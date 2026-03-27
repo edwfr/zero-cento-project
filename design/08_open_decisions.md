@@ -49,19 +49,19 @@
 ## 04 — Data Model
 
 - [x] **OD-23** Entità principali → User, CoachTrainee, Exercise, TrainingProgram, Week, Workout, WorkoutExercise, ExerciseFeedback.
-- [ ] **OD-24** DB engine → PostgreSQL consigliato (Neon o Supabase per Vercel); da confermare.
-- [ ] **OD-25** ORM → Prisma consigliato; da confermare.
-- [ ] **OD-26** Strategia migrazioni schema (migration files vs prisma db push)?
+- [x] **OD-24** DB engine → **Supabase PostgreSQL**. Connection pooling PgBouncer incluso, dashboard admin ricca, free tier 500MB, coverage AI eccellente.
+- [x] **OD-25** ORM → **Prisma**. Type-safety automatica, schema dichiarativo, Prisma Studio, migrations robuste, coverage AI eccellentissima.
+- [x] **OD-26** Strategia migrazioni → **Prisma Migrate** con migration files. Trackable (Git), rollback-capable, environment-safe (DIRECT_URL per migrations).
 - [ ] **OD-27** Crescita dati → stima ~14.400 WorkoutExercise + ~14.400 Feedback nel primo ciclo (50 trainee). Dimensioni molto contenute.
 
 ---
 
 ## 05 — Security & Auth
 
-- [ ] **OD-28** Metodo autenticazione → email+password (assunto); OAuth da valutare.
-- [ ] **OD-29** Provider auth → NextAuth.js (Auth.js) consigliato; alternativa Clerk.
+- [x] **OD-28** Metodo autenticazione → **Email+password** per MVP (Supabase Auth). OAuth (Google/GitHub) e Magic Link opzionali post-MVP.
+- [x] **OD-29** Provider auth → **Supabase Auth**. Integrazione nativa Supabase, JWT session, coverage AI ottima, zero setup auth infra. Collegamento auth.users ↔ public.User.
 - [x] **OD-30** Ruoli → `admin` · `coach` · `trainee`. Matrice permessi in 05_security_auth.md.
-- [ ] **OD-31** Gestione segreti → Vercel Env Vars (assunto); vault per scenari enterprise.
+- [x] **OD-31** Gestione segreti → **Vercel Environment Variables** confermate (DATABASE_URL, SUPABASE_SERVICE_ROLE_KEY, etc). No vault necessario per MVP.
 - [ ] **OD-32** Compliance GDPR? (dati personali trainee presenti)
 
 ---

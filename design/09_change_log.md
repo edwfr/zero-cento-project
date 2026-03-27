@@ -4,6 +4,43 @@
 
 ---
 
+## 2026-03-27 (rev 7)
+- **Azione**: Chiusura stack critico Database + ORM + Auth (OD-24, OD-25, OD-26, OD-28, OD-29, OD-31).
+- **OD-24 - Database**: **Supabase PostgreSQL** confermato
+  - Rationale: Connection pooling (PgBouncer) incluso → risolve rischio OD-36
+  - Dashboard admin ricca per gestione visuale dati
+  - Free tier generoso (500MB DB, 1GB storage, 2GB bandwidth)
+  - Coverage AI ottima (vastissima documentazione Supabase + Next.js)
+  - Auth integrato nello stesso ecosistema
+- **OD-25 - ORM**: **Prisma** confermato
+  - Type-safety automatica end-to-end (schema → types generati)
+  - Prisma Studio per debug dati locale
+  - Migrations robuste e trackable (Git)
+  - Coverage AI eccellentissima (vastissimo nei training data)
+- **OD-26 - Migrazioni**: **Prisma Migrate** con migration files
+  - Workflow: modifica schema → `prisma migrate dev` → commit migration files
+  - Rollback-capable, environment-safe (DIRECT_URL per DDL, DATABASE_URL pooled per runtime)
+- **OD-28 - Metodo auth**: **Email+password** per MVP
+  - OAuth (Google/GitHub) e Magic Link opzionali post-MVP
+- **OD-29 - Provider auth**: **Supabase Auth** 
+  - Integrazione nativa con Supabase DB
+  - JWT session (access + refresh token) in cookie HTTP-only
+  - Collegamento auth.users ↔ public.User (trigger Supabase)
+  - Zero setup infra auth (no NextAuth config)
+- **OD-31 - Gestione segreti**: **Vercel Environment Variables** (standard per MVP)
+  - DATABASE_URL, DIRECT_URL, SUPABASE_SERVICE_ROLE_KEY
+  - No vault enterprise necessario
+- **Setup completo**:
+  ```
+  Database: Supabase PostgreSQL (pooled + direct connections)
+  ORM: Prisma (schema.prisma + migrations)
+  Auth: Supabase Auth (email/password, JWT)
+  Secrets: Vercel Env Vars
+  ```
+- **Implicazioni**: Stack critico definito, sviluppo può partire. Connection pooling risolto, auth zero-config, type-safety garantita, coverage AI massima.
+
+---
+
 ## 2026-03-27 (rev 6)
 - **Azione**: Chiusura stack backend API (OD-18, OD-19, OD-20).
 - **OD-18 - Stile API**: **REST confermato** con API Routes Next.js

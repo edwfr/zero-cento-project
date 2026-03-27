@@ -3,10 +3,10 @@
 ## Stack tecnologico
 - **Framework**: Next.js (App Router) — gestisce sia il frontend che il backend.
 - **Runtime backend**: Next.js API Routes / Server Actions (Node.js serverless su Vercel).
-- **Database**: ❓ **OD-24** — da scegliere (PostgreSQL su Neon o Supabase consigliati per compatibilità Vercel).
-- **ORM**: ❓ **OD-25** — Prisma consigliato per Next.js.
+- **Database**: **Supabase PostgreSQL** — connection pooling (PgBouncer) incluso, dashboard admin, free tier generoso (500MB DB).
+- **ORM**: **Prisma** — type-safety automatica, migrations robuste, coverage AI eccellente.
 - **Hosting / Cloud**: Vercel (frontend + serverless functions).
-- **Autenticazione**: ❓ **OD-29** — provider da definire (NextAuth.js / Clerk).
+- **Autenticazione**: **Supabase Auth** — email/password, OAuth integrato, gestione sessioni JWT.
 
 ## Architettura logica
 

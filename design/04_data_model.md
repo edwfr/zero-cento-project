@@ -1,17 +1,41 @@
 # Data Model
 
+## Database & ORM
+- **Database**: **Supabase PostgreSQL** (connection pooling PgBouncer incluso)
+- **ORM**: **Prisma** (schema dichiarativo, type-safety, migrations)
+- **Strategia migrazioni**: **Prisma Migrate** con migration files (trackable, rollback-capable)
+
+**Configurazione**:
+```env
+# Connection pooled per runtime app (max performance)
+DATABASE_URL="postgresql://postgres:[PASSWORD]@db.[PROJECT].supabase.co:6543/postgres?pgbouncer=true"
+
+# Connection diretta per migrations (PgBouncer non supporta DDL)
+DIRECT_URL="postgresql://postgres:[PASSWORD]@db.[PROJECT].supabase.co:5432/postgres"
+```
+
+**Workflow migrations**:
+```bash
+# 1. Modifica schema.prisma
+# 2. Crea migration
+npx prisma migrate dev --name add_exercise_category
+
+# 3. Deploy in produzione
+npx prisma migrate deploy
+```
+
 ## Entità principali
 
-| Entità | Descrizione |
-|---|---|
-| `User` | Utente del sistema con ruolo (admin / coach / trainee) |
-| `CoachTrainee` | Associazione esplicita coach → trainee |
-| `Exercise` | Esercizio nella libreria condivisa (con URL YouTube) |
-| `TrainingProgram` | Scheda di allenamento multi-settimana assegnata a un trainee |
-| `Week` | Singola settimana all'interno di una scheda |
-| `Workout` | Singolo allenamento (giorno) all'interno di una settimana |
-| `WorkoutExercise` | Esercizio con parametri all'interno di un allenamento |
-| `ExerciseFeedback` | Feedback del trainee su un WorkoutExercise |
+| Entità             | Descrizione                                                  |
+| ------------------ | ------------------------------------------------------------ |
+| `User`             | Utente del sistema con ruolo (admin / coach / trainee)       |
+| `CoachTrainee`     | Associazione esplicita coach → trainee                       |
+| `Exercise`         | Esercizio nella libreria condivisa (con URL YouTube)         |
+| `TrainingProgram`  | Scheda di allenamento multi-settimana assegnata a un trainee |
+| `Week`             | Singola settimana all'interno di una scheda                  |
+| `Workout`          | Singolo allenamento (giorno) all'interno di una settimana    |
+| `WorkoutExercise`  | Esercizio con parametri all'interno di un allenamento        |
+| `ExerciseFeedback` | Feedback del trainee su un WorkoutExercise                   |
 
 ## Schema (logico)
 
