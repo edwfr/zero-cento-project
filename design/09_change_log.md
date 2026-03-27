@@ -4,6 +4,67 @@
 
 ---
 
+## 2026-03-27 (rev 15)
+- **Azione**: Chiusura completa stack Deploy, Scaling, Testing (OD-33, OD-34, OD-36, OD-37, OD-38, OD-39, OD-40, OD-41).
+- **OD-33 - Ambienti**: 
+  - **3 ambienti definiti**: Production (`prod.zerocento.app`), Staging (`test.zerocento.app`), Dev (`dev-*.zerocento.app`)
+  - **Supabase Database Branching**: 1 progetto Pro con branch `main`, `staging`, `dev` (GRATIS, incluso in Pro)
+  - **Strategia ottimizzazione costi**: Branch `staging` sempre attivo per QA, branch `dev` PAUSABILE quando non serve → €0 compute
+  - **Verosimiglianza test**: Branch staging è clone esatto di main (stesso schema, seed dati realistici)
+  - **Deployment URLs**: Preview deployments GRATIS illimitati con Vercel Pro (es. `pr-42.zerocento.app`)
+- **OD-34 - CI/CD**:
+  - **GitHub Actions attivo**: Workflow automatizzato per lint, type-check, unit test, E2E
+  - **Deployment flow**: Feature branch → PR staging (unit tests) → auto-deploy test.zerocento.app (E2E) → PR main (se E2E GREEN) → deploy prod.zerocento.app
+  - **Branch protection**: Main e staging protetti, require status checks (test + e2e-staging), manual approval opzionale su main
+  - **Pipeline completa**: `.github/workflows/ci.yml` con jobs `test` (lint/typecheck/unit coverage 80%), `e2e-staging` (Playwright su test.zerocento.app), `deploy-prod` (conditional su main)
+- **OD-36 - Connection Pooling**:
+  - **Bottleneck risolto**: Supabase PgBouncer (port 6543, transaction pooling) incluso in Pro (GRATIS)
+  - **Configurazione Prisma**: `connection_limit=10` per instance, `DATABASE_URL` pooled (port 6543), `DIRECT_URL` direct (port 5432 solo migrations)
+  - **Capacity analysis**: 54 utenti → ~10 req/min peak → max 30 connessioni attive → PgBouncer riutilizza 15 connessioni PostgreSQL reali → **nessun bottleneck previsto**
+  - **Monitoring**: Supabase Dashboard alerta se connessioni >80% pool (75/100)
+  - **Scalabilità**: Architettura gestisce fino a ~500 utenti con stesso setup (trigger upgrade: Prisma Accelerate solo se >500 utenti)
+- **OD-37 - Budget**:
+  - **Budget disponibile**: €50/mese
+  - **Costi effettivi**: €45-48/mese (Vercel Pro €20 + Supabase Pro €25 + Sentry free €0 + Supabase dev branch €0-3)
+  - **Margine**: €2-5/mese per imprevisti (bandwidth extra, storage growth)
+  - **Costo per utente**: €0,83/utente/mese (€45 ÷ 54 utenti)
+  - **Ottimizzazione**: 1 progetto Supabase con branching (vs 2 progetti = €50 → SFORAVA budget), pause dev branch, preview deployments gratis, rate limiting in-memory (no Redis necessario)
+  - **Proiezione crescita**: 150 utenti = stesso costo (€45), 500 utenti = +€5-10, >1000 utenti = +€55 (necessari upgrade)
+- **OD-38 - Framework Unit Test**:
+  - **Libreria**: **Vitest** confermato (best-in-class Next.js/React, performance 10-20x Jest, coverage nativo, TypeScript first-class)
+  - **Rationale**: API Jest-compatible, vastissima coverage AI (crescita 2023-26), hot module reload, parallel execution nativo
+  - **Target**: Business logic (calcoli volume/RPE/massimali, validazioni Zod, helpers, permission checks, custom hooks)
+  - **Esclusi da unit**: Config files, componenti UI puri, layouts/loading/error, API Routes boilerplate (testati con E2E)
+- **OD-39 - Framework E2E**:
+  - **Libreria**: **Playwright** confermato in scope MVP
+  - **Flussi critici obbligatori**: Creazione utente (admin/trainer → trainee), creazione scheda multi-settimana, pubblicazione scheda a trainee, invio feedback con serie multiple
+  - **Device matrix ottimizzata**: Desktop 1440px per admin/trainer (full suite), Mobile 390px per trainee (full suite), altri device solo smoke tests
+  - **Configurazione**: Multi-browser (Chromium/Firefox), auto-wait, screenshot on failure, trace on first retry
+- **OD-40 - Coverage minimo**:
+  - **Soglia**: **80%** su lines/branches/functions/statements (standard industry per progetti seri)
+  - **Enforced in CI**: Check bloccante su GitHub Actions, PR fallisce se coverage <80%
+  - **Report**: Vitest coverage con @vitest/coverage-v8, report HTML locale + JSON per CI
+  - **Esclusioni**: Config, layouts, UI puri, type definitions (vedi vitest.config.ts exclude patterns)
+- **OD-41 - E2E in CI**:
+  - **Esecuzione**: **Sì, in CI, bloccante per deploy prod**
+  - **Quando**: E2E girano su `test.zerocento.app` dopo ogni deploy staging (branch staging)
+  - **Deployment gate**: PR `staging → main` richiede E2E GREEN come status check obbligatorio; se E2E fail → merge BLOCCATO → deploy prod IMPOSSIBILE
+  - **Workflow**: Feature branch (unit only) → PR staging (unit + E2E su test) → PR main (require E2E green) → deploy prod
+  - **Performance**: E2E solo su staging (non su ogni feature branch), ~5-10min runtime, 2 retries in CI
+- **Implicazioni architetturali**:
+  - **Zero costi extra per ambienti**: Supabase branching + Vercel preview deployments inclusi in piani Pro (€45 totale vs €70 con 2 progetti)
+  - **QA verosimile**: Branch staging con dati realistici, ambiente test identico a prod (stessi constraint DB, stesso runtime Vercel)
+  - **Quality gates robusti**: Unit 80% + E2E pass obbligatori → deploy prod impossibile se quality regression
+  - **Developer experience**: Feature branch → preview URL immediato (per review UI), unit tests rapidi (Vitest), E2E solo quando merge staging (no wait su ogni push)
+  - **Monitoraggio production-ready**: Sentry error tracking, Vercel analytics, Supabase connection pool monitoring
+- **Documentazione aggiornata**:
+  - 06_deploy_and_scaling.md: Sezioni "Ambienti 3-tier", "Supabase Database Branching setup", "CI/CD GitHub Actions workflow", "Connection Pooling dettaglio", "Budget breakdown"
+  - 07_testing_strategy.md: Sezioni "Unit Testing Vitest", "E2E Testing Playwright", "Automazione e Coverage", esempi codice completi
+  - 08_open_decisions.md: OD-33/34/36/37/38/39/40/41 marcate [x] con riassunto decisioni
+- **Implicazioni**: Tutti gli open decision chiusi. Architettura deploy production-ready con 3 ambienti isolati. Testing strategy completa (unit 80% + E2E critici). Budget ottimizzato sotto €50/mese. CI/CD automatizzato con quality gates. Developer può iniziare implementazione con specifiche complete.
+
+---
+
 ## 2026-03-27 (rev 14)
 - **Azione**: Chiusura OD-21 (Rate Limiting) e OD-22 (Logging Strutturato).
 - **OD-21 - Rate Limiting**: 

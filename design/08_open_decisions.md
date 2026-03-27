@@ -68,18 +68,18 @@
 
 ## 06 — Deploy & Scaling
 
-- [ ] **OD-33** URL produzione e accessi ambienti?
-- [ ] **OD-34** CI/CD → integrazione Vercel+GitHub nativa sufficiente; GitHub Actions per test aggiuntivi?
+- [x] **OD-33** URL produzione e accessi ambienti? → **3 ambienti**: `prod.zerocento.app` (sempre attivo), `test.zerocento.app` (staging sempre attivo), `dev-*.zerocento.app` (preview pausabili). Supabase Database Branching (main/staging/dev) per isolamento dati.
+- [x] **OD-34** CI/CD → **GitHub Actions** attivo per test automatici pre-deploy. Workflow: unit test + E2E su ogni PR, deploy staging auto, deploy prod dopo E2E pass su staging.
 - [x] **OD-35** Strategia deploy → deploy immutabili Vercel con rollback istantaneo (risolto da piattaforma).
-- [ ] **OD-36** Bottleneck → DB connection pooling su serverless (mitigazione: PgBouncer / Prisma Accelerate).
-- [ ] **OD-37** Budget infrastrutturale mensile stimato?
+- [x] **OD-36** Bottleneck → DB connection pooling risolto con **Supabase PgBouncer** (incluso in Pro plan) + Prisma `connection_limit=10`. Nessun bottleneck previsto per scala MVP (54 utenti).
+- [x] **OD-37** Budget infrastrutturale mensile stimato? → **€45-48/mese**: Vercel Pro €20 + Supabase Pro €25 (include branching staging/dev gratis) + Sentry free tier €0. Sotto budget €50 con €2-5 margine.
 
 ---
 
 ## 07 — Testing Strategy
 
-- [ ] **OD-38** Framework unit test → Vitest consigliato.
-- [ ] **OD-39** Framework E2E → Playwright consigliato; in scope per MVP?
-- [ ] **OD-40** Soglia minima coverage (es. 70%)?
-- [ ] **OD-41** Test E2E in CI o solo locale?
+- [x] **OD-38** Framework unit test → **Vitest** confermato (best-in-class per Next.js, compatibilità Vite, coverage integrato, vastissima presenza training data AI). Unit test su tutta la business logic.
+- [x] **OD-39** Framework E2E → **Playwright** confermato in scope MVP. Flussi critici: creazione utente, creazione/pubblicazione scheda, invio feedback. E2E bloccante per deploy prod.
+- [x] **OD-40** Soglia minima coverage → **80% minimo** su business logic (calcolo volume, RPE, massimali, validazioni Zod, helper functions). Esclusi: config files, componenti puramente presentazionali, boilerplate API Routes.
+- [x] **OD-41** Test E2E in CI → **Sì, bloccanti per deploy prod**. GitHub Actions esegue E2E su staging prima di permettere merge su main. Se E2E fail, deploy prod bloccato.
 - [x] **OD-42** Flussi critici → definiti in 07_testing_strategy.md con priorità P0/P1/P2/P3. Include test per nuove funzionalità (massimali, reportistica, feedback con serie multiple, validazioni RPE/peso).
