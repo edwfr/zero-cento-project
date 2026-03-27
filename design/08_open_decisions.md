@@ -38,9 +38,9 @@
 
 ## 03 — Backend & API
 
-- [ ] **OD-18** Stile API → REST (default) o tRPC? Server Actions per form mutations?
-- [ ] **OD-19** Validazione input → Zod consigliato (da confermare).
-- [ ] **OD-20** Formato standard errori API → proposta in 03_backend_api.md, da approvare.
+- [x] **OD-18** Stile API → **REST** con endpoint HTTP standard. Coverage AI eccellente, pattern consolidati, semantics chiare. Server Actions opzionali per form.
+- [x] **OD-19** Validazione input → **Zod** confermato. Schema riutilizzabili, type-safety, integrazione React Hook Form.
+- [x] **OD-20** Formato standard errori API → definito in 03_backend_api.md (`{data}` per success, `{error: {code, message, details?}}` per errori).
 - [ ] **OD-21** Rate limiting / throttling?
 - [ ] **OD-22** Logging strutturato: soluzione e livelli?
 

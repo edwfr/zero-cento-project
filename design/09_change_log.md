@@ -4,6 +4,25 @@
 
 ---
 
+## 2026-03-27 (rev 6)
+- **Azione**: Chiusura stack backend API (OD-18, OD-19, OD-20).
+- **OD-18 - Stile API**: **REST confermato** con API Routes Next.js
+  - Rationale: Coverage AI eccellente, pattern consolidati (vastissima presenza training data), HTTP semantics chiare
+  - Server Actions opzionali per form submissions (progressive enhancement)
+  - Type-safety via TypeScript + Zod validation
+- **OD-19 - Validazione**: **Zod confermato**
+  - Schema riutilizzabili (shared/schemas)
+  - Type-safety end-to-end
+  - Integrazione nativa con React Hook Form (frontend) e API Routes (backend)
+- **OD-20 - Formato errori**: Formato standard definito
+  - Success: `{data, meta?}`
+  - Error: `{error: {code, message, details?}}`
+  - HTTP status code semantici (200, 201, 400, 401, 403, 404, 500)
+  - Helper `apiSuccess()` e `apiError()` per consistency
+- **Filosofia**: REST per massima coverage AI + pattern universali, Zod per validation type-safe, formato errori standardizzato per client handling consistency.
+
+---
+
 ## 2026-03-27 (rev 5)
 - **Azione**: Chiusura stack frontend (OD-14, OD-15, OD-16) ottimizzato per sviluppo AI-first.
 - **OD-14 - Libreria UI**: **Tailwind CSS** + **Material UI (MUI)**
