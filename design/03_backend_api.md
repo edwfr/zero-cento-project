@@ -40,13 +40,13 @@
   - Trainee disabilitato (`isActive=false`): login bloccato con messaggio "Account disabilitato"
 
 ### Esercizi — Libreria Condivisa (Admin + Trainer)
-| Method   | Path                  | Descrizione                                            | Ruoli autorizzati |
-| -------- | --------------------- | ------------------------------------------------------ | ----------------- |
-| `GET`    | `/api/exercises`      | Lista libreria esercizi (filtri: tipo, schema motorio) | tutti             |
-| `POST`   | `/api/exercises`      | Crea esercizio (aggiunto a libreria condivisa)         | admin, trainer    |
-| `GET`    | `/api/exercises/[id]` | Dettaglio esercizio                                    | tutti             |
-| `PUT`    | `/api/exercises/[id]` | Modifica esercizio (QUALSIASI esercizio)               | admin, trainer    |
-| `DELETE` | `/api/exercises/[id]` | Elimina esercizio (QUALSIASI esercizio)                | admin, trainer    |
+| Method   | Path                  | Descrizione                                                              | Ruoli autorizzati |
+| -------- | --------------------- | ------------------------------------------------------------------------ | ----------------- |
+| `GET`    | `/api/exercises`      | Lista libreria esercizi (filtri: tipo, schema motorio, gruppo muscolare) | tutti             |
+| `POST`   | `/api/exercises`      | Crea esercizio (aggiunto a libreria condivisa)                           | admin, trainer    |
+| `GET`    | `/api/exercises/[id]` | Dettaglio esercizio con gruppi muscolari e schema                        | tutti             |
+| `PUT`    | `/api/exercises/[id]` | Modifica esercizio (QUALSIASI esercizio)                                 | admin, trainer    |
+| `DELETE` | `/api/exercises/[id]` | Elimina esercizio (QUALSIASI esercizio)                                  | admin, trainer    |
 
 **Note autorizzazione libreria condivisa**:
 - **Libreria condivisa**: Tutti gli esercizi sono visibili e gestibili da TUTTI i trainer (non solo chi li ha creati)
@@ -57,6 +57,42 @@
   - Validazione backend: verifica solo `role IN ('admin', 'trainer')`, **non** ownership
 - **Rationale**: Collaborazione tra trainer, evita duplicazione, libreria si arricchisce organicamente
 - **Protezione**: Eliminazione esercizio usato in scheda attiva restituisce `409 Conflict` (integrità referenziale)
+
+### Gruppi Muscolari — Libreria Condivisa (Admin + Trainer)
+| Method   | Path                              | Descrizione                        | Ruoli autorizzati |
+| -------- | --------------------------------- | ---------------------------------- | ----------------- |
+| `GET`    | `/api/muscle-groups`              | Lista gruppi muscolari attivi      | tutti             |
+| `POST`   | `/api/muscle-groups`              | Crea nuovo gruppo muscolare        | admin, trainer    |
+| `GET`    | `/api/muscle-groups/[id]`         | Dettaglio gruppo muscolare         | tutti             |
+| `PUT`    | `/api/muscle-groups/[id]`         | Modifica gruppo (QUALSIASI)        | admin, trainer    |
+| `PATCH`  | `/api/muscle-groups/[id]/archive` | Archivia gruppo (isActive=false)   | admin, trainer    |
+| `DELETE` | `/api/muscle-groups/[id]`         | Elimina gruppo (solo se non usato) | admin, trainer    |
+
+**Note autorizzazione gruppi muscolari**:
+- **Libreria condivisa**: Tutti i gruppi muscolari sono gestibili da TUTTI i trainer
+- `POST /api/muscle-groups`: Crea nuovo gruppo (es. "Obliqui", "Erettori spinali") disponibile immediatamente a tutti
+- `PUT /api/muscle-groups/[id]`: Modifica nome/descrizione di qualsiasi gruppo
+- `PATCH .../archive`: Archiviazione soft (isActive=false) per gruppi obsoleti senza eliminarli (preserva integrità referenziale)
+- `DELETE`: Eliminazione fisica bloccata se esistono `ExerciseMuscleGroup` con quel gruppo → `409 Conflict`
+- **Rationale**: Tassonomia personalizzabile senza modificare codice, adattamento a metodologie diverse
+
+### Schemi Motori — Libreria Condivisa (Admin + Trainer)
+| Method   | Path                                  | Descrizione                        | Ruoli autorizzati |
+| -------- | ------------------------------------- | ---------------------------------- | ----------------- |
+| `GET`    | `/api/movement-patterns`              | Lista schemi motori attivi         | tutti             |
+| `POST`   | `/api/movement-patterns`              | Crea nuovo schema motorio          | admin, trainer    |
+| `GET`    | `/api/movement-patterns/[id]`         | Dettaglio schema motorio           | tutti             |
+| `PUT`    | `/api/movement-patterns/[id]`         | Modifica schema (QUALSIASI)        | admin, trainer    |
+| `PATCH`  | `/api/movement-patterns/[id]/archive` | Archivia schema (isActive=false)   | admin, trainer    |
+| `DELETE` | `/api/movement-patterns/[id]`         | Elimina schema (solo se non usato) | admin, trainer    |
+
+**Note autorizzazione schemi motori**:
+- **Libreria condivisa**: Tutti gli schemi motori sono gestibili da TUTTI i trainer
+- `POST /api/movement-patterns`: Crea nuovo schema (es. "Turkish Get-Up", "Overhead Carry") disponibile immediatamente
+- `PUT /api/movement-patterns/[id]`: Modifica nome/descrizione di qualsiasi schema
+- `PATCH .../archive`: Archiviazione soft per schemi obsoleti
+- `DELETE`: Eliminazione fisica bloccata se esistono `Exercise` con quel schema → `409 Conflict`
+- **Rationale**: Espansione categorizzazioni senza deploy
 
 ### Schede / Programmi (trainer)
 | Method   | Path                          | Descrizione                           |

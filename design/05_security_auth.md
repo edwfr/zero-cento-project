@@ -175,7 +175,17 @@ await supabase.auth.signOut()
 - **Trainee**: può **solo leggere** la libreria esercizi (per consultare video/descrizioni durante allenamento)
 - **Rationale**: Collaborazione tra trainer, evita duplicazione esercizi, libreria si arricchisce con contributi di tutti
 
-- **Isolamento dati**: un trainer vede e modifica solo trainee e schede a lui assegnati; la libreria esercizi è condivisa; un trainee vede solo le proprie schede.
+**Dettaglio gruppi muscolari e schemi motori condivisi**:
+- **Gestione dinamica**: Gruppi muscolari (`MuscleGroup`) e schemi motori (`MovementPattern`) sono tabelle DB gestibili, non enum hardcoded
+- **Admin**: può creare, modificare, archiviare (`isActive=false`) gruppi e schemi
+- **Trainer**: può creare, modificare, archiviare gruppi e schemi (libreria condivisa)
+  - Permette espansione categorizzazioni senza modificare codice (es. aggiungere "Obliqui", "Turkish Get-Up")
+- **Trainee**: può **solo leggere** gruppi e schemi (per filtri/ricerca esercizi)
+- **Archiviazione**: Campo `isActive=false` disabilita gruppo/schema senza eliminarlo (preserva integrità referenziale con esercizi esistenti)
+- **Eliminazione fisica**: Bloccata se esistono riferimenti (esercizi con quel gruppo/schema)
+- **Rationale**: Flessibilità per personalizzare tassonomia esercizi senza deploy codice, adattamento a metodologie training diverse
+
+- **Isolamento dati**: un trainer vede e modifica solo trainee e schede a lui assegnati; la libreria esercizi è condivisa; la libreria gruppi muscolari e schemi motori è condivisa; un trainee vede solo le proprie schede.
 
 ## Protezione API
 - Ogni API Route / Server Action verifica la sessione attiva e il ruolo prima di qualsiasi operazione.

@@ -26,17 +26,20 @@ npx prisma migrate deploy
 
 ## Entità principali
 
-| Entità             | Descrizione                                                                     |
-| ------------------ | ------------------------------------------------------------------------------- |
-| `User`             | Utente del sistema con ruolo (admin / trainer / trainee)                        |
-| `TrainerTrainee`   | Associazione esplicita trainer → trainee                                        |
-| `Exercise`         | Esercizio nella libreria condivisa (con gruppo muscolare, tipo, schema motorio) |
-| `TrainingProgram`  | Scheda di allenamento multi-settimana assegnata a un trainee                    |
-| `Week`             | Singola settimana all'interno di una scheda                                     |
-| `Workout`          | Singolo allenamento (giorno) all'interno di una settimana                       |
-| `WorkoutExercise`  | Esercizio con parametri all'interno di un allenamento                           |
-| `ExerciseFeedback` | Feedback del trainee su un WorkoutExercise (serie, kg, RPE)                     |
-| `PersonalRecord`   | Massimali (1RM o nRM) gestiti per trainee ed esercizio                          |
+| Entità                | Descrizione                                                                               |
+| --------------------- | ----------------------------------------------------------------------------------------- |
+| `User`                | Utente del sistema con ruolo (admin / trainer / trainee)                                  |
+| `TrainerTrainee`      | Associazione esplicita trainer → trainee                                                  |
+| `MuscleGroup`         | Gruppo muscolare gestibile (es. Pettorali, Quadricipiti) - configurabile da admin/trainer |
+| `MovementPattern`     | Schema motorio gestibile (es. Squat, Push) - configurabile da admin/trainer               |
+| `Exercise`            | Esercizio nella libreria condivisa (con gruppi muscolari, tipo, schema motorio)           |
+| `ExerciseMuscleGroup` | Associazione Exercise ↔ MuscleGroup con coefficiente d'incidenza (0.0-1.0)                |
+| `TrainingProgram`     | Scheda di allenamento multi-settimana assegnata a un trainee                              |
+| `Week`                | Singola settimana all'interno di una scheda                                               |
+| `Workout`             | Singolo allenamento (giorno) all'interno di una settimana                                 |
+| `WorkoutExercise`     | Esercizio con parametri all'interno di un allenamento                                     |
+| `ExerciseFeedback`    | Feedback del trainee su un WorkoutExercise (serie, kg, RPE)                               |
+| `PersonalRecord`      | Massimali (1RM o nRM) gestiti per trainee ed esercizio                                    |
 
 ## Schema (logico)
 
@@ -56,21 +59,52 @@ TrainerTrainee
   trainerId       FK → User
   traineeId     FK → User
 
+MuscleGroup
+  id            UUID  PK
+  name          String  UNIQUE      -- es. "Pettorali", "Quadricipiti", "Deltoidi anteriori"
+  description   String?             -- descrizione opzionale
+  createdBy     FK → User           -- admin/trainer che ha creato (audit trail)
+  createdAt     DateTime
+  isActive      Boolean             -- flag per "archiviare" gruppi muscolari obsoleti senza eliminarli
+
+  -- NOTA: Gestibile da admin e trainer (libreria condivisa)
+  -- Permette espansione categorizzazioni senza modificare codice
+
+MovementPattern
+  id            UUID  PK
+  name          String  UNIQUE      -- es. "Squat", "Horizontal Push", "Hip Extension"
+  description   String?             -- descrizione schema motorio
+  createdBy     FK → User           -- admin/trainer che ha creato (audit trail)
+  createdAt     DateTime
+  isActive      Boolean             -- flag per "archiviare" pattern obsoleti
+
+  -- NOTA: Gestibile da admin e trainer (libreria condivisa)
+  -- Alternative: "Accosciata", "Spinta Orizzontale", "Estensione Anca", "Tirata Verticale", etc.
+
 Exercise
   id                  UUID  PK
   name                String
   description         String?
   youtubeUrl          String          -- URL video YouTube dimostrativo
-  muscleGroups        Json            -- Array di {name: String, coefficient: Float} - gruppo muscolare e coefficiente d'incidenza
   type                Enum(fundamental, accessory)  -- Fondamentale (SBD) o Accessorio
-  movementPattern     Enum(squat, horizontal_push, hip_extension, horizontal_pull, vertical_pull, other)  -- Schema motorio
+  movementPatternId   FK → MovementPattern  -- Schema motorio (relazione vs enum hardcoded)
   notes               String[]        -- Lista di note/varianti
   createdBy           FK → User       -- trainer/admin che ha creato l'esercizio (solo audit trail, NON determina ownership)
   createdAt           DateTime
 
+  -- RELAZIONE GRUPPI MUSCOLARI: via ExerciseMuscleGroup (many-to-many con coefficient)
+
   -- NOTA: Libreria CONDIVISA tra tutti i trainer
   -- Ogni trainer può CRUD su QUALSIASI esercizio (non solo i propri)
   -- Campo createdBy serve solo per tracciabilità/audit, non per permission
+
+ExerciseMuscleGroup
+  id            UUID  PK
+  exerciseId    FK → Exercise
+  muscleGroupId FK → MuscleGroup
+  coefficient   Float           -- Coefficiente d'incidenza 0.0-1.0 (es. 0.8 per muscolo primario, 0.3 per sinergico)
+  
+  UNIQUE(exerciseId, muscleGroupId)  -- Constraint: un esercizio non può avere lo stesso gruppo muscolare duplicato
 
 TrainingProgram
   id                 UUID  PK
@@ -135,6 +169,9 @@ PersonalRecord
 - `User(trainer)` → N `TrainingProgram` (come trainer)
 - `User(trainee)` → N `TrainingProgram` (come destinatario)
 - `User(trainer)` ↔ N `User(trainee)` via `TrainerTrainee`
+- `MuscleGroup` ↔ N `Exercise` via `ExerciseMuscleGroup` (many-to-many con coefficient)
+- `MovementPattern` → N `Exercise` (one-to-many)
+- `Exercise` ↔ N `MuscleGroup` via `ExerciseMuscleGroup` (many-to-many con coefficient)
 - `TrainingProgram` → N `Week` → N `Workout` → N `WorkoutExercise` → N `ExerciseFeedback`
 - `Exercise` → N `WorkoutExercise`
 - `User(trainee)` → N `ExerciseFeedback`
@@ -144,7 +181,9 @@ PersonalRecord
 ## Query critiche
 - **Scheda corrente trainee**: `TrainingProgram` con `status=active` e `traineeId=<id>`, espanso fino a `WorkoutExercise`.
 - **Avanzamento scheda (trainer)**: `ExerciseFeedback` aggregati per `TrainingProgram` — % esercizi completati per settimana.
-- **Libreria esercizi**: tutti gli `Exercise`, filtrabili per nome (ricerca testuale), gruppo muscolare, tipo (fondamentale/accessorio), schema motorio.
+- **Libreria esercizi**: tutti gli `Exercise` con relazioni `ExerciseMuscleGroup` e `MovementPattern`, filtrabili per nome (ricerca testuale), gruppo muscolare (via join), tipo (fondamentale/accessorio), schema motorio (via FK).
+- **Gruppi muscolari attivi**: `MuscleGroup` con `isActive=true`, ordinati per `name`.
+- **Schemi motori attivi**: `MovementPattern` con `isActive=true`, ordinati per `name`.
 - **Storico trainee**: `TrainingProgram` con `traineeId=<id>`, ordinate per `startDate` DESC.
 - **Massimali trainee**: `PersonalRecord` con `traineeId=<id>`, raggrupati per `exerciseId`, ordinati per `recordDate` DESC.
 - **Reportistica SBD** (solo per esercizi fondamentali):
@@ -152,29 +191,72 @@ PersonalRecord
   - **NBL (Numero alzate)**: totale delle serie × ripetizioni per esercizio nel periodo
   - **IM (Intensità media)**: media ponderata delle intensità (%) per esercizio nel periodo
 - **Serie Allenanti (per gruppo muscolare)**:
-  - Serie totali: somma di tutte le serie per workout exercises filtrati per gruppo muscolare
+  - Serie totali: somma di tutte le serie per workout exercises filtrati per gruppo muscolare (join via `ExerciseMuscleGroup`)
   - Ripetizioni totali: somma di `sets × reps` per workout exercises filtrati per gruppo muscolare
 
 ## Note implementative
 
-### Gruppo Muscolare e Coefficiente d'Incidenza
-Ogni esercizio può coinvolgere più gruppi muscolari con diversi livelli di coinvolgimento. Il campo `muscleGroups` in `Exercise` è un array JSON che contiene elementi nel formato:
-```json
-[
-  {"name": "Pettorali", "coefficient": 0.8},
-  {"name": "Tricipiti", "coefficient": 0.5},
-  {"name": "Deltoidi anteriori", "coefficient": 0.3}
-]
+### Gruppi Muscolari Gestibili
+I gruppi muscolari non sono più hardcoded ma gestibili dinamicamente da admin e trainer tramite tabella `MuscleGroup`.
+
+**Esempi gruppi muscolari comuni** (seed iniziale consigliato):
+- Pettorali
+- Deltoidi anteriori / mediali / posteriori
+- Dorsali
+- Trapezi
+- Bicipiti
+- Tricipiti
+- Quadricipiti
+- Femorali
+- Glutei
+- Addominali
+- Lombari
+- Polpacci
+
+**Gestione**:
+- Admin/Trainer possono aggiungere nuovi gruppi (es. "Obliqui", "Erettori spinali")
+- Campo `isActive=false` per "archiviare" gruppi obsoleti senza eliminarli (preserva integrità referenziale)
+- Eliminazione fisica bloccata se esistono `ExerciseMuscleGroup` riferimenti
+
+### Schemi Motori Gestibili
+Gli schemi motori non sono più enum ma gestibili dinamicamente tramite tabella `MovementPattern`.
+
+**Esempi schemi motori comuni** (seed iniziale consigliato):
+- Squat (Accosciata)
+- Horizontal Push (Spinta Orizzontale)
+- Vertical Push (Spinta Verticale)
+- Hip Extension (Estensione Anca)
+- Horizontal Pull (Tirata Orizzontale)
+- Vertical Pull (Tirata Verticale)
+- Hip Hinge (Cerniera Anca)
+- Lunge (Affondo)
+- Carry (Trasporto)
+- Core Stability (Stabilità Core)
+- Rotation (Rotazione)
+- Other (Altro)
+
+**Gestione**:
+- Admin/Trainer possono aggiungere schemi personalizzati (es. "Turkish Get-Up", "Overhead Carry")
+- Campo `isActive=false` per archiviare pattern obsoleti
+- Eliminazione fisica bloccata se esistono `Exercise` con quel pattern
+
+### Coefficiente d'Incidenza (ExerciseMuscleGroup)
+Ogni esercizio può coinvolgere più gruppi muscolari con diversi livelli di coinvolgimento. La tabella `ExerciseMuscleGroup` associa esercizio e gruppo muscolare con un coefficiente 0.0-1.0:
+
+**Esempio: Panca Piana**
+```sql
+INSERT INTO ExerciseMuscleGroup (exerciseId, muscleGroupId, coefficient) VALUES
+  ('panca-uuid', 'pettorali-uuid', 0.8),      -- Primario
+  ('panca-uuid', 'tricipiti-uuid', 0.5),      -- Sinergico
+  ('panca-uuid', 'deltoidi-ant-uuid', 0.3);   -- Stabilizzatore
 ```
 
+**Interpretazione coefficiente**:
+- `0.8-1.0`: Muscolo target primario
+- `0.5-0.7`: Muscolo sinergico (contributo significativo)
+- `0.1-0.4`: Muscolo stabilizzatore (contributo minore)
+
 ### Schema Motorio
-Gli esercizi sono categorizzati per schema motorio principale:
-- `squat`: accosciata (squat, goblet squat, front squat, ecc.)
-- `horizontal_push`: spinta orizzontale (panca, push-up, ecc.)
-- `hip_extension`: estensione anca (stacco, hip thrust, ecc.)
-- `horizontal_pull`: tirata orizzontale (rematore, inverted row, ecc.)
-- `vertical_pull`: tirata verticale (trazioni, lat machine, ecc.)
-- `other`: altri movimenti non categorizzabili
 
 ### Gestione Peso e Intensità
 Il campo `weightType` in `WorkoutExercise` determina come interpretare il campo `weight`:
@@ -205,6 +287,33 @@ Nel campo `setsPerformed` di `ExerciseFeedback`, l'utente registra per ogni seri
   {"reps": 7, "weight": 80.0},
   {"reps": 6, "weight": 80.0}
 ]
+```
+
+### Seed Data Iniziale
+Al primo deploy, sistema deve creare gruppi muscolari e schemi motori di base per permettere creazione esercizi:
+
+```sql
+-- Seed MuscleGroup
+INSERT INTO MuscleGroup (name, isActive, createdBy) VALUES
+  ('Pettorali', true, 'admin-uuid'),
+  ('Dorsali', true, 'admin-uuid'),
+  ('Deltoidi', true, 'admin-uuid'),
+  ('Bicipiti', true, 'admin-uuid'),
+  ('Tricipiti', true, 'admin-uuid'),
+  ('Quadricipiti', true, 'admin-uuid'),
+  ('Femorali', true, 'admin-uuid'),
+  ('Glutei', true, 'admin-uuid'),
+  ('Core', true, 'admin-uuid');
+
+-- Seed MovementPattern
+INSERT INTO MovementPattern (name, description, isActive, createdBy) VALUES
+  ('Squat', 'Accosciata', true, 'admin-uuid'),
+  ('Horizontal Push', 'Spinta orizzontale', true, 'admin-uuid'),
+  ('Hip Extension', 'Estensione anca', true, 'admin-uuid'),
+  ('Horizontal Pull', 'Tirata orizzontale', true, 'admin-uuid'),
+  ('Vertical Pull', 'Tirata verticale', true, 'admin-uuid'),
+  ('Lunge', 'Affondo', true, 'admin-uuid'),
+  ('Other', 'Altro', true, 'admin-uuid');
 ```
 
 ### Reportistica SBD

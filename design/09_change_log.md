@@ -4,6 +4,82 @@
 
 ---
 
+## 2026-03-27 (rev 18)
+- **Azione**: Trasformazione gruppi muscolari e schemi motori da enum hardcoded a entità DB gestibili dinamicamente.
+- **Requisito**: Admin e trainer devono poter aggiungere/modificare gruppi muscolari e schemi motori senza modificare codice, permettendo personalizzazione tassonomia esercizi.
+- **Modello precedente**: 
+  - `Exercise.muscleGroups` = JSON array con nomi hardcoded (es. `[{"name": "Pettorali", "coefficient": 0.8}]`)
+  - `Exercise.movementPattern` = Enum hardcoded (`squat`, `horizontal_push`, etc.)
+  - Modifica/espansione richiedeva deploy codice
+- **Modello nuovo**:
+  - **Tabella MuscleGroup**: Entità gestibile con `id`, `name`, `description`, `isActive`, `createdBy`
+  - **Tabella MovementPattern**: Entità gestibile con `id`, `name`, `description`, `isActive`, `createdBy`
+  - **Tabella ExerciseMuscleGroup**: Associazione many-to-many Exercise ↔ MuscleGroup con `coefficient` (0.0-1.0)
+  - **Exercise.movementPatternId**: Foreign key a `MovementPattern` (vs enum)
+- **Nuove entità DB**:
+  ```sql
+  MuscleGroup (id, name UNIQUE, description, isActive, createdBy, createdAt)
+  MovementPattern (id, name UNIQUE, description, isActive, createdBy, createdAt)
+  ExerciseMuscleGroup (id, exerciseId FK, muscleGroupId FK, coefficient Float)
+    UNIQUE(exerciseId, muscleGroupId)
+  ```
+- **Relazioni**:
+  - `MuscleGroup` ↔ N `Exercise` via `ExerciseMuscleGroup` (many-to-many con coefficient)
+  - `MovementPattern` → N `Exercise` (one-to-many)
+- **Permission CRUD**:
+  - **Admin**: CRUD completo su gruppi e schemi
+  - **Trainer**: CRUD completo (libreria condivisa, come per esercizi)
+  - **Trainee**: Solo lettura (per filtri/ricerca)
+- **Nuovi endpoint API**:
+  - `GET/POST /api/muscle-groups` — Lista/crea gruppi muscolari
+  - `PUT /api/muscle-groups/[id]` — Modifica gruppo
+  - `PATCH /api/muscle-groups/[id]/archive` — Archivia (isActive=false)
+  - `DELETE /api/muscle-groups/[id]` — Elimina (solo se non usato)
+  - `GET/POST /api/movement-patterns` — Lista/crea schemi motori
+  - `PUT /api/movement-patterns/[id]` — Modifica schema
+  - `PATCH /api/movement-patterns/[id]/archive` — Archivia
+  - `DELETE /api/movement-patterns/[id]` — Elimina (solo se non usato)
+- **Archiviazione soft**:
+  - Campo `isActive=false` disabilita gruppo/schema obsoleto senza eliminarlo
+  - Preserva integrità referenziale con esercizi esistenti
+  - UX: Filtri "Solo attivi" di default, opzione "Mostra archiviati" per admin/trainer
+- **Eliminazione fisica**:
+  - Bloccata con `409 Conflict` se esistono riferimenti:
+    - `MuscleGroup` usato in `ExerciseMuscleGroup` → eliminazione negata
+    - `MovementPattern` usato in `Exercise` → eliminazione negata
+  - Suggerimento UX: "Archivia invece di eliminare"
+- **Seed data iniziale** (migration):
+  - Gruppi muscolari base: Pettorali, Dorsali, Deltoidi, Bicipiti, Tricipiti, Quadricipiti, Femorali, Glutei, Core
+  - Schemi motori base: Squat, Horizontal Push, Hip Extension, Horizontal Pull, Vertical Pull, Lunge, Other
+  - `createdBy` = admin UUID, `isActive` = true
+- **Esempi use case**:
+  - Trainer specializzato powerlifting aggiunge schema "Sumo Deadlift Variation"
+  - Trainer bodybuilding aggiunge gruppo "Obliqui" separato da "Core"
+  - Admin archivia schema "Carry" poco usato (isActive=false)
+- **Coefficiente incidenza** (ExerciseMuscleGroup):
+  - `0.8-1.0`: Muscolo target primario
+  - `0.5-0.7`: Muscolo sinergico
+  - `0.1-0.4`: Muscolo stabilizzatore
+  - Esempio Panca Piana: Pettorali 0.8, Tricipiti 0.5, Deltoidi anteriori 0.3
+- **Query aggiornate**:
+  - Filtro esercizi per gruppo muscolare: JOIN `ExerciseMuscleGroup` WHERE `muscleGroupId=X`
+  - Filtro esercizi per schema motorio: WHERE `movementPatternId=X`
+  - Serie allenanti per gruppo: JOIN via `ExerciseMuscleGroup`, sum serie pesate per coefficient
+- **Benefici**:
+  - ✅ **Flessibilità**: Espansione tassonomia senza deploy codice
+  - ✅ **Personalizzazione**: Trainer adattano categorizzazioni a metodologie proprie
+  - ✅ **Collaborazione**: Nuovi gruppi/schemi disponibili a tutti i trainer
+  - ✅ **Integrità**: Archiviazione soft preserva storico senza rompere riferimenti
+  - ✅ **Audit trail**: `createdBy` traccia autore gruppo/schema
+- **Testing**: Aggiunti test P2 per CRUD gruppi/schemi, P2 per archiviazione, P2 per blocco eliminazione con riferimenti, P3 per filtri esercizi per gruppo/schema
+- **Documentazione aggiornata**:
+  - 04_data_model.md: Nuove entità MuscleGroup, MovementPattern, ExerciseMuscleGroup con schema e relazioni; sezione "Gruppi Muscolari Gestibili" e "Schemi Motori Gestibili" con esempi seed
+  - 05_security_auth.md: Matrice permessi con nuove righe "Gruppi muscolari" e "Schemi motori" CRUD per admin/trainer; sezione "Dettaglio gruppi muscolari e schemi motori condivisi"
+  - 03_backend_api.md: Nuovi gruppi endpoint `/api/muscle-groups` e `/api/movement-patterns` con authorization notes
+- **Implicazioni**: Architettura data-driven per tassonomia esercizi. Elimina necessità modifiche codice per aggiungere categorizzazioni. Trainer autonomi nella gestione metadata esercizi. Sistema scalabile per metodologie training diverse (powerlifting, bodybuilding, crossfit, etc.).
+
+---
+
 ## 2026-03-27 (rev 17)
 - **Azione**: Strategia session management per allenamenti lunghi (60-90+ min) senza re-login.
 - **Requisito**: Trainee usa app in palestra con frequente app switching (Instagram, musica, timer) durante recuperi tra serie. Sistema deve mantenere sessione attiva senza interruzioni.
