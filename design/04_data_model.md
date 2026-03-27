@@ -28,8 +28,8 @@ npx prisma migrate deploy
 
 | Entità             | Descrizione                                                                     |
 | ------------------ | ------------------------------------------------------------------------------- |
-| `User`             | Utente del sistema con ruolo (admin / coach / trainee)                          |
-| `CoachTrainee`     | Associazione esplicita coach → trainee                                          |
+| `User`             | Utente del sistema con ruolo (admin / trainer / trainee)                          |
+| `TrainerTrainee`     | Associazione esplicita trainer → trainee                                          |
 | `Exercise`         | Esercizio nella libreria condivisa (con gruppo muscolare, tipo, schema motorio) |
 | `TrainingProgram`  | Scheda di allenamento multi-settimana assegnata a un trainee                    |
 | `Week`             | Singola settimana all'interno di una scheda                                     |
@@ -46,14 +46,14 @@ User
   email         String  UNIQUE
   firstName     String
   lastName      String
-  role          Enum(admin, coach, trainee)
+  role          Enum(admin, trainer, trainee)
   isActive      Boolean         -- profilo attivo o disattivato
-  initialPassword String?       -- prima password generata dal coach (opzionale)
+  initialPassword String?       -- prima password generata dal trainer (opzionale)
   createdAt     DateTime
 
-CoachTrainee
+TrainerTrainee
   id            UUID  PK
-  coachId       FK → User
+  trainerId       FK → User
   traineeId     FK → User
 
 Exercise
@@ -65,13 +65,13 @@ Exercise
   type                Enum(fundamental, accessory)  -- Fondamentale (SBD) o Accessorio
   movementPattern     Enum(squat, horizontal_push, hip_extension, horizontal_pull, vertical_pull, other)  -- Schema motorio
   notes               String[]        -- Lista di note/varianti
-  createdBy           FK → User       -- coach che ha creato l'esercizio
+  createdBy           FK → User       -- trainer che ha creato l'esercizio
   createdAt           DateTime
 
 TrainingProgram
   id                 UUID  PK
   title              String
-  coachId            FK → User
+  trainerId            FK → User
   traineeId          FK → User
   startDate          Date
   durationWeeks      Int
@@ -128,9 +128,9 @@ PersonalRecord
 ```
 
 ## Relazioni
-- `User(coach)` → N `TrainingProgram` (come coach)
+- `User(trainer)` → N `TrainingProgram` (come trainer)
 - `User(trainee)` → N `TrainingProgram` (come destinatario)
-- `User(coach)` ↔ N `User(trainee)` via `CoachTrainee`
+- `User(trainer)` ↔ N `User(trainee)` via `TrainerTrainee`
 - `TrainingProgram` → N `Week` → N `Workout` → N `WorkoutExercise` → N `ExerciseFeedback`
 - `Exercise` → N `WorkoutExercise`
 - `User(trainee)` → N `ExerciseFeedback`
@@ -139,7 +139,7 @@ PersonalRecord
 
 ## Query critiche
 - **Scheda corrente trainee**: `TrainingProgram` con `status=active` e `traineeId=<id>`, espanso fino a `WorkoutExercise`.
-- **Avanzamento scheda (coach)**: `ExerciseFeedback` aggregati per `TrainingProgram` — % esercizi completati per settimana.
+- **Avanzamento scheda (trainer)**: `ExerciseFeedback` aggregati per `TrainingProgram` — % esercizi completati per settimana.
 - **Libreria esercizi**: tutti gli `Exercise`, filtrabili per nome (ricerca testuale), gruppo muscolare, tipo (fondamentale/accessorio), schema motorio.
 - **Storico trainee**: `TrainingProgram` con `traineeId=<id>`, ordinate per `startDate` DESC.
 - **Massimali trainee**: `PersonalRecord` con `traineeId=<id>`, raggrupati per `exerciseId`, ordinati per `recordDate` DESC.
@@ -206,8 +206,8 @@ Nel campo `setsPerformed` di `ExerciseFeedback`, l'utente registra per ogni seri
 ### Reportistica SBD
 La reportistica FRQ/NBL/IM è calcolata solo per esercizi con `type=fundamental` (Squat, Bench Press, Deadlift) su un periodo di X settimane specificato dall'utente.
 
-### Creazione Profilo da Coach
-Quando un coach crea un nuovo profilo trainee:
+### Creazione Profilo da trainer
+Quando un trainer crea un nuovo profilo trainee:
 1. Il sistema genera una password temporanea
 2. La password viene salvata in `initialPassword` (opzionalmente)
 3. L'utente deve cambiarla al primo login

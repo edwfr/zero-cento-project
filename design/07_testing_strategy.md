@@ -11,28 +11,28 @@
 | -------- | ------------------------------------------------------------------------------ | ------- |
 | P0       | Login + redirect alla dashboard corretta in base al ruolo                      | tutti   |
 | P0       | Accesso negato a route non autorizzate per ruolo                               | tutti   |
-| P1       | Coach: crea esercizio con URL YouTube valido, gruppi muscolari, schema motorio | coach   |
-| P1       | Coach: crea scheda multi-settimana e la assegna a trainee                      | coach   |
-| P1       | Coach: crea profilo trainee e genera password iniziale                         | coach   |
+| P1       | trainer: crea esercizio con URL YouTube valido, gruppi muscolari, schema motorio | trainer   |
+| P1       | trainer: crea scheda multi-settimana e la assegna a trainee                      | trainer   |
+| P1       | trainer: crea profilo trainee e genera password iniziale                         | trainer   |
 | P1       | Trainee: visualizza scheda corrente                                            | trainee |
 | P1       | Trainee: invia feedback su un esercizio con serie multiple (reps + kg)         | trainee |
 | P1       | Trainee: aggiunge/modifica massimale (1RM o nRM)                               | trainee |
-| P2       | Coach: visualizza avanzamento e feedback trainee                               | coach   |
-| P2       | Coach: visualizza massimali di un trainee                                      | coach   |
+| P2       | trainer: visualizza avanzamento e feedback trainee                               | trainer   |
+| P2       | trainer: visualizza massimali di un trainee                                      | trainer   |
 | P2       | Trainee: visualizza reportistica SBD (FRQ, NBL, IM)                            | trainee |
-| P2       | Coach: visualizza reportistica serie allenanti per gruppo muscolare            | coach   |
+| P2       | trainer: visualizza reportistica serie allenanti per gruppo muscolare            | trainer   |
 | P2       | Admin: crea / modifica / elimina utente                                        | admin   |
-| P2       | Admin: crea nuovo coach (validazione role=coach richiede admin)                | admin   |
-| P2       | Coach: disabilita proprio trainee (isActive=false)                             | coach   |
-| P2       | Coach: tenta disabilitare trainee di altro coach (deve fallire con 403)        | coach   |
+| P2       | Admin: crea nuovo trainer (validazione role=trainer richiede admin)                | admin   |
+| P2       | trainer: disabilita proprio trainee (isActive=false)                             | trainer   |
+| P2       | trainer: tenta disabilitare trainee di altro trainer (deve fallire con 403)        | trainer   |
 | P2       | Admin: disabilita qualsiasi trainee                                            | admin   |
 | P2       | Trainee disabilitato: tenta login (deve fallire con messaggio appropriato)     | trainee |
-| P2       | Coach: tenta creare coach (deve fallire con 403 Forbidden)                     | coach   |
+| P2       | trainer: tenta creare trainer (deve fallire con 403 Forbidden)                     | trainer   |
 | P2       | Trainee: tenta accedere a /api/users (deve fallire con 403 Forbidden)          | trainee |
 | P2       | Trainee: marca settimana per feedback e aggiunge feedback generale             | trainee |
 | P3       | Validazione RPE (5.0-10.0 con incrementi 0.5)                                  | trainee |
 | P3       | Validazione peso in % 1RM con calcolo automatico kg                            | trainee |
-| P3       | Validazione reps come intervallo (es. "6/8")                                   | coach   |
+| P3       | Validazione reps come intervallo (es. "6/8")                                   | trainer   |
 
 ## Automazione
 - ❓ **OD-41** — i test E2E girano in CI (GitHub Actions) o solo in locale pre-push?
@@ -43,7 +43,7 @@
 
 Data l'ottimizzazione UX differenziata per ruolo, i test E2E devono validare l'esperienza su device target specifici:
 
-### Admin / Coach → Desktop Testing
+### Admin / trainer → Desktop Testing
 **Device target**: Desktop 1280px - 1920px
 
 **Viewport Playwright**:
@@ -51,7 +51,7 @@ Data l'ottimizzazione UX differenziata per ruolo, i test E2E devono validare l'e
 // playwright.config.ts
 projects: [
   {
-    name: 'desktop-coach',
+    name: 'desktop-trainer',
     use: { 
       ...devices['Desktop Chrome'],
       viewport: { width: 1440, height: 900 }
@@ -75,7 +75,7 @@ projects: [
 - ✅ Form multi-step con preview side-by-side
 - ✅ Hover states su elementi interattivi (mouse-driven UX)
 
-**Non testare**: Mobile portrait per Admin/Coach (fuori scope ottimizzazione)
+**Non testare**: Mobile portrait per Admin/trainer (fuori scope ottimizzazione)
 
 ---
 
@@ -123,7 +123,7 @@ projects: [
 | Ruolo       | Desktop 1440px | Tablet 768px | Mobile 390px |
 | ----------- | -------------- | ------------ | ------------ |
 | **Admin**   | ✅ Full suite   | ⚠️ Smoke      | ❌ Skip       |
-| **Coach**   | ✅ Full suite   | ⚠️ Smoke      | ❌ Skip       |
+| **trainer**   | ✅ Full suite   | ⚠️ Smoke      | ❌ Skip       |
 | **Trainee** | ⚠️ Smoke        | ⚠️ Smoke      | ✅ Full suite |
 
 **Legenda**:

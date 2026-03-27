@@ -6,9 +6,9 @@
 
 ## 00 — Problem Statement
 
-- [x] **OD-01** Chi è l'utente primario? → Coach (crea schede) e Trainee (esegue e dà feedback).
+- [x] **OD-01** Chi è l'utente primario? → trainer (crea schede) e Trainee (esegue e dà feedback).
 - [x] **OD-02** Esistono utenti secondari? → Admin (gestione anagrafiche).
-- [x] **OD-03** Valore concreto? → Centralizzare gestione schede multi-settimana e raccolta feedback coach↔trainee.
+- [x] **OD-03** Valore concreto? → Centralizzare gestione schede multi-settimana e raccolta feedback trainer↔trainee.
 - [x] **OD-04** Scope OUT (funzionalità escluse dall'MVP)? → Pagamenti, app nativa (solo web responsive mobile-friendly), chat trainer-trainee, nutrizione.
 - [x] **OD-05** Vincoli tecnologici → Next.js (App Router) + Vercel.
 - [x] **OD-06** Vincoli temporali / milestone principali? → Nessuno al momento.
@@ -28,7 +28,7 @@
 
 ## 02 — Frontend Design
 
-- [x] **OD-13** Pagine principali → definite per ruolo (admin/coach/trainee) in 02_frontend_design.md.
+- [x] **OD-13** Pagine principali → definite per ruolo (admin/trainer/trainee) in 02_frontend_design.md.
 - [x] **OD-14** Libreria UI → **Tailwind CSS** (coverage AI ottima) + **Material UI (MUI)** (vastissima documentazione nei training data, componenti accessibili pronti). Alternativa: shadcn/ui se si preferisce modernità.
 - [x] **OD-15** State management → **TanStack Query** per server state (ottima coverage AI, pattern consolidati) + **Context API** per state globale semplice (React nativo, nessuna dipendenza).
 - [x] **OD-16** Gestione form → **React Hook Form** + **Zod** (standard de facto, altissima presenza training data AI, pattern validation consolidati).
@@ -48,7 +48,7 @@
 
 ## 04 — Data Model
 
-- [x] **OD-23** Entità principali → User, CoachTrainee, Exercise, TrainingProgram, Week, Workout, WorkoutExercise, ExerciseFeedback, PersonalRecord.
+- [x] **OD-23** Entità principali → User, TrainerTrainee, Exercise, TrainingProgram, Week, Workout, WorkoutExercise, ExerciseFeedback, PersonalRecord.
 - [x] **OD-24** DB engine → **Supabase PostgreSQL**. Connection pooling PgBouncer incluso, dashboard admin ricca, free tier 500MB, coverage AI eccellente.
 - [x] **OD-25** ORM → **Prisma**. Type-safety automatica, schema dichiarativo, Prisma Studio, migrations robuste, coverage AI eccellentissima.
 - [x] **OD-26** Strategia migrazioni → **Prisma Migrate** con migration files. Trackable (Git), rollback-capable, environment-safe (DIRECT_URL per migrations).
@@ -60,7 +60,7 @@
 
 - [x] **OD-28** Metodo autenticazione → **Email+password** per MVP (Supabase Auth). OAuth (Google/GitHub) e Magic Link opzionali post-MVP.
 - [x] **OD-29** Provider auth → **Supabase Auth**. Integrazione nativa Supabase, JWT session, coverage AI ottima, zero setup auth infra. Collegamento auth.users ↔ public.User.
-- [x] **OD-30** Ruoli → `admin` · `coach` · `trainee`. Matrice permessi in 05_security_auth.md.
+- [x] **OD-30** Ruoli → `admin` · `trainer` · `trainee`. Matrice permessi in 05_security_auth.md.
 - [x] **OD-31** Gestione segreti → **Vercel Environment Variables** confermate (DATABASE_URL, SUPABASE_SERVICE_ROLE_KEY, etc). No vault necessario per MVP.
 - [x] **OD-32** Compliance GDPR → Dettagliato in 05_security_auth.md. Requisiti MVP: Cookie consent banner, Privacy Policy + Terms, Delete Account feature, Supabase region EU, data retention policy. Checklist implementativa completa.
 

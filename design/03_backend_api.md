@@ -15,31 +15,31 @@
 | ------ | ------------------------- | --------------------------------------- | ----- |
 | `POST` | `/api/auth/[...nextauth]` | Handler NextAuth (login/logout/session) | tutti |
 
-### Utenti (Admin + Coach)
+### Utenti (Admin + trainer)
 | Method   | Path                         | Descrizione                                                      | Ruoli autorizzati |
 | -------- | ---------------------------- | ---------------------------------------------------------------- | ----------------- |
-| `GET`    | `/api/users`                 | Lista utenti (admin: tutti, coach: solo propri trainee)          | admin, coach      |
-| `POST`   | `/api/users`                 | Crea utente (admin: coach/trainee, coach: solo trainee)          | admin, coach      |
-| `GET`    | `/api/users/[id]`            | Dettaglio utente (admin: tutti, coach: solo propri trainee)      | admin, coach      |
-| `PUT`    | `/api/users/[id]`            | Modifica utente (admin: tutti campi, coach: solo propri trainee) | admin, coach      |
-| `DELETE` | `/api/users/[id]`            | Elimina utente (admin: tutti, coach: solo propri trainee)        | admin, coach      |
-| `PATCH`  | `/api/users/[id]/deactivate` | Disabilita trainee (admin: tutti, coach: solo propri)            | admin, coach      |
-| `PATCH`  | `/api/users/[id]/activate`   | Riabilita trainee (admin: tutti, coach: solo propri)             | admin, coach      |
+| `GET`    | `/api/users`                 | Lista utenti (admin: tutti, trainer: solo propri trainee)          | admin, trainer      |
+| `POST`   | `/api/users`                 | Crea utente (admin: trainer/trainee, trainer: solo trainee)          | admin, trainer      |
+| `GET`    | `/api/users/[id]`            | Dettaglio utente (admin: tutti, trainer: solo propri trainee)      | admin, trainer      |
+| `PUT`    | `/api/users/[id]`            | Modifica utente (admin: tutti campi, trainer: solo propri trainee) | admin, trainer      |
+| `DELETE` | `/api/users/[id]`            | Elimina utente (admin: tutti, trainer: solo propri trainee)        | admin, trainer      |
+| `PATCH`  | `/api/users/[id]/deactivate` | Disabilita trainee (admin: tutti, trainer: solo propri)            | admin, trainer      |
+| `PATCH`  | `/api/users/[id]/activate`   | Riabilita trainee (admin: tutti, trainer: solo propri)             | admin, trainer      |
 
 **Note autorizzazione creazione**:
-- `POST /api/users` con `role=coach`: **solo admin**
-- `POST /api/users` con `role=trainee`: **admin o coach** (coach crea i propri atleti)
+- `POST /api/users` con `role=trainer`: **solo admin**
+- `POST /api/users` con `role=trainee`: **admin o trainer** (trainer crea i propri atleti)
 - `POST /api/users` con `role=admin`: **bloccato** (admin creabile solo via seed/migration iniziale)
-- Coach che crea trainee: il sistema crea automaticamente record in `CoachTrainee` per l'associazione
+- trainer che crea trainee: il sistema crea automaticamente record in `TrainerTrainee` per l'associazione
 
 **Note autorizzazione disabilitazione**:
 - `PATCH /api/users/[id]/deactivate` e `/activate`: 
   - Admin: può disabilitare qualsiasi trainee
-  - Coach: può disabilitare **solo trainee a lui assegnati** (verifica esistenza record `CoachTrainee`)
-  - Se coach tenta disabilitare trainee di altro coach: **403 Forbidden**
+  - trainer: può disabilitare **solo trainee a lui assegnati** (verifica esistenza record `TrainerTrainee`)
+  - Se trainer tenta disabilitare trainee di altro trainer: **403 Forbidden**
   - Trainee disabilitato (`isActive=false`): login bloccato con messaggio "Account disabilitato"
 
-### Esercizi (Coach)
+### Esercizi (trainer)
 | Method   | Path                  | Descrizione                                            |
 | -------- | --------------------- | ------------------------------------------------------ |
 | `GET`    | `/api/exercises`      | Lista libreria esercizi (filtri: tipo, schema motorio) |
@@ -48,7 +48,7 @@
 | `PUT`    | `/api/exercises/[id]` | Modifica esercizio                                     |
 | `DELETE` | `/api/exercises/[id]` | Elimina esercizio                                      |
 
-### Schede / Programmi (Coach)
+### Schede / Programmi (trainer)
 | Method   | Path                          | Descrizione                           |
 | -------- | ----------------------------- | ------------------------------------- |
 | `GET`    | `/api/programs`               | Lista schede (filtrabili per trainee) |
@@ -66,7 +66,7 @@
 | `POST` | `/api/feedback`                 | Invia feedback su un WorkoutExercise   |
 | `PUT`  | `/api/feedback/[id]`            | Modifica feedback esistente            |
 
-### Massimali / Personal Records (Trainee + Coach)
+### Massimali / Personal Records (Trainee + trainer)
 | Method   | Path                                | Descrizione                               |
 | -------- | ----------------------------------- | ----------------------------------------- |
 | `GET`    | `/api/trainee/records`              | Lista massimali del trainee autenticato   |
@@ -74,9 +74,9 @@
 | `POST`   | `/api/trainee/records`              | Aggiungi nuovo massimale                  |
 | `PUT`    | `/api/trainee/records/[id]`         | Modifica massimale esistente              |
 | `DELETE` | `/api/trainee/records/[id]`         | Elimina massimale                         |
-| `GET`    | `/api/coach/trainees/[id]/records`  | Coach visualizza massimali del trainee    |
+| `GET`    | `/api/trainer/trainees/[id]/records`  | trainer visualizza massimali del trainee    |
 
-### Reportistica (Coach + Trainee)
+### Reportistica (trainer + Trainee)
 | Method | Path                                       | Descrizione                                       |
 | ------ | ------------------------------------------ | ------------------------------------------------- |
 | `GET`  | `/api/programs/[id]/reports/sbd`           | Report SBD (FRQ, NBL, IM) per periodo specificato |
@@ -154,13 +154,13 @@ export async function POST(request: Request) {
   - weightType determina interpretazione campo weight
   - reps può essere stringa ("8", "6/8", "8-10")
   - setsPerformed array con reps e weight per ogni serie
-  - ruoli validi (`admin`\|`coach`\|`trainee`) all'assegnazione utente
+  - ruoli validi (`admin`\|`trainer`\|`trainee`) all'assegnazione utente
   - relazioni referenziali (traineeId esiste, programId valido, exerciseId valido)
 
 ## Autorizzazione API
 - Ogni route verifica la sessione utente e il ruolo prima di eseguire.
 - Un trainee non può accedere a route `/api/users` o `/api/programs` in scrittura.
-- Un coach può leggere/modificare solo i trainee e le schede di propria competenza.
+- Un trainer può leggere/modificare solo i trainee e le schede di propria competenza.
 
 ## Error handling
 

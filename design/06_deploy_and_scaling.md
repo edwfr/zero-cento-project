@@ -16,7 +16,7 @@
 - **Strategia deploy**: Vercel usa deploy immutabili con rollback istantaneo — ❓ **OD-35** risolto de facto da Vercel.
 
 ## Scalabilità
-- **Scala corrente**: 54 utenti (1 admin + 3 coach + 50 trainee). Nessun requisito di scaling aggressivo.
+- **Scala corrente**: 54 utenti (1 admin + 3 trainer + 50 trainee). Nessun requisito di scaling aggressivo.
 - **Bottleneck previsti**: ❓ **OD-36** — connessioni DB da serverless (ogni function apre connessioni proprie); mitigazione: connection pooler (Prisma Accelerate, PgBouncer, Supabase Pooler).
 - **Strategie**:
   - Serverless Vercel scala automaticamente a zero in assenza di traffico (costo zero a riposo).

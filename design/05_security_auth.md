@@ -28,12 +28,12 @@ const { data, error } = await supabase.auth.signInWithPassword({
 - Collegamento: `User.id` (UUID) = `auth.users.id` (trigger Supabase per sync)
 
 ## Autorizzazione
-- **Ruoli**: `admin` · `coach` · `trainee`.
+- **Ruoli**: `admin` · `trainer` · `trainee`.
 - **Matrice permessi**:
 
-| Risorsa                    | admin              | coach                    | trainee             |
+| Risorsa                    | admin              | trainer                    | trainee             |
 | -------------------------- | ------------------ | ------------------------ | ------------------- |
-| Creazione utenti           | ✅ coach + trainee  | ✅ solo trainee           | ❌                   |
+| Creazione utenti           | ✅ trainer + trainee  | ✅ solo trainee           | ❌                   |
 | Gestione utenti (RUD)      | ✅ tutti gli utenti | ✅ solo propri trainee    | ❌                   |
 | Libreria esercizi          | lettura            | CRUD (propri)            | lettura             |
 | Schede                     | lettura            | CRUD (proprie)           | lettura (assegnate) |
@@ -43,42 +43,42 @@ const { data, error } = await supabase.auth.signInWithPassword({
 | Monitoraggio avanzamento   | ✅                  | ✅ (propri trainee)       | ❌                   |
 
 **Dettaglio creazione utenti**:
-- **Admin**: può creare sia utenti con ruolo `coach` sia utenti con ruolo `trainee`
-- **Coach**: può creare **solo** utenti con ruolo `trainee` (i propri atleti)
+- **Admin**: può creare sia utenti con ruolo `trainer` sia utenti con ruolo `trainee`
+- **trainer**: può creare **solo** utenti con ruolo `trainee` (i propri atleti)
 - **Trainee**: **non può** creare alcun utente
 
 **Dettaglio gestione utenti (Read/Update/Delete)**:
 - **Admin**: full CRUD su tutti gli utenti del sistema
-- **Coach**: può modificare/eliminare **solo i trainee a lui assegnati** (via tabella `CoachTrainee`)
+- **trainer**: può modificare/eliminare **solo i trainee a lui assegnati** (via tabella `TrainerTrainee`)
 - **Trainee**: nessun accesso alle funzioni di gestione utenti
 
 **Dettaglio disabilitazione trainee (campo `User.isActive`)**:
 - **Admin**: può disabilitare/riabilitare **qualsiasi trainee** del sistema
-- **Coach**: può disabilitare/riabilitare **solo i propri trainee** (quelli a lui assegnati via `CoachTrainee`)
-  - Coach **non può** visualizzare né disabilitare trainee di altri coach
-  - Validazione backend: `PUT /api/users/[id]` con `isActive=false` verifica che esista record `CoachTrainee` con `coachId=current_user` e `traineeId=target_user`
+- **trainer**: può disabilitare/riabilitare **solo i propri trainee** (quelli a lui assegnati via `TrainerTrainee`)
+  - trainer **non può** visualizzare né disabilitare trainee di altri trainer
+  - Validazione backend: `PUT /api/users/[id]` con `isActive=false` verifica che esista record `TrainerTrainee` con `trainerId=current_user` e `traineeId=target_user`
 - **Trainee**: nessun accesso a funzioni di disabilitazione utenti
-- **Effetto disabilitazione**: trainee con `isActive=false` non può effettuare login (redirect con messaggio "Account disabilitato, contatta il tuo coach")
+- **Effetto disabilitazione**: trainee con `isActive=false` non può effettuare login (redirect con messaggio "Account disabilitato, contatta il tuo trainer")
 
-- **Isolamento dati**: un coach vede e modifica solo trainee e schede a lui assegnati; un trainee vede solo le proprie schede.
+- **Isolamento dati**: un trainer vede e modifica solo trainee e schede a lui assegnati; un trainee vede solo le proprie schede.
 
 ## Protezione API
 - Ogni API Route / Server Action verifica la sessione attiva e il ruolo prima di qualsiasi operazione.
-- Middleware Next.js (`middleware.ts`) per proteggere tutte le route `/admin/*`, `/coach/*`, `/trainee/*` con redirect a `/login` se non autenticato.
+- Middleware Next.js (`middleware.ts`) per proteggere tutte le route `/admin/*`, `/trainer/*`, `/trainee/*` con redirect a `/login` se non autenticato.
 - Validazione input lato server su tutti gli endpoint (❓ **OD-19** — Zod).
 - ❓ **OD-21** — rate limiting: valutare Vercel Edge Middleware o provider auth.
 
-### Gestione Password Iniziali (Coach crea Trainee)
-Quando un coach crea un nuovo profilo trainee:
+### Gestione Password Iniziali (trainer crea Trainee)
+Quando un trainer crea un nuovo profilo trainee:
 1. Il sistema genera una password temporanea sicura (es. 12 caratteri, mix alfanumerico + simboli)
-2. Password visualizzata UNA SOLA VOLTA al coach (modal non dismissable finché non copiata)
+2. Password visualizzata UNA SOLA VOLTA al trainer (modal non dismissable finché non copiata)
 3. Password opzionalmente salvata in campo `User.initialPassword` (encrypted at rest dal DB)
 4. Trainee deve cambiare password al primo login (flag `mustChangePassword` su User)
 5. Dopo cambio password, `initialPassword` viene cancellato e `mustChangePassword` = false
 
 **Pattern sicuro**:
 ```typescript
-// app/api/coach/trainees/route.ts (POST)
+// app/api/trainer/trainees/route.ts (POST)
 import { generateSecurePassword } from '@/lib/password-utils'
 
 const tempPassword = generateSecurePassword()
@@ -105,7 +105,7 @@ await prisma.user.create({
 return apiSuccess({ user, tempPassword }) // ritorna solo questa volta
 ```
 
-**UX Coach**:
+**UX trainer**:
 - Modal con password + bottone "Copia Password"
 - Avviso: "Salva questa password, non sarà più visibile"
 - Checkbox "Ho salvato la password" per chiudere modal
@@ -130,12 +130,12 @@ return apiSuccess({ user, tempPassword }) // ritorna solo questa volta
 L'app raccoglie e processa dati personali soggetti a GDPR:
 - **Dati identificativi**: nome, cognome, email
 - **Dati performance**: RPE effettivo, note allenamenti, feedback esercizi
-- **Dati relazionali**: coach-trainee assignments
+- **Dati relazionali**: trainer-trainee assignments
 - **Dati tecnici**: IP address (logs Vercel), session cookies (Supabase Auth)
 
 ### Base legale (Art. 6 GDPR)
 - **Consenso esplicito** (Art. 6.1.a): utente accetta termini e privacy policy al signup
-- **Esecuzione contratto** (Art. 6.1.b): servizio coaching richiede processing dati performance
+- **Esecuzione contratto** (Art. 6.1.b): servizio training richiede processing dati performance
 
 ### Requisiti minimi MVP
 
@@ -173,7 +173,7 @@ Documento `/terms` con:
 | Dato                  | Retention                         | Rationale                        |
 | --------------------- | --------------------------------- | -------------------------------- |
 | Account utente attivo | Indefinito fino a cancellazione   | Necessario per servizio          |
-| Feedback allenamenti  | 2 anni da completamento programma | Storico coach + trainee          |
+| Feedback allenamenti  | 2 anni da completamento programma | Storico trainer + trainee          |
 | Account cancellato    | Anonimizzazione immediata         | GDPR Art. 17                     |
 | Logs sistema          | 30 giorni                         | Troubleshooting (Vercel default) |
 
@@ -184,7 +184,7 @@ Funzionalità obbligatoria:
 // Triggera:
 // 1. Hard delete da auth.users (Supabase)
 // 2. Anonimizzazione User record (sostituire nome/email con "Deleted User [UUID]")
-// 3. Mantenere feedback anonimizzati per statistiche coach (legittimo interesse)
+// 3. Mantenere feedback anonimizzati per statistiche trainer (legittimo interesse)
 // Oppure:
 // Cascade delete completo se non necessario storico
 ```

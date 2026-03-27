@@ -12,25 +12,25 @@
 | Route               | Descrizione                                                                                |
 | ------------------- | ------------------------------------------------------------------------------------------ |
 | `/admin/dashboard`  | Panoramica sistema                                                                         |
-| `/admin/users`      | Lista utenti (CRUD admin/coach/trainee) con toggle attivo/disabilitato per tutti i trainee |
-| `/admin/users/new`  | Creazione nuovo utente (coach o trainee)                                                   |
+| `/admin/users`      | Lista utenti (CRUD admin/trainer/trainee) con toggle attivo/disabilitato per tutti i trainee |
+| `/admin/users/new`  | Creazione nuovo utente (trainer o trainee)                                                   |
 | `/admin/users/[id]` | Dettaglio/modifica utente (include cambio ruolo e toggle attivazione)                      |
 
-### Coach
+### trainer
 | Route                           | Descrizione                                                         |
 | ------------------------------- | ------------------------------------------------------------------- |
-| `/coach/dashboard`              | Panoramica trainee assegnati e stato schede                         |
-| `/coach/exercises`              | Libreria esercizi condivisa (lista + crea)                          |
-| `/coach/exercises/[id]`         | Dettaglio esercizio (video YouTube + modifica)                      |
-| `/coach/exercises/new`          | Creazione nuovo esercizio con campi completi                        |
-| `/coach/trainees`               | Lista trainee gestiti (solo propri, con toggle attivo/disabilitato) |
-| `/coach/trainees/[id]`          | Profilo trainee + schede assegnate                                  |
-| `/coach/trainees/new`           | Creazione nuovo profilo trainee (genera password)                   |
-| `/coach/trainees/[id]/records`  | Visualizza/modifica massimali trainee                               |
-| `/coach/programs/new`           | Creazione nuova scheda multi-settimana                              |
-| `/coach/programs/[id]`          | Dettaglio / modifica scheda                                         |
-| `/coach/programs/[id]/progress` | Monitoraggio avanzamento + feedback trainee                         |
-| `/coach/programs/[id]/reports`  | Reportistica SBD e serie allenanti                                  |
+| `/trainer/dashboard`              | Panoramica trainee assegnati e stato schede                         |
+| `/trainer/exercises`              | Libreria esercizi condivisa (lista + crea)                          |
+| `/trainer/exercises/[id]`         | Dettaglio esercizio (video YouTube + modifica)                      |
+| `/trainer/exercises/new`          | Creazione nuovo esercizio con campi completi                        |
+| `/trainer/trainees`               | Lista trainee gestiti (solo propri, con toggle attivo/disabilitato) |
+| `/trainer/trainees/[id]`          | Profilo trainee + schede assegnate                                  |
+| `/trainer/trainees/new`           | Creazione nuovo profilo trainee (genera password)                   |
+| `/trainer/trainees/[id]/records`  | Visualizza/modifica massimali trainee                               |
+| `/trainer/programs/new`           | Creazione nuova scheda multi-settimana                              |
+| `/trainer/programs/[id]`          | Dettaglio / modifica scheda                                         |
+| `/trainer/programs/[id]/progress` | Monitoraggio avanzamento + feedback trainee                         |
+| `/trainer/programs/[id]/reports`  | Reportistica SBD e serie allenanti                                  |
 
 ### Trainee
 | Route                                        | Descrizione                                       |
@@ -47,12 +47,12 @@
 - `ExerciseCard` — mostra nome, thumbnail YouTube, parametri (serie/rip/RPE), gruppi muscolari, tipo (fondamentale/accessorio).
 - `MuscleGroupBadge` — badge per gruppo muscolare con coefficiente d'incidenza (es. "Pettorali 80%").
 - `MovementPatternIcon` — icona per schema motorio (accosciata, spinta, ecc.).
-- `UserStatusToggle` — toggle per attivare/disabilitare trainee (admin: tutti, coach: solo propri; mostra stato attivo/disabilitato).
-- `WorkoutProgramBuilder` — editor drag-and-drop settimane/giorni/esercizi (coach).
+- `UserStatusToggle` — toggle per attivare/disabilitare trainee (admin: tutti, trainer: solo propri; mostra stato attivo/disabilitato).
+- `WorkoutProgramBuilder` — editor drag-and-drop settimane/giorni/esercizi (trainer).
 - `WorkoutExerciseForm` — form per aggiungere esercizio con serie, reps (stringa o intervallo), RPE, peso, recupero, riscaldamento.
 - `FeedbackForm` — form per il trainee su un singolo esercizio (RPE effettivo, array di serie con reps/kg, note, completato).
 - `SetInput` — input ripetibile per ogni serie (reps + kg) nel feedback.
-- `ProgressTracker` — visualizzazione stato avanzamento scheda (coach view).
+- `ProgressTracker` — visualizzazione stato avanzamento scheda (trainer view).
 - `PersonalRecordCard` — card per visualizzare massimale (1RM o nRM) con data e note.
 - `PersonalRecordForm` — form per aggiungere/modificare massimale (esercizio, reps, peso, data).
 - `SBDReportChart` — grafico per reportistica SBD (FRQ, NBL, IM) con filtro periodo.
@@ -71,7 +71,7 @@
 
 ## UX states
 - **Loading**: skeleton loader su card e tabelle; spinner su azioni brevi.
-- **Empty**: illustrazione + CTA contestuale (es. "Nessuna scheda — crea la prima" per il coach).
+- **Empty**: illustrazione + CTA contestuale (es. "Nessuna scheda — crea la prima" per il trainer).
 - **Error**: banner non-invasivo con messaggio di errore leggibile + retry action.
 
 ## Design system
@@ -85,7 +85,7 @@
 
 **Strategia di design differenziata:**
 
-### Admin & Coach → Desktop-first
+### Admin & trainer → Desktop-first
 - **Target primario**: Desktop (1280px+)
 - **Rationale**: Workflow intensivi di creazione contenuti (schede multi-settimana, libreria esercizi, monitoraggio trainee)
 - **Layout**: Sidebar persistente, tabelle multi-colonna, drag-and-drop avanzato, dashboard dense con grafici
@@ -133,11 +133,11 @@ const useRoleLayout = () => {
 ```
 
 **Componenti role-aware**:
-- Admin/Coach: MUI `DataGrid` per tabelle dense, `Drawer` per sidebar
+- Admin/trainer: MUI `DataGrid` per tabelle dense, `Drawer` per sidebar
 - Trainee: MUI `BottomNavigation`, `SwipeableDrawer`, `Stepper` touch-friendly
 
 **Testing responsive per ruolo**:
-- Admin/Coach: test su 1280px, 1440px, 1920px (desktop standard)
+- Admin/trainer: test su 1280px, 1440px, 1920px (desktop standard)
 - Trainee: test su 360px (Android small), 390px (iPhone 12/13), 428px (iPhone 14 Pro Max)
 
 **Nota**: Entrambe le esperienze rimangono **responsive** (funzionali su tutti i device), ma l'ottimizzazione UX è polarizzata per il caso d'uso principale di ciascun ruolo.

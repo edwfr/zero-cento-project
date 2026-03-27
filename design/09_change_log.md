@@ -4,66 +4,87 @@
 
 ---
 
+## 2026-03-27 (rev 13)
+- **Azione**: Rinominazione globale del ruolo "Coach" in "Trainer".
+- **Rationale**: Standardizzazione terminologia per chiarezza semantica - "Trainer" è più comunemente utilizzato nel contesto fitness/sportivo per chi allena atleti.
+- **Modifiche pervasive**:
+  - Ruolo: `coach` → `trainer` (enum User.role, matrice permessi, API endpoints)
+  - Route frontend: `/coach/*` → `/trainer/*` (tutte le pagine trainer)
+  - Entità DB: `CoachTrainee` → `TrainerTrainee` (tabella associazione)
+  - Campi: `coachId` → `trainerId` in tutte le entità (Exercise.createdBy, TrainingProgram, TrainerTrainee)
+  - Endpoint API: `/api/coach/*` → `/api/trainer/*` (records trainee, etc.)
+  - Testo documentazione: "coach" → "trainer", "Coach" → "Trainer" in tutti i file
+- **File aggiornati**: Tutti i file di design (00-09) con sostituzione sistematica
+- **Impatto implementazione**:
+  - Schema Prisma: rinominare entità `CoachTrainee` → `TrainerTrainee`, campo `coachId` → `trainerId`
+  - Backend: aggiornare route `/api/coach/` → `/api/trainer/`, validazione enum `role=trainer`
+  - Frontend: rinominare directory `/coach/` → `/trainer/`, aggiornare navigation, labels UI
+  - Testing: aggiornare test case con nuova terminologia
+- **Nessun impatto funzionale**: Pura rinominazione, logica di business invariata
+- **Implicazioni**: Terminologia più chiara e allineata al dominio fitness. Migliore UX per utenti finali (terminologia standard del settore).
+
+---
+
 ## 2026-03-27 (rev 12)
 - **Azione**: Definizione permission granulari per disabilitazione trainee.
-- **Requisito**: Admin può disabilitare qualsiasi trainee; Coach può disabilitare solo i propri trainee (isolamento).
+- **Requisito**: Admin può disabilitare qualsiasi trainee; trainer può disabilitare solo i propri trainee (isolamento).
 - **Permission disabilitazione**:
   - **Admin**: può disabilitare/riabilitare **qualsiasi trainee** del sistema (campo `User.isActive`)
-  - **Coach**: può disabilitare/riabilitare **solo i propri trainee** (verifica via `CoachTrainee`)
-  - **Coach NON può**: visualizzare né disabilitare trainee assegnati ad altri coach
+  - **trainer**: può disabilitare/riabilitare **solo i propri trainee** (verifica via `TrainerTrainee`)
+  - **trainer NON può**: visualizzare né disabilitare trainee assegnati ad altri trainer
   - **Trainee**: nessun accesso a funzioni di gestione utenti
 - **Validazione backend**:
   - Endpoint: `PATCH /api/users/[id]/deactivate` e `/activate`
-  - Coach request: verifica esistenza `CoachTrainee.coachId = current_user AND CoachTrainee.traineeId = target_user`
-  - Se coach tenta disabilitare trainee di altro coach: **403 Forbidden**
+  - trainer request: verifica esistenza `TrainerTrainee.trainerId = current_user AND TrainerTrainee.traineeId = target_user`
+  - Se trainer tenta disabilitare trainee di altro trainer: **403 Forbidden**
 - **Effetto disabilitazione**: 
   - Trainee con `isActive=false` non può effettuare login
-  - Redirect a login page con messaggio: "Account disabilitato, contatta il tuo coach"
+  - Redirect a login page con messaggio: "Account disabilitato, contatta il tuo trainer"
 - **Implicazioni UX**:
   - Admin UI: lista utenti mostra stato attivo/disabilitato per tutti i trainee, toggle disponibile
-  - Coach UI: lista trainee mostra solo propri trainee con stato, toggle abilitato solo per i propri
-  - Coach UI non mostra trainee di altri coach (isolamento dati)
-- **Testing**: Aggiunti test P2 per disabilitazione (coach proprio trainee, coach trainee altrui con 403, admin qualsiasi trainee, login trainee disabilitato)
-- **Implicazioni**: Isolamento dati garantito anche per azioni di disabilitazione. Coach mantiene autonomia operativa sui propri atleti senza interferire con altri coach. Admin ha visibilità e controllo globale.
+  - trainer UI: lista trainee mostra solo propri trainee con stato, toggle abilitato solo per i propri
+  - trainer UI non mostra trainee di altri trainer (isolamento dati)
+- **Testing**: Aggiunti test P2 per disabilitazione (trainer proprio trainee, trainer trainee altrui con 403, admin qualsiasi trainee, login trainee disabilitato)
+- **Implicazioni**: Isolamento dati garantito anche per azioni di disabilitazione. trainer mantiene autonomia operativa sui propri atleti senza interferire con altri trainer. Admin ha visibilità e controllo globale.
 
 ---
 
 ## 2026-03-27 (rev 11)
 - **Azione**: Definizione granulare permission per creazione utenti basata su ruolo.
 - **Matrice creazione utenti**:
-  - **Admin**: può creare utenti con ruolo `coach` E utenti con ruolo `trainee`
-  - **Coach**: può creare **solo** utenti con ruolo `trainee` (i propri atleti)
+  - **Admin**: può creare utenti con ruolo `trainer` E utenti con ruolo `trainee`
+  - **trainer**: può creare **solo** utenti con ruolo `trainee` (i propri atleti)
   - **Trainee**: **non può** creare alcun utente
 - **Rationale**: 
-  - Admin ha controllo completo della piattaforma e può onboardare nuovi coach
-  - Coach ha autonomia operativa per aggiungere i propri atleti senza coinvolgere admin
+  - Admin ha controllo completo della piattaforma e può onboardare nuovi trainer
+  - trainer ha autonomia operativa per aggiungere i propri atleti senza coinvolgere admin
   - Trainee non ha bisogno di creare utenti (ruolo consumer)
 - **Dettaglio gestione (RUD)**:
   - **Admin**: full CRUD su tutti gli utenti del sistema
-  - **Coach**: può modificare/eliminare solo i trainee a lui assegnati (via `CoachTrainee`)
+  - **trainer**: può modificare/eliminare solo i trainee a lui assegnati (via `TrainerTrainee`)
   - **Trainee**: nessun accesso a funzioni di gestione utenti
 - **Implicazioni tecniche**:
   - Endpoint `POST /api/users` richiede check su `role` nel body:
-    - Se `role=coach`: verificare che richiedente sia `admin`
-    - Se `role=trainee`: verificare che richiedente sia `admin` O `coach`
+    - Se `role=trainer`: verificare che richiedente sia `admin`
+    - Se `role=trainee`: verificare che richiedente sia `admin` O `trainer`
     - Se `role=admin`: **bloccato** (admin creabile solo via seed/migration)
-  - Coach che crea trainee: sistema crea automaticamente record `CoachTrainee` per associazione
-  - Frontend: pagina `/admin/users/new` mostra dropdown ruolo con `coach` e `trainee`, `/coach/trainees/new` crea solo trainee
+  - trainer che crea trainee: sistema crea automaticamente record `TrainerTrainee` per associazione
+  - Frontend: pagina `/admin/users/new` mostra dropdown ruolo con `trainer` e `trainee`, `/trainer/trainees/new` crea solo trainee
 - **Aggiornamenti file**:
   - 05_security_auth.md: matrice permessi espansa con dettaglio creazione + gestione utenti
-  - 03_backend_api.md: sezione "Utenti" rinominata in "Utenti (Admin + Coach)" con note autorizzazione
-  - 02_frontend_design.md: aggiunta pagina `/admin/users/new`, corretta pagina coach `/coach/trainees/new`
-- **Implicazioni**: Permission granulare garantisce separazione responsabilità e autonomia operativa coach. Validazione ruolo sul backend previene privilege escalation. UX riflette i permessi effettivi (coach non vede opzione per creare altri coach).
+  - 03_backend_api.md: sezione "Utenti" rinominata in "Utenti (Admin + trainer)" con note autorizzazione
+  - 02_frontend_design.md: aggiunta pagina `/admin/users/new`, corretta pagina trainer `/trainer/trainees/new`
+- **Implicazioni**: Permission granulare garantisce separazione responsabilità e autonomia operativa trainer. Validazione ruolo sul backend previene privilege escalation. UX riflette i permessi effettivi (trainer non vede opzione per creare altri trainer).
 
 ---
 
 ## 2026-03-27 (rev 10)
 - **Azione**: Definizione strategia UX differenziata per ruolo - ottimizzazione device-specific.
 - **Rationale**: Casi d'uso reali richiedono esperienze ottimizzate per device diversi:
-  - **Admin/Coach**: workflow di creazione contenuti complessi (editor schede multi-settimana, gestione libreria, analytics) → ottimale su desktop con schermi ampi, mouse/keyboard
+  - **Admin/trainer**: workflow di creazione contenuti complessi (editor schede multi-settimana, gestione libreria, analytics) → ottimale su desktop con schermi ampi, mouse/keyboard
   - **Trainee**: consultazione scheda e inserimento feedback durante allenamento in palestra → ottimale su mobile portrait, input touch rapido
 - **Strategia implementata**:
-  - **Admin/Coach → Desktop-first** (1280px+):
+  - **Admin/trainer → Desktop-first** (1280px+):
     - Layout: Sidebar persistente, tabelle multi-colonna, drag-and-drop avanzato, dashboard dense
     - Componenti: `WorkoutProgramBuilder` con editor complesso, tabelle estese, form multi-step con preview
     - Responsive: funzionale su tablet landscape, **non ottimizzato per mobile portrait**
@@ -74,8 +95,8 @@
     - Responsive: usabile su desktop ma esperienza primaria per telefono
 - **Implicazioni tecniche**:
   - Hook custom `useRoleLayout()` per classi CSS condizionali basate su ruolo
-  - Componenti role-aware: MUI `DataGrid`/`Drawer` per Admin/Coach, MUI `BottomNavigation`/`SwipeableDrawer` per Trainee
-  - Testing responsive differenziato: desktop 1280-1920px per Admin/Coach, mobile 360-428px per Trainee
+  - Componenti role-aware: MUI `DataGrid`/`Drawer` per Admin/trainer, MUI `BottomNavigation`/`SwipeableDrawer` per Trainee
+  - Testing responsive differenziato: desktop 1280-1920px per Admin/trainer, mobile 360-428px per Trainee
   - Vincolo UX documentato in 00_problem_statement.md
 - **Nota importante**: Entrambe le esperienze rimangono **responsive** e funzionali su tutti i device, ma l'ottimizzazione UX è polarizzata per il caso d'uso principale.
 - **Implicazioni**: Design polarizzato chiarisce priorità implementative. Nessun compromesso UX necessario: ogni ruolo ottiene l'esperienza migliore per il suo workflow reale. Testing strategy aggiornata con device target specifici.
@@ -90,11 +111,11 @@
   - **Week**: Aggiunti `feedbackRequested` (marcatura settimane rilevanti) e `generalFeedback` (commento testuale settimana)
   - **WorkoutExercise**: Arricchito con `targetRpe` (Float 5.0-10.0 incrementi 0.5), `weightType` (Enum: absolute/percentage_1rm/percentage_rm), `restTime` (Enum: 30s/1m/2m/3m/5m), `isWarmup` (Boolean), supporto `reps` come intervallo (es. "6/8")
   - **ExerciseFeedback**: Aggiunto `setsPerformed` (Json array con {reps, weight} per ogni serie), `actualRpe` (Float 5.0-10.0)
-  - **User**: Separato `name` in `firstName` e `lastName`, aggiunti `isActive` (profilo attivo/disattivato) e `initialPassword` (per gestione password generate da coach)
+  - **User**: Separato `name` in `firstName` e `lastName`, aggiunti `isActive` (profilo attivo/disattivato) e `initialPassword` (per gestione password generate da trainer)
   - **Nuova entità PersonalRecord**: Gestione massimali (1RM o nRM) per trainee/esercizio con storico date
 - **Backend API - Nuovi endpoint**:
   - `/api/trainee/records/*` - CRUD massimali personali
-  - `/api/coach/trainees/[id]/records` - Coach visualizza massimali trainee
+  - `/api/trainer/trainees/[id]/records` - trainer visualizza massimali trainee
   - `/api/programs/[id]/reports/sbd` - Reportistica SBD (FRQ, NBL, IM)
   - `/api/programs/[id]/reports/training-sets` - Serie allenanti per gruppo muscolare
   - `/api/programs/[id]/reports/volume` - Volume totale per gruppo muscolare
@@ -107,13 +128,13 @@
   - `feedbackSchema` con setsPerformed e actualRpe Float
   - `personalRecordSchema` per gestione massimali
 - **Frontend - Nuove pagine e componenti**:
-  - Pagine: `/coach/trainees/[id]/create` (crea trainee + genera password), `/trainee/records` (gestione massimali), `/coach|trainee/reports` (reportistica)
+  - Pagine: `/trainer/trainees/[id]/create` (crea trainee + genera password), `/trainee/records` (gestione massimali), `/trainer|trainee/reports` (reportistica)
   - Componenti: `MuscleGroupBadge`, `MovementPatternIcon`, `SetInput`, `PersonalRecordCard/Form`, `SBDReportChart`, `TrainingVolumeChart`, `RPESelector`, `RestTimeSelector`, `RepsInput`
 - **Security - Gestione password iniziali**:
-  - Flusso sicuro per coach che crea trainee: generazione password temporanea, visualizzazione una-tantum, encrypted storage opzionale, cambio obbligatorio al primo login
+  - Flusso sicuro per trainer che crea trainee: generazione password temporanea, visualizzazione una-tantum, encrypted storage opzionale, cambio obbligatorio al primo login
   - Pattern implementativo documentato in 05_security_auth.md
 - **Testing - Nuovi flussi critici**:
-  - P1: Coach crea profilo trainee con password, trainee aggiunge massimale
+  - P1: trainer crea profilo trainee con password, trainee aggiunge massimale
   - P1: Trainee invia feedback con array serie (reps + kg)
   - P2: Visualizzazione reportistica SBD e serie allenanti
   - P3: Validazione RPE Float, peso in %, reps come intervallo
@@ -236,8 +257,8 @@
 ## 2026-03-27 (rev 2)
 - **Azione**: Compilazione di tutti i file di design con le informazioni fornite dal product owner.
 - **Decisioni consolidate**: OD-01, OD-02, OD-03, OD-05, OD-08, OD-09, OD-10, OD-11, OD-13, OD-17, OD-23, OD-30, OD-35.
-- **Dominio definito**: piattaforma coaching web (Next.js + Vercel), 3 ruoli (admin/coach/trainee), scala iniziale 54 utenti.
-- **Entità di dominio definite**: User, CoachTrainee, Exercise, TrainingProgram, Week, Workout, WorkoutExercise, ExerciseFeedback.
+- **Dominio definito**: piattaforma training web (Next.js + Vercel), 3 ruoli (admin/trainer/trainee), scala iniziale 54 utenti.
+- **Entità di dominio definite**: User, TrainerTrainee, Exercise, TrainingProgram, Week, Workout, WorkoutExercise, ExerciseFeedback.
 - **Prossimi passi**: chiudere le decisioni aperte rimanenti (OD-14 UI lib, OD-24 DB engine, OD-25 ORM, OD-28/29 auth provider, OD-04 scope OUT).
 
 ---
