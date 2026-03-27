@@ -207,6 +207,121 @@ PersonalRecord
 - `User(trainee)` → N `PersonalRecord` (massimali per trainee)
 - `Exercise` → N `PersonalRecord` (massimali per esercizio)
 
+## Dashboard Trainer - KPI
+
+Quando il trainer accede al sistema, visualizza una dashboard con indicatori chiave sullo stato dei suoi trainee.
+
+### KPI Principali
+
+| KPI                                       | Descrizione                                                           | Priorità  |
+| ----------------------------------------- | --------------------------------------------------------------------- | --------- |
+| **Trainee Attivi**                        | Totale trainee con `isActive=true` e scheda `status=active` assegnata | Info      |
+| **Schede in Scadenza (< 2 settimane)**    | Trainee con scheda attiva che termina entro 14 giorni                 | ⚠️ Warning |
+| **Schede in Scadenza (questa settimana)** | Trainee con scheda attiva che termina entro 7 giorni                  | 🔴 Alta    |
+
+### Calcolo Data Fine Scheda
+
+La data di termine di una scheda si calcola come:
+```typescript
+endDate = startDate + (durationWeeks * 7) giorni
+```
+
+**Esempio**:
+- `startDate`: 2026-04-01
+- `durationWeeks`: 12
+- `endDate`: 2026-06-23 (2026-04-01 + 84 giorni)
+
+### Query Dashboard
+
+**1. Trainee Attivi Totali**
+```sql
+SELECT COUNT(DISTINCT tp.traineeId)
+FROM TrainingProgram tp
+JOIN User u ON tp.traineeId = u.id
+WHERE tp.trainerId = <trainerId>
+  AND tp.status = 'active'
+  AND u.isActive = true
+```
+
+**2. Schede in Scadenza (< 2 settimane)**
+```sql
+SELECT 
+  u.id,
+  u.firstName,
+  u.lastName,
+  tp.title,
+  tp.startDate,
+  tp.durationWeeks,
+  (tp.startDate + (tp.durationWeeks * 7)) AS endDate,
+  ((tp.startDate + (tp.durationWeeks * 7)) - CURRENT_DATE) AS daysRemaining
+FROM TrainingProgram tp
+JOIN User u ON tp.traineeId = u.id
+WHERE tp.trainerId = <trainerId>
+  AND tp.status = 'active'
+  AND u.isActive = true
+  AND (tp.startDate + (tp.durationWeeks * 7)) BETWEEN CURRENT_DATE AND (CURRENT_DATE + 14)
+ORDER BY endDate ASC
+```
+
+**3. Schede in Scadenza (questa settimana)**
+```sql
+SELECT 
+  u.id,
+  u.firstName,
+  u.lastName,
+  tp.title,
+  tp.startDate,
+  tp.durationWeeks,
+  (tp.startDate + (tp.durationWeeks * 7)) AS endDate,
+  ((tp.startDate + (tp.durationWeeks * 7)) - CURRENT_DATE) AS daysRemaining
+FROM TrainingProgram tp
+JOIN User u ON tp.traineeId = u.id
+WHERE tp.trainerId = <trainerId>
+  AND tp.status = 'active'
+  AND u.isActive = true
+  AND (tp.startDate + (tp.durationWeeks * 7)) BETWEEN CURRENT_DATE AND (CURRENT_DATE + 7)
+ORDER BY endDate ASC
+```
+
+### Interazione UI
+
+**Dashboard View**:
+```
+┌─────────────── Dashboard Trainer ────────────────┐
+│                                                   │
+│  📊 Trainee Attivi                        15      │
+│                                                   │
+│  ⚠️  Schede in scadenza (< 2 settimane)   5       │
+│      [Clicca per dettagli]                        │
+│                                                   │
+│  🔴 Schede in scadenza (questa settimana)  2      │
+│      [Clicca per dettagli]                        │
+│                                                   │
+└───────────────────────────────────────────────────┘
+```
+
+**Vista Dettaglio Scadenze** (cliccando su KPI warning/alta priorità):
+```
+┌─────────── Schede in Scadenza ───────────┐
+│ Trainee         Scheda              Termina    Giorni  │
+│ Mario Rossi     Forza 12W          2026-04-05  9 gg   │
+│ Laura Bianchi   Ipertrofia 8W      2026-04-08  12 gg  │
+│ Paolo Verdi     Powerlifting 16W   2026-04-10  14 gg  │
+└──────────────────────────────────────────────────────┘
+
+Filtri: [Questa settimana] [< 2 settimane] [Tutte]
+```
+
+### Note Implementative
+
+- **Refresh**: KPI ricalcolati ad ogni accesso dashboard (query leggere, no caching necessario)
+- **Filtro `isActive`**: Solo trainee con `User.isActive=true` sono inclusi nei conteggi
+- **Azioni rapide**: Dalla vista dettaglio, trainer può:
+  - Aprire profilo trainee
+  - Creare nuova scheda (se scheda corrente sta per terminare)
+  - Visualizzare storico schede trainee
+- **Notifiche opzionali**: Sistema può inviare notifiche email/push a trainer quando scheda sta per scadere (< 7 giorni) ❓ **OD-28**
+
 ## Query critiche
 - **Scheda corrente trainee**: `TrainingProgram` con `status=active` e `traineeId=<id>`, espanso fino a `WorkoutExercise`.
 - **Avanzamento scheda (trainer)**: `ExerciseFeedback` aggregati per `TrainingProgram` — % esercizi completati per settimana.
@@ -217,6 +332,8 @@ PersonalRecord
 - **Schede draft trainer**: `TrainingProgram` con `status=draft` e `trainerId=<id>`, ordinate per `updatedAt` DESC (ultime modificate prima).
 - **Storico trainee**: `TrainingProgram` con `traineeId=<id>`, ordinate per `startDate` DESC.
 - **Massimali trainee**: `PersonalRecord` con `traineeId=<id>`, raggrupati per `exerciseId`, ordinati per `recordDate` DESC.
+- **Dashboard KPI trainee attivi**: COUNT trainee con `isActive=true` e scheda `status=active` per trainer
+- **Dashboard schede in scadenza**: `TrainingProgram` con `status=active`, `trainerId=<id>`, `isActive=true`, dove `endDate` (calcolato) è entro 7 o 14 giorni da oggi
 - **Reportistica SBD** (solo per esercizi fondamentali):
   - **FRQ (Frequenza)**: numero di giorni distinti in cui l'esercizio SBD appare nel periodo
   - **NBL (Numero alzate)**: totale delle serie × ripetizioni per esercizio nel periodo
