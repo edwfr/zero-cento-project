@@ -26,20 +26,21 @@ npx prisma migrate deploy
 
 ## Entità principali
 
-| Entità                | Descrizione                                                                               |
-| --------------------- | ----------------------------------------------------------------------------------------- |
-| `User`                | Utente del sistema con ruolo (admin / trainer / trainee)                                  |
-| `TrainerTrainee`      | Associazione esplicita trainer → trainee                                                  |
-| `MuscleGroup`         | Gruppo muscolare gestibile (es. Pettorali, Quadricipiti) - configurabile da admin/trainer |
-| `MovementPattern`     | Schema motorio gestibile (es. Squat, Push) - configurabile da admin/trainer               |
-| `Exercise`            | Esercizio nella libreria condivisa (con gruppi muscolari, tipo, schema motorio)           |
-| `ExerciseMuscleGroup` | Associazione Exercise ↔ MuscleGroup con coefficiente d'incidenza (0.0-1.0)                |
-| `TrainingProgram`     | Scheda di allenamento multi-settimana assegnata a un trainee                              |
-| `Week`                | Singola settimana all'interno di una scheda                                               |
-| `Workout`             | Singolo allenamento (giorno) all'interno di una settimana                                 |
-| `WorkoutExercise`     | Esercizio con parametri all'interno di un allenamento                                     |
-| `ExerciseFeedback`    | Feedback del trainee su un WorkoutExercise (serie, kg, RPE)                               |
-| `PersonalRecord`      | Massimali (1RM o nRM) gestiti per trainee ed esercizio                                    |
+| Entità                 | Descrizione                                                                               |
+| ---------------------- | ----------------------------------------------------------------------------------------- |
+| `User`                 | Utente del sistema con ruolo (admin / trainer / trainee)                                  |
+| `TrainerTrainee`       | Associazione esplicita trainer → trainee                                                  |
+| `MuscleGroup`          | Gruppo muscolare gestibile (es. Pettorali, Quadricipiti) - configurabile da admin/trainer |
+| `MovementPattern`      | Schema motorio gestibile (es. Squat, Push) - configurabile da admin/trainer               |
+| `MovementPatternColor` | Colore personalizzato per MovementPattern per ogni trainer - vista alto livello schede    |
+| `Exercise`             | Esercizio nella libreria condivisa (con gruppi muscolari, tipo, schema motorio)           |
+| `ExerciseMuscleGroup`  | Associazione Exercise ↔ MuscleGroup con coefficiente d'incidenza (0.0-1.0)                |
+| `TrainingProgram`      | Scheda di allenamento multi-settimana assegnata a un trainee                              |
+| `Week`                 | Singola settimana all'interno di una scheda                                               |
+| `Workout`              | Singolo allenamento (giorno) all'interno di una settimana                                 |
+| `WorkoutExercise`      | Esercizio con parametri all'interno di un allenamento                                     |
+| `ExerciseFeedback`     | Feedback del trainee su un WorkoutExercise (serie, kg, RPE)                               |
+| `PersonalRecord`       | Massimali (1RM o nRM) gestiti per trainee ed esercizio                                    |
 
 ## Schema (logico)
 
@@ -81,6 +82,19 @@ MovementPattern
   -- NOTA: Gestibile da admin e trainer (libreria condivisa)
   -- Alternative: "Accosciata", "Spinta Orizzontale", "Estensione Anca", "Tirata Verticale", etc.
 
+MovementPatternColor
+  id                UUID  PK
+  trainerId         FK → User              -- trainer proprietario della personalizzazione
+  movementPatternId FK → MovementPattern   -- pattern da colorare
+  color             String                 -- hex color (es. "#3b82f6", "#ef4444")
+  
+  UNIQUE(trainerId, movementPatternId)  -- Constraint: un trainer può avere un solo colore per pattern
+  
+  -- NOTA: Personalizzazione colori per vista alto livello schede
+  -- Trainer vede distribuzione MovementPattern nella settimana con colori custom
+  -- Se non esiste record per trainer+pattern, sistema usa colore default
+  -- Colori suggeriti default: Squat=#8b5cf6, Push=#3b82f6, Pull=#10b981, etc.
+
 Exercise
   id                  UUID  PK
   name                String
@@ -111,18 +125,31 @@ TrainingProgram
   title              String
   trainerId            FK → User
   traineeId          FK → User
-  startDate          Date
+  startDate          Date?            -- Data inizio Week 1 (null se draft, popolato a pubblicazione)
   durationWeeks      Int
   workoutsPerWeek    Int             -- n allenamenti per settimana
   status             Enum(draft, active, completed)
+  publishedAt        DateTime?       -- Timestamp pubblicazione (null se draft)
   createdAt          DateTime
+  updatedAt          DateTime
+
+  -- NOTA: Workflow creazione scheda
+  -- 1. status=draft: trainer può salvare parzialmente, modificare n volte
+  -- 2. Pubblicazione: trainer decide quando → status=active, startDate popolato (Week 1 mapping calendario)
+  -- 3. startDate usato per calcolare date settimane successive e reportistica
 
 Week
   id                 UUID  PK
   programId          FK → TrainingProgram
-  weekNumber         Int
-  feedbackRequested  Boolean         -- settimana marcata come rilevante per feedback
-  generalFeedback    String?         -- feedback generale del trainee sulla settimana
+  weekNumber         Int              -- 1, 2, 3, ..., n
+  startDate          Date?            -- Data inizio settimana (calcolata: program.startDate + (weekNumber-1)*7 giorni)
+  feedbackRequested  Boolean          -- settimana marcata come rilevante per feedback
+  generalFeedback    String?          -- feedback generale del trainee sulla settimana
+  
+  -- NOTA: startDate calcolato automaticamente dopo pubblicazione programma
+  -- Week 1 startDate = TrainingProgram.startDate (scelto da trainer a pubblicazione)
+  -- Week 2 startDate = TrainingProgram.startDate + 7 giorni
+  -- Week n startDate = TrainingProgram.startDate + (n-1)*7 giorni
 
 Workout
   id            UUID  PK
@@ -169,6 +196,8 @@ PersonalRecord
 - `User(trainer)` → N `TrainingProgram` (come trainer)
 - `User(trainee)` → N `TrainingProgram` (come destinatario)
 - `User(trainer)` ↔ N `User(trainee)` via `TrainerTrainee`
+- `User(trainer)` → N `MovementPatternColor` (personalizzazione colori per vista alto livello)
+- `MovementPattern` → N `MovementPatternColor` (colori custom per trainer)
 - `MuscleGroup` ↔ N `Exercise` via `ExerciseMuscleGroup` (many-to-many con coefficient)
 - `MovementPattern` → N `Exercise` (one-to-many)
 - `Exercise` ↔ N `MuscleGroup` via `ExerciseMuscleGroup` (many-to-many con coefficient)
@@ -184,12 +213,15 @@ PersonalRecord
 - **Libreria esercizi**: tutti gli `Exercise` con relazioni `ExerciseMuscleGroup` e `MovementPattern`, filtrabili per nome (ricerca testuale), gruppo muscolare (via join), tipo (fondamentale/accessorio), schema motorio (via FK).
 - **Gruppi muscolari attivi**: `MuscleGroup` con `isActive=true`, ordinati per `name`.
 - **Schemi motori attivi**: `MovementPattern` con `isActive=true`, ordinati per `name`.
+- **Colori MovementPattern per trainer**: `MovementPatternColor` con `trainerId=<id>`, join `MovementPattern` per nome pattern.
+- **Schede draft trainer**: `TrainingProgram` con `status=draft` e `trainerId=<id>`, ordinate per `updatedAt` DESC (ultime modificate prima).
 - **Storico trainee**: `TrainingProgram` con `traineeId=<id>`, ordinate per `startDate` DESC.
 - **Massimali trainee**: `PersonalRecord` con `traineeId=<id>`, raggrupati per `exerciseId`, ordinati per `recordDate` DESC.
 - **Reportistica SBD** (solo per esercizi fondamentali):
   - **FRQ (Frequenza)**: numero di giorni distinti in cui l'esercizio SBD appare nel periodo
   - **NBL (Numero alzate)**: totale delle serie × ripetizioni per esercizio nel periodo
   - **IM (Intensità media)**: media ponderata delle intensità (%) per esercizio nel periodo
+  - **Periodo analisi**: basato su `Week.startDate` + `Workout.dayLabel` per mappare feedback a date calendario reali
 - **Serie Allenanti (per gruppo muscolare)**:
   - Serie totali: somma di tutte le serie per workout exercises filtrati per gruppo muscolare (join via `ExerciseMuscleGroup`)
   - Ripetizioni totali: somma di `sets × reps` per workout exercises filtrati per gruppo muscolare
@@ -315,6 +347,134 @@ INSERT INTO MovementPattern (name, description, isActive, createdBy) VALUES
   ('Lunge', 'Affondo', true, 'admin-uuid'),
   ('Other', 'Altro', true, 'admin-uuid');
 ```
+
+### Workflow Creazione Scheda (Trainer)
+
+**Step 1: Setup iniziale**
+```typescript
+// Trainer crea scheda draft
+POST /api/programs
+{
+  "traineeId": "uuid",
+  "title": "Scheda Powerlifting 12 settimane",
+  "durationWeeks": 12,
+  "workoutsPerWeek": 4,
+  "status": "draft",
+  "startDate": null  // null finché non pubblica
+}
+// → Sistema crea TrainingProgram + 12 Week + 48 Workout (12×4) vuoti
+```
+
+**Step 2: Vista alto livello - "settimana tipo"**
+Trainer visualizza griglia settimana con workout disponibili (es. 4 giorni):
+```
+┌─────────── Week Template ────────────┐
+│ Day 1     Day 2     Day 3     Day 4  │
+│ (vuoto)   (vuoto)   (vuoto)   (vuoto)│
+└──────────────────────────────────────┘
+```
+
+Trainer aggiunge esercizi in vista rapida:
+```typescript
+// Aggiunge Squat al Day 1
+POST /api/workouts/[day1-uuid]/exercises/quick
+{
+  "exerciseId": "squat-uuid",
+  "order": 1
+  // Altri campi (sets, reps, etc.) null - da compilare dopo
+}
+```
+
+UI mostra MovementPattern con colore:
+```
+┌─────────── Week Template ────────────┐
+│ Day 1            Day 2            Day 3            Day 4         │
+│ 🟣 Squat         🔵 Bench Press   🟢 Deadlift      🟡 OHP        │
+│ 🟣 Front Squat   🔵 Incline DB    🟢 RDL           🟡 Lat Raise  │
+│ 🟢 Pull-up       🟢 Barbell Row   🔵 Dips          🟣 Leg Press  │
+└──────────────────────────────────────────────────────────────────┘
+
+Legenda colori (personalizzabili da trainer):
+🟣 Squat (viola)         🔵 Horizontal Push (blu)
+🟢 Pull (verde)          🟡 Vertical Push (giallo)
+🔴 Hip Extension (rosso)
+```
+
+**Step 3: Dettaglio singolo allenamento**
+Trainer clicca su "Day 1" → entra in dettaglio:
+```typescript
+// Completa dettagli WorkoutExercise
+PUT /api/workout-exercises/[we-uuid]
+{
+  "sets": 5,
+  "reps": "5",
+  "targetRpe": 8.0,
+  "weightType": "percentage_1rm",
+  "weight": 80,  // 80% 1RM
+  "restTime": "3m",
+  "isWarmup": false,
+  "notes": "Concentrati sulla tecnica"
+}
+```
+
+**Step 4: Salvataggio incrementale**
+Trainer può salvare parzialmente:
+```typescript
+// Auto-save ogni 30s o al cambio pagina
+PATCH /api/programs/[id]
+{
+  "updatedAt": "2026-03-27T15:30:00Z"
+}  // status rimane "draft"
+```
+
+UI mostra progresso:
+```
+Scheda "Powerlifting 12 settimane" (Draft)
+✅ Week 1: 4/4 workout compilati
+⚠️  Week 2: 2/4 workout compilati
+🔘 Week 3-12: non iniziate
+
+[Continua Modifica] [Pubblica]
+```
+
+**Step 5: Pubblicazione**
+Trainer decide di pubblicare:
+```typescript
+// Pubblica scheda
+POST /api/programs/[id]/publish
+{
+  "week1StartDate": "2026-04-01"  // Trainer sceglie data inizio Week 1
+}
+
+// Backend:
+// 1. Valida scheda completa (tutti workout hanno almeno 1 esercizio con dettagli)
+// 2. Aggiorna TrainingProgram:
+//    - status = "active"
+//    - startDate = "2026-04-01"
+//    - publishedAt = NOW()
+// 3. Calcola Week.startDate per tutte le settimane:
+//    - Week 1: 2026-04-01
+//    - Week 2: 2026-04-08 (startDate + 7 giorni)
+//    - Week 3: 2026-04-15 (startDate + 14 giorni)
+//    - ... fino Week 12
+// 4. Return success
+```
+
+UI post-pubblicazione:
+```
+Scheda pubblicata con successo!
+
+Week 1 inizia: Lunedì 1 Aprile 2026
+Week 12 termina: Domenica 23 Giugno 2026
+
+[Visualizza Scheda] [Assegna a Trainee]
+```
+
+**Note implementative**:
+- Draft può essere salvato infinite volte (no limite)
+- Pubblicazione irreversibile per quanto riguarda `startDate` (se serve modificare, creare nuova versione scheda)
+- Trainee vede solo schede `status=active` assegnate a lui
+- Reportistica usa `Week.startDate` + `ExerciseFeedback.date` per correlazione temporale
 
 ### Reportistica SBD
 La reportistica FRQ/NBL/IM è calcolata solo per esercizi con `type=fundamental` (Squat, Bench Press, Deadlift) su un periodo di X settimane specificato dall'utente.

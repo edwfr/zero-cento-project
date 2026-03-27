@@ -17,20 +17,25 @@
 | `/admin/users/[id]` | Dettaglio/modifica utente (include cambio ruolo e toggle attivazione)                        |
 
 ### trainer
-| Route                             | Descrizione                                                         |
-| --------------------------------- | ------------------------------------------------------------------- |
-| `/trainer/dashboard`              | Panoramica trainee assegnati e stato schede                         |
-| `/trainer/exercises`              | Libreria esercizi condivisa (lista + crea)                          |
-| `/trainer/exercises/[id]`         | Dettaglio esercizio (video YouTube + modifica)                      |
-| `/trainer/exercises/new`          | Creazione nuovo esercizio con campi completi                        |
-| `/trainer/trainees`               | Lista trainee gestiti (solo propri, con toggle attivo/disabilitato) |
-| `/trainer/trainees/[id]`          | Profilo trainee + schede assegnate                                  |
-| `/trainer/trainees/new`           | Creazione nuovo profilo trainee (genera password)                   |
-| `/trainer/trainees/[id]/records`  | Visualizza/modifica massimali trainee                               |
-| `/trainer/programs/new`           | Creazione nuova scheda multi-settimana                              |
-| `/trainer/programs/[id]`          | Dettaglio / modifica scheda                                         |
-| `/trainer/programs/[id]/progress` | Monitoraggio avanzamento + feedback trainee                         |
-| `/trainer/programs/[id]/reports`  | Reportistica SBD e serie allenanti                                  |
+| Route                                  | Descrizione                                                                                  |
+| -------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `/trainer/dashboard`                   | Panoramica trainee assegnati e stato schede                                                  |
+| `/trainer/exercises`                   | Libreria esercizi condivisa (lista + crea)                                                   |
+| `/trainer/exercises/[id]`              | Dettaglio esercizio (video YouTube + modifica)                                               |
+| `/trainer/exercises/new`               | Creazione nuovo esercizio con campi completi                                                 |
+| `/trainer/trainees`                    | Lista trainee gestiti (solo propri, con toggle attivo/disabilitato)                          |
+| `/trainer/trainees/[id]`               | Profilo trainee + schede assegnate                                                           |
+| `/trainer/trainees/new`                | Creazione nuovo profilo trainee (genera password)                                            |
+| `/trainer/trainees/[id]/records`       | Visualizza/modifica massimali trainee                                                        |
+| `/trainer/programs`                    | Lista schede (draft, active, completed) con filtri e ricerca                                 |
+| `/trainer/programs/new`                | **Step 1**: Setup scheda (durata, allenamenti/settimana, trainee)                            |
+| `/trainer/programs/[id]/week-overview` | **Step 2**: Vista alto livello settimana tipo (aggiungi esercizi con colori MovementPattern) |
+| `/trainer/programs/[id]/workout/[wId]` | **Step 3**: Dettaglio singolo allenamento (compila serie/reps/RPE/peso/recupero)             |
+| `/trainer/programs/[id]/publish`       | **Step 4**: Pubblicazione scheda (scelta data inizio Week 1)                                 |
+| `/trainer/programs/[id]`               | Dettaglio / modifica scheda (post-pubblicazione, read-only o edit draft)                     |
+| `/trainer/programs/[id]/progress`      | Monitoraggio avanzamento + feedback trainee                                                  |
+| `/trainer/programs/[id]/reports`       | Reportistica SBD e serie allenanti                                                           |
+| `/trainer/settings/movement-colors`    | Personalizzazione colori MovementPattern per vista alto livello                              |
 
 ### Trainee
 | Route                                        | Descrizione                                       |
@@ -47,6 +52,10 @@
 - `ExerciseCard` — mostra nome, thumbnail YouTube, parametri (serie/rip/RPE), gruppi muscolari, tipo (fondamentale/accessorio).
 - `MuscleGroupBadge` — badge per gruppo muscolare con coefficiente d'incidenza (es. "Pettorali 80%").
 - `MovementPatternIcon` — icona per schema motorio (accosciata, spinta, ecc.).
+- `MovementPatternTag` — badge colorato per schema motorio con colore personalizzato trainer (usato in vista alto livello).
+- `WeekOverviewGrid` — griglia settimana tipo per aggiunta rapida esercizi con vista MovementPattern colorati.
+- `WorkoutDayColumn` — colonna singolo giorno in vista overview con esercizi + colori pattern.
+- `ColorPicker` — selector colore per personalizzazione MovementPattern (HEX input + palette predefinita).
 - `UserStatusToggle` — toggle per attivare/disabilitare trainee (admin: tutti, trainer: solo propri; mostra stato attivo/disabilitato).
 - `WorkoutProgramBuilder` — editor drag-and-drop settimane/giorni/esercizi (trainer).
 - `WorkoutExerciseForm` — form per aggiungere esercizio con serie, reps (stringa o intervallo), RPE, peso, recupero, riscaldamento.

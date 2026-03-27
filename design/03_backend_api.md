@@ -95,14 +95,25 @@
 - **Rationale**: Espansione categorizzazioni senza deploy
 
 ### Schede / Programmi (trainer)
-| Method   | Path                          | Descrizione                           |
-| -------- | ----------------------------- | ------------------------------------- |
-| `GET`    | `/api/programs`               | Lista schede (filtrabili per trainee) |
-| `POST`   | `/api/programs`               | Crea scheda                           |
-| `GET`    | `/api/programs/[id]`          | Dettaglio scheda completa             |
-| `PUT`    | `/api/programs/[id]`          | Modifica scheda                       |
-| `DELETE` | `/api/programs/[id]`          | Elimina scheda                        |
-| `GET`    | `/api/programs/[id]/progress` | Avanzamento + feedback trainee        |
+| Method   | Path                          | Descrizione                                       | Ruoli autorizzati |
+| -------- | ----------------------------- | ------------------------------------------------- | ----------------- |
+| `GET`    | `/api/programs`               | Lista schede (filtrabili per trainee, status)     | trainer           |
+| `POST`   | `/api/programs`               | Crea scheda (inizialmente draft)                  | trainer           |
+| `GET`    | `/api/programs/[id]`          | Dettaglio scheda completa                         | trainer           |
+| `PUT`    | `/api/programs/[id]`          | Modifica scheda (solo draft)                      | trainer           |
+| `DELETE` | `/api/programs/[id]`          | Elimina scheda (solo draft)                       | trainer           |
+| `POST`   | `/api/programs/[id]/publish`  | Pubblica scheda (draft → active, setta startDate) | trainer           |
+| `GET`    | `/api/programs/[id]/progress` | Avanzamento + feedback trainee                    | trainer           |
+
+**Note workflow schede**:
+- `POST /api/programs`: Crea scheda con `status=draft`, `startDate=null`. Sistema crea automaticamente Week + Workout vuoti basati su `durationWeeks` e `workoutsPerWeek`.
+- `PUT /api/programs/[id]`: Modifiche permesse solo se `status=draft`. Se `status=active`, richiede creazione nuova versione.
+- `POST /api/programs/[id]/publish`: 
+  - Corpo richiesta: `{ "week1StartDate": "2026-04-01" }`
+  - Validazione: Tutti workout devono avere almeno 1 esercizio con dettagli completi (sets, reps, etc.)
+  - Azione: `status=draft → active`, `startDate=week1StartDate`, calcola `Week.startDate` per tutte le settimane, `publishedAt=NOW()`
+  - Response: Dettaglio scheda pubblicata con date calcolate
+- `DELETE`: Permesso solo su schede `status=draft` (schede active non eliminabili, solo archiviabili con `status=completed`)
 
 ### Feedback (Trainee)
 | Method | Path                            | Descrizione                            |

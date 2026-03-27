@@ -4,6 +4,93 @@
 
 ---
 
+## 2026-03-27 (rev 19)
+- **Azione**: Workflow completo creazione schede con vista alto livello, colori MovementPattern personalizzabili, draft incrementale, pubblicazione con mapping calendario.
+- **Requisito**: Trainer deve poter creare schede con approccio top-down: setup iniziale (durata/frequenza) → vista alto livello settimana tipo con distribuzione MovementPattern colorati → dettaglio singoli allenamenti → pubblicazione con scelta data inizio.
+- **Workflow implementato**:
+  1. **Setup iniziale** (`POST /api/programs`): Trainer definisce durata settimane + allenamenti/settimana. Sistema crea `TrainingProgram` draft + Week + Workout vuoti.
+  2. **Vista alto livello** (`/trainer/programs/[id]/week-overview`): Griglia settimana tipo con workout days. Trainer aggiunge esercizi in modalità rapida. UI mostra MovementPattern con colori personalizzati per visualizzare bilanciamento schemi motori (es. 🟣 Squat, 🔵 Push, 🟢 Pull).
+  3. **Dettaglio workout** (`/trainer/programs/[id]/workout/[wId]`): Trainer entra nel singolo allenamento, compila dettagli per ogni esercizio (sets, reps, RPE, peso, recupero, note).
+  4. **Salvataggio incrementale**: Scheda salvabile infinite volte come `status=draft`. Auto-save ogni 30s. Trainer può chiudere e riprendere dopo.
+  5. **Pubblicazione** (`POST /api/programs/[id]/publish`): Trainer sceglie data inizio Week 1 (es. "1 Aprile 2026"). Sistema valida completezza scheda, aggiorna `status=active`, popola `TrainingProgram.startDate` e calcola `Week.startDate` per tutte le settimane (Week 1 = startDate, Week 2 = startDate+7, etc.).
+- **Nuove entità DB**:
+  - **MovementPatternColor**: Tabella many-to-many (trainerId, movementPatternId, color). Ogni trainer personalizza colori per vista overview.
+  - **TrainingProgram.publishedAt** (DateTime?): Timestamp pubblicazione.
+  - **TrainingProgram.updatedAt** (DateTime): Per ordinare draft per ultima modifica.
+  - **Week.startDate** (Date?): Calcolato automaticamente a pubblicazione. Usato per reportistica (mapping feedback → date reali).
+- **Colori MovementPattern**:
+  - Tabella `MovementPatternColor` con constraint UNIQUE(trainerId, movementPatternId)
+  - Default colors se trainer non ha personalizzazione: Squat=#8b5cf6, Horizontal Push=#3b82f6, Pull=#10b981, etc.
+  - Endpoint `PUT /api/trainer/movement-pattern-colors/[patternId]` con body `{color: "#hex"}`
+  - Validazione hex color: regex `^#[0-9A-Fa-f]{6}$`
+- **Mapping calendario Week → Date**:
+  - Pubblicazione richiede `week1StartDate` (es. "2026-04-01")
+  - Backend calcola: Week[n].startDate = program.startDate + (n-1)*7 giorni
+  - Esempio: Week 1 = 1 Apr, Week 2 = 8 Apr, Week 3 = 15 Apr, ..., Week 12 = 17 Jun
+  - Reportistica usa `Week.startDate` + `ExerciseFeedback.date` per correlazione temporale (FRQ/NBL/IM per periodo)
+- **Validazione pubblicazione**:
+  - Ogni Workout deve avere almeno 1 WorkoutExercise
+  - Ogni WorkoutExercise deve avere: sets, reps, weightType, restTime (campi obbligatori)
+  - Se validazione fail → `400 Bad Request` con dettaglio workout incompleti
+- **Stati scheda**:
+  - `draft`: Modificabile, non visibile a trainee, startDate=null
+  - `active`: Pubblicata, visibile a trainee, startDate popolato, modifiche bloccate (serve nuova versione)
+  - `completed`: Terminata (dopo ultima settimana), archiviabile
+- **Nuovi endpoint API**:
+  - `POST /api/programs/[id]/publish` con body `{week1StartDate: "YYYY-MM-DD"}`
+  - `GET/PUT /api/trainer/movement-pattern-colors/[patternId]`
+  - `DELETE /api/trainer/movement-pattern-colors/[patternId]` (reset a default)
+- **Nuove pagine frontend**:
+  - `/trainer/programs` (lista schede con badge draft/active/completed)
+  - `/trainer/programs/[id]/week-overview` (griglia settimana tipo con esercizi colorati per MovementPattern)
+  - `/trainer/programs/[id]/publish` (modal scelta data Week 1 + validazione pre-pubblicazione)
+  - `/trainer/settings/movement-colors` (color picker per personalizzare MovementPattern)
+- **Nuovi componenti**:
+  - `WeekOverviewGrid`: Griglia giorni settimana con drag-and-drop esercizi
+  - `WorkoutDayColumn`: Colonna singolo giorno con lista esercizi + badge colorati MovementPattern
+  - `MovementPatternTag`: Badge con colore custom trainer + nome pattern
+  - `ColorPicker`: HEX input + palette predefinita per selezione colori
+  - `PublishModal`: Modal con date picker + preview distribuzione settimane + validazione
+- **UX vista alto livello**:
+  ```
+  Week Overview - Settimana Tipo
+  ┌─────────────────────────────────────────────────────────┐
+  │ Day 1          Day 2          Day 3          Day 4      │
+  │ 🟣 Squat       🔵 Bench       🟢 Deadlift    🔴 OHP     │
+  │ 🟣 Front Sq    🔵 Incline     🟢 RDL         🟡 Lat R   │
+  │ 🟢 Pull-up     🟢 Row         🔵 Dips        🟣 Leg P   │
+  │ [+ Add]        [+ Add]        [+ Add]        [+ Add]    │
+  └─────────────────────────────────────────────────────────┘
+  
+  Legend (personalizza colori):
+  🟣 Squat  🔵 Push  🟢 Pull  🔴 Hip Ext  🟡 Vertical
+  ```
+- **Progresso compilazione**:
+  UI mostra stato completamento per aiutare trainer:
+  ```
+  Scheda "Powerlifting 12w" (Draft)
+  ✅ Week 1: 4/4 workout completi
+  ⚠️  Week 2: 2/4 workout completi  
+  🔘 Week 3-12: non iniziate
+  
+  [Continua] [Pubblica] (disabilitato se incompleta)
+  ```
+- **Benefici**:
+  - ✅ **Vista strategica**: Trainer vede bilanciamento MovementPattern prima di entrare in dettaglio
+  - ✅ **Colori personalizzati**: Ogni trainer usa propria codifica colori (utile se multi-metodologia)
+  - ✅ **Salvataggio incrementale**: Nessuna perdita lavoro, compilazione in più sessioni
+  - ✅ **Pubblicazione controllata**: Trainer decide quando rendere visibile scheda a trainee
+  - ✅ **Mapping calendario**: Date reali per reportistica accurata (non solo "Week 1/2/3")
+  - ✅ **Validazione pre-pubblicazione**: Previene schede incomplete pubblicate per errore
+- **Testing**: Aggiunti test P1 per workflow completo creazione-pubblicazione, P2 per salvataggio draft incrementale, P2 per validazione pubblicazione, P3 per personalizzazione colori
+- **Documentazione aggiornata**:
+  - 04_data_model.md: Entità MovementPatternColor, campi TrainingProgram/Week aggiornati, sezione "Workflow Creazione Scheda" con esempi step-by-step
+  - 02_frontend_design.md: Nuove route workflow schede, nuovi componenti vista overview
+  - 03_backend_api.md: Endpoint `/api/programs/[id]/publish` e `/api/trainer/movement-pattern-colors/*`
+- **Implicazioni**: Workflow UX ottimizzato per processo reale trainer (top-down: strategia → tattica). Colori personalizzati migliorano usabilità per trainer con metodologie diverse (powerlifting vs bodybuilding). Mapping calendario essenziale per reportistica temporale accurata. Draft incrementale elimina pressione "completare tutto in una sessione".
+
+---
+
 ## 2026-03-27 (rev 18)
 - **Azione**: Trasformazione gruppi muscolari e schemi motori da enum hardcoded a entità DB gestibili dinamicamente.
 - **Requisito**: Admin e trainer devono poter aggiungere/modificare gruppi muscolari e schemi motori senza modificare codice, permettendo personalizzazione tassonomia esercizi.
