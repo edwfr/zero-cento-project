@@ -15,14 +15,29 @@
 | ------ | ------------------------- | --------------------------------------- | ----- |
 | `POST` | `/api/auth/[...nextauth]` | Handler NextAuth (login/logout/session) | tutti |
 
-### Utenti (Admin)
-| Method   | Path              | Descrizione             |
-| -------- | ----------------- | ----------------------- |
-| `GET`    | `/api/users`      | Lista utenti            |
-| `POST`   | `/api/users`      | Crea utente             |
-| `GET`    | `/api/users/[id]` | Dettaglio utente        |
-| `PUT`    | `/api/users/[id]` | Modifica utente / ruolo |
-| `DELETE` | `/api/users/[id]` | Elimina utente          |
+### Utenti (Admin + Coach)
+| Method   | Path                         | Descrizione                                                      | Ruoli autorizzati |
+| -------- | ---------------------------- | ---------------------------------------------------------------- | ----------------- |
+| `GET`    | `/api/users`                 | Lista utenti (admin: tutti, coach: solo propri trainee)          | admin, coach      |
+| `POST`   | `/api/users`                 | Crea utente (admin: coach/trainee, coach: solo trainee)          | admin, coach      |
+| `GET`    | `/api/users/[id]`            | Dettaglio utente (admin: tutti, coach: solo propri trainee)      | admin, coach      |
+| `PUT`    | `/api/users/[id]`            | Modifica utente (admin: tutti campi, coach: solo propri trainee) | admin, coach      |
+| `DELETE` | `/api/users/[id]`            | Elimina utente (admin: tutti, coach: solo propri trainee)        | admin, coach      |
+| `PATCH`  | `/api/users/[id]/deactivate` | Disabilita trainee (admin: tutti, coach: solo propri)            | admin, coach      |
+| `PATCH`  | `/api/users/[id]/activate`   | Riabilita trainee (admin: tutti, coach: solo propri)             | admin, coach      |
+
+**Note autorizzazione creazione**:
+- `POST /api/users` con `role=coach`: **solo admin**
+- `POST /api/users` con `role=trainee`: **admin o coach** (coach crea i propri atleti)
+- `POST /api/users` con `role=admin`: **bloccato** (admin creabile solo via seed/migration iniziale)
+- Coach che crea trainee: il sistema crea automaticamente record in `CoachTrainee` per l'associazione
+
+**Note autorizzazione disabilitazione**:
+- `PATCH /api/users/[id]/deactivate` e `/activate`: 
+  - Admin: può disabilitare qualsiasi trainee
+  - Coach: può disabilitare **solo trainee a lui assegnati** (verifica esistenza record `CoachTrainee`)
+  - Se coach tenta disabilitare trainee di altro coach: **403 Forbidden**
+  - Trainee disabilitato (`isActive=false`): login bloccato con messaggio "Account disabilitato"
 
 ### Esercizi (Coach)
 | Method   | Path                  | Descrizione                                            |

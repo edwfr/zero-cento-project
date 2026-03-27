@@ -4,6 +4,59 @@
 
 ---
 
+## 2026-03-27 (rev 12)
+- **Azione**: Definizione permission granulari per disabilitazione trainee.
+- **Requisito**: Admin può disabilitare qualsiasi trainee; Coach può disabilitare solo i propri trainee (isolamento).
+- **Permission disabilitazione**:
+  - **Admin**: può disabilitare/riabilitare **qualsiasi trainee** del sistema (campo `User.isActive`)
+  - **Coach**: può disabilitare/riabilitare **solo i propri trainee** (verifica via `CoachTrainee`)
+  - **Coach NON può**: visualizzare né disabilitare trainee assegnati ad altri coach
+  - **Trainee**: nessun accesso a funzioni di gestione utenti
+- **Validazione backend**:
+  - Endpoint: `PATCH /api/users/[id]/deactivate` e `/activate`
+  - Coach request: verifica esistenza `CoachTrainee.coachId = current_user AND CoachTrainee.traineeId = target_user`
+  - Se coach tenta disabilitare trainee di altro coach: **403 Forbidden**
+- **Effetto disabilitazione**: 
+  - Trainee con `isActive=false` non può effettuare login
+  - Redirect a login page con messaggio: "Account disabilitato, contatta il tuo coach"
+- **Implicazioni UX**:
+  - Admin UI: lista utenti mostra stato attivo/disabilitato per tutti i trainee, toggle disponibile
+  - Coach UI: lista trainee mostra solo propri trainee con stato, toggle abilitato solo per i propri
+  - Coach UI non mostra trainee di altri coach (isolamento dati)
+- **Testing**: Aggiunti test P2 per disabilitazione (coach proprio trainee, coach trainee altrui con 403, admin qualsiasi trainee, login trainee disabilitato)
+- **Implicazioni**: Isolamento dati garantito anche per azioni di disabilitazione. Coach mantiene autonomia operativa sui propri atleti senza interferire con altri coach. Admin ha visibilità e controllo globale.
+
+---
+
+## 2026-03-27 (rev 11)
+- **Azione**: Definizione granulare permission per creazione utenti basata su ruolo.
+- **Matrice creazione utenti**:
+  - **Admin**: può creare utenti con ruolo `coach` E utenti con ruolo `trainee`
+  - **Coach**: può creare **solo** utenti con ruolo `trainee` (i propri atleti)
+  - **Trainee**: **non può** creare alcun utente
+- **Rationale**: 
+  - Admin ha controllo completo della piattaforma e può onboardare nuovi coach
+  - Coach ha autonomia operativa per aggiungere i propri atleti senza coinvolgere admin
+  - Trainee non ha bisogno di creare utenti (ruolo consumer)
+- **Dettaglio gestione (RUD)**:
+  - **Admin**: full CRUD su tutti gli utenti del sistema
+  - **Coach**: può modificare/eliminare solo i trainee a lui assegnati (via `CoachTrainee`)
+  - **Trainee**: nessun accesso a funzioni di gestione utenti
+- **Implicazioni tecniche**:
+  - Endpoint `POST /api/users` richiede check su `role` nel body:
+    - Se `role=coach`: verificare che richiedente sia `admin`
+    - Se `role=trainee`: verificare che richiedente sia `admin` O `coach`
+    - Se `role=admin`: **bloccato** (admin creabile solo via seed/migration)
+  - Coach che crea trainee: sistema crea automaticamente record `CoachTrainee` per associazione
+  - Frontend: pagina `/admin/users/new` mostra dropdown ruolo con `coach` e `trainee`, `/coach/trainees/new` crea solo trainee
+- **Aggiornamenti file**:
+  - 05_security_auth.md: matrice permessi espansa con dettaglio creazione + gestione utenti
+  - 03_backend_api.md: sezione "Utenti" rinominata in "Utenti (Admin + Coach)" con note autorizzazione
+  - 02_frontend_design.md: aggiunta pagina `/admin/users/new`, corretta pagina coach `/coach/trainees/new`
+- **Implicazioni**: Permission granulare garantisce separazione responsabilità e autonomia operativa coach. Validazione ruolo sul backend previene privilege escalation. UX riflette i permessi effettivi (coach non vede opzione per creare altri coach).
+
+---
+
 ## 2026-03-27 (rev 10)
 - **Azione**: Definizione strategia UX differenziata per ruolo - ottimizzazione device-specific.
 - **Rationale**: Casi d'uso reali richiedono esperienze ottimizzate per device diversi:

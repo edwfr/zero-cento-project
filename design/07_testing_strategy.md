@@ -22,6 +22,13 @@
 | P2       | Trainee: visualizza reportistica SBD (FRQ, NBL, IM)                            | trainee |
 | P2       | Coach: visualizza reportistica serie allenanti per gruppo muscolare            | coach   |
 | P2       | Admin: crea / modifica / elimina utente                                        | admin   |
+| P2       | Admin: crea nuovo coach (validazione role=coach richiede admin)                | admin   |
+| P2       | Coach: disabilita proprio trainee (isActive=false)                             | coach   |
+| P2       | Coach: tenta disabilitare trainee di altro coach (deve fallire con 403)        | coach   |
+| P2       | Admin: disabilita qualsiasi trainee                                            | admin   |
+| P2       | Trainee disabilitato: tenta login (deve fallire con messaggio appropriato)     | trainee |
+| P2       | Coach: tenta creare coach (deve fallire con 403 Forbidden)                     | coach   |
+| P2       | Trainee: tenta accedere a /api/users (deve fallire con 403 Forbidden)          | trainee |
 | P2       | Trainee: marca settimana per feedback e aggiunge feedback generale             | trainee |
 | P3       | Validazione RPE (5.0-10.0 con incrementi 0.5)                                  | trainee |
 | P3       | Validazione peso in % 1RM con calcolo automatico kg                            | trainee |

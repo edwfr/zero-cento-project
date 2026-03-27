@@ -9,27 +9,28 @@
 | `/`      | Redirect automatico alla dashboard del ruolo dopo il login | tutti |
 
 ### Admin
-| Route               | Descrizione                             |
-| ------------------- | --------------------------------------- |
-| `/admin/dashboard`  | Panoramica sistema                      |
-| `/admin/users`      | Lista utenti (CRUD admin/coach/trainee) |
-| `/admin/users/[id]` | Dettaglio/modifica utente               |
+| Route               | Descrizione                                                                                |
+| ------------------- | ------------------------------------------------------------------------------------------ |
+| `/admin/dashboard`  | Panoramica sistema                                                                         |
+| `/admin/users`      | Lista utenti (CRUD admin/coach/trainee) con toggle attivo/disabilitato per tutti i trainee |
+| `/admin/users/new`  | Creazione nuovo utente (coach o trainee)                                                   |
+| `/admin/users/[id]` | Dettaglio/modifica utente (include cambio ruolo e toggle attivazione)                      |
 
 ### Coach
-| Route                           | Descrizione                                       |
-| ------------------------------- | ------------------------------------------------- |
-| `/coach/dashboard`              | Panoramica trainee assegnati e stato schede       |
-| `/coach/exercises`              | Libreria esercizi condivisa (lista + crea)        |
-| `/coach/exercises/[id]`         | Dettaglio esercizio (video YouTube + modifica)    |
-| `/coach/exercises/new`          | Creazione nuovo esercizio con campi completi      |
-| `/coach/trainees`               | Lista trainee gestiti                             |
-| `/coach/trainees/[id]`          | Profilo trainee + schede assegnate                |
-| `/coach/trainees/[id]/create`   | Creazione nuovo profilo trainee (genera password) |
-| `/coach/trainees/[id]/records`  | Visualizza/modifica massimali trainee             |
-| `/coach/programs/new`           | Creazione nuova scheda multi-settimana            |
-| `/coach/programs/[id]`          | Dettaglio / modifica scheda                       |
-| `/coach/programs/[id]/progress` | Monitoraggio avanzamento + feedback trainee       |
-| `/coach/programs/[id]/reports`  | Reportistica SBD e serie allenanti                |
+| Route                           | Descrizione                                                         |
+| ------------------------------- | ------------------------------------------------------------------- |
+| `/coach/dashboard`              | Panoramica trainee assegnati e stato schede                         |
+| `/coach/exercises`              | Libreria esercizi condivisa (lista + crea)                          |
+| `/coach/exercises/[id]`         | Dettaglio esercizio (video YouTube + modifica)                      |
+| `/coach/exercises/new`          | Creazione nuovo esercizio con campi completi                        |
+| `/coach/trainees`               | Lista trainee gestiti (solo propri, con toggle attivo/disabilitato) |
+| `/coach/trainees/[id]`          | Profilo trainee + schede assegnate                                  |
+| `/coach/trainees/new`           | Creazione nuovo profilo trainee (genera password)                   |
+| `/coach/trainees/[id]/records`  | Visualizza/modifica massimali trainee                               |
+| `/coach/programs/new`           | Creazione nuova scheda multi-settimana                              |
+| `/coach/programs/[id]`          | Dettaglio / modifica scheda                                         |
+| `/coach/programs/[id]/progress` | Monitoraggio avanzamento + feedback trainee                         |
+| `/coach/programs/[id]/reports`  | Reportistica SBD e serie allenanti                                  |
 
 ### Trainee
 | Route                                        | Descrizione                                       |
@@ -46,6 +47,7 @@
 - `ExerciseCard` — mostra nome, thumbnail YouTube, parametri (serie/rip/RPE), gruppi muscolari, tipo (fondamentale/accessorio).
 - `MuscleGroupBadge` — badge per gruppo muscolare con coefficiente d'incidenza (es. "Pettorali 80%").
 - `MovementPatternIcon` — icona per schema motorio (accosciata, spinta, ecc.).
+- `UserStatusToggle` — toggle per attivare/disabilitare trainee (admin: tutti, coach: solo propri; mostra stato attivo/disabilitato).
 - `WorkoutProgramBuilder` — editor drag-and-drop settimane/giorni/esercizi (coach).
 - `WorkoutExerciseForm` — form per aggiungere esercizio con serie, reps (stringa o intervallo), RPE, peso, recupero, riscaldamento.
 - `FeedbackForm` — form per il trainee su un singolo esercizio (RPE effettivo, array di serie con reps/kg, note, completato).

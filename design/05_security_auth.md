@@ -31,15 +31,34 @@ const { data, error } = await supabase.auth.signInWithPassword({
 - **Ruoli**: `admin` · `coach` · `trainee`.
 - **Matrice permessi**:
 
-| Risorsa                    | admin   | coach                      | trainee             |
-| -------------------------- | ------- | -------------------------- | ------------------- |
-| Gestione utenti (CRUD)     | ✅       | ❌ (solo creazione trainee) | ❌                   |
-| Libreria esercizi          | lettura | CRUD (propri)              | lettura             |
-| Schede                     | lettura | CRUD (proprie)             | lettura (assegnate) |
-| Feedback                   | lettura | lettura                    | CRUD (propri)       |
-| Massimali (PersonalRecord) | lettura | lettura (propri trainee)   | CRUD (propri)       |
-| Reportistica               | ✅       | ✅ (propri trainee)         | ✅ (propria)         |
-| Monitoraggio avanzamento   | ✅       | ✅ (propri trainee)         | ❌                   |
+| Risorsa                    | admin              | coach                    | trainee             |
+| -------------------------- | ------------------ | ------------------------ | ------------------- |
+| Creazione utenti           | ✅ coach + trainee  | ✅ solo trainee           | ❌                   |
+| Gestione utenti (RUD)      | ✅ tutti gli utenti | ✅ solo propri trainee    | ❌                   |
+| Libreria esercizi          | lettura            | CRUD (propri)            | lettura             |
+| Schede                     | lettura            | CRUD (proprie)           | lettura (assegnate) |
+| Feedback                   | lettura            | lettura                  | CRUD (propri)       |
+| Massimali (PersonalRecord) | lettura            | lettura (propri trainee) | CRUD (propri)       |
+| Reportistica               | ✅                  | ✅ (propri trainee)       | ✅ (propria)         |
+| Monitoraggio avanzamento   | ✅                  | ✅ (propri trainee)       | ❌                   |
+
+**Dettaglio creazione utenti**:
+- **Admin**: può creare sia utenti con ruolo `coach` sia utenti con ruolo `trainee`
+- **Coach**: può creare **solo** utenti con ruolo `trainee` (i propri atleti)
+- **Trainee**: **non può** creare alcun utente
+
+**Dettaglio gestione utenti (Read/Update/Delete)**:
+- **Admin**: full CRUD su tutti gli utenti del sistema
+- **Coach**: può modificare/eliminare **solo i trainee a lui assegnati** (via tabella `CoachTrainee`)
+- **Trainee**: nessun accesso alle funzioni di gestione utenti
+
+**Dettaglio disabilitazione trainee (campo `User.isActive`)**:
+- **Admin**: può disabilitare/riabilitare **qualsiasi trainee** del sistema
+- **Coach**: può disabilitare/riabilitare **solo i propri trainee** (quelli a lui assegnati via `CoachTrainee`)
+  - Coach **non può** visualizzare né disabilitare trainee di altri coach
+  - Validazione backend: `PUT /api/users/[id]` con `isActive=false` verifica che esista record `CoachTrainee` con `coachId=current_user` e `traineeId=target_user`
+- **Trainee**: nessun accesso a funzioni di disabilitazione utenti
+- **Effetto disabilitazione**: trainee con `isActive=false` non può effettuare login (redirect con messaggio "Account disabilitato, contatta il tuo coach")
 
 - **Isolamento dati**: un coach vede e modifica solo trainee e schede a lui assegnati; un trainee vede solo le proprie schede.
 
