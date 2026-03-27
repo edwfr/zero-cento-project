@@ -4,6 +4,25 @@
 
 ---
 
+## 2026-03-27 (rev 8)
+- **Azione**: Chiusura OD-32 (GDPR compliance).
+- **OD-32 - Compliance GDPR**: Dettagliata analisi e checklist implementativa
+  - **Dati personali raccolti**: nome, email, performance allenamenti (RPE, feedback)
+  - **Base legale**: Consenso esplicito (Art. 6.1.a) + Esecuzione contratto (Art. 6.1.b)
+  - **Requisiti obbligatori MVP**:
+    1. Cookie Consent Banner (react-cookie-consent)
+    2. Privacy Policy (template GDPR-compliant)
+    3. Terms of Service
+    4. Data Retention Policy (2 anni feedback, anonimizzazione immediata su delete)
+    5. Right to Erasure (Delete Account feature obbligatoria)
+    6. Data Processing Agreement (Supabase + Vercel DPA)
+    7. **Supabase region EU** (dati in UE per GDPR)
+  - **Checklist implementativa**: 9 task operativi in 05_security_auth.md
+  - **Non bloccante sviluppo**: policy possono essere scritte in parallelo, feature "Delete Account" implementabile in fase finale MVP
+- **Implicazioni**: GDPR compliance garantita con checklist chiara. Cookie consent + privacy policy obbligatori pre-launch. Delete account obbligatorio. Supabase region EU da configurare.
+
+---
+
 ## 2026-03-27 (rev 7)
 - **Azione**: Chiusura stack critico Database + ORM + Auth (OD-24, OD-25, OD-26, OD-28, OD-29, OD-31).
 - **OD-24 - Database**: **Supabase PostgreSQL** confermato

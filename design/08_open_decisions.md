@@ -62,7 +62,7 @@
 - [x] **OD-29** Provider auth → **Supabase Auth**. Integrazione nativa Supabase, JWT session, coverage AI ottima, zero setup auth infra. Collegamento auth.users ↔ public.User.
 - [x] **OD-30** Ruoli → `admin` · `coach` · `trainee`. Matrice permessi in 05_security_auth.md.
 - [x] **OD-31** Gestione segreti → **Vercel Environment Variables** confermate (DATABASE_URL, SUPABASE_SERVICE_ROLE_KEY, etc). No vault necessario per MVP.
-- [ ] **OD-32** Compliance GDPR? (dati personali trainee presenti)
+- [x] **OD-32** Compliance GDPR → Dettagliato in 05_security_auth.md. Requisiti MVP: Cookie consent banner, Privacy Policy + Terms, Delete Account feature, Supabase region EU, data retention policy. Checklist implementativa completa.
 
 ---
 
