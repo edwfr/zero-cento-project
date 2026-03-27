@@ -143,13 +143,21 @@ Week
   programId          FK → TrainingProgram
   weekNumber         Int              -- 1, 2, 3, ..., n
   startDate          Date?            -- Data inizio settimana (calcolata: program.startDate + (weekNumber-1)*7 giorni)
-  feedbackRequested  Boolean          -- settimana marcata come rilevante per feedback
+  feedbackRequested  Boolean          -- feedback OBBLIGATORIO per questa settimana (impostato da trainer)
   generalFeedback    String?          -- feedback generale del trainee sulla settimana
   
   -- NOTA: startDate calcolato automaticamente dopo pubblicazione programma
   -- Week 1 startDate = TrainingProgram.startDate (scelto da trainer a pubblicazione)
   -- Week 2 startDate = TrainingProgram.startDate + 7 giorni
   -- Week n startDate = TrainingProgram.startDate + (n-1)*7 giorni
+  
+  -- NOTA: feedbackRequested
+  -- Trainer può marcare settimane specifiche come "feedback obbligatorio"
+  -- Esempio: Week 1-4 feedbackRequested=false (feedback opzionale)
+  --          Week 5 feedbackRequested=true (feedback OBBLIGATORIO)
+  --          Week 6 feedbackRequested=false (feedback opzionale)
+  -- Se true, trainee deve compilare feedback per TUTTI gli esercizi della settimana
+  -- UI trainee mostra badge "Feedback Richiesto" e blocca avanzamento settimana successiva se incompleto
 
 Workout
   id            UUID  PK
@@ -321,6 +329,171 @@ Filtri: [Questa settimana] [< 2 settimane] [Tutte]
   - Creare nuova scheda (se scheda corrente sta per terminare)
   - Visualizzare storico schede trainee
 - **Notifiche opzionali**: Sistema può inviare notifiche email/push a trainer quando scheda sta per scadere (< 7 giorni) ❓ **OD-28**
+
+## Gestione Feedback
+
+### Feedback Obbligatori per Settimana
+
+Il trainer può marcare settimane specifiche come "feedback obbligatorio" durante la compilazione della scheda.
+
+**Workflow Trainer (compilazione scheda)**:
+```typescript
+// Durante creazione/modifica settimana
+PATCH /api/weeks/[week-id]
+{
+  "feedbackRequested": true  // Marca la settimana come obbligatoria per feedback
+}Validazione feedback obbligatori**: COUNT `WorkoutExercise` vs COUNT `ExerciseFeedback` per settimana con `feedbackRequested=true`
+- **Storico feedback esercizio**: `ExerciseFeedback` per `exerciseId` + `dayLabel` + `programId` + settimane precedenti, ordinati per `weekNumber` DESC
+- **
+
+// Esempio: Scheda 12 settimane
+// Week 1-4: feedbackRequested = false (feedback opzionale)
+// Week 5: feedbackRequested = true (OBBLIGATORIO - punto controllo mesociclo)
+// Week 6-11: feedbackRequested = false (opzionale)
+// Week 12: feedbackRequested = true (OBBLIGATORIO - valutazione finale)
+```
+
+**UI Trainer (vista scheda)**:
+```
+┌─────────── Configurazione Settimane ───────────┐
+│ Week 1  [ ] Feedback obbligatorio              │
+│ Week 2  [ ] Feedback obbligatorio              │
+│ Week 3  [ ] Feedback obbligatorio              │
+│ Week 4  [ ] Feedback obbligatorio              │
+│ Week 5  [✓] Feedback obbligatorio  ⚠️          │
+│ Week 6  [ ] Feedback obbligatorio              │
+│ ...                                            │
+│ Week 12 [✓] Feedback obbligatorio  ⚠️          │
+└────────────────────────────────────────────────┘
+```
+
+**Workflow Trainee (compilazione feedback)**:
+
+Se `Week.feedbackRequested = true`:
+- UI mostra badge "🔴 Feedback Obbligatorio" sulla settimana
+- Trainee deve compilare `ExerciseFeedback` per TUTTI i `WorkoutExercise` della settimana
+- Sistema blocca avanzamento alla settimana successiva finché feedback non è completo
+- Notifica push/email a trainee se settimana obbligatoria sta per terminare senza feedback
+
+Se `Week.feedbackRequested = false`:
+- Trainee può compilare feedback su esercizi specifici a sua discrezione
+- Nessun blocco avanzamento settimana
+
+**Query validazione feedback obbligatorio**:
+```sql
+-- Verifica se trainee ha completato feedback obbligatori per settimana
+SELECT 
+  w.id AS weekId,
+  w.weekNumber,
+  w.feedbackRequested,
+  COUNT(DISTINCT we.id) AS totalExercises,
+  COUNT(DISTINCT ef.workoutExerciseId) AS exercisesWithFeedback
+FROM Week w
+JOIN Workout wo ON wo.weekId = w.id
+JOIN WorkoutExercise we ON we.workoutId = wo.id
+LEFT JOIN ExerciseFeedback ef ON ef.workoutExerciseId = we.id 
+  AND ef.traineeId = <traineeId>
+WHERE w.id = <weekId>
+  AND w.feedbackRequested = true
+GROUP BY w.id, w.weekNumber, w.feedbackRequested
+HAVING COUNT(DISTINCT we.id) != COUNT(DISTINCT ef.workoutExerciseId)
+
+-- Se query ritorna righe → feedback incompleto (blocca avanzamento)
+-- Se query vuota → feedback completo (consenti avanzamento)
+```
+
+### Storico Feedback per Esercizio
+
+Quando il trainee compila feedback per un esercizio, può visualizzare i feedback delle settimane precedenti per **lo stesso esercizio** all'interno della stessa scheda.
+
+**Caso d'uso**:
+- Trainee è a Week 5, Workout "Giorno A", esercizio "Squat"
+- Può vedere feedback di Squat da Week 1, 2, 3, 4 (dello stesso Workout "Giorno A")
+- Visualizza: RPE percepito, serie/reps/peso completati, note personali
+
+**Query storico feedback esercizio**:
+```sql
+-- Recupera storico feedback per stesso esercizio nelle settimane precedenti
+SELECT 
+  w.weekNumber,
+  w.startDate,
+  ef.date,
+  ef.actualRpe,
+  ef.setsPerformed,  -- JSON array [{reps: 8, weight: 80}, ...]
+  ef.notes,
+  ef.completed,
+  we.sets AS targetSets,
+  we.reps AS targetReps,
+  we.targetRpe
+FROM ExerciseFeedback ef
+JOIN WorkoutExercise we ON ef.workoutExerciseId = we.id
+JOIN Workout wo ON we.workoutId = wo.id
+JOIN Week w ON wo.weekId = w.id
+WHERE we.exerciseId = <exerciseId>           -- Stesso esercizio (es. Squat)
+  AND wo.dayLabel = <currentDayLabel>         -- Stesso giorno (es. "Giorno A")
+  AND w.programId = <currentProgramId>        -- Stessa scheda
+  AND w.weekNumber < <currentWeekNumber>      -- Solo settimane PRECEDENTI
+  AND ef.traineeId = <traineeId>
+ORDER BY w.weekNumber DESC
+LIMIT 10  -- Ultime 10 settimane con feedback
+```
+
+**UI Trainee (compilazione feedback con storico)**:
+```
+┌─────────── Feedback Esercizio ───────────────────────────┐
+│ Week 5 · Giorno A · Squat                                │
+│                                                           │
+│ Target: 5 serie × 5 reps @ 80% 1RM (RPE 8.0)            │
+│                                                           │
+│ Serie Completate:                                        │
+│ Serie 1: [8] reps × [100] kg  RPE: [8.5]                │
+│ Serie 2: [7] reps × [100] kg                            │
+│ Serie 3: [6] reps × [100] kg                            │
+│ [+ Aggiungi Serie]                                       │
+│                                                           │
+│ Note personali:                                          │
+│ [Fatica accumulata, ridurre carico settimana prossima]  │
+│                                                           │
+│ ─────────── Storico Settimane Precedenti ────────────── │
+│                                                           │
+│ 📊 Week 4 (2026-04-22)                    RPE 8.0        │
+│    5×5 @ 95kg · Note: "Buona tecnica"                    │
+│    [Espandi dettagli ▼]                                  │
+│                                                           │
+│ 📊 Week 3 (2026-04-15)                    RPE 7.5        │
+│    5×5 @ 92.5kg · Note: "Ancora sotto RPE target"        │
+│    [Espandi dettagli ▼]                                  │
+│                                                           │
+│ 📊 Week 2 (2026-04-08)                    RPE 7.0        │
+│    5×5 @ 90kg · Note: "Facile, aumentare carico"         │
+│    [Espandi dettagli ▼]                                  │
+│                                                           │
+│ 📊 Week 1 (2026-04-01)                    RPE 6.5        │
+│    5×5 @ 85kg · Note: "Settimana introduttiva"           │
+│    [Espandi dettagli ▼]                                  │
+│                                                           │
+│ [Salva Feedback]                               [Annulla] │
+└───────────────────────────────────────────────────────────┘
+```
+
+**Dettagli implementativi storico**:
+- Storico mostrato solo quando trainee apre form feedback esercizio
+- Confronto automatico target vs actual (evidenzia se trainee ha raggiunto target RPE/reps)
+- Grafico opzionale: trend RPE/peso nelle ultime N settimane ❓ **OD-29**
+- Espansione dettaglio mostra serie complete: `[{reps: 5, weight: 85}, {reps: 5, weight: 85}, ...]`
+
+### Note UX
+
+**Feedback obbligatorio**:
+- Badge visibile: 🔴 "Feedback Obbligatorio" in header settimana
+- Progress bar: "3/8 esercizi completati" (dinamico)
+- Alert: "Completa tutti i feedback per avanzare a Week 6"
+- Notifica trainer: quando trainee completa settimana con feedback obbligatorio
+
+**Storico feedback**:
+- Caricamento lazy: storico recuperato solo quando trainee apre form esercizio (no preload)
+- Cache locale: storico cachato per sessione (evita query ripetute)
+- Collapsible: default collapsed per non ingombrare UI, espandibile on-click
 
 ## Query critiche
 - **Scheda corrente trainee**: `TrainingProgram` con `status=active` e `traineeId=<id>`, espanso fino a `WorkoutExercise`.
@@ -551,7 +724,44 @@ Scheda "Powerlifting 12 settimane" (Draft)
 ⚠️  Week 2: 2/4 workout compilati
 🔘 Week 3-12: non iniziate
 
+Feedback Obbligatori:
+🔴 Week 5 (punto controllo)
+🔴 Week 12 (valutazione finale)
+
 [Continua Modifica] [Pubblica]
+```
+
+**Step 4.1: Configurazione feedback obbligatori**
+Trainer marca settimane con feedback obbligatorio:
+```typescript
+// Trainer marca Week 5 e Week 12 come feedback obbligatorio
+PATCH /api/weeks/[week5-uuid]
+{
+  "feedbackRequested": true
+}
+
+PATCH /api/weeks/[week12-uuid]
+{
+  "feedbackRequested": true
+}
+```
+
+UI configurazione feedback:
+```
+┌──── Configurazione Feedback per Settimana ────┐
+│                                                │
+│ Seleziona settimane con feedback OBBLIGATORIO:│
+│                                                │
+│ [ ] Week 1    [ ] Week 5  🔴  [ ] Week 9      │
+│ [ ] Week 2    [ ] Week 6      [ ] Week 10     │
+│ [ ] Week 3    [ ] Week 7      [ ] Week 11     │
+│ [ ] Week 4    [ ] Week 8      [✓] Week 12  🔴 │
+│                                                │
+│ ℹ️ Settimane marcate richiedono feedback      │
+│   completo prima di avanzare                  │
+│                                                │
+│ [Salva Configurazione]                         │
+└────────────────────────────────────────────────┘
 ```
 
 **Step 5: Pubblicazione**
