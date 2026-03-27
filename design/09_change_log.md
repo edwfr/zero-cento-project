@@ -4,6 +4,45 @@
 
 ---
 
+## 2026-03-27 (rev 14)
+- **Azione**: Chiusura OD-21 (Rate Limiting) e OD-22 (Logging Strutturato).
+- **OD-21 - Rate Limiting**: 
+  - **Soluzione MVP**: Middleware Next.js custom con in-memory store
+  - **Limiti definiti**: 
+    - Auth login: 5 tentativi / 15 minuti (prevenzione brute-force)
+    - Auth signup: 3 registrazioni / ora (prevenzione spam)
+    - Feedback: 30 richieste / minuto (realistico per workflow trainee)
+    - Creazione utenti: 20 trainee / ora per trainer
+    - API autenticate generiche: 100 richieste / minuto per utente
+    - API pubbliche: 20 richieste / minuto per IP
+  - **Rationale**: In-memory sufficiente per scala MVP (54 utenti), zero dipendenze esterne, setup immediato
+  - **Limitazioni**: State volatile (reset ad ogni deploy), non condiviso tra istanze serverless (ok per Vercel single-region)
+  - **Evoluzione post-MVP**: Upstash Redis per persistence, multi-region support, analytics avanzate
+  - **Implementazione**: Middleware in `middleware.ts` con Map() JavaScript, chiavi per IP (non autenticati) o userId (autenticati), HTTP 429 con messaggio user-friendly
+- **OD-22 - Logging Strutturato**:
+  - **Libreria**: **Pino** — logger Node.js high-performance, output JSON strutturato, vastissima coverage AI
+  - **Livelli abilitati**:
+    - **Development**: DEBUG, INFO, WARN, ERROR (con pino-pretty per output colorato)
+    - **Production**: INFO, WARN, ERROR (DEBUG disabilitato per ridurre noise e costi)
+  - **Rationale**: Pino è lo standard de facto per logging Node.js serverless, performance eccellenti, structured logging nativo
+  - **Error tracking**: Integrazione **Sentry** (free tier 5K eventi/mese) per alerting, source maps, user impact analysis
+  - **Pattern logging**: Context ricco con userId, action, timestamp su ogni log; no dati sensibili (password, token); stack trace su errori
+  - **Visualizzazione**: Vercel Dashboard per log real-time (retention 1 giorno free, 7 giorni Pro); Sentry dashboard per errori critici con alerting
+  - **Best practices**: Log eventi chiave (login, creazione risorse, errori), evita log eccessivi in prod, monitora Sentry quota
+- **Implicazioni tecniche**:
+  - Rate limiting: file `middleware.ts` con matcher `/api/:path*`, response 429 con error code standard, frontend gestisce 429 con toast user-friendly
+  - Logging: file `lib/logger.ts` con config Pino, import in ogni API Route, wrapper `logger.info/warn/error()` con structured data
+  - Sentry: `sentry.server.config.ts` + `@sentry/nextjs`, captureException con context (tags, user, extra), alerting configurabile
+- **Costi stimati**: 
+  - Rate limiting in-memory: €0 (nessuna dipendenza esterna)
+  - Pino logging: €0 (libreria open source)
+  - Sentry free tier: €0 fino a 5K errori/mese (ampiamente sufficiente MVP)
+  - Vercel log retention: incluso in piano Pro (7 giorni)
+- **Documentazione aggiornata**: 03_backend_api.md con sezioni dettagliate "Rate Limiting" e "Logging Strutturato" (implementazione, pattern, esempi codice)
+- **Implicazioni**: Backend protetto da abusi con rate limiting granulare. Logging strutturato garantisce diagnostica errori efficace e monitoring production. Sentry free tier per alerting critici. Setup immediato, zero costi aggiuntivi, coverage AI ottima.
+
+---
+
 ## 2026-03-27 (rev 13)
 - **Azione**: Rinominazione globale del ruolo "Coach" in "Trainer".
 - **Rationale**: Standardizzazione terminologia per chiarezza semantica - "Trainer" è più comunemente utilizzato nel contesto fitness/sportivo per chi allena atleti.

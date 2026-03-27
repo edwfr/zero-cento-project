@@ -41,8 +41,8 @@
 - [x] **OD-18** Stile API → **REST** con endpoint HTTP standard. Coverage AI eccellente, pattern consolidati, semantics chiare. Server Actions opzionali per form.
 - [x] **OD-19** Validazione input → **Zod** confermato. Schema riutilizzabili, type-safety, integrazione React Hook Form.
 - [x] **OD-20** Formato standard errori API → definito in 03_backend_api.md (`{data}` per success, `{error: {code, message, details?}}` per errori).
-- [ ] **OD-21** Rate limiting / throttling?
-- [ ] **OD-22** Logging strutturato: soluzione e livelli?
+- [x] **OD-21** Rate limiting / throttling? → **Middleware custom Next.js** con in-memory store per MVP. Limiti: 5 tentativi/15min su auth, 30 req/min su feedback, 100 req/min per utente autenticato. Upstash Redis opzionale per production scaling.
+- [x] **OD-22** Logging strutturato: soluzione e livelli? → **Pino** per logging strutturato JSON. Livelli prod: INFO, WARN, ERROR (DEBUG solo dev). Integrazione **Sentry** (free tier) per error tracking e alerting.
 
 ---
 
