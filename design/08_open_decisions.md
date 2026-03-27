@@ -6,80 +6,80 @@
 
 ## 00 — Problem Statement
 
-- [ ] **OD-01** Chi è l'utente primario? (ruolo, contesto d'uso, livello tecnico)
-- [ ] **OD-02** Esistono utenti secondari o amministratori?
-- [ ] **OD-03** Qual è il valore concreto prodotto dall'app? (outcome misurabile)
-- [ ] **OD-04** Quali funzionalità sono esplicitamente fuori scope (MVP)?
-- [ ] **OD-05** Vincoli tecnologici esistenti? (es. stack aziendale obbligato, cloud provider, licenze)
-- [ ] **OD-06** Vincoli temporali / milestone principali?
-- [ ] **OD-07** Vincoli organizzativi? (team size, approvazioni, compliance)
+- [x] **OD-01** Chi è l'utente primario? → Coach (crea schede) e Trainee (esegue e dà feedback).
+- [x] **OD-02** Esistono utenti secondari? → Admin (gestione anagrafiche).
+- [x] **OD-03** Valore concreto? → Centralizzare gestione schede multi-settimana e raccolta feedback coach↔trainee.
+- [x] **OD-04** Scope OUT (funzionalità escluse dall'MVP)? → Pagamenti, app nativa (solo web responsive mobile-friendly), chat trainer-trainee, nutrizione.
+- [x] **OD-05** Vincoli tecnologici → Next.js (App Router) + Vercel.
+- [x] **OD-06** Vincoli temporali / milestone principali? → Nessuno al momento.
+- [x] **OD-07** Vincoli organizzativi (team size, processi di approvazione)? → Nessuno.
 
 ---
 
 ## 01 — Architecture Overview
 
-- [ ] **OD-08** Quale stack tecnologico viene adottato? (Frontend framework, Backend runtime, DB)
-- [ ] **OD-09** Hosting / Cloud provider? (Vercel, AWS, Azure, on-premise…)
-- [ ] **OD-10** Architettura: monolite, microservizi, serverless, edge?
-- [ ] **OD-11** Esiste un BFF (Backend for Frontend) o il frontend chiama direttamente le API?
-- [ ] **OD-12** Quali sono i rischi architetturali da monitorare?
+- [x] **OD-08** Stack → Next.js full-stack (frontend + API Routes / Server Actions).
+- [x] **OD-09** Hosting → Vercel.
+- [x] **OD-10** Architettura → monolite applicativo Next.js su infrastruttura serverless Vercel.
+- [x] **OD-11** BFF → Next.js è il BFF; nessun servizio backend separato.
+- [x] **OD-12** Rischi architetturali → dettagliati in 01_architecture_overview.md (cold start BASSO con Vercel Pro, connection pooling MEDIO - richiede configurazione).
 
 ---
 
 ## 02 — Frontend Design
 
-- [ ] **OD-13** Quali sono le pagine/schermate principali dell'applicazione?
-- [ ] **OD-14** Quale libreria UI viene utilizzata? (es. shadcn/ui, MUI, Tailwind puro…)
-- [ ] **OD-15** Quale soluzione di state management globale? (Zustand, Redux, Context API, nessuna)
-- [ ] **OD-16** Come vengono gestiti i form? (React Hook Form, Formik, nativo)
-- [ ] **OD-17** L'app richiede SSR / SSG o è interamente SPA?
+- [x] **OD-13** Pagine principali → definite per ruolo (admin/coach/trainee) in 02_frontend_design.md.
+- [x] **OD-14** Libreria UI → **Tailwind CSS** (coverage AI ottima) + **Material UI (MUI)** (vastissima documentazione nei training data, componenti accessibili pronti). Alternativa: shadcn/ui se si preferisce modernità.
+- [x] **OD-15** State management → **TanStack Query** per server state (ottima coverage AI, pattern consolidati) + **Context API** per state globale semplice (React nativo, nessuna dipendenza).
+- [x] **OD-16** Gestione form → **React Hook Form** + **Zod** (standard de facto, altissima presenza training data AI, pattern validation consolidati).
+- [x] **OD-17** SSR vs SPA → Next.js App Router usa SSR/RSC di default; client components per parti interattive.
 
 ---
 
 ## 03 — Backend & API
 
-- [ ] **OD-18** REST, GraphQL, tRPC o altro?
-- [ ] **OD-19** Dove avviene la validazione degli input? (zod, yup, joi, lato DB)
-- [ ] **OD-20** Qual è il formato standard degli errori API?
-- [ ] **OD-21** Si utilizzano rate limiting / throttling? Con quale provider?
-- [ ] **OD-22** Logging strutturato: soluzione e livelli di log previsti?
+- [ ] **OD-18** Stile API → REST (default) o tRPC? Server Actions per form mutations?
+- [ ] **OD-19** Validazione input → Zod consigliato (da confermare).
+- [ ] **OD-20** Formato standard errori API → proposta in 03_backend_api.md, da approvare.
+- [ ] **OD-21** Rate limiting / throttling?
+- [ ] **OD-22** Logging strutturato: soluzione e livelli?
 
 ---
 
 ## 04 — Data Model
 
-- [ ] **OD-23** Quali sono le entità principali del dominio?
-- [ ] **OD-24** Database relazionale o document-based? (PostgreSQL, MySQL, MongoDB, SQLite…)
-- [ ] **OD-25** Si usa un ORM? (Prisma, Drizzle, TypeORM, nessuno)
-- [ ] **OD-26** Strategia di migrazione dello schema? (migration files, push automatico)
-- [ ] **OD-27** Crescita attesa dei dati: ordini di grandezza per le entità principali?
+- [x] **OD-23** Entità principali → User, CoachTrainee, Exercise, TrainingProgram, Week, Workout, WorkoutExercise, ExerciseFeedback.
+- [ ] **OD-24** DB engine → PostgreSQL consigliato (Neon o Supabase per Vercel); da confermare.
+- [ ] **OD-25** ORM → Prisma consigliato; da confermare.
+- [ ] **OD-26** Strategia migrazioni schema (migration files vs prisma db push)?
+- [ ] **OD-27** Crescita dati → stima ~14.400 WorkoutExercise + ~14.400 Feedback nel primo ciclo (50 trainee). Dimensioni molto contenute.
 
 ---
 
 ## 05 — Security & Auth
 
-- [ ] **OD-28** Quale metodo di autenticazione? (email+password, OAuth, magic link, SSO aziendale)
-- [ ] **OD-29** Provider di autenticazione? (NextAuth, Auth0, Clerk, Firebase Auth, custom)
-- [ ] **OD-30** Quali ruoli esistono nel sistema? (admin, user, guest…)
-- [ ] **OD-31** Come vengono gestiti i segreti? (env vars, secret manager, vault)
-- [ ] **OD-32** Requisiti di compliance? (GDPR, SOC2, ISO 27001)
+- [ ] **OD-28** Metodo autenticazione → email+password (assunto); OAuth da valutare.
+- [ ] **OD-29** Provider auth → NextAuth.js (Auth.js) consigliato; alternativa Clerk.
+- [x] **OD-30** Ruoli → `admin` · `coach` · `trainee`. Matrice permessi in 05_security_auth.md.
+- [ ] **OD-31** Gestione segreti → Vercel Env Vars (assunto); vault per scenari enterprise.
+- [ ] **OD-32** Compliance GDPR? (dati personali trainee presenti)
 
 ---
 
 ## 06 — Deploy & Scaling
 
-- [ ] **OD-33** Ambienti previsti: dev / staging / prod? URL e accessi?
-- [ ] **OD-34** CI/CD pipeline: GitHub Actions, GitLab CI, altro?
-- [ ] **OD-35** Strategia di deploy: rolling, blue/green, immutabile?
-- [ ] **OD-36** Bottleneck di scalabilità previsti? (DB connections, compute, storage)
+- [ ] **OD-33** URL produzione e accessi ambienti?
+- [ ] **OD-34** CI/CD → integrazione Vercel+GitHub nativa sufficiente; GitHub Actions per test aggiuntivi?
+- [x] **OD-35** Strategia deploy → deploy immutabili Vercel con rollback istantaneo (risolto da piattaforma).
+- [ ] **OD-36** Bottleneck → DB connection pooling su serverless (mitigazione: PgBouncer / Prisma Accelerate).
 - [ ] **OD-37** Budget infrastrutturale mensile stimato?
 
 ---
 
 ## 07 — Testing Strategy
 
-- [ ] **OD-38** Framework di unit test? (Vitest, Jest, pytest…)
-- [ ] **OD-39** Framework E2E? (Playwright, Cypress, nessuno per MVP)
-- [ ] **OD-40** Soglia minima di code coverage accettata?
-- [ ] **OD-41** I test E2E girano in CI o solo in locale?
-- [ ] **OD-42** Quali sono i flussi utente critici da coprire obbligatoriamente?
+- [ ] **OD-38** Framework unit test → Vitest consigliato.
+- [ ] **OD-39** Framework E2E → Playwright consigliato; in scope per MVP?
+- [ ] **OD-40** Soglia minima coverage (es. 70%)?
+- [ ] **OD-41** Test E2E in CI o solo locale?
+- [ ] **OD-42** Flussi critici → bozza definita in 07_testing_strategy.md; da approvare.
