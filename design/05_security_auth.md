@@ -31,15 +31,15 @@ const { data, error } = await supabase.auth.signInWithPassword({
 - **Ruoli**: `admin` · `coach` · `trainee`.
 - **Matrice permessi**:
 
-| Risorsa                  | admin   | coach              | trainee             |
-| ------------------------ | ------- | ------------------ | ------------------- |
-| Gestione utenti (CRUD)   | ✅       | ❌ (solo creazione trainee) | ❌                   |
-| Libreria esercizi        | lettura | CRUD (propri)      | lettura             |
-| Schede                   | lettura | CRUD (proprie)     | lettura (assegnate) |
-| Feedback                 | lettura | lettura            | CRUD (propri)       |
-| Massimali (PersonalRecord) | lettura | lettura (propri trainee) | CRUD (propri) |
-| Reportistica             | ✅       | ✅ (propri trainee) | ✅ (propria)        |
-| Monitoraggio avanzamento | ✅       | ✅ (propri trainee) | ❌                   |
+| Risorsa                    | admin   | coach                      | trainee             |
+| -------------------------- | ------- | -------------------------- | ------------------- |
+| Gestione utenti (CRUD)     | ✅       | ❌ (solo creazione trainee) | ❌                   |
+| Libreria esercizi          | lettura | CRUD (propri)              | lettura             |
+| Schede                     | lettura | CRUD (proprie)             | lettura (assegnate) |
+| Feedback                   | lettura | lettura                    | CRUD (propri)       |
+| Massimali (PersonalRecord) | lettura | lettura (propri trainee)   | CRUD (propri)       |
+| Reportistica               | ✅       | ✅ (propri trainee)         | ✅ (propria)         |
+| Monitoraggio avanzamento   | ✅       | ✅ (propri trainee)         | ❌                   |
 
 - **Isolamento dati**: un coach vede e modifica solo trainee e schede a lui assegnati; un trainee vede solo le proprie schede.
 

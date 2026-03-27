@@ -25,13 +25,13 @@
 | `DELETE` | `/api/users/[id]` | Elimina utente          |
 
 ### Esercizi (Coach)
-| Method   | Path                  | Descrizione                                          |
-| -------- | --------------------- | ---------------------------------------------------- |
+| Method   | Path                  | Descrizione                                            |
+| -------- | --------------------- | ------------------------------------------------------ |
 | `GET`    | `/api/exercises`      | Lista libreria esercizi (filtri: tipo, schema motorio) |
-| `POST`   | `/api/exercises`      | Crea esercizio                                       |
-| `GET`    | `/api/exercises/[id]` | Dettaglio esercizio                                  |
-| `PUT`    | `/api/exercises/[id]` | Modifica esercizio                                   |
-| `DELETE` | `/api/exercises/[id]` | Elimina esercizio                                    |
+| `POST`   | `/api/exercises`      | Crea esercizio                                         |
+| `GET`    | `/api/exercises/[id]` | Dettaglio esercizio                                    |
+| `PUT`    | `/api/exercises/[id]` | Modifica esercizio                                     |
+| `DELETE` | `/api/exercises/[id]` | Elimina esercizio                                      |
 
 ### Schede / Programmi (Coach)
 | Method   | Path                          | Descrizione                           |
@@ -52,21 +52,21 @@
 | `PUT`  | `/api/feedback/[id]`            | Modifica feedback esistente            |
 
 ### Massimali / Personal Records (Trainee + Coach)
-| Method   | Path                             | Descrizione                                 |
-| -------- | -------------------------------- | ------------------------------------------- |
-| `GET`    | `/api/trainee/records`           | Lista massimali del trainee autenticato     |
+| Method   | Path                                | Descrizione                               |
+| -------- | ----------------------------------- | ----------------------------------------- |
+| `GET`    | `/api/trainee/records`              | Lista massimali del trainee autenticato   |
 | `GET`    | `/api/trainee/records/[exerciseId]` | Storico massimali per esercizio specifico |
-| `POST`   | `/api/trainee/records`           | Aggiungi nuovo massimale                    |
-| `PUT`    | `/api/trainee/records/[id]`      | Modifica massimale esistente                |
-| `DELETE` | `/api/trainee/records/[id]`      | Elimina massimale                           |
-| `GET`    | `/api/coach/trainees/[id]/records` | Coach visualizza massimali del trainee    |
+| `POST`   | `/api/trainee/records`              | Aggiungi nuovo massimale                  |
+| `PUT`    | `/api/trainee/records/[id]`         | Modifica massimale esistente              |
+| `DELETE` | `/api/trainee/records/[id]`         | Elimina massimale                         |
+| `GET`    | `/api/coach/trainees/[id]/records`  | Coach visualizza massimali del trainee    |
 
 ### Reportistica (Coach + Trainee)
-| Method | Path                                      | Descrizione                                           |
-| ------ | ----------------------------------------- | ----------------------------------------------------- |
-| `GET`  | `/api/programs/[id]/reports/sbd`          | Report SBD (FRQ, NBL, IM) per periodo specificato     |
-| `GET`  | `/api/programs/[id]/reports/training-sets` | Serie allenanti per gruppo muscolare (grafico)       |
-| `GET`  | `/api/programs/[id]/reports/volume`       | Volume totale (serie × rip) per gruppo muscolare      |
+| Method | Path                                       | Descrizione                                       |
+| ------ | ------------------------------------------ | ------------------------------------------------- |
+| `GET`  | `/api/programs/[id]/reports/sbd`           | Report SBD (FRQ, NBL, IM) per periodo specificato |
+| `GET`  | `/api/programs/[id]/reports/training-sets` | Serie allenanti per gruppo muscolare (grafico)    |
+| `GET`  | `/api/programs/[id]/reports/volume`        | Volume totale (serie × rip) per gruppo muscolare  |
 
 ## Validazione
 - **Libreria**: **Zod** — schema type-safe riutilizzabili, integrazione nativa con React Hook Form.

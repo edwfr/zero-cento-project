@@ -16,20 +16,20 @@
 | `/admin/users/[id]` | Dettaglio/modifica utente               |
 
 ### Coach
-| Route                           | Descrizione                                      |
-| ------------------------------- | ------------------------------------------------ |
-| `/coach/dashboard`              | Panoramica trainee assegnati e stato schede      |
-| `/coach/exercises`              | Libreria esercizi condivisa (lista + crea)       |
-| `/coach/exercises/[id]`         | Dettaglio esercizio (video YouTube + modifica)   |
-| `/coach/exercises/new`          | Creazione nuovo esercizio con campi completi     |
-| `/coach/trainees`               | Lista trainee gestiti                            |
-| `/coach/trainees/[id]`          | Profilo trainee + schede assegnate               |
+| Route                           | Descrizione                                       |
+| ------------------------------- | ------------------------------------------------- |
+| `/coach/dashboard`              | Panoramica trainee assegnati e stato schede       |
+| `/coach/exercises`              | Libreria esercizi condivisa (lista + crea)        |
+| `/coach/exercises/[id]`         | Dettaglio esercizio (video YouTube + modifica)    |
+| `/coach/exercises/new`          | Creazione nuovo esercizio con campi completi      |
+| `/coach/trainees`               | Lista trainee gestiti                             |
+| `/coach/trainees/[id]`          | Profilo trainee + schede assegnate                |
 | `/coach/trainees/[id]/create`   | Creazione nuovo profilo trainee (genera password) |
-| `/coach/trainees/[id]/records`  | Visualizza/modifica massimali trainee            |
-| `/coach/programs/new`           | Creazione nuova scheda multi-settimana           |
-| `/coach/programs/[id]`          | Dettaglio / modifica scheda                      |
-| `/coach/programs/[id]/progress` | Monitoraggio avanzamento + feedback trainee      |
-| `/coach/programs/[id]/reports`  | Reportistica SBD e serie allenanti               |
+| `/coach/trainees/[id]/records`  | Visualizza/modifica massimali trainee             |
+| `/coach/programs/new`           | Creazione nuova scheda multi-settimana            |
+| `/coach/programs/[id]`          | Dettaglio / modifica scheda                       |
+| `/coach/programs/[id]/progress` | Monitoraggio avanzamento + feedback trainee       |
+| `/coach/programs/[id]/reports`  | Reportistica SBD e serie allenanti                |
 
 ### Trainee
 | Route                                        | Descrizione                                       |
