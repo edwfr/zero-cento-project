@@ -4,6 +4,65 @@
 
 ---
 
+## 2026-03-27 (rev 17)
+- **Azione**: Strategia session management per allenamenti lunghi (60-90+ min) senza re-login.
+- **Requisito**: Trainee usa app in palestra con frequente app switching (Instagram, musica, timer) durante recuperi tra serie. Sistema deve mantenere sessione attiva senza interruzioni.
+- **Contesto d'uso utenti**:
+  - **Trainer**: Accesso sporadico (15-30 min) per creazione contenuti (profili, schede) da desktop
+  - **Trainee**: Accesso continuativo (60-90+ min) durante allenamento in palestra da mobile, con app in background durante recuperi
+- **Session strategy**:
+  - **Access Token JWT**: 4 ore expiry (copre allenamento 90min + ampio margine)
+  - **Refresh Token**: 30 giorni expiry (utente non deve rifare login ogni giorno)
+  - **Auto-refresh**: Supabase Auth rinnova automaticamente access token usando refresh token prima della scadenza
+  - **Persist session**: Cookie HTTP-only + `persistSession: true` mantiene sessione anche dopo chiusura browser
+- **Configurazione Supabase Auth**:
+  ```typescript
+  {
+    jwt: { expiryDuration: 14400 },      // 4 ore
+    refreshToken: { expiryDuration: 2592000 }, // 30 giorni
+    autoRefreshToken: true,
+    persistSession: true
+  }
+  ```
+- **Workflow tipico trainee**:
+  1. Login 10:00 → access token valido fino 14:00
+  2. Allenamento 10:30-12:00 → app switcha tra esercizi + Instagram + timer
+  3. Sessione rimane attiva (access token valido)
+  4. Riapre app 14:30 → access token scaduto → Supabase auto-refresh con refresh token → nuovo access token → user rimane loggato senza interruzione
+  5. Dopo 30 giorni inattività → refresh token scade → richiesto login (ragionevole)
+- **PWA (Progressive Web App) per trainee**:
+  - **Installazione**: Web App Manifest per icona home screen, modalità standalone (no browser UI), portrait lock
+  - **Offline support**: Service Worker con cache strategy (scheda corrente cache-first, feedback network-first con queue)
+  - **State persistence**: localStorage per feedback parziali (auto-save ogni 5s, ripristino dopo app switch)
+  - **Install prompt**: Mostrato solo su mobile (<768px) per trainee, suggerisce installazione per accesso rapido
+- **Protezione sicurezza**:
+  - Cookie `Secure` (HTTPS only), `HttpOnly` (no JS access), `SameSite=Lax` (CSRF protection)
+  - Refresh token rotation: Supabase genera nuovo refresh token ad ogni refresh, invalida vecchio (anti replay attack)
+- **State persistence feedback**:
+  - Hook `useFeedbackPersistence(workoutExerciseId)` salva draft in localStorage ogni 5s
+  - Ripristina automaticamente form se trainee switcha app e torna
+  - Auto-clear draft dopo 24h (evita accumulo storage)
+- **Benefici**:
+  - ✅ **Zero friction**: Trainee non deve mai rifare login durante allenamento
+  - ✅ **App switching seamless**: Passa tra app senza perdere stato
+  - ✅ **Dati sicuri**: Feedback parziale salvato, recuperabile dopo crash/chiusura accidentale
+  - ✅ **Esperienza nativa**: PWA installabile con icona home screen, full-screen
+  - ✅ **Offline capable**: Scheda consultabile anche senza rete (palestre con WiFi scarso)
+- **Implicazioni tecniche**:
+  - `next-pwa` package per generazione service worker
+  - Web App Manifest in `/public/manifest.json`
+  - Service Worker strategy: Workbox con NetworkFirst per API, CacheFirst per assets
+  - Hook `useLocalStorage` per persistence feedback drafts
+  - Component `InstallPrompt` per suggerire installazione PWA
+- **Testing**: Aggiunti test P2 per session expiry + auto-refresh, P3 per PWA install prompt, P3 per feedback draft persistence
+- **Documentazione aggiornata**:
+  - 00_problem_statement.md: Sezione "Contesto d'uso" con dettaglio sessioni trainer/trainee
+  - 05_security_auth.md: Sezione "Session Management per Allenamenti Lunghi" con configuration, workflow, security
+  - 02_frontend_design.md: Sezione "PWA (Progressive Web App) per Trainee" con manifest, service worker, state persistence
+- **Implicazioni**: UX trainee ottimizzata per uso reale palestra. Session 4h + auto-refresh elimina frustrazione re-login. PWA offre esperienza app nativa senza development iOS/Android. State persistence protegge lavoro utente da perdita dati accidentale. Strategia allineata con best practice mobile fitness apps.
+
+---
+
 ## 2026-03-27 (rev 16)
 - **Azione**: Libreria esercizi da privata per trainer a CONDIVISA tra tutti i trainer.
 - **Requisito**: Gestione collaborativa libreria esercizi — tutti i trainer devono poter creare, modificare, eliminare qualsiasi esercizio.

@@ -27,6 +27,112 @@ const { data, error } = await supabase.auth.signInWithPassword({
 - Prisma gestisce tabella `public.User` (id, name, role, ...)
 - Collegamento: `User.id` (UUID) = `auth.users.id` (trigger Supabase per sync)
 
+### Session Management per Allenamenti Lunghi
+
+**Requisito critico**: Trainee usa app in palestra per 60-90+ minuti con frequente app switching (Instagram, timer, musica) durante recuperi. Sistema deve **NON richiedere re-login** durante sessione allenamento.
+
+**Strategia Supabase Auth**:
+
+| Token                  | Expiry        | Storage          | Scopo                           |
+| ---------------------- | ------------- | ---------------- | ------------------------------- |
+| **Access Token** (JWT) | **4 ore**     | Cookie HTTP-only | Autenticazione API requests     |
+| **Refresh Token**      | **30 giorni** | Cookie HTTP-only | Rinnovo automatico access token |
+
+**Configurazione Supabase**:
+```typescript
+// supabase/config.ts
+export const supabaseConfig = {
+  auth: {
+    // Access token valido 4 ore (copre allenamento 90min + margine)
+    jwt: {
+      expiryDuration: 14400 // 4 ore in secondi
+    },
+    // Refresh token valido 30 giorni (utente non deve rifare login ogni giorno)
+    refreshToken: {
+      expiryDuration: 2592000 // 30 giorni in secondi
+    },
+    // Auto-refresh quando access token scade
+    autoRefreshToken: true,
+    // Persisti sessione anche dopo chiusura browser
+    persistSession: true,
+    // Detection cambio sessione in altri tab
+    detectSessionInUrl: true
+  }
+}
+```
+
+**Workflow session refresh automatico**:
+```
+1. Trainee fa login alle 10:00
+   ├─> Access token valido fino 14:00
+   └─> Refresh token valido fino 30 giorni dopo
+
+2. Trainee inizia allenamento 10:30 (app aperta)
+   ├─> Completa 3 esercizi (10:30 - 11:15)
+   ├─> Switcha su Instagram durante recupero (app in background)
+   └─> Torna su app (11:20) → sessione ancora attiva ✅
+
+3. Trainee continua allenamento fino 12:00
+   ├─> Access token ancora valido (scade 14:00)
+   └─> Nessun re-login richiesto ✅
+
+4. Trainee chiude app, riapre 2 ore dopo (14:30)
+   ├─> Access token scaduto (era 14:00)
+   ├─> Supabase usa refresh token → genera nuovo access token
+   └─> Utente rimane loggato, no interruzione ✅
+
+5. Dopo 30 giorni senza uso
+   ├─> Refresh token scaduto
+   └─> Richiesto login (ragionevole per inattività prolungata)
+```
+
+**Client-side handling**:
+```typescript
+// lib/supabase-client.ts
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+
+export const supabase = createClientComponentClient({
+  supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  options: {
+    auth: {
+      autoRefreshToken: true, // Auto-refresh prima della scadenza
+      persistSession: true,   // Persist anche dopo chiusura browser
+      detectSessionInUrl: true
+    }
+  }
+})
+
+// Listener eventi sessione (opzionale, per logging)
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'TOKEN_REFRESHED') {
+    console.log('Session auto-refreshed', session)
+  }
+  if (event === 'SIGNED_OUT') {
+    // Redirect to login
+    window.location.href = '/login'
+  }
+})
+```
+
+**Protezione contro session hijacking**:
+- Cookie `Secure` flag (HTTPS only)
+- Cookie `SameSite=Lax` (protezione CSRF)
+- Cookie `HttpOnly` (no accesso JS, protezione XSS)
+- Rotation refresh token: Supabase genera nuovo refresh token ad ogni refresh (invalida vecchio)
+
+**Gestione app switching e background**:
+- Browser/WebView mantiene sessione anche con app in background
+- Service Worker (se PWA) mantiene stato anche offline
+- LocalStorage persiste feedback parziali (vedi sezione PWA)
+
+**Logout esplicito**:
+```typescript
+// Trainee clicca "Logout" manualmente
+await supabase.auth.signOut()
+// Invalida access + refresh token, clear cookies
+```
+
 ## Autorizzazione
 - **Ruoli**: `admin` · `trainer` · `trainee`.
 - **Matrice permessi**:

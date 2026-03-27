@@ -9,6 +9,11 @@ Realizzare una piattaforma web per la gestione di servizi di training sportivo/f
 - **Utente di sistema**: Admin -- gestisce tutte le anagrafiche (utenti, ruoli).
 - **Scala iniziale**: 1 admin - 3 trainer - 50 trainee.
 
+### Contesto d'uso
+- **Trainer**: Accesso sporadico per creazione contenuti (nuovi trainee, schede) -- sessioni brevi (15-30 min), principalmente da desktop
+- **Trainee**: Accesso continuativo durante allenamento (60-90+ min) in palestra -- sessioni lunghe, da mobile, con frequente app switching (Instagram, musica, timer) durante i recuperi tra serie
+- **Implicazione critica**: Sistema deve mantenere sessione attiva per 90+ minuti senza richiedere re-login, anche con app in background o device in standby durante recuperi
+
 ## Valore generato
 - Il trainer ha un unico strumento per progettare programmi multi-settimana con esercizi dettagliati (serie, ripetizioni, intensita, RPE) e monitorarne l'esecuzione.
 - Il trainee ha sempre visibile la scheda corrente e puo dare feedback immediato su ogni esercizio.

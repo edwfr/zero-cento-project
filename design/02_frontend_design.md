@@ -9,16 +9,16 @@
 | `/`      | Redirect automatico alla dashboard del ruolo dopo il login | tutti |
 
 ### Admin
-| Route               | Descrizione                                                                                |
-| ------------------- | ------------------------------------------------------------------------------------------ |
-| `/admin/dashboard`  | Panoramica sistema                                                                         |
+| Route               | Descrizione                                                                                  |
+| ------------------- | -------------------------------------------------------------------------------------------- |
+| `/admin/dashboard`  | Panoramica sistema                                                                           |
 | `/admin/users`      | Lista utenti (CRUD admin/trainer/trainee) con toggle attivo/disabilitato per tutti i trainee |
 | `/admin/users/new`  | Creazione nuovo utente (trainer o trainee)                                                   |
-| `/admin/users/[id]` | Dettaglio/modifica utente (include cambio ruolo e toggle attivazione)                      |
+| `/admin/users/[id]` | Dettaglio/modifica utente (include cambio ruolo e toggle attivazione)                        |
 
 ### trainer
-| Route                           | Descrizione                                                         |
-| ------------------------------- | ------------------------------------------------------------------- |
+| Route                             | Descrizione                                                         |
+| --------------------------------- | ------------------------------------------------------------------- |
 | `/trainer/dashboard`              | Panoramica trainee assegnati e stato schede                         |
 | `/trainer/exercises`              | Libreria esercizi condivisa (lista + crea)                          |
 | `/trainer/exercises/[id]`         | Dettaglio esercizio (video YouTube + modifica)                      |
@@ -73,6 +73,195 @@
 - **Loading**: skeleton loader su card e tabelle; spinner su azioni brevi.
 - **Empty**: illustrazione + CTA contestuale (es. "Nessuna scheda — crea la prima" per il trainer).
 - **Error**: banner non-invasivo con messaggio di errore leggibile + retry action.
+
+## PWA (Progressive Web App) per Trainee
+
+**Requisito**: Trainee usa app in palestra (60-90+ min) con frequente app switching tra esercizi. Necessario:
+- ✅ Installazione come app standalone (no barra browser)
+- ✅ Funzionamento anche con connessione intermittente
+- ✅ Persistenza stato feedback parziale (non perdere dati se app va in background)
+- ✅ Session management seamless (no re-login durante allenamento)
+
+**Implementazione**:
+
+### Web App Manifest
+```json
+// public/manifest.json
+{
+  "name": "ZeroCento Training",
+  "short_name": "ZeroCento",
+  "description": "Gestione schede allenamento",
+  "start_url": "/trainee/dashboard",
+  "display": "standalone",  // App full-screen senza browser UI
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait",  // Lock portrait per trainee (uso palestra)
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["health", "fitness"],
+  "screenshots": [
+    {
+      "src": "/screenshots/workout-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ]
+}
+```
+
+### Service Worker per Offline Support
+```typescript
+// public/sw.js (generato da next-pwa)
+// Cache strategia:
+// - Scheda corrente: Cache-first (disponibile anche offline)
+// - API feedback: Network-first con fallback queue
+// - Assets statici: Cache-first con stale-while-revalidate
+
+// Installazione PWA prompt
+// app/components/InstallPrompt.tsx
+import { useEffect, useState } from 'react'
+
+export function InstallPrompt() {
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
+  const [showPrompt, setShowPrompt] = useState(false)
+  
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault()
+      setDeferredPrompt(e)
+      // Mostra solo a trainee (non admin/trainer desktop)
+      if (window.innerWidth < 768) {
+        setShowPrompt(true)
+      }
+    }
+    
+    window.addEventListener('beforeinstallprompt', handler)
+    return () => window.removeEventListener('beforeinstallprompt', handler)
+  }, [])
+  
+  const handleInstall = async () => {
+    if (!deferredPrompt) return
+    deferredPrompt.prompt()
+    const { outcome } = await deferredPrompt.userChoice
+    setDeferredPrompt(null)
+    setShowPrompt(false)
+  }
+  
+  if (!showPrompt) return null
+  
+  return (
+    <div className="fixed bottom-4 left-4 right-4 bg-blue-600 text-white p-4 rounded-lg shadow-lg z-50">
+      <p className="font-semibold">Installa ZeroCento</p>
+      <p className="text-sm mt-1">Accesso rapido durante gli allenamenti</p>
+      <div className="flex gap-2 mt-3">
+        <button onClick={handleInstall} className="bg-white text-blue-600 px-4 py-2 rounded">
+          Installa
+        </button>
+        <button onClick={() => setShowPrompt(false)} className="text-white">
+          Dopo
+        </button>
+      </div>
+    </div>
+  )
+}
+```
+
+### State Persistence per Feedback Parziali
+```typescript
+// hooks/useFeedbackPersistence.ts
+import { useEffect } from 'react'
+import { useLocalStorage } from '@/hooks/useLocalStorage'
+
+interface FeedbackDraft {
+  workoutExerciseId: string
+  setsPerformed: Array<{ reps: number; weight: number }>
+  actualRpe?: number
+  notes?: string
+  timestamp: number
+}
+
+export function useFeedbackPersistence(workoutExerciseId: string) {
+  const [draft, setDraft] = useLocalStorage<FeedbackDraft | null>(
+    `feedback-draft-${workoutExerciseId}`,
+    null
+  )
+  
+  // Auto-save ogni 5 secondi
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (draft) {
+        setDraft({ ...draft, timestamp: Date.now() })
+      }
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [draft])
+  
+  const saveDraft = (data: Partial<FeedbackDraft>) => {
+    setDraft({ ...draft, ...data, workoutExerciseId, timestamp: Date.now() })
+  }
+  
+  const clearDraft = () => {
+    setDraft(null)
+  }
+  
+  // Auto-clear draft dopo 24h (evita accumulo storage)
+  useEffect(() => {
+    if (draft && Date.now() - draft.timestamp > 86400000) {
+      clearDraft()
+    }
+  }, [draft])
+  
+  return { draft, saveDraft, clearDraft }
+}
+
+// Uso nel form feedback
+// app/trainee/programs/[id]/workout/[workoutId]/page.tsx
+export default function WorkoutPage() {
+  const { draft, saveDraft, clearDraft } = useFeedbackPersistence(workoutExerciseId)
+  
+  // Ripristina draft se esiste
+  useEffect(() => {
+    if (draft) {
+      setFormData(draft)
+    }
+  }, [draft])
+  
+  const handleSubmit = async (data: FeedbackData) => {
+    await submitFeedback(data)
+    clearDraft() // Clear dopo submit success
+  }
+  
+  // Auto-save mentre utente compila
+  const handleInputChange = (field: string, value: any) => {
+    setFormData({ ...formData, [field]: value })
+    saveDraft({ ...formData, [field]: value })
+  }
+}
+```
+
+**Benefici PWA trainee**:
+- ✅ **Installazione**: Icona home screen, apertura senza browser UI (esperienza app nativa)
+- ✅ **Offline support**: Scheda corrente disponibile anche senza rete (cache service worker)
+- ✅ **State persistence**: Feedback parziale salvato in localStorage, recuperabile dopo app switch
+- ✅ **Session seamless**: JWT 4h + auto-refresh = no re-login durante allenamento
+- ✅ **Performance**: Asset cached, caricamento istantaneo
+
+**Note trainer/admin**:
+- PWA installabile anche per loro ma **non prioritario** (uso desktop)
+- Manifest con `display: "browser"` per desktop (mantiene browser UI)
+- Service worker cache meno aggressiva (contenuti cambiano frequentemente)
 
 ## Design system
 - **Librerie UI**: **Tailwind CSS** (styling utility-first, coverage AI eccellente) + **Material UI (MUI)** (componenti accessibili pronti, vastissima documentazione nei training data AI).
