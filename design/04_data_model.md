@@ -28,8 +28,8 @@ npx prisma migrate deploy
 
 | Entità             | Descrizione                                                                     |
 | ------------------ | ------------------------------------------------------------------------------- |
-| `User`             | Utente del sistema con ruolo (admin / trainer / trainee)                          |
-| `TrainerTrainee`     | Associazione esplicita trainer → trainee                                          |
+| `User`             | Utente del sistema con ruolo (admin / trainer / trainee)                        |
+| `TrainerTrainee`   | Associazione esplicita trainer → trainee                                        |
 | `Exercise`         | Esercizio nella libreria condivisa (con gruppo muscolare, tipo, schema motorio) |
 | `TrainingProgram`  | Scheda di allenamento multi-settimana assegnata a un trainee                    |
 | `Week`             | Singola settimana all'interno di una scheda                                     |
@@ -65,8 +65,12 @@ Exercise
   type                Enum(fundamental, accessory)  -- Fondamentale (SBD) o Accessorio
   movementPattern     Enum(squat, horizontal_push, hip_extension, horizontal_pull, vertical_pull, other)  -- Schema motorio
   notes               String[]        -- Lista di note/varianti
-  createdBy           FK → User       -- trainer che ha creato l'esercizio
+  createdBy           FK → User       -- trainer/admin che ha creato l'esercizio (solo audit trail, NON determina ownership)
   createdAt           DateTime
+
+  -- NOTA: Libreria CONDIVISA tra tutti i trainer
+  -- Ogni trainer può CRUD su QUALSIASI esercizio (non solo i propri)
+  -- Campo createdBy serve solo per tracciabilità/audit, non per permission
 
 TrainingProgram
   id                 UUID  PK

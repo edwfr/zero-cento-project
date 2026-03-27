@@ -315,32 +315,36 @@ e2e-staging:
 
 ## Flussi critici da coprire (❓ OD-42)
 
-| Priorità | Flusso                                                                           | Ruolo   |
-| -------- | -------------------------------------------------------------------------------- | ------- |
-| P0       | Login + redirect alla dashboard corretta in base al ruolo                        | tutti   |
-| P0       | Accesso negato a route non autorizzate per ruolo                                 | tutti   |
-| P1       | trainer: crea esercizio con URL YouTube valido, gruppi muscolari, schema motorio | trainer |
-| P1       | trainer: crea scheda multi-settimana e la assegna a trainee                      | trainer |
-| P1       | trainer: crea profilo trainee e genera password iniziale                         | trainer |
-| P1       | Trainee: visualizza scheda corrente                                              | trainee |
-| P1       | Trainee: invia feedback su un esercizio con serie multiple (reps + kg)           | trainee |
-| P1       | Trainee: aggiunge/modifica massimale (1RM o nRM)                                 | trainee |
-| P2       | trainer: visualizza avanzamento e feedback trainee                               | trainer |
-| P2       | trainer: visualizza massimali di un trainee                                      | trainer |
-| P2       | Trainee: visualizza reportistica SBD (FRQ, NBL, IM)                              | trainee |
-| P2       | trainer: visualizza reportistica serie allenanti per gruppo muscolare            | trainer |
-| P2       | Admin: crea / modifica / elimina utente                                          | admin   |
-| P2       | Admin: crea nuovo trainer (validazione role=trainer richiede admin)              | admin   |
-| P2       | trainer: disabilita proprio trainee (isActive=false)                             | trainer |
-| P2       | trainer: tenta disabilitare trainee di altro trainer (deve fallire con 403)      | trainer |
-| P2       | Admin: disabilita qualsiasi trainee                                              | admin   |
-| P2       | Trainee disabilitato: tenta login (deve fallire con messaggio appropriato)       | trainee |
-| P2       | trainer: tenta creare trainer (deve fallire con 403 Forbidden)                   | trainer |
-| P2       | Trainee: tenta accedere a /api/users (deve fallire con 403 Forbidden)            | trainee |
-| P2       | Trainee: marca settimana per feedback e aggiunge feedback generale               | trainee |
-| P3       | Validazione RPE (5.0-10.0 con incrementi 0.5)                                    | trainee |
-| P3       | Validazione peso in % 1RM con calcolo automatico kg                              | trainee |
-| P3       | Validazione reps come intervallo (es. "6/8")                                     | trainer |
+| Priorità | Flusso                                                                            | Ruolo   |
+| -------- | --------------------------------------------------------------------------------- | ------- |
+| P0       | Login + redirect alla dashboard corretta in base al ruolo                         | tutti   |
+| P0       | Accesso negato a route non autorizzate per ruolo                                  | tutti   |
+| P1       | trainer: crea esercizio con URL YouTube valido, gruppi muscolari, schema motorio  | trainer |
+| P1       | trainer: crea scheda multi-settimana e la assegna a trainee                       | trainer |
+| P1       | trainer: crea profilo trainee e genera password iniziale                          | trainer |
+| P1       | Trainee: visualizza scheda corrente                                               | trainee |
+| P1       | Trainee: invia feedback su un esercizio con serie multiple (reps + kg)            | trainee |
+| P1       | Trainee: aggiunge/modifica massimale (1RM o nRM)                                  | trainee |
+| P2       | trainer: visualizza avanzamento e feedback trainee                                | trainer |
+| P2       | trainer: visualizza massimali di un trainee                                       | trainer |
+| P2       | Trainee: visualizza reportistica SBD (FRQ, NBL, IM)                               | trainee |
+| P2       | trainer: visualizza reportistica serie allenanti per gruppo muscolare             | trainer |
+| P2       | Admin: crea / modifica / elimina utente                                           | admin   |
+| P2       | Admin: crea nuovo trainer (validazione role=trainer richiede admin)               | admin   |
+| P2       | trainer: disabilita proprio trainee (isActive=false)                              | trainer |
+| P2       | trainer: tenta disabilitare trainee di altro trainer (deve fallire con 403)       | trainer |
+| P2       | Admin: disabilita qualsiasi trainee                                               | admin   |
+| P2       | Trainee disabilitato: tenta login (deve fallire con messaggio appropriato)        | trainee |
+| P2       | trainer: tenta creare trainer (deve fallire con 403 Forbidden)                    | trainer |
+| P2       | Trainee: tenta accedere a /api/users (deve fallire con 403 Forbidden)             | trainee |
+| P2       | trainer A: modifica esercizio creato da trainer B (libreria condivisa, 200 OK)    | trainer |
+| P2       | trainer A: elimina esercizio creato da trainer B (libreria condivisa, 200 OK)     | trainer |
+| P2       | Trainee: tenta modificare esercizio (deve fallire con 403 Forbidden)              | trainee |
+| P2       | trainer: elimina esercizio usato in scheda attiva (deve fallire con 409 Conflict) | trainer |
+| P2       | Trainee: marca settimana per feedback e aggiunge feedback generale                | trainee |
+| P3       | Validazione RPE (5.0-10.0 con incrementi 0.5)                                     | trainee |
+| P3       | Validazione peso in % 1RM con calcolo automatico kg                               | trainee |
+| P3       | Validazione reps come intervallo (es. "6/8")                                      | trainer |
 
 ## Automazione e Coverage (OD-40 ✅, OD-41 ✅)
 

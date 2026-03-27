@@ -4,6 +4,37 @@
 
 ---
 
+## 2026-03-27 (rev 16)
+- **Azione**: Libreria esercizi da privata per trainer a CONDIVISA tra tutti i trainer.
+- **Requisito**: Gestione collaborativa libreria esercizi — tutti i trainer devono poter creare, modificare, eliminare qualsiasi esercizio.
+- **Modello precedente**: Esercizi creati da trainer erano modificabili solo dal creatore (ownership via `Exercise.createdBy`)
+- **Modello nuovo**: **Libreria condivisa** — tutti i trainer possono CRUD su TUTTI gli esercizi
+- **Permission aggiornate**:
+  - **Admin**: CRUD su qualsiasi esercizio
+  - **Trainer**: CRUD su **qualsiasi esercizio** nella libreria (non solo i propri)
+  - **Trainee**: Solo lettura (per consultare video/descrizioni durante allenamento)
+  - Campo `Exercise.createdBy` mantenuto solo per **audit trail** (tracciabilità autore originale), **non determina ownership**
+- **Autorizzazione backend**:
+  - `GET /api/exercises`: accessibile a tutti (trainer per comporre schede, trainee per consultazione)
+  - `POST /api/exercises`: solo admin e trainer (nuovo esercizio immediatamente disponibile a tutti)
+  - `PUT /DELETE /api/exercises/[id]`: solo admin e trainer su **qualsiasi esercizio**
+  - Validazione: verifica `role IN ('admin', 'trainer')`, **non** verifica `createdBy = current_user`
+- **Protezione integrità**: Eliminazione esercizio usato in `WorkoutExercise` restituisce `409 Conflict` (foreign key constraint)
+- **Rationale**:
+  - ✅ **Collaborazione**: Trainer possono beneficiare degli esercizi creati da colleghi
+  - ✅ **Evita duplicazione**: No bisogno di ricreare "Squat" per ogni trainer
+  - ✅ **Libreria ricca**: Si arricchisce organicamente con contributi di tutti
+  - ✅ **Manutenzione condivisa**: Correzione errori (es. link YouTube rotto) disponibile a tutti immediatamente
+- **UX implications**:
+  - Pagina `/trainer/exercises`: mostra TUTTI gli esercizi (non filtro per `createdBy`)
+  - Badge "Creato da [Nome Trainer]" per tracciabilità visuale
+  - Bottoni Edit/Delete attivi su qualsiasi esercizio (non solo propri)
+  - Warning prima di eliminare: "Questa azione influenzerà tutti i trainer che usano questo esercizio"
+- **Testing**: Aggiunti test P2 per verifica permission condivise (trainer A modifica esercizio creato da trainer B, successo 200; trainer A elimina esercizio trainer B, successo 200; trainee tenta modificare esercizio, 403; trainer elimina esercizio usato in scheda attiva, 409 Conflict)
+- **Implicazioni**: Modello collaborativo aumenta valore piattaforma. Libreria evolve più rapidamente. Responsabilità condivisa richiede disciplina (no eliminazioni accidentali). Audit trail via `createdBy` mantiene tracciabilità.
+
+---
+
 ## 2026-03-27 (rev 15)
 - **Azione**: Chiusura completa stack Deploy, Scaling, Testing (OD-33, OD-34, OD-36, OD-37, OD-38, OD-39, OD-40, OD-41).
 - **OD-33 - Ambienti**: 

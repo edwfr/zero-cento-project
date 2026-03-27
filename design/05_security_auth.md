@@ -31,16 +31,16 @@ const { data, error } = await supabase.auth.signInWithPassword({
 - **Ruoli**: `admin` · `trainer` · `trainee`.
 - **Matrice permessi**:
 
-| Risorsa                    | admin              | trainer                    | trainee             |
-| -------------------------- | ------------------ | ------------------------ | ------------------- |
-| Creazione utenti           | ✅ trainer + trainee  | ✅ solo trainee           | ❌                   |
-| Gestione utenti (RUD)      | ✅ tutti gli utenti | ✅ solo propri trainee    | ❌                   |
-| Libreria esercizi          | lettura            | CRUD (propri)            | lettura             |
-| Schede                     | lettura            | CRUD (proprie)           | lettura (assegnate) |
-| Feedback                   | lettura            | lettura                  | CRUD (propri)       |
-| Massimali (PersonalRecord) | lettura            | lettura (propri trainee) | CRUD (propri)       |
-| Reportistica               | ✅                  | ✅ (propri trainee)       | ✅ (propria)         |
-| Monitoraggio avanzamento   | ✅                  | ✅ (propri trainee)       | ❌                   |
+| Risorsa                    | admin               | trainer                  | trainee             |
+| -------------------------- | ------------------- | ------------------------ | ------------------- |
+| Creazione utenti           | ✅ trainer + trainee | ✅ solo trainee           | ❌                   |
+| Gestione utenti (RUD)      | ✅ tutti gli utenti  | ✅ solo propri trainee    | ❌                   |
+| Libreria esercizi          | CRUD                | CRUD (condivisa)         | lettura             |
+| Schede                     | lettura             | CRUD (proprie)           | lettura (assegnate) |
+| Feedback                   | lettura             | lettura                  | CRUD (propri)       |
+| Massimali (PersonalRecord) | lettura             | lettura (propri trainee) | CRUD (propri)       |
+| Reportistica               | ✅                   | ✅ (propri trainee)       | ✅ (propria)         |
+| Monitoraggio avanzamento   | ✅                   | ✅ (propri trainee)       | ❌                   |
 
 **Dettaglio creazione utenti**:
 - **Admin**: può creare sia utenti con ruolo `trainer` sia utenti con ruolo `trainee`
@@ -60,7 +60,16 @@ const { data, error } = await supabase.auth.signInWithPassword({
 - **Trainee**: nessun accesso a funzioni di disabilitazione utenti
 - **Effetto disabilitazione**: trainee con `isActive=false` non può effettuare login (redirect con messaggio "Account disabilitato, contatta il tuo trainer")
 
-- **Isolamento dati**: un trainer vede e modifica solo trainee e schede a lui assegnati; un trainee vede solo le proprie schede.
+**Dettaglio libreria esercizi condivisa**:
+- **Libreria condivisa tra trainer**: Tutti gli esercizi sono visibili e modificabili da TUTTI i trainer del sistema
+- **Admin**: può creare, modificare, eliminare qualsiasi esercizio
+- **trainer**: può creare, modificare, eliminare **qualsiasi esercizio** nella libreria (non solo i propri)
+  - Campo `Exercise.createdBy` traccia chi ha creato l'esercizio (audit trail) ma **non limita permission**
+  - Validazione backend: `PUT /DELETE /api/exercises/[id]` verifica solo che utente sia ruolo `trainer` o `admin`
+- **Trainee**: può **solo leggere** la libreria esercizi (per consultare video/descrizioni durante allenamento)
+- **Rationale**: Collaborazione tra trainer, evita duplicazione esercizi, libreria si arricchisce con contributi di tutti
+
+- **Isolamento dati**: un trainer vede e modifica solo trainee e schede a lui assegnati; la libreria esercizi è condivisa; un trainee vede solo le proprie schede.
 
 ## Protezione API
 - Ogni API Route / Server Action verifica la sessione attiva e il ruolo prima di qualsiasi operazione.
@@ -173,7 +182,7 @@ Documento `/terms` con:
 | Dato                  | Retention                         | Rationale                        |
 | --------------------- | --------------------------------- | -------------------------------- |
 | Account utente attivo | Indefinito fino a cancellazione   | Necessario per servizio          |
-| Feedback allenamenti  | 2 anni da completamento programma | Storico trainer + trainee          |
+| Feedback allenamenti  | 2 anni da completamento programma | Storico trainer + trainee        |
 | Account cancellato    | Anonimizzazione immediata         | GDPR Art. 17                     |
 | Logs sistema          | 30 giorni                         | Troubleshooting (Vercel default) |
 

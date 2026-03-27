@@ -39,14 +39,24 @@
   - Se trainer tenta disabilitare trainee di altro trainer: **403 Forbidden**
   - Trainee disabilitato (`isActive=false`): login bloccato con messaggio "Account disabilitato"
 
-### Esercizi (trainer)
-| Method   | Path                  | Descrizione                                            |
-| -------- | --------------------- | ------------------------------------------------------ |
-| `GET`    | `/api/exercises`      | Lista libreria esercizi (filtri: tipo, schema motorio) |
-| `POST`   | `/api/exercises`      | Crea esercizio                                         |
-| `GET`    | `/api/exercises/[id]` | Dettaglio esercizio                                    |
-| `PUT`    | `/api/exercises/[id]` | Modifica esercizio                                     |
-| `DELETE` | `/api/exercises/[id]` | Elimina esercizio                                      |
+### Esercizi — Libreria Condivisa (Admin + Trainer)
+| Method   | Path                  | Descrizione                                            | Ruoli autorizzati |
+| -------- | --------------------- | ------------------------------------------------------ | ----------------- |
+| `GET`    | `/api/exercises`      | Lista libreria esercizi (filtri: tipo, schema motorio) | tutti             |
+| `POST`   | `/api/exercises`      | Crea esercizio (aggiunto a libreria condivisa)         | admin, trainer    |
+| `GET`    | `/api/exercises/[id]` | Dettaglio esercizio                                    | tutti             |
+| `PUT`    | `/api/exercises/[id]` | Modifica esercizio (QUALSIASI esercizio)               | admin, trainer    |
+| `DELETE` | `/api/exercises/[id]` | Elimina esercizio (QUALSIASI esercizio)                | admin, trainer    |
+
+**Note autorizzazione libreria condivisa**:
+- **Libreria condivisa**: Tutti gli esercizi sono visibili e gestibili da TUTTI i trainer (non solo chi li ha creati)
+- `GET /api/exercises`: Accessibile a tutti (trainer usano per comporre schede, trainee leggono durante allenamento)
+- `POST /api/exercises`: Admin e trainer possono creare esercizi che diventano immediatamente disponibili a tutti i trainer
+- `PUT /DELETE /api/exercises/[id]`: Admin e trainer possono modificare/eliminare **qualsiasi esercizio**, non solo i propri
+  - Campo `Exercise.createdBy` traccia autore originale (audit log) ma **non limita permission**
+  - Validazione backend: verifica solo `role IN ('admin', 'trainer')`, **non** ownership
+- **Rationale**: Collaborazione tra trainer, evita duplicazione, libreria si arricchisce organicamente
+- **Protezione**: Eliminazione esercizio usato in scheda attiva restituisce `409 Conflict` (integrità referenziale)
 
 ### Schede / Programmi (trainer)
 | Method   | Path                          | Descrizione                           |
