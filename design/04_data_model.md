@@ -101,7 +101,7 @@ WorkoutExercise
   workoutId         FK → Workout
   exerciseId        FK → Exercise
   sets              Int
-  reps              String          -- es. "8", "8-10", "6/8" (intervallo), "AMRAP"
+  reps              String          -- es. "8", "8-10", "6/8" (intervallo)
   targetRpe         Float?          -- target RPE (5.0–10.0 con incrementi di 0.5)
   weightType        Enum(absolute, percentage_1rm, percentage_rm)  -- tipo di peso
   weight            Float?          -- kg assoluti o percentuale (se SBD, intensità in % dà i KG)
