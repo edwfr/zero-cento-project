@@ -113,11 +113,11 @@ projects: [
 
 ### Matrix Testing Consigliata
 
-| Ruolo         | Desktop 1440px | Tablet 768px | Mobile 390px |
-| ------------- | -------------- | ------------ | ------------ |
-| **Admin**     | ✅ Full suite  | ⚠️ Smoke     | ❌ Skip      |
-| **Coach**     | ✅ Full suite  | ⚠️ Smoke     | ❌ Skip      |
-| **Trainee**   | ⚠️ Smoke       | ⚠️ Smoke     | ✅ Full suite|
+| Ruolo       | Desktop 1440px | Tablet 768px | Mobile 390px |
+| ----------- | -------------- | ------------ | ------------ |
+| **Admin**   | ✅ Full suite   | ⚠️ Smoke      | ❌ Skip       |
+| **Coach**   | ✅ Full suite   | ⚠️ Smoke      | ❌ Skip       |
+| **Trainee** | ⚠️ Smoke        | ⚠️ Smoke      | ✅ Full suite |
 
 **Legenda**:
 - ✅ **Full suite**: tutti i flussi P0/P1/P2 testati
