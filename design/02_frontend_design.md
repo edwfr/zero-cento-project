@@ -16,16 +16,20 @@
 | `/admin/users/[id]` | Dettaglio/modifica utente               |
 
 ### Coach
-| Route                           | Descrizione                                    |
-| ------------------------------- | ---------------------------------------------- |
-| `/coach/dashboard`              | Panoramica trainee assegnati e stato schede    |
-| `/coach/exercises`              | Libreria esercizi condivisa (lista + crea)     |
-| `/coach/exercises/[id]`         | Dettaglio esercizio (video YouTube + modifica) |
-| `/coach/trainees`               | Lista trainee gestiti                          |
-| `/coach/trainees/[id]`          | Profilo trainee + schede assegnate             |
-| `/coach/programs/new`           | Creazione nuova scheda multi-settimana         |
-| `/coach/programs/[id]`          | Dettaglio / modifica scheda                    |
-| `/coach/programs/[id]/progress` | Monitoraggio avanzamento + feedback trainee    |
+| Route                           | Descrizione                                      |
+| ------------------------------- | ------------------------------------------------ |
+| `/coach/dashboard`              | Panoramica trainee assegnati e stato schede      |
+| `/coach/exercises`              | Libreria esercizi condivisa (lista + crea)       |
+| `/coach/exercises/[id]`         | Dettaglio esercizio (video YouTube + modifica)   |
+| `/coach/exercises/new`          | Creazione nuovo esercizio con campi completi     |
+| `/coach/trainees`               | Lista trainee gestiti                            |
+| `/coach/trainees/[id]`          | Profilo trainee + schede assegnate               |
+| `/coach/trainees/[id]/create`   | Creazione nuovo profilo trainee (genera password) |
+| `/coach/trainees/[id]/records`  | Visualizza/modifica massimali trainee            |
+| `/coach/programs/new`           | Creazione nuova scheda multi-settimana           |
+| `/coach/programs/[id]`          | Dettaglio / modifica scheda                      |
+| `/coach/programs/[id]/progress` | Monitoraggio avanzamento + feedback trainee      |
+| `/coach/programs/[id]/reports`  | Reportistica SBD e serie allenanti               |
 
 ### Trainee
 | Route                                        | Descrizione                                       |
@@ -34,14 +38,28 @@
 | `/trainee/programs/current`                  | Scheda attiva con esercizi per settimana/giorno   |
 | `/trainee/programs/[id]/workout/[workoutId]` | Singolo allenamento + form feedback per esercizio |
 | `/trainee/history`                           | Storico schede completate/passate                 |
+| `/trainee/records`                           | Gestione massimali personali (1RM, nRM)           |
+| `/trainee/records/[exerciseId]`              | Storico massimali per esercizio specifico         |
+| `/trainee/reports`                           | Visualizza reportistica personale (SBD, volume)   |
 
 ## Componenti riutilizzabili
-- `ExerciseCard` — mostra nome, thumbnail YouTube, parametri (serie/rip/RPE).
+- `ExerciseCard` — mostra nome, thumbnail YouTube, parametri (serie/rip/RPE), gruppi muscolari, tipo (fondamentale/accessorio).
+- `MuscleGroupBadge` — badge per gruppo muscolare con coefficiente d'incidenza (es. "Pettorali 80%").
+- `MovementPatternIcon` — icona per schema motorio (accosciata, spinta, ecc.).
 - `WorkoutProgramBuilder` — editor drag-and-drop settimane/giorni/esercizi (coach).
-- `FeedbackForm` — form per il trainee su un singolo esercizio (RPE effettivo, note, completato).
+- `WorkoutExerciseForm` — form per aggiungere esercizio con serie, reps (stringa o intervallo), RPE, peso, recupero, riscaldamento.
+- `FeedbackForm` — form per il trainee su un singolo esercizio (RPE effettivo, array di serie con reps/kg, note, completato).
+- `SetInput` — input ripetibile per ogni serie (reps + kg) nel feedback.
 - `ProgressTracker` — visualizzazione stato avanzamento scheda (coach view).
+- `PersonalRecordCard` — card per visualizzare massimale (1RM o nRM) con data e note.
+- `PersonalRecordForm` — form per aggiungere/modificare massimale (esercizio, reps, peso, data).
+- `SBDReportChart` — grafico per reportistica SBD (FRQ, NBL, IM) con filtro periodo.
+- `TrainingVolumeChart` — grafico per serie/ripetizioni totali per gruppo muscolare.
 - `YoutubeEmbed` — wrapper per iframe YouTube con lazy load.
 - `RoleGuard` — HOC / middleware che reindirizza se il ruolo non è autorizzato.
+- `RPESelector` — selector per RPE (5.0-10.0 con incrementi 0.5) con icone/colori.
+- `RestTimeSelector` — selector per tempo recupero (30s, 1m, 2m, 3m, 5m).
+- `RepsInput` — input per ripetizioni che supporta numero singolo, intervallo (6/8), o range (8-10).
 
 ## Gestione stato
 - **Locale**: `useState` / `useReducer` per form e UI state effimero.

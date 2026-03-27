@@ -33,10 +33,12 @@ const { data, error } = await supabase.auth.signInWithPassword({
 
 | Risorsa                  | admin   | coach              | trainee             |
 | ------------------------ | ------- | ------------------ | ------------------- |
-| Gestione utenti (CRUD)   | ✅       | ❌                  | ❌                   |
+| Gestione utenti (CRUD)   | ✅       | ❌ (solo creazione trainee) | ❌                   |
 | Libreria esercizi        | lettura | CRUD (propri)      | lettura             |
 | Schede                   | lettura | CRUD (proprie)     | lettura (assegnate) |
 | Feedback                 | lettura | lettura            | CRUD (propri)       |
+| Massimali (PersonalRecord) | lettura | lettura (propri trainee) | CRUD (propri) |
+| Reportistica             | ✅       | ✅ (propri trainee) | ✅ (propria)        |
 | Monitoraggio avanzamento | ✅       | ✅ (propri trainee) | ❌                   |
 
 - **Isolamento dati**: un coach vede e modifica solo trainee e schede a lui assegnati; un trainee vede solo le proprie schede.
@@ -46,6 +48,53 @@ const { data, error } = await supabase.auth.signInWithPassword({
 - Middleware Next.js (`middleware.ts`) per proteggere tutte le route `/admin/*`, `/coach/*`, `/trainee/*` con redirect a `/login` se non autenticato.
 - Validazione input lato server su tutti gli endpoint (❓ **OD-19** — Zod).
 - ❓ **OD-21** — rate limiting: valutare Vercel Edge Middleware o provider auth.
+
+### Gestione Password Iniziali (Coach crea Trainee)
+Quando un coach crea un nuovo profilo trainee:
+1. Il sistema genera una password temporanea sicura (es. 12 caratteri, mix alfanumerico + simboli)
+2. Password visualizzata UNA SOLA VOLTA al coach (modal non dismissable finché non copiata)
+3. Password opzionalmente salvata in campo `User.initialPassword` (encrypted at rest dal DB)
+4. Trainee deve cambiare password al primo login (flag `mustChangePassword` su User)
+5. Dopo cambio password, `initialPassword` viene cancellato e `mustChangePassword` = false
+
+**Pattern sicuro**:
+```typescript
+// app/api/coach/trainees/route.ts (POST)
+import { generateSecurePassword } from '@/lib/password-utils'
+
+const tempPassword = generateSecurePassword()
+const { user } = await supabase.auth.admin.createUser({
+  email: validatedData.email,
+  password: tempPassword,
+  email_confirm: true,
+  user_metadata: { mustChangePassword: true }
+})
+
+// Salva in DB
+await prisma.user.create({
+  data: {
+    id: user.id,
+    email: validatedData.email,
+    firstName: validatedData.firstName,
+    lastName: validatedData.lastName,
+    role: 'trainee',
+    isActive: true,
+    initialPassword: await encrypt(tempPassword) // encrypt con key da env
+  }
+})
+
+return apiSuccess({ user, tempPassword }) // ritorna solo questa volta
+```
+
+**UX Coach**:
+- Modal con password + bottone "Copia Password"
+- Avviso: "Salva questa password, non sarà più visibile"
+- Checkbox "Ho salvato la password" per chiudere modal
+
+**UX Trainee primo login**:
+- Dopo login con password temporanea, redirect automatico a `/change-password`
+- Form con "Vecchia Password" (temporanea) + "Nuova Password" + "Conferma"
+- Dopo cambio, accesso normale alla dashboard
 
 ## Gestione segreti
 - **Vercel Environment Variables** per variabili sensibili:

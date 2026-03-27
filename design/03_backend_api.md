@@ -25,13 +25,13 @@
 | `DELETE` | `/api/users/[id]` | Elimina utente          |
 
 ### Esercizi (Coach)
-| Method   | Path                  | Descrizione             |
-| -------- | --------------------- | ----------------------- |
-| `GET`    | `/api/exercises`      | Lista libreria esercizi |
-| `POST`   | `/api/exercises`      | Crea esercizio          |
-| `GET`    | `/api/exercises/[id]` | Dettaglio esercizio     |
-| `PUT`    | `/api/exercises/[id]` | Modifica esercizio      |
-| `DELETE` | `/api/exercises/[id]` | Elimina esercizio       |
+| Method   | Path                  | Descrizione                                          |
+| -------- | --------------------- | ---------------------------------------------------- |
+| `GET`    | `/api/exercises`      | Lista libreria esercizi (filtri: tipo, schema motorio) |
+| `POST`   | `/api/exercises`      | Crea esercizio                                       |
+| `GET`    | `/api/exercises/[id]` | Dettaglio esercizio                                  |
+| `PUT`    | `/api/exercises/[id]` | Modifica esercizio                                   |
+| `DELETE` | `/api/exercises/[id]` | Elimina esercizio                                    |
 
 ### Schede / Programmi (Coach)
 | Method   | Path                          | Descrizione                           |
@@ -51,6 +51,23 @@
 | `POST` | `/api/feedback`                 | Invia feedback su un WorkoutExercise   |
 | `PUT`  | `/api/feedback/[id]`            | Modifica feedback esistente            |
 
+### Massimali / Personal Records (Trainee + Coach)
+| Method   | Path                             | Descrizione                                 |
+| -------- | -------------------------------- | ------------------------------------------- |
+| `GET`    | `/api/trainee/records`           | Lista massimali del trainee autenticato     |
+| `GET`    | `/api/trainee/records/[exerciseId]` | Storico massimali per esercizio specifico |
+| `POST`   | `/api/trainee/records`           | Aggiungi nuovo massimale                    |
+| `PUT`    | `/api/trainee/records/[id]`      | Modifica massimale esistente                |
+| `DELETE` | `/api/trainee/records/[id]`      | Elimina massimale                           |
+| `GET`    | `/api/coach/trainees/[id]/records` | Coach visualizza massimali del trainee    |
+
+### Reportistica (Coach + Trainee)
+| Method | Path                                      | Descrizione                                           |
+| ------ | ----------------------------------------- | ----------------------------------------------------- |
+| `GET`  | `/api/programs/[id]/reports/sbd`          | Report SBD (FRQ, NBL, IM) per periodo specificato     |
+| `GET`  | `/api/programs/[id]/reports/training-sets` | Serie allenanti per gruppo muscolare (grafico)       |
+| `GET`  | `/api/programs/[id]/reports/volume`       | Volume totale (serie × rip) per gruppo muscolare      |
+
 ## Validazione
 - **Libreria**: **Zod** — schema type-safe riutilizzabili, integrazione nativa con React Hook Form.
 - **Dove**: lato server (ogni API Route valida prima di operazioni DB) + lato client (React Hook Form per UX immediata).
@@ -59,10 +76,53 @@
 // shared/schemas/exercise.ts
 import { z } from 'zod'
 
+export const muscleGroupSchema = z.object({
+  name: z.string().min(2),
+  coefficient: z.number().min(0).max(1) // 0.0 - 1.0
+})
+
 export const exerciseSchema = z.object({
   name: z.string().min(3, 'Nome minimo 3 caratteri'),
+  description: z.string().optional(),
   youtubeUrl: z.string().url().regex(/youtube\.com|youtu\.be/, 'URL YouTube non valido'),
-  category: z.enum(['strength', 'cardio', 'mobility'])
+  muscleGroups: z.array(muscleGroupSchema).min(1, 'Almeno un gruppo muscolare richiesto'),
+  type: z.enum(['fundamental', 'accessory']),
+  movementPattern: z.enum(['squat', 'horizontal_push', 'hip_extension', 'horizontal_pull', 'vertical_pull', 'other']),
+  notes: z.array(z.string()).optional()
+})
+
+export const workoutExerciseSchema = z.object({
+  exerciseId: z.string().uuid(),
+  sets: z.number().int().min(1).max(20),
+  reps: z.string(), // "8" o "6/8" o "8-10"
+  targetRpe: z.number().min(5).max(10).multipleOf(0.5).optional(),
+  weightType: z.enum(['absolute', 'percentage_1rm', 'percentage_rm']),
+  weight: z.number().optional(),
+  restTime: z.enum(['30s', '1m', '2m', '3m', '5m']),
+  isWarmup: z.boolean(),
+  notes: z.string().optional(),
+  order: z.number().int()
+})
+
+export const setPerformedSchema = z.object({
+  reps: z.number().int().min(0),
+  weight: z.number().min(0)
+})
+
+export const feedbackSchema = z.object({
+  workoutExerciseId: z.string().uuid(),
+  completed: z.boolean(),
+  actualRpe: z.number().min(5).max(10).multipleOf(0.5).optional(),
+  setsPerformed: z.array(setPerformedSchema),
+  notes: z.string().optional()
+})
+
+export const personalRecordSchema = z.object({
+  exerciseId: z.string().uuid(),
+  reps: z.number().int().min(1).max(20), // 1 per 1RM, n per nRM
+  weight: z.number().min(0),
+  recordDate: z.string().datetime(),
+  notes: z.string().optional()
 })
 
 // app/api/exercises/route.ts
@@ -74,9 +134,13 @@ export async function POST(request: Request) {
 ```
 - **Regole chiave**: 
   - youtubeUrl valido su Exercise
-  - RPE range 1–10 su feedback
+  - RPE range 5.0–10.0 (incrementi 0.5) su feedback e WorkoutExercise
+  - muscleGroups array con coefficienti 0.0-1.0
+  - weightType determina interpretazione campo weight
+  - reps può essere stringa ("8", "6/8", "8-10")
+  - setsPerformed array con reps e weight per ogni serie
   - ruoli validi (`admin`\|`coach`\|`trainee`) all'assegnazione utente
-  - relazioni referenziali (traineeId esiste, programId valido)
+  - relazioni referenziali (traineeId esiste, programId valido, exerciseId valido)
 
 ## Autorizzazione API
 - Ogni route verifica la sessione utente e il ruolo prima di eseguire.

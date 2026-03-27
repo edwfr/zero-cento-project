@@ -48,11 +48,11 @@
 
 ## 04 — Data Model
 
-- [x] **OD-23** Entità principali → User, CoachTrainee, Exercise, TrainingProgram, Week, Workout, WorkoutExercise, ExerciseFeedback.
+- [x] **OD-23** Entità principali → User, CoachTrainee, Exercise, TrainingProgram, Week, Workout, WorkoutExercise, ExerciseFeedback, PersonalRecord.
 - [x] **OD-24** DB engine → **Supabase PostgreSQL**. Connection pooling PgBouncer incluso, dashboard admin ricca, free tier 500MB, coverage AI eccellente.
 - [x] **OD-25** ORM → **Prisma**. Type-safety automatica, schema dichiarativo, Prisma Studio, migrations robuste, coverage AI eccellentissima.
 - [x] **OD-26** Strategia migrazioni → **Prisma Migrate** con migration files. Trackable (Git), rollback-capable, environment-safe (DIRECT_URL per migrations).
-- [ ] **OD-27** Crescita dati → stima ~14.400 WorkoutExercise + ~14.400 Feedback nel primo ciclo (50 trainee). Dimensioni molto contenute.
+- [x] **OD-27** Crescita dati → ~14.400 WorkoutExercise + ~14.400 Feedback nel primo ciclo (50 trainee × 1 scheda × 12 settimane × 4 allenamenti × 6 esercizi). Dimensioni molto contenute, nessuna ottimizzazione sharding necessaria.
 
 ---
 
@@ -82,4 +82,4 @@
 - [ ] **OD-39** Framework E2E → Playwright consigliato; in scope per MVP?
 - [ ] **OD-40** Soglia minima coverage (es. 70%)?
 - [ ] **OD-41** Test E2E in CI o solo locale?
-- [ ] **OD-42** Flussi critici → bozza definita in 07_testing_strategy.md; da approvare.
+- [x] **OD-42** Flussi critici → definiti in 07_testing_strategy.md con priorità P0/P1/P2/P3. Include test per nuove funzionalità (massimali, reportistica, feedback con serie multiple, validazioni RPE/peso).

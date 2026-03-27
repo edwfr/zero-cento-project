@@ -1,0 +1,51 @@
+File Excel con libreria di esercizi
+
+Libreria Esercizi
+- Descrizione Esercizio
+- Gruppo Muscolare e coefficente d'incidenza (n)
+- Video youtube (URLs)
+- Fondamentale (SBD) o Accessorio () -> da capire come lo usiamo
+- note / varianti (lista di testo)
+- schema motorio (accosciata, spinta, estensione anca, spinta orizzontale, tirata orizz, tirata verticale)
+
+Scheda
+- n allenamenti x m settimana
+- settimane possono essere marcate come rilevanti per feedback
+- feedback generale sulla settimana
+- feedback per esercizio 
+  - l'utente deve scrivere il numero di rep / i kg usati per ogni serie
+  - feedback testuale
+
+
+Allenamento
+- sequenza di esercizi
+
+Esercizio
+- ordine
+- serie x ripetizione (possibile mettere numero intero oppure intervallo 6/8)
+- note (menu a tendina)
+- rpe (5 a 10 solo con .5)
+- kg (o numerico o in % rispetto a max o rm (dallo storico)) 
+- se SBD intensità in % da i KG
+- recpero (da 30s, 1m, 2m, 3m, 5m)
+- riscaldamento
+
+Reportistica (solo per alzate SBD) - x Settimane
+- FRQ > numero di giorni in cui fai esercizio
+- NBL > numero di alzate per esercizio
+- IM > media delle intensità
+
+Serie Allenanti
+Grafico per
+- Serie totali per gruppo muscolare
+- Ripetizioni totali per gruppo muscolare
+
+Massimali gestiti manualmente per profilo / poi anagrafica per esercizio con rm, possibilità di salvarsi n rm per esercizi
+
+Profilo
+- nome 
+- cognome
+- mail
+- attiva o disattivata
+
+Coach ha funzionalità per creare profilo e genera prima password 

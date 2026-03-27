@@ -4,6 +4,46 @@
 
 ---
 
+## 2026-03-27 (rev 9)
+- **Azione**: Integrazione completa data model dettagliato con informazioni raccolte dal documento note.txt.
+- **Data Model - Arricchimento entità**:
+  - **Exercise**: Aggiunti campi `muscleGroups` (Json array con coefficienti d'incidenza 0.0-1.0), `type` (fundamental/accessory per SBD), `movementPattern` (schema motorio: squat, push, pull, ecc.), `notes` (array varianti)
+  - **TrainingProgram**: Aggiunto `workoutsPerWeek` (n allenamenti per m settimane)
+  - **Week**: Aggiunti `feedbackRequested` (marcatura settimane rilevanti) e `generalFeedback` (commento testuale settimana)
+  - **WorkoutExercise**: Arricchito con `targetRpe` (Float 5.0-10.0 incrementi 0.5), `weightType` (Enum: absolute/percentage_1rm/percentage_rm), `restTime` (Enum: 30s/1m/2m/3m/5m), `isWarmup` (Boolean), supporto `reps` come intervallo (es. "6/8")
+  - **ExerciseFeedback**: Aggiunto `setsPerformed` (Json array con {reps, weight} per ogni serie), `actualRpe` (Float 5.0-10.0)
+  - **User**: Separato `name` in `firstName` e `lastName`, aggiunti `isActive` (profilo attivo/disattivato) e `initialPassword` (per gestione password generate da coach)
+  - **Nuova entità PersonalRecord**: Gestione massimali (1RM o nRM) per trainee/esercizio con storico date
+- **Backend API - Nuovi endpoint**:
+  - `/api/trainee/records/*` - CRUD massimali personali
+  - `/api/coach/trainees/[id]/records` - Coach visualizza massimali trainee
+  - `/api/programs/[id]/reports/sbd` - Reportistica SBD (FRQ, NBL, IM)
+  - `/api/programs/[id]/reports/training-sets` - Serie allenanti per gruppo muscolare
+  - `/api/programs/[id]/reports/volume` - Volume totale per gruppo muscolare
+  - Aggiornamento filtri `/api/exercises` per tipo e schema motorio
+- **Validazione Zod - Nuovi schemi**:
+  - `muscleGroupSchema` (name + coefficient 0.0-1.0)
+  - `exerciseSchema` arricchito con muscleGroups, type, movementPattern
+  - `workoutExerciseSchema` con targetRpe Float, weightType, restTime, isWarmup
+  - `setPerformedSchema` per array serie nel feedback
+  - `feedbackSchema` con setsPerformed e actualRpe Float
+  - `personalRecordSchema` per gestione massimali
+- **Frontend - Nuove pagine e componenti**:
+  - Pagine: `/coach/trainees/[id]/create` (crea trainee + genera password), `/trainee/records` (gestione massimali), `/coach|trainee/reports` (reportistica)
+  - Componenti: `MuscleGroupBadge`, `MovementPatternIcon`, `SetInput`, `PersonalRecordCard/Form`, `SBDReportChart`, `TrainingVolumeChart`, `RPESelector`, `RestTimeSelector`, `RepsInput`
+- **Security - Gestione password iniziali**:
+  - Flusso sicuro per coach che crea trainee: generazione password temporanea, visualizzazione una-tantum, encrypted storage opzionale, cambio obbligatorio al primo login
+  - Pattern implementativo documentato in 05_security_auth.md
+- **Testing - Nuovi flussi critici**:
+  - P1: Coach crea profilo trainee con password, trainee aggiunge massimale
+  - P1: Trainee invia feedback con array serie (reps + kg)
+  - P2: Visualizzazione reportistica SBD e serie allenanti
+  - P3: Validazione RPE Float, peso in %, reps come intervallo
+- **Note implementative**: Documentate strutture Json per muscleGroups, setsPerformed, logica calcolo peso da percentuale 1RM, scala RPE 5.0-10.0, reportistica SBD (FRQ/NBL/IM)
+- **Implicazioni**: Data model completo e pronto per implementazione Prisma. Tutti i requisiti funzionali raccolti nelle note sono stati integrati nei file di design. API endpoints definiti. Validazione type-safe garantita. UX e security patterns documentati.
+
+---
+
 ## 2026-03-27 (rev 8)
 - **Azione**: Chiusura OD-32 (GDPR compliance).
 - **OD-32 - Compliance GDPR**: Dettagliata analisi e checklist implementativa
