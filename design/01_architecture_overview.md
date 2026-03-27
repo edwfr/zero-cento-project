@@ -30,6 +30,7 @@ Next.js funge da BFF (Backend for Frontend): non esiste un servizio backend sepa
 
 ## Componenti principali
 - **Frontend responsibilities**: rendering pagine per ruolo (admin/coach/trainee), gestione sessione utente, visualizzazione schede e form feedback.
+  - **UX differenziata**: Admin/Coach ottimizzati per desktop (workflow complessi), Trainee ottimizzato per mobile portrait (uso in palestra)
 - **Backend responsibilities**: autenticazione, autorizzazione per ruolo, logica di business (CRUD esercizi, schede, feedback), validazione input.
 - **Data layer responsibilities**: persistenza entità di dominio (utenti, esercizi, schede, feedback), integrità referenziale.
 
