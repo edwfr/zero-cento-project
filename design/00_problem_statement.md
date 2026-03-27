@@ -21,12 +21,15 @@ Realizzare una piattaforma web per la gestione di servizi di coaching sportivo/f
 - Visualizzazione scheda corrente e storico schede per il trainee.
 - Feedback del trainee su ogni esercizio del singolo allenamento.
 - Monitoraggio avanzamento e feedback da parte del coach.
-- Interfaccia responsive (desktop + mobile web).
+- Interfaccia responsive con ottimizzazione differenziata per ruolo:
+  - **Admin / Coach**: ottimizzata per desktop (workflow di creazione contenuti complessi)
+  - **Trainee**: ottimizzata per mobile portrait (uso in palestra durante allenamento)
 
 ## Scope OUT
 - [OD-04] Da definire: notifiche push/email, pagamenti/abbonamenti, app nativa iOS/Android, chat in-app, pianificazione nutrizionale.
 
 ## Vincoli
 - **Tecnologici**: Next.js (App Router) come framework full-stack; deploy su Vercel.
+- **UX/Device**: Admin e Coach lavorano primariamente da desktop; Trainee utilizza l'app principalmente da mobile in palestra.
 - **Temporali**: [OD-06] milestone da definire.
 - **Organizzativi**: [OD-07] dimensione team e processi di approvazione da definire.

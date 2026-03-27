@@ -79,6 +79,67 @@
 - **Gestione form**: **React Hook Form** (performance ottimale, pattern semplici) + **Zod** (validation type-safe, schema riutilizzabili, altissima presenza training data AI).
 - **Convenzioni CSS**: utility-first con Tailwind; MUI styled con `sx` prop o Emotion quando necessario; nessun CSS globale custom salvo reset e variabili tema.
 
+## Ottimizzazione UI per ruolo
+
+**Strategia di design differenziata:**
+
+### Admin & Coach → Desktop-first
+- **Target primario**: Desktop (1280px+)
+- **Rationale**: Workflow intensivi di creazione contenuti (schede multi-settimana, libreria esercizi, monitoraggio trainee)
+- **Layout**: Sidebar persistente, tabelle multi-colonna, drag-and-drop avanzato, dashboard dense con grafici
+- **Responsive**: Funzionale su tablet landscape (768px+), ma **non ottimizzato per mobile portrait**
+- **Componenti chiave desktop-oriented**:
+  - `WorkoutProgramBuilder` — editor complesso con drag-and-drop
+  - Tabelle estese per lista trainee/esercizi con sorting/filtering
+  - Dashboard multi-widget con metriche affiancate
+  - Form multi-step con preview side-by-side
+
+### Trainee → Mobile portrait-first
+- **Target primario**: Mobile portrait (360px - 428px)
+- **Rationale**: Uso principale in palestra durante allenamento (consultazione scheda, inserimento feedback immediato)
+- **Layout**: Single column, CTA prominenti, input touch-friendly (min 44px), bottom navigation
+- **UX mobile-centric**:
+  - Workout cards a stack verticale con scroll
+  - Form feedback ottimizzati per input rapido (tastierino numerico per kg/reps)
+  - Bottom sheet per azioni secondarie
+  - Swipe gestures per navigazione tra esercizi
+  - Sticky header con contesto allenamento corrente
+- **Responsive**: Usabile su desktop ma esperienza ottimizzata per telefono
+- **Pattern mobile-first**:
+  - `FeedbackForm` — input serie ottimizzato per touch (stepper +/- per reps/kg)
+  - `WorkoutExercise` card — video collassabile, parametri in evidenza
+  - Navigation — bottom tab bar per accesso rapido dashboard/current/records/reports
+
+### Implicazioni implementative
+
+**CSS condizionale per ruolo**:
+```typescript
+// Hook custom per applicare classi basate su ruolo
+const useRoleLayout = () => {
+  const { user } = useAuth()
+  const isTrainee = user?.role === 'trainee'
+  
+  return {
+    containerClass: isTrainee 
+      ? 'container-mobile px-4 max-w-md' // mobile-first
+      : 'container-desktop px-8 max-w-7xl', // desktop-first
+    gridClass: isTrainee
+      ? 'grid-cols-1' // sempre single column
+      : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' // responsive multi-column
+  }
+}
+```
+
+**Componenti role-aware**:
+- Admin/Coach: MUI `DataGrid` per tabelle dense, `Drawer` per sidebar
+- Trainee: MUI `BottomNavigation`, `SwipeableDrawer`, `Stepper` touch-friendly
+
+**Testing responsive per ruolo**:
+- Admin/Coach: test su 1280px, 1440px, 1920px (desktop standard)
+- Trainee: test su 360px (Android small), 390px (iPhone 12/13), 428px (iPhone 14 Pro Max)
+
+**Nota**: Entrambe le esperienze rimangono **responsive** (funzionali su tutti i device), ma l'ottimizzazione UX è polarizzata per il caso d'uso principale di ciascun ruolo.
+
 ## Rationale scelte per sviluppo AI-first
 Stack selezionato per massimizzare efficacia generazione codice AI:
 - **Tailwind CSS**: sintassi concisa, pattern ripetitivi, coverage eccellente nei training data.

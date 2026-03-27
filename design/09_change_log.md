@@ -4,6 +4,31 @@
 
 ---
 
+## 2026-03-27 (rev 10)
+- **Azione**: Definizione strategia UX differenziata per ruolo - ottimizzazione device-specific.
+- **Rationale**: Casi d'uso reali richiedono esperienze ottimizzate per device diversi:
+  - **Admin/Coach**: workflow di creazione contenuti complessi (editor schede multi-settimana, gestione libreria, analytics) → ottimale su desktop con schermi ampi, mouse/keyboard
+  - **Trainee**: consultazione scheda e inserimento feedback durante allenamento in palestra → ottimale su mobile portrait, input touch rapido
+- **Strategia implementata**:
+  - **Admin/Coach → Desktop-first** (1280px+):
+    - Layout: Sidebar persistente, tabelle multi-colonna, drag-and-drop avanzato, dashboard dense
+    - Componenti: `WorkoutProgramBuilder` con editor complesso, tabelle estese, form multi-step con preview
+    - Responsive: funzionale su tablet landscape, **non ottimizzato per mobile portrait**
+  - **Trainee → Mobile portrait-first** (360px-428px):
+    - Layout: Single column, CTA prominenti (min 44px), bottom navigation, sticky header
+    - UX mobile-centric: cards a stack verticale, form ottimizzati per input rapido (stepper +/- per kg/reps), swipe gestures, bottom sheet
+    - Componenti: `FeedbackForm` ottimizzato touch, bottom tab bar navigation
+    - Responsive: usabile su desktop ma esperienza primaria per telefono
+- **Implicazioni tecniche**:
+  - Hook custom `useRoleLayout()` per classi CSS condizionali basate su ruolo
+  - Componenti role-aware: MUI `DataGrid`/`Drawer` per Admin/Coach, MUI `BottomNavigation`/`SwipeableDrawer` per Trainee
+  - Testing responsive differenziato: desktop 1280-1920px per Admin/Coach, mobile 360-428px per Trainee
+  - Vincolo UX documentato in 00_problem_statement.md
+- **Nota importante**: Entrambe le esperienze rimangono **responsive** e funzionali su tutti i device, ma l'ottimizzazione UX è polarizzata per il caso d'uso principale.
+- **Implicazioni**: Design polarizzato chiarisce priorità implementative. Nessun compromesso UX necessario: ogni ruolo ottiene l'esperienza migliore per il suo workflow reale. Testing strategy aggiornata con device target specifici.
+
+---
+
 ## 2026-03-27 (rev 9)
 - **Azione**: Integrazione completa data model dettagliato con informazioni raccolte dal documento note.txt.
 - **Data Model - Arricchimento entità**:
