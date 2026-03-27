@@ -495,6 +495,249 @@ LIMIT 10  -- Ultime 10 settimane con feedback
 - Cache locale: storico cachato per sessione (evita query ripetute)
 - Collapsible: default collapsed per non ingombrare UI, espandibile on-click
 
+## Visualizzazione Feedback per Trainer
+
+Il trainer deve poter visualizzare i feedback obbligatori compilati dai trainee in due contesti principali.
+
+### Contesto 1: Vista Generale Trainee (Profilo/Dashboard)
+
+Nella scheda del trainee, il trainer visualizza una sezione dedicata "Feedback Raccolti" con aggregazione per esercizio.
+
+**Query feedback trainee raggruppati per esercizio**:
+```sql
+-- Recupera tutti i feedback di settimane obbligatorie per un trainee, raggruppati per esercizio
+SELECT 
+  e.id AS exerciseId,
+  e.name AS exerciseName,
+  e.type AS exerciseType,
+  mp.name AS movementPattern,
+  COUNT(DISTINCT ef.id) AS totalFeedbackCount,
+  COUNT(DISTINCT w.id) AS weeksWithFeedback,
+  MAX(ef.date) AS lastFeedbackDate,
+  AVG(ef.actualRpe) AS avgRpe,
+  -- Aggregazione serie/peso (richiede elaborazione JSON)
+  JSON_AGG(
+    JSON_BUILD_OBJECT(
+      'weekNumber', w.weekNumber,
+      'weekStartDate', w.startDate,
+      'feedbackDate', ef.date,
+      'actualRpe', ef.actualRpe,
+      'setsPerformed', ef.setsPerformed,
+      'notes', ef.notes,
+      'completed', ef.completed,
+      'targetSets', we.sets,
+      'targetReps', we.reps,
+      'targetRpe', we.targetRpe
+    ) ORDER BY w.weekNumber DESC
+  ) AS feedbackHistory
+FROM Exercise e
+JOIN WorkoutExercise we ON we.exerciseId = e.id
+JOIN ExerciseFeedback ef ON ef.workoutExerciseId = we.id
+JOIN Workout wo ON we.workoutId = wo.id
+JOIN Week w ON wo.weekId = w.id
+JOIN TrainingProgram tp ON w.programId = tp.id
+LEFT JOIN MovementPattern mp ON e.movementPatternId = mp.id
+WHERE ef.traineeId = <traineeId>
+  AND tp.trainerId = <trainerId>
+  AND w.feedbackRequested = true  -- Solo settimane con feedback obbligatorio
+GROUP BY e.id, e.name, e.type, mp.name
+ORDER BY lastFeedbackDate DESC, exerciseName ASC
+```
+
+**UI Vista Generale Trainee**:
+```
+┌─────────── Profilo Trainee: Mario Rossi ──────────────┐
+│                                                        │
+│ [Anagrafica] [Schede] [Massimali] [📊 Feedback]       │
+│                                                        │
+│ ──────────── Feedback Raccolti (Settimane Obbligatorie) ────── │
+│                                                        │
+│ Filtri: [Tutte le schede ▼] [Tutti gli esercizi ▼]   │
+│                                                        │
+│ 🟣 Squat (Fondamentale)                  12 feedback  │
+│    Ultimo: 2026-03-20 · RPE medio: 8.2               │
+│    [Visualizza dettaglio ▼]                           │
+│                                                        │
+│ 🔵 Bench Press (Fondamentale)            10 feedback  │
+│    Ultimo: 2026-03-18 · RPE medio: 7.8               │
+│    [Visualizza dettaglio ▼]                           │
+│                                                        │
+│ 🟢 Deadlift (Fondamentale)               12 feedback  │
+│    Ultimo: 2026-03-19 · RPE medio: 8.5               │
+│    [Visualizza dettaglio ▼]                           │
+│                                                        │
+│ 🔵 Incline Dumbbell Press (Accessorio)    8 feedback │
+│    Ultimo: 2026-03-18 · RPE medio: 7.5               │
+│    [Visualizza dettaglio ▼]                           │
+│                                                        │
+└────────────────────────────────────────────────────────┘
+```
+
+**UI Dettaglio Esercizio Espanso** (quando trainer clicca "Visualizza dettaglio"):
+```
+┌─────────── Storico Feedback: Squat ───────────────────┐
+│                                                        │
+│ 📈 Trend RPE e Carico                                 │
+│     [Grafico lineare RPE/Peso ultime 12 settimane]   │
+│                                                        │
+│ ──────────── Dettaglio per Settimana ──────────────── │
+│                                                        │
+│ 📅 Week 12 - Scheda "Powerlifting 16W" (2026-03-20)  │
+│    Target: 5×5 @ 85% 1RM (RPE 8.5)                   │
+│    Actual: 5×5 @ 100kg (RPE 8.5)                     │
+│    Serie: [5×100kg, 5×100kg, 5×100kg, 5×100kg, 5×100kg] │
+│    Note: "Buona esecuzione, carico gestibile"         │
+│    ✅ Completato                                       │
+│                                                        │
+│ 📅 Week 8 - Scheda "Powerlifting 16W" (2026-02-20)   │
+│    Target: 5×5 @ 80% 1RM (RPE 8.0)                   │
+│    Actual: 5×5 @ 95kg (RPE 7.8)                      │
+│    Serie: [5×95kg, 5×95kg, 5×95kg, 4×95kg, 4×95kg]   │
+│    Note: "Ultime 2 serie faticose"                    │
+│    ✅ Completato                                       │
+│                                                        │
+│ 📅 Week 4 - Scheda "Powerlifting 16W" (2026-01-23)   │
+│    Target: 5×5 @ 75% 1RM (RPE 7.5)                   │
+│    Actual: 5×5 @ 90kg (RPE 7.5)                      │
+│    Serie: [5×90kg, 5×90kg, 5×90kg, 5×90kg, 5×90kg]   │
+│    Note: "Settimana introduttiva, carico leggero"     │
+│    ✅ Completato                                       │
+│                                                        │
+│ [Esporta CSV] [Confronta con altri trainee]           │
+└────────────────────────────────────────────────────────┘
+```
+
+### Contesto 2: Durante Compilazione Nuova Scheda
+
+Quando il trainer sta compilando una nuova scheda per un trainee, può accedere rapidamente ai feedback storici per prendere decisioni informate sui carichi/volume.
+
+**Accesso contestuale durante compilazione**:
+```
+┌─────────── Nuova Scheda per Mario Rossi ──────────────┐
+│ Week 1 · Giorno A                                      │
+│                                                        │
+│ Esercizio 1: Squat                                     │
+│ Serie: [5]  Reps: [5]  Peso: [85%] 1RM                │
+│ RPE target: [8.0]  Recupero: [3m]                     │
+│                                                        │
+│ 💡 [Visualizza feedback storici Squat]                │
+│    ↓ (quick preview inline)                           │
+│    Week 12 Scheda precedente: 5×5 @ 100kg (RPE 8.5)  │
+│    Week 8 Scheda precedente: 5×5 @ 95kg (RPE 7.8)    │
+│    Raccomandazione: carico iniziale consigliato 90kg  │
+│                                                        │
+│ [+ Aggiungi Esercizio]                                │
+│                                                        │
+└────────────────────────────────────────────────────────┘
+```
+
+**Query feedback ultimo mesociclo per esercizio specifico**:
+```sql
+-- Recupera feedback più recenti per esercizio specifico (ultimi 3 mesi)
+SELECT 
+  w.weekNumber,
+  w.startDate AS weekStartDate,
+  tp.title AS programTitle,
+  ef.date AS feedbackDate,
+  ef.actualRpe,
+  ef.setsPerformed,  -- JSON array
+  ef.notes,
+  ef.completed,
+  we.sets AS targetSets,
+  we.reps AS targetReps,
+  we.targetRpe,
+  we.weight AS targetWeight,
+  we.weightType
+FROM ExerciseFeedback ef
+JOIN WorkoutExercise we ON ef.workoutExerciseId = we.id
+JOIN Workout wo ON we.workoutId = wo.id
+JOIN Week w ON wo.weekId = w.id
+JOIN TrainingProgram tp ON w.programId = tp.id
+WHERE ef.traineeId = <traineeId>
+  AND we.exerciseId = <exerciseId>
+  AND w.feedbackRequested = true
+  AND ef.date >= (CURRENT_DATE - INTERVAL '3 months')  -- Ultimi 3 mesi
+ORDER BY ef.date DESC
+LIMIT 5  -- Ultimi 5 feedback rilevanti
+```
+
+### Dashboard Trainer - Sezione Feedback Pending
+
+Aggiunta alla dashboard trainer: notifica trainee che hanno completato settimane con feedback obbligatorio.
+
+**Query feedback obbligatori recenti da revisionare**:
+```sql
+-- Feedback obbligatori completati nelle ultime 7 giorni (da revisionare)
+SELECT 
+  u.id AS traineeId,
+  u.firstName,
+  u.lastName,
+  tp.id AS programId,
+  tp.title AS programTitle,
+  w.weekNumber,
+  w.startDate AS weekStartDate,
+  COUNT(DISTINCT ef.id) AS feedbackCount,
+  MAX(ef.date) AS lastFeedbackDate
+FROM User u
+JOIN TrainingProgram tp ON tp.traineeId = u.id
+JOIN Week w ON w.programId = tp.id
+JOIN Workout wo ON wo.weekId = w.id
+JOIN WorkoutExercise we ON we.workoutId = wo.id
+JOIN ExerciseFeedback ef ON ef.workoutExerciseId = we.id
+WHERE tp.trainerId = <trainerId>
+  AND w.feedbackRequested = true
+  AND ef.date >= (CURRENT_DATE - INTERVAL '7 days')
+  AND u.isActive = true
+GROUP BY u.id, u.firstName, u.lastName, tp.id, tp.title, w.weekNumber, w.startDate
+ORDER BY lastFeedbackDate DESC
+```
+
+**UI Dashboard Trainer (aggiunta sezione)**:
+```
+┌─────────────── Dashboard Trainer ────────────────┐
+│                                                   │
+│  📊 Trainee Attivi                        15      │
+│  ⚠️  Schede in scadenza (< 2 settimane)   5       │
+│  🔴 Schede in scadenza (questa settimana)  2      │
+│                                                   │
+│  📝 Feedback Obbligatori Recenti           3      │
+│      [Visualizza e revisiona]                     │
+│                                                   │
+└───────────────────────────────────────────────────┘
+
+Cliccando su "Visualizza e revisiona":
+
+┌─────────── Feedback Obbligatori da Revisionare ────┐
+│ Trainee         Scheda           Week  Data         │
+│ Mario Rossi     Powerlifting 16W  W12  2026-03-20  │
+│   → 8 esercizi completati                          │
+│   [Visualizza dettaglio]                           │
+│                                                     │
+│ Laura Bianchi   Ipertrofia 8W    W4   2026-03-18  │
+│   → 6 esercizi completati                          │
+│   [Visualizza dettaglio]                           │
+│                                                     │
+│ Paolo Verdi     Forza 12W         W6   2026-03-17  │
+│   → 7 esercizi completati                          │
+│   [Visualizza dettaglio]                           │
+└─────────────────────────────────────────────────────┘
+```
+
+### Esportazione e Analisi
+
+Il trainer può esportare feedback aggregati per analisi esterne.
+
+**Funzionalità export**:
+- **CSV per trainee**: tutti i feedback obbligatori del trainee, raggruppati per esercizio
+- **PDF report progressi**: report automatico con grafici trend RPE/carico per esercizi fondamentali (SBD)
+- **Confronto trainee**: comparare progressi di più trainee su stesso esercizio (anonimizzato) ❓ **OD-30**
+
+**Note implementative**:
+- **Performance**: Query feedback usano indici su `(traineeId, exerciseId, date)` per velocità
+- **Privacy**: Solo trainer assegnato può vedere feedback dei propri trainee
+- **Retention**: Feedback storici conservati indefinitamente (spazio trascurabile, ~1KB per feedback)
+- **Notifiche**: Trainer riceve notifica push quando trainee completa settimana con feedback obbligatorio
+
 ## Query critiche
 - **Scheda corrente trainee**: `TrainingProgram` con `status=active` e `traineeId=<id>`, espanso fino a `WorkoutExercise`.
 - **Avanzamento scheda (trainer)**: `ExerciseFeedback` aggregati per `TrainingProgram` — % esercizi completati per settimana.
@@ -507,6 +750,9 @@ LIMIT 10  -- Ultime 10 settimane con feedback
 - **Massimali trainee**: `PersonalRecord` con `traineeId=<id>`, raggrupati per `exerciseId`, ordinati per `recordDate` DESC.
 - **Dashboard KPI trainee attivi**: COUNT trainee con `isActive=true` e scheda `status=active` per trainer
 - **Dashboard schede in scadenza**: `TrainingProgram` con `status=active`, `trainerId=<id>`, `isActive=true`, dove `endDate` (calcolato) è entro 7 o 14 giorni da oggi
+- **Feedback trainee raggruppati per esercizio**: `ExerciseFeedback` JOIN multiple per aggregare feedback per esercizio con storico completo, filtrati per `feedbackRequested=true`
+- **Feedback obbligatori recenti da revisionare**: `ExerciseFeedback` con `feedbackRequested=true` completati negli ultimi 7 giorni
+- **Feedback ultimo mesociclo per esercizio**: `ExerciseFeedback` per `exerciseId` + `traineeId` negli ultimi 3 mesi, ordinati per data DESC
 - **Reportistica SBD** (solo per esercizi fondamentali):
   - **FRQ (Frequenza)**: numero di giorni distinti in cui l'esercizio SBD appare nel periodo
   - **NBL (Numero alzate)**: totale delle serie × ripetizioni per esercizio nel periodo
