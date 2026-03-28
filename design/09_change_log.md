@@ -4,6 +4,365 @@
 
 ---
 
+## 2026-03-28 (rev 35)
+- **Azione**: Chiusura ODR-15, ODR-16, ODR-17 — decisioni qualità e testing per production-readiness completo.
+- **ODR-15 - Error boundary client-side React**:
+  - **Problema**: Nessuna strategia definita per gestire crash React lato client, rischio white screen per utenti
+  - **Decisione**: **Error boundary globale con react-error-boundary + logging Sentry**
+  - **Implementazione tecnica**:
+    - **Library**: `react-error-boundary` (17KB, standard de facto, integration Sentry nativa)
+    - **Root Error Boundary**: Wrappa `<body>` in `app/layout.tsx` (Next.js App Router)
+      ```tsx
+      // app/layout.tsx
+      import { ErrorBoundary } from 'react-error-boundary'
+      
+      export default function RootLayout({ children }) {
+        return (
+          <html>
+            <body>
+              <ErrorBoundary 
+                FallbackComponent={GlobalErrorFallback}
+                onError={logErrorToSentry}
+                onReset={() => window.location.href = '/'}
+              >
+                {children}
+              </ErrorBoundary>
+            </body>
+          </html>
+        )
+      }
+      ```
+    - **Global Fallback UI**:
+      ```tsx
+      // components/GlobalErrorFallback.tsx
+      function GlobalErrorFallback({ error, resetErrorBoundary }) {
+        return (
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold mb-4">Qualcosa è andato storto</h1>
+              <p className="text-gray-600 mb-6">
+                Ci scusiamo per l'inconveniente. Il nostro team è stato notificato.
+              </p>
+              <button onClick={resetErrorBoundary}>
+                Ricarica la pagina
+              </button>
+              {process.env.NODE_ENV === 'development' && (
+                <pre className="mt-4 text-left">{error.message}</pre>
+              )}
+            </div>
+          </div>
+        )
+      }
+      ```
+    - **Boundary granulari** per sezioni critiche:
+      - Dashboard trainee (workout viewer): Fallback \"Errore caricamento allenamento\" con link homepage
+      - Dashboard trainer (program builder): Fallback \"Errore editor scheda\" mantiene sidebar navigazione
+      - Feedback form: Fallback \"Errore invio feedback\" con retry button
+    - **Sentry integration**:
+      ```tsx
+      import * as Sentry from '@sentry/nextjs'
+      
+      function logErrorToSentry(error: Error, info: { componentStack: string }) {
+        Sentry.captureException(error, {
+          contexts: {
+            react: {
+              componentStack: info.componentStack,
+            },
+          },
+          user: {
+            id: currentUser?.id,
+            email: currentUser?.email,
+            role: currentUser?.role,
+          },
+          tags: {
+            errorBoundary: true,
+          },
+        })
+      }
+      ```
+    - **Error recovery strategy**:
+      - `resetErrorBoundary()` prova re-render del componente fallito
+      - Se errore persiste dopo 3 retry, escalation a boundary parent
+      - Root boundary fallback sempre disponibile (full page reload)
+  - **Dev vs Prod behavior**:
+    - **Dev**: Stack trace completo visibile, hot reload mantiene error state per debug
+    - **Prod**: UI pulita con error ID univoco (Sentry event ID) per supporto
+  - **Benefici**:
+    - Zero white screen: sempre mostra UI (anche se degradata)
+    - Debug facilitato: Sentry correla errori con session replay + breadcrumbs
+    - UX professionale: messaggi contestuali invece di crash generico
+    - Resilienza: sezioni app indipendenti (crash dashboard non blocca navbar)
+- **ODR-16 - Accessibility (a11y) target e testing**:
+  - **Problema**: MUI è WCAG-compliant ma nessun target esplicito definito, nessun test automatico a11y, potenziale rischio conformità legale
+  - **Decisione**: **Target WCAG 2.1 Level AA** con test automatici axe-core integrati in E2E
+  - **Rationale target AA**:
+    - Level A = baseline minimo (insufficiente per apps con autenticazione)
+    - Level AA = standard industria per web apps, conformità Legge Stanca italiana
+    - Level AAA = overkill per MVP fitness (requisiti troppo stringenti)
+  - **Implementazione test automatici**:
+    - **Library**: `@axe-core/playwright` (axe-core engine in Playwright tests)
+    - **Integration E2E**:
+      ```typescript
+      // tests/accessibility.spec.ts
+      import { test, expect } from '@playwright/test'
+      import AxeBuilder from '@axe-core/playwright'
+      
+      test('login page deve essere accessibile', async ({ page }) => {
+        await page.goto('/login')
+        
+        const accessibilityScanResults = await new AxeBuilder({ page })
+          .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+          .analyze()
+        
+        expect(accessibilityScanResults.violations).toEqual([])
+      })
+      
+      test('dashboard trainer deve essere accessibile', async ({ page }) => {
+        await loginAsTrainer(page)
+        await page.goto('/trainer/dashboard')
+        
+        const results = await new AxeBuilder({ page })
+          .exclude('#third-party-widget') // Escludi componenti terzi non controllabili
+          .analyze()
+        
+        // Blocca SOLO violazioni critiche/serious
+        const criticalViolations = results.violations.filter(
+          v => v.impact === 'critical' || v.impact === 'serious'
+        )
+        expect(criticalViolations).toEqual([])
+      })
+      ```
+    - **Test coverage**: Login, Dashboard trainer, Dashboard trainee, Creazione scheda, Invio feedback (flussi P0)
+    - **CI/CD**: Test a11y eseguiti su ogni PR, violations critiche bloccano merge
+  - **Checklist manuale MVP** (validazione pre-launch):
+    - [ ] **Navigazione tastiera**: Tab order logico, Enter su bottoni, Esc chiude modals
+    - [ ] **Screen reader**: Test con NVDA (Windows) su login + dashboard, annunci corretti form errors
+    - [ ] **Contrasto colori**: Minimo 4.5:1 testo normale, 3:1 testo large (>18pt), verificato con Contrast Checker
+    - [ ] **Form labels**: Ogni input ha `<label>` esplicito (no placeholder-only), errori annunciati con `aria-describedby`
+    - [ ] **Focus indicator**: Visibile su tutti elementi interattivi (outline 2px solid, colore contrastante)
+    - [ ] **Skip link**: \"Salta al contenuto principale\" per bypassare navbar ripetitiva
+    - [ ] **Immagini**: Alt text descrittivo (no \"immagine\", \"foto\"), decorative images hanno `alt=\"\"`
+    - [ ] **ARIA**: Usato solo dove necessario (MUI gestisce maggior parte), custom components validati
+  - **Benefici MUI baseline**:
+    - MUI componenti hanno ARIA roles/labels built-in
+    - Keyboard navigation funzionante out-of-box (Tab, Space, Enter)
+    - Focus management automatico (modals, drawers)
+    - High contrast mode support
+  - **Post-MVP**: 
+    - Audit esterno WebAIM quando utenza >200 utenti
+    - Certificazione WCAG AA se richiesto da clienti enterprise
+    - User testing con utenti screen reader reali
+  - **Conformità legale**: 
+    - Legge Stanca (4/2004) richiede accessibilità PA e fornitori PA → applicabile se ZeroCento serve enti pubblici
+    - Direttiva UE 2016/2102 applicabile a enti pubblici
+    - Target AA garantisce conformità robusta
+- **ODR-17 - Seed data strategy per ambienti**:
+  - **Problema**: Menzionata necessità seed per MuscleGroup/MovementPattern ma non definita strategia completa per staging (demo/UAT) e E2E (test deterministici)
+  - **Decisione**: **Seed script Prisma environment-specific** con dati predicibili (E2E) e realistici (staging)
+  - **Implementazione base `prisma/seed.ts`**:
+    - **Esecuzione**: `npx prisma db seed` (configurato in `package.json` "prisma": {"seed": "ts-node prisma/seed.ts"})
+    - **Dati statici universali** (tutti ambienti):
+      ```typescript
+      // prisma/seed.ts
+      async function main() {
+        // 14 gruppi muscolari standard
+        const muscleGroups = await prisma.muscleGroup.createMany({
+          data: [
+            { name: 'Pettorali', code: 'CHEST' },
+            { name: 'Dorsali', code: 'BACK' },
+            { name: 'Spalle', code: 'SHOULDERS' },
+            { name: 'Bicipiti', code: 'BICEPS' },
+            { name: 'Tricipiti', code: 'TRICEPS' },
+            { name: 'Quadricipiti', code: 'QUADS' },
+            { name: 'Femorali', code: 'HAMSTRINGS' },
+            { name: 'Glutei', code: 'GLUTES' },
+            { name: 'Polpacci', code: 'CALVES' },
+            { name: 'Addominali', code: 'ABS' },
+            { name: 'Lombari', code: 'LOWER_BACK' },
+            { name: 'Trapezi', code: 'TRAPS' },
+            { name: 'Avambracci', code: 'FOREARMS' },
+            { name: 'Adduttori', code: 'ADDUCTORS' },
+          ],
+        })
+        
+        // 7 movement patterns
+        const movementPatterns = await prisma.movementPattern.createMany({
+          data: [
+            { name: 'Squat', description: 'Accosciata, piegamento gambe' },
+            { name: 'Hinge', description: 'Piegamento anche (stacchi, good morning)' },
+            { name: 'Push Verticale', description: 'Spinta sopra la testa' },
+            { name: 'Push Orizzontale', description: 'Spinta petto (panca, push-up)' },
+            { name: 'Pull Verticale', description: 'Tirata verticale (trazioni, lat machine)' },
+            { name: 'Pull Orizzontale', description: 'Remata orizzontale' },
+            { name: 'Carry/Core', description: 'Farmer walk, plank, anti-rotation' },
+          ],
+        })
+        
+        // Admin user (configurabile via env)
+        const adminEmail = process.env.ADMIN_EMAIL || 'admin@zerocento.local'
+        const adminPassword = process.env.ADMIN_PASSWORD || 'Admin123!' // Hashato con Supabase Auth
+        
+        const admin = await prisma.user.create({
+          data: {
+            email: adminEmail,
+            firstName: 'Admin',
+            lastName: 'ZeroCento',
+            role: 'admin',
+            isActive: true,
+          },
+        })
+        
+        console.log('✅ Seed base completato: MuscleGroups, MovementPatterns, Admin')
+      }
+      ```
+  - **Seed E2E `prisma/seed-e2e.ts`** (dati predicibili):
+    - **Scopo**: Test automatici Playwright con ID fissi e dati conosciuti
+    - **Esecuzione**: `npm run seed:e2e` (GitHub Actions prima di test E2E)
+    - **Dati creati**:
+      ```typescript
+      // prisma/seed-e2e.ts
+      async function seedE2E() {
+        // 1. Utenti fissi con credenziali note
+        const trainer = await createUser({
+          email: 'trainer1@test.local',
+          password: 'Test123!',
+          firstName: 'Mario',
+          lastName: 'Rossi',
+          role: 'trainer',
+        })
+        
+        const trainee = await createUser({
+          email: 'trainee1@test.local',
+          password: 'Test123!',
+          firstName: 'Luca',
+          lastName: 'Verdi',
+          role: 'trainee',
+        })
+        
+        // 2. Relazione trainer-trainee
+        await prisma.trainerTrainee.create({
+          data: { trainerId: trainer.id, traineeId: trainee.id },
+        })
+        
+        // 3. Esercizi con ID predicibili
+        const squat = await prisma.exercise.create({
+          data: {
+            name: 'Squat Bilanciere',
+            type: 'STRENGTH',
+            createdById: trainer.id,
+            movementPatternId: movementPatterns[0].id, // Squat pattern
+          },
+        })
+        // ... altri 9 esercizi standard
+        
+        // 4. Scheda test (8 settimane, 3 workout/settimana)
+        const program = await prisma.trainingProgram.create({
+          data: {
+            name: 'Scheda Test E2E',
+            trainerId: trainer.id,
+            traineeId: trainee.id,
+            status: 'active',
+            durationWeeks: 8,
+            startDate: new Date('2026-03-01'),
+          },
+        })
+        
+       // Week, Workout, WorkoutExercise creati con loop
+        // ... (dettaglio implementazione)
+        
+        console.log('✅ Seed E2E completato: 1 trainer, 1 trainee, 10 esercizi, 1 scheda attiva')
+      }
+      ```
+    - **Test usage**:
+      ```typescript
+      // tests/feedback.spec.ts
+      test('trainee può inviare feedback', async ({ page }) => {
+        await loginAs(page, 'trainee1@test.local', 'Test123!')
+        await page.goto('/trainee/workout')
+        
+        // ID predicibili da seed
+        await page.click('[data-testid=\"exercise-squat-feedback\"]')
+        await page.fill('[name=\"reps\"]', '10')
+        await page.fill('[name=\"weight\"]', '100')
+        await page.click('button[type=\"submit\"]')
+        
+        await expect(page.locator('.success-message')).toBeVisible()
+      })
+      ```
+  - **Seed staging `prisma/seed-staging.ts`** (dati realistici):
+    - **Scopo**: Demo per stakeholder, UAT, sviluppo frontend
+    - **Esecuzione**: `npm run seed:staging` (manuale o auto su deploy staging)
+    - **Dati creati**:
+      ```typescript
+      // prisma/seed-staging.ts
+      async function seedStaging() {
+        // 3 trainer realistici
+        const trainers = await Promise.all([
+          createUser({ email: 'mario.rossi@demo.zerocento.it', firstName: 'Mario', lastName: 'Rossi', role: 'trainer' }),
+          createUser({ email: 'laura.bianchi@demo.zerocento.it', firstName: 'Laura', lastName: 'Bianchi', role: 'trainer' }),
+          createUser({ email: 'giorgio.verdi@demo.zerocento.it', firstName: 'Giorgio', lastName: 'Verdi', role: 'trainer' }),
+        ])
+        
+        // 15 trainee con nomi italiani comuni
+        const traineeNames = [
+          ['Luca', 'Ferrari'], ['Sofia', 'Russo'], ['Marco', 'Romano'],
+          ['Giulia', 'Colombo'], ['Alessandro', 'Ricci'], ['Francesca', 'Moretti'],
+          // ... altri 9
+        ]
+        const trainees = await Promise.all(
+          traineeNames.map(([first, last]) => 
+            createUser({ 
+              email: `${first.toLowerCase()}.${last.toLowerCase()}@trainee.zerocento.it`,
+              firstName: first, 
+              lastName: last, 
+              role: 'trainee' 
+            })
+          )
+        )
+        
+        // 50 esercizi libreria (mix bilanciere, manubri, corpo libero)
+        const exercises = await createExerciseLibrary(trainers[0].id)
+        
+        // 5 schede pubblicate varie tipologie
+        const programs = [
+          { name: 'Forza 4x4', type: 'strength', weeks: 12, trainee: trainees[0] },
+          { name: 'Ipertrofia Upper/Lower', type: 'hypertrophy', weeks: 8, trainee: trainees[1] },
+          { name: 'Principiante Full Body', type: 'beginner', weeks: 6, trainee: trainees[2] },
+          { name: 'Powerlifting Peaking', type: 'strength', weeks: 10, trainee: trainees[3] },
+          { name: 'Tonificazione 3x/week', type: 'toning', weeks: 8, trainee: trainees[4] },
+        ]
+        
+        // Genera feedback ultimi 30 giorni
+        await generateRecentFeedback(programs, trainees)
+        
+        console.log('✅ Seed staging completato: 3 trainer, 15 trainee, 50 esercizi, 5 schede + feedback')
+      }
+      ```
+    - **Rigeneration**: `npm run seed:staging --reset` pulisce DB e ricrea dati fresh
+  - **Seed production `prisma/seed.ts`**:
+    - **SOLO dati statici**: MuscleGroup, MovementPattern
+    - **Admin configurabile**: Email/password da env variables (`.env.production`)
+    - **Zero dati utente**: Nessun trainer/trainee/scheda di test
+  - **CI/CD integration**:
+    - **GitHub Actions workflow**:
+      ```yaml
+      # .github/workflows/e2e-tests.yml
+      - name: Seed database E2E
+        run: npm run seed:e2e
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_TEST }}
+      
+      - name: Run Playwright tests
+        run: npm run test:e2e
+      ```
+    - **Staging auto-seed**: Vercel deploy hook esegue `npm run seed:staging` dopo migrations
+    - **Production safe**: Seed prod eseguito solo manualmente post-setup iniziale
+  - **Benefici**:
+    - **Test E2E deterministici**: ID fissi, nessun flakiness da dati randomici
+    - **Staging usabile immediatamente**: Dati demo realistici per UAT e presentazioni
+    - **Prod deployment safe**: Zero rischio di test data leak in produzione
+    - **Developer experience**: Setup locale in <2 minuti con seed script
+
 ## 2026-03-28 (rev 34)
 - **Azione**: Chiusura ultime due assunzioni ODR-31, ODR-32 per completare allineamento requisiti operativi MVP.
 - **ODR-31 - Limite numero esercizi libreria condivisa**:
