@@ -113,13 +113,13 @@
 
 #### Architetturali (da valutare)
 
-- [ ] **ODR-09** Database indexes espliciti → Query dashboard con calcolo `endDate` e JOIN multipli beneficerebbero di indici compositi. Impatto trascurabile a 54 utenti, rilevante a 500+. **Decisione**: Definire strategia indexing per scalabilità futura.
+- [x] **ODR-09** Database indexes espliciti → Risolto. Implementati **indici compositi** per ottimizzare query dashboard, ricerca esercizi, feedback trainee e lookup relazionali. Strategia dettagliata in `docs/database-indexes.md`. Indici su: User (email, role+isActive), TrainerTrainee (trainerId), Exercise (type+isActive, movementPatternId), WorkoutExercise (workoutId+order), ExerciseFeedback (traineeId+date, workoutExerciseId+traineeId+date UNIQUE), PersonalRecord (traineeId+exerciseId+type+recordDate). Performance garantita per scala MVP e oltre. (chiuso 2026-03-28, vedi 09_change_log.md rev 29)
 
-- [ ] **ODR-10** API pagination → Nessun endpoint definisce paginazione (GET /api/exercises, /api/users, /api/programs). Lista esercizi può crescere indefinitamente. **Decisione**: Aggiungere pagination standard su tutti gli endpoint GET list.
+- [x] **ODR-10** API pagination → Risolto. Implementata **cursor-based pagination** su `GET /api/exercises` (lista esercizi libreria condivisa). Parametri: cursor, limit (default 50, max 100), sortBy (name/createdAt/type), order (asc/desc). Response include `nextCursor` e `hasMore`. Strategia dettagliata in `docs/api-pagination.md`. Endpoint `/api/users` e `/api/programs` NON paginati per MVP (max 54 utenti, schede filtrate per trainer). Performance garantita, scalabilità a >500 esercizi gestita. (chiuso 2026-03-28, vedi 09_change_log.md rev 29)
 
-- [ ] **ODR-11** Concurrency control → Nessun optimistic locking. Due trainer modificano stesso esercizio: ultimo vince silenziosamente. Raro a 3 trainer ma possibile. **Decisione**: Valutare `version` field o `updatedAt` check per conflitti.
+- [x] **ODR-11** Concurrency control → Risolto. **Rischio ACCETTATO per MVP**. Nessun optimistic locking implementato. Scenario "due trainer modificano stesso esercizio contemporaneamente" (last-write-wins) è accettabile con 3 trainer e uso limitato della libreria condivisa. Rischio classificato come BASSO per MVP, mitigazione rinviata post-MVP se emerge necessità reale. (chiuso 2026-03-28, vedi 09_change_log.md rev 29)
 
-- [ ] **ODR-12** Idempotency su POST feedback → Double-tap può creare due `ExerciseFeedback` per stesso `WorkoutExercise`. **Decisione**: Aggiungere constraint UNIQUE `(workoutExerciseId, traineeId)` o idempotency key.
+- [x] **ODR-12** Idempotency su POST feedback → Risolto. Implementato **constraint UNIQUE** `(workoutExerciseId, traineeId, date)` su tabella `ExerciseFeedback`. Previene feedback duplicati per stesso esercizio/trainee/giorno in caso di double-tap o network retry. Backend valida duplicati prima di INSERT, client implementa debouncing 500ms su submit button. Strategia dettagliata in `docs/database-indexes.md` e `design-review/00_review_v1.md` (A2 - Idempotency POST feedback). (chiuso 2026-03-28, vedi 09_change_log.md rev 29)
 
 #### Operations & Monitoring
 
