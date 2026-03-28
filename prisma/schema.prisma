@@ -1,0 +1,331 @@
+// ZeroCento Training Platform - Prisma Schema
+// Generated from design documentation (04_data_model.md)
+// Date: 2026-03-28
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")      // Pooled connection (PgBouncer) for app runtime
+  directUrl = env("DIRECT_URL")        // Direct connection for migrations (no PgBouncer)
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum Role {
+  admin
+  trainer
+  trainee
+}
+
+enum ExerciseType {
+  fundamental  // Squat, Bench, Deadlift
+  accessory    // Assistenza e complementari
+}
+
+enum ProgramStatus {
+  draft
+  active
+  completed
+}
+
+enum WeekType {
+  normal   // Settimana standard
+  test     // Settimana di valutazione/test massimali (UI trainee con colori vivaci)
+  deload   // Settimana di scarico/recupero (UI trainee con colori rilassanti)
+}
+
+enum WeightType {
+  absolute              // kg assoluti (es. 100kg)
+  percentage_1rm        // percentuale del massimale (es. 80% di 1RM)
+  percentage_rm         // percentuale di nRM (es. 85% di 5RM)
+  percentage_previous   // percentuale relativa alla prima occorrenza esercizio nel workout
+}
+
+enum RestTime {
+  s30  // 30 secondi
+  m1   // 1 minuto
+  m2   // 2 minuti
+  m3   // 3 minuti
+  m5   // 5 minuti
+}
+
+// ============================================================================
+// MODELS
+// ============================================================================
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  firstName String
+  lastName  String
+  role      Role
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  // Relations
+  createdMuscleGroups      MuscleGroup[]                @relation("CreatedMuscleGroups")
+  createdMovementPatterns  MovementPattern[]            @relation("CreatedMovementPatterns")
+  createdExercises         Exercise[]                   @relation("CreatedExercises")
+  movementPatternColors    MovementPatternColor[]       @relation("TrainerPatternColors")
+  
+  // Trainer relations
+  trainingProgramsAsTrainer TrainingProgram[]           @relation("TrainerPrograms")
+  traineesAsTrainer         TrainerTrainee[]            @relation("TrainerAssignments")
+  
+  // Trainee relations
+  trainingProgramsAsTrainee TrainingProgram[]           @relation("TraineePrograms")
+  trainerAsTrainee          TrainerTrainee?             @relation("TraineeAssignment")
+  exerciseFeedbacks         ExerciseFeedback[]          @relation("TraineeFeedbacks")
+  personalRecords           PersonalRecord[]            @relation("TraineeRecords")
+
+  @@index([email])
+  @@index([role, isActive])
+  @@map("users")
+}
+
+model TrainerTrainee {
+  id        String   @id @default(uuid())
+  trainerId String
+  traineeId String   @unique  // UNIQUE: Un trainee ha UN SOLO trainer (relazione 1:1)
+  createdAt DateTime @default(now())
+
+  // Relations
+  trainer User @relation("TrainerAssignments", fields: [trainerId], references: [id], onDelete: Cascade)
+  trainee User @relation("TraineeAssignment", fields: [traineeId], references: [id], onDelete: Cascade)
+
+  @@index([trainerId])
+  @@map("trainer_trainee")
+}
+
+model MuscleGroup {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdBy   String
+  createdAt   DateTime @default(now())
+  isActive    Boolean  @default(true)
+
+  // Relations
+  creator              User                   @relation("CreatedMuscleGroups", fields: [createdBy], references: [id])
+  exerciseMuscleGroups ExerciseMuscleGroup[]  @relation("MuscleGroupExercises")
+
+  @@index([isActive])
+  @@map("muscle_groups")
+}
+
+model MovementPattern {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdBy   String
+  createdAt   DateTime @default(now())
+  isActive    Boolean  @default(true)
+
+  // Relations
+  creator               User                     @relation("CreatedMovementPatterns", fields: [createdBy], references: [id])
+  exercises             Exercise[]               @relation("PatternExercises")
+  movementPatternColors MovementPatternColor[]   @relation("PatternColors")
+
+  @@index([isActive])
+  @@map("movement_patterns")
+}
+
+model MovementPatternColor {
+  id                String @id @default(uuid())
+  trainerId         String
+  movementPatternId String
+  color             String // Hex color (es. "#3b82f6", "#ef4444")
+
+  // Relations
+  trainer         User            @relation("TrainerPatternColors", fields: [trainerId], references: [id], onDelete: Cascade)
+  movementPattern MovementPattern @relation("PatternColors", fields: [movementPatternId], references: [id], onDelete: Cascade)
+
+  @@unique([trainerId, movementPatternId])
+  @@index([trainerId])
+  @@map("movement_pattern_colors")
+}
+
+model Exercise {
+  id                String       @id @default(uuid())
+  name              String
+  description       String?
+  youtubeUrl        String
+  type              ExerciseType
+  movementPatternId String
+  notes             String[]     // Array di note/varianti
+  createdBy         String       // Solo audit trail, NON determina ownership
+  createdAt         DateTime     @default(now())
+
+  // Relations
+  creator              User                   @relation("CreatedExercises", fields: [createdBy], references: [id])
+  movementPattern      MovementPattern        @relation("PatternExercises", fields: [movementPatternId], references: [id])
+  exerciseMuscleGroups ExerciseMuscleGroup[]  @relation("ExerciseMuscleGroups")
+  workoutExercises     WorkoutExercise[]      @relation("ExerciseWorkouts")
+  personalRecords      PersonalRecord[]       @relation("ExerciseRecords")
+
+  @@index([type])
+  @@index([movementPatternId])
+  @@index([name])
+  @@map("exercises")
+}
+
+model ExerciseMuscleGroup {
+  id            String  @id @default(uuid())
+  exerciseId    String
+  muscleGroupId String
+  coefficient   Float   // Coefficiente d'incidenza 0.0-1.0
+
+  // Relations
+  exercise    Exercise    @relation("ExerciseMuscleGroups", fields: [exerciseId], references: [id], onDelete: Cascade)
+  muscleGroup MuscleGroup @relation("MuscleGroupExercises", fields: [muscleGroupId], references: [id], onDelete: Cascade)
+
+  @@unique([exerciseId, muscleGroupId])
+  @@index([exerciseId])
+  @@index([muscleGroupId])
+  @@map("exercise_muscle_groups")
+}
+
+model TrainingProgram {
+  id              String        @id @default(uuid())
+  title           String
+  trainerId       String
+  traineeId       String
+  startDate       DateTime?     // Null se draft, popolato a pubblicazione
+  durationWeeks   Int
+  workoutsPerWeek Int
+  status          ProgramStatus @default(draft)
+  publishedAt     DateTime?     // Null se draft
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  trainer User   @relation("TrainerPrograms", fields: [trainerId], references: [id])
+  trainee User   @relation("TraineePrograms", fields: [traineeId], references: [id])
+  weeks   Week[] @relation("ProgramWeeks")
+
+  // Indexes per dashboard queries
+  @@index([trainerId, status])
+  @@index([traineeId, status])
+  @@index([status, startDate])
+  @@map("training_programs")
+}
+
+model Week {
+  id                String    @id @default(uuid())
+  programId         String
+  weekNumber        Int
+  startDate         DateTime? // Calcolato: program.startDate + (weekNumber-1)*7 giorni
+  weekType          WeekType  @default(normal)
+  feedbackRequested Boolean   @default(false)
+  generalFeedback   String?
+
+  // Relations
+  program  TrainingProgram @relation("ProgramWeeks", fields: [programId], references: [id], onDelete: Cascade)
+  workouts Workout[]       @relation("WeekWorkouts")
+
+  @@index([programId, weekNumber])
+  @@index([startDate])
+  @@map("weeks")
+}
+
+model Workout {
+  id       String  @id @default(uuid())
+  weekId   String
+  dayLabel String  // es. "Giorno 1", "Giorno 2"
+  notes    String?
+
+  // Relations
+  week             Week              @relation("WeekWorkouts", fields: [weekId], references: [id], onDelete: Cascade)
+  workoutExercises WorkoutExercise[] @relation("WorkoutExercises")
+
+  @@index([weekId])
+  @@map("workouts")
+}
+
+model WorkoutExercise {
+  id         String     @id @default(uuid())
+  workoutId  String
+  exerciseId String
+  sets       Int
+  reps       String     // es. "8", "8-10", "6/8"
+  targetRpe  Float?     // 5.0-10.0 con incrementi 0.5
+  weightType WeightType
+  weight     Float?
+  restTime   RestTime
+  isWarmup   Boolean    @default(false)
+  notes      String?
+  order      Int
+
+  // Relations
+  workout          Workout            @relation("WorkoutExercises", fields: [workoutId], references: [id], onDelete: Cascade)
+  exercise         Exercise           @relation("ExerciseWorkouts", fields: [exerciseId], references: [id])
+  exerciseFeedbacks ExerciseFeedback[] @relation("ExerciseFeedbacks")
+
+  @@index([workoutId, order])
+  @@index([exerciseId])
+  @@map("workout_exercises")
+}
+
+model ExerciseFeedback {
+  id                String    @id @default(uuid())
+  workoutExerciseId String
+  traineeId         String
+  date              DateTime  @default(now())
+  completed         Boolean   @default(false)
+  actualRpe         Float?    // RPE percepito 5.0-10.0
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  workoutExercise WorkoutExercise @relation("ExerciseFeedbacks", fields: [workoutExerciseId], references: [id], onDelete: Cascade)
+  trainee         User            @relation("TraineeFeedbacks", fields: [traineeId], references: [id])
+  setsPerformed   SetPerformed[]  @relation("FeedbackSets")
+
+  // Partial idempotency: stesso esercizio, stesso trainee, stesso giorno (calendario)
+  // Permette feedback multipli per stesso esercizio in giorni diversi (ex. nuova scheda)
+  @@unique([workoutExerciseId, traineeId, date])
+  @@index([traineeId, date])
+  @@index([workoutExerciseId])
+  @@map("exercise_feedbacks")
+}
+
+model SetPerformed {
+  id         String   @id @default(uuid())
+  feedbackId String
+  setNumber  Int      // Numero progressivo serie: 1, 2, 3, ...
+  reps       Int
+  weight     Float    // kg
+  createdAt  DateTime @default(now())
+
+  // Relations
+  feedback ExerciseFeedback @relation("FeedbackSets", fields: [feedbackId], references: [id], onDelete: Cascade)
+
+  @@unique([feedbackId, setNumber])
+  @@index([feedbackId])
+  @@map("sets_performed")
+}
+
+model PersonalRecord {
+  id         String   @id @default(uuid())
+  traineeId  String
+  exerciseId String
+  reps       Int      // 1 per 1RM, n per nRM
+  weight     Float    // kg
+  recordDate DateTime
+  notes      String?
+  createdAt  DateTime @default(now())
+
+  // Relations
+  trainee  User     @relation("TraineeRecords", fields: [traineeId], references: [id])
+  exercise Exercise @relation("ExerciseRecords", fields: [exerciseId], references: [id])
+
+  @@index([traineeId, exerciseId])
+  @@index([recordDate])
+  @@map("personal_records")
+}
