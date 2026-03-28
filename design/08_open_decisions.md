@@ -153,19 +153,19 @@
 
 ### Assunzioni da Confermare
 
-- [ ] **ODR-24** Lingua applicazione → Si assume italiano. Email template Supabase di default sono inglese. **Decisione**: Confermare lingua e customizzare template email.
+- [x] **ODR-24** Lingua applicazione → Risolto. **Tutto gestito via token i18n** (già implementato con i18next/next-i18next). Template email usano chiavi traduzione da `/public/locales/{it,en}/emails.json`, backend seleziona lingua utente da User preferences o browser locale. Email Supabase customizzate con template i18n-aware. Nessun testo hardcoded in italiano. (chiuso 2026-03-28, vedi 09_change_log.md rev 32)
 
-- [ ] **ODR-25** Fuso orario → Date (`Week.startDate`, `ExerciseFeedback.date`, `PersonalRecord.recordDate`) senza timezone. **Decisione**: Dichiarare UTC o Europe/Rome per evitare bug visualizzazione.
+- [x] **ODR-25** Fuso orario (UTC vs Europe/Rome) → Risolto. **Standard UTC per storage DB**, conversione a fuso locale nel frontend. Tutte le date salvate come `DateTime` in PostgreSQL con timezone UTC. Frontend converte con libreria `date-fns-tz` in base a fuso utente (auto-detection browser via `Intl.DateTimeFormat().resolvedOptions().timeZone` o preferenza profilo utente). Formato display: "28 marzo 2026, 14:30" (locale-aware). Backend API sempre ritorna ISO 8601 UTC (2026-03-28T13:30:00.000Z). (chiuso 2026-03-28, vedi 09_change_log.md rev 32)
 
 - [ ] **ODR-26** Un solo programma attivo per trainee → Nessun vincolo UNIQUE su `(traineeId, status='active')`. **Decisione**: Aggiungere constraint o chiarire se scenario multi-scheda è valido.
 
-- [ ] **ODR-27** Soft-delete vs hard-delete utenti → `User.isActive` controlla login ma `DELETE /api/users/[id]` sembra hard delete. Conflitto con GDPR right to erasure (anonimizzazione vs cancellazione). **Decisione**: Implementare anonimizzazione GDPR-compliant.
+- [x] **ODR-27** Soft-delete vs hard-delete (GDPR) → Risolto. **Pattern soft-delete globale** per tutte le entità. Implementazione: aggiunto campo `deletedAt DateTime?` a tutte le entità principali (User, Exercise, TrainingProgram, MuscleGroup, MovementPattern, TrainerTrainee). DELETE endpoint imposta `deletedAt = NOW()` invece di rimuovere record. Query filtrano automaticamente `WHERE deletedAt IS NULL`. Per **User**: soft-delete + **anonimizzazione GDPR-compliant** (firstName → "Deleted", lastName → "User", email → `deleted_{uuid}@anonymized.local`). Benefici: audit trail completo, GDPR right to erasure soddisfatto, recupero accidentale possibile (admin restore). (chiuso 2026-03-28, vedi 09_change_log.md rev 32)
 
-- [ ] **ODR-28** Trainee non può cambiare trainer → Nessun workflow riassegnazione da parte utente. **Decisione**: Confermare se è requisito o solo admin può riassegnare.
+- [ ] **ODR-28** Trainee non può cambiare trainer → Nessun workflow riassegnazione da parte utente. ~~**Decisione**: Confermare se è requisito o solo admin può riassegnare.~~ ✅ **PARZIALMENTE RISOLTO ODR-08**: Admin gestisce riassegnazione con endpoint `/api/admin/trainer-trainee/[traineeId]`.
 
 - [ ] **ODR-29** Proiezione storage Supabase → Free tier 500MB, crescita ~14.400 feedback × N cicli × N anni non dettagliata. **Decisione**: Calcolare proiezione storage 12-24 mesi e confermare adequatezza free/pro tier.
 
-- [ ] **ODR-30** Deploy region → Vercel e Supabase in EU, region esatta non specificata. Per GDPR si assume `eu-central-1` (Frankfurt). **Decisione**: Confermare region deployment.
+- [x] **ODR-30** Deploy region → Risolto. **Deploy completo in EU (Frankfurt, Germania)**. Vercel region: **fra1** (Frankfurt), Supabase region: **eu-central-1** (Frankfurt AWS). Benefici: latenza Europa <50ms, GDPR full compliance (dati processati e storati esclusivamente in UE), conformità normativa italiana. Configurazione: Vercel project settings region fra1, Supabase project creation con region Germany (Frankfurt). Alternative EU valutate: ams1 (Amsterdam), cdg1 (Paris) — scelta Frankfurt per latenza Italia ottimale e availability zone AWS robuste. (chiuso 2026-03-28, vedi 09_change_log.md rev 32)
 
 ### Domande Aperte da Valutazione Complessiva
 

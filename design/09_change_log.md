@@ -4,6 +4,158 @@
 
 ---
 
+## 2026-03-28 (rev 32)
+- **Azione**: Chiusura decisioni operative critiche ODR-24, ODR-25, ODR-27, ODR-30 per standard tecnici production-ready.
+- **ODR-24 - Lingua applicazione e template email**:
+  - **Problema**: Template email Supabase di default in inglese, necessità confermare lingua applicazione e gestione multi-lingua
+  - **Decisione**: **Tutto gestito via token i18n** (sistema già implementato con i18next/next-i18next)
+  - **Implementazione**:
+    - **Template email i18n-aware**: File traduzione `/public/locales/it/emails.json` e `/en/emails.json` con chiavi per subject/body email
+    - **Selezione lingua**: Backend legge preferenza lingua da `User.preferredLanguage` (campo da aggiungere) o fallback a `Accept-Language` header
+    - **Email templates Supabase**: Customizzati con placeholder `{{ .ConfirmationURL }}` + testo tradotto server-side prima invio
+    - **Nessun testo hardcoded**: Zero stringhe italiano/inglese nel codice, tutto via `t('key')` i18next
+  - **Esempio template email**:
+    ```typescript
+    // Backend: app/api/auth/send-email/route.ts
+    const userLanguage = user.preferredLanguage || 'it'
+    const t = await getServerTranslation(userLanguage, 'emails')
+    
+    const emailSubject = t('welcome.subject', { name: user.firstName })
+    const emailBody = t('welcome.body', { 
+      trainerName: trainer.firstName,
+      loginUrl: process.env.APP_URL 
+    })
+    ```
+  - **Struttura file traduzioni email**:
+    ```json
+    // /public/locales/it/emails.json
+    {
+      "welcome": {
+        "subject": "Benvenuto in ZeroCento, {{name}}!",
+        "body": "Il tuo trainer {{trainerName}} ti ha aggiunto alla piattaforma..."
+      },
+      "passwordReset": {
+        "subject": "Reset password",
+        "body": "Clicca qui per reimpostare la tua password: {{resetUrl}}"
+      }
+    }
+    ```
+  - **Benefici**: Coerenza totale multi-lingua UI + email, cambio lingua utente riflesso ovunque, manutenzione centralizzata traduzioni
+- **ODR-25 - Fuso orario (UTC vs Europe/Rome)**:
+  - **Problema**: Date salvate senza timezone specifico, rischio bug visualizzazione per utenti in fusi diversi
+  - **Decisione**: **Standard UTC per storage DB**, conversione a fuso locale nel frontend
+  - **Implementazione storage**:
+    - PostgreSQL: Tutte le date salvate come `TIMESTAMP WITH TIME ZONE` (automatico con Prisma `DateTime`)
+    - Backend: `new Date()` JavaScript genera sempre UTC, salvato direttamente
+    - Prisma: `DateTime` fields mappano a `timestamptz` PostgreSQL (UTC storage nativo)
+  - **Implementazione frontend**:
+    - **Libreria**: `date-fns-tz` per conversione timezone (lightweight, tree-shakeable)
+    - **Auto-detection fuso**: `Intl.DateTimeFormat().resolvedOptions().timeZone` → es. "Europe/Rome"
+    - **Display date**: `format(utcToZonedTime(date, userTimezone), 'd MMMM yyyy, HH:mm', { locale: it })`
+    - **Input date**: Conversione inversa con `zonedTimeToUtc()` prima di inviare API
+  - **Esempio codice**:
+    ```typescript
+    // Frontend component
+    import { utcToZonedTime, format } from 'date-fns-tz'
+    import { it } from 'date-fns/locale'
+    
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone // "Europe/Rome"
+    const utcDate = new Date(workout.startDate) // "2026-03-28T13:30:00.000Z" (UTC)
+    const localDate = utcToZonedTime(utcDate, userTimezone) // 14:30 in Rome (UTC+1)
+    const formatted = format(localDate, 'd MMMM yyyy, HH:mm', { locale: it }) // "28 marzo 2026, 14:30"
+    ```
+  - **API response format**: Sempre ISO 8601 UTC (`2026-03-28T13:30:00.000Z`), frontend converte
+  - **Benefici**: Dati coerenti multi-timezone, supporto utenti internazionali, no bug daylight saving, standard industry
+- **ODR-27 - Soft-delete vs hard-delete (GDPR)**:
+  - **Problema**: DELETE hard-delete rimuove dati permanentemente, conflitto GDPR right to erasure (richiede anonimizzazione, non cancellazione), perdita audit trail
+  - **Decisione**: **Pattern soft-delete globale** per tutte le entità + anonimizzazione GDPR per User
+  - **Implementazione soft-delete**:
+    - **Campo aggiunto**: `deletedAt DateTime?` a tutte le entità principali (User, Exercise, TrainingProgram, MuscleGroup, MovementPattern, TrainerTrainee, etc.)
+    - **DELETE endpoint**: `PATCH` che imposta `deletedAt = NOW()` invece di `DELETE` fisico
+    - **Query automatiche**: Middleware Prisma filtra `WHERE deletedAt IS NULL` per default
+    - **Restore**: Admin può ripristinare con `PATCH /restore` impostando `deletedAt = NULL`
+  - **Schema Prisma aggiornato**:
+    ```prisma
+    model User {
+      // ... campi esistenti
+      deletedAt DateTime?
+      @@index([deletedAt]) // Performance query filtrate
+    }
+    
+    model Exercise {
+      // ... campi esistenti
+      deletedAt DateTime?
+    }
+    
+    // Stesso pattern per tutte le entità
+    ```
+  - **Anonimizzazione GDPR per User**:
+    - DELETE utente esegue **soft-delete + anonimizzazione dati personali**:
+      - `deletedAt = NOW()`
+      - `firstName = "Deleted"`
+      - `lastName = "User"`
+      - `email = "deleted_{uuid}@anonymized.local"` (preserva unique constraint)
+      - `isActive = false` (blocca login)
+    - **Dati preservati**: `id`, `role`, `createdAt` (per integrità referenziale schede/feedback)
+    - **GDPR compliant**: Dati personali irrecuperabili, right to erasure soddisfatto, audit trail ID preservato
+  - **Middleware Prisma soft-delete**:
+    ```typescript
+    // lib/prisma.ts
+    prisma.$use(async (params, next) => {
+      if (params.action === 'delete') {
+        params.action = 'update'
+        params.args['data'] = { deletedAt: new Date() }
+      }
+      if (params.action === 'findMany' || params.action === 'findFirst') {
+        params.args.where = { ...params.args.where, deletedAt: null }
+      }
+      return next(params)
+    })
+    ```
+  - **API behavior**:
+    - `DELETE /api/users/[id]` → soft-delete + anonimizzazione
+    - `DELETE /api/exercises/[id]` → soft-delete semplice
+    - `GET /api/users` → filtra `deletedAt IS NULL` automaticamente
+    - `GET /api/admin/users?includeDeleted=true` → opzione admin per vedere deleted
+  - **Benefici**: Audit trail completo, recupero errori accidentali, GDPR compliant, tracciabilità operazioni, integrità referenziale preservata
+- **ODR-30 - Deploy region esatta**:
+  - **Problema**: Region deployment non specificata, necessario confermare per GDPR compliance e latenza ottimale
+  - **Decisione**: **Deploy completo in EU (Frankfurt, Germania)** per GDPR compliance e latenza Italia ottimale
+  - **Region selezionate**:
+    - **Vercel**: `fra1` (Frankfurt, Germany)
+    - **Supabase**: `eu-central-1` (Frankfurt, AWS Germany)
+  - **Rationale Frankfurt**:
+    - ✅ **GDPR full compliance**: Dati processati e storati esclusivamente in territorio UE
+    - ✅ **Latenza Italia**: Frankfurt è datacenter EU più vicino all'Italia (~20-30ms Roma-Frankfurt)
+    - ✅ **Availability zone robuste**: AWS eu-central-1 ha 3 AZ con 99.99% SLA
+    - ✅ **Pricing competitivo**: Stesso costo regions EU, no premium Asia/US
+    - ✅ **Conformità normativa**: Germania ha standard privacy allineati GDPR rigorosi
+  - **Alternative EU valutate**:
+    - `ams1` Amsterdam: Latenza simile (~25-35ms), ma Frankfurt preferito per AZ multiple
+    - `cdg1` Paris: Latenza leggermente superiore (~35-45ms)
+    - `lhr1` London: Post-Brexit, preferito evitare per data residency UE
+  - **Configurazione**:
+    - **Vercel project settings**: Region `fra1` selezionata in Project Settings → General → Region
+    - **Supabase project creation**: Region `Germany (Frankfurt)` selezionata durante setup iniziale (immutabile)
+    - **Vercel Serverless Functions**: Deployate automaticamente in `fra1`
+    - **Vercel Edge Network**: CDN globale, ma origin sempre Frankfurt
+  - **Test latenza attesi**:
+    - Italia (Roma/Milano) → Frankfurt: ~20-30ms
+    - Europa Occidentale: ~10-40ms
+    - Europa Orientale: ~30-60ms
+    - US/Asia: ~150-250ms (accettabile, utenti primari in Italia)
+  - **Benefici**: GDPR compliance garantita, latenza ottimale per utenti Italia/EU, availability alta, pricing efficiente, conformità normativa robusta
+- **Chiusura decisioni**: **ODR-24**, **ODR-25**, **ODR-27**, **ODR-30** risolti ✅
+- **Implicazioni implementative**:
+  - **i18n email**: Aggiungere campo `User.preferredLanguage` (enum IT|EN), creare file `emails.json` traduzioni, customizzare template Supabase
+  - **Timezone**: Installare `date-fns-tz`, creare utility `formatLocalDate()`, testare conversioni DST (daylight saving)
+  - **Soft-delete**: Migration Prisma per aggiungere `deletedAt` a tutte entità, implementare middleware Prisma, aggiornare query esistenti, creare endpoint `/restore` admin
+  - **Region**: Configurare Vercel project region `fra1`, creare Supabase project in Frankfurt (se non già fatto), verificare latenza con test load
+  - **Testing**: E2E test per email multi-lingua, unit test conversioni timezone, test soft-delete + restore, test latency Frankfurt
+- **Implicazioni**: Standard tecnici production-ready definiti. Multi-lingua completa (UI + email). Timezone handling corretto per utenti internazionali. Soft-delete preserva audit trail e GDPR compliance. Deploy EU garantisce conformità e performance ottimali.
+
+---
+
 ## 2026-03-28 (rev 31)
 - **Azione**: Chiusura ODR-22 con creazione diagramma ER completo per visualizzazione data model.
 - **ODR-22 - Diagramma ER**:
