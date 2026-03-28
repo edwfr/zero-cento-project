@@ -136,13 +136,31 @@ Questo documento contiene le user stories organizzate per tipo di utente/persona
 
 **US-U06**: Come trainee, voglio visualizzare lo storico di tutte le schede completate o passate, per rivedere i programmi precedenti e confrontare i progressi.
 
+### Navigazione e UX Allenamento
+
+**US-U06a**: Come trainee, quando accedo alla dashboard e ho una scheda attiva, voglio essere automaticamente reindirizzato al primo allenamento non completato (o alla prima settimana se tutto è completo), per riprendere velocemente l'allenamento senza dover cercare manualmente dove ero rimasto.
+
+**US-U06b**: Come trainee, quando visualizzo un allenamento, voglio vedere una card per ogni esercizio con tutti i dettagli (video YouTube, serie/reps, RPE target, peso calcolato, recupero), per avere tutte le informazioni necessarie durante l'esecuzione.
+
+**US-U06c**: Come trainee, voglio navigare tra gli esercizi di un allenamento tramite pulsanti freccia o swipe gestures su mobile, per muovermi rapidamente tra un esercizio e l'altro senza tornare alla lista.
+
+**US-U06d**: Come trainee, voglio vedere un indicatore di progresso visivo (es. "3/8 esercizi completati") e miniature degli esercizi rimanenti, per capire a che punto sono dell'allenamento.
+
+**US-U06e**: Come trainee, voglio che il sistema visualizzi miniature cliccabili di tutti gli esercizi del workout in basso alla schermata, per fare jump diretto a un esercizio specifico senza scorrere sequenzialmente.
+
 ### Feedback e Tracciamento
 
 **US-U07**: Come trainee, voglio fornire feedback su ogni esercizio completato specificando: numero di serie effettivamente eseguite con reps e kg per ogni serie, RPE percepito, note testuali e flag di completamento, per permettere al trainer di monitorare la mia aderenza e prestazione.
 
-**US-U08**: Come trainee, voglio che il sistema mantenga la sessione attiva per oltre 90 minuti senza richiedere re-login, per utilizzare l'app durante l'intero allenamento anche con frequente switching ad altre app (Instagram, musica, timer).
+**US-U07a**: Come trainee, voglio poter aggiungere serie extra oltre a quelle pianificate dal trainer (es. pianificate 4, eseguite 5), per tracciare accuratamente variazioni sul programma dovute a energie residue o tecniche avanzate.
 
-**US-U09**: Come trainee, voglio che il sistema salvi automaticamente il feedback parziale anche se l'app va in background, per non perdere i dati inseriti durante l'allenamento.
+**US-U08**: Come trainee, voglio che il sistema mantenga la sessione attiva per oltre 90 minuti (almeno 2 ore) senza richiedere re-login, per utilizzare l'app durante l'intero allenamento anche con frequente switching ad altre app (Instagram, musica, timer).
+
+**US-U09**: Come trainee, voglio che il sistema salvi automaticamente il feedback parziale ogni 2 secondi durante l'input (debounced autosave), per non perdere i dati inseriti anche se l'app va in crash o la connessione si interrompe.
+
+**US-U09a**: Come trainee, voglio vedere un indicatore discreto "Salvato" o "Salvando..." dopo ogni modifica, per avere conferma visiva che i miei dati non sono andati persi.
+
+**US-U09b**: Come trainee, quando navigo da un esercizio all'altro, voglio che il sistema salvi automaticamente i dati dell'esercizio corrente prima di passare al successivo, per garantire che tutto il feedback venga persistito anche senza click esplicito su "Salva".
 
 **US-U10**: Come trainee, voglio fornire feedback generale testuale per le settimane marcate come "feedback obbligatorio" dal trainer, per comunicare sensazioni complessive, difficoltà o miglioramenti percepiti.
 
@@ -164,10 +182,10 @@ Questo documento contiene le user stories organizzate per tipo di utente/persona
 
 ## Riepilogo User Stories per Ruolo
 
-| Ruolo   | User Stories | Aree Funzionali                                                                                                                                                     |
-| ------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Admin   | US-A01-A14   | Gestione utenti (CRUD), attivazione/disattivazione, associazioni trainer-trainee, **gestione operativa globale schede, riassegnazione trainee, report system-wide** |
-| Trainer | US-T01-T28   | Libreria esercizi, gruppi muscolari, schemi motori, gestione trainee, creazione schede, monitoraggio                                                                |
-| Trainee | US-U01-U13   | Visualizzazione schede, feedback esercizi, visualizzazione massimali, sessione estesa                                                                               |
+| Ruolo   | User Stories                                         | Aree Funzionali                                                                                                                                                     |
+| ------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Admin   | US-A01-A14                                           | Gestione utenti (CRUD), attivazione/disattivazione, associazioni trainer-trainee, **gestione operativa globale schede, riassegnazione trainee, report system-wide** |
+| Trainer | US-T01-T28                                           | Libreria esercizi, gruppi muscolari, schemi motori, gestione trainee, creazione schede, monitoraggio                                                                |
+| Trainee | US-U01-U13 + **US-U06a-U06e, US-U07a, US-U09a-U09b** | Visualizzazione schede, **navigazione intelligente, UX card-based**, feedback esercizi con autosave, visualizzazione massimali, sessione estesa                     |
 
-**Totale User Stories**: 48 (include US-T20a: riferimento carico riga precedente + US-A09-A14: gestione operativa globale admin)
+**Totale User Stories**: 56 (include US-T20a: riferimento carico riga precedente + US-A09-A14: gestione operativa globale admin + **US-U06a-U06e, US-U07a, US-U09a-U09b: flusso UX trainee**)

@@ -52,6 +52,443 @@
 | `/trainee/records`                           | Visualizzazione massimali personali (1RM, nRM)    |
 | `/trainee/records/[exerciseId]`              | Storico massimali per esercizio specifico         |
 
+## Flusso UX Trainee — Dettaglio Implementazione
+
+### Dashboard e Navigazione Intelligente
+
+La dashboard trainee (`/trainee/dashboard`) implementa un sistema di **redirect automatico** alla prossima sessione da completare:
+
+```typescript
+// app/trainee/dashboard/page.tsx
+
+interface DashboardProps {
+  activeProgram: TrainingProgram | null
+  nextIncompleteWorkout: Workout | null
+}
+
+export default async function TraineeDashboard() {
+  const session = await getServerSession(authOptions)
+  const traineeId = session.user.id
+  
+  // Fetch scheda attiva
+  const activeProgram = await prisma.trainingProgram.findFirst({
+    where: {
+      traineeId,
+      status: 'active'
+    },
+    include: {
+      weeks: {
+        include: {
+          workouts: {
+            include: {
+              workoutExercises: {
+                include: {
+                  exerciseFeedback: true // Per determinare stato completamento
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+  
+  if (!activeProgram) {
+    return <NoActiveProgramView />
+  }
+  
+  // Determina prossimo workout da completare
+  const nextWorkout = findNextIncompleteWorkout(activeProgram)
+  
+  return (
+    <div className="space-y-6">
+      <ProgramHeader program={activeProgram} />
+      
+      {nextWorkout ? (
+        <Button 
+          size="lg" 
+          onClick={() => router.push(
+            `/trainee/programs/${activeProgram.id}/workout/${nextWorkout.id}`
+          )}
+        >
+          Vai all'allenamento {nextWorkout.dayLabel}
+        </Button>
+      ) : (
+        <Alert severity="success">
+          🎉 Scheda completata! Ottimo lavoro.
+        </Alert>
+      )}
+      
+      <WeeklyOverview program={activeProgram} />
+    </div>
+  )
+}
+
+// Helper function
+function findNextIncompleteWorkout(program: TrainingProgram): Workout | null {
+  for (const week of program.weeks.sort((a, b) => a.weekNumber - b.weekNumber)) {
+    for (const workout of week.workouts.sort((a, b) => a.dayNumber - b.dayNumber)) {
+      const totalExercises = workout.workoutExercises.length
+      const completedExercises = workout.workoutExercises.filter(
+        (we) => we.exerciseFeedback?.completed === true
+      ).length
+      
+      if (completedExercises < totalExercises) {
+        return workout // Primo workout non completamente finito
+      }
+    }
+  }
+  return null // Tutti workout completati
+}
+```
+
+### Workout View — Layout Card-Based
+
+La pagina workout (`/trainee/programs/[id]/workout/[workoutId]`) implementa una **navigazione card-by-card** con autosave:
+
+**UI Layout**:
+```
+┌──────────────────────────────────────────────────────────┐
+│                      Header Bar                          │
+│  Week 2 - Giorno 3 | Upper Body                          │
+│  Progress: 3/8 esercizi completati  [●●●○○○○○]          │
+└──────────────────────────────────────────────────────────┘
+
+┌──────────────── Exercise Card (Current) ────────────────┐
+│                                                          │
+│  🔴 Esercizio 1/8                                        │
+│  Bench Press                                             │
+│  Pettorali 90% • Spalle 40% • Tricipiti 60%             │
+│                                                          │
+│  📹 [YouTube Embed - Lazy Loaded]                       │
+│                                                          │
+│  ─────────────────────────────────────────────────────   │
+│                                                          │
+│  📊 Parametri Allenamento                                │
+│                                                          │
+│  • 4 serie × 6 reps                                      │
+│  • RPE target: 8.0 💪                                    │
+│  • Peso calcolato: 80 kg (assoluto)                      │
+│  • Recupero: 3 minuti                                    │
+│                                                          │
+│  ─────────────────────────────────────────────────────   │
+│                                                          │
+│  ✅ Serie Completate                                     │
+│                                                          │
+│  Serie 1: [__6__] reps × [__80__] kg     ✓             │
+│  Serie 2: [__6__] reps × [__80__] kg     ✓             │
+│  Serie 3: [__5__] reps × [__80__] kg     ✓             │
+│  Serie 4: [_____] reps × [_____] kg      ○             │
+│                                                          │
+│  [+ Aggiungi serie extra]                                │
+│                                                          │
+│  ─────────────────────────────────────────────────────   │
+│                                                          │
+│  💪 RPE Percepito                                        │
+│  [========●==================] 7.5                       │
+│  (target: 8.0)                                           │
+│                                                          │
+│  ─────────────────────────────────────────────────────   │
+│                                                          │
+│  📝 Note Personali                                       │
+│  ┌────────────────────────────────────────────────┐     │
+│  │ Ultima serie difficile, ho dovuto ridurre     │     │
+│  │ il peso. Prossima volta partire da 77.5kg     │     │
+│  └────────────────────────────────────────────────┘     │
+│                                                          │
+│  ─────────────────────────────────────────────────────   │
+│                                                          │
+│  [ ✅ Completato ]    [ ❌ Non Completato ]             │
+│                                                          │
+│  ─────────────────────────────────────────────────────   │
+│                                                          │
+│  [← Esercizio Precedente]  [Esercizio Successivo →]     │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
+
+┌────────── Miniature Esercizi (Scroll Orizzontale) ──────┐
+│  [●1] [●2] [●3] [○4] [○5] [○6] [○7] [○8]               │
+│  Bench  OHP  Squat Rows  ...                             │
+└──────────────────────────────────────────────────────────┘
+```
+
+**Funzionalità Chiave**:
+
+1. **Navigazione Esercizi**:
+   - Pulsanti freccia laterali (← →)
+   - Swipe gestures su mobile (sinistra/destra)
+   - Click su miniature in basso per jump diretto
+   - Keyboard navigation (ArrowLeft/ArrowRight)
+
+2. **Progress Tracking**:
+   - Indicator visivo "3/8 esercizi completati"
+   - Progress bar con pallini colorati (● completato, ○ da fare)
+   - Miniature badge numerati con stato
+
+3. **Autosave Feedback**:
+   - **Debounced save** ogni 2 secondi durante input
+   - **Save on blur** quando campo perde focus
+   - **Save on navigation** prima di cambiare esercizio
+   - Indicatore "Salvato" / "Salvando..." discreto
+
+4. **Input Serie Dinamico**:
+   - Form array per ogni serie prevista
+   - Possibilità di aggiungere serie extra (oltre le 4 pianificate)
+   - Validazione inline (reps > 0, peso >= 0)
+
+5. **Stato Completamento**:
+   - ✅ **Completato**: tutte le serie sono compilate + feedback fornito
+   - ❌ **Non Completato**: esercizio saltato (infortunio, tempo, attrezzatura mancante)
+   - ○ **In Progress**: parzialmente compilato
+
+### Mobile-First Considerations
+
+**Session Management**:
+- **Timeout esteso**: `maxAge: 7200` (2 ore) per sessioni trainee
+- **Rolling session**: refresh automatico ogni 30 minuti di attività
+- **Offline-ready**: salvataggio locale con sync al ripristino connessione
+
+**Performance**:
+- **Lazy load YouTube**: video caricati solo quando visibili
+- **Prefetch**: esercizio successivo pre-caricato in background
+- **Image optimization**: thumbnail esercizi con Next.js Image
+
+**Touch Gestures**:
+- Swipe left/right per navigare esercizi
+- Pull-to-refresh per ricaricare workout
+- Long press su miniature per preview rapido
+
+### Componente WorkoutExerciseCard — Implementazione
+
+```typescript
+// components/WorkoutExerciseCard.tsx
+
+interface WorkoutExerciseCardProps {
+  workoutExercise: WorkoutExercise & {
+    exercise: Exercise & { exerciseMuscleGroups: ExerciseMuscleGroup[] }
+    exerciseFeedback: ExerciseFeedback | null
+  }
+  currentIndex: number
+  totalCount: number
+  onNext: () => void
+  onPrevious: () => void
+  onFeedbackChange: (feedback: Partial<ExerciseFeedback>) => void
+}
+
+export const WorkoutExerciseCard: React.FC<WorkoutExerciseCardProps> = ({
+  workoutExercise,
+  currentIndex,
+  totalCount,
+  onNext,
+  onPrevious,
+  onFeedbackChange
+}) => {
+  const [feedback, setFeedback] = useState<Partial<ExerciseFeedback>>(
+    workoutExercise.exerciseFeedback || {}
+  )
+  const [isSaving, setIsSaving] = useState(false)
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  
+  // Autosave con debounce
+  const debouncedSave = useDebouncedCallback(
+    async (feedbackData: Partial<ExerciseFeedback>) => {
+      setIsSaving(true)
+      await saveFeedback(workoutExercise.id, feedbackData)
+      setLastSaved(new Date())
+      setIsSaving(false)
+    },
+    2000 // 2 secondi di debounce
+  )
+  
+  // Trigger autosave on change
+  useEffect(() => {
+    if (Object.keys(feedback).length > 0) {
+      debouncedSave(feedback)
+      onFeedbackChange(feedback)
+    }
+  }, [feedback])
+  
+  // Save on navigation
+  const handleNavigation = async (direction: 'next' | 'prev') => {
+    if (isSaving) {
+      await debouncedSave.flush() // Force immediate save
+    }
+    direction === 'next' ? onNext() : onPrevious()
+  }
+  
+  // Swipe gestures
+  const swipeHandlers = useSwipe({
+    onSwipeLeft: () => currentIndex < totalCount - 1 && handleNavigation('next'),
+    onSwipeRight: () => currentIndex > 0 && handleNavigation('prev'),
+    threshold: 50
+  })
+  
+  return (
+    <div {...swipeHandlers} className="workout-exercise-card">
+      {/* Header */}
+      <div className="card-header">
+        <Badge color="primary">
+          Esercizio {currentIndex + 1}/{totalCount}
+        </Badge>
+        <h2>{workoutExercise.exercise.name}</h2>
+        <MuscleGroupList groups={workoutExercise.exercise.exerciseMuscleGroups} />
+      </div>
+      
+      {/* Video */}
+      {workoutExercise.exercise.youtubeUrl && (
+        <YoutubeEmbed 
+          url={workoutExercise.exercise.youtubeUrl} 
+          lazy 
+        />
+      )}
+      
+      {/* Parametri */}
+      <div className="parameters">
+        <h3>📊 Parametri Allenamento</h3>
+        <ul>
+          <li>{workoutExercise.sets} serie × {workoutExercise.reps} reps</li>
+          <li>RPE target: {workoutExercise.targetRpe} 💪</li>
+          <li>Peso calcolato: {workoutExercise.effectiveWeight} kg</li>
+          <li>Recupero: {workoutExercise.restTime}</li>
+        </ul>
+      </div>
+      
+      {/* Serie Completate */}
+      <div className="sets-performed">
+        <h3>✅ Serie Completate</h3>
+        <SetsInput
+          targetSets={workoutExercise.sets}
+          value={feedback.setsPerformed || []}
+          onChange={(sets) => setFeedback({ ...feedback, setsPerformed: sets })}
+        />
+      </div>
+      
+      {/* RPE Percepito */}
+      <div className="rpe-selector">
+        <h3>💪 RPE Percepito</h3>
+        <RPESlider
+          value={feedback.actualRpe || workoutExercise.targetRpe}
+          target={workoutExercise.targetRpe}
+          onChange={(rpe) => setFeedback({ ...feedback, actualRpe: rpe })}
+        />
+      </div>
+      
+      {/* Note */}
+      <div className="notes">
+        <h3>📝 Note Personali</h3>
+        <textarea
+          value={feedback.notes || ''}
+          onChange={(e) => setFeedback({ ...feedback, notes: e.target.value })}
+          placeholder="Aggiungi note sull'esecuzione, difficoltà, sensazioni..."
+        />
+      </div>
+      
+      {/* Stato Completamento */}
+      <div className="completion-actions">
+        <Button
+          variant="success"
+          onClick={() => setFeedback({ ...feedback, completed: true })}
+          disabled={!isFormValid(feedback)}
+        >
+          ✅ Completato
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => setFeedback({ ...feedback, completed: false })}
+        >
+          ❌ Non Completato
+        </Button>
+      </div>
+      
+      {/* Navigation */}
+      <div className="navigation">
+        <Button
+          onClick={() => handleNavigation('prev')}
+          disabled={currentIndex === 0}
+        >
+          ← Precedente
+        </Button>
+        <Button
+          onClick={() => handleNavigation('next')}
+          disabled={currentIndex === totalCount - 1}
+        >
+          Successivo →
+        </Button>
+      </div>
+      
+      {/* Autosave indicator */}
+      <div className="autosave-status">
+        {isSaving ? (
+          <span className="text-gray-500">💾 Salvando...</span>
+        ) : lastSaved ? (
+          <span className="text-green-600">✓ Salvato {formatDistanceToNow(lastSaved)}</span>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+```
+
+### API Endpoint per Autosave
+
+```typescript
+// app/api/exercise-feedback/[id]/route.ts
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== 'trainee') {
+    return new Response('Unauthorized', { status: 401 })
+  }
+  
+  const feedbackData = await request.json()
+  const workoutExerciseId = params.id
+  
+  // Upsert feedback (crea se non esiste, aggiorna se esiste)
+  const feedback = await prisma.exerciseFeedback.upsert({
+    where: {
+      workoutExerciseId_traineeId: {
+        workoutExerciseId,
+        traineeId: session.user.id
+      }
+    },
+    update: {
+      actualRpe: feedbackData.actualRpe,
+      notes: feedbackData.notes,
+      completed: feedbackData.completed,
+      updatedAt: new Date()
+    },
+    create: {
+      workoutExerciseId,
+      traineeId: session.user.id,
+      actualRpe: feedbackData.actualRpe,
+      notes: feedbackData.notes,
+      completed: feedbackData.completed || false
+    }
+  })
+  
+  // Update/create SetPerformed records
+  if (feedbackData.setsPerformed) {
+    await prisma.setPerformed.deleteMany({
+      where: { exerciseFeedbackId: feedback.id }
+    })
+    
+    await prisma.setPerformed.createMany({
+      data: feedbackData.setsPerformed.map((set, index) => ({
+        exerciseFeedbackId: feedback.id,
+        setNumber: index + 1,
+        reps: set.reps,
+        weight: set.weight
+      }))
+    })
+  }
+  
+  return Response.json({ success: true, feedback })
+}
+```
+
 ## Componenti riutilizzabili
 - `ExerciseCard` — mostra nome, thumbnail YouTube, parametri (serie/rip/RPE), gruppi muscolari, tipo (fondamentale/accessorio).
 - `MuscleGroupBadge` — badge per gruppo muscolare con coefficiente d'incidenza (es. "Pettorali 80%").
