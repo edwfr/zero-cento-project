@@ -11,9 +11,17 @@
 ## Gruppi di endpoint principali
 
 ### Auth
-| Method | Path                      | Descrizione                             | Ruoli |
-| ------ | ------------------------- | --------------------------------------- | ----- |
-| `POST` | `/api/auth/[...nextauth]` | Handler NextAuth (login/logout/session) | tutti |
+
+**Autenticazione gestita da Supabase Auth** — non richiede endpoint API Routes custom per MVP.
+
+- **Login/Logout/Session**: Gestiti direttamente da Supabase client SDK (`@supabase/auth-helpers-nextjs`)
+- **Metodo MVP**: Email + password via `supabase.auth.signInWithPassword()` e `supabase.auth.signOut()`
+- **Session management**: JWT automatico con refresh token, cookie HTTP-only
+- **Endpoint futuri (post-MVP OAuth)**: `/api/auth/callback` per gestire redirect OAuth (Google, GitHub)
+
+**Non serve endpoint catch-all come NextAuth** — Supabase gestisce tutto lato infrastruttura.
+
+---
 
 ### Utenti (Admin + trainer)
 | Method   | Path                         | Descrizione                                                        | Ruoli autorizzati |
@@ -189,16 +197,17 @@ export const workoutExerciseSchema = z.object({
 })
 
 export const setPerformedSchema = z.object({
-  reps: z.number().int().min(0),
-  weight: z.number().min(0)
+  setNumber: z.number().int().min(1), // Numero serie progressivo (1, 2, 3, ...)
+  reps: z.number().int().min(0).max(50), // Ripetizioni eseguite
+  weight: z.number().min(0).max(500) // Peso in kg (max 500kg validazione sanity)
 })
 
 export const feedbackSchema = z.object({
   workoutExerciseId: z.string().uuid(),
   completed: z.boolean(),
   actualRpe: z.number().min(5).max(10).multipleOf(0.5).optional(),
-  setsPerformed: z.array(setPerformedSchema),
-  notes: z.string().optional()
+  sets: z.array(setPerformedSchema).min(1, 'Almeno una serie richiesta'), // Array di serie eseguite
+  notes: z.string().max(1000).optional() // Note testuali del trainee (max 1000 caratteri)
 })
 
 export const weekConfigSchema = z.object({
@@ -227,7 +236,7 @@ export async function POST(request: Request) {
   - muscleGroups array con coefficienti 0.0-1.0
   - weightType determina interpretazione campo weight
   - reps può essere stringa ("8", "6/8", "8-10")
-  - setsPerformed array con reps e weight per ogni serie
+  - sets array con setNumber, reps e weight per ogni serie eseguita (normalizzato in tabella SetPerformed)
   - ruoli validi (`admin`\|`trainer`\|`trainee`) all'assegnazione utente
   - relazioni referenziali (traineeId esiste, programId valido, exerciseId valido)
 

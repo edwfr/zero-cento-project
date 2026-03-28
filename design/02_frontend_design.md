@@ -198,9 +198,9 @@ import { useLocalStorage } from '@/hooks/useLocalStorage'
 
 interface FeedbackDraft {
   workoutExerciseId: string
-  setsPerformed: Array<{ reps: number; weight: number }>
+  sets: Array<{ setNumber: number; reps: number; weight: number }> // Array normalizzato per DB
   actualRpe?: number
-  notes?: string
+  notes?: string // Note testuali libere del trainee
   timestamp: number
 }
 

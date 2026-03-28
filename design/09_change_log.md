@@ -4,6 +4,70 @@
 
 ---
 
+## 2026-03-28 (rev 22)
+- **Azione**: Normalizzazione dati feedback con tabella SetPerformed.
+- **Decisione**: Sostituire campo JSON `ExerciseFeedback.setsPerformed` con tabella relazionale **SetPerformed** (1:N).
+- **Schema SetPerformed**:
+  ```
+  SetPerformed
+    id          UUID  PK
+    feedbackId  FK → ExerciseFeedback
+    setNumber   Int         -- numero progressivo (1, 2, 3, ...)
+    reps        Int         -- ripetizioni eseguite
+    weight      Float       -- peso in kg
+    createdAt   DateTime
+    
+    UNIQUE(feedbackId, setNumber)
+  ```
+- **Benefici**:
+  - ✅ **Type-safety completa**: no parsing JSON runtime, validazione DB-level
+  - ✅ **Query aggregate efficienti**: `SELECT MAX(weight) FROM SetPerformed WHERE feedbackId IN (...)` per peso massimo esercizio
+  - ✅ **Indicizzazione**: indici su feedbackId, setNumber per performance
+  - ✅ **Constraint UNIQUE**: impossibile duplicare numero serie per stesso feedback
+  - ✅ **Scalabilità gestibile**: volumetria stimata ~50K righe (54 trainee × 12w × 4 workout × 6 ex × 3.5 set)
+- **Modifiche schema ExerciseFeedback**:
+  - ❌ Rimosso: `setsPerformed Json`
+  - ✅ Confermato: `notes String?` per commenti testuali liberi trainee
+  - ✅ Aggiunti: `createdAt` e `updatedAt` per audit trail
+- **Aggiornamenti documentazione**:
+  - 04_data_model.md: Aggiunta tabella SetPerformed, aggiornate relazioni e query esempio
+  - 03_backend_api.md: Schema Zod aggiornato con validazione `sets` array (setNumber, reps, weight)
+  - 02_frontend_design.md: Interface FeedbackDraft con `sets: Array<{setNumber, reps, weight}>`
+  - 10_user_stories.md: US-U07 e US-T26 già menzionano note testuali (no modifiche)
+- **Rationale**:
+  - Campo JSON bypassa type-safety, impedisce query aggregate ("peso max esercizio X negli ultimi 3 mesi")
+  - Volumetria ~50K set è gestibile con normalizzazione (nessun vincolo sharding)
+  - PostgreSQL gestisce 50K righe in microsecondi con indici appropriati
+  - Pattern standard per dati strutturati relazionali
+- **Implicazioni implementative**:
+  - Migration Prisma: creare tabella SetPerformed, migrare dati JSON esistenti (se presenti), drop colonna setsPerformed
+  - API `/api/feedback`: body request accetta `sets: [{setNumber, reps, weight}, ...]`, backend crea N righe SetPerformed
+  - Query reportistica: JOIN ExerciseFeedback + SetPerformed per analisi peso/volume
+- **Decisione**: **ODR-02** chiusa.
+
+---
+
+## 2026-03-28 (rev 21)
+- **Azione**: Chiusura decisione architetturale su provider autenticazione.
+- **Decisione**: **Supabase Auth confermato definitivamente** come provider esclusivo per autenticazione e sessioni.
+- **Modifiche documentazione**:
+  - 03_backend_api.md: Rimossa tabella endpoint `/api/auth/[...nextauth]` (pattern NextAuth.js). Sostituita con sezione "Auth" che chiarisce:
+    - Autenticazione gestita da Supabase client SDK (`@supabase/auth-helpers-nextjs`)
+    - Login/Logout/Session via `supabase.auth.signInWithPassword()` e `supabase.auth.signOut()`
+    - Non servono endpoint API Routes custom per MVP (email+password)
+    - Endpoint `/api/auth/callback` necessario solo per OAuth post-MVP (Google, GitHub)
+  - 08_open_decisions.md: **ODR-01 chiuso** — conflitto NextAuth vs Supabase Auth risolto
+- **Rationale**:
+  - Supabase Auth è già infrastruttura scelta per DB e sessioni JWT
+  - NextAuth richiederebbe duplicazione gestione sessioni e configurazione manuale
+  - Supabase Auth include out-of-the-box: JWT automatic refresh, cookie HTTP-only, email templates, OAuth providers
+  - Coverage AI eccellente per `@supabase/auth-helpers-nextjs`
+  - Zero setup per MVP, massima coerenza architetturale
+- **NON c'è conflitto**: NextAuth e Supabase Auth sono alternativi, non possono coesistere. Scelta definitiva: **Supabase Auth**.
+- **Decisione**: **ODR-01** chiusa.
+
+---
+
 ## 2026-03-28 (rev 20)
 - **Azione**: Password reset e notifiche email configurate per MVP.
 - **Decisione**: Usare **Supabase Email Service** (default, zero setup) per gestione password reset. Email incluse in Supabase Pro (300/mese), template personalizzabili in italiano, flusso automatico con magic link.

@@ -39,7 +39,8 @@ npx prisma migrate deploy
 | `Week`                 | Singola settimana all'interno di una scheda                                               |
 | `Workout`              | Singolo allenamento (giorno) all'interno di una settimana                                 |
 | `WorkoutExercise`      | Esercizio con parametri all'interno di un allenamento                                     |
-| `ExerciseFeedback`     | Feedback del trainee su un WorkoutExercise (serie, kg, RPE)                               |
+| `ExerciseFeedback`     | Feedback del trainee su un WorkoutExercise (RPE, note testuali)                           |
+| `SetPerformed`         | Serie eseguita dal trainee con reps e kg (relazione 1:N con ExerciseFeedback)             |
 | `PersonalRecord`       | Massimali (1RM o nRM) gestiti per trainee ed esercizio                                    |
 
 ## Schema (logico)
@@ -200,8 +201,27 @@ ExerciseFeedback
   date               DateTime
   completed          Boolean
   actualRpe          Float?      -- RPE percepito dal trainee (5.0–10.0 con incrementi di 0.5)
-  setsPerformed      Json        -- Array di {reps: Int, weight: Float} per ogni serie completata
-  notes              String?     -- commento libero del trainee
+  notes              String?     -- commento libero testuale del trainee sull'esercizio
+  createdAt          DateTime
+  updatedAt          DateTime
+
+  -- NOTA: Serie eseguite normalizzate in tabella SetPerformed (relazione 1:N)
+  -- Benefici: type-safety, query aggregate efficienti, indicizzazione
+
+SetPerformed
+  id                 UUID  PK
+  feedbackId         FK → ExerciseFeedback
+  setNumber          Int         -- numero progressivo serie (1, 2, 3, ..., n)
+  reps               Int         -- ripetizioni eseguite nella serie
+  weight             Float       -- peso usato in kg
+  createdAt          DateTime
+  
+  UNIQUE(feedbackId, setNumber)  -- Constraint: un feedback non può avere set duplicati con stesso numero
+  
+  -- NOTA: Normalizzazione per evitare campo JSON
+  -- Permette query aggregate tipo: MAX(weight), AVG(reps), COUNT(*) per esercizio
+  -- Volumetria stimata: ~50K righe (54 trainee × 12 settimane × 4 workout × 6 esercizi × 3.5 set medi)
+  -- Indicizzabile e type-safe, nessun parsing JSON runtime
 
 PersonalRecord
   id                 UUID  PK
@@ -223,9 +243,10 @@ PersonalRecord
 - `MuscleGroup` ↔ N `Exercise` via `ExerciseMuscleGroup` (many-to-many con coefficient)
 - `MovementPattern` → N `Exercise` (one-to-many)
 - `Exercise` ↔ N `MuscleGroup` via `ExerciseMuscleGroup` (many-to-many con coefficient)
-- `TrainingProgram` → N `Week` → N `Workout` → N `WorkoutExercise` → N `ExerciseFeedback`
+- `TrainingProgram` → N `Week` → N `Workout` → N `WorkoutExercise` → N `ExerciseFeedback` → N `SetPerformed`
 - `Exercise` → N `WorkoutExercise`
 - `User(trainee)` → N `ExerciseFeedback`
+- `ExerciseFeedback` → N `SetPerformed` (serie eseguite normalizzate)
 - `User(trainee)` → N `PersonalRecord` (massimali per trainee)
 - `Exercise` → N `PersonalRecord` (massimali per esercizio)
 
@@ -478,21 +499,30 @@ SELECT
   w.startDate,
   ef.date,
   ef.actualRpe,
-  ef.setsPerformed,  -- JSON array [{reps: 8, weight: 80}, ...]
   ef.notes,
   ef.completed,
   we.sets AS targetSets,
   we.reps AS targetReps,
-  we.targetRpe
+  we.targetRpe,
+  -- Aggregazione serie eseguite da tabella SetPerformed
+  JSON_AGG(
+    JSON_BUILD_OBJECT(
+      'setNumber', sp.setNumber,
+      'reps', sp.reps,
+      'weight', sp.weight
+    ) ORDER BY sp.setNumber ASC
+  ) AS setsPerformed
 FROM ExerciseFeedback ef
 JOIN WorkoutExercise we ON ef.workoutExerciseId = we.id
 JOIN Workout wo ON we.workoutId = wo.id
 JOIN Week w ON wo.weekId = w.id
+LEFT JOIN SetPerformed sp ON sp.feedbackId = ef.id  -- JOIN con tabella normalizzata
 WHERE we.exerciseId = <exerciseId>           -- Stesso esercizio (es. Squat)
   AND wo.dayLabel = <currentDayLabel>         -- Stesso giorno (es. "Giorno A")
   AND w.programId = <currentProgramId>        -- Stessa scheda
   AND w.weekNumber < <currentWeekNumber>      -- Solo settimane PRECEDENTI
   AND ef.traineeId = <traineeId>
+GROUP BY ef.id, w.weekNumber, w.startDate, ef.date, ef.actualRpe, ef.notes, ef.completed, we.sets, we.reps, we.targetRpe
 ORDER BY w.weekNumber DESC
 LIMIT 10  -- Ultime 10 settimane con feedback
 ```
@@ -588,19 +618,28 @@ SELECT
   COUNT(DISTINCT w.id) AS weeksWithFeedback,
   MAX(ef.date) AS lastFeedbackDate,
   AVG(ef.actualRpe) AS avgRpe,
-  -- Aggregazione serie/peso (richiede elaborazione JSON)
+  -- Aggregazione feedback con serie dalla tabella SetPerformed
   JSON_AGG(
     JSON_BUILD_OBJECT(
+      'feedbackId', ef.id,
       'weekNumber', w.weekNumber,
       'weekStartDate', w.startDate,
       'feedbackDate', ef.date,
       'actualRpe', ef.actualRpe,
-      'setsPerformed', ef.setsPerformed,
       'notes', ef.notes,
       'completed', ef.completed,
       'targetSets', we.sets,
       'targetReps', we.reps,
-      'targetRpe', we.targetRpe
+      'targetRpe', we.targetRpe,
+      'sets', (
+        -- Subquery per aggregare serie da SetPerformed
+        SELECT JSON_AGG(
+          JSON_BUILD_OBJECT('setNumber', sp.setNumber, 'reps', sp.reps, 'weight', sp.weight)
+          ORDER BY sp.setNumber
+        )
+        FROM SetPerformed sp
+        WHERE sp.feedbackId = ef.id
+      )
     ) ORDER BY w.weekNumber DESC
   ) AS feedbackHistory
 FROM Exercise e
@@ -713,23 +752,32 @@ SELECT
   tp.title AS programTitle,
   ef.date AS feedbackDate,
   ef.actualRpe,
-  ef.setsPerformed,  -- JSON array
   ef.notes,
   ef.completed,
   we.sets AS targetSets,
   we.reps AS targetReps,
   we.targetRpe,
   we.weight AS targetWeight,
-  we.weightType
+  we.weightType,
+  -- Aggregazione serie eseguite da SetPerformed
+  JSON_AGG(
+    JSON_BUILD_OBJECT(
+      'setNumber', sp.setNumber,
+      'reps', sp.reps,
+      'weight', sp.weight
+    ) ORDER BY sp.setNumber ASC
+  ) AS setsPerformed
 FROM ExerciseFeedback ef
 JOIN WorkoutExercise we ON ef.workoutExerciseId = we.id
 JOIN Workout wo ON we.workoutId = wo.id
 JOIN Week w ON wo.weekId = w.id
 JOIN TrainingProgram tp ON w.programId = tp.id
+LEFT JOIN SetPerformed sp ON sp.feedbackId = ef.id  -- JOIN normalizzato
 WHERE ef.traineeId = <traineeId>
   AND we.exerciseId = <exerciseId>
   AND w.feedbackRequested = true
   AND ef.date >= (CURRENT_DATE - INTERVAL '3 months')  -- Ultimi 3 mesi
+GROUP BY ef.id, w.weekNumber, w.startDate, tp.title, ef.date, ef.actualRpe, ef.notes, ef.completed, we.sets, we.reps, we.targetRpe, we.weight, we.weightType
 ORDER BY ef.date DESC
 LIMIT 5  -- Ultimi 5 feedback rilevanti
 ```

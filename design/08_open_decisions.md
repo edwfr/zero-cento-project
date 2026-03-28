@@ -84,3 +84,118 @@
 - [x] **OD-40** Soglia minima coverage → **80% minimo** su business logic (calcolo volume, RPE, massimali, validazioni Zod, helper functions). Esclusi: config files, componenti puramente presentazionali, boilerplate API Routes.
 - [x] **OD-41** Test E2E in CI → **Sì, bloccanti per deploy prod**. GitHub Actions esegue E2E su staging prima di permettere merge su main. Se E2E fail, deploy prod bloccato.
 - [x] **OD-42** Flussi critici → definiti in 07_testing_strategy.md con priorità P0/P1/P2/P3. Include test per nuove funzionalità (massimali, reportistica, feedback con serie multiple, validazioni RPE/peso).
+
+---
+
+## 08 — Design Review v1 (vedi design-review/00_review_v1.md)
+
+### Criticità Architetturali da Risolvere
+
+- [x] **ODR-01** Conflitto NextAuth vs Supabase Auth → Risolto. Confermato **Supabase Auth** come provider esclusivo. Documentazione allineata: rimossi riferimenti NextAuth da 03_backend_api.md, chiarito che autenticazione è gestita da Supabase client SDK senza endpoint API Routes custom per MVP. (chiuso 2026-03-28, vedi 09_change_log.md)
+
+- [x] **ODR-02** `ExerciseFeedback.setsPerformed` come JSON → Risolto. Creata tabella **SetPerformed** (1:N con ExerciseFeedback) per normalizzazione completa. Campi: setNumber, reps, weight. Type-safety garantita, query aggregate efficienti (MAX/AVG weight per esercizio), indicizzazione DB, constraint UNIQUE(feedbackId, setNumber). Campo ExerciseFeedback.notes confermato per testo libero trainee. Volumetria ~50K set gestibile. (chiuso 2026-03-28, vedi 09_change_log.md) → Il campo JSON bypassa type-safety, non è indicizzabile, rende impossibili query aggregate (es. "peso massimo per esercizio X"). Volumetria ~50K set, gestibile con normalizzazione. **Decisione**: Valutare tabella `SetPerformed` (FK a ExerciseFeedback) per type-safety e query efficienti.
+
+- [ ] **ODR-03** Rate limiting in-memory inefficace su serverless → Il Map in-memory viene resettato ad ogni cold start e isolato tra istanze. Brute-force auth non è protetto. Upstash Redis free tier (10K cmd/day, €0) è disponibile. **Decisione**: Implementare Upstash Redis per rate limiting almeno su `/api/auth/*` anche in MVP.
+
+- [ ] **ODR-04** `User.initialPassword` salvata nel DB (anche encrypted) → Vulnerabilità se encryption key compromessa. La password è già in `auth.users` di Supabase, flag `mustChangePassword` è sufficiente. **Decisione**: Non salvare la password temporanea nel DB. Se serve "ri-visualizzare", generarne una nuova.
+
+### Ambiguità Funzionali da Chiarire
+
+- [ ] **ODR-05** Gestione multi-trainer per stesso trainee → `TrainerTrainee` è N:N ma non è chiaro se un trainee può avere più trainer contemporaneamente. Se sì: chi gestisce schede? Se no: aggiungere UNIQUE su `traineeId`. **Decisione**: Chiarire 1:1 vs N:N e documentare o vincolare.
+
+- [ ] **ODR-06** Transizione `active → completed` scheda → Non specificato se è automatica (ultima settimana) o manuale (trainer). Cosa succede con feedback incompleti? Il trainee può ancora fornire feedback su schede completed? **Decisione**: Definire workflow e trigger per la transizione.
+
+- [ ] **ODR-07** Versionamento schede → In 03_backend_api.md: _"Se status=active, richiede nuova versione"_ ma nessun meccanismo definito. Come si duplica? Campo `previousVersionId`? **Decisione**: Definire schema e workflow di versionamento.
+
+- [ ] **ODR-08** Admin senza CRUD su programmi → Admin ha solo lettura schede, nessun trainer vede schede altrui. Se trainer lascia: trainee e schede orfani. **Decisione**: Prevedere admin override per riassegnazione o almeno accesso read globale.
+
+### Parti Mancanti e Proposte di Miglioramento
+
+#### Architetturali (da valutare)
+
+- [ ] **ODR-09** Database indexes espliciti → Query dashboard con calcolo `endDate` e JOIN multipli beneficerebbero di indici compositi. Impatto trascurabile a 54 utenti, rilevante a 500+. **Decisione**: Definire strategia indexing per scalabilità futura.
+
+- [ ] **ODR-10** API pagination → Nessun endpoint definisce paginazione (GET /api/exercises, /api/users, /api/programs). Lista esercizi può crescere indefinitamente. **Decisione**: Aggiungere pagination standard su tutti gli endpoint GET list.
+
+- [ ] **ODR-11** Concurrency control → Nessun optimistic locking. Due trainer modificano stesso esercizio: ultimo vince silenziosamente. Raro a 3 trainer ma possibile. **Decisione**: Valutare `version` field o `updatedAt` check per conflitti.
+
+- [ ] **ODR-12** Idempotency su POST feedback → Double-tap può creare due `ExerciseFeedback` per stesso `WorkoutExercise`. **Decisione**: Aggiungere constraint UNIQUE `(workoutExerciseId, traineeId)` o idempotency key.
+
+#### Operations & Monitoring
+
+- [ ] **ODR-13** Backup & Disaster Recovery → Supabase Pro include daily backup ma non documentate: recovery strategy, RPO/RTO, test restore procedure. **Decisione**: Definire procedura DR e schedule test restore.
+
+- [ ] **ODR-14** Monitoring & Alerting → Sentry per errori ma nessun health check endpoint, uptime monitoring, dashboard operativa. **Decisione**: Implementare `GET /api/health` (DB ping + Supabase Auth check) e uptime monitoring (UptimeRobot free tier).
+
+- [ ] **ODR-15** Error boundary client-side → Non definita strategia error boundary React per crash. **Decisione**: Implementare error boundary globale con fallback UI e logging Sentry.
+
+#### Testing & Quality
+
+- [ ] **ODR-16** Accessibility (a11y) → MUI è WCAG-compliant ma nessun target (AA?) né testing a11y. Potenziale requisito legale. **Decisione**: Definire target WCAG e integrare axe-core in E2E se necessario.
+
+- [ ] **ODR-17** Seed data strategy → Menzionata per MuscleGroup/MovementPattern ma non definita per staging (seed realistici) e E2E (seed predicibili). **Decisione**: Creare seed script per ogni ambiente.
+
+#### Stack & Tooling
+
+- [ ] **ODR-18** Conflitto Tailwind CSS + MUI → Coesistenza causa specificity conflicts, bundle +50-80KB, DX degradata. **Decisione**: Usare MUI solo per componenti complessi o valutare migrazione a shadcn/ui (Tailwind-native).
+
+- [ ] **ODR-19** Service Worker con App Router → `next-pwa` ha supporto limitato App Router, possibili problemi RSC + SW caching. **Decisione**: Valutare `@serwist/next` (fork attivo con supporto App Router) o limitare caching SW.
+
+- [ ] **ODR-20** Vendor lock-in Supabase → Auth + DB + Storage + Email tutti su Supabase. SPOF per servizi critici. Prisma mitiga lock-in DB ma Auth è più accoppiato. **Decisione**: Documentare API surface Supabase Auth usate per eventuale migrazione futura.
+
+#### Documentazione
+
+- [ ] **ODR-21** Schema Prisma effettivo → Documentazione mostra schema logico ma nessun file `schema.prisma` reale. Gap design ↔ codice. **Decisione**: Creare e committare `prisma/schema.prisma` come single source of truth.
+
+- [ ] **ODR-22** Diagramma ER → Nessun diagramma visuale delle relazioni. **Decisione**: Aggiungere diagramma Mermaid o dbdiagram.io al 04_data_model.md.
+
+- [ ] **ODR-23** Internazionalizzazione (i18n) → App chiaramente in italiano ma non esplicitato se supporto altre lingue. Se i18n post-MVP, retrofit costoso. **Decisione**: Confermare app monolingua o prevedere i18n da subito.
+
+### Assunzioni da Confermare
+
+- [ ] **ODR-24** Lingua applicazione → Si assume italiano. Email template Supabase di default sono inglese. **Decisione**: Confermare lingua e customizzare template email.
+
+- [ ] **ODR-25** Fuso orario → Date (`Week.startDate`, `ExerciseFeedback.date`, `PersonalRecord.recordDate`) senza timezone. **Decisione**: Dichiarare UTC o Europe/Rome per evitare bug visualizzazione.
+
+- [ ] **ODR-26** Un solo programma attivo per trainee → Nessun vincolo UNIQUE su `(traineeId, status='active')`. **Decisione**: Aggiungere constraint o chiarire se scenario multi-scheda è valido.
+
+- [ ] **ODR-27** Soft-delete vs hard-delete utenti → `User.isActive` controlla login ma `DELETE /api/users/[id]` sembra hard delete. Conflitto con GDPR right to erasure (anonimizzazione vs cancellazione). **Decisione**: Implementare anonimizzazione GDPR-compliant.
+
+- [ ] **ODR-28** Trainee non può cambiare trainer → Nessun workflow riassegnazione da parte utente. **Decisione**: Confermare se è requisito o solo admin può riassegnare.
+
+- [ ] **ODR-29** Proiezione storage Supabase → Free tier 500MB, crescita ~14.400 feedback × N cicli × N anni non dettagliata. **Decisione**: Calcolare proiezione storage 12-24 mesi e confermare adequatezza free/pro tier.
+
+- [ ] **ODR-30** Deploy region → Vercel e Supabase in EU, region esatta non specificata. Per GDPR si assume `eu-central-1` (Frankfurt). **Decisione**: Confermare region deployment.
+
+### Domande Aperte da Valutazione Complessiva
+
+Le seguenti domande emergono dalla review e richiedono chiarimento:
+
+1. **ODR-05** (ripetuto sopra): Un trainee può essere assegnato a più trainer contemporaneamente?
+2. **ODR-06** (ripetuto sopra): Qual è il trigger per `active → completed`?
+3. **ODR-07** (ripetuto sopra): Come si gestisce il versionamento schede?
+4. **ODR-23** (ripetuto sopra): Supporto multi-lingua?
+5. **ODR-25** (ripetuto sopra): Quale timezone?
+6. **ODR-08** (ripetuto sopra): Procedura handover trainer eliminato?
+7. **ODR-26** (ripetuto sopra): Limite una scheda active per trainee?
+8. È previsto limite numero esercizi nella libreria condivisa?
+9. **ODR-16** (ripetuto sopra): Target WCAG per accessibilità?
+10. Comunicazione credenziali via WhatsApp compatibile con GDPR (transito su piattaforma terza)?
+
+### Valutazione Complessiva Review v1
+
+**Livello Maturità**: ★★★★☆ (4/5)
+
+**Verdict**: Progetto con maturità documentale **sopra la media** per MVP. Criticità identificate risolvibili senza impatto architetturale significativo. Stack Next.js + Supabase + Vercel coerente, economico, adeguato alla scala.
+
+**Readiness implementazione**: **Alta** — previo allineamento delle ambiguità segnalate (ODR-01 a ODR-08 prioritari).
+
+**Raccomandazioni prioritarie**:
+1. ~~**ODR-01**: Risolvere conflitto auth NextAuth/Supabase in documentazione~~ ✅ **CHIUSO**
+2. ~~**ODR-02**: Normalizzare setsPerformed con tabella SetPerformed~~ ✅ **CHIUSO**
+3. **ODR-03**: Implementare Upstash Redis per rate limiting (security critico)
+3. **ODR-04**: Rimuovere `initialPassword` dal DB (security)
+4. **ODR-05** a **ODR-08**: Chiarire ambiguità funzionali (multi-trainer, versionamento, workflow schede)
+5. **ODR-10**, **ODR-12**: Pagination e idempotency (scalabilità)
+6. **ODR-14**: Health check e monitoring (operations)
+7. **ODR-21**: Creare `schema.prisma` reale (developer experience)
