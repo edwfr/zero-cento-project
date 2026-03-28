@@ -137,16 +137,16 @@ await supabase.auth.signOut()
 - **Ruoli**: `admin` · `trainer` · `trainee`.
 - **Matrice permessi**:
 
-| Risorsa                    | admin               | trainer                  | trainee             |
-| -------------------------- | ------------------- | ------------------------ | ------------------- |
-| Creazione utenti           | ✅ trainer + trainee | ✅ solo trainee           | ❌                   |
-| Gestione utenti (RUD)      | ✅ tutti gli utenti  | ✅ solo propri trainee    | ❌                   |
-| Libreria esercizi          | CRUD                | CRUD (condivisa)         | lettura             |
-| Schede                     | lettura             | CRUD (proprie)           | lettura (assegnate) |
-| Feedback                   | lettura             | lettura                  | CRUD (propri)       |
-| Massimali (PersonalRecord) | lettura             | lettura (propri trainee) | CRUD (propri)       |
-| Reportistica               | ✅                   | ✅ (propri trainee)       | ❌                   |
-| Monitoraggio avanzamento   | ✅                   | ✅ (propri trainee)       | ❌                   |
+| Risorsa                    | admin               | trainer               | trainee             |
+| -------------------------- | ------------------- | --------------------- | ------------------- |
+| Creazione utenti           | ✅ trainer + trainee | ✅ solo trainee        | ❌                   |
+| Gestione utenti (RUD)      | ✅ tutti gli utenti  | ✅ solo propri trainee | ❌                   |
+| Libreria esercizi          | CRUD                | CRUD (condivisa)      | lettura             |
+| Schede                     | lettura             | CRUD (proprie)        | lettura (assegnate) |
+| Feedback                   | lettura             | lettura               | CRUD (propri)       |
+| Massimali (PersonalRecord) | lettura             | CRUD (propri trainee) | lettura (propri)    |
+| Reportistica               | ✅                   | ✅ (propri trainee)    | ❌                   |
+| Monitoraggio avanzamento   | ✅                   | ✅ (propri trainee)    | ❌                   |
 
 **Dettaglio creazione utenti**:
 - **Admin**: può creare sia utenti con ruolo `trainer` sia utenti con ruolo `trainee`

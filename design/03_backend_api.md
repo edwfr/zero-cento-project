@@ -123,15 +123,22 @@
 | `POST` | `/api/feedback`                 | Invia feedback su un WorkoutExercise   |
 | `PUT`  | `/api/feedback/[id]`            | Modifica feedback esistente            |
 
-### Massimali / Personal Records (Trainee + trainer)
-| Method   | Path                                 | Descrizione                               |
-| -------- | ------------------------------------ | ----------------------------------------- |
-| `GET`    | `/api/trainee/records`               | Lista massimali del trainee autenticato   |
-| `GET`    | `/api/trainee/records/[exerciseId]`  | Storico massimali per esercizio specifico |
-| `POST`   | `/api/trainee/records`               | Aggiungi nuovo massimale                  |
-| `PUT`    | `/api/trainee/records/[id]`          | Modifica massimale esistente              |
-| `DELETE` | `/api/trainee/records/[id]`          | Elimina massimale                         |
-| `GET`    | `/api/trainer/trainees/[id]/records` | trainer visualizza massimali del trainee  |
+### Massimali / Personal Records
+
+#### Trainee (solo lettura)
+| Method | Path                                | Descrizione                               |
+| ------ | ----------------------------------- | ----------------------------------------- |
+| `GET`  | `/api/trainee/records`              | Lista massimali del trainee autenticato   |
+| `GET`  | `/api/trainee/records/[exerciseId]` | Storico massimali per esercizio specifico |
+
+#### Trainer (CRUD sui propri trainee)
+| Method   | Path                                            | Descrizione                   |
+| -------- | ----------------------------------------------- | ----------------------------- |
+| `GET`    | `/api/trainer/trainees/[id]/records`            | Lista massimali del trainee   |
+| `GET`    | `/api/trainer/trainees/[id]/records/[recordId]` | Dettaglio massimale specifico |
+| `POST`   | `/api/trainer/trainees/[id]/records`            | Aggiungi nuovo massimale      |
+| `PUT`    | `/api/trainer/trainees/[id]/records/[recordId]` | Modifica massimale esistente  |
+| `DELETE` | `/api/trainer/trainees/[id]/records/[recordId]` | Elimina massimale             |
 
 ### Reportistica (trainer)
 | Method | Path                                       | Descrizione                                       |

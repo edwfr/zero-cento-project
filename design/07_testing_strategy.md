@@ -324,9 +324,10 @@ e2e-staging:
 | P1       | trainer: crea profilo trainee e genera password iniziale                          | trainer |
 | P1       | Trainee: visualizza scheda corrente                                               | trainee |
 | P1       | Trainee: invia feedback su un esercizio con serie multiple (reps + kg)            | trainee |
-| P1       | Trainee: aggiunge/modifica massimale (1RM o nRM)                                  | trainee |
+| P1       | Trainee: visualizza massimali (sola lettura)                                      | trainee |
+| P1       | trainer: aggiunge/modifica massimale per un trainee                               | trainer |
 | P2       | trainer: visualizza avanzamento e feedback trainee                                | trainer |
-| P2       | trainer: visualizza massimali di un trainee                                       | trainer |
+| P2       | Trainee: tenta modificare massimale (deve fallire con 403 Forbidden)              | trainee |
 | P2       | trainer: visualizza reportistica serie allenanti per gruppo muscolare             | trainer |
 | P2       | Admin: crea / modifica / elimina utente                                           | admin   |
 | P2       | Admin: crea nuovo trainer (validazione role=trainer richiede admin)               | admin   |

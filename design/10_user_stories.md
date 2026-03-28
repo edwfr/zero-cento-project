@@ -126,13 +126,11 @@ Questo documento contiene le user stories organizzate per tipo di utente/persona
 
 **US-U11**: Come trainee, voglio vedere chiaramente quali settimane richiedono feedback obbligatorio e verificare quali esercizi devo ancora completare, per rispettare le richieste del trainer.
 
-### Gestione Massimali
+### Visualizzazione Massimali
 
 **US-U12**: Come trainee, voglio visualizzare la lista dei miei massimali personali (1RM e nRM) per ogni esercizio, per avere un riferimento delle mie capacità massimali.
 
-**US-U13**: Come trainee, voglio aggiungere o modificare manualmente i miei massimali specificando esercizio, numero di ripetizioni, peso, data e note, per tenere traccia dei miei progressi nel tempo.
-
-**US-U14**: Come trainee, voglio visualizzare lo storico dei massimali per esercizio specifico con andamento nel tempo, per vedere graficamente i miei miglioramenti.
+**US-U13**: Come trainee, voglio visualizzare lo storico dei massimali per esercizio specifico con andamento nel tempo, per vedere graficamente i miei miglioramenti.
 
 ---
 
@@ -142,6 +140,6 @@ Questo documento contiene le user stories organizzate per tipo di utente/persona
 | ------- | ------------ | ---------------------------------------------------------------------------------------------------- |
 | Admin   | US-A01-A08   | Gestione utenti (CRUD), attivazione/disattivazione profili, associazioni trainer-trainee             |
 | Trainer | US-T01-T28   | Libreria esercizi, gruppi muscolari, schemi motori, gestione trainee, creazione schede, monitoraggio |
-| Trainee | US-U01-U14   | Visualizzazione schede, feedback esercizi, gestione massimali, sessione estesa                       |
+| Trainee | US-U01-U13   | Visualizzazione schede, feedback esercizi, visualizzazione massimali, sessione estesa                |
 
-**Totale User Stories**: 42
+**Totale User Stories**: 41

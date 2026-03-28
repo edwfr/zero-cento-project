@@ -26,7 +26,7 @@
 | `/trainer/trainees`                    | Lista trainee gestiti (solo propri, con toggle attivo/disabilitato)                          |
 | `/trainer/trainees/[id]`               | Profilo trainee + schede assegnate                                                           |
 | `/trainer/trainees/new`                | Creazione nuovo profilo trainee (genera password)                                            |
-| `/trainer/trainees/[id]/records`       | Visualizza/modifica massimali trainee                                                        |
+| `/trainer/trainees/[id]/records`       | Gestione completa massimali trainee (CRUD)                                                   |
 | `/trainer/programs`                    | Lista schede (draft, active, completed) con filtri e ricerca                                 |
 | `/trainer/programs/new`                | **Step 1**: Setup scheda (durata, allenamenti/settimana, trainee)                            |
 | `/trainer/programs/[id]/week-overview` | **Step 2**: Vista alto livello settimana tipo (aggiungi esercizi con colori MovementPattern) |
@@ -44,7 +44,7 @@
 | `/trainee/programs/current`                  | Scheda attiva con esercizi per settimana/giorno   |
 | `/trainee/programs/[id]/workout/[workoutId]` | Singolo allenamento + form feedback per esercizio |
 | `/trainee/history`                           | Storico schede completate/passate                 |
-| `/trainee/records`                           | Gestione massimali personali (1RM, nRM)           |
+| `/trainee/records`                           | Visualizzazione massimali personali (1RM, nRM)    |
 | `/trainee/records/[exerciseId]`              | Storico massimali per esercizio specifico         |
 
 ## Componenti riutilizzabili
@@ -62,7 +62,7 @@
 - `SetInput` — input ripetibile per ogni serie (reps + kg) nel feedback.
 - `ProgressTracker` — visualizzazione stato avanzamento scheda (trainer view).
 - `PersonalRecordCard` — card per visualizzare massimale (1RM o nRM) con data e note.
-- `PersonalRecordForm` — form per aggiungere/modificare massimale (esercizio, reps, peso, data).
+- `PersonalRecordForm` — form per aggiungere/modificare massimale (esercizio, reps, peso, data) — **solo trainer**.
 - `SBDReportChart` — grafico per reportistica SBD (FRQ, NBL, IM) con filtro periodo.
 - `TrainingVolumeChart` — grafico per serie/ripetizioni totali per gruppo muscolare.
 - `YoutubeEmbed` — wrapper per iframe YouTube con lazy load.

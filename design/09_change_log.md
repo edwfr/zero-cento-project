@@ -16,7 +16,13 @@
 - **Post-MVP opzionale**: Migrazione a SMTP custom (Resend/SendGrid) per email benvenuto automatica con branding ZeroCento.
 - **Effort stimato**: 3.5 ore (UI forgot-password + reset-password + personalizzazione template + test).
 - **Decisione**: **OD-33b** chiusa.
-- **Modifica permessi**: Reportistica personale **non più visibile al trainee** (solo admin e trainer). Rationale: dati aggregati e analisi sono strumenti di lavoro per trainer, trainee si concentra su esecuzione allenamento e feedback immediato.
+- **Modifica permessi reportistica**: Reportistica personale **non più visibile al trainee** (solo admin e trainer). Rationale: dati aggregati e analisi sono strumenti di lavoro per trainer, trainee si concentra su esecuzione allenamento e feedback immediato.
+- **Modifica permessi massimali**: Massimali **gestiti esclusivamente dal trainer**, trainee ha solo visualizzazione (lettura). Rationale: i massimali sono parametri tecnici fondamentali per calcolo intensità schede, devono essere validati e tracciati dal trainer per correttezza metodologica e sicurezza. Trainee visualizza i propri massimali come riferimento durante allenamento.
+- **Impatto**:
+  - User Stories: da 42 a 41 (rimossa US-U13 su aggiunta/modifica massimali trainee, US-U14 diventa US-U13)
+  - API: endpoint `/api/trainee/records` solo GET, aggiunto CRUD completo a `/api/trainer/trainees/[id]/records/*`
+  - Frontend: `/trainee/records` da "Gestione" a "Visualizzazione", `/trainer/trainees/[id]/records` da "Visualizza/modifica" a "Gestione completa (CRUD)"
+  - Test: aggiunti test P1 per trainer CRUD massimali, test P2 per verifica 403 su tentativi modifica trainee
 
 ---
 
