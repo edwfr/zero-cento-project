@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-03-28 (rev 20)
+- **Azione**: Password reset e notifiche email configurate per MVP.
+- **Decisione**: Usare **Supabase Email Service** (default, zero setup) per gestione password reset. Email incluse in Supabase Pro (300/mese), template personalizzabili in italiano, flusso automatico con magic link.
+- **Primo login trainee**: Comunicazione credenziali temporanee **manualmente** via WhatsApp/telefono da parte del trainer (no email automatica). Trainee fa login → cambio password obbligatorio.
+- **Rationale**:
+  - ✅ Zero configurazione SMTP per MVP (focus su features core)
+  - ✅ Free tier 300 email/mese abbondante per 54 utenti (~110 email/anno stimati)
+  - ✅ Comunicazione diretta trainer-trainee già consolidata (WhatsApp)
+  - ✅ Evita rischio email benvenuto in spam (nuovo dominio senza reputation)
+- **Post-MVP opzionale**: Migrazione a SMTP custom (Resend/SendGrid) per email benvenuto automatica con branding ZeroCento.
+- **Effort stimato**: 3.5 ore (UI forgot-password + reset-password + personalizzazione template + test).
+- **Decisione**: **OD-33b** chiusa.
+
+---
+
 ## 2026-03-27 (rev 19)
 - **Azione**: Workflow completo creazione schede con vista alto livello, colori MovementPattern personalizzabili, draft incrementale, pubblicazione con mapping calendario.
 - **Requisito**: Trainer deve poter creare schede con approccio top-down: setup iniziale (durata/frequenza) → vista alto livello settimana tipo con distribuzione MovementPattern colorati → dettaglio singoli allenamenti → pubblicazione con scelta data inizio.

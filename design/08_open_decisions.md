@@ -63,6 +63,7 @@
 - [x] **OD-30** Ruoli → `admin` · `trainer` · `trainee`. Matrice permessi in 05_security_auth.md.
 - [x] **OD-31** Gestione segreti → **Vercel Environment Variables** confermate (DATABASE_URL, SUPABASE_SERVICE_ROLE_KEY, etc). No vault necessario per MVP.
 - [x] **OD-32** Compliance GDPR → Dettagliato in 05_security_auth.md. Requisiti MVP: Cookie consent banner, Privacy Policy + Terms, Delete Account feature, Supabase region EU, data retention policy. Checklist implementativa completa.
+- [x] **OD-33b** Password reset e notifiche email → **Supabase Email Service** (default) per MVP. Password reset automatico con email Supabase incluse (300/mese free tier). Primo login: trainer comunica credenziali temporanee manualmente (WhatsApp/telefono). Email benvenuto automatica opzionale post-MVP con SMTP custom (Resend/SendGrid).
 
 ---
 
