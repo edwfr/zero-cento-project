@@ -70,6 +70,10 @@
 - `RPESelector` — selector per RPE (5.0-10.0 con incrementi 0.5) con icone/colori.
 - `RestTimeSelector` — selector per tempo recupero (30s, 1m, 2m, 3m, 5m).
 - `RepsInput` — input per ripetizioni che supporta numero singolo, intervallo (6/8), o range (8-10).
+- `WeekTypeBadge` — badge per indicare tipologia settimana (normale, test, scarico) con icone e colori specifici.
+- `WeekTypeBanner` — banner full-width per header settimana trainee con messaggi contestuali in base al tipo (test: colori vivaci rosso/arancione, scarico: colori rilassanti verde/azzurro).
+- `WeekTypeSelector` — dropdown per trainer per selezionare tipo settimana durante configurazione scheda (normale, test, scarico).
+- `WeekConfigurationTable` — tabella per configurare tipo settimana e feedback obbligatorio per tutte le settimane di una scheda (trainer view).
 
 ## Gestione stato
 - **Locale**: `useState` / `useReducer` per form e UI state effimero.

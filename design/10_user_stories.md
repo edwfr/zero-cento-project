@@ -84,6 +84,12 @@ Questo documento contiene le user stories organizzate per tipo di utente/persona
 
 **US-T23**: Come trainer, voglio marcare specifiche settimane come "feedback obbligatorio", per richiedere al trainee di fornire feedback dettagliato su esercizi e prestazioni in momenti chiave della programmazione.
 
+**US-T23a**: Come trainer, voglio configurare la tipologia di ogni settimana (normale, test, scarico) durante la creazione della scheda, per comunicare al trainee l'intensità e la natura di ogni fase dell'allenamento attraverso l'interfaccia visiva.
+
+**US-T23b**: Come trainer, voglio marcare specifiche settimane come "settimane di test" con UI trainee evidenziata (banner rosso/arancione con icone chiamate all'attenzione), per segnalare settimane di valutazione massimali o performance che richiedono massima concentrazione.
+
+**US-T23c**: Come trainer, voglio marcare specifiche settimane come "settimane di scarico" con UI trainee rilassante (banner verde/azzurro con toni soft), per comunicare settimane di recupero attivo dove il focus è su tecnica e rigenerazione.
+
 **US-T24**: Come trainer, voglio visualizzare la lista di tutte le schede create (draft, active, completed) con filtri e ricerca, per gestire efficacemente la mia programmazione.
 
 ### Monitoraggio e Reportistica
@@ -125,6 +131,12 @@ Questo documento contiene le user stories organizzate per tipo di utente/persona
 **US-U10**: Come trainee, voglio fornire feedback generale testuale per le settimane marcate come "feedback obbligatorio" dal trainer, per comunicare sensazioni complessive, difficoltà o miglioramenti percepiti.
 
 **US-U11**: Come trainee, voglio vedere chiaramente quali settimane richiedono feedback obbligatorio e verificare quali esercizi devo ancora completare, per rispettare le richieste del trainer.
+
+**US-U11a**: Come trainee, voglio visualizzare un banner prominente con colori vivaci (rosso/arancione) e icone di attenzione quando una settimana è marcata come "settimana di test", per essere mentalmente preparato a una sessione di valutazione massimale che richiede massima concentrazione.
+
+**US-U11b**: Come trainee, voglio visualizzare un banner rilassante con colori soft (verde/azzurro) e icone di recupero quando una settimana è marcata come "settimana di scarico", per comprendere che il focus è su tecnica, mobilità e rigenerazione invece di performance massimale.
+
+**US-U11c**: Come trainee, voglio che i badge e i banner di tipologia settimana si combinino con il badge "Feedback Obbligatorio" quando entrambi sono attivi, per avere visibilità completa delle caratteristiche della settimana corrente.
 
 ### Visualizzazione Massimali
 

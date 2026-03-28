@@ -104,15 +104,20 @@
 | `DELETE` | `/api/programs/[id]`          | Elimina scheda (solo draft)                       | trainer           |
 | `POST`   | `/api/programs/[id]/publish`  | Pubblica scheda (draft → active, setta startDate) | trainer           |
 | `GET`    | `/api/programs/[id]/progress` | Avanzamento + feedback trainee                    | trainer           |
+| `PATCH`  | `/api/weeks/[id]`             | Configura tipo settimana e feedback obbligatorio  | trainer           |
 
 **Note workflow schede**:
-- `POST /api/programs`: Crea scheda con `status=draft`, `startDate=null`. Sistema crea automaticamente Week + Workout vuoti basati su `durationWeeks` e `workoutsPerWeek`.
+- `POST /api/programs`: Crea scheda con `status=draft`, `startDate=null`. Sistema crea automaticamente Week + Workout vuoti basati su `durationWeeks` e `workoutsPerWeek`. Default `weekType=normal` per tutte le settimane.
 - `PUT /api/programs/[id]`: Modifiche permesse solo se `status=draft`. Se `status=active`, richiede creazione nuova versione.
+- `PATCH /api/weeks/[id]`: Configura `weekType` (normal, test, deload) e `feedbackRequested` (boolean) per singola settimana. Permesso solo se scheda è `status=draft`.
+  - Corpo richiesta: `{ "weekType": "test", "feedbackRequested": true }`
+  - Validazione: `weekType` deve essere uno di `["normal", "test", "deload"]`
+  - Response: Week aggiornata con nuova configurazione
 - `POST /api/programs/[id]/publish`: 
   - Corpo richiesta: `{ "week1StartDate": "2026-04-01" }`
   - Validazione: Tutti workout devono avere almeno 1 esercizio con dettagli completi (sets, reps, etc.)
   - Azione: `status=draft → active`, `startDate=week1StartDate`, calcola `Week.startDate` per tutte le settimane, `publishedAt=NOW()`
-  - Response: Dettaglio scheda pubblicata con date calcolate
+  - Response: Dettaglio scheda pubblicata con date calcolate e configurazioni settimane (tipo + feedback)
 - `DELETE`: Permesso solo su schede `status=draft` (schede active non eliminabili, solo archiviabili con `status=completed`)
 
 ### Feedback (Trainee)
@@ -194,6 +199,11 @@ export const feedbackSchema = z.object({
   actualRpe: z.number().min(5).max(10).multipleOf(0.5).optional(),
   setsPerformed: z.array(setPerformedSchema),
   notes: z.string().optional()
+})
+
+export const weekConfigSchema = z.object({
+  weekType: z.enum(['normal', 'test', 'deload']),
+  feedbackRequested: z.boolean()
 })
 
 export const personalRecordSchema = z.object({

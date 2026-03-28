@@ -143,6 +143,7 @@ Week
   programId          FK → TrainingProgram
   weekNumber         Int              -- 1, 2, 3, ..., n
   startDate          Date?            -- Data inizio settimana (calcolata: program.startDate + (weekNumber-1)*7 giorni)
+  weekType           Enum(normal, test, deload)  -- Tipologia settimana: normale, test, scarico (default: normal)
   feedbackRequested  Boolean          -- feedback OBBLIGATORIO per questa settimana (impostato da trainer)
   generalFeedback    String?          -- feedback generale del trainee sulla settimana
   
@@ -158,11 +159,24 @@ Week
   --          Week 6 feedbackRequested=false (feedback opzionale)
   -- Se true, trainee deve compilare feedback per TUTTI gli esercizi della settimana
   -- UI trainee mostra badge "Feedback Richiesto" e blocca avanzamento settimana successiva se incompleto
+  
+  -- NOTA: weekType
+  -- Tipologia settimana che influenza UI trainee:
+  -- - normal (default): UI standard, nessun badge particolare
+  -- - test: Settimana di valutazione/test massimali
+  --         UI trainee: Banner rosso/arancione prominente "🔥 SETTIMANA DI TEST"
+  --         Badge su workout: "⚡ Test" con colori vivaci (#ef4444, #f97316)
+  --         Alert pre-allenamento: "Questa è una settimana di valutazione. Massima concentrazione!"
+  -- - deload: Settimana di scarico/recupero
+  --         UI trainee: Banner verde/blu rilassante "🌿 SETTIMANA DI SCARICO"
+  --         Badge su workout: "💤 Scarico" con colori soft (#10b981, #6ee7b7)
+  --         Alert pre-allenamento: "Settimana di recupero. Focus su tecnica e mobilità."
+  -- Trainer configura weekType durante compilazione scheda (insieme a feedbackRequested)
 
 Workout
   id            UUID  PK
   weekId        FK → Week
-  dayLabel      String          -- es. "Lunedì", "Giorno A"
+  dayLabel      String          -- es.  "Giorno 1", "Giorno 2", "Giorno 3"
   notes         String?
 
 WorkoutExercise
@@ -355,22 +369,67 @@ PATCH /api/weeks/[week-id]
 
 **UI Trainer (vista scheda)**:
 ```
-┌─────────── Configurazione Settimane ───────────┐
-│ Week 1  [ ] Feedback obbligatorio              │
-│ Week 2  [ ] Feedback obbligatorio              │
-│ Week 3  [ ] Feedback obbligatorio              │
-│ Week 4  [ ] Feedback obbligatorio              │
-│ Week 5  [✓] Feedback obbligatorio  ⚠️          │
-│ Week 6  [ ] Feedback obbligatorio              │
-│ ...                                            │
-│ Week 12 [✓] Feedback obbligatorio  ⚠️          │
-└────────────────────────────────────────────────┘
+┌─────────── Configurazione Settimane ───────────────────────────────┐
+│ Week  Tipo           Feedback      Note                            │
+│  1    [Normale ▼]    [ ]           Standard                        │
+│  2    [Normale ▼]    [ ]           Standard                        │
+│  3    [Normale ▼]    [ ]           Standard                        │
+│  4    [Test ▼] 🔥    [✓] ⚠️         Valutazione mesociclo          │
+│  5    [Normale ▼]    [ ]           Standard                        │
+│  6    [Scarico ▼] 💤 [ ]           Recupero attivo                 │
+│  7    [Normale ▼]    [ ]           Standard                        │
+│  8    [Test ▼] 🔥    [✓] ⚠️         Test massimali                 │
+│ ...                                                                 │
+│  12   [Normale ▼]    [✓] ⚠️         Valutazione finale             │
+└─────────────────────────────────────────────────────────────────────┘
+
+Tipo settimana:
+- Normale: settimana standard di allenamento
+- Test 🔥: settimana di valutazione/test (UI trainee con colori vivaci)
+- Scarico 💤: settimana di deload/recupero (UI trainee con colori rilassanti)
 ```
 
-**Workflow Trainee (compilazione feedback)**:
+**Workflow Trainee (compilazione feedback e UI settimana)**:
+
+**UI in base a weekType**:
+
+`Week.weekType = "normal"`:
+- UI standard senza badge particolari
+- Colori tema predefinito
+- Header settimana: "Week [N] · [Data Inizio] - [Data Fine]"
+
+`Week.weekType = "test"`:
+- Banner prominente header settimana:
+  ```
+  ┌──────────────────────────────────────────────────┐
+  │ 🔥 SETTIMANA DI TEST                             │
+  │ Week 4 · 22-28 Aprile 2026                      │
+  │ ⚡ Questa è una settimana di valutazione         │
+  │    Massima concentrazione e focus!               │
+  └──────────────────────────────────────────────────┘
+  ```
+- Badge su ogni workout: "⚡ Test" con background rosso/arancione (#ef4444, #f97316)
+- Alert pre-allenamento: "⚠️ Allenamento di test. Preparati mentalmente!"
+- Colori UI: rosso, arancione, giallo vivaci per richiamare attenzione
+
+`Week.weekType = "deload"`:
+- Banner rilassante header settimana:
+  ```
+  ┌──────────────────────────────────────────────────┐
+  │ 🌿 SETTIMANA DI SCARICO                          │
+  │ Week 6 · 6-12 Maggio 2026                       │
+  │ 💤 Settimana di recupero attivo                  │
+  │    Focus su tecnica, mobilità e rigenerazione    │
+  └──────────────────────────────────────────────────┘
+  ```
+- Badge su ogni workout: "💤 Scarico" con background verde/azzurro soft (#10b981, #6ee7b7)
+- Alert pre-allenamento: "✨ Allenamento di scarico. Ascolta il tuo corpo."
+- Colori UI: verde acqua, azzurro, toni pastello per effetto rilassante
+
+**Gestione feedback obbligatori**:
 
 Se `Week.feedbackRequested = true`:
-- UI mostra badge "🔴 Feedback Obbligatorio" sulla settimana
+- UI mostra badge aggiuntivo "🔴 Feedback Obbligatorio" (indipendente da weekType)
 - Trainee deve compilare `ExerciseFeedback` per TUTTI i `WorkoutExercise` della settimana
 - Sistema blocca avanzamento alla settimana successiva finché feedback non è completo
 - Notifica push/email a trainee se settimana obbligatoria sta per terminare senza feedback
@@ -484,11 +543,25 @@ LIMIT 10  -- Ultime 10 settimane con feedback
 
 ### Note UX
 
+**Tipologia settimana (weekType)**:
+- Settimana normale: UI standard, header neutro, colori tema predefinito
+- Settimana test: 
+  - Banner rosso/arancione (#ef4444, #f97316) con icona 🔥⚡
+  - Alert pre-workout: "⚠️ Allenamento di test. Massima concentrazione!"
+  - Badge su workout card: "⚡ Test" con background vivace
+  - Colori UI: rosso, arancione, giallo per richiamare attenzione
+- Settimana scarico:
+  - Banner verde/azzurro soft (#10b981, #6ee7b7) con icona 🌿💤
+  - Alert pre-workout: "✨ Allenamento di scarico. Ascolta il tuo corpo."
+  - Badge su workout card: "💤 Scarico" con background rilassante
+  - Colori UI: verde acqua, azzurro pastello per effetto calming
+
 **Feedback obbligatorio**:
-- Badge visibile: 🔴 "Feedback Obbligatorio" in header settimana
+- Badge visibile: 🔴 "Feedback Obbligatorio" in header settimana (indipendente da weekType)
 - Progress bar: "3/8 esercizi completati" (dinamico)
 - Alert: "Completa tutti i feedback per avanzare a Week 6"
 - Notifica trainer: quando trainee completa settimana con feedback obbligatorio
+- Combinazione con weekType: badge obbligatorio si aggiunge a banner test/scarico (non sovrascrive)
 
 **Storico feedback**:
 - Caricamento lazy: storico recuperato solo quando trainee apre form esercizio (no preload)
@@ -977,37 +1050,58 @@ Feedback Obbligatori:
 [Continua Modifica] [Pubblica]
 ```
 
-**Step 4.1: Configurazione feedback obbligatori**
-Trainer marca settimane con feedback obbligatorio:
+**Step 4.1: Configurazione tipologia e feedback settimane**
+Trainer configura tipo settimana e feedback obbligatorio:
 ```typescript
-// Trainer marca Week 5 e Week 12 come feedback obbligatorio
-PATCH /api/weeks/[week5-uuid]
+// Trainer configura Week 4 come settimana di TEST con feedback obbligatorio
+PATCH /api/weeks/[week4-uuid]
 {
+  "weekType": "test",
   "feedbackRequested": true
 }
 
+// Trainer configura Week 6 come settimana di SCARICO (no feedback obbligatorio)
+PATCH /api/weeks/[week6-uuid]
+{
+  "weekType": "deload",
+  "feedbackRequested": false
+}
+
+// Trainer configura Week 12 come settimana NORMALE con feedback obbligatorio
 PATCH /api/weeks/[week12-uuid]
 {
+  "weekType": "normal",
   "feedbackRequested": true
 }
 ```
 
-UI configurazione feedback:
+UI configurazione settimane (tabella completa):
 ```
-┌──── Configurazione Feedback per Settimana ────┐
-│                                                │
-│ Seleziona settimane con feedback OBBLIGATORIO:│
-│                                                │
-│ [ ] Week 1    [ ] Week 5  🔴  [ ] Week 9      │
-│ [ ] Week 2    [ ] Week 6      [ ] Week 10     │
-│ [ ] Week 3    [ ] Week 7      [ ] Week 11     │
-│ [ ] Week 4    [ ] Week 8      [✓] Week 12  🔴 │
-│                                                │
-│ ℹ️ Settimane marcate richiedono feedback      │
-│   completo prima di avanzare                  │
-│                                                │
-│ [Salva Configurazione]                         │
-└────────────────────────────────────────────────┘
+┌──── Configurazione Settimane ─────────────────────────────────────┐
+│                                                                    │
+│ Week  Tipo Settimana    Feedback Obbl.  Descrizione               │
+│ ──────────────────────────────────────────────────────────────── │
+│  1    [Normale ▼]       [ ]             Introduzione              │
+│  2    [Normale ▼]       [ ]             Progressione volume       │
+│  3    [Normale ▼]       [ ]             Peak volume               │
+│  4    [Test ▼] 🔥       [✓] 🔴          Valutazione mesociclo     │
+│  5    [Normale ▼]       [ ]             Nuovo blocco              │
+│  6    [Scarico ▼] 💤    [ ]             Recupero attivo           │
+│  7    [Normale ▼]       [ ]             Ripresa intensità         │
+│  8    [Test ▼] 🔥       [✓] 🔴          Test massimali            │
+│  9    [Normale ▼]       [ ]             Consolidamento            │
+│  10   [Normale ▼]       [ ]             Peak intensità            │
+│  11   [Scarico ▼] 💤    [ ]             Taper                     │
+│  12   [Normale ▼]       [✓] 🔴          Valutazione finale        │
+│                                                                    │
+│ Legenda:                                                           │
+│ • Normale: settimana standard di allenamento                      │
+│ • Test 🔥: valutazione/test (UI trainee con colori vivaci)       │
+│ • Scarico 💤: deload/recupero (UI trainee con colori rilassanti)  │
+│ • Feedback 🔴: obbligatorio completare tutti gli esercizi         │
+│                                                                    │
+│ [Salva Configurazione]                               [Annulla]    │
+└────────────────────────────────────────────────────────────────────┘
 ```
 
 **Step 5: Pubblicazione**
@@ -1039,6 +1133,12 @@ Scheda pubblicata con successo!
 
 Week 1 inizia: Lunedì 1 Aprile 2026
 Week 12 termina: Domenica 23 Giugno 2026
+
+Summary configurazione:
+- Settimane normali: 9
+- Settimane di test: 2 (Week 4, Week 8)
+- Settimane di scarico: 2 (Week 6, Week 11)
+- Feedback obbligatori: 3 (Week 4, Week 8, Week 12)
 
 [Visualizza Scheda] [Assegna a Trainee]
 ```
