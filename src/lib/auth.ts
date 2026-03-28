@@ -5,15 +5,15 @@ import type { Role } from '@prisma/client'
 import { apiError } from './api-response'
 
 export interface AuthSession {
-  user: {
-    id: string
-    email: string
-    firstName: string
-    lastName: string
-    role: Role
-    isActive: boolean
-  }
-  supabaseUser: SupabaseUser
+    user: {
+        id: string
+        email: string
+        firstName: string
+        lastName: string
+        role: Role
+        isActive: boolean
+    }
+    supabaseUser: SupabaseUser
 }
 
 /**
@@ -21,77 +21,77 @@ export interface AuthSession {
  * Returns null if not authenticated
  */
 export async function getSession(): Promise<AuthSession | null> {
-  const supabase = createClient()
-  
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.getSession()
+    const supabase = createClient()
 
-  if (error || !session) {
-    return null
-  }
+    const {
+        data: { session },
+        error,
+    } = await supabase.auth.getSession()
 
-  // Fetch user data from Prisma
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: {
-      id: true,
-      email: true,
-      firstName: true,
-      lastName: true,
-      role: true,
-      isActive: true,
-    },
-  })
+    if (error || !session) {
+        return null
+    }
 
-  if (!user) {
-    return null
-  }
+    // Fetch user data from Prisma
+    const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+            isActive: true,
+        },
+    })
 
-  // Check if user is active
-  if (!user.isActive) {
-    return null
-  }
+    if (!user) {
+        return null
+    }
 
-  return {
-    user,
-    supabaseUser: session.user,
-  }
+    // Check if user is active
+    if (!user.isActive) {
+        return null
+    }
+
+    return {
+        user,
+        supabaseUser: session.user,
+    }
 }
 
 /**
  * Require authentication - returns session or throws 401 error response
  */
 export async function requireAuth(): Promise<AuthSession> {
-  const session = await getSession()
+    const session = await getSession()
 
-  if (!session) {
-    throw apiError('UNAUTHORIZED', 'Authentication required', 401)
-  }
+    if (!session) {
+        throw apiError('UNAUTHORIZED', 'Authentication required', 401)
+    }
 
-  return session
+    return session
 }
 
 /**
  * Require specific role(s) - returns session or throws 403 error response
  */
 export async function requireRole(
-  allowedRoles: Role | Role[]
+    allowedRoles: Role | Role[]
 ): Promise<AuthSession> {
-  const session = await requireAuth()
+    const session = await requireAuth()
 
-  const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles]
+    const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles]
 
-  if (!roles.includes(session.user.role)) {
-    throw apiError(
-      'FORBIDDEN',
-      `Access denied. Required role: ${roles.join(' or ')}`,
-      403
-    )
-  }
+    if (!roles.includes(session.user.role)) {
+        throw apiError(
+            'FORBIDDEN',
+            `Access denied. Required role: ${roles.join(' or ')}`,
+            403
+        )
+    }
 
-  return session
+    return session
 }
 
 /**
@@ -99,74 +99,74 @@ export async function requireRole(
  * Used for trainer permission checks
  */
 export async function isTrainerOwnsTrainee(
-  trainerId: string,
-  traineeId: string
+    trainerId: string,
+    traineeId: string
 ): Promise<boolean> {
-  const association = await prisma.trainerTrainee.findFirst({
-    where: {
-      trainerId,
-      traineeId,
-    },
-  })
+    const association = await prisma.trainerTrainee.findFirst({
+        where: {
+            trainerId,
+            traineeId,
+        },
+    })
 
-  return !!association
+    return !!association
 }
 
 /**
  * Require trainer ownership of trainee
  */
 export async function requireTrainerOwnership(
-  traineeId: string
+    traineeId: string
 ): Promise<AuthSession> {
-  const session = await requireRole('trainer')
+    const session = await requireRole('trainer')
 
-  const owns = await isTrainerOwnsTrainee(session.user.id, traineeId)
+    const owns = await isTrainerOwnsTrainee(session.user.id, traineeId)
 
-  if (!owns) {
-    throw apiError(
-      'FORBIDDEN',
-      'You do not have access to this trainee',
-      403
-    )
-  }
+    if (!owns) {
+        throw apiError(
+            'FORBIDDEN',
+            'You do not have access to this trainee',
+            403
+        )
+    }
 
-  return session
+    return session
 }
 
 /**
  * Check if trainer owns a program
  */
 export async function isTrainerOwnsProgram(
-  trainerId: string,
-  programId: string
+    trainerId: string,
+    programId: string
 ): Promise<boolean> {
-  const program = await prisma.trainingProgram.findFirst({
-    where: {
-      id: programId,
-      trainerId,
-    },
-  })
+    const program = await prisma.trainingProgram.findFirst({
+        where: {
+            id: programId,
+            trainerId,
+        },
+    })
 
-  return !!program
+    return !!program
 }
 
 /**
  * Require trainer ownership of program
  */
 export async function requireTrainerProgramOwnership(
-  programId: string
+    programId: string
 ): Promise<AuthSession> {
-  const session = await requireRole('trainer')
+    const session = await requireRole('trainer')
 
-  const owns = await isTrainerOwnsProgram(session.user.id, programId)
+    const owns = await isTrainerOwnsProgram(session.user.id, programId)
 
-  if (!owns) {
-    throw apiError(
-      'FORBIDDEN',
-      'You do not have access to this program',
-      403
-    )
-  }
+    if (!owns) {
+        throw apiError(
+            'FORBIDDEN',
+            'You do not have access to this program',
+            403
+        )
+    }
 
-  return session
+    return session
 }

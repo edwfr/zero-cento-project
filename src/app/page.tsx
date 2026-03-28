@@ -5,6 +5,6 @@ import { redirect } from 'next/navigation'
  * The middleware will handle authentication and redirect to login if needed
  */
 export default function Home() {
-  // Middleware handles redirect to role-based dashboard
-  redirect('/login')
+    // Middleware handles redirect to role-based dashboard
+    redirect('/login')
 }

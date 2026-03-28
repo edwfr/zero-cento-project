@@ -5,9 +5,9 @@ import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 
 type Params = {
-  params: {
-    id: string
-  }
+    params: {
+        id: string
+    }
 }
 
 /**
@@ -15,20 +15,20 @@ type Params = {
  * Archive muscle group (set isActive = false)
  */
 export async function PATCH(request: NextRequest, { params }: Params) {
-  try {
-    await requireRole(['admin', 'trainer'])
+    try {
+        await requireRole(['admin', 'trainer'])
 
-    const muscleGroup = await prisma.muscleGroup.update({
-      where: { id: params.id },
-      data: { isActive: false },
-    })
+        const muscleGroup = await prisma.muscleGroup.update({
+            where: { id: params.id },
+            data: { isActive: false },
+        })
 
-    logger.info({ muscleGroupId: params.id }, 'Muscle group archived')
+        logger.info({ muscleGroupId: params.id }, 'Muscle group archived')
 
-    return apiSuccess({ muscleGroup })
-  } catch (error: any) {
-    if (error instanceof Response) return error
-    logger.error({ error }, 'Error archiving muscle group')
-    return apiError('INTERNAL_ERROR', 'Failed to archive muscle group', 500)
-  }
+        return apiSuccess({ muscleGroup })
+    } catch (error: any) {
+        if (error instanceof Response) return error
+        logger.error({ error }, 'Error archiving muscle group')
+        return apiError('INTERNAL_ERROR', 'Failed to archive muscle group', 500)
+    }
 }

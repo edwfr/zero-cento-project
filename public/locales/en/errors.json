@@ -1,13 +1,13 @@
 {
-  "errors": {
-    "generic": "An error occurred",
-    "networkError": "Connection error. Please try again later.",
-    "unauthorized": "Unauthorized access",
-    "forbidden": "Access denied",
-    "notFound": "Resource not found",
-    "validationError": "Validation error",
-    "conflict": "Data conflict",
-    "rateLimitExceeded": "Too many requests. Please try again later.",
-    "internalError": "Internal server error"
-  }
+    "errors": {
+        "generic": "An error occurred",
+        "networkError": "Connection error. Please try again later.",
+        "unauthorized": "Unauthorized access",
+        "forbidden": "Access denied",
+        "notFound": "Resource not found",
+        "validationError": "Validation error",
+        "conflict": "Data conflict",
+        "rateLimitExceeded": "Too many requests. Please try again later.",
+        "internalError": "Internal server error"
+    }
 }

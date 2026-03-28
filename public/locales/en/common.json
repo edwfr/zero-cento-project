@@ -1,35 +1,35 @@
 {
-  "app": {
-    "name": "ZeroCento Training",
-    "tagline": "Your training platform"
-  },
-  "common": {
-    "email": "Email",
-    "password": "Password",
-    "firstName": "First Name",
-    "lastName": "Last Name",
-    "save": "Save",
-    "cancel": "Cancel",
-    "delete": "Delete",
-    "edit": "Edit",
-    "create": "Create",
-    "search": "Search",
-    "filter": "Filter",
-    "loading": "Loading...",
-    "noResults": "No results",
-    "error": "Error",
-    "success": "Success",
-    "confirm": "Confirm",
-    "back": "Back",
-    "next": "Next",
-    "previous": "Previous",
-    "close": "Close",
-    "yes": "Yes",
-    "no": "No"
-  },
-  "roles": {
-    "admin": "Administrator",
-    "trainer": "Trainer",
-    "trainee": "Trainee"
-  }
+    "app": {
+        "name": "ZeroCento Training",
+        "tagline": "Your training platform"
+    },
+    "common": {
+        "email": "Email",
+        "password": "Password",
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "edit": "Edit",
+        "create": "Create",
+        "search": "Search",
+        "filter": "Filter",
+        "loading": "Loading...",
+        "noResults": "No results",
+        "error": "Error",
+        "success": "Success",
+        "confirm": "Confirm",
+        "back": "Back",
+        "next": "Next",
+        "previous": "Previous",
+        "close": "Close",
+        "yes": "Yes",
+        "no": "No"
+    },
+    "roles": {
+        "admin": "Administrator",
+        "trainer": "Trainer",
+        "trainee": "Trainee"
+    }
 }

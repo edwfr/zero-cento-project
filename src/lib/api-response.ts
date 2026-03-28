@@ -4,57 +4,57 @@
  */
 
 export interface ApiSuccessResponse<T = unknown> {
-  data: T
-  meta: {
-    timestamp: string
-  }
+    data: T
+    meta: {
+        timestamp: string
+    }
 }
 
 export interface ApiErrorResponse {
-  error: {
-    code: string
-    message: string
-    details?: unknown
-  }
+    error: {
+        code: string
+        message: string
+        details?: unknown
+    }
 }
 
 export type ApiErrorCode =
-  | 'VALIDATION_ERROR'
-  | 'UNAUTHORIZED'
-  | 'FORBIDDEN'
-  | 'NOT_FOUND'
-  | 'CONFLICT'
-  | 'RATE_LIMIT_EXCEEDED'
-  | 'INTERNAL_ERROR'
+    | 'VALIDATION_ERROR'
+    | 'UNAUTHORIZED'
+    | 'FORBIDDEN'
+    | 'NOT_FOUND'
+    | 'CONFLICT'
+    | 'RATE_LIMIT_EXCEEDED'
+    | 'INTERNAL_ERROR'
 
 /**
  * Creates a standardized success response
  */
 export function apiSuccess<T>(data: T, status = 200): Response {
-  const response: ApiSuccessResponse<T> = {
-    data,
-    meta: {
-      timestamp: new Date().toISOString(),
-    },
-  }
-  return Response.json(response, { status })
+    const response: ApiSuccessResponse<T> = {
+        data,
+        meta: {
+            timestamp: new Date().toISOString(),
+        },
+    }
+    return Response.json(response, { status })
 }
 
 /**
  * Creates a standardized error response
  */
 export function apiError(
-  code: ApiErrorCode,
-  message: string,
-  status: number,
-  details?: unknown
+    code: ApiErrorCode,
+    message: string,
+    status: number,
+    details?: unknown
 ): Response {
-  const response: ApiErrorResponse = {
-    error: {
-      code,
-      message,
-      details,
-    },
-  }
-  return Response.json(response, { status })
+    const response: ApiErrorResponse = {
+        error: {
+            code,
+            message,
+            details,
+        },
+    }
+    return Response.json(response, { status })
 }

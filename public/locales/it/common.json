@@ -1,35 +1,35 @@
 {
-  "app": {
-    "name": "ZeroCento Training",
-    "tagline": "La tua piattaforma di training"
-  },
-  "common": {
-    "email": "Email",
-    "password": "Password",
-    "firstName": "Nome",
-    "lastName": "Cognome",
-    "save": "Salva",
-    "cancel": "Annulla",
-    "delete": "Elimina",
-    "edit": "Modifica",
-    "create": "Crea",
-    "search": "Cerca",
-    "filter": "Filtra",
-    "loading": "Caricamento...",
-    "noResults": "Nessun risultato",
-    "error": "Errore",
-    "success": "Successo",
-    "confirm": "Conferma",
-    "back": "Indietro",
-    "next": "Avanti",
-    "previous": "Precedente",
-    "close": "Chiudi",
-    "yes": "Sì",
-    "no": "No"
-  },
-  "roles": {
-    "admin": "Amministratore",
-    "trainer": "Trainer",
-    "trainee": "Atleta"
-  }
+    "app": {
+        "name": "ZeroCento Training",
+        "tagline": "La tua piattaforma di training"
+    },
+    "common": {
+        "email": "Email",
+        "password": "Password",
+        "firstName": "Nome",
+        "lastName": "Cognome",
+        "save": "Salva",
+        "cancel": "Annulla",
+        "delete": "Elimina",
+        "edit": "Modifica",
+        "create": "Crea",
+        "search": "Cerca",
+        "filter": "Filtra",
+        "loading": "Caricamento...",
+        "noResults": "Nessun risultato",
+        "error": "Errore",
+        "success": "Successo",
+        "confirm": "Conferma",
+        "back": "Indietro",
+        "next": "Avanti",
+        "previous": "Precedente",
+        "close": "Chiudi",
+        "yes": "Sì",
+        "no": "No"
+    },
+    "roles": {
+        "admin": "Amministratore",
+        "trainer": "Trainer",
+        "trainee": "Atleta"
+    }
 }

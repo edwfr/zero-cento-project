@@ -5,11 +5,11 @@ import { z } from 'zod'
  */
 
 export const muscleGroupSchema = z.object({
-  name: z
-    .string()
-    .min(2, 'Nome troppo corto')
-    .max(50, 'Nome troppo lungo'),
-  description: z.string().max(200).optional(),
+    name: z
+        .string()
+        .min(2, 'Nome troppo corto')
+        .max(50, 'Nome troppo lungo'),
+    description: z.string().max(200).optional(),
 })
 
 export const updateMuscleGroupSchema = muscleGroupSchema.partial()
