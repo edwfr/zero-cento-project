@@ -144,10 +144,10 @@ Questo documento contiene le user stories organizzate per tipo di utente/persona
 
 ## Riepilogo User Stories per Ruolo
 
-| Ruolo   | User Stories | Aree Funzionali                                                                                           |
-| ------- | ------------ | --------------------------------------------------------------------------------------------------------- |
-| Admin   | US-A01-A08   | Gestione utenti (CRUD), attivazione/disattivazione profili, associazioni trainer-trainee                 |
-| Trainer | US-T01-T28   | Libreria esercizi, gruppi muscolari, schemi motori, gestione trainee, creazione schede, monitoraggio     |
-| Trainee | US-U01-U16   | Visualizzazione schede, feedback esercizi, gestione massimali, reportistica personale, sessione estesa   |
+| Ruolo   | User Stories | Aree Funzionali                                                                                        |
+| ------- | ------------ | ------------------------------------------------------------------------------------------------------ |
+| Admin   | US-A01-A08   | Gestione utenti (CRUD), attivazione/disattivazione profili, associazioni trainer-trainee               |
+| Trainer | US-T01-T28   | Libreria esercizi, gruppi muscolari, schemi motori, gestione trainee, creazione schede, monitoraggio   |
+| Trainee | US-U01-U16   | Visualizzazione schede, feedback esercizi, gestione massimali, reportistica personale, sessione estesa |
 
 **Totale User Stories**: 44
