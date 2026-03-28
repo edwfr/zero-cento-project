@@ -107,7 +107,7 @@
 
 - [x] **ODR-07** Versionamento schede → ~~In 03_backend_api.md: _"Se status=active, richiede nuova versione"_~~ **Decisione**: **NON previsto versionamento**. Schede pubblicate (`status=active/completed`) sono IMMUTABILI. Trainer può modificare solo schede `draft`. `PUT /api/programs/[id]` su scheda pubblicata → 403 Forbidden. Se trainer vuole modifiche, crea nuova scheda da zero. **✅ Risolto il 2026-03-28**: Confermata immutabilità, rimosso riferimento ambiguo a "nuova versione".
 
-- [ ] **ODR-08** Admin senza CRUD su programmi → Admin ha solo lettura schede, nessun trainer vede schede altrui. Se trainer lascia: trainee e schede orfani. **Decisione**: Prevedere admin override per riassegnazione o almeno accesso read globale.
+- [x] **ODR-08** ✅ **RISOLTO** (2026-03-28): Admin ha CRUD completo su TUTTE le schede (draft/active/completed), può riassegnare trainee tra trainer, accesso report globali. Endpoint `/api/admin/programs/*` e `/api/admin/trainer-trainee/[traineeId]` per gestione operativa. Risolve handover trainer e supporto emergenze. Dettagli in 05_security_auth.md, 03_backend_api.md, 02_frontend_design.md, US-A09-A14.
 
 ### Parti Mancanti e Proposte di Miglioramento
 
@@ -176,7 +176,7 @@ Le seguenti domande emergono dalla review e richiedono chiarimento:
 3. ~~**ODR-07** (ripetuto sopra): Come si gestisce il versionamento schede?~~ ✅ **RISOLTO** (non previsto versionamento, schede pubblicate immutabili)
 4. **ODR-23** (ripetuto sopra): Supporto multi-lingua?
 5. **ODR-25** (ripetuto sopra): Quale timezone?
-6. **ODR-08** (ripetuto sopra): Procedura handover trainer eliminato?
+6. ~~**ODR-08** (ripetuto sopra): Procedura handover trainer eliminato?~~ ✅ **RISOLTO**
 7. **ODR-26** (ripetuto sopra): Limite una scheda active per trainee?
 8. È previsto limite numero esercizi nella libreria condivisa?
 9. **ODR-16** (ripetuto sopra): Target WCAG per accessibilità?
@@ -198,7 +198,7 @@ Le seguenti domande emergono dalla review e richiedono chiarimento:
 5. ~~**ODR-06**: Workflow active → completed (transizione automatica)~~ ✅ **CHIUSO**
 6. ~~**ODR-07**: Versionamento schede (nessun versionamento, schede immutabili)~~ ✅ **CHIUSO**
 7. **ODR-03**: Implementare Upstash Redis per rate limiting (security critico)
-8. **ODR-08**: Chiarire admin override per gestione trainer (handover)
+8. ~~**ODR-08**: Chiarire admin override per gestione trainer (handover)~~ ✅ **CHIUSO**
 9. **ODR-10**, **ODR-12**: Pagination e idempotency (scalabilità)
 10. **ODR-14**: Health check e monitoring (operations)
 11. **ODR-21**: Creare `schema.prisma` reale (developer experience)

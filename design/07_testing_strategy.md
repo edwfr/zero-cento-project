@@ -155,6 +155,232 @@ describe('feedbackSchema', () => {
     expect(() => feedbackSchema.parse(invalid)).toThrow()
   })
 })
+
+// lib/__tests__/weight-calculator.test.ts
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { calculateEffectiveWeight } from '@/lib/calculations'
+import { prisma } from '@/lib/prisma'
+
+describe('calculateEffectiveWeight', () => {
+  const mockTraineeId = 'trainee-123'
+  
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+  
+  it('calculates absolute weight correctly', async () => {
+    const workoutExercise = {
+      id: '1',
+      workoutId: 'workout-1',
+      exerciseId: 'squat-1',
+      weightType: 'absolute',
+      weight: 100,
+      order: 1
+    }
+    
+    const result = await calculateEffectiveWeight(workoutExercise, mockTraineeId)
+    expect(result).toBe(100)
+  })
+  
+  it('calculates percentage_1rm correctly', async () => {
+    vi.mocked(prisma.personalRecord.findFirst).mockResolvedValue({
+      id: 'record-1',
+      traineeId: mockTraineeId,
+      exerciseId: 'squat-1',
+      reps: 1,
+      weight: 120,  // 1RM = 120kg
+      recordDate: new Date(),
+      notes: null,
+      createdAt: new Date()
+    })
+    
+    const workoutExercise = {
+      id: '1',
+      workoutId: 'workout-1',
+      exerciseId: 'squat-1',
+      weightType: 'percentage_1rm',
+      weight: 80,  // 80% di 120kg = 96kg
+      order: 1
+    }
+    
+    const result = await calculateEffectiveWeight(workoutExercise, mockTraineeId)
+    expect(result).toBe(96)
+  })
+  
+  it('calculates percentage_previous with reduction', async () => {
+    const previousExercise = {
+      id: '0',
+      workoutId: 'workout-1',
+      exerciseId: 'squat-1',
+      weightType: 'absolute',
+      weight: 100,
+      order: 1
+    }
+    
+    vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(previousExercise)
+    
+    const currentExercise = {
+      id: '1',
+      workoutId: 'workout-1',
+      exerciseId: 'squat-1',
+      weightType: 'percentage_previous',
+      weight: -5,  // -5% di 100kg = 95kg
+      order: 2
+    }
+    
+    const result = await calculateEffectiveWeight(currentExercise, mockTraineeId)
+    expect(result).toBe(95)
+  })
+  
+  it('calculates percentage_previous with increase', async () => {
+    const previousExercise = {
+      id: '0',
+      workoutId: 'workout-1',
+      exerciseId: 'squat-1',
+      weightType: 'absolute',
+      weight: 100,
+      order: 1
+    }
+    
+    vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(previousExercise)
+    
+    const currentExercise = {
+      id: '1',
+      workoutId: 'workout-1',
+      exerciseId: 'squat-1',
+      weightType: 'percentage_previous',
+      weight: 10,  // +10% di 100kg = 110kg
+      order: 2
+    }
+    
+    const result = await calculateEffectiveWeight(currentExercise, mockTraineeId)
+    expect(result).toBe(110)
+  })
+  
+  it('calculates percentage_previous with zero change', async () => {
+    const previousExercise = {
+      id: '0',
+      workoutId: 'workout-1',
+      exerciseId: 'squat-1',
+      weightType: 'absolute',
+      weight: 100,
+      order: 1
+    }
+    
+    vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(previousExercise)
+    
+    const currentExercise = {
+      id: '1',
+      workoutId: 'workout-1',
+      exerciseId: 'squat-1',
+      weightType: 'percentage_previous',
+      weight: 0,  // 0% di 100kg = 100kg (identico)
+      order: 2
+    }
+    
+    const result = await calculateEffectiveWeight(currentExercise, mockTraineeId)
+    expect(result).toBe(100)
+  })
+  
+  it('throws error when no previous occurrence found', async () => {
+    vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(null)
+    
+    const currentExercise = {
+      id: '1',
+      workoutId: 'workout-1',
+      exerciseId: 'squat-1',
+      weightType: 'percentage_previous',
+      weight: -5,
+      order: 1  // Nessuna riga precedente!
+    }
+    
+    await expect(
+      calculateEffectiveWeight(currentExercise, mockTraineeId)
+    ).rejects.toThrow('Nessuna occorrenza precedente trovata')
+  })
+  
+  it('handles recursive percentage_previous (chain)', async () => {
+    // Riga 1: 100kg absolute
+    // Riga 2: -5% rispetto riga 1 = 95kg
+    // Riga 3: -10% rispetto riga 2 = 85.5kg
+    
+    const row1 = {
+      id: '1',
+      workoutId: 'workout-1',
+      exerciseId: 'squat-1',
+      weightType: 'absolute',
+      weight: 100,
+      order: 1
+    }
+    
+    const row2 = {
+      id: '2',
+      workoutId: 'workout-1',
+      exerciseId: 'squat-1',
+      weightType: 'percentage_previous',
+      weight: -5,
+      order: 2
+    }
+    
+    const row3 = {
+      id: '3',
+      workoutId: 'workout-1',
+      exerciseId: 'squat-1',
+      weightType: 'percentage_previous',
+      weight: -10,
+      order: 3
+    }
+    
+    // Mock per riga 3 trova riga 1 (prima occorrenza)
+    vi.mocked(prisma.workoutExercise.findFirst)
+      .mockResolvedValueOnce(row1)  // Prima chiamata per row3
+    
+    const result = await calculateEffectiveWeight(row3, mockTraineeId)
+    // row3 fa riferimento a row1 (non row2!)
+    // 100kg - 10% = 90kg
+    expect(result).toBe(90)
+  })
+})
+
+// schemas/__tests__/workoutExercise.test.ts
+import { describe, it, expect } from 'vitest'
+import { workoutExerciseSchema } from '@/schemas/workoutExercise'
+
+describe('workoutExerciseSchema', () => {
+  it('validates percentage_previous requires weight', () => {
+    const invalid = {
+      exerciseId: '123e4567-e89b-12d3-a456-426614174000',
+      sets: 3,
+      reps: 8,
+      targetRpe: 8.0,
+      weightType: 'percentage_previous',
+      weight: null,  // MANCA!
+      restTime: '3m',
+      isWarmup: false,
+      order: 2
+    }
+    
+    expect(() => workoutExerciseSchema.parse(invalid)).toThrow(
+      'weight è obbligatorio quando weightType è percentage_previous'
+    )
+  })
+  
+  it('allows percentage_previous with valid weight', () => {
+    const valid = {
+      exerciseId: '123e4567-e89b-12d3-a456-426614174000',
+      sets: 3,
+      reps: 8,
+      targetRpe: 8.0,
+      weightType: 'percentage_previous',
+      weight: -5,
+      restTime: '3m',
+      isWarmup: false,
+      order: 2
+    }
+    
+    expect(() => workoutExerciseSchema.parse(valid)).not.toThrow()
+  })
+})
 ```
 
 **Script package.json**:
@@ -298,6 +524,122 @@ test.describe('Trainee feedback flow', () => {
     expect(data.data.sets[0]).toMatchObject({ setNumber: 1, reps: expect.any(Number), weight: expect.any(Number) })
   })
 })
+
+// e2e/percentage-previous-flow.spec.ts
+import { test, expect } from '@playwright/test'
+
+test.describe('Trainer percentage_previous flow', () => {
+  test.use({ ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } })
+  
+  test('trainer creates workout with repeated exercise using percentage_previous', async ({ page }) => {
+    // Login trainer
+    await page.goto('/login')
+    await page.fill('[name="email"]', 'trainer@test.com')
+    await page.fill('[name="password"]', 'password123')
+    await page.click('button[type="submit"]')
+    
+    // Vai a creazione scheda
+    await page.goto('/trainer/programs/new')
+    
+    // Setup scheda (step 1)
+    await page.fill('[name="title"]', 'Wave Loading Program')
+    await page.selectOption('[name="trainee"]', 'trainee-123')
+    await page.fill('[name="durationWeeks"]', '12')
+    await page.fill('[name="workoutsPerWeek"]', '4')
+    await page.click('button[data-testid="next-step"]')
+    
+    // Seleziona workout "Giorno 1" (step 2-3)
+    await page.click('[data-testid="workout-day-1"]')
+    
+    // Aggiungi primo Squat (riga 1)
+    await page.click('[data-testid="add-exercise"]')
+    await page.selectOption('[name="exerciseId"]', 'squat-uuid')
+    await page.fill('[name="sets"]', '1')
+    await page.fill('[name="reps"]', '2')
+    await page.fill('[name="targetRpe"]', '8.0')
+    
+    // Selezione peso assoluto
+    await page.click('[data-testid="weight-type-absolute"]')
+    await page.fill('[name="weight"]', '100')
+    
+    await page.selectOption('[name="restTime"]', '3m')
+    await page.fill('[name="order"]', '1')
+    await page.click('button[data-testid="save-exercise"]')
+    
+    // Aggiungi secondo Squat (riga 2) con percentage_previous
+    await page.click('[data-testid="add-exercise"]')
+    await page.selectOption('[name="exerciseId"]', 'squat-uuid')
+    await page.fill('[name="sets"]', '3')
+    await page.fill('[name="reps"]', '4')
+    await page.fill('[name="targetRpe"]', '7.5')
+    
+    // Selezione percentage_previous
+    await page.click('[data-testid="weight-type-percentage-previous"]')
+    
+    // Verifica che UI mostra dettagli riga precedente
+    await expect(page.locator('[data-testid="previous-occurrence-info"]'))
+      .toContainText('Prima occorrenza: Squat @ 100kg (riga 1)')
+    
+    // Inserisci percentuale -5%
+    await page.fill('[name="weight"]', '-5')
+    
+    // Verifica preview calcolo
+    await expect(page.locator('[data-testid="weight-preview"]'))
+      .toContainText('→ 95.0 kg (100kg - 5%)')
+    
+    await page.selectOption('[name="restTime"]', '2m')
+    await page.fill('[name="order"]', '2')
+    await page.click('button[data-testid="save-exercise"]')
+    
+    // Salva scheda draft
+    await page.click('button[data-testid="save-draft"]')
+    
+    // Verifica success message
+    await expect(page.locator('[data-testid="save-success"]')).toBeVisible()
+    
+    // Verifica in DB che secondo esercizio ha weightType=percentage_previous
+    const response = await page.request.get('/api/programs/[programId]/workout/[workoutId]')
+    const data = await response.json()
+    
+    const exercise2 = data.data.exercises.find(e => e.order === 2)
+    expect(exercise2.weightType).toBe('percentage_previous')
+    expect(exercise2.weight).toBe(-5)
+  })
+  
+  test('trainer tries to use percentage_previous without previous occurrence - should fail', async ({ page }) => {
+    // Login trainer
+    await page.goto('/login')
+    await page.fill('[name="email"]', 'trainer@test.com')
+    await page.fill('[name="password"]', 'password123')
+    await page.click('button[type="submit"]')
+    
+    // Vai a workout vuoto
+    await page.goto('/trainer/programs/[programId]/workout/[workoutId]')
+    
+    // Aggiungi Squat come PRIMO esercizio con percentage_previous (ERRORE!)
+    await page.click('[data-testid="add-exercise"]')
+    await page.selectOption('[name="exerciseId"]', 'squat-uuid')
+    await page.fill('[name="sets"]', '3')
+    await page.fill('[name="reps"]', '5')
+    
+    // Selezione percentage_previous (dovrebbe essere disabled o mostrare errore)
+    await page.click('[data-testid="weight-type-percentage-previous"]')
+    
+    // Verifica errore inline
+    await expect(page.locator('[data-testid="previous-occurrence-error"]'))
+      .toContainText('⚠️ Nessuna occorrenza precedente dello stesso esercizio')
+    
+    // Verifica che campo weight è disabled
+    await expect(page.locator('[name="weight"]')).toBeDisabled()
+    
+    // Se trainer prova a salvare comunque, validazione backend blocca
+    await page.click('button[data-testid="save-exercise"]')
+    
+    // Verifica errore dal backend
+    await expect(page.locator('[data-testid="api-error"]'))
+      .toContainText('Impossibile usare percentage_previous')
+  })
+})
 ```
 
 **CI Integration** (GitHub Actions):
@@ -345,6 +687,7 @@ e2e-staging:
 | P0       | Accesso negato a route non autorizzate per ruolo                                  | tutti   |
 | P1       | trainer: crea esercizio con URL YouTube valido, gruppi muscolari, schema motorio  | trainer |
 | P1       | trainer: crea scheda multi-settimana e la assegna a trainee                       | trainer |
+| P1       | trainer: inserisce stesso esercizio più volte con riferimento carico precedente   | trainer |
 | P1       | trainer: crea profilo trainee e genera password iniziale                          | trainer |
 | P1       | Trainee: visualizza scheda corrente                                               | trainee |
 | P1       | Trainee: invia feedback su un esercizio con serie multiple (reps + kg)            | trainee |
@@ -366,6 +709,7 @@ e2e-staging:
 | P2       | Trainee: tenta modificare esercizio (deve fallire con 403 Forbidden)              | trainee |
 | P2       | trainer: elimina esercizio usato in scheda attiva (deve fallire con 409 Conflict) | trainer |
 | P2       | Trainee: marca settimana per feedback e aggiunge feedback generale                | trainee |
+| P2       | trainer: usa percentage_previous senza riga precedente (deve fallire validazione) | trainer |
 | P3       | Validazione RPE (5.0-10.0 con incrementi 0.5)                                     | trainee |
 | P3       | Validazione peso in % 1RM con calcolo automatico kg                               | trainee |
 | P3       | Validazione reps come intervallo (es. "6/8")                                      | trainer |

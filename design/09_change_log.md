@@ -4,6 +4,131 @@
 
 ---
 
+## 2026-03-28 (rev 27)
+- **Azione**: Implementazione permessi super-user admin per gestione operativa globale.
+- **Requisito**: Admin deve avere CRUD completo su TUTTE le risorse del sistema per gestione ordinaria e straordinaria (handover trainer, supporto emergenze, QA schede).
+- **Decisione**: Admin ha permessi completi senza restrizioni su schede, trainee, report, con capacità di riassegnazione trainer.
+- **Modello permessi aggiornato**:
+  - **Schede / Programmi**: Admin ha CRUD su TUTTE le schede di TUTTI i trainer (vs solo lettura precedente)
+    - Admin può modificare schede anche se `status=active` o `completed` (eccezione regola immutabilità)
+    - Admin può eliminare schede anche attive (con warning, per gestione emergenze)
+  - **Associazioni trainer**: Admin ha CRUD con riassegnazione trainee tra trainer (gestione handover)
+  - **Feedback**: Admin ha lettura completa di tutti i feedback (vs limitato precedente)
+  - **Massimali**: Admin ha CRUD su massimali di tutti i trainee (vs solo lettura precedente)
+  - **Reportistica**: Admin accede a report system-wide di tutti i trainee e tutti i trainer
+- **Nuovi endpoint API** (03_backend_api.md):
+  - `GET /api/admin/programs` — lista TUTTE le schede con filtri (trainer/trainee/status/search)
+  - `GET /api/admin/programs/[id]` — dettaglio scheda di qualsiasi trainer
+  - `POST /api/admin/programs` — crea scheda per qualsiasi trainee (bypass ownership)
+  - `PUT /api/admin/programs/[id]` — modifica scheda qualsiasi trainer (anche active/completed)
+  - `DELETE /api/admin/programs/[id]` — elimina scheda qualsiasi trainer (anche active)
+  - `POST /api/admin/programs/[id]/publish` — pubblica scheda draft di qualsiasi trainer
+  - `PUT /api/admin/trainer-trainee/[traineeId]` — riassegna trainee a nuovo trainer (handover)
+- **Workflow riassegnazione trainee**:
+  - Body request: `{ "newTrainerId": "uuid", "reason": "Motivazione handover" }`
+  - Backend: DELETE vecchio `TrainerTrainee`, INSERT nuovo con `newTrainerId`
+  - Schede esistenti mantengono `trainerId` originale (paternità), nuovo trainer può visualizzarle (read) ma non modificarle
+  - Nuovo trainer può creare nuove schede per trainee riassegnato
+  - Response: `{ "traineeId", "oldTrainerId", "newTrainerId", "reassignedAt" }`
+- **Nuove pagine frontend** (02_frontend_design.md):
+  - `/admin/programs` — lista globale schede con filtri e ricerca
+  - `/admin/programs/[id]` — dettaglio/modifica scheda qualsiasi trainer (override immutabilità)
+  - `/admin/programs/[id]/progress` — monitoraggio avanzamento con feedback
+  - `/admin/trainees/[id]/reassign` — form riassegnazione trainee a nuovo trainer
+  - `/admin/reports` — dashboard report globali (volume, SBD, feedback system-wide)
+- **Nuove User Stories** (10_user_stories.md):
+  - **US-A09**: Visualizzare tutte le schede di tutti i trainer con filtri
+  - **US-A10**: Modificare qualsiasi scheda (anche active/completed) per emergenze
+  - **US-A11**: Eliminare schede di qualsiasi trainer per gestione eccezionale
+  - **US-A12**: Riassegnare trainee tra trainer (handover gestito)
+  - **US-A13**: Accedere a report e monitoraggio system-wide
+  - **US-A14**: Visualizzare audit log operazioni straordinarie admin
+  - Totale user stories aggiornato: **48** (da 42)
+- **Casi d'uso admin**:
+  1. **Handover trainer**: Trainer lascia → admin riassegna trainee → visualizza/modifica schede orfane
+  2. **Supporto emergenze**: Trainee segnala bug scheda → admin interviene direttamente
+  3. **Revisione qualità**: Admin supervisiona schede trainer junior per QA metodologica
+  4. **Correzione errori critici**: Admin corregge scheda per conto trainer impegnato/assente
+- **Validazione backend**:
+  - Helper `canAccessProgram(user, program)`: admin bypassa tutti i check
+  - Admin può operare su schede immutabili (trainer/trainee ricevono 403 Forbidden)
+  - Audit log per operazioni admin su schede e riassegnazioni (tracciabilità)
+- **Sezione dettagliata** in 05_security_auth.md:
+  - "Admin Override: Gestione Operativa Globale"
+  - Permessi admin su schede, workflow riassegnazione, UI admin, casi d'uso, validazione
+  - Note su gestione schede dopo riassegnazione (paternità vs accesso)
+- **Rationale**:
+  - ✅ **Gestione operativa**: Admin risolve emergenze senza bloccare trainee/trainer
+  - ✅ **Handover trainer**: Procedura gestita per cambio trainer senza perdere continuità
+  - ✅ **QA e supervisione**: Admin verifica qualità schede per garantire standard servizio
+  - ✅ **Supporto utenti**: Admin interviene su problemi tecnici trainer/trainee
+  - ✅ **Zero downtime**: Problemi risolti immediatamente da admin, no attesa trainer
+- **Chiusura decisione**: **ODR-08** risolto ✅
+- **Implicazioni implementative**:
+  - Middleware auth: check admin bypassa tutte le restrizioni ownership
+  - Frontend: route admin con tabelle globali, filtri avanzati, badge "Admin Override" su azioni
+  - Backend: validazione role=admin permette operazioni su risorse immutabili
+  - Audit log: logging strutturato per tutte le operazioni admin (Pino + Sentry)
+- **Implicazioni**: Admin ha ruolo super-user senza restrizioni. Gestione operativa garantita anche in situazioni eccezionali. Handover trainer gestito con continuità servizio. Trainer mantiene isolamento (non vede schede altri trainer). QA e supporto garantiti da admin con visibilità completa.
+
+---
+
+## 2026-03-28 (rev 26)
+- **Azione**: Aggiunta funzionalità riferimento carico riga precedente per esercizi ripetuti nello stesso workout.
+- **Requisito**: Trainer deve poter inserire lo stesso esercizio più volte nella stessa giornata con carichi differenziati facendo riferimento al carico della prima occorrenza (non al massimale).
+- **Caso d'uso**: 
+  - Wave loading: Squat 1×2 @ 100kg → Squat 3×4 @ -5% (95kg) → Squat 5×6 @ -10% rispetto prima (90kg)
+  - Cluster set: Squat 3×3 @ 90kg → Squat 3×3 @ 0% (identico) → Squat 3×3 @ -15% (drop set finale)
+  - Back-off set: Squat 1×1 @ 100% 1RM → Squat 5×5 @ -20% (volume)
+- **Modello dati**:
+  - **WorkoutExercise.weightType**: Nuovo valore enum `percentage_previous` (in aggiunta a `absolute`, `percentage_1rm`, `percentage_rm`)
+  - **WorkoutExercise.weight**: Quando `weightType=percentage_previous`, contiene percentuale relativa (es. -5 = -5%, +10 = +10%, 0 = identico)
+  - **Logica**: Sistema cerca PRIMA occorrenza dello stesso `exerciseId` nel medesimo `workoutId` con `order < current`, applica percentuale al carico base
+- **Calcolo peso effettivo**:
+  - Sistema risolve carico base della prima occorrenza (può essere absolute, percentage_1rm, percentage_rm, o ricorsivamente percentage_previous)
+  - Applica formula: `carico_base * (1 + weight/100)`
+  - Esempio: Prima occorrenza 100kg, seconda occorrenza weight=-5 → 100 × 0.95 = 95kg
+- **Validazione backend**:
+  - Schema Zod: verifica che `weight` sia presente quando `weightType=percentage_previous`
+  - Backend validation: verifica esistenza occorrenza precedente prima di salvare WorkoutExercise
+  - Se nessuna occorrenza precedente trovata → errore 400 "Impossibile usare percentage_previous: nessuna occorrenza precedente dello stesso esercizio"
+- **UI Frontend (componente WeightTypeSelector)**:
+  - Radio button "Riferimento Riga Precedente" con query automatica occorrenza precedente
+  - Se trovata: mostra dettagli prima occorrenza (es. "Squat @ 100kg (riga 1)")
+  - Input percentuale con preview calcolo real-time (es. "-5% → 95.0 kg")
+  - Se non trovata: alert inline "⚠️ Nessuna occorrenza precedente dello stesso esercizio"
+  - Validazione: min -100%, max +100%
+- **Casi edge gestiti**:
+  - Catene ricorsive: Se riga 2 usa percentage_previous e riga 3 fa riferimento a riga 1 (non riga 2), sistema risolve correttamente
+  - Limite ricorsione: max 10 livelli per prevenire loop infiniti
+  - Validazione frontend + backend per consistenza
+- **Test coverage**:
+  - Unit test: `calculateEffectiveWeight()` con percentage_previous (riduzione, aumento, zero change, recursive chain, errore no previous)
+  - Unit test: validazione Zod schema per percentage_previous
+  - E2E test P1: Trainer crea workout con esercizio ripetuto usando percentage_previous con preview e salvataggio
+  - E2E test P2: Trainer prova percentage_previous senza occorrenza precedente → validazione blocca con errore
+- **User Story**: Aggiunta **US-T20a** per riferimento carico riga precedente con tecniche avanzate (wave loading, cluster set, back-off set)
+- **Documentazione aggiornata**:
+  - 04_data_model.md: Schema WorkoutExercise con nuovo enum `percentage_previous`, sezione "Gestione Peso e Intensità" espansa con esempi dettagliati e logica calcolo
+  - 03_backend_api.md: Schema Zod validation per `percentage_previous`, helper `calculateEffectiveWeight()` con logica ricorsiva completa
+  - 02_frontend_design.md: Componente `WeightTypeSelector` nella lista componenti riutilizzabili, sezione dettagliata con UI design, props, logica validazione, query occorrenza precedente, casi d'uso
+  - 10_user_stories.md: User Story US-T20a con esempi concreti, totale user stories aggiornato a 42
+  - 07_testing_strategy.md: Unit test per `calculateEffectiveWeight()` con tutti i casi edge, unit test per schema validation, E2E test workflow completo e validazione errori, aggiunta flusso P1 "trainer inserisce stesso esercizio con percentage_previous"
+- **Benefici**:
+  - ✅ **Automazione calcoli**: Trainer non deve ricalcolare manualmente pesi per ogni occorrenza ripetuta
+  - ✅ **Tecniche avanzate**: Supporta wave loading, cluster set, back-off set con configurazione semplice
+  - ✅ **Flessibilità**: Percentuali negative (riduzione), positive (aumento), zero (identico) copre tutti i pattern
+  - ✅ **Validazione robusta**: Errori chiari se configurazione invalida (no occorrenza precedente)
+  - ✅ **Preview UX**: Trainer vede peso calcolato in tempo reale durante configurazione
+- **Implicazioni implementative**:
+  - Migration Prisma: Aggiungere `percentage_previous` a enum `weightType`
+  - Backend: Implementare logica ricorsiva `calculateEffectiveWeight()` con limit 10 livelli
+  - Frontend: Query API per occorrenza precedente (`GET /api/workout-exercises?workoutId=X&exerciseId=Y&orderLt=Z`)
+  - Testing: Coverage completo unit + E2E per tutti i casi edge
+- **Implicazioni**: Funzionalità avanzata che supporta pattern di programmazione sofisticati usati da trainer esperti. Differenzia piattaforma ZeroCento da soluzioni generiche. Automazione calcoli migliora UX e riduce errori manuali. Sistema robusto con validazione e preview real-time.
+
+---
+
 ## 2026-03-28 (rev 25)
 - **Azione**: Chiarimento immutabilità schede pubblicate - rimosso riferimento ambiguo a "versionamento"
 - **Decisione**: Schede pubblicate (`status=active` o `status=completed`) sono **IMMUTABILI**. Trainer può modificare schede SOLO se `status=draft`.

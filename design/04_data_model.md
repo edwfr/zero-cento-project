@@ -200,12 +200,22 @@ WorkoutExercise
   sets              Int
   reps              String          -- es. "8", "8-10", "6/8" (intervallo)
   targetRpe         Float?          -- target RPE (5.0–10.0 con incrementi di 0.5)
-  weightType        Enum(absolute, percentage_1rm, percentage_rm)  -- tipo di peso
-  weight            Float?          -- kg assoluti o percentuale (se SBD, intensità in % dà i KG)
+  weightType        Enum(absolute, percentage_1rm, percentage_rm, percentage_previous)  -- tipo di peso
+  weight            Float?          -- kg assoluti, percentuale 1RM/nRM, o percentuale relativa alla riga precedente
   restTime          Enum(30s, 1m, 2m, 3m, 5m)  -- tempo di recupero
   isWarmup          Boolean         -- flag riscaldamento
   notes             String?         -- note con menu a tendina (predefinite)
   order             Int             -- posizione nell'allenamento
+  
+  -- NOTA: weightType = percentage_previous
+  -- Permette di referenziare il carico della PRIMA occorrenza dello stesso esercizio nel workout
+  -- Esempio: Workout "Giorno A" ha 2 occorrenze di "Squat"
+  --   Riga 1 (order=1): Squat, 1 serie x 2 rip @ RPE 8, weightType=absolute, weight=100kg
+  --   Riga 2 (order=2): Squat, 3 serie x 4 rip, weightType=percentage_previous, weight=-5 (= -5% rispetto riga 1)
+  -- Calcolo: Riga 2 usa 100kg - 5% = 95kg
+  -- Il campo weight contiene la percentuale da applicare (es. -5 = -5%, +10 = +10%, 0 = stesso carico)
+  -- Sistema cerca la PRIMA occorrenza (order < current) dello STESSO exerciseId nel MEDESIMO workoutId
+  -- Se non trova occorrenza precedente → errore validazione (impossibile calcolare peso relativo)
 
 ExerciseFeedback
   id                 UUID  PK
@@ -967,8 +977,39 @@ Il campo `weightType` in `WorkoutExercise` determina come interpretare il campo 
 - `absolute`: peso assoluto in kg
 - `percentage_1rm`: percentuale del massimale (1RM) - recuperato da `PersonalRecord`
 - `percentage_rm`: percentuale di un nRM specifico - recuperato da `PersonalRecord`
+- `percentage_previous`: percentuale relativa alla prima occorrenza dello stesso esercizio nel workout
 
-Per esercizi fondamentali (SBD), quando si usa una percentuale, il sistema calcola automaticamente i kg effettivi basandosi sul massimale più recente del trainee.
+**Dettaglio percentage_previous**:
+Quando un trainer inserisce lo stesso esercizio più volte nello stesso workout, può fare riferimento al carico della prima occorrenza (anziché al massimale).
+
+**Esempio concreto**:
+```
+Workout "Giorno A - Squat Focus":
+  Riga 1 (order=1): Squat, 1 serie x 2 rip @ RPE 8.0
+                    weightType: absolute
+                    weight: 100.0 (kg)
+  
+  Riga 2 (order=2): Squat, 3 serie x 4 rip @ RPE 7.5
+                    weightType: percentage_previous
+                    weight: -5.0 (= -5% rispetto alla riga 1)
+                    Carico calcolato: 100kg - 5% = 95kg
+```
+
+**Logica di calcolo**:
+1. Sistema identifica la PRIMA occorrenza dello stesso `exerciseId` nel medesimo `workoutId` con `order < current`
+2. Se la prima occorrenza usa `percentage_1rm` o `percentage_rm`, il sistema risolve prima quel carico in kg assoluti
+3. Applica la percentuale: `carico_base * (1 + weight/100)`
+   - `weight = -5` → carico_base × 0.95 (riduzione 5%)
+   - `weight = +10` → carico_base × 1.10 (aumento 10%)
+   - `weight = 0` → carico_base × 1.00 (identico)
+4. Se non esiste occorrenza precedente → **errore di validazione** (impossibile calcolare peso relativo)
+
+**Casi d'uso**:
+- Wave loading: 1×2@RPE9 → 3×4@-5% → 5×6@-10% (progressivo decremento)
+- Cluster set: 3×3@RPE8 → 3×3@0% (stesso carico) → 3×3@-10% (drop set finale)
+- Back-off set: 1×1@100% 1RM → 5×5@-20% (primo set massimale, poi volume)
+
+Per esercizi fondamentali (SBD), quando si usa una percentuale del massimale, il sistema calcola automaticamente i kg effettivi basandosi sul massimale più recente del trainee in `PersonalRecord`.
 
 ### RPE (Rate of Perceived Exertion)
 Il RPE è espresso su scala 5.0-10.0 con incrementi di 0.5:

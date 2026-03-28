@@ -131,6 +131,39 @@
   - **IMPORTANTE**: Dopo pubblicazione, scheda diventa **immutabile** - nessuna modifica permessa (PUT/DELETE bloccati)
 - `DELETE`: Permesso solo su schede `status=draft` (schede active non eliminabili, solo archiviabili con `status=completed`)
 
+### Schede / Programmi - Admin Override (Admin)
+| Method   | Path                                     | Descrizione                                                   | Ruoli autorizzati |
+| -------- | ---------------------------------------- | ------------------------------------------------------------- | ----------------- |
+| `GET`    | `/api/admin/programs`                    | Lista TUTTE le schede di TUTTI i trainer (filtri disponibili) | admin             |
+| `GET`    | `/api/admin/programs/[id]`               | Dettaglio scheda di qualsiasi trainer                         | admin             |
+| `POST`   | `/api/admin/programs`                    | Crea scheda per qualsiasi trainee (bypass ownership trainer)  | admin             |
+| `PUT`    | `/api/admin/programs/[id]`               | Modifica scheda di qualsiasi trainer (anche active/completed) | admin             |
+| `DELETE` | `/api/admin/programs/[id]`               | Elimina scheda di qualsiasi trainer (anche active)            | admin             |
+| `POST`   | `/api/admin/programs/[id]/publish`       | Pubblica scheda draft di qualsiasi trainer                    | admin             |
+| `PUT`    | `/api/admin/trainer-trainee/[traineeId]` | Riassegna trainee a nuovo trainer (handover)                  | admin             |
+
+**Note admin override**:
+- **Admin bypassa restrizioni trainer**: Può modificare/eliminare schede anche se `status=active` o `completed` (eccezione per gestione emergenze)
+- **Filtri GET /api/admin/programs**:
+  - `?trainerId=uuid` — filtra per trainer specifico
+  - `?traineeId=uuid` — filtra per trainee specifico
+  - `?status=draft|active|completed` — filtra per stato scheda
+  - `?search=keyword` — ricerca per titolo scheda
+- **Riassegnazione trainee**: `PUT /api/admin/trainer-trainee/[traineeId]`
+  - Corpo richiesta: `{ "newTrainerId": "uuid", "reason": "Handover motivazione" }`
+  - Azione: DELETE vecchio `TrainerTrainee`, INSERT nuovo record con `newTrainerId`
+  - Schede esistenti mantengono `trainerId` originale (paternità), nuovo trainer può visualizzarle (lettura) ma non modificarle
+  - Nuovo trainer può creare nuove schede per trainee riassegnato
+  - Response: `{ "traineeId", "oldTrainerId", "newTrainerId", "reassignedAt" }`
+- **Validazione**: Admin può operare su schede immutabili, trainee/trainer non possono (403 Forbidden se provano)
+- **Audit log**: Tutte le operazioni admin su schede e riassegnazioni vengono loggate per tracciabilità
+
+**Casi d'uso admin**:
+1. **Handover trainer**: Trainer lascia piattaforma → admin riassegna trainee + visualizza/modifica schede orfane
+2. **Supporto emergenze**: Trainee segnala bug scheda → admin interviene direttamente
+3. **Revisione qualità**: Admin supervisiona schede per QA metodologica
+4. **Correzione errori critici**: Admin corregge scheda per conto trainer impegnato
+
 ### Feedback (Trainee)
 | Method | Path                            | Descrizione                                     |
 | ------ | ------------------------------- | ----------------------------------------------- |
@@ -198,6 +231,122 @@ export const exerciseSchema = z.object({
   name: z.string().min(3, 'Nome minimo 3 caratteri'),
   description: z.string().optional(),
   youtubeUrl: z.string().url().regex(/youtube\.com|youtu\.be/, 'URL YouTube non valido'),
+  type: z.enum(['fundamental', 'accessory']),
+  movementPatternId: z.string().uuid(),
+  muscleGroups: z.array(muscleGroupSchema).min(1, 'Almeno un gruppo muscolare'),
+  notes: z.array(z.string()).optional()
+})
+
+export const workoutExerciseSchema = z.object({
+  exerciseId: z.string().uuid(),
+  sets: z.number().int().min(1).max(20),
+  reps: z.union([
+    z.number().int().min(1),           // numero singolo: 8
+    z.string().regex(/^\d+-\d+$/),     // range: "8-10"
+    z.string().regex(/^\d+\/\d+$/)     // intervallo: "6/8"
+  ]),
+  targetRpe: z.number().min(5.0).max(10.0).multipleOf(0.5).optional(),
+  weightType: z.enum(['absolute', 'percentage_1rm', 'percentage_rm', 'percentage_previous']),
+  weight: z.number().optional(),
+  restTime: z.enum(['30s', '1m', '2m', '3m', '5m']),
+  isWarmup: z.boolean().default(false),
+  notes: z.string().optional(),
+  order: z.number().int().min(1)
+}).refine(
+  (data) => {
+    // Se weightType è percentage_previous, weight deve essere presente e rappresenta la percentuale relativa
+    if (data.weightType === 'percentage_previous') {
+      return data.weight !== undefined && data.weight !== null
+    }
+    return true
+  },
+  {
+    message: 'weight è obbligatorio quando weightType è percentage_previous',
+    path: ['weight']
+  }
+)
+
+// Validazione lato backend per percentage_previous
+// In POST/PUT /api/workout-exercises/[id]
+export async function validateWorkoutExercise(data: WorkoutExercise, workoutId: string) {
+  // Validazione Zod base
+  const validated = workoutExerciseSchema.parse(data)
+  
+  // Se usa percentage_previous, verifica esistenza occorrenza precedente
+  if (validated.weightType === 'percentage_previous') {
+    const previousOccurrence = await prisma.workoutExercise.findFirst({
+      where: {
+        workoutId: workoutId,
+        exerciseId: validated.exerciseId,
+        order: { lt: validated.order }  // Cerca riga con order minore (precedente)
+      },
+      orderBy: { order: 'asc' }  // Prende la PRIMA occorrenza
+    })
+    
+    if (!previousOccurrence) {
+      throw new ValidationError(
+        'Impossibile usare percentage_previous: nessuna occorrenza precedente dello stesso esercizio nel workout',
+        'weight_type_invalid'
+      )
+    }
+  }
+  
+  return validated
+}
+
+// Helper per calcolare peso effettivo
+export async function calculateEffectiveWeight(
+  workoutExercise: WorkoutExercise,
+  traineeId: string
+): Promise<number> {
+  switch (workoutExercise.weightType) {
+    case 'absolute':
+      return workoutExercise.weight || 0
+    
+    case 'percentage_1rm':
+    case 'percentage_rm': {
+      // Recupera massimale da PersonalRecord
+      const record = await prisma.personalRecord.findFirst({
+        where: {
+          traineeId,
+          exerciseId: workoutExercise.exerciseId,
+          reps: workoutExercise.weightType === 'percentage_1rm' ? 1 : undefined
+        },
+        orderBy: { recordDate: 'desc' }
+      })
+      if (!record) throw new Error('Massimale non trovato')
+      const percentage = workoutExercise.weight || 0
+      return record.weight * (percentage / 100)
+    }
+    
+    case 'percentage_previous': {
+      // Trova prima occorrenza dello stesso esercizio nel workout
+      const previousOccurrence = await prisma.workoutExercise.findFirst({
+        where: {
+          workoutId: workoutExercise.workoutId,
+          exerciseId: workoutExercise.exerciseId,
+          order: { lt: workoutExercise.order }
+        },
+        orderBy: { order: 'asc' }
+      })
+      
+      if (!previousOccurrence) {
+        throw new Error('Nessuna occorrenza precedente trovata')
+      }
+      
+      // Risolvi ricorsivamente il peso della riga precedente (potrebbe essere anch'essa percentage_previous!)
+      const baseWeight = await calculateEffectiveWeight(previousOccurrence, traineeId)
+      const percentageModifier = workoutExercise.weight || 0
+      
+      // Calcolo: baseWeight * (1 + percentage/100)
+      // Esempio: weight=-5 → baseWeight * 0.95, weight=+10 → baseWeight * 1.10
+      return baseWeight * (1 + percentageModifier / 100)
+    }
+    
+    default:
+      throw new Error('weightType non riconosciuto')
+  }
+}
   muscleGroups: z.array(muscleGroupSchema).min(1, 'Almeno un gruppo muscolare richiesto'),
   type: z.enum(['fundamental', 'accessory']),
   movementPattern: z.enum(['squat', 'horizontal_push', 'hip_extension', 'horizontal_pull', 'vertical_pull', 'other']),

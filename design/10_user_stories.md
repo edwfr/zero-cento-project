@@ -26,6 +26,20 @@ Questo documento contiene le user stories organizzate per tipo di utente/persona
 
 **US-A08**: Come admin, voglio modificare le associazioni trainer-trainee, per riassegnare atleti tra diversi trainer quando necessario.
 
+### Gestione Operativa Globale
+
+**US-A09**: Come admin, voglio visualizzare tutte le schede di allenamento di tutti i trainer con filtri per trainer, trainee e status (draft/active/completed), per avere visibilità completa sulla programmazione della piattaforma.
+
+**US-A10**: Come admin, voglio visualizzare e modificare qualsiasi scheda di allenamento (anche se status=active o completed), per gestire emergenze operative o correggere errori critici senza coinvolgere il trainer.
+
+**US-A11**: Come admin, voglio eliminare schede di allenamento di qualsiasi trainer (anche attive), per gestire situazioni eccezionali come handover trainer o contenuti inappropriati.
+
+**US-A12**: Come admin, voglio riassegnare un trainee da un trainer a un altro, per gestire handover quando un trainer lascia la piattaforma o per redistribuire il carico di lavoro.
+
+**US-A13**: Come admin, voglio accedere ai report e al monitoraggio avanzamento di tutte le schede e tutti i trainee, per supervisionare la qualità del servizio e identificare problematiche system-wide.
+
+**US-A14**: Come admin, voglio visualizzare un audit log delle operazioni di riassegnazione trainee e modifiche schede effettuate da admin, per mantenere tracciabilità delle operazioni straordinarie.
+
 ---
 
 ## 👨‍🏫 Trainer
@@ -77,6 +91,8 @@ Questo documento contiene le user stories organizzate per tipo di utente/persona
 **US-T19**: Come trainer, voglio avere una vista ad alto livello della settimana tipo con aggiunta rapida di esercizi visualizzati con colori degli schemi motori personalizzati, per bilanciare visivamente la distribuzione dei movimenti (Step 2: Week Overview).
 
 **US-T20**: Come trainer, voglio compilare il dettaglio di ogni singolo allenamento specificando per ogni esercizio: ordine, serie x ripetizioni (numero intero o intervallo es. "6/8"), note (menu a tendina), RPE target (5.0-10.0 con incrementi 0.5), peso (kg assoluti o % rispetto a massimale), tempo di recupero (30s, 1m, 2m, 3m, 5m) e flag riscaldamento, per definire con precisione ogni sessione (Step 3: Workout Detail).
+
+**US-T20a**: Come trainer, voglio inserire lo stesso esercizio più volte nello stesso allenamento con carichi differenziati facendo riferimento alla prima occorrenza (es. Squat 1×2 @ RPE 8, poi Squat 3×4 @ -5% rispetto alla riga precedente), per implementare tecniche avanzate come wave loading, cluster set e back-off set senza ricalcolare manualmente i pesi.
 
 **US-T21**: Come trainer, voglio salvare una scheda come bozza (status=draft) e modificarla più volte prima della pubblicazione, per poter lavorare alla programmazione in sessioni separate.
 
@@ -148,10 +164,10 @@ Questo documento contiene le user stories organizzate per tipo di utente/persona
 
 ## Riepilogo User Stories per Ruolo
 
-| Ruolo   | User Stories | Aree Funzionali                                                                                      |
-| ------- | ------------ | ---------------------------------------------------------------------------------------------------- |
-| Admin   | US-A01-A08   | Gestione utenti (CRUD), attivazione/disattivazione profili, associazioni trainer-trainee             |
-| Trainer | US-T01-T28   | Libreria esercizi, gruppi muscolari, schemi motori, gestione trainee, creazione schede, monitoraggio |
-| Trainee | US-U01-U13   | Visualizzazione schede, feedback esercizi, visualizzazione massimali, sessione estesa                |
+| Ruolo   | User Stories | Aree Funzionali                                                                                                                                                     |
+| ------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Admin   | US-A01-A14   | Gestione utenti (CRUD), attivazione/disattivazione, associazioni trainer-trainee, **gestione operativa globale schede, riassegnazione trainee, report system-wide** |
+| Trainer | US-T01-T28   | Libreria esercizi, gruppi muscolari, schemi motori, gestione trainee, creazione schede, monitoraggio                                                                |
+| Trainee | US-U01-U13   | Visualizzazione schede, feedback esercizi, visualizzazione massimali, sessione estesa                                                                               |
 
-**Totale User Stories**: 41
+**Totale User Stories**: 48 (include US-T20a: riferimento carico riga precedente + US-A09-A14: gestione operativa globale admin)

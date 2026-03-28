@@ -137,16 +137,142 @@ await supabase.auth.signOut()
 - **Ruoli**: `admin` · `trainer` · `trainee`.
 - **Matrice permessi**:
 
-| Risorsa                    | admin               | trainer               | trainee             |
-| -------------------------- | ------------------- | --------------------- | ------------------- |
-| Creazione utenti           | ✅ trainer + trainee | ✅ solo trainee        | ❌                   |
-| Gestione utenti (RUD)      | ✅ tutti gli utenti  | ✅ solo propri trainee | ❌                   |
-| Libreria esercizi          | CRUD                | CRUD (condivisa)      | lettura             |
-| Schede                     | lettura             | CRUD (proprie)        | lettura (assegnate) |
-| Feedback                   | lettura             | lettura               | CRUD (propri)       |
-| Massimali (PersonalRecord) | lettura             | CRUD (propri trainee) | lettura (propri)    |
-| Reportistica               | ✅                   | ✅ (propri trainee)    | ❌                   |
-| Monitoraggio avanzamento   | ✅                   | ✅ (propri trainee)    | ❌                   |
+| Risorsa                    | admin                     | trainer               | trainee             |
+| -------------------------- | ------------------------- | --------------------- | ------------------- |
+| Creazione utenti           | ✅ trainer + trainee       | ✅ solo trainee        | ❌                   |
+| Gestione utenti (RUD)      | ✅ tutti gli utenti        | ✅ solo propri trainee | ❌                   |
+| Libreria esercizi          | CRUD                      | CRUD (condivisa)      | lettura             |
+| Gruppi muscolari           | CRUD                      | CRUD (condivisi)      | lettura             |
+| Schemi motori              | CRUD                      | CRUD (condivisi)      | lettura             |
+| **Schede / Programmi**     | **CRUD (tutte)**          | CRUD (proprie)        | lettura (assegnate) |
+| **Associazioni trainer**   | **CRUD (riassegnazione)** | lettura (proprie)     | ❌                   |
+| Feedback                   | lettura (tutti)           | lettura               | CRUD (propri)       |
+| Massimali (PersonalRecord) | CRUD (tutti)              | CRUD (propri trainee) | lettura (propri)    |
+| Reportistica               | ✅ (tutti i trainee)       | ✅ (propri trainee)    | ❌                   |
+| Monitoraggio avanzamento   | ✅ (tutte le schede)       | ✅ (proprie schede)    | ❌                   |
+
+**Note chiave**:
+- **Admin ha CRUD completo su TUTTE le risorse del sistema** (super-user senza restrizioni)
+- **Admin può riassegnare trainee tra trainer** modificando `TrainerTrainee` (gestione handover trainer)
+- **Admin può visualizzare, modificare, eliminare schede di qualsiasi trainer** (gestione operativa globale)
+- **Admin accede a report e monitoraggio di tutti i trainee** (visibilità completa per supervisione)
+- Trainer mantiene isolamento: vede solo propri trainee e proprie schede (autonomia operativa)
+
+### Admin Override: Gestione Operativa Globale
+
+**Requisito**: Admin deve avere permessi super-user per gestione operativa ordinaria e straordinaria (handover trainer, revisione schede, supporto emergenze).
+
+#### Gestione Schede di Allenamento (TrainingProgram)
+
+**Admin ha accesso completo a TUTTE le schede del sistema** (draft, active, completed) indipendentemente dal trainer creatore.
+
+**Permessi admin**:
+- ✅ **Visualizzazione**: `GET /api/admin/programs` lista TUTTE le schede di TUTTI i trainer (filtri per trainer, trainee, status)
+- ✅ **Creazione**: `POST /api/admin/programs` crea scheda per qualsiasi trainee (bypassando ownership trainer)
+- ✅ **Modifica**: `PUT /api/admin/programs/[id]` modifica schede di qualsiasi trainer
+  - **Schede draft**: modificabili liberamente
+  - **Schede active/completed**: modificabili da admin (eccezione alla regola immutabilità per gestione emergenze)
+- ✅ **Eliminazione**: `DELETE /api/admin/programs/[id]` elimina schede di qualsiasi trainer (anche active, con warning)
+- ✅ **Pubblicazione**: `POST /api/admin/programs/[id]/publish` pubblica schede draft di qualsiasi trainer
+
+**Casi d'uso**:
+1. **Handover trainer**: Trainer A lascia la piattaforma → admin riassegna trainee a trainer B → admin può visualizzare/modificare schede create da trainer A
+2. **Revisione qualità**: Admin supervisiona schede di trainer junior per QA metodologica
+3. **Supporto emergenze**: Trainee contatta admin per problema scheda (es. esercizio sbagliato) → admin interviene direttamente
+4. **Correzione errori**: Admin corregge scheda per conto di trainer impegnato/assente
+
+**Validazione backend**:
+```typescript
+// middleware/auth.ts - Check permission per schede
+export function canAccessProgram(user: User, program: TrainingProgram): boolean {
+  // Admin: accesso totale
+  if (user.role === 'admin') return true
+  
+  // Trainer: solo proprie schede
+  if (user.role === 'trainer') return program.trainerId === user.id
+  
+  // Trainee: solo schede assegnate
+  if (user.role === 'trainee') return program.traineeId === user.id
+  
+  return false
+}
+```
+
+#### Riassegnazione Trainee tra Trainer
+
+**Admin può modificare la tabella `TrainerTrainee`** per riassegnare atleti tra diversi trainer (handover gestito).
+
+**Endpoint dedicato**: `PUT /api/admin/trainer-trainee/[traineeId]`
+
+**Workflow riassegnazione**:
+```typescript
+// Body request
+{
+  "newTrainerId": "trainer-b-uuid",
+  "reason": "Handover per cambio specializzazione trainee"  // Opzionale, per audit log
+}
+
+// Backend logic
+// 1. Verifica che trainee esista e sia attivo
+// 2. Verifica che newTrainer esista e abbia role=trainer
+// 3. DELETE vecchio record TrainerTrainee (trainee può avere SOLO 1 trainer)
+// 4. INSERT nuovo record TrainerTrainee con newTrainerId
+// 5. Log operazione per audit trail
+// 6. Notifica email opzionale a vecchio trainer, nuovo trainer, trainee
+
+// Response
+{
+  "data": {
+    "traineeId": "...",
+    "oldTrainerId": "trainer-a-uuid",
+    "newTrainerId": "trainer-b-uuid",
+    "reassignedAt": "2026-03-28T15:30:00Z"
+  }
+}
+```
+
+**Gestione schede dopo riassegnazione**:
+- **Schede esistenti** (create dal vecchio trainer) **non cambiano `trainerId`** (preservano paternità originale)
+- Nuovo trainer **può visualizzare** le schede esistenti del trainee (accesso lettura per continuità)
+- Nuovo trainer **NON può modificare** schede create dal vecchio trainer (solo admin può modificarle)
+- Nuovo trainer **può creare nuove schede** per il trainee riassegnato
+
+**UI Admin**:
+```
+┌─────────── Riassegna Trainee ───────────────┐
+│                                              │
+│ Trainee: Mario Rossi (#trainee-123)         │
+│ Trainer attuale: Giovanni Bianchi (Trainer) │
+│                                              │
+│ Nuovo Trainer:                               │
+│ [▼ Seleziona trainer]                        │
+│   - Laura Verdi (Powerlifting)              │
+│   - Paolo Rossi (Bodybuilding)              │
+│   - Chiara Neri (CrossFit)                   │
+│                                              │
+│ Motivo (opzionale):                          │
+│ [Cambio specializzazione trainee]           │
+│                                              │
+│ ⚠️ Questa azione è permanente.              │
+│    Il nuovo trainer avrà accesso al trainee  │
+│    e potrà creare nuove schede.              │
+│                                              │
+│ [Annulla]                    [Conferma]      │
+└──────────────────────────────────────────────┘
+```
+
+**Audit log**: Operazioni admin su schede e riassegnazioni vengono loggate per tracciabilità.
+
+#### Accesso Report e Monitoraggio Globale
+
+**Admin può accedere a report e monitoraggio di TUTTI i trainee**:
+- `GET /api/admin/reports/sbd?traineeId=X` — report SBD per qualsiasi trainee
+- `GET /api/admin/reports/training-volume?trainerId=Y` — volume training per trainer specifico
+- `GET /api/admin/programs/[id]/progress` — avanzamento e feedback di qualsiasi scheda
+
+**Dashboard admin**: Vista aggregata con KPI globali (trainee attivi, schede in scadenza per tutti i trainer, feedback pending system-wide).
+
+**Rationale**: Admin ha ruolo supervisore e gestore operativo, necessita visibilità completa per garantire funzionamento piattaforma e qualità servizio.
 
 **Dettaglio creazione utenti**:
 - **Admin**: può creare sia utenti con ruolo `trainer` sia utenti con ruolo `trainee`

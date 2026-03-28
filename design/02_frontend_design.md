@@ -9,12 +9,17 @@
 | `/`      | Redirect automatico alla dashboard del ruolo dopo il login | tutti |
 
 ### Admin
-| Route               | Descrizione                                                                                  |
-| ------------------- | -------------------------------------------------------------------------------------------- |
-| `/admin/dashboard`  | Panoramica sistema                                                                           |
-| `/admin/users`      | Lista utenti (CRUD admin/trainer/trainee) con toggle attivo/disabilitato per tutti i trainee |
-| `/admin/users/new`  | Creazione nuovo utente (trainer o trainee)                                                   |
-| `/admin/users/[id]` | Dettaglio/modifica utente (include cambio ruolo e toggle attivazione)                        |
+| Route                           | Descrizione                                                                                  |
+| ------------------------------- | -------------------------------------------------------------------------------------------- |
+| `/admin/dashboard`              | Panoramica sistema                                                                           |
+| `/admin/users`                  | Lista utenti (CRUD admin/trainer/trainee) con toggle attivo/disabilitato per tutti i trainee |
+| `/admin/users/new`              | Creazione nuovo utente (trainer o trainee)                                                   |
+| `/admin/users/[id]`             | Dettaglio/modifica utente (include cambio ruolo e toggle attivazione)                        |
+| `/admin/programs`               | **Lista globale schede di TUTTI i trainer** (filtri trainer/trainee/status, ricerca)         |
+| `/admin/programs/[id]`          | **Dettaglio/modifica scheda di qualsiasi trainer** (override immutabilità)                   |
+| `/admin/programs/[id]/progress` | **Monitoraggio avanzamento scheda** di qualsiasi trainer con feedback trainee                |
+| `/admin/trainees/[id]/reassign` | **Riassegnazione trainee a nuovo trainer** (handover gestito)                                |
+| `/admin/reports`                | **Dashboard report globali** (volume, SBD, feedback per tutti i trainer)                     |
 
 ### trainer
 | Route                                  | Descrizione                                                                                  |
@@ -58,6 +63,7 @@
 - `UserStatusToggle` — toggle per attivare/disabilitare trainee (admin: tutti, trainer: solo propri; mostra stato attivo/disabilitato).
 - `WorkoutProgramBuilder` — editor drag-and-drop settimane/giorni/esercizi (trainer).
 - `WorkoutExerciseForm` — form per aggiungere esercizio con serie, reps (stringa o intervallo), RPE, peso, recupero, riscaldamento.
+- `WeightTypeSelector` — selector per tipo peso (assoluto, %1RM, %nRM, %riga precedente) con validazione e helper visivi.
 - `FeedbackForm` — form per il trainee su un singolo esercizio (RPE effettivo, array di serie con reps/kg, note, completato).
 - `SetInput` — input ripetibile per ogni serie (reps + kg) nel feedback.
 - `ProgressTracker` — visualizzazione stato avanzamento scheda (trainer view).
@@ -74,6 +80,178 @@
 - `WeekTypeBanner` — banner full-width per header settimana trainee con messaggi contestuali in base al tipo (test: colori vivaci rosso/arancione, scarico: colori rilassanti verde/azzurro).
 - `WeekTypeSelector` — dropdown per trainer per selezionare tipo settimana durante configurazione scheda (normale, test, scarico).
 - `WeekConfigurationTable` — tabella per configurare tipo settimana e feedback obbligatorio per tutte le settimane di una scheda (trainer view).
+
+### WeightTypeSelector — Dettaglio Componente
+
+Componente fondamentale per inserimento esercizi con supporto completo per riferimenti al carico relativo (riga precedente).
+
+**Props**:
+```typescript
+interface WeightTypeSelectorProps {
+  value: {
+    weightType: 'absolute' | 'percentage_1rm' | 'percentage_rm' | 'percentage_previous'
+    weight: number | null
+  }
+  onChange: (value: { weightType: string; weight: number | null }) => void
+  exerciseId: string       // Per verificare occorrenze precedenti
+  workoutId: string        // Per cercare nella stessa giornata
+  currentOrder: number     // Ordine corrente dell'esercizio
+  disabled?: boolean
+}
+```
+
+**UI Design**:
+```
+┌────────── Tipo Peso ──────────────────────────────────────┐
+│                                                            │
+│ ○ Peso Assoluto (kg)                                      │
+│   └─ [____100____] kg                                     │
+│                                                            │
+│ ○ Percentuale 1RM                                         │
+│   └─ [____80____] %  →  85.0 kg  (1RM: 106.25kg)        │
+│                                                            │
+│ ○ Percentuale nRM                                         │
+│   └─ [____85____] % di [__5__] RM                        │
+│                                                            │
+│ ● Riferimento Riga Precedente                             │
+│   ↳ Prima occorrenza: Squat @ 100kg (riga 1)             │
+│   └─ [____-5____] %  →  95.0 kg  (100kg - 5%)           │
+│                                                            │
+│ 💡 Hint: Usa riferimento riga precedente per wave        │
+│   loading, cluster set, o back-off set progressivi       │
+└────────────────────────────────────────────────────────────┘
+```
+
+**Logica validazione e feedback visivo**:
+
+1. **Selezione "Riferimento Riga Precedente"**:
+   - Sistema cerca occorrenza precedente dello stesso esercizio nel workout (`workoutId` + `exerciseId` + `order < currentOrder`)
+   - Se **trovata**: Mostra dettagli riga precedente (peso calcolato) + input percentuale attivo
+   - Se **non trovata**: Mostra errore inline "⚠️ Nessuna occorrenza precedente dello stesso esercizio. Seleziona prima un altro tipo di peso."
+
+2. **Preview calcolo in tempo reale**:
+   - Quando trainer inserisce percentuale (es. -5), mostra preview: "95.0 kg (100kg - 5%)"
+   - Se percentuale positiva (es. +10): "110.0 kg (100kg + 10%)"
+   - Se percentuale zero: "100.0 kg (identico)"
+
+3. **Errori validazione**:
+   - Percentuale < -100: "⚠️ Percentuale troppo bassa (min -100%)"
+   - Percentuale > +100: "⚠️ Percentuale troppo alta (max +100%)"
+   - Campo vuoto: "⚠️ Inserisci percentuale relativa"
+
+**Workflow trainer (aggiunta esercizio ripetuto)**:
+```typescript
+// Esempio: trainer aggiunge Squat seconda volta nel workout
+
+// Step 1: Sistema rileva che Squat è già presente (riga 1)
+// Step 2: UI mostra automatically opzione "Riferimento Riga Precedente" abilitata
+// Step 3: Trainer seleziona "Riferimento Riga Precedente"
+// Step 4: UI carica dettagli riga 1: "Squat @ 100kg assoluti"
+// Step 5: Trainer inserisce -5 nel campo percentuale
+// Step 6: Preview mostra "95.0 kg (100kg - 5%)"
+// Step 7: Submit → backend valida + salva weightType=percentage_previous, weight=-5
+```
+
+**Query per trovare occorrenza precedente**:
+```typescript
+// Frontend helper
+async function findPreviousOccurrence(
+  workoutId: string, 
+  exerciseId: string, 
+  currentOrder: number
+): Promise<WorkoutExercise | null> {
+  const response = await fetch(
+    `/api/workout-exercises?workoutId=${workoutId}&exerciseId=${exerciseId}&orderLt=${currentOrder}`
+  )
+  const data = await response.json()
+  return data.data[0] || null // Prima occorrenza con order < currentOrder
+}
+
+// Uso nel componente
+const WeightTypeSelector: React.FC<WeightTypeSelectorProps> = ({ 
+  exerciseId, 
+  workoutId, 
+  currentOrder,
+  ...props 
+}) => {
+  const [previousOccurrence, setPreviousOccurrence] = useState<WorkoutExercise | null>(null)
+  const [loading, setLoading] = useState(false)
+  
+  useEffect(() => {
+    if (props.value.weightType === 'percentage_previous') {
+      setLoading(true)
+      findPreviousOccurrence(workoutId, exerciseId, currentOrder)
+        .then(setPreviousOccurrence)
+        .finally(() => setLoading(false))
+    }
+  }, [props.value.weightType, workoutId, exerciseId, currentOrder])
+  
+  const calculatePreview = () => {
+    if (!previousOccurrence || !props.value.weight) return null
+    const baseWeight = previousOccurrence.weight // Semplificato, nella realtà usa calculateEffectiveWeight
+    const modifier = props.value.weight
+    const resultWeight = baseWeight * (1 + modifier / 100)
+    return { baseWeight, resultWeight, modifier }
+  }
+  
+  return (
+    <div className="space-y-4">
+      {/* Radio options per weightType */}
+      
+      {props.value.weightType === 'percentage_previous' && (
+        <div className="ml-6 space-y-2">
+          {loading && <Spinner />}
+          
+          {!loading && previousOccurrence && (
+            <>
+              <div className="text-sm text-gray-600">
+                ↳ Prima occorrenza: {previousOccurrence.exercise.name} @ {previousOccurrence.weight}kg (riga {previousOccurrence.order})
+              </div>
+              
+              <TextField
+                type="number"
+                label="Percentuale relativa"
+                value={props.value.weight || ''}
+                onChange={(e) => props.onChange({ 
+                  ...props.value, 
+                  weight: parseFloat(e.target.value) 
+                })}
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">%</InputAdornment>
+                }}
+                helperText={
+                  calculatePreview() 
+                    ? `→ ${calculatePreview().resultWeight.toFixed(1)} kg (${calculatePreview().baseWeight}kg ${calculatePreview().modifier > 0 ? '+' : ''}${calculatePreview().modifier}%)`
+                    : 'Inserisci percentuale (es. -5 per -5%, +10 per +10%)'
+                }
+              />
+            </>
+          )}
+          
+          {!loading && !previousOccurrence && (
+            <Alert severity="error">
+              ⚠️ Nessuna occorrenza precedente dello stesso esercizio. Seleziona prima un altro tipo di peso.
+            </Alert>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+**Casi d'uso UI**:
+1. **Wave loading**: Riga 1 @ 100kg → Riga 2 @ -5% (95kg) → Riga 3 @ -10% da riga 2 (85.5kg)
+2. **Cluster set**: Riga 1 @ 90kg → Riga 2 @ 0% (90kg identico) → Riga 3 @ -15% (76.5kg drop set)
+3. **Back-off set**: Riga 1 @ 100% 1RM (120kg) → Riga 2 @ -20% (96kg volume)
+
+**Note implementative**:
+- Preview calcolo peso è **client-side** per UX immediata
+- Backend **ri-valida** sempre il calcolo (trust no client input)
+- Se riga precedente usa anch'essa `percentage_previous`, sistema risolve ricorsivamente tutta la catena
+- Limite ricorsione: max 10 livelli (previene loop infiniti se dati corrotti)
+
+
 
 ## Gestione stato
 - **Locale**: `useState` / `useReducer` per form e UI state effimero.
