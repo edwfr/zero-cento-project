@@ -327,7 +327,6 @@ e2e-staging:
 | P1       | Trainee: aggiunge/modifica massimale (1RM o nRM)                                  | trainee |
 | P2       | trainer: visualizza avanzamento e feedback trainee                                | trainer |
 | P2       | trainer: visualizza massimali di un trainee                                       | trainer |
-| P2       | Trainee: visualizza reportistica SBD (FRQ, NBL, IM)                               | trainee |
 | P2       | trainer: visualizza reportistica serie allenanti per gruppo muscolare             | trainer |
 | P2       | Admin: crea / modifica / elimina utente                                           | admin   |
 | P2       | Admin: crea nuovo trainer (validazione role=trainer richiede admin)               | admin   |

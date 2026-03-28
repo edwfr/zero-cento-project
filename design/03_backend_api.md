@@ -133,7 +133,7 @@
 | `DELETE` | `/api/trainee/records/[id]`          | Elimina massimale                         |
 | `GET`    | `/api/trainer/trainees/[id]/records` | trainer visualizza massimali del trainee  |
 
-### Reportistica (trainer + Trainee)
+### Reportistica (trainer)
 | Method | Path                                       | Descrizione                                       |
 | ------ | ------------------------------------------ | ------------------------------------------------- |
 | `GET`  | `/api/programs/[id]/reports/sbd`           | Report SBD (FRQ, NBL, IM) per periodo specificato |

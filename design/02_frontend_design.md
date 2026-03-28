@@ -46,7 +46,6 @@
 | `/trainee/history`                           | Storico schede completate/passate                 |
 | `/trainee/records`                           | Gestione massimali personali (1RM, nRM)           |
 | `/trainee/records/[exerciseId]`              | Storico massimali per esercizio specifico         |
-| `/trainee/reports`                           | Visualizza reportistica personale (SBD, volume)   |
 
 ## Componenti riutilizzabili
 - `ExerciseCard` — mostra nome, thumbnail YouTube, parametri (serie/rip/RPE), gruppi muscolari, tipo (fondamentale/accessorio).

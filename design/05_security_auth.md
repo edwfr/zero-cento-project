@@ -145,7 +145,7 @@ await supabase.auth.signOut()
 | Schede                     | lettura             | CRUD (proprie)           | lettura (assegnate) |
 | Feedback                   | lettura             | lettura                  | CRUD (propri)       |
 | Massimali (PersonalRecord) | lettura             | lettura (propri trainee) | CRUD (propri)       |
-| Reportistica               | ✅                   | ✅ (propri trainee)       | ✅ (propria)         |
+| Reportistica               | ✅                   | ✅ (propri trainee)       | ❌                   |
 | Monitoraggio avanzamento   | ✅                   | ✅ (propri trainee)       | ❌                   |
 
 **Dettaglio creazione utenti**:

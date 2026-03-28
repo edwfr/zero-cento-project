@@ -16,6 +16,7 @@
 - **Post-MVP opzionale**: Migrazione a SMTP custom (Resend/SendGrid) per email benvenuto automatica con branding ZeroCento.
 - **Effort stimato**: 3.5 ore (UI forgot-password + reset-password + personalizzazione template + test).
 - **Decisione**: **OD-33b** chiusa.
+- **Modifica permessi**: Reportistica personale **non più visibile al trainee** (solo admin e trainer). Rationale: dati aggregati e analisi sono strumenti di lavoro per trainer, trainee si concentra su esecuzione allenamento e feedback immediato.
 
 ---
 

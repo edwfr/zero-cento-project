@@ -134,20 +134,14 @@ Questo documento contiene le user stories organizzate per tipo di utente/persona
 
 **US-U14**: Come trainee, voglio visualizzare lo storico dei massimali per esercizio specifico con andamento nel tempo, per vedere graficamente i miei miglioramenti.
 
-### Reportistica Personale
-
-**US-U15**: Come trainee, voglio visualizzare la reportistica sulle alzate fondamentali SBD (FRQ, NBL, IM) per il periodo della mia scheda attiva, per comprendere l'intensità del lavoro sui fondamentali.
-
-**US-U16**: Come trainee, voglio visualizzare grafici di serie totali e ripetizioni totali per gruppo muscolare, per capire quali aree del corpo sto allenando di più.
-
 ---
 
 ## Riepilogo User Stories per Ruolo
 
-| Ruolo   | User Stories | Aree Funzionali                                                                                        |
-| ------- | ------------ | ------------------------------------------------------------------------------------------------------ |
-| Admin   | US-A01-A08   | Gestione utenti (CRUD), attivazione/disattivazione profili, associazioni trainer-trainee               |
-| Trainer | US-T01-T28   | Libreria esercizi, gruppi muscolari, schemi motori, gestione trainee, creazione schede, monitoraggio   |
-| Trainee | US-U01-U16   | Visualizzazione schede, feedback esercizi, gestione massimali, reportistica personale, sessione estesa |
+| Ruolo   | User Stories | Aree Funzionali                                                                                      |
+| ------- | ------------ | ---------------------------------------------------------------------------------------------------- |
+| Admin   | US-A01-A08   | Gestione utenti (CRUD), attivazione/disattivazione profili, associazioni trainer-trainee             |
+| Trainer | US-T01-T28   | Libreria esercizi, gruppi muscolari, schemi motori, gestione trainee, creazione schede, monitoraggio |
+| Trainee | US-U01-U14   | Visualizzazione schede, feedback esercizi, gestione massimali, sessione estesa                       |
 
-**Totale User Stories**: 44
+**Totale User Stories**: 42
