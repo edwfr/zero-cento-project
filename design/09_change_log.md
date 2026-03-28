@@ -4,6 +4,61 @@
 
 ---
 
+## 2026-03-28 (rev 25)
+- **Azione**: Chiarimento immutabilità schede pubblicate - rimosso riferimento ambiguo a "versionamento"
+- **Decisione**: Schede pubblicate (`status=active` o `status=completed`) sono **IMMUTABILI**. Trainer può modificare schede SOLO se `status=draft`.
+- **Rationale**:
+  - **Integrità dati**: Feedback trainee, date, avanzamento devono rimanere coerenti con la scheda originale pubblicata
+  - **Semplicità architetturale**: Nessun versionamento, nessuna duplicazione di entità annidate, no campi `previousVersionId`
+  - **UX chiara**: Trainer sa che pubblicazione = commit finale, nessuna modifica retroattiva possibile
+  - Se trainer vuole cambiamenti, crea nuova scheda da zero (caso d'uso raro per MVP con ~50 trainee)
+- **Modifiche comportamento API**:
+  - `PUT /api/programs/[id]` su scheda `active/completed` → **403 Forbidden** (precedentemente documentazione diceva "richiede creazione nuova versione" senza definire come)
+  - `DELETE /api/programs/[id]` su scheda `active/completed` → **403 Forbidden** (già esistente, confermato)
+  - Validazione backend: `if (program.status !== 'draft') throw new ForbiddenError('...')`
+- **Aggiornamenti documentazione**:
+  - 03_backend_api.md: Corretto note workflow con `PUT` bloccato su schede pubblicate, aggiunto warning su `POST /publish`
+  - 04_data_model.md: Aggiunto commento IMPORTANTE su immutabilità schede nell'entità `TrainingProgram`
+  - design-review/00_review_v1.md: Marcato "Versionamento schede" come ✅ **RISOLTO** (non previsto versionamento)
+- **Implicazioni implementative**:
+  - Validazione API: aggiungere check `status === 'draft'` prima di permettere PUT/DELETE su `TrainingProgram`
+  - Frontend: disabilitare pulsante "Modifica" su schede active/completed, mostrare badge "Pubblicata - Non modificabile"
+  - Test E2E: aggiungere test per `PUT /api/programs/[id]` con scheda active → expect 403
+- **Decisione**: **No versionamento per MVP** ✅ (eventuale post-MVP se emerge necessità)
+
+---
+
+## 2026-03-28 (rev 24)
+- **Azione**: Chiarimento relazione trainer-trainee (1:1) e workflow schede active → completed.
+- **Decisione**: 
+  1. **Relazione 1:1 trainer-trainee**: Un trainee può avere UN SOLO trainer. Aggiunto UNIQUE constraint su `TrainerTrainee.traineeId`.
+  2. **Workflow active → completed**: La scheda passa automaticamente a 'completed' al termine dell'ultima settimana (endDate).
+- **Rationale**:
+  - **Relazione 1:1**: Semplifica gestione responsabilità e autorizzazioni. Se necessario cambio trainer, eliminare vecchio record e crearne uno nuovo.
+  - **Workflow automatico**: La transizione è basata su tempo (endDate calcolato), non su azioni manuali. I feedback richiesti vengono inviati quando specificato dal trainer, ma la scheda passa comunque a 'completed' al termine del periodo.
+- **Modifiche schema**:
+  - ✅ Aggiunto: `TrainerTrainee.traineeId UNIQUE` constraint
+  - ✅ Aggiunto: `TrainerTrainee.createdAt DateTime` per audit trail
+  - ✅ Documentato: Note workflow su `TrainingProgram.status` per transizione automatica
+- **Workflow feedback e transizione schede**:
+  - **Feedback richiesti** (`Week.feedbackRequested=true`): Trainee deve compilare feedback per TUTTI gli esercizi della settimana specificata
+  - **Invio esplicito**: `POST /api/programs/[id]/submit` per inviare feedback compilati al trainer in qualsiasi momento
+  - **Transizione automatica**: Job schedulato (cron daily) verifica `endDate = startDate + (durationWeeks * 7)` e aggiorna `status=completed`
+  - Se ci sono feedback pendenti all'ultima settimana, la scheda passa comunque a 'completed'
+  - Trainee NON può fornire feedback su schede 'completed'
+- **Aggiornamenti documentazione**:
+  - 04_data_model.md: Schema `TrainerTrainee` con UNIQUE constraint, note relazione 1:1, workflow transizione schede
+  - 03_backend_api.md: Endpoint `POST /api/programs/[id]/submit`, note vincolo 1:1, workflow feedback
+  - 08_open_decisions.md: **ODR-05** e **ODR-06** marcate come risolte
+- **Implicazioni implementative**:
+  - Migration Prisma: ADD UNIQUE constraint su `TrainerTrainee.traineeId`, ADD column `createdAt`
+  - Validazione API `/api/users` (POST trainee): verificare che non esista già record `TrainerTrainee` per quel `traineeId`
+  - Job schedulato: Vercel Cron o GitHub Actions per check daily schede da completare
+  - API `POST /api/programs/[id]/submit`: validazione feedback completi se settimana ha `feedbackRequested=true`
+- **Decisioni**: **ODR-05** e **ODR-06** chiuse ✅
+
+---
+
 ## 2026-03-28 (rev 23)
 - **Azione**: Rimozione campo `User.initialPassword` per migliorare la sicurezza.
 - **Decisione**: Eliminato il campo `initialPassword` dal modello `User`. Le password temporanee NON vengono più salvate nel database.
@@ -143,7 +198,7 @@
   - Se validazione fail → `400 Bad Request` con dettaglio workout incompleti
 - **Stati scheda**:
   - `draft`: Modificabile, non visibile a trainee, startDate=null
-  - `active`: Pubblicata, visibile a trainee, startDate popolato, modifiche bloccate (serve nuova versione)
+  - `active`: Pubblicata, visibile a trainee, startDate popolato, **modifiche bloccate (immutabile)**
   - `completed`: Terminata (dopo ultima settimana), archiviabile
 - **Nuovi endpoint API**:
   - `POST /api/programs/[id]/publish` con body `{week1StartDate: "YYYY-MM-DD"}`

@@ -101,11 +101,11 @@
 
 ### Ambiguità Funzionali da Chiarire
 
-- [ ] **ODR-05** Gestione multi-trainer per stesso trainee → `TrainerTrainee` è N:N ma non è chiaro se un trainee può avere più trainer contemporaneamente. Se sì: chi gestisce schede? Se no: aggiungere UNIQUE su `traineeId`. **Decisione**: Chiarire 1:1 vs N:N e documentare o vincolare.
+- [x] **ODR-05** Gestione multi-trainer per stesso trainee → `TrainerTrainee` è N:N ma non è chiaro se un trainee può avere più trainer contemporaneamente. Se sì: chi gestisce schede? Se no: aggiungere UNIQUE su `traineeId`. **Decisione**: Relazione 1:1 confermata. Un trainee ha UN SOLO trainer. Aggiunto UNIQUE constraint su `TrainerTrainee.traineeId`. **✅ Risolto il 2026-03-28**: Implementata relazione 1:1 con UNIQUE constraint.
 
-- [ ] **ODR-06** Transizione `active → completed` scheda → Non specificato se è automatica (ultima settimana) o manuale (trainer). Cosa succede con feedback incompleti? Il trainee può ancora fornire feedback su schede completed? **Decisione**: Definire workflow e trigger per la transizione.
+- [x] **ODR-06** Transizione `active → completed` scheda → Non specificato se è automatica (ultima settimana) o manuale (trainer). Cosa succede con feedback incompleti? Il trainee può ancora fornire feedback su schede completed? **Decisione**: Transizione AUTOMATICA al termine dell'ultima settimana (endDate = startDate + durationWeeks * 7). I feedback richiesti (Week.feedbackRequested=true) vanno inviati quando richiesti. Se ci sono feedback pendenti all'ultima settimana, la scheda passa comunque a 'completed'. Job schedulato verifica endDate e aggiorna status. **✅ Risolto il 2026-03-28**: Documentato workflow automatico.
 
-- [ ] **ODR-07** Versionamento schede → In 03_backend_api.md: _"Se status=active, richiede nuova versione"_ ma nessun meccanismo definito. Come si duplica? Campo `previousVersionId`? **Decisione**: Definire schema e workflow di versionamento.
+- [x] **ODR-07** Versionamento schede → ~~In 03_backend_api.md: _"Se status=active, richiede nuova versione"_~~ **Decisione**: **NON previsto versionamento**. Schede pubblicate (`status=active/completed`) sono IMMUTABILI. Trainer può modificare solo schede `draft`. `PUT /api/programs/[id]` su scheda pubblicata → 403 Forbidden. Se trainer vuole modifiche, crea nuova scheda da zero. **✅ Risolto il 2026-03-28**: Confermata immutabilità, rimosso riferimento ambiguo a "nuova versione".
 
 - [ ] **ODR-08** Admin senza CRUD su programmi → Admin ha solo lettura schede, nessun trainer vede schede altrui. Se trainer lascia: trainee e schede orfani. **Decisione**: Prevedere admin override per riassegnazione o almeno accesso read globale.
 
@@ -171,9 +171,9 @@
 
 Le seguenti domande emergono dalla review e richiedono chiarimento:
 
-1. **ODR-05** (ripetuto sopra): Un trainee può essere assegnato a più trainer contemporaneamente?
-2. **ODR-06** (ripetuto sopra): Qual è il trigger per `active → completed`?
-3. **ODR-07** (ripetuto sopra): Come si gestisce il versionamento schede?
+1. ~~**ODR-05** (ripetuto sopra): Un trainee può essere assegnato a più trainer contemporaneamente?~~ ✅ **RISOLTO**
+2. ~~**ODR-06** (ripetuto sopra): Qual è il trigger per `active → completed`?~~ ✅ **RISOLTO**
+3. ~~**ODR-07** (ripetuto sopra): Come si gestisce il versionamento schede?~~ ✅ **RISOLTO** (non previsto versionamento, schede pubblicate immutabili)
 4. **ODR-23** (ripetuto sopra): Supporto multi-lingua?
 5. **ODR-25** (ripetuto sopra): Quale timezone?
 6. **ODR-08** (ripetuto sopra): Procedura handover trainer eliminato?
@@ -194,8 +194,11 @@ Le seguenti domande emergono dalla review e richiedono chiarimento:
 1. ~~**ODR-01**: Risolvere conflitto auth NextAuth/Supabase in documentazione~~ ✅ **CHIUSO**
 2. ~~**ODR-02**: Normalizzare setsPerformed con tabella SetPerformed~~ ✅ **CHIUSO**
 3. ~~**ODR-04**: Rimuovere `initialPassword` dal DB (security)~~ ✅ **CHIUSO**
-4. **ODR-03**: Implementare Upstash Redis per rate limiting (security critico)
-5. **ODR-05** a **ODR-08**: Chiarire ambiguità funzionali (multi-trainer, versionamento, workflow schede)
-6. **ODR-10**, **ODR-12**: Pagination e idempotency (scalabilità)
-7. **ODR-14**: Health check e monitoring (operations)
-8. **ODR-21**: Creare `schema.prisma` reale (developer experience)
+4. ~~**ODR-05**: Gestione multi-trainer (relazione 1:1 confermata)~~ ✅ **CHIUSO**
+5. ~~**ODR-06**: Workflow active → completed (transizione automatica)~~ ✅ **CHIUSO**
+6. ~~**ODR-07**: Versionamento schede (nessun versionamento, schede immutabili)~~ ✅ **CHIUSO**
+7. **ODR-03**: Implementare Upstash Redis per rate limiting (security critico)
+8. **ODR-08**: Chiarire admin override per gestione trainer (handover)
+9. **ODR-10**, **ODR-12**: Pagination e idempotency (scalabilità)
+10. **ODR-14**: Health check e monitoring (operations)
+11. **ODR-21**: Creare `schema.prisma` reale (developer experience)

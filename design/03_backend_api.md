@@ -38,7 +38,9 @@
 - `POST /api/users` con `role=trainer`: **solo admin**
 - `POST /api/users` con `role=trainee`: **admin o trainer** (trainer crea i propri atleti)
 - `POST /api/users` con `role=admin`: **bloccato** (admin creabile solo via seed/migration iniziale)
-- trainer che crea trainee: il sistema crea automaticamente record in `TrainerTrainee` per l'associazione
+- trainer che crea trainee: il sistema crea automaticamente record in `TrainerTrainee` per l'associazione (relazione 1:1)
+- **Vincolo 1:1**: Un trainee può avere UN SOLO trainer. `TrainerTrainee.traineeId` ha UNIQUE constraint per garantire l'unicità
+- Se necessario cambio trainer: eliminare vecchio record `TrainerTrainee` e crearne uno nuovo
 
 **Note autorizzazione disabilitazione**:
 - `PATCH /api/users/[id]/deactivate` e `/activate`: 
@@ -116,7 +118,7 @@
 
 **Note workflow schede**:
 - `POST /api/programs`: Crea scheda con `status=draft`, `startDate=null`. Sistema crea automaticamente Week + Workout vuoti basati su `durationWeeks` e `workoutsPerWeek`. Default `weekType=normal` per tutte le settimane.
-- `PUT /api/programs/[id]`: Modifiche permesse solo se `status=draft`. Se `status=active`, richiede creazione nuova versione.
+- `PUT /api/programs/[id]`: Modifiche permesse **SOLO se `status=draft`**. Se `status=active` o `status=completed` → **403 Forbidden**. Schede pubblicate sono immutabili. Se trainer vuole modifiche, deve creare nuova scheda da zero.
 - `PATCH /api/weeks/[id]`: Configura `weekType` (normal, test, deload) e `feedbackRequested` (boolean) per singola settimana. Permesso solo se scheda è `status=draft`.
   - Corpo richiesta: `{ "weekType": "test", "feedbackRequested": true }`
   - Validazione: `weekType` deve essere uno di `["normal", "test", "deload"]`
@@ -126,15 +128,34 @@
   - Validazione: Tutti workout devono avere almeno 1 esercizio con dettagli completi (sets, reps, etc.)
   - Azione: `status=draft → active`, `startDate=week1StartDate`, calcola `Week.startDate` per tutte le settimane, `publishedAt=NOW()`
   - Response: Dettaglio scheda pubblicata con date calcolate e configurazioni settimane (tipo + feedback)
+  - **IMPORTANTE**: Dopo pubblicazione, scheda diventa **immutabile** - nessuna modifica permessa (PUT/DELETE bloccati)
 - `DELETE`: Permesso solo su schede `status=draft` (schede active non eliminabili, solo archiviabili con `status=completed`)
 
 ### Feedback (Trainee)
-| Method | Path                            | Descrizione                            |
-| ------ | ------------------------------- | -------------------------------------- |
-| `GET`  | `/api/trainee/programs`         | Storico schede del trainee autenticato |
-| `GET`  | `/api/trainee/programs/current` | Scheda corrente attiva                 |
-| `POST` | `/api/feedback`                 | Invia feedback su un WorkoutExercise   |
-| `PUT`  | `/api/feedback/[id]`            | Modifica feedback esistente            |
+| Method | Path                            | Descrizione                                     |
+| ------ | ------------------------------- | ----------------------------------------------- |
+| `GET`  | `/api/trainee/programs`         | Storico schede del trainee autenticato          |
+| `GET`  | `/api/trainee/programs/current` | Scheda corrente attiva                          |
+| `POST` | `/api/feedback`                 | Invia feedback su un WorkoutExercise            |
+| `PUT`  | `/api/feedback/[id]`            | Modifica feedback esistente                     |
+| `POST` | `/api/programs/[id]/submit`     | Invio esplicito feedback settimanali al trainer |
+
+**Note workflow feedback**:
+- `POST /api/feedback`: Il trainee registra feedback per un singolo `WorkoutExercise` (RPE, serie eseguite, note). Il feedback viene salvato come bozza.
+- Feedback richiesti (`Week.feedbackRequested=true`):
+  - Il trainee deve compilare feedback per TUTTI gli esercizi della settimana richiesta
+  - I feedback vengono inviati al trainer quando richiesti (fine settimana specificata)
+  - Sistema mostra badge "🔴 Feedback Obbligatorio"
+- `POST /api/programs/[id]/submit`: Invio esplicito di tutti i feedback compilati al trainer
+  - Il trainee può inviare feedback in qualsiasi momento durante la scheda
+  - Corpo richiesta: `{ "weekId": "uuid" }` per specificare quali feedback inviare
+  - Validazione: Verifica che tutti gli esercizi della settimana abbiano feedback compilato (se `feedbackRequested=true`)
+  - Response: Conferma invio + notifica trainer
+- **Transizione scheda active → completed**:
+  - AUTOMATICA al termine dell'ultima settimana (endDate = startDate + durationWeeks * 7)
+  - Job schedulato (cron daily) verifica endDate e aggiorna `status=completed`
+  - Se ci sono feedback pendenti all'ultima settimana, la scheda passa comunque a 'completed'
+  - Il trainee NON può più fornire feedback su schede 'completed'
 
 ### Massimali / Personal Records
 

@@ -138,19 +138,21 @@ Now I have complete context across all 11 design documents. Here is the structur
 
 ### 4.2 Ambiguità funzionali
 
-**a) Gestione multi-trainer per stesso trainee**
-- `TrainerTrainee` è una relazione N:N ma non è chiaro se un trainee possa avere **più trainer contemporaneamente**
-- Se sì: conflitti su chi crea/pubblica schede? Come si gestisce la visibilità delle schede di un trainer X quando il trainee è anche seguito da trainer Y?
-- Se no: documentare esplicitamente il vincolo 1:1 come UNIQUE su `traineeId`
+**a) Gestione multi-trainer per stesso trainee** ✅ **Risolto (rev 24)**
+- ~~`TrainerTrainee` è una relazione N:N ma non è chiaro se un trainee possa avere **più trainer contemporaneamente**~~
+- ~~Se sì: conflitti su chi crea/pubblica schede? Come si gestisce la visibilità delle schede di un trainer X quando il trainee è anche seguito da trainer Y?~~
+- ~~Se no: documentare esplicitamente il vincolo 1:1 come UNIQUE su `traineeId`~~
+- **Decisione**: Relazione 1:1 confermata. Un trainee ha UN SOLO trainer. Aggiunto UNIQUE constraint su `TrainerTrainee.traineeId`.
 
-**b) Workflow scheda "active → completed"**
-- È ben documentata la transizione `draft → active` (publish), ma la transizione `active → completed` non è specificata:
-  - È automatica quando passa l'ultima settimana? È manuale dal trainer?
-  - Cosa succede se un trainee non ha completato tutti i feedback? Si completa comunque?
-  - Il trainee può ancora fornire feedback su schede `completed`?
+**b) Workflow scheda "active → completed"** ✅ **Risolto (rev 24)**
+- ~~È ben documentata la transizione `draft → active` (publish), ma la transizione `active → completed` non è specificata:~~
+  - ~~È automatica quando passa l'ultima settimana? È manuale dal trainer?~~
+  - ~~Cosa succede se un trainee non ha completato tutti i feedback? Si completa comunque?~~
+  - ~~Il trainee può ancora fornire feedback su schede `completed`?~~
+- **Decisione**: Transizione AUTOMATICA al termine dell'ultima settimana (endDate = startDate + durationWeeks * 7). Job schedulato verifica endDate e aggiorna status. I feedback richiesti vanno inviati quando richiesti dal trainer. Se ci sono feedback pendenti all'ultima settimana, la scheda passa comunque a 'completed'.
 
-**c) Versionamento schede**
-- In 03_backend_api.md: _"Se status=active, richiede creazione nuova versione"_ — ma non c'è nessun meccanismo di versioning definito. Come si duplica una scheda? Si crea un nuovo `TrainingProgram` con un link alla versione precedente? Campo `previousVersionId`?
+**c) Versionamento schede** ✅ **RISOLTO**
+- ~~In 03_backend_api.md: _"Se status=active, richiede creazione nuova versione"_~~ — **CHIARITO**: Non esiste versionamento. Schede pubblicate sono **immutabili**. Trainer può modificare scheda SOLO se `status=draft`. Se scheda è `active/completed`, PUT ritorna `403 Forbidden`. Se trainer vuole modifiche, deve creare nuova scheda da zero.
 
 **d) Admin non ha esplicitamente CRUD su programmi**
 - Nella matrice permessi, admin ha solo "lettura" sulle schede. Nessun trainer vede i trainee di altri trainer. Se un trainer lascia la piattaforma, i suoi trainee e le loro schede diventano orfani
@@ -212,14 +214,14 @@ Now I have complete context across all 11 design documents. Here is the structur
 
 ### 6.2 Organizzativi (repo, documentazione)
 
-| #   | Proposta                                                           | Rationale                                                                                               |
-| --- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| O1  | **Creare `schema.prisma` effettivo** nella repo                    | Single source of truth per il data model, elimina gap design ↔ codice                                   |
-| O2  | **Aggiungere ADR (Architecture Decision Records)**                 | Il change log attuale è ottimo ma non strutturato come ADR; formalizzare il pattern accelera onboarding |
-| O3  | **Documentare `active → completed` e versionamento schede**        | Colmare le ambiguità funzionali identificate                                                            |
-| O4  | **Definire seed data strategy** per ambienti (dev/staging/E2E)     | Testing reproducibile, onboarding sviluppatori                                                          |
-| O5  | **Aggiungere diagramma ER** (Mermaid o dbdiagram.io) al data model | Visualizzazione relazioni per review rapide                                                             |
-| O6  | **Esplicitare vincolo trainer-trainee** (1:N o N:N)                | Elimina ambiguità relazionale                                                                           |
+| #   | Proposta                                                                                                                                            | Rationale                                                                                               |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| O1  | **Creare `schema.prisma` effettivo** nella repo                                                                                                     | Single source of truth per il data model, elimina gap design ↔ codice                                   |
+| O2  | **Aggiungere ADR (Architecture Decision Records)**                                                                                                  | Il change log attuale è ottimo ma non strutturato come ADR; formalizzare il pattern accelera onboarding |
+| O3  | ~~**Documentare `active → completed` e versionamento schede**~~ ✅ **RISOLTO** (rev 24-25: workflow automatico, no versionamento, schede immutabili) | ~~Colmare le ambiguità funzionali identificate~~ **Completato**                                         |
+| O4  | **Definire seed data strategy** per ambienti (dev/staging/E2E)                                                                                      | Testing reproducibile, onboarding sviluppatori                                                          |
+| O5  | **Aggiungere diagramma ER** (Mermaid o dbdiagram.io) al data model                                                                                  | Visualizzazione relazioni per review rapide                                                             |
+| O6  | **Esplicitare vincolo trainer-trainee** (1:N o N:N) ✅ **RISOLTO** (rev 24: relazione 1:1 confermata, UNIQUE constraint su traineeId)                | ~~Elimina ambiguità relazionale~~ **Completato**                                                        |
 
 ### 6.3 Tecnologici (tooling, standard, automazioni)
 

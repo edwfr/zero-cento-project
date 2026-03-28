@@ -58,7 +58,12 @@ User
 TrainerTrainee
   id            UUID  PK
   trainerId       FK → User
-  traineeId     FK → User
+  traineeId     FK → User  UNIQUE  -- Un trainee può avere UN SOLO trainer (relazione 1:1)
+  createdAt     DateTime
+  
+  -- NOTA: Relazione 1:1 trainer-trainee
+  -- UNIQUE constraint su traineeId garantisce che ogni trainee abbia esattamente un trainer
+  -- Se necessario cambio trainer: eliminare vecchio record TrainerTrainee e crearne uno nuovo
 
 MuscleGroup
   id            UUID  PK
@@ -133,10 +138,19 @@ TrainingProgram
   createdAt          DateTime
   updatedAt          DateTime
 
-  -- NOTA: Workflow creazione scheda
-  -- 1. status=draft: trainer può salvare parzialmente, modificare n volte
+  -- NOTA: Workflow creazione e ciclo vita scheda
+  -- 1. status=draft: trainer può salvare parzialmente, modificare n volte (PUT permesso)
   -- 2. Pubblicazione: trainer decide quando → status=active, startDate popolato (Week 1 mapping calendario)
-  -- 3. startDate usato per calcolare date settimane successive e reportistica
+  -- 3. IMPORTANTE: Dopo pubblicazione, scheda diventa IMMUTABILE
+  --    - PUT/DELETE su scheda active/completed → 403 Forbidden
+  --    - Se trainer vuole modifiche, deve creare nuova scheda da zero
+  -- 4. startDate usato per calcolare date settimane successive e reportistica
+  -- 5. Transizione active → completed: AUTOMATICA dopo endDate (startDate + durationWeeks * 7 giorni)
+  --    - La scheda passa a 'completed' automaticamente al termine dell'ultima settimana
+  --    - I feedback richiesti (Week.feedbackRequested=true) vanno inviati quando richiesti dal trainer
+  --    - Il trainee può inviare esplicitamente i feedback durante il programma
+  --    - Se ci sono feedback pendenti all'ultima settimana, la scheda passa comunque a 'completed'
+  --    - Job schedulato o check API verifica endDate e aggiorna status automaticamente
 
 Week
   id                 UUID  PK
@@ -236,7 +250,9 @@ PersonalRecord
 ## Relazioni
 - `User(trainer)` → N `TrainingProgram` (come trainer)
 - `User(trainee)` → N `TrainingProgram` (come destinatario)
-- `User(trainer)` ↔ N `User(trainee)` via `TrainerTrainee`
+- `User(trainer)` → N `User(trainee)` via `TrainerTrainee` (relazione 1:1 - un trainee ha UN SOLO trainer)
+  - UNIQUE constraint su `TrainerTrainee.traineeId` garantisce l'unicità
+  - Se necessario cambio trainer: eliminare vecchio record e crearne uno nuovo
 - `User(trainer)` → N `MovementPatternColor` (personalizzazione colori per vista alto livello)
 - `MovementPattern` → N `MovementPatternColor` (colori custom per trainer)
 - `MuscleGroup` ↔ N `Exercise` via `ExerciseMuscleGroup` (many-to-many con coefficient)
@@ -1206,9 +1222,11 @@ Summary configurazione:
 
 **Note implementative**:
 - Draft può essere salvato infinite volte (no limite)
-- Pubblicazione irreversibile per quanto riguarda `startDate` (se serve modificare, creare nuova versione scheda)
+- Pubblicazione irreversibile: scheda diventa **IMMUTABILE** dopo pubblicazione (no modifiche, no eliminazione)
+- Se trainer vuole modifiche a scheda pubblicata, deve creare nuova scheda da zero
 - Trainee vede solo schede `status=active` assegnate a lui
 - Reportistica usa `Week.startDate` + `ExerciseFeedback.date` per correlazione temporale
+- **Transizione active → completed**: Job schedulato (es. cron daily) o check API verifica `endDate = startDate + (durationWeeks * 7)` e aggiorna `status=completed` automaticamente
 
 ### Reportistica SBD
 La reportistica FRQ/NBL/IM è calcolata solo per esercizi con `type=fundamental` (Squat, Bench Press, Deadlift) su un periodo di X settimane specificato dall'utente.
