@@ -191,17 +191,19 @@ model ExerciseMuscleGroup {
 }
 
 model TrainingProgram {
-  id              String        @id @default(uuid())
-  title           String
-  trainerId       String
-  traineeId       String
-  startDate       DateTime?     // Null se draft, popolato a pubblicazione
-  durationWeeks   Int
-  workoutsPerWeek Int
-  status          ProgramStatus @default(draft)
-  publishedAt     DateTime?     // Null se draft
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id                String        @id @default(uuid())
+  title             String
+  trainerId         String
+  traineeId         String
+  startDate         DateTime?     // Null se draft, popolato a pubblicazione
+  durationWeeks     Int
+  workoutsPerWeek   Int
+  status            ProgramStatus @default(draft)
+  publishedAt       DateTime?     // Null se draft
+  completedAt       DateTime?     // Timestamp quando scheda passa a completed (auto o manuale)
+  completionReason  String?       // Motivo completamento manuale (opzionale, solo se trainer completa manualmente)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   // Relations
   trainer User   @relation("TrainerPrograms", fields: [trainerId], references: [id])

@@ -1,5 +1,53 @@
 # Change Log
 
+## [2026-03-28] Risoluzione Criticità Design Review v2
+
+### Modifiche
+
+**1. Rimozione duplicazione schema Zod in 03_backend_api.md**
+- **Problema**: Presenza di due versioni degli schema Zod (aggiornata con `percentage_previous` e legacy con `movementPattern` hardcoded)
+- **Soluzione**: Rimosso blocco legacy duplicato (exerciseSchema e workoutExerciseSchema obsoleti)
+- **File modificati**: `design/03_backend_api.md`
+- **Impatto**: Elimina confusione per sviluppatori, mantiene solo schema aggiornati come fonte di verità
+
+**2. Chiarimento logica calculateEffectiveWeight per percentage_previous**
+- **Problema**: La funzione usava `orderBy: 'asc'` che prendeva la PRIMA occorrenza precedente, causando riferimenti alla stessa riga base invece della catena progressiva
+- **Soluzione**: 
+  - Modificato `orderBy` da `'asc'` a `'desc'` per prendere la riga IMMEDIATAMENTE precedente
+  - Aggiunta documentazione esplicita sul comportamento ricorsivo e catene progressive
+  - Aggiornati test unitari in `07_testing_strategy.md` per riflettere il comportamento corretto (catena: 100kg → -5% = 95kg → -10% = 85.5kg)
+- **Comportamento**: `percentage_previous` si attiva SOLO se nello stesso workout c'è già lo stesso esercizio. Ogni riga con `-x%` calcola il peso sulla base della riga immediatamente precedente, permettendo catene progressive
+- **File modificati**: `design/03_backend_api.md`, `design/07_testing_strategy.md`, `design-review/00_design_review_v2.md`
+- **Impatto**: Risolve ambiguità sul comportamento ricorsivo, permette wave loading e back-off set con logica prevista dai trainer
+
+**3. Completamento scheda: doppia modalità (automatica e manuale)**
+- **Problema**: Documentata solo transizione automatica `active → completed` al termine endDate, mancava possibilità per trainer di completare manualmente
+- **Soluzione**:
+  - Aggiunto endpoint `PATCH /api/programs/[id]/complete` per completamento manuale da parte del trainer
+  - Aggiunti campi `completedAt` e `completionReason` al model `TrainingProgram` in Prisma schema
+  - Documentate DUE modalità: AUTOMATICA (cron daily) + MANUALE (trainer)
+  - Use case manuale: trainee termina anticipatamente, cambio programmazione, infortunio
+- **File modificati**: `design/03_backend_api.md`, `design/04_data_model.md`, `prisma/schema.prisma`, `design-review/00_design_review_v2.md`
+- **Impatto**: Maggiore flessibilità per trainer, tracking motivazione completamento anticipato
+
+**4. Chiarimento feedback real-time visibili al trainer**
+- **Problema**: Non chiaro se feedback erano "bozze" fino al submit o visibili immediatamente
+- **Soluzione**:
+  - Documentato esplicitamente che trainer vede feedback in **real-time** (appena trainee compila con `POST /api/feedback`)
+  - `POST /api/programs/[id]/submit` serve per: validazione completezza, timestamp formale, trigger notifica trainer (non blocco visibilità)
+  - Dashboard trainer mostra feedback in tempo reale tramite `GET /api/programs/[id]/progress`
+- **File modificati**: `design/03_backend_api.md`, `design-review/00_design_review_v2.md`
+- **Impatto**: UX più naturale per contesto palestra, monitoraggio continuo allenamento trainee da parte del trainer
+
+### Riepilogo File Modificati
+- `design/03_backend_api.md` — Rimozione duplicati Zod, chiarimento calculateEffectiveWeight, nuovo endpoint complete, feedback real-time
+- `design/04_data_model.md` — Aggiornamento schema TrainingProgram con completedAt/completionReason, note workflow completamento
+- `design/07_testing_strategy.md` — Test unit calculateEffectiveWeight con comportamento corretto catena
+- `prisma/schema.prisma` — Aggiunti campi completedAt e completionReason a TrainingProgram
+- `design-review/00_design_review_v2.md` — Marcate criticità risolte con ✅
+
+---
+
 > Ogni entry documenta una decisione chiusa. Le decisioni aperte vivono in 08_open_decisions.md.
 
 ---

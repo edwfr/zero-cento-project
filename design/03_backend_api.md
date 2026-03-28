@@ -113,6 +113,7 @@
 | `PUT`    | `/api/programs/[id]`          | Modifica scheda (solo draft)                      | trainer           |
 | `DELETE` | `/api/programs/[id]`          | Elimina scheda (solo draft)                       | trainer           |
 | `POST`   | `/api/programs/[id]/publish`  | Pubblica scheda (draft → active, setta startDate) | trainer           |
+| `PATCH`  | `/api/programs/[id]/complete` | Completa manualmente scheda attiva                | trainer           |
 | `GET`    | `/api/programs/[id]/progress` | Avanzamento + feedback trainee                    | trainer           |
 | `PATCH`  | `/api/weeks/[id]`             | Configura tipo settimana e feedback obbligatorio  | trainer           |
 
@@ -129,6 +130,14 @@
   - Azione: `status=draft → active`, `startDate=week1StartDate`, calcola `Week.startDate` per tutte le settimane, `publishedAt=NOW()`
   - Response: Dettaglio scheda pubblicata con date calcolate e configurazioni settimane (tipo + feedback)
   - **IMPORTANTE**: Dopo pubblicazione, scheda diventa **immutabile** - nessuna modifica permessa (PUT/DELETE bloccati)
+- `PATCH /api/programs/[id]/complete`: Completa manualmente scheda attiva (active → completed)
+  - Corpo richiesta: `{ "reason": "Trainee ha terminato anticipatamente" }` (reason opzionale)
+  - Validazione: 
+    - Scheda deve essere `status=active` (se `draft` → `400 Bad Request`, se già `completed` → `409 Conflict`)
+    - Solo il trainer proprietario può completare la scheda (verifica `program.trainerId === session.userId`)
+  - Azione: `status=active → completed`, `completedAt=NOW()`, `completionReason=reason`
+  - Response: Scheda aggiornata con status `completed`
+  - **Use case**: Trainer decide di chiudere la scheda prima della endDate naturale (es. trainee ha completato tutti i workout anticipatamente, cambio programmazione, infortunio)
 - `DELETE`: Permesso solo su schede `status=draft` (schede active non eliminabili, solo archiviabili con `status=completed`)
 
 ### Schede / Programmi - Admin Override (Admin)
@@ -174,21 +183,28 @@
 | `POST` | `/api/programs/[id]/submit`     | Invio esplicito feedback settimanali al trainer |
 
 **Note workflow feedback**:
-- `POST /api/feedback`: Il trainee registra feedback per un singolo `WorkoutExercise` (RPE, serie eseguite, note). Il feedback viene salvato come bozza.
+- `POST /api/feedback`: Il trainee registra feedback per un singolo `WorkoutExercise` (RPE, serie eseguite, note). Il feedback viene salvato e **immediatamente visibile al trainer** (real-time).
+- **Visibilità real-time**: Il trainer può visualizzare i feedback appena compilati dal trainee tramite `GET /api/programs/[id]/progress` senza attendere submit esplicito. Questo permette monitoraggio continuo dell'allenamento.
 - Feedback richiesti (`Week.feedbackRequested=true`):
   - Il trainee deve compilare feedback per TUTTI gli esercizi della settimana richiesta
-  - I feedback vengono inviati al trainer quando richiesti (fine settimana specificata)
-  - Sistema mostra badge "🔴 Feedback Obbligatorio"
-- `POST /api/programs/[id]/submit`: Invio esplicito di tutti i feedback compilati al trainer
+  - Sistema mostra badge "🔴 Feedback Obbligatorio" nella UI trainee
+  - Il submit esplicito valida la completezza dei feedback richiesti
+- `POST /api/programs/[id]/submit`: Invio formale di tutti i feedback compilati per una settimana specifica
   - Il trainee può inviare feedback in qualsiasi momento durante la scheda
   - Corpo richiesta: `{ "weekId": "uuid" }` per specificare quali feedback inviare
   - Validazione: Verifica che tutti gli esercizi della settimana abbiano feedback compilato (se `feedbackRequested=true`)
-  - Response: Conferma invio + notifica trainer
-- **Transizione scheda active → completed**:
-  - AUTOMATICA al termine dell'ultima settimana (endDate = startDate + durationWeeks * 7)
-  - Job schedulato (cron daily) verifica endDate e aggiorna `status=completed`
-  - Se ci sono feedback pendenti all'ultima settimana, la scheda passa comunque a 'completed'
-  - Il trainee NON può più fornire feedback su schede 'completed'
+  - Response: Conferma invio + notifica trainer (es. email/push notification)
+  - **Scopo submit**: Timestamp formale "settimana completata", validazione completezza, trigger notifica trainer (non blocco visibilità feedback)
+- **Transizione scheda active → completed** (DUE modalità):
+  1. **AUTOMATICA** al termine dell'ultima settimana:
+     - endDate = startDate + durationWeeks * 7 giorni
+     - Job schedulato (cron daily) verifica endDate e aggiorna `status=completed`
+     - Se ci sono feedback pendenti all'ultima settimana, la scheda passa comunque a 'completed'
+  2. **MANUALE** tramite trainer:
+     - `PATCH /api/programs/[id]/complete` permette al trainer di completare la scheda prima della endDate
+     - Use case: trainee ha terminato tutti i workout anticipatamente, cambio programmazione, infortunio
+     - Corpo richiesta può includere `reason` per tracciare motivazione
+  - **Effetto completamento**: Il trainee NON può più fornire feedback su schede 'completed' (UI mostra scheda in sola lettura)
 
 ### Massimali / Personal Records
 
@@ -272,7 +288,7 @@ export async function validateWorkoutExercise(data: WorkoutExercise, workoutId: 
   // Validazione Zod base
   const validated = workoutExerciseSchema.parse(data)
   
-  // Se usa percentage_previous, verifica esistenza occorrenza precedente
+  // Se usa percentage_previous, verifica esistenza occorrenza precedente NELLO STESSO WORKOUT
   if (validated.weightType === 'percentage_previous') {
     const previousOccurrence = await prisma.workoutExercise.findFirst({
       where: {
@@ -280,7 +296,7 @@ export async function validateWorkoutExercise(data: WorkoutExercise, workoutId: 
         exerciseId: validated.exerciseId,
         order: { lt: validated.order }  // Cerca riga con order minore (precedente)
       },
-      orderBy: { order: 'asc' }  // Prende la PRIMA occorrenza
+      orderBy: { order: 'desc' }  // Prende la riga IMMEDIATAMENTE precedente (non la prima!)
     })
     
     if (!previousOccurrence) {
@@ -320,26 +336,31 @@ export async function calculateEffectiveWeight(
     }
     
     case 'percentage_previous': {
-      // Trova prima occorrenza dello stesso esercizio nel workout
+      // Trova riga IMMEDIATAMENTE precedente dello stesso esercizio nel workout
+      // IMPORTANTE: percentage_previous si può usare SOLO se nello stesso workout c'è già lo stesso esercizio
+      // La prima occorrenza di un esercizio DEVE avere weightType diverso da percentage_previous
       const previousOccurrence = await prisma.workoutExercise.findFirst({
         where: {
           workoutId: workoutExercise.workoutId,
           exerciseId: workoutExercise.exerciseId,
           order: { lt: workoutExercise.order }
         },
-        orderBy: { order: 'asc' }
+        orderBy: { order: 'desc' }  // DESC = prende la riga IMMEDIATAMENTE precedente
       })
       
       if (!previousOccurrence) {
         throw new Error('Nessuna occorrenza precedente trovata')
       }
       
-      // Risolvi ricorsivamente il peso della riga precedente (potrebbe essere anch'essa percentage_previous!)
+      // Risolvi ricorsivamente il peso della riga precedente
+      // Se la riga precedente è anch'essa percentage_previous, risale alla sua precedente, e così via
+      // Questo permette catene come: 100kg → -5% (95kg) → -5% (90.25kg)
       const baseWeight = await calculateEffectiveWeight(previousOccurrence, traineeId)
       const percentageModifier = workoutExercise.weight || 0
       
       // Calcolo: baseWeight * (1 + percentage/100)
-      // Esempio: weight=-5 → baseWeight * 0.95, weight=+10 → baseWeight * 1.10
+      // Esempio: weight=-5 → baseWeight * 0.95 (riduzione 5%)
+      // Esempio: weight=10 → baseWeight * 1.10 (aumento 10%)
       return baseWeight * (1 + percentageModifier / 100)
     }
     
@@ -347,24 +368,6 @@ export async function calculateEffectiveWeight(
       throw new Error('weightType non riconosciuto')
   }
 }
-  muscleGroups: z.array(muscleGroupSchema).min(1, 'Almeno un gruppo muscolare richiesto'),
-  type: z.enum(['fundamental', 'accessory']),
-  movementPattern: z.enum(['squat', 'horizontal_push', 'hip_extension', 'horizontal_pull', 'vertical_pull', 'other']),
-  notes: z.array(z.string()).optional()
-})
-
-export const workoutExerciseSchema = z.object({
-  exerciseId: z.string().uuid(),
-  sets: z.number().int().min(1).max(20),
-  reps: z.string(), // "8" o "6/8" o "8-10"
-  targetRpe: z.number().min(5).max(10).multipleOf(0.5).optional(),
-  weightType: z.enum(['absolute', 'percentage_1rm', 'percentage_rm']),
-  weight: z.number().optional(),
-  restTime: z.enum(['30s', '1m', '2m', '3m', '5m']),
-  isWarmup: z.boolean(),
-  notes: z.string().optional(),
-  order: z.number().int()
-})
 
 export const setPerformedSchema = z.object({
   setNumber: z.number().int().min(1), // Numero serie progressivo (1, 2, 3, ...)

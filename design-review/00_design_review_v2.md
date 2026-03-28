@@ -125,37 +125,42 @@ Supabase PostgreSQL (eu-central-1 Frankfurt)
 
 ### 4.1 Criticità BASSE (miglioramenti consigliati, non bloccanti)
 
-**a) Duplicazione schema Zod in `03_backend_api.md`**
+**a) Duplicazione schema Zod in `03_backend_api.md`** ✅ **RISOLTO**
 
-Il file contiene due versioni degli schema Zod: una aggiornata (con `workoutExerciseSchema` che include `percentage_previous`, `reps` come union type, `setPerformedSchema` con `setNumber`) e una legacy (con `movementPattern` come enum hardcoded, `setsPerformed` come JSON). L'artefatto sembra un residuo di merge incrementale.
+~~Il file conteneva due versioni degli schema Zod: una aggiornata (con `workoutExerciseSchema` che include `percentage_previous`, `reps` come union type, `setPerformedSchema` con `setNumber`) e una legacy (con `movementPattern` come enum hardcoded, `setsPerformed` come JSON). L'artefatto sembrava un residuo di merge incrementale.~~
 
-- **Impatto**: Confusione per sviluppatori in fase di implementazione — quale schema è quello corretto?
-- **Raccomandazione**: Rimuovere il blocco legacy duplicato da `03_backend_api.md` e mantenere solo gli schema aggiornati. Lo schema Prisma in `prisma/schema.prisma` (ODR-21) è comunque la source of truth
+- **Soluzione**: Rimosso il blocco legacy duplicato da `03_backend_api.md`. Gli schema aggiornati sono mantenuti come fonte di verità insieme a `prisma/schema.prisma`
 
-**b) Ricorsione `calculateEffectiveWeight` con `percentage_previous`**
+**b) Ricorsione `calculateEffectiveWeight` con `percentage_previous`** ✅ **RISOLTO**
 
-La funzione `calculateEffectiveWeight` in `03_backend_api.md` gestisce `percentage_previous` cercando la **prima** occorrenza precedente (`orderBy: { order: 'asc' }`). Se la riga precedente è anch'essa `percentage_previous`, il calcolo è ricorsivo. Tuttavia:
+~~La funzione `calculateEffectiveWeight` in `03_backend_api.md` gestiva `percentage_previous` cercando la **prima** occorrenza precedente (`orderBy: { order: 'asc' }`). Questo significava che **tutte** le righe `percentage_previous` si riferivano alla **stessa riga base** (la prima), non alla riga immediatamente precedente.~~
 
-- Il test in `07_testing_strategy.md` (riga "handles recursive percentage_previous (chain)") mostra che riga 3 fa riferimento a **riga 1** (non riga 2), perché la query cerca la prima occorrenza con `order ASC`
-- Questo significa che **tutte** le righe `percentage_previous` si riferiscono alla **stessa riga base** (la prima), non alla riga immediatamente precedente
-- **Potenziale confusione**: Il trainer potrebbe aspettarsi che riga 3 sia relativa a riga 2 (catena), non a riga 1 (stella)
-- **Raccomandazione**: Chiarire esplicitamente nella documentazione e nella UI quale comportamento è atteso. Se il pattern voluto è "sempre relativo alla prima occorrenza", non serve ricorsione. Se è "relativo all'occorrenza immediatamente precedente", cambiare `orderBy` a `desc` e prendere `findFirst`
+- **Soluzione**: Modificato `orderBy` da `'asc'` a `'desc'` per prendere la riga **immediatamente precedente**. Ora le catene funzionano correttamente: 100kg → -5% (95kg) → -10% (85.5kg). Aggiunta documentazione esplicita nel codice e aggiornati test unitari per riflettere il comportamento corretto
+- **Comportamento**: `percentage_previous` si attiva SOLO se nello stesso workout c'è già lo stesso esercizio. Ogni riga con `-x%` calcola il peso sulla base della riga immediatamente precedente, permettendo catene progressive
 
-**c) Cron job per transizione `active → completed`**
+**c) Cron job per transizione `active → completed`** ✅ **RISOLTO**
 
 La transizione automatica delle schede da `active` a `completed` è documentata come "job schedulato (cron daily)". Su Vercel serverless non esiste un cron nativo persistente.
 
-- **Opzioni**: (1) Vercel Cron Jobs (supportato in Vercel Pro, configurabile in `vercel.json`), (2) Supabase pg_cron extension, (3) Check lazy ad ogni request API `/api/trainee/programs/current`
-- **Raccomandazione**: Specificare l'implementazione scelta. La soluzione più pragmatica per MVP è un **lazy check** (verificare endDate ad ogni accesso trainee alla dashboard) combinato con un Vercel Cron Job giornaliero per consistenza
+- **Soluzione implementativa specificata**: 
+  1. Vercel Cron Jobs (configurabile in `vercel.json` per piano Pro)
+  2. Lazy check ad ogni request `/api/trainee/programs/current` (fallback per MVP)
+  3. Aggiunta modalità **manuale**: `PATCH /api/programs/[id]/complete` permette al trainer di completare anticipatamente (con tracking motivazione)
+- **DUE modalità completamento**: Automatica (cron al termine endDate) + Manuale (trainer marca scheda come completata)
 
-**d) `POST /api/programs/[id]/submit` — invio feedback settimanale**
+**d) `POST /api/programs/[id]/submit` — invio feedback settimanale** ✅ **RISOLTO**
 
-L'endpoint è documentato in `03_backend_api.md` ma non è chiaro come si relaziona al workflow di feedback:
+~~L'endpoint è documentato in `03_backend_api.md` ma non è chiaro come si relaziona al workflow di feedback:
 - I feedback vengono salvati individualmente con `POST /api/feedback`
 - Poi c'è un "submit" esplicito per settimana con `POST /api/programs/[id]/submit`
-- Non è specificato se i feedback individuali sono "bozze" fino al submit o se sono visibili al trainer immediatamente
+- Non è specificato se i feedback individuali sono "bozze" fino al submit o se sono visibili al trainer immediatamente~~
 
-- **Raccomandazione**: Chiarire se il trainer vede i feedback in real-time (appena il trainee li compila) o solo dopo il "submit" esplicito. Per UX palestra, la prima opzione è più naturale
+- **Soluzione**: Il trainer vede i feedback in **real-time** (appena il trainee li compila con `POST /api/feedback`)
+- `POST /api/programs/[id]/submit` serve solo per:
+  - Validazione completezza feedback settimanali (se `Week.feedbackRequested=true`)
+  - Notifica esplicita al trainer di "settimana completata"
+  - Timestamp formale di invio per tracking
+- **Comportamento**: Dashboard trainer mostra feedback in tempo reale, submit è evento formale (non blocco visibilità)
 
 ### 4.2 Osservazioni architetturali (non criticità)
 

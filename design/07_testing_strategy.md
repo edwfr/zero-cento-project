@@ -331,14 +331,18 @@ describe('calculateEffectiveWeight', () => {
       order: 3
     }
     
-    // Mock per riga 3 trova riga 1 (prima occorrenza)
+    // Mock per chiamate ricorsive:
+    // Quando calcola row3, trova row2 (immediatamente precedente)
+    // Quando calcola row2 (ricorsione), trova row1 (immediatamente precedente)
     vi.mocked(prisma.workoutExercise.findFirst)
-      .mockResolvedValueOnce(row1)  // Prima chiamata per row3
+      .mockResolvedValueOnce(row2)  // row3 trova row2 (orderBy desc)
+      .mockResolvedValueOnce(row1)  // row2 trova row1 (ricorsione, orderBy desc)
     
     const result = await calculateEffectiveWeight(row3, mockTraineeId)
-    // row3 fa riferimento a row1 (non row2!)
-    // 100kg - 10% = 90kg
-    expect(result).toBe(90)
+    // row3 fa riferimento a row2 (non row1!)
+    // row2 = 100kg - 5% = 95kg
+    // row3 = 95kg - 10% = 85.5kg
+    expect(result).toBe(85.5)
   })
 })
 

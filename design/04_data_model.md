@@ -170,6 +170,8 @@ erDiagram
         int workoutsPerWeek
         enum status "draft|active|completed"
         datetime publishedAt
+        datetime completedAt "quando passa a completed"
+        string completionReason "motivo se complete manuale"
         datetime createdAt
         datetime updatedAt
     }
@@ -351,10 +353,14 @@ TrainingProgram
   --    - PUT/DELETE su scheda active/completed → 403 Forbidden
   --    - Se trainer vuole modifiche, deve creare nuova scheda da zero
   -- 4. startDate usato per calcolare date settimane successive e reportistica
-  -- 5. Transizione active → completed: AUTOMATICA dopo endDate (startDate + durationWeeks * 7 giorni)
-  --    - La scheda passa a 'completed' automaticamente al termine dell'ultima settimana
-  --    - I feedback richiesti (Week.feedbackRequested=true) vanno inviati quando richiesti dal trainer
-  --    - Il trainee può inviare esplicitamente i feedback durante il programma
+  -- 5. Transizione active → completed: DUE modalità
+  --    a) AUTOMATICA: Job schedulato (cron daily) verifica endDate (startDate + durationWeeks * 7) e aggiorna status=completed
+  --       - completedAt = NOW(), completionReason = null (completamento naturale)
+  --    b) MANUALE: Trainer chiama PATCH /api/programs/[id]/complete
+  --       - completedAt = NOW(), completionReason = motivazione fornita dal trainer
+  --       - Use case: trainee termina anticipatamente, cambio programmazione, infortunio
+  --    - La scheda passa a 'completed' automaticamente al termine dell'ultima settimana OPPURE quando trainer la marca
+  --    - Una volta 'completed', il trainee NON può più fornire feedback (UI sola lettura)
   --    - Se ci sono feedback pendenti all'ultima settimana, la scheda passa comunque a 'completed'
   --    - Job schedulato o check API verifica endDate e aggiorna status automaticamente
 
@@ -1473,7 +1479,10 @@ Summary configurazione:
 - Se trainer vuole modifiche a scheda pubblicata, deve creare nuova scheda da zero
 - Trainee vede solo schede `status=active` assegnate a lui
 - Reportistica usa `Week.startDate` + `ExerciseFeedback.date` per correlazione temporale
-- **Transizione active → completed**: Job schedulato (es. cron daily) o check API verifica `endDate = startDate + (durationWeeks * 7)` e aggiorna `status=completed` automaticamente
+- **Transizione active → completed**: DUE modalità:
+  1. **AUTOMATICA**: Job schedulato (es. cron daily) verifica `endDate = startDate + (durationWeeks * 7)` e aggiorna `status=completed` automaticamente. Setta `completedAt=NOW()`, `completionReason=null`
+  2. **MANUALE**: Trainer chiama `PATCH /api/programs/[id]/complete` con motivazione opzionale. Setta `completedAt=NOW()`, `completionReason=motivo fornito`
+  - Use case manuale: trainee termina anticipatamente, cambio programmazione, infortunio
 
 ### Reportistica SBD
 La reportistica FRQ/NBL/IM è calcolata solo per esercizi con `type=fundamental` (Squat, Bench Press, Deadlift) su un periodo di X settimane specificato dall'utente.
