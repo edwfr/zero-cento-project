@@ -208,7 +208,7 @@ Now I have complete context across all 11 design documents. Here is the structur
 | A3  | **Sostituire MUI con shadcn/ui**                                                        | Elimina conflitto Tailwind/Emotion, riduce bundle, stack più coerente | Alto (ma vantaggioso long-term) | 🔄 Da valutare (ODR-18)      |
 | A4  | **Aggiungere pagination** su tutti gli endpoint GET list                                | Scalabilità, performance prevedibile                                  | Basso                           | 🔄 Da valutare (ODR-10)      |
 | A5  | **Definire un health check** `GET /api/health` (DB ping + Supabase Auth check)          | Monitoring, uptime alerting                                           | Basso                           | 🔄 Da valutare (ODR-14)      |
-| A6  | **Rimuovere `initialPassword` dal DB**                                                  | Riduzione superficie di attacco, principio di least privilege         | Basso                           | 🔄 Da valutare (ODR-04)      |
+| A6  | **Rimuovere `initialPassword` dal DB**                                                  | Riduzione superficie di attacco, principio di least privilege         | Basso                           | ✅ **Implementato** (rev 23) |
 
 ### 6.2 Organizzativi (repo, documentazione)
 

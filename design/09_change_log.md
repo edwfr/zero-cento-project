@@ -4,6 +4,29 @@
 
 ---
 
+## 2026-03-28 (rev 23)
+- **Azione**: Rimozione campo `User.initialPassword` per migliorare la sicurezza.
+- **Decisione**: Eliminato il campo `initialPassword` dal modello `User`. Le password temporanee NON vengono più salvate nel database.
+- **Rationale**:
+  - Anche se encrypted, salvare password temporanee nel DB rappresenta una vulnerabilità: se la chiave di encryption viene compromessa, tutte le password non ancora cambiate sono esposte
+  - Il flag `mustChangePassword` gestito da Supabase auth è sufficiente per forzare il cambio password al primo login
+  - Principio di **least privilege** e **riduzione superficie di attacco**
+  - Se un trainer necessita di rigenerare la password per un trainee, può farlo creando una nuova password temporanea (non serve "ri-visualizzare" quella vecchia)
+- **Modifiche schema**:
+  - ❌ Rimosso: `User.initialPassword String?`
+  - ✅ Confermato: flag `mustChangePassword` gestito da Supabase per forzare cambio password
+- **Aggiornamenti documentazione**:
+  - 04_data_model.md: Rimosso campo `initialPassword` da schema User, aggiornate note creazione trainee
+  - 05_security_auth.md: Aggiornata sezione "Gestione Password Iniziali", rimossa logica di salvataggio password
+  - 08_open_decisions.md: **ODR-04** marcata come risolta
+- **Implicazioni implementative**:
+  - Migration Prisma: DROP column `initialPassword` da tabella User
+  - API `/api/trainer/trainees` (POST): non salvare più la password temporanea, restituirla solo nella response
+  - UX: Confermare che il trainer abbia copiato la password prima di chiudere il modal (non più recuperabile)
+- **Decisione**: **ODR-04** chiusa ✅
+
+---
+
 ## 2026-03-28 (rev 22)
 - **Azione**: Normalizzazione dati feedback con tabella SetPerformed.
 - **Decisione**: Sostituire campo JSON `ExerciseFeedback.setsPerformed` con tabella relazionale **SetPerformed** (1:N).

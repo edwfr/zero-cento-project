@@ -53,7 +53,6 @@ User
   lastName      String
   role          Enum(admin, trainer, trainee)
   isActive      Boolean         -- profilo attivo o disattivato
-  initialPassword String?       -- prima password generata dal trainer (opzionale)
   createdAt     DateTime
 
 TrainerTrainee
@@ -1216,10 +1215,12 @@ La reportistica FRQ/NBL/IM è calcolata solo per esercizi con `type=fundamental`
 
 ### Creazione Profilo da trainer
 Quando un trainer crea un nuovo profilo trainee:
-1. Il sistema genera una password temporanea
-2. La password viene salvata in `initialPassword` (opzionalmente)
-3. L'utente deve cambiarla al primo login
+1. Il sistema genera una password temporanea sicura
+2. La password viene mostrata UNA SOLA VOLTA al trainer (non salvata nel DB)
+3. L'utente deve cambiarla al primo login (flag `mustChangePassword` gestito da Supabase)
 4. Il campo `isActive` permette di disattivare temporaneamente un profilo senza cancellarlo
+
+**Nota di sicurezza**: La password temporanea NON viene salvata nel database per evitare vulnerabilità in caso di compromissione della chiave di encryption. Se necessario rigenerare la password, il trainer può farlo creando una nuova password temporanea.
 
 ## Crescita attesa del dato
 - 50 trainee × 1 scheda attiva × 12 settimane × 4 allenamenti × 6 esercizi = ~14.400 `WorkoutExercise` + ~14.400 `ExerciseFeedback` nel primo ciclo.

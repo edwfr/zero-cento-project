@@ -197,9 +197,9 @@ await supabase.auth.signOut()
 Quando un trainer crea un nuovo profilo trainee:
 1. Il sistema genera una password temporanea sicura (es. 12 caratteri, mix alfanumerico + simboli)
 2. Password visualizzata UNA SOLA VOLTA al trainer (modal non dismissable finché non copiata)
-3. Password opzionalmente salvata in campo `User.initialPassword` (encrypted at rest dal DB)
-4. Trainee deve cambiare password al primo login (flag `mustChangePassword` su User)
-5. Dopo cambio password, `initialPassword` viene cancellato e `mustChangePassword` = false
+3. Password NON salvata nel database (security best practice - ODR-04)
+4. Trainee deve cambiare password al primo login (flag `mustChangePassword` gestito da Supabase auth)
+5. Dopo cambio password, il flag `mustChangePassword` viene impostato a false
 
 **Pattern sicuro**:
 ```typescript
@@ -214,7 +214,7 @@ const { user } = await supabase.auth.admin.createUser({
   user_metadata: { mustChangePassword: true }
 })
 
-// Salva in DB
+// Salva in DB (senza password temporanea per security - ODR-04)
 await prisma.user.create({
   data: {
     id: user.id,
@@ -222,8 +222,7 @@ await prisma.user.create({
     firstName: validatedData.firstName,
     lastName: validatedData.lastName,
     role: 'trainee',
-    isActive: true,
-    initialPassword: await encrypt(tempPassword) // encrypt con key da env
+    isActive: true
   }
 })
 

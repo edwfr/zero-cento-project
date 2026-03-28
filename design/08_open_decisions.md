@@ -97,7 +97,7 @@
 
 - [ ] **ODR-03** Rate limiting in-memory inefficace su serverless → Il Map in-memory viene resettato ad ogni cold start e isolato tra istanze. Brute-force auth non è protetto. Upstash Redis free tier (10K cmd/day, €0) è disponibile. **Decisione**: Implementare Upstash Redis per rate limiting almeno su `/api/auth/*` anche in MVP.
 
-- [ ] **ODR-04** `User.initialPassword` salvata nel DB (anche encrypted) → Vulnerabilità se encryption key compromessa. La password è già in `auth.users` di Supabase, flag `mustChangePassword` è sufficiente. **Decisione**: Non salvare la password temporanea nel DB. Se serve "ri-visualizzare", generarne una nuova.
+- [x] **ODR-04** `User.initialPassword` salvata nel DB (anche encrypted) → Vulnerabilità se encryption key compromessa. La password è già in `auth.users` di Supabase, flag `mustChangePassword` è sufficiente. **Decisione**: Non salvare la password temporanea nel DB. Se serve "ri-visualizzare", generarne una nuova. **✅ Risolto il 2026-03-28**: Rimosso campo `initialPassword` dal modello User.
 
 ### Ambiguità Funzionali da Chiarire
 
@@ -193,9 +193,9 @@ Le seguenti domande emergono dalla review e richiedono chiarimento:
 **Raccomandazioni prioritarie**:
 1. ~~**ODR-01**: Risolvere conflitto auth NextAuth/Supabase in documentazione~~ ✅ **CHIUSO**
 2. ~~**ODR-02**: Normalizzare setsPerformed con tabella SetPerformed~~ ✅ **CHIUSO**
-3. **ODR-03**: Implementare Upstash Redis per rate limiting (security critico)
-3. **ODR-04**: Rimuovere `initialPassword` dal DB (security)
-4. **ODR-05** a **ODR-08**: Chiarire ambiguità funzionali (multi-trainer, versionamento, workflow schede)
-5. **ODR-10**, **ODR-12**: Pagination e idempotency (scalabilità)
-6. **ODR-14**: Health check e monitoring (operations)
-7. **ODR-21**: Creare `schema.prisma` reale (developer experience)
+3. ~~**ODR-04**: Rimuovere `initialPassword` dal DB (security)~~ ✅ **CHIUSO**
+4. **ODR-03**: Implementare Upstash Redis per rate limiting (security critico)
+5. **ODR-05** a **ODR-08**: Chiarire ambiguità funzionali (multi-trainer, versionamento, workflow schede)
+6. **ODR-10**, **ODR-12**: Pagination e idempotency (scalabilità)
+7. **ODR-14**: Health check e monitoring (operations)
+8. **ODR-21**: Creare `schema.prisma` reale (developer experience)
