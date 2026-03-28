@@ -173,14 +173,61 @@
 3. **Revisione qualità**: Admin supervisiona schede per QA metodologica
 4. **Correzione errori critici**: Admin corregge scheda per conto trainer impegnato
 
+### Workout View (Trainee)
+| Method | Path                            | Descrizione                                                   |
+| ------ | ------------------------------- | ------------------------------------------------------------- |
+| `GET`  | `/api/trainee/programs`         | Storico schede del trainee autenticato                        |
+| `GET`  | `/api/trainee/programs/current` | Scheda corrente attiva                                        |
+| `GET`  | `/api/trainee/workouts/[id]`    | Dettaglio workout con esercizi e **pesi effettivi calcolati** |
+
+**Note calcolo pesi per visualizzazione trainee**:
+- **Requisito UX**: Per ogni esercizio con `weightType` dinamico (percentage_1rm, percentage_rm, percentage_previous), la response deve includere:
+  1. **Valore impostato dal trainer** (`weight` field): es. 80, -5, 85
+  2. **Peso effettivo calcolato** (`effectiveWeight` field): es. 100.0, 95.0, 102.5
+- **Calcolo server-side obbligatorio**: Il client NON deve calcolare i pesi. Il server calcola `effectiveWeight` per ogni `WorkoutExercise` usando la funzione `calculateEffectiveWeight()` (vedi sezione Validazione sotto)
+- **Gestione errori**: Se calcolo fallisce (es. massimale 1RM mancante per `percentage_1rm`), `effectiveWeight: null` + UI trainee mostra messaggio "Massimale non registrato - contatta il tuo trainer"
+- **Performance**: Batch fetch di PersonalRecords in singola query all'inizio, caching client-side con TanStack Query (5min staleTime)
+- Vedi [docs/weight-calculation-trainee-view.md](../docs/weight-calculation-trainee-view.md) per implementazione dettagliata
+
+**Esempio response GET `/api/trainee/workouts/[id]`**:
+```json
+{
+  "id": "workout-uuid",
+  "dayLabel": "Giorno 1",
+  "exercises": [
+    {
+      "id": "we-uuid-1",
+      "exercise": { "name": "Squat", "youtubeUrl": "..." },
+      "sets": 3,
+      "reps": "5",
+      "targetRpe": 8.0,
+      "weightType": "percentage_1rm",
+      "weight": 80,
+      "effectiveWeight": 100.0,
+      "restTime": "3m",
+      "order": 1
+    },
+    {
+      "id": "we-uuid-2",
+      "exercise": { "name": "Squat", "youtubeUrl": "..." },
+      "sets": 2,
+      "reps": "8",
+      "weightType": "percentage_previous",
+      "weight": -5,
+      "effectiveWeight": 95.0,
+      "restTime": "2m",
+      "order": 2
+    }
+  ]
+}
+```
+
 ### Feedback (Trainee)
-| Method | Path                            | Descrizione                                     |
-| ------ | ------------------------------- | ----------------------------------------------- |
-| `GET`  | `/api/trainee/programs`         | Storico schede del trainee autenticato          |
-| `GET`  | `/api/trainee/programs/current` | Scheda corrente attiva                          |
-| `POST` | `/api/feedback`                 | Invia feedback su un WorkoutExercise            |
-| `PUT`  | `/api/feedback/[id]`            | Modifica feedback esistente                     |
-| `POST` | `/api/programs/[id]/submit`     | Invio esplicito feedback settimanali al trainer |
+| Method | Path                        | Descrizione                                     |
+| ------ | --------------------------- | ----------------------------------------------- |
+| `POST` | `/api/feedback`             | Invia feedback su un WorkoutExercise            |
+| `PUT`  | `/api/feedback/[id]`        | Modifica feedback esistente                     |
+| `POST` | `/api/programs/[id]/submit` | Invio esplicito feedback settimanali al trainer |
 
 **Note workflow feedback**:
 - `POST /api/feedback`: Il trainee registra feedback per un singolo `WorkoutExercise` (RPE, serie eseguite, note). Il feedback viene salvato e **immediatamente visibile al trainer** (real-time).

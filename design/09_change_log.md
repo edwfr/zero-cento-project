@@ -1,5 +1,34 @@
 # Change Log
 
+## [2026-03-28] Specifica Calcolo Pesi Server-Side per Trainee View
+
+### Modifiche
+
+**1. Creazione documento implementazione weight calculation**
+- **Contesto**: Conferma requisito design review (item 4.2b) su necessità calcolo peso effettivo server-side per visualizzazione trainee
+- **Problema**: Nel caso di pesi dinamici (percentage_1rm, percentage_rm, percentage_previous), il trainee deve vedere:
+  1. Il valore impostato dal trainer (es. "80% 1RM", "-5%")
+  2. Il peso effettivo calcolato (es. "100 kg", "95 kg")
+- **Soluzione**:
+  - Creato documento dettagliato `docs/weight-calculation-trainee-view.md` con:
+    - Specifica endpoint `GET /api/trainee/workouts/[id]` con campo `effectiveWeight` aggiunto a ogni WorkoutExercise
+    - Implementazione calcolo server-side con `calculateEffectiveWeight()` già definita in 03_backend_api.md
+    - Ottimizzazioni performance: batch fetch PersonalRecords, caching client-side TanStack Query (5min)
+    - Gestione errori: `effectiveWeight: null` se massimale mancante + UI message per trainee
+    - Test cases per validazione calcolo (absolute, percentage_1rm, percentage_previous chain)
+    - Roadmap future: pre-calculation al publish in campo `effectiveWeightSnapshot` (fase 2)
+- **File modificati**: 
+  - `design/03_backend_api.md` — Aggiunta sezione "Workout View (Trainee)" con specifica `GET /api/trainee/workouts/[id]` e esempio response JSON con `effectiveWeight`
+  - `docs/weight-calculation-trainee-view.md` — NUOVO file con implementazione completa
+- **Impatto**: Chiarezza implementativa per backend team, risolve item design review 4.2b, specifica UX trainee per visualizzazione pesi dinamici
+- **Priority**: HIGH (blocker per trainee workout view MVP)
+
+### Riepilogo File Modificati
+- `design/03_backend_api.md` — Nuova tabella endpoint "Workout View (Trainee)", specifica calcolo pesi server-side
+- `docs/weight-calculation-trainee-view.md` — Documento implementazione completo (NUOVO)
+
+---
+
 ## [2026-03-28] Risoluzione Criticità Design Review v2
 
 ### Modifiche
