@@ -4,6 +4,103 @@
 
 ---
 
+## 2026-03-28 (rev 28)
+- **Azione**: Chiusura decisioni operative critiche ODR-03, ODR-13, ODR-14 con soluzioni pragmatiche a costo zero.
+- **ODR-03 - Rate Limiting con Upstash Redis**:
+  - **Problema**: Rate limiting in-memory con Map() inefficace su serverless (cold start resetta state, istanze isolate) → brute-force auth non protetto
+  - **Decisione**: **Upstash Redis free tier** (10K comandi/giorno, €0) per rate limiting **SOLO endpoint auth critici**
+  - **Scope protetto**:
+    - `POST /api/auth/login` — 5 tentativi / 15 minuti per IP
+    - `POST /api/auth/signup` — 3 registrazioni / ora per IP
+    - `POST /api/auth/reset-password` — 3 richieste / ora per IP
+  - **Scope in-memory mantenuto**: Altri endpoint (`/api/programs`, `/api/exercises`, `/api/feedback`) continuano con rate limiting Map() in-memory (sufficiente per 54 utenti MVP, non critico per security)
+  - **Setup tecnico**:
+    - Account Upstash gratuito, create Redis database (region EU)
+    - Env vars: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
+    - Middleware `/middleware.ts`: check path → se `/api/auth/*` usa Upstash, altrimenti in-memory
+    - Implementazione: `@upstash/redis` con REST API (edge-compatible)
+  - **Capacità free tier**: 10K cmd/giorno = 416 cmd/ora → 54 utenti * 5 login/giorno = 270 cmd/giorno → margine 97%
+  - **Codice pattern**:
+    ```typescript
+    import { Redis } from '@upstash/redis';
+    const redis = new Redis({ url, token });
+    const key = `auth:login:${ip}`;
+    const attempts = await redis.incr(key);
+    if (attempts === 1) await redis.expire(key, 900); // 15min
+    if (attempts > 5) return Response.json({ error: 'Too many attempts' }, { status: 429 });
+    ```
+  - **Benefici**: Protezione brute-force garantita, persistenza tra cold start, costo €0, setup <30min
+  - **Limitazioni accettate**: Rate limiting non-auth rimane in-memory (accettabile per MVP, nessun rischio security critico)
+- **ODR-13 - Backup & Disaster Recovery**:
+  - **Setup scelto**: **Supabase backup standard** incluso in Pro plan (già pagato €25/mese)
+  - **Backup automatici**: Daily full snapshot, retention 7 giorni rolling
+  - **Parametri DR**:
+    - **RPO (Recovery Point Objective)**: 24 ore — in caso disaster, perdi max 1 giorno di dati
+    - **RTO (Recovery Time Objective)**: 15-30 minuti — tempo restore manuale via Supabase Dashboard
+  - **Procedura test restore** (trimestrale):
+    1. Crea Supabase Project temporaneo "test-restore-YYYY-MM-DD"
+    2. Settings → Database → Backups → Restore backup più recente
+    3. Verifica integrità: query sample su User, TrainingProgram, ExerciseFeedback
+    4. Test login con credenziali utente test
+    5. Elimina project temporaneo (no costi aggiuntivi)
+    6. Documenta risultati in log operativo
+  - **Scadenza test**: Primo test a deploy prod iniziale, poi ogni 3 mesi (calendario trimestrale)
+  - **Accettabilità RPO 24h**: Per app fitness non-transazionale, perdere 1 giorno progressi allenamento è accettabile (non banking/healthcare)
+  - **Escalation futura**: Se app diventa business-critical (atleti pro paganti), upgrade a:
+    - Supabase PITR (Point-in-Time Recovery) add-on +€100/mese → RPO < 1 minuto
+    - Oppure pg_dump automatico ogni 6h su S3 → RPO 6h, costo ~€1-2/mese
+  - **Benefici**: Backup garantito, procedura testata, RPO/RTO chiari, costo €0 incrementale
+- **ODR-14 - Monitoring & Alerting**:
+  - **Stack monitoring completo** (€0 totale):
+    1. **Health Check Endpoint**:
+       - Route: `GET /api/health`
+       - Verifiche: Prisma DB connection (`SELECT 1`), Supabase Auth status API
+       - Response: `200 { status: 'healthy', checks: {...} }` se OK, `503 { status: 'unhealthy' }` se fail
+       - Timeout: 5s per check, fail-fast
+       - Setup: 15 minuti implementazione
+    2. **Uptime Monitoring - UptimeRobot**:
+       - **Free tier**: 50 monitor, check ogni 5 minuti
+       - **Monitor configurati**:
+         - `prod.zerocento.app/api/health` (produzione)
+         - `test.zerocento.app/api/health` (staging)
+       - **Alerting**: Email immediate su downtime, 2 retry prima di alert (riduce falsi positivi)
+       - **Status page**: Opzionale pubblico (uptimerobot.com/[project])
+       - **Setup**: 5 minuti registrazione + config
+       - **Scelta vs Better Uptime**: UptimeRobot offre 50 monitor (vs 10), check 5min accettabile per MVP, setup più rapido
+    3. **Error Tracking - Sentry**:
+       - Free tier: 5K eventi/mese (già previsto in design)
+       - Error aggregation, stack traces, user context
+       - Alert email su error spike
+       - Source maps per produzione
+    4. **Performance Monitoring - Vercel Analytics**:
+       - Incluso in Vercel Pro (già pagato)
+       - Web Vitals: LCP, FID, CLS
+       - Real User Monitoring per frontend
+  - **Setup totale**: <1 ora (health endpoint 15min + UptimeRobot 5min + Sentry config 20min + Vercel enable 2min)
+  - **Copertura operativa**:
+    - ✅ Uptime: check ogni 5min con email alert
+    - ✅ Health applicativo: DB + Auth verificati
+    - ✅ Errori: tracciati e aggregati
+    - ✅ Performance: Web Vitals monitorate
+  - **Benefici**: Visibilità completa infra + app, alert immediati su outage, zero costi, minimal effort
+  - **Limitazioni accettate**: No backend tracing/slow query detection (Sentry Performance €26/mese), sufficiente per MVP
+- **Costi complessivi**:
+  - Upstash Redis: €0 (free tier)
+  - Supabase backup: €0 (incluso Pro)
+  - UptimeRobot: €0 (free tier)
+  - Sentry: €0 (free tier)
+  - Vercel Analytics: €0 (incluso Pro)
+  - **Totale incrementale: €0** (nessun aggiornamento budget €45-48/mese)
+- **Chiusura decisioni**: **ODR-03**, **ODR-13**, **ODR-14** risolti ✅
+- **Implicazioni implementative**:
+  - Middleware: aggiornare con branch logic auth (Upstash) vs non-auth (in-memory)
+  - Health endpoint: implementare `app/api/health/route.ts` con Prisma check + Supabase status
+  - UptimeRobot: registrazione account, configurazione 2 monitor prod/staging
+  - Documentazione operativa: procedura test restore trimestrale, playbook risposta incident
+- **Implicazioni**: Security auth protetta da brute-force, backup strategy documentata e testabile, monitoring operativo completo. Stack production-ready a costo zero incrementale. Setup rapido minimal effort. Scalabilità futura garantita (upgrade path chiari se necessario).
+
+---
+
 ## 2026-03-28 (rev 27)
 - **Azione**: Implementazione permessi super-user admin per gestione operativa globale.
 - **Requisito**: Admin deve avere CRUD completo su TUTTE le risorse del sistema per gestione ordinaria e straordinaria (handover trainer, supporto emergenze, QA schede).

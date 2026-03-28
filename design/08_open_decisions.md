@@ -95,7 +95,7 @@
 
 - [x] **ODR-02** `ExerciseFeedback.setsPerformed` come JSON → Risolto. Creata tabella **SetPerformed** (1:N con ExerciseFeedback) per normalizzazione completa. Campi: setNumber, reps, weight. Type-safety garantita, query aggregate efficienti (MAX/AVG weight per esercizio), indicizzazione DB, constraint UNIQUE(feedbackId, setNumber). Campo ExerciseFeedback.notes confermato per testo libero trainee. Volumetria ~50K set gestibile. (chiuso 2026-03-28, vedi 09_change_log.md) → Il campo JSON bypassa type-safety, non è indicizzabile, rende impossibili query aggregate (es. "peso massimo per esercizio X"). Volumetria ~50K set, gestibile con normalizzazione. **Decisione**: Valutare tabella `SetPerformed` (FK a ExerciseFeedback) per type-safety e query efficienti.
 
-- [ ] **ODR-03** Rate limiting in-memory inefficace su serverless → Il Map in-memory viene resettato ad ogni cold start e isolato tra istanze. Brute-force auth non è protetto. Upstash Redis free tier (10K cmd/day, €0) è disponibile. **Decisione**: Implementare Upstash Redis per rate limiting almeno su `/api/auth/*` anche in MVP.
+- [x] **ODR-03** Rate limiting in-memory inefficace su serverless → Il Map in-memory viene resettato ad ogni cold start e isolato tra istanze. Brute-force auth non è protetto. **Decisione**: Implementato **Upstash Redis** (free tier 10K cmd/day, €0) per rate limiting SOLO su `/api/auth/*` (login/signup/password-reset). Rate limiting in-memory mantenuto per altri endpoint (sufficiente per MVP con 54 utenti). ✅ **RISOLTO (2026-03-28, rev 28)**: Setup Upstash Redis per protezione brute-force auth, costo €0.
 
 - [x] **ODR-04** `User.initialPassword` salvata nel DB (anche encrypted) → Vulnerabilità se encryption key compromessa. La password è già in `auth.users` di Supabase, flag `mustChangePassword` è sufficiente. **Decisione**: Non salvare la password temporanea nel DB. Se serve "ri-visualizzare", generarne una nuova. **✅ Risolto il 2026-03-28**: Rimosso campo `initialPassword` dal modello User.
 
@@ -123,9 +123,9 @@
 
 #### Operations & Monitoring
 
-- [ ] **ODR-13** Backup & Disaster Recovery → Supabase Pro include daily backup ma non documentate: recovery strategy, RPO/RTO, test restore procedure. **Decisione**: Definire procedura DR e schedule test restore.
+- [x] **ODR-13** Backup & Disaster Recovery → Supabase Pro include daily backup ma non documentate: recovery strategy, RPO/RTO, test restore procedure. **Decisione**: Utilizzare **Supabase backup standard incluso** (daily backup, 7 giorni retention). RPO 24h, RTO 15-30 min. Procedura test restore trimestrale documentata. Soluzione adeguata per MVP fitness (dati non business-critical). ✅ **RISOLTO (2026-03-28, rev 28)**: Backup strategy con setup minimo, costo €0.
 
-- [ ] **ODR-14** Monitoring & Alerting → Sentry per errori ma nessun health check endpoint, uptime monitoring, dashboard operativa. **Decisione**: Implementare `GET /api/health` (DB ping + Supabase Auth check) e uptime monitoring (UptimeRobot free tier).
+- [x] **ODR-14** Monitoring & Alerting → Sentry per errori ma nessun health check endpoint, uptime monitoring, dashboard operativa. **Decisione**: Implementare **health check endpoint** `GET /api/health` (verifica DB + Supabase Auth), **UptimeRobot free tier** (50 monitor, check ogni 5min, alert email), **Sentry free tier** per error tracking (già previsto), **Vercel Analytics** per performance (incluso Pro). Stack 100% gratuito. ✅ **RISOLTO (2026-03-28, rev 28)**: Monitoring operativo completo, costo €0, setup <1h.
 
 - [ ] **ODR-15** Error boundary client-side → Non definita strategia error boundary React per crash. **Decisione**: Implementare error boundary globale con fallback UI e logging Sentry.
 

@@ -460,10 +460,14 @@ export function apiError(code: string, message: string, status: number, details?
 
 **Obiettivo**: Proteggere il backend da abusi, brute-force attacks, e sovraccarico involontario (es. double-click su bottoni).
 
-**Strategia MVP**: Middleware Next.js custom con **store in-memory**
-- ✅ **Pro**: Zero dipendenze esterne, setup immediato, sufficiente per scala MVP (54 utenti)
-- ⚠️ **Limiti**: State volatile (reset ad ogni deploy), non condiviso tra istanze serverless (ok per Vercel single-region)
-- 🚀 **Evoluzione production**: Upstash Redis (serverless-friendly, persistent, multi-region)
+**Strategia MVP** — **Approccio ibrido**:
+- 🔐 **Endpoint auth (`/api/auth/*`)**: **Upstash Redis** (free tier 10K cmd/giorno, €0)
+  - ✅ Persistenza tra cold start e istanze
+  - ✅ Protezione brute-force garantita
+  - ✅ Serverless-friendly, edge-compatible
+- 📊 **Altri endpoint**: **Store in-memory** (Map in middleware)
+  - ✅ Zero costi, sufficiente per 54 utenti
+  - ⚠️ State volatile ma accettabile per non-auth endpoints
 
 **Limiti definiti per endpoint**:
 
@@ -476,22 +480,34 @@ export function apiError(code: string, message: string, status: number, details?
 | API generiche (autenticate) | 100 richieste / minuto  | Uso normale applicazione                           |
 | API generiche (pubbliche)   | 20 richieste / minuto   | Limita abuso su endpoint non autenticati           |
 
-**Implementazione**:
+**Implementazione** (approccio ibrido):
 ```typescript
 // middleware.ts
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { Redis } from '@upstash/redis'
 
-// In-memory store (volatile, reset ad ogni deploy)
+// Upstash Redis per auth endpoints (persistent, multi-instance)
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!
+})
+
+// In-memory store per altri endpoint (volatile ma sufficiente)
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>()
 
-function getRateLimitKey(req: NextRequest, endpoint: string): string {
-  const ip = req.ip || req.headers.get('x-forwarded-for') || 'unknown'
-  const userId = req.cookies.get('userId')?.value // se autenticato
-  return userId ? `user:${userId}:${endpoint}` : `ip:${ip}:${endpoint}`
+async function checkAuthRateLimit(ip: string, endpoint: string, limit: number, windowSec: number): Promise<boolean> {
+  const key = `ratelimit:auth:${endpoint}:${ip}`
+  const attempts = await redis.incr(key)
+  
+  if (attempts === 1) {
+    await redis.expire(key, windowSec) // TTL automatico
+  }
+  
+  return attempts <= limit
 }
 
-function checkRateLimit(key: string, limit: number, windowMs: number): boolean {
+function checkInMemoryRateLimit(key: string, limit: number, windowMs: number): boolean {
   const now = Date.now()
   const record = rateLimitStore.get(key)
   
@@ -500,21 +516,20 @@ function checkRateLimit(key: string, limit: number, windowMs: number): boolean {
     return true
   }
   
-  if (record.count >= limit) {
-    return false // limite superato
-  }
+  if (record.count >= limit) return false
   
   record.count++
   return true
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown'
   
-  // Rate limit su auth
+  // Rate limit AUTH con Upstash Redis (persistent)
   if (pathname.startsWith('/api/auth/login')) {
-    const key = getRateLimitKey(request, 'auth:login')
-    if (!checkRateLimit(key, 5, 15 * 60 * 1000)) { // 5 tentativi / 15min
+    const allowed = await checkAuthRateLimit(ip, 'login', 5, 900) // 5 tentativi / 15min
+    if (!allowed) {
       return NextResponse.json(
         { error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Troppi tentativi. Riprova tra 15 minuti.' } },
         { status: 429 }
@@ -522,10 +537,21 @@ export function middleware(request: NextRequest) {
     }
   }
   
-  // Rate limit su feedback
+  if (pathname.startsWith('/api/auth/signup')) {
+    const allowed = await checkAuthRateLimit(ip, 'signup', 3, 3600) // 3 reg / 1h
+    if (!allowed) {
+      return NextResponse.json(
+        { error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Troppe registrazioni. Riprova tra 1 ora.' } },
+        { status: 429 }
+      )
+    }
+  }
+  
+  // Rate limit ALTRI endpoint con in-memory (volatile ma OK)
   if (pathname.startsWith('/api/feedback')) {
-    const key = getRateLimitKey(request, 'feedback')
-    if (!checkRateLimit(key, 30, 60 * 1000)) { // 30 req / 1min
+    const userId = request.cookies.get('userId')?.value || ip
+    const key = `feedback:${userId}`
+    if (!checkInMemoryRateLimit(key, 30, 60 * 1000)) { // 30 req / 1min
       return NextResponse.json(
         { error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Troppi feedback inviati. Attendi 1 minuto.' } },
         { status: 429 }
@@ -533,10 +559,11 @@ export function middleware(request: NextRequest) {
     }
   }
   
-  // Rate limit generico autenticato
+  // Rate limit generico autenticato (in-memory OK)
   if (pathname.startsWith('/api/') && request.cookies.has('userId')) {
-    const key = getRateLimitKey(request, 'api:authenticated')
-    if (!checkRateLimit(key, 100, 60 * 1000)) { // 100 req / 1min
+    const userId = request.cookies.get('userId')!.value
+    const key = `api:authenticated:${userId}`
+    if (!checkInMemoryRateLimit(key, 100, 60 * 1000)) { // 100 req / 1min
       return NextResponse.json(
         { error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Limite richieste superato. Attendi 1 minuto.' } },
         { status: 429 }
@@ -550,6 +577,25 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: '/api/:path*'
 }
+```
+
+**Setup Upstash Redis** (auth endpoints):
+1. Crea account gratuito su [upstash.com](https://upstash.com)
+2. Create Redis Database → seleziona regione **EU (Ireland o Frankfurt)** per GDPR
+3. Copia credenziali REST API (non Classic Redis)
+4. Aggiungi a Vercel Environment Variables:
+   - `UPSTASH_REDIS_REST_URL`
+   - `UPSTASH_REDIS_REST_TOKEN`
+5. Installa package: `npm install @upstash/redis`
+
+**Capacità free tier Upstash**:
+- 10.000 comandi/giorno = 416 comandi/ora
+- 54 utenti × 5 login/giorno = 270 comandi auth/giorno
+- **Margine: 97%** (ampiamente sufficiente)
+
+**Evoluzione futura** (se scala cresce):
+- Upstash Pro €10/mese per 100K cmd/giorno
+- Oppure estendi in-memory endpoints a Redis se necessario
 ```
 
 **Gestione frontend**:
@@ -568,30 +614,7 @@ export async function apiCall(endpoint: string, options?: RequestInit) {
 }
 ```
 
-**Evoluzione post-MVP** (se traffico cresce):
-```typescript
-// Rate limiting con Upstash Redis
-import { Ratelimit } from '@upstash/ratelimit'
-import { Redis } from '@upstash/redis'
-
-const redis = Redis.fromEnv()
-const ratelimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(5, '15 m'), // 5 req ogni 15 minuti
-  analytics: true
-})
-
-export async function POST(request: Request) {
-  const ip = request.headers.get('x-forwarded-for') || 'unknown'
-  const { success } = await ratelimit.limit(ip)
-  
-  if (!success) {
-    return apiError('RATE_LIMIT_EXCEEDED', 'Too many requests', 429)
-  }
-  
-  // ... logica endpoint
-}
-```
+---
 
 ## Logging Strutturato
 
