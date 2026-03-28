@@ -117,8 +117,12 @@ describe('feedbackSchema', () => {
       workoutExerciseId: '123e4567-e89b-12d3-a456-426614174000',
       completed: true,
       actualRpe: 8.5,
-      setsPerformed: [{ reps: 10, weight: 100 }, { reps: 9, weight: 100 }],
-      notes: 'Buon allenamento'
+      sets: [
+        { setNumber: 1, reps: 10, weight: 100 },
+        { setNumber: 2, reps: 9, weight: 100 },
+        { setNumber: 3, reps: 8, weight: 100 }
+      ],
+      notes: 'Buon allenamento, leggera fatica alla terza serie'
     }
     expect(() => feedbackSchema.parse(valid)).not.toThrow()
   })
@@ -130,6 +134,24 @@ describe('feedbackSchema', () => {
   
   it('rejects RPE with invalid increment', () => {
     const invalid = { actualRpe: 8.3 } // Deve essere multiplo di 0.5
+    expect(() => feedbackSchema.parse(invalid)).toThrow()
+  })
+  
+  it('validates sets array with setNumber, reps, weight', () => {
+    const valid = {
+      workoutExerciseId: '123e4567-e89b-12d3-a456-426614174000',
+      completed: true,
+      sets: [{ setNumber: 1, reps: 8, weight: 80 }]
+    }
+    expect(() => feedbackSchema.parse(valid)).not.toThrow()
+  })
+  
+  it('rejects sets array without required fields', () => {
+    const invalid = {
+      workoutExerciseId: '123e4567-e89b-12d3-a456-426614174000',
+      completed: true,
+      sets: [{ reps: 8 }] // manca setNumber e weight
+    }
     expect(() => feedbackSchema.parse(invalid)).toThrow()
   })
 })
@@ -266,12 +288,14 @@ test.describe('Trainee feedback flow', () => {
     // Verifica success message
     await expect(page.locator('[data-testid="feedback-success"]')).toBeVisible()
     
-    // Verifica feedback salvato in DB (chiamata API)
+    // Verifica feedback salvato in DB con serie normalizzate
     const response = await page.request.get('/api/feedback?workoutExerciseId=...')
     expect(response.ok()).toBeTruthy()
     const data = await response.json()
     expect(data.data.actualRpe).toBe(8.5)
-    expect(data.data.setsPerformed).toHaveLength(3)
+    // Verifica serie normalizzate in tabella SetPerformed (3 serie)
+    expect(data.data.sets).toHaveLength(3)
+    expect(data.data.sets[0]).toMatchObject({ setNumber: 1, reps: expect.any(Number), weight: expect.any(Number) })
   })
 })
 ```

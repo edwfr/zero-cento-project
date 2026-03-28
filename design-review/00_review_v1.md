@@ -118,14 +118,14 @@ Now I have complete context across all 11 design documents. Here is the structur
 
 ### 4.1 Criticità architetturali
 
-**a) Conflitto NextAuth vs Supabase Auth**
-- In 03_backend_api.md l'endpoint auth è `POST /api/auth/[...nextauth]` (pattern NextAuth.js), ma l'intera sezione sicurezza e il codice di esempio usano **Supabase Auth** (`supabase.auth.signInWithPassword`, Supabase JWT, etc.)
-- Questi sono due provider di autenticazione **alternativi**, non possono coesistere facilmente
-- **Raccomandazione**: Allineare la documentazione. Se la scelta è Supabase Auth (come sembra dal resto), rimuovere il riferimento NextAuth e definire il pattern di verifica sessione server-side via `createServerComponentClient`
+**a) Conflitto NextAuth vs Supabase Auth** ✅ **RISOLTO** (2026-03-28, rev 21)
+- ~~In 03_backend_api.md l'endpoint auth è `POST /api/auth/[...nextauth]` (pattern NextAuth.js), ma l'intera sezione sicurezza e il codice di esempio usano **Supabase Auth** (`supabase.auth.signInWithPassword`, Supabase JWT, etc.)~~
+- ~~Questi sono due provider di autenticazione **alternativi**, non possono coesistere facilmente~~
+- **Implementato**: Documentazione allineata, confermato Supabase Auth come provider esclusivo, rimossi riferimenti NextAuth. Vedi ODR-01 chiuso.
 
-**b) `ExerciseFeedback.setsPerformed` come JSON**
-- Il campo `setsPerformed` è definito come `Json` (array di `{reps, weight}`) — questo bypassa la type-safety di Prisma, non è indicizzabile, e rende impossibili query aggregate efficienti (es. "peso massimo sollevato per esercizio X")
-- **Raccomandazione**: Valutare una tabella `SetPerformed` normalizzata (FK a ExerciseFeedback). La volumetria è contenuta (~14.400 feedback × 3-5 set = ~50.000 record, gestibilissima)
+**b) `ExerciseFeedback.setsPerformed` come JSON** ✅ **RISOLTO** (2026-03-28, rev 22)
+- ~~Il campo `setsPerformed` è definito come `Json` (array di `{reps, weight}`) — questo bypassa la type-safety di Prisma, non è indicizzabile, e rende impossibili query aggregate efficienti (es. "peso massimo sollevato per esercizio X")~~
+- **Implementato**: Creata tabella `SetPerformed` normalizzata (1:N con ExerciseFeedback) con campi setNumber, reps, weight. Type-safety garantita, query aggregate efficienti, constraint UNIQUE(feedbackId, setNumber). Vedi ODR-02 chiuso.
 
 **c) Rate limiting in-memory su serverless**
 - Il rate limiter è implementato come `Map()` in-memory nel middleware. In ambiente serverless, **ogni cold start crea un nuovo Map vuoto** e ogni istanza concorrente ha il proprio Map isolato. Il rate limiting è di fatto inaffidabile
@@ -201,14 +201,14 @@ Now I have complete context across all 11 design documents. Here is the structur
 
 ### 6.1 Architetturali
 
-| #   | Proposta                                                                                | Rationale                                                             | Effort                          |
-| --- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------- |
-| A1  | **Normalizzare `setsPerformed`** in tabella `SetPerformed`                              | Query aggregate, type-safety, reporting più efficiente                | Medio                           |
-| A2  | **Aggiungere UNIQUE constraint** `(workoutExerciseId, traineeId)` su `ExerciseFeedback` | Prevenire feedback duplicati (idempotency)                            | Basso                           |
-| A3  | **Sostituire MUI con shadcn/ui**                                                        | Elimina conflitto Tailwind/Emotion, riduce bundle, stack più coerente | Alto (ma vantaggioso long-term) |
-| A4  | **Aggiungere pagination** su tutti gli endpoint GET list                                | Scalabilità, performance prevedibile                                  | Basso                           |
-| A5  | **Definire un health check** `GET /api/health` (DB ping + Supabase Auth check)          | Monitoring, uptime alerting                                           | Basso                           |
-| A6  | **Rimuovere `initialPassword` dal DB**                                                  | Riduzione superficie di attacco, principio di least privilege         | Basso                           |
+| #   | Proposta                                                                                | Rationale                                                             | Effort                          | Status                      |
+| --- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------- | --------------------------- |
+| A1  | **Normalizzare `setsPerformed`** in tabella `SetPerformed`                              | Query aggregate, type-safety, reporting più efficiente                | Medio                           | ✅ **Implementato** (rev 22) |
+| A2  | **Aggiungere UNIQUE constraint** `(workoutExerciseId, traineeId)` su `ExerciseFeedback` | Prevenire feedback duplicati (idempotency)                            | Basso                           | 🔄 Da valutare (ODR-12)      |
+| A3  | **Sostituire MUI con shadcn/ui**                                                        | Elimina conflitto Tailwind/Emotion, riduce bundle, stack più coerente | Alto (ma vantaggioso long-term) | 🔄 Da valutare (ODR-18)      |
+| A4  | **Aggiungere pagination** su tutti gli endpoint GET list                                | Scalabilità, performance prevedibile                                  | Basso                           | 🔄 Da valutare (ODR-10)      |
+| A5  | **Definire un health check** `GET /api/health` (DB ping + Supabase Auth check)          | Monitoring, uptime alerting                                           | Basso                           | 🔄 Da valutare (ODR-14)      |
+| A6  | **Rimuovere `initialPassword` dal DB**                                                  | Riduzione superficie di attacco, principio di least privilege         | Basso                           | 🔄 Da valutare (ODR-04)      |
 
 ### 6.2 Organizzativi (repo, documentazione)
 

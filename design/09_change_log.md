@@ -549,7 +549,7 @@
   - **TrainingProgram**: Aggiunto `workoutsPerWeek` (n allenamenti per m settimane)
   - **Week**: Aggiunti `feedbackRequested` (marcatura settimane rilevanti) e `generalFeedback` (commento testuale settimana)
   - **WorkoutExercise**: Arricchito con `targetRpe` (Float 5.0-10.0 incrementi 0.5), `weightType` (Enum: absolute/percentage_1rm/percentage_rm), `restTime` (Enum: 30s/1m/2m/3m/5m), `isWarmup` (Boolean), supporto `reps` come intervallo (es. "6/8")
-  - **ExerciseFeedback**: Aggiunto `setsPerformed` (Json array con {reps, weight} per ogni serie), `actualRpe` (Float 5.0-10.0)
+  - **ExerciseFeedback**: Aggiunto `setsPerformed` (Json array con {reps, weight} per ogni serie), `actualRpe` (Float 5.0-10.0) — ⚠️ NOTA: Campo setsPerformed JSON successivamente normalizzato con tabella SetPerformed in rev 22 (2026-03-28) per type-safety e query aggregate
   - **User**: Separato `name` in `firstName` e `lastName`, aggiunti `isActive` (profilo attivo/disattivato) e `initialPassword` (per gestione password generate da trainer)
   - **Nuova entità PersonalRecord**: Gestione massimali (1RM o nRM) per trainee/esercizio con storico date
 - **Backend API - Nuovi endpoint**:
@@ -563,8 +563,8 @@
   - `muscleGroupSchema` (name + coefficient 0.0-1.0)
   - `exerciseSchema` arricchito con muscleGroups, type, movementPattern
   - `workoutExerciseSchema` con targetRpe Float, weightType, restTime, isWarmup
-  - `setPerformedSchema` per array serie nel feedback
-  - `feedbackSchema` con setsPerformed e actualRpe Float
+  - `setPerformedSchema` per array serie nel feedback — ⚠️ NOTA: Schema successivamente aggiornato in rev 22 con setNumber per normalizzazione DB
+  - `feedbackSchema` con setsPerformed e actualRpe Float — ⚠️ NOTA: Campo setsPerformed rinominato in `sets` in rev 22 per coerenza con tabella SetPerformed
   - `personalRecordSchema` per gestione massimali
 - **Frontend - Nuove pagine e componenti**:
   - Pagine: `/trainer/trainees/[id]/create` (crea trainee + genera password), `/trainee/records` (gestione massimali), `/trainer|trainee/reports` (reportistica)

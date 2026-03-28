@@ -969,14 +969,28 @@ Valori predefiniti disponibili nel menu a tendina: `30s`, `1m`, `2m`, `3m`, `5m`
 Le note sono selezionabili da un menu a tendina con opzioni predefinite (es. "Eseguire lentamente la fase eccentrica", "Focus sulla contrazione", "Esplosivo nella fase concentrica", ecc.).
 
 ### Feedback Trainee
-Nel campo `setsPerformed` di `ExerciseFeedback`, l'utente registra per ogni serie completata le ripetizioni effettive e il peso utilizzato:
-```json
-[
-  {"reps": 8, "weight": 80.0},
-  {"reps": 7, "weight": 80.0},
-  {"reps": 6, "weight": 80.0}
-]
+
+Il trainee registra feedback per ogni esercizio completato. I dati sono normalizzati in due tabelle:
+
+**ExerciseFeedback**: Contiene metadati generali del feedback
+- `actualRpe`: RPE percepito (5.0-10.0 con incrementi 0.5)
+- `notes`: Commento testuale libero del trainee (es. "Difficoltà alla terza serie", "Ottima sensazione")
+- `completed`: Flag completamento esercizio
+
+**SetPerformed**: Contiene dettaglio di ogni singola serie (relazione 1:N con ExerciseFeedback)
+```sql
+-- Esempio: trainee ha eseguito 3 serie di Squat
+INSERT INTO SetPerformed (feedbackId, setNumber, reps, weight) VALUES
+  ('feedback-uuid-123', 1, 8, 80.0),  -- Serie 1: 8 rip @ 80kg
+  ('feedback-uuid-123', 2, 7, 80.0),  -- Serie 2: 7 rip @ 80kg
+  ('feedback-uuid-123', 3, 6, 80.0);  -- Serie 3: 6 rip @ 80kg
 ```
+
+**Benefici normalizzazione**:
+- Type-safety: validazione DB-level (Int per reps, Float per weight)
+- Query aggregate: `SELECT MAX(weight) FROM SetPerformed WHERE ...`
+- Constraint UNIQUE: impossibile duplicare numero serie
+- Indicizzazione: performance ottimale su query peso/volume
 
 ### Seed Data Iniziale
 Al primo deploy, sistema deve creare gruppi muscolari e schemi motori di base per permettere creazione esercizi:
