@@ -145,11 +145,11 @@
 
 #### Documentazione
 
-- [ ] **ODR-21** Schema Prisma effettivo → Documentazione mostra schema logico ma nessun file `schema.prisma` reale. Gap design ↔ codice. **Decisione**: Creare e committare `prisma/schema.prisma` come single source of truth.
+- [x] **ODR-21** Schema Prisma effettivo → Risolto. File **`prisma/schema.prisma` creato e committato** come single source of truth. Schema completo con tutte le entità (14 models), relazioni, indexes, constraints. Generato da design documentato in 04_data_model.md. Include enums (Role, ExerciseType, ProgramStatus, WeekType, WeightType, RestTime), configurazione datasource con DATABASE_URL pooled e DIRECT_URL per migrations. Documentato in `design-review/00_review_v1.md` (O1 - Schema Prisma effettivo implementato rev 26). (chiuso 2026-03-28, vedi 09_change_log.md rev 26)
 
-- [ ] **ODR-22** Diagramma ER → Nessun diagramma visuale delle relazioni. **Decisione**: Aggiungere diagramma Mermaid o dbdiagram.io al 04_data_model.md.
+- [x] **ODR-22** Diagramma ER → Risolto. **Diagramma ER completo in formato Mermaid** aggiunto a `04_data_model.md`. Visualizza tutte le 14 entità, relazioni (1:1, 1:N, N:M), cardinalità, tabelle junction (ExerciseMuscleGroup, TrainerTrainee), gerarchia schede (TrainingProgram → Week → Workout → WorkoutExercise), feedback tracking (ExerciseFeedback → SetPerformed), personalizzazioni (MovementPatternColor). Diagramma include dettagli campi chiave per ogni entità. Formato Mermaid renderizzabile direttamente su GitHub/GitLab/VS Code. (chiuso 2026-03-28, vedi 09_change_log.md rev 31)
 
-- [ ] **ODR-23** Internazionalizzazione (i18n) → App chiaramente in italiano ma non esplicitato se supporto altre lingue. Se i18n post-MVP, retrofit costoso. **Decisione**: Confermare app monolingua o prevedere i18n da subito.
+- [x] **ODR-23** Internazionalizzazione (i18n) → Risolto. **Supporto italiano + inglese** implementato via **i18next/next-i18next** per Next.js App Router. Struttura file-based translations (`/public/locales/it` e `/en`), URL-based routing (`/it/dashboard`, `/en/dashboard`), server-side + client-side support, persistence lingua in cookie + localStorage, fallback italiano. Strategia completa documentata in `docs/i18n-strategy.md` con configurazione, esempi codice, gestione email templates. Documentato in `design-review/00_review_v1.md` (A8 - Implementare i18n rev 26). (chiuso 2026-03-28, vedi 09_change_log.md rev 26)
 
 ### Assunzioni da Confermare
 

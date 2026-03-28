@@ -43,6 +43,212 @@ npx prisma migrate deploy
 | `SetPerformed`         | Serie eseguita dal trainee con reps e kg (relazione 1:N con ExerciseFeedback)             |
 | `PersonalRecord`       | Massimali (1RM o nRM) gestiti per trainee ed esercizio                                    |
 
+---
+
+## Diagramma ER
+
+```mermaid
+erDiagram
+    %% ============================================================================
+    %% USERS & ASSIGNMENTS
+    %% ============================================================================
+    
+    User ||--o{ TrainerTrainee : "trainer (1:N)"
+    User ||--o| TrainerTrainee : "trainee (1:1 UNIQUE)"
+    
+    User ||--o{ MuscleGroup : "creates"
+    User ||--o{ MovementPattern : "creates"
+    User ||--o{ Exercise : "creates (audit)"
+    User ||--o{ MovementPatternColor : "customizes"
+    
+    User ||--o{ TrainingProgram : "trainer (1:N)"
+    User ||--o{ TrainingProgram : "trainee (1:N)"
+    
+    User ||--o{ ExerciseFeedback : "trainee (1:N)"
+    User ||--o{ PersonalRecord : "trainee (1:N)"
+
+    %% ============================================================================
+    %% EXERCISE LIBRARY
+    %% ============================================================================
+    
+    MovementPattern ||--o{ Exercise : "has pattern"
+    MovementPattern ||--o{ MovementPatternColor : "has colors"
+    
+    Exercise ||--o{ ExerciseMuscleGroup : "targets (M:N)"
+    MuscleGroup ||--o{ ExerciseMuscleGroup : "in exercises (M:N)"
+    
+    Exercise ||--o{ WorkoutExercise : "used in"
+    Exercise ||--o{ PersonalRecord : "has records"
+
+    %% ============================================================================
+    %% TRAINING PROGRAMS
+    %% ============================================================================
+    
+    TrainingProgram ||--|{ Week : "contains (1:N)"
+    Week ||--|{ Workout : "contains (1:N)"
+    Workout ||--|{ WorkoutExercise : "contains (1:N)"
+
+    %% ============================================================================
+    %% FEEDBACK & TRACKING
+    %% ============================================================================
+    
+    WorkoutExercise ||--o{ ExerciseFeedback : "receives (1:N)"
+    ExerciseFeedback ||--|{ SetPerformed : "has sets (1:N)"
+
+    %% ============================================================================
+    %% ENTITÀ DETAILS
+    %% ============================================================================
+
+    User {
+        uuid id PK
+        string email UK
+        string firstName
+        string lastName
+        enum role "admin|trainer|trainee"
+        boolean isActive
+        datetime createdAt
+    }
+
+    TrainerTrainee {
+        uuid id PK
+        uuid trainerId FK
+        uuid traineeId FK_UK "UNIQUE: relazione 1:1"
+        datetime createdAt
+    }
+
+    MuscleGroup {
+        uuid id PK
+        string name UK
+        string description
+        uuid createdBy FK
+        boolean isActive
+        datetime createdAt
+    }
+
+    MovementPattern {
+        uuid id PK
+        string name UK
+        string description
+        uuid createdBy FK
+        boolean isActive
+        datetime createdAt
+    }
+
+    MovementPatternColor {
+        uuid id PK
+        uuid trainerId FK
+        uuid movementPatternId FK
+        string color "hex #RRGGBB"
+    }
+
+    Exercise {
+        uuid id PK
+        string name
+        string description
+        string youtubeUrl
+        enum type "fundamental|accessory"
+        uuid movementPatternId FK
+        string-array notes
+        uuid createdBy FK "audit only"
+        datetime createdAt
+    }
+
+    ExerciseMuscleGroup {
+        uuid id PK
+        uuid exerciseId FK
+        uuid muscleGroupId FK
+        float coefficient "0.0-1.0"
+    }
+
+    TrainingProgram {
+        uuid id PK
+        string title
+        uuid trainerId FK
+        uuid traineeId FK
+        datetime startDate "null if draft"
+        int durationWeeks
+        int workoutsPerWeek
+        enum status "draft|active|completed"
+        datetime publishedAt
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    Week {
+        uuid id PK
+        uuid programId FK
+        int weekNumber
+        datetime startDate
+        enum weekType "normal|test|deload"
+        boolean feedbackRequested
+        string generalFeedback
+    }
+
+    Workout {
+        uuid id PK
+        uuid weekId FK
+        string dayLabel
+        string notes
+    }
+
+    WorkoutExercise {
+        uuid id PK
+        uuid workoutId FK
+        uuid exerciseId FK
+        int sets
+        string reps "es 8 or 8-10"
+        float targetRpe "5.0-10.0"
+        enum weightType "absolute|percentage_1rm|percentage_rm|percentage_previous"
+        float weight
+        enum restTime "s30|m1|m2|m3|m5"
+        boolean isWarmup
+        string notes
+        int order
+    }
+
+    ExerciseFeedback {
+        uuid id PK
+        uuid workoutExerciseId FK
+        uuid traineeId FK
+        datetime date
+        boolean completed
+        float actualRpe "5.0-10.0"
+        string notes
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    SetPerformed {
+        uuid id PK
+        uuid feedbackId FK
+        int setNumber "1 2 3"
+        int reps
+        float weight "kg"
+        datetime createdAt
+    }
+
+    PersonalRecord {
+        uuid id PK
+        uuid traineeId FK
+        uuid exerciseId FK
+        int reps "1 for 1RM"
+        float weight "kg"
+        datetime recordDate
+        string notes
+        datetime createdAt
+    }
+```
+
+**Note diagramma**:
+- **Relazione 1:1**: TrainerTrainee.traineeId è UNIQUE (un trainee ha un solo trainer)
+- **Relazioni many-to-many**: ExerciseMuscleGroup è tabella junction tra Exercise e MuscleGroup
+- **Gerarchia schede**: TrainingProgram → Week → Workout → WorkoutExercise (cascade delete)
+- **Feedback tracking**: WorkoutExercise → ExerciseFeedback → SetPerformed (normalizzato per type-safety)
+- **Libreria condivisa**: Exercise accessibile a tutti i trainer (createdBy solo audit trail)
+- **Personalizzazione**: MovementPatternColor permette colori custom per trainer
+
+---
+
 ## Schema (logico)
 
 ```

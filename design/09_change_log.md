@@ -4,6 +4,40 @@
 
 ---
 
+## 2026-03-28 (rev 31)
+- **Azione**: Chiusura ODR-22 con creazione diagramma ER completo per visualizzazione data model.
+- **ODR-22 - Diagramma ER**:
+  - **Problema**: Documentazione data model testuale completa ma nessuna visualizzazione grafica delle relazioni tra entità, difficile overview rapida per review design
+  - **Decisione**: Creato **diagramma ER completo in formato Mermaid** inserito in `04_data_model.md`
+  - **Contenuto diagramma**:
+    - **14 entità visualizzate**: User, TrainerTrainee, MuscleGroup, MovementPattern, MovementPatternColor, Exercise, ExerciseMuscleGroup, TrainingProgram, Week, Workout, WorkoutExercise, ExerciseFeedback, SetPerformed, PersonalRecord
+    - **Relazioni con cardinalità**: 1:1 (TrainerTrainee.traineeId UNIQUE), 1:N (User → TrainingProgram, Week → Workout), N:M (Exercise ↔ MuscleGroup via ExerciseMuscleGroup)
+    - **Gerarchia schede**: TrainingProgram → Week → Workout → WorkoutExercise (cascade delete) visualizzata chiaramente
+    - **Feedback tracking**: WorkoutExercise → ExerciseFeedback → SetPerformed (normalizzazione serie eseguite)
+    - **Dettagli campi**: Ogni entità mostra campi chiave, tipi (uuid, string, enum, datetime), constraints (PK, FK, UK), note implementative
+    - **Personalizzazioni**: MovementPatternColor per colori custom trainer, Exercise.createdBy audit-only (libreria condivisa)
+  - **Formato Mermaid**:
+    - Renderizzabile direttamente su GitHub, GitLab, VS Code (con estensioni), documentazione online
+    - Sintassi `erDiagram` con relazioni `||--o{` (one-to-many), `||--o|` (one-to-one), entità con campi dettagliati
+    - Code block markdown standard (```mermaid), versionabile Git, no dipendenze tool esterni
+  - **Posizionamento**: Inserito in `04_data_model.md` tra sezione "Entità principali" (tabella riassuntiva) e "Schema (logico)" (dettaglio testuale)
+  - **Note diagramma**: Aggiunta legenda sotto diagramma con spiegazioni relazione 1:1 trainee-trainer UNIQUE, tabelle junction M:N, gerarchia cascade, feedback normalizzato, libreria condivisa
+  - **Benefici**:
+    - ✅ **Visualizzazione rapida**: Review design relazioni a colpo d'occhio senza leggere centinaia righe testo
+    - ✅ **Onboarding sviluppatori**: Nuovi dev capiscono architettura DB in 2 minuti guardando diagramma
+    - ✅ **Verifica integrità**: Spot immediato relazioni mancanti, FK inconsistenti, cardinalità errate
+    - ✅ **Documentazione sempre aggiornata**: Mermaid in markdown, aggiornabile insieme al codice, no tool esterni che si disallineano
+    - ✅ **Comunicazione stakeholder**: Diagramma condivisibile con non-dev per review architettura dati
+  - **Manutenzione**: Se schema Prisma cambia (aggiunte entità, nuove relazioni), diagramma Mermaid va aggiornato manualmente in sync. Pattern: modifica `prisma/schema.prisma` → commit → aggiorna diagramma in `04_data_model.md` → commit insieme
+- **Chiusura decisione**: **ODR-22** risolto ✅
+- **Implicazioni implementative**:
+  - Documentazione: diagramma permanente in `04_data_model.md`, template per futuri aggiornamenti schema
+  - Review process: verificare sync diagramma-schema Prisma durante PR review che toccano data model
+  - Tooling: suggerito plugin VS Code "Markdown Preview Mermaid Support" per preview locale durante editing
+- **Implicazioni**: Data model completamente documentato con visualizzazione grafica professionale. Gap design ↔ codice eliminato. Developer experience migliorata per onboarding e review. Stakeholder possono comprendere architettura dati senza leggere codice Prisma.
+
+---
+
 ## 2026-03-28 (rev 30)
 - **Azione**: Chiusura decisioni Stack & Tooling ODR-18, ODR-19, ODR-20 con mitigazioni strategiche.
 - **ODR-18 - Conflitto Tailwind CSS + MUI**:
