@@ -4,6 +4,102 @@
 
 ---
 
+## 2026-03-28 (rev 34)
+- **Azione**: Chiusura ultime due assunzioni ODR-31, ODR-32 per completare allineamento requisiti operativi MVP.
+- **ODR-31 - Limite numero esercizi libreria condivisa**:
+  - **Problema**: Necessità definire se esiste un limite massimo di esercizi nella libreria condivisa tra trainer
+  - **Decisione**: **Limite soft ~500 esercizi** stimato come ampiamente sufficiente, nessun constraint hard DB
+  - **Rationale**:
+    - Libreria condivisa tra 3 trainer, crescita organica bassa (~5-10 nuovi esercizi/mese)
+    - Proiezione: 180-360 esercizi/anno, ~1000 esercizi in 3-5 anni
+    - Pagination cursor-based già implementata (ODR-10) garantisce performance fino a 1000+ records
+    - UI con search/filter per exercise type e muscle group rende navigazione efficiente
+  - **Implementazione**:
+    - DB: Nessun CHECK constraint su conteggio Exercise (crescita illimitata)
+    - UI: Search bar sempre visibile, filtri multipli (type, muscleGroup, isActive)
+    - Performance: Index composito su `(type, isActive)` garantisce query <50ms fino a 2000+ esercizi
+  - **Monitoraggio**: Se libreria supera 400 esercizi, valutare categorizzazione avanzata (tags custom) o archiving esercizi obsoleti via soft-delete
+  - **Benefici**: Nessuna limitazione artificiale, scalabilità garantita, flessibilità operativa massima
+- **ODR-32 - Credenziali via WhatsApp GDPR-compliant**:
+  - **Problema**: Comunicazione password temporanea via WhatsApp/telefono potenzialmente non conforme GDPR (transito dato sensibile su piattaforma terza)
+  - **Decisione MVP**: **Rischio ACCETTATO** — mantiene semplicità operativa per onboarding trainee
+  - **Rationale**:
+    - MVP con scala limitata (50 trainee), relazione trust trainer-trainee già consolidata
+    - Password temporanea usa-e-getta con obbligo cambio primo login (`mustChangePassword=true`)
+    - WhatsApp usa crittografia E2E (password in transito protetta)
+    - Nessun log password in chiaro nel sistema ZeroCento
+  - **Mitigazioni MVP**:
+    1. Password temporanea generata con caratteri casuali sicuri (16 caratteri, mix alfanumerico+simboli)
+    2. Trainer istruito a comunicare credenziali SOLO via canale cifrato (WhatsApp, Signal, chiamata vocale)
+    3. Flag `mustChangePassword` forza cambio immediato,Password temporanea invalidata dopo primo login
+    4. Nessun campo `initialPassword` salvato nel DB (già rimosso ODR-04)
+  - **Soluzione post-MVP**: **Magic link via email** per setup password sicuro
+    - Implementazione: Endpoint `/api/auth/invite` genera token JWT one-time (exp 48h)
+    - Trainer clicca "Invita Trainee" → sistema invia email con link `app.zerocento.com/setup-password?token=...`
+    - Trainee clicca link, imposta password direttamente nel form, token validato e consumato
+    - Template email i18n-aware (già infra ODR-24)
+  - **Trigger upgrade magic link**:
+    - Utenza supera 100 trainee (gestione manuale non più scalabile)
+    - Richiesta esplicita conformità GDPR da legale/audit
+    - Feedback trainer su complessità comunicazione manuale credenziali
+  - **Benefici post-MVP**: GDPR full-compliant, password mai transita fuori sistema, audit trail completo, UX professionale
+  - **Costo implementazione post-MVP**: ~2-4h dev (endpoint + email template + UI form setup password)
+
+## 2026-03-28 (rev 33)
+- **Azione**: Chiusura decisioni funzionali ODR-26, ODR-28, ODR-29 sulla base di requisiti utente confermati.
+- **ODR-26 - Multi-scheda attiva per trainee**:
+  - **Problema**: Necessità chiarire se un trainee può avere più schede con `status='active'` contemporaneamente
+  - **Decisione**: **Scenario multi-scheda CONSENTITO** — nessun constraint UNIQUE richiesto
+  - **Rationale**: Flessibilità operativa per trainer che vogliono assegnare schede parallele (es. scheda forza + scheda mobilità, scheda upper + lower body split)
+  - **Implementazione UI**:
+    - Dashboard trainee mostra **selector scheda** se multiple attive (dropdown o tab)
+    - Ogni scheda ha nome distintivo obbligatorio (`TrainingProgram.name`)
+    - Visualizzazione settimana corrente filtrata per scheda selezionata
+    - Feedback submission specifica `workoutExerciseId` che lega a scheda univoca via relazioni
+  - **Benefici**: Massima flessibilità programmazione, supporto scenari avanzati (periodizzazione multi-focus), nessuna limitazione artificiale
+- **ODR-28 - Riassegnazione trainee**:
+  - **Problema**: Necessità definire se trainee può cambiare trainer autonomamente o solo admin gestisce riassegnazione
+  - **Decisione**: **Solo ADMIN può riassegnare trainee** — nessuna UI self-service per trainee
+  - **Rationale**: 
+    - Prevenire abusi (trainee "shoppa" trainer senza motivazione)
+    - Mantenere controllo gestionale centralizzato
+    - Supportare handover trainer (eliminato/inattivo) con gestione admin
+  - **Implementazione**: Endpoint `PUT /api/admin/trainer-trainee/[traineeId]` già definito in ODR-08
+  - **Workflow**: 
+    1. Trainee richiede cambio trainer via canale esterno (email admin, telefono)
+    2. Admin valuta richiesta e approva/rifiuta
+    3. Admin usa dashboard admin per riassegnare relazione TrainerTrainee
+    4. Trainee riceve notifica cambio trainer (opzionale post-MVP)
+  - **Benefici**: Processo controllato, audit trail completo (chi ha riassegnato, quando), prevenzione conflitti
+- **ODR-29 - Proiezione storage Supabase**:
+  - **Problema**: Necessità calcolare crescita storage DB per confermare adequatezza free tier 500MB vs Pro tier
+  - **Assunzioni confermate dall'utente**:
+    - **50 trainee iniziali**
+    - **Crescita trainee +20% annua** (nessuna crescita trainer prevista)
+    - 1 scheda/anno per trainee come media conservativa
+  - **Calcolo volumetria per trainee/anno**:
+    - 1 scheda × 12 settimane × 4 allenamenti × 6 esercizi = 288 `WorkoutExercise`
+    - 288 `ExerciseFeedback` (1 per esercizio completato)
+    - ~1000 `SetPerformed` (media 3-4 set/esercizio)
+    - Stima bytes record: WorkoutExercise ~200B, ExerciseFeedback ~150B, SetPerformed ~50B
+    - **Totale per trainee/anno: ~150KB**
+  - **Proiezione cumulativa**:
+    - Anno 1: 50 trainee × 150KB = **7.5 MB**
+    - Anno 2: 60 trainee × 150KB = 9MB (totale cumulativo **16.5 MB**)
+    - Anno 3: 72 trainee × 150KB = 10.8MB (totale **27 MB**)
+    - Anno 5: 104 trainee × 150KB = 15.6MB (totale **~60 MB**)
+    - Anno 10: 258 trainee × 150KB = 38.7MB/anno (totale cumulativo **~250 MB**)
+  - **Overhead DB** (indexes, metadata, audit fields):
+    - Stima moltiplicatore 2-3× per indexes compositi, foreign keys, timestamps
+    - Anno 5 con overhead: **150-180 MB**
+    - Anno 10 con overhead: **500-750 MB**
+  - **Decisione**: **Free tier Supabase (500MB) adeguato per 5+ anni**
+  - **Trigger upgrade Pro tier**:
+    - Retention dati storici >5 anni SENZA soft-delete cleanup
+    - Crescita trainee accelera oltre 30% annuo
+    - Storage raggiunge 400MB (80% free tier) → pianificare upgrade
+  - **Benefici**: Costo infra €0 aggiuntivo per primi 5 anni, budget mantenuto sotto €50/mese, scalabilità garantita con upgrade Pro seamless
+
 ## 2026-03-28 (rev 32)
 - **Azione**: Chiusura decisioni operative critiche ODR-24, ODR-25, ODR-27, ODR-30 per standard tecnici production-ready.
 - **ODR-24 - Lingua applicazione e template email**:

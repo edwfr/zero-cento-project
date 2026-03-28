@@ -157,15 +157,19 @@
 
 - [x] **ODR-25** Fuso orario (UTC vs Europe/Rome) → Risolto. **Standard UTC per storage DB**, conversione a fuso locale nel frontend. Tutte le date salvate come `DateTime` in PostgreSQL con timezone UTC. Frontend converte con libreria `date-fns-tz` in base a fuso utente (auto-detection browser via `Intl.DateTimeFormat().resolvedOptions().timeZone` o preferenza profilo utente). Formato display: "28 marzo 2026, 14:30" (locale-aware). Backend API sempre ritorna ISO 8601 UTC (2026-03-28T13:30:00.000Z). (chiuso 2026-03-28, vedi 09_change_log.md rev 32)
 
-- [ ] **ODR-26** Un solo programma attivo per trainee → Nessun vincolo UNIQUE su `(traineeId, status='active')`. **Decisione**: Aggiungere constraint o chiarire se scenario multi-scheda è valido.
+- [x] **ODR-26** Multi-scheda attiva per trainee → Risolto. **Scenario multi-scheda CONSENTITO**. Un trainee può avere più schede con `status='active'` contemporaneamente (es. scheda forza + scheda mobilità). Nessun constraint UNIQUE necessario su `(traineeId, status='active')`. Il trainer decide quali schede assegnare e il trainee visualizza tutte le schede attive nella dashboard con selezione manuale. UI dashboard trainee mostra selector scheda se multiple attive. (chiuso 2026-03-28, vedi 09_change_log.md rev 33)
 
 - [x] **ODR-27** Soft-delete vs hard-delete (GDPR) → Risolto. **Pattern soft-delete globale** per tutte le entità. Implementazione: aggiunto campo `deletedAt DateTime?` a tutte le entità principali (User, Exercise, TrainingProgram, MuscleGroup, MovementPattern, TrainerTrainee). DELETE endpoint imposta `deletedAt = NOW()` invece di rimuovere record. Query filtrano automaticamente `WHERE deletedAt IS NULL`. Per **User**: soft-delete + **anonimizzazione GDPR-compliant** (firstName → "Deleted", lastName → "User", email → `deleted_{uuid}@anonymized.local`). Benefici: audit trail completo, GDPR right to erasure soddisfatto, recupero accidentale possibile (admin restore). (chiuso 2026-03-28, vedi 09_change_log.md rev 32)
 
-- [ ] **ODR-28** Trainee non può cambiare trainer → Nessun workflow riassegnazione da parte utente. ~~**Decisione**: Confermare se è requisito o solo admin può riassegnare.~~ ✅ **PARZIALMENTE RISOLTO ODR-08**: Admin gestisce riassegnazione con endpoint `/api/admin/trainer-trainee/[traineeId]`.
+- [x] **ODR-28** Riassegnazione trainee → Risolto. **Solo ADMIN può riassegnare trainee** a trainer diverso. Workflow: admin usa endpoint `PUT /api/admin/trainer-trainee/[traineeId]` (già implementato in ODR-08) per modificare relazione TrainerTrainee. Il trainee NON può cambiare trainer autonomamente (nessuna UI self-service). Casi d'uso: handover trainer eliminato, conflitti trainer-trainee, riorganizzazione interna. Motivazione: evitare abusi (trainee "shoppa" trainer) e mantenere controllo gestionale centralizzato. (chiuso 2026-03-28, vedi 09_change_log.md rev 33)
 
-- [ ] **ODR-29** Proiezione storage Supabase → Free tier 500MB, crescita ~14.400 feedback × N cicli × N anni non dettagliata. **Decisione**: Calcolare proiezione storage 12-24 mesi e confermare adequatezza free/pro tier.
+- [x] **ODR-29** Proiezione storage Supabase → Risolto. **Free tier 500MB adeguato per 5+ anni**. Assunzioni: 50 trainee iniziali, crescita **+20% annua trainee** (trainer fissi), 1 scheda/anno per trainee, 288 WorkoutExercise + 288 ExerciseFeedback + 1000 SetPerformed per trainee/anno (~150KB/trainee/anno). Proiezione cumulativa: Anno 1: 7.5MB | Anno 2: 16.5MB | Anno 3: 27MB | Anno 5: ~60MB | Anno 10: ~250MB. Con overhead DB (indexes, metadata) stimato 2-3×, storage totale Anno 5 = ~150-180MB, Anno 10 = ~500-750MB. Free tier sufficiente per 5 anni, Pro tier necessario solo se retention dati >5 anni o crescita trainee accelera oltre 20%. (chiuso 2026-03-28, vedi 09_change_log.md rev 33)
 
 - [x] **ODR-30** Deploy region → Risolto. **Deploy completo in EU (Frankfurt, Germania)**. Vercel region: **fra1** (Frankfurt), Supabase region: **eu-central-1** (Frankfurt AWS). Benefici: latenza Europa <50ms, GDPR full compliance (dati processati e storati esclusivamente in UE), conformità normativa italiana. Configurazione: Vercel project settings region fra1, Supabase project creation con region Germany (Frankfurt). Alternative EU valutate: ams1 (Amsterdam), cdg1 (Paris) — scelta Frankfurt per latenza Italia ottimale e availability zone AWS robuste. (chiuso 2026-03-28, vedi 09_change_log.md rev 32)
+
+- [x] **ODR-31** Limite numero esercizi libreria condivisa → Risolto. **Limite soft ~500 esercizi** stimato come capacità ampiamente sufficiente per MVP e fase operativa. Nessun constraint hard nel DB (nessun CHECK su conteggio Exercise). Rationale: libreria condivisa tra tutti i trainer, crescita organica lenta (3 trainer aggiungono ~5-10 esercizi nuovi/mese = 180-360/anno). Con pagination cursor-based già implementata (ODR-10), performance garantita fino a 1000+ esercizi. UI search/filter per type/muscleGroup rende navigazione efficiente anche con volumi alti. Monitoraggio: se libreria supera 400 esercizi, valutare categorizzazione avanzata o archiving esercizi obsoleti (soft-delete). (chiuso 2026-03-28, vedi 09_change_log.md rev 34)
+
+- [x] **ODR-32** Credenziali via WhatsApp GDPR-compliant → Risolto. **Per MVP: rischio ACCETTATO**. Comunicazione password temporanea via WhatsApp/telefono mantiene semplicità operativa per trainer (nessun setup email template custom). Mitigazioni MVP: (1) Password temporanea usa-e-getta con flag `mustChangePassword` obbligatorio al primo login, (2) Trainer istruito a comunicare credenziali solo via canali cifrati (WhatsApp E2E), (3) Nessun log password in chiaro nel sistema. **Post-MVP**: Implementare magic link via email per setup password sicuro (endpoint `/api/auth/invite` genera token JWT one-time, email con link `app.zerocento.com/setup-password?token=...`, trainee imposta password direttamente). Benefici post-MVP: GDPR full-compliant (password mai transita fuori sistema), audit trail completo, UX professionale. Trigger implementazione: quando utenza supera 100 trainee o su richiesta esplicita conformità legale. (chiuso 2026-03-28, vedi 09_change_log.md rev 34)
 
 ### Domande Aperte da Valutazione Complessiva
 
@@ -174,13 +178,15 @@ Le seguenti domande emergono dalla review e richiedono chiarimento:
 1. ~~**ODR-05** (ripetuto sopra): Un trainee può essere assegnato a più trainer contemporaneamente?~~ ✅ **RISOLTO**
 2. ~~**ODR-06** (ripetuto sopra): Qual è il trigger per `active → completed`?~~ ✅ **RISOLTO**
 3. ~~**ODR-07** (ripetuto sopra): Come si gestisce il versionamento schede?~~ ✅ **RISOLTO** (non previsto versionamento, schede pubblicate immutabili)
-4. **ODR-23** (ripetuto sopra): Supporto multi-lingua?
-5. **ODR-25** (ripetuto sopra): Quale timezone?
+4. ~~**ODR-23** (ripetuto sopra): Supporto multi-lingua?~~ ✅ **RISOLTO** (i18n implementato)
+5. ~~**ODR-25** (ripetuto sopra): Quale timezone?~~ ✅ **RISOLTO** (UTC storage, conversione locale frontend)
 6. ~~**ODR-08** (ripetuto sopra): Procedura handover trainer eliminato?~~ ✅ **RISOLTO**
-7. **ODR-26** (ripetuto sopra): Limite una scheda active per trainee?
-8. È previsto limite numero esercizi nella libreria condivisa?
-9. **ODR-16** (ripetuto sopra): Target WCAG per accessibilità?
-10. Comunicazione credenziali via WhatsApp compatibile con GDPR (transito su piattaforma terza)?
+7. ~~**ODR-26** (ripetuto sopra): Limite una scheda active per trainee?~~ ✅ **RISOLTO** (multi-scheda consentita)
+8. ~~**ODR-28** (ripetuto sopra): Trainee può cambiare trainer?~~ ✅ **RISOLTO** (solo admin)
+9. ~~**ODR-29** (ripetuto sopra): Proiezione storage?~~ ✅ **RISOLTO** (free tier adeguato 5+ anni)
+10. ~~**ODR-31**: È previsto limite numero esercizi nella libreria condivisa?~~ ✅ **RISOLTO** (limite soft ~500 esercizi)
+11. ~~**ODR-16** (ripetuto sopra): Target WCAG per accessibilità?~~
+12. ~~**ODR-32**: Comunicazione credenziali via WhatsApp compatibile con GDPR?~~ ✅ **RISOLTO** (rischio accettato MVP, magic link post-MVP)
 
 ### Valutazione Complessiva Review v1
 
