@@ -32,9 +32,11 @@ npm run prisma:generate
    - Copia **anon public**: `eyJ...`
    - Copia **service_role**: `eyJ...` (secret!)
 
-6. Vai su **Settings** → **Database**:
-   - Copia **Connection String** (pooler - port 6543)
-   - Copia **Direct Connection** (port 5432)
+6. Nella sidebar, clicca su **Database** → **Settings** (sotto "CONFIGURATION"):
+   - Vedrai "Connection string" o "Connection pooling"
+   - Copia **Connection pooling** (porta 6543) - usa questo per DATABASE_URL
+   - Copia **Direct connection** (porta 5432) - usa questo per DIRECT_URL
+   - Se hai problemi a trovarlo, cerca la tab "Connection info" o "Database settings"
 
 7. **Modifica `.env.local`**:
 ```env
@@ -185,17 +187,25 @@ Verifica middleware: `src/middleware.ts` deve permettere accesso a `/login` nei 
 
 ## 📋 Checklist Setup Completo
 
-- [ ] npm install completato
-- [ ] Prisma client generato
-- [ ] Supabase project creato (Frankfurt)
-- [ ] `.env.local` configurato con credenziali reali
-- [ ] Prima migration eseguita (`prisma:migrate`)
-- [ ] Database popolato (`prisma:seed`)
+- [x] npm install completato
+- [x] Prisma client generato
+- [x] Supabase project creato (Frankfurt)
+- [x] `.env` e `.env.local` configurati con credenziali reali
+- [x] **Schema database creato** (via SQL Editor - 28 marzo 2026) ✅
+- [ ] **PROSSIMO STEP**: Database popolato (`npm run prisma:seed`)
 - [ ] Password create per admin/trainer1/trainee1 in Supabase
 - [ ] Dev server avviato (`npm run dev`)
 - [ ] Health check passa (200 OK)
 - [ ] Login funziona con admin
 - [ ] API /api/users risponde correttamente
+
+---
+
+### 📝 Nota 28 Marzo 2026
+**Completato fino a:** Creazione schema database
+**Metodo:** Script SQL eseguito manualmente su Supabase (prisma/init.sql)
+**Motivo:** Porta 5432 non raggiungibile via Prisma CLI
+**Prossimo step domani:** Eseguire `npm run prisma:seed` per popolare i dati iniziali
 
 ---
 
