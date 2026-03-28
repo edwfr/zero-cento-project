@@ -137,11 +137,11 @@
 
 #### Stack & Tooling
 
-- [ ] **ODR-18** Conflitto Tailwind CSS + MUI → Coesistenza causa specificity conflicts, bundle +50-80KB, DX degradata. **Decisione**: Usare MUI solo per componenti complessi o valutare migrazione a shadcn/ui (Tailwind-native).
+- [x] **ODR-18** Conflitto Tailwind CSS + MUI → Risolto. **Rischio MITIGATO** con strategia di separazione netta: MUI limitato a componenti complessi (DataGrid per tabelle esercizi/utenti, Drawer per menu mobile, BottomNavigation per trainee mobile), Tailwind per tutto il resto (layout, form controls, cards, buttons, spacing). Componenti MUI isolati con @emotion/styled, Tailwind gestisce design system. Bundle size monitorato con Webpack Bundle Analyzer (limite 120KB gzipped per MUI). Alternative future: shadcn/ui valutato come sostituto post-MVP se conflitti persistono. Dettagli in `design-review/00_review_v1.md` (5.1 Rischio MEDIO). (chiuso 2026-03-28, vedi 09_change_log.md rev 30)
 
-- [ ] **ODR-19** Service Worker con App Router → `next-pwa` ha supporto limitato App Router, possibili problemi RSC + SW caching. **Decisione**: Valutare `@serwist/next` (fork attivo con supporto App Router) o limitare caching SW.
+- [x] **ODR-19** Service Worker con App Router → Risolto. **Rischio BASSO** con strategia di mitigazione: usare **@serwist/next** (fork attivo di next-pwa con supporto maturo App Router) al posto di next-pwa. Limitare caching SW a asset statici e API GET specifiche. Comportamento offline predicibile, cache invalidation gestibile. Implementazione: Workbox con NetworkFirst per API, CacheFirst per assets. Dettagli in `design-review/00_review_v1.md` (5.3 Rischio BASSO) e `02_frontend_design.md` (Service Worker per Offline Support). (chiuso 2026-03-28, vedi 09_change_log.md rev 30)
 
-- [ ] **ODR-20** Vendor lock-in Supabase → Auth + DB + Storage + Email tutti su Supabase. SPOF per servizi critici. Prisma mitiga lock-in DB ma Auth è più accoppiato. **Decisione**: Documentare API surface Supabase Auth usate per eventuale migrazione futura.
+- [x] **ODR-20** Vendor lock-in Supabase → Risolto. **Rischio MITIGATO** con strategie multi-layer: (1) Database: Prisma ORM astrae completamente dipendenza DB, migrazione a qualsiasi PostgreSQL gestito possibile con zero code change. (2) Auth: Documentate tutte le API Supabase Auth usate in `docs/supabase-auth-api-surface.md` (signInWithPassword, signUp, signOut, getSession, refreshSession, JWT verification). Migrazione a NextAuth.js/Clerk/Auth0 fattibile sostituendo adapter layer `lib/auth`. (3) Storage: Non usato per MVP, se introdotto wrappare in adapter `lib/storage`. (4) Email: Template email in repository `/emails` (React Email), provider switchabile con env var. Dettagli in `design-review/00_review_v1.md` (5.2 Rischio BASSO-MEDIO). (chiuso 2026-03-28, vedi 09_change_log.md rev 30)
 
 #### Documentazione
 

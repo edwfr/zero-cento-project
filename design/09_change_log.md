@@ -4,6 +4,79 @@
 
 ---
 
+## 2026-03-28 (rev 30)
+- **Azione**: Chiusura decisioni Stack & Tooling ODR-18, ODR-19, ODR-20 con mitigazioni strategiche.
+- **ODR-18 - Conflitto Tailwind CSS + MUI**:
+  - **Problema**: Tailwind (utility-first CSS) e MUI (CSS-in-JS/Emotion) usano sistemi styling fondamentalmente diversi. Coesistenza causa conflitti specificity, override imprevedibili, bundle size aumentato ~50-80KB
+  - **Impatto**: Developer experience degradata, bug visivi difficili da diagnosticare, CSS bundle più grande del necessario
+  - **Decisione**: **Rischio MITIGATO** con strategia di separazione netta
+  - **Strategia di mitigazione**:
+    - **MUI limitato a componenti complessi**: DataGrid (tabelle esercizi/utenti con sorting/filtering), Drawer (menu mobile hamburger), BottomNavigation (barra navigazione trainee mobile)
+    - **Tailwind per tutto il resto**: Layout (flexbox/grid), form controls (input/select/textarea), cards, buttons, spacing, typography
+    - **Separazione netta**: Componenti MUI isolati con `@emotion/styled`, non mescolare Tailwind utility classes su componenti MUI (evita override wars)
+    - **Bundle size monitorato**: Webpack Bundle Analyzer configurato per verificare che MUI non ecceda 120KB gzipped
+    - **Convenzioni CSS**: Utility-first con Tailwind, MUI styled con `sx` prop o Emotion quando necessario, zero CSS globale custom (solo reset e variabili tema)
+  - **Alternative future**: shadcn/ui valutato come sostituto post-MVP se conflitti persistono (Tailwind-native, componenti accessibili, bundle più leggero)
+  - **Benefici**: Stack ibrido funzionale per MVP, componenti MUI riutilizzabili per funzionalità complesse, Tailwind per velocità sviluppo layout, DX accettabile con convenzioni chiare
+  - **Documentato in**: `design-review/00_review_v1.md` (5.1 Rischio MEDIO), `02_frontend_design.md` (Convenzioni CSS)
+- **ODR-19 - Service Worker con App Router**:
+  - **Problema**: `next-pwa` ha supporto limitato per Next.js App Router (maturo solo per Pages Router). Potenziali problemi con RSC (React Server Components) + SW caching
+  - **Impatto**: Comportamento offline non predicibile, cache invalidation complessa, bug difficili da debuggare
+  - **Decisione**: **Rischio BASSO** con strategia di mitigazione chiara
+  - **Strategia di mitigazione**:
+    - **Usare @serwist/next** al posto di next-pwa (fork attivo con supporto maturo App Router, community attiva, aggiornamenti regolari)
+    - **Limitare caching SW**: Solo asset statici (JS/CSS/fonts/images) e API GET specifiche (GET /api/programs/[id], GET /api/exercises)
+    - **Evitare cache su**: POST/PUT/DELETE requests, API con auth header, contenuti dinamici personalizzati
+    - **Implementazione Workbox**:
+      - **NetworkFirst** per API (dati freschi quando online, fallback cache se offline)
+      - **CacheFirst** per assets statici (performance, raramente cambiano)
+      - **StaleWhileRevalidate** per immagini/loghi
+    - **Cache invalidation**: Service Worker verifica versione app, invalida cache se mismatch
+  - **Benefici**: Offline support garantito per trainee in palestra (scheda corrente, feedback), performance migliorate con asset caching, comportamento predicibile
+  - **Documentato in**: `design-review/00_review_v1.md` (5.3 Rischio BASSO), `02_frontend_design.md` (Service Worker per Offline Support)
+- **ODR-20 - Vendor Lock-in Supabase**:
+  - **Problema**: Auth + DB + Storage + Branching + Email tutti su Supabase. Se Supabase ha outage prolungato o cambia pricing drasticamente, intera piattaforma bloccata. Single point of failure per servizi critici
+  - **Impatto**: Dipendenza completa da vendor esterno, difficoltà migrazione se necessario
+  - **Decisione**: **Rischio MITIGATO** con strategie multi-layer per facilitare migrazione futura
+  - **Strategie di mitigazione**:
+    1. **Database** (lock-in BASSO):
+       - Prisma ORM astrae completamente dipendenza DB
+       - Migrazione a qualsiasi PostgreSQL gestito possibile: AWS RDS, Google Cloud SQL, Neon, Railway, self-hosted
+       - Zero code change necessario (solo DATABASE_URL env var)
+       - Connection pooling gestibile con PgBouncer esterno se necessario
+    2. **Auth** (lock-in MEDIO → MITIGATO):
+       - **Documentate tutte le API Supabase Auth** usate nella piattaforma in `docs/supabase-auth-api-surface.md`:
+         - Client-side: `signInWithPassword()`, `signUp()`, `signOut()`, `getSession()`, `refreshSession()`
+         - Server-side: JWT verification con `@supabase/ssr`, custom middleware per session check
+         - OAuth (post-MVP): `signInWithOAuth()` per Google/GitHub
+       - **Migration strategy**: Sostituire adapter layer `lib/auth` con implementazione NextAuth.js, Clerk, o Auth0
+       - **Stima effort migrazione**: 16-24 ore dev (adapter layer + testing E2E auth flows)
+    3. **Storage** (lock-in ZERO per MVP):
+       - Non usato per MVP (no upload immagini profilo, no video esercizi)
+       - Se introdotto post-MVP: wrappare in adapter `lib/storage` con interfaccia astratta, provider switchabile (Supabase/AWS S3/Cloudflare R2)
+    4. **Email** (lock-in BASSO):
+       - Template email in repository sotto `/emails` (React Email framework)
+       - Provider switchabile con env var `EMAIL_PROVIDER` (Supabase/SendGrid/Resend/AWS SES)
+       - Stima effort switch: 4-6 ore (config + adattamento template se necessario)
+    5. **Branching** (lock-in ZERO):
+       - Feature opzionale per preview environments, non dipendenza critica
+       - Alternativa: database separati per staging/dev (standard industry practice)
+  - **Risk assessment Supabase**:
+    - Valutato **stabile e affidabile**: Series B funding $80M, SOC 2 Type II compliant, 99.9% SLA su Pro tier
+    - Community attiva (40K+ GitHub stars), documentazione eccellente, roadmap pubblica
+    - Pricing trasparente e competitivo (Pro $25/mese vs AWS RDS ~$50-100/mese)
+  - **Benefici**: Lock-in mitigato su tutti i servizi, migration path documentato e fattibile, effort stimato accettabile, costo opportunità basso (velocity sviluppo MVP alta con Supabase)
+  - **Documentato in**: `design-review/00_review_v1.md` (5.2 Rischio BASSO-MEDIO), `docs/supabase-auth-api-surface.md` (API surface completa)
+- **Chiusura decisioni**: **ODR-18**, **ODR-19**, **ODR-20** risolti ✅
+- **Implicazioni implementative**:
+  - **Frontend**: Webpack Bundle Analyzer configurato in `next.config.js` per monitoring bundle size
+  - **Service Worker**: Installare `@serwist/next`, configurare Workbox strategies, testare offline behavior
+  - **Documentazione operativa**: Mantenere aggiornato `docs/supabase-auth-api-surface.md` se aggiunte nuove API auth
+  - **Monitoring**: Alert su bundle size >150KB per MUI (threshold warning)
+- **Implicazioni**: Stack tecnologico validato con mitigazioni robuste. Vendor lock-in gestibile con effort contenuto. Service Worker funzionale per offline support trainee. Coesistenza Tailwind+MUI accettabile per MVP con convenzioni chiare. Migration path documentato per ridurre rischio lungo termine.
+
+---
+
 ## 2026-03-28 (rev 29)
 - **Azione**: Chiusura decisioni architetturali ODR-09, ODR-10, ODR-11, ODR-12 con implementazioni e accettazione rischi.
 - **ODR-09 - Database Indexes Espliciti**:
