@@ -1,7 +1,21 @@
+import { config } from 'dotenv'
 import { PrismaClient } from '@prisma/client'
 import { hash } from 'bcryptjs'
 
-const prisma = new PrismaClient()
+// Load environment variables from .env file
+config()
+
+// Use direct connection for seeding (bypasses PgBouncer)
+// PgBouncer on port 6543 doesn't support some operations needed for seeding
+const databaseUrl = process.env.DIRECT_URL || process.env.DATABASE_URL
+
+const prisma = new PrismaClient({
+    datasources: {
+        db: {
+            url: databaseUrl,
+        },
+    },
+})
 
 async function main() {
     console.log('🌱 Seeding database...')

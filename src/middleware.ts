@@ -91,29 +91,31 @@ function getRateLimitConfig(pathname: string): { limit: number; windowMs: number
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl
 
-    // Rate limiting
-    const clientIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
-    const rateLimitKey = `${clientIp}:${pathname}`
-    const rateLimitConfig = getRateLimitConfig(pathname)
+    // Rate limiting - skip in development
+    if (process.env.NODE_ENV !== 'development') {
+        const clientIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+        const rateLimitKey = `${clientIp}:${pathname}`
+        const rateLimitConfig = getRateLimitConfig(pathname)
 
-    const allowed = await checkRateLimit(
-        rateLimitKey,
-        rateLimitConfig.limit,
-        rateLimitConfig.windowMs,
-        rateLimitConfig.useRedis
-    )
-
-    if (!allowed) {
-        logger.warn({ clientIp, pathname }, 'Rate limit exceeded')
-        return NextResponse.json(
-            {
-                error: {
-                    code: 'RATE_LIMIT_EXCEEDED',
-                    message: 'Too many requests. Please try again later.',
-                },
-            },
-            { status: 429 }
+        const allowed = await checkRateLimit(
+            rateLimitKey,
+            rateLimitConfig.limit,
+            rateLimitConfig.windowMs,
+            rateLimitConfig.useRedis
         )
+
+        if (!allowed) {
+            logger.warn({ clientIp, pathname }, 'Rate limit exceeded')
+            return NextResponse.json(
+                {
+                    error: {
+                        code: 'RATE_LIMIT_EXCEEDED',
+                        message: 'Too many requests. Please try again later.',
+                    },
+                },
+                { status: 429 }
+            )
+        }
     }
 
     // Skip auth for public routes
