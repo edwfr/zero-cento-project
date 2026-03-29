@@ -84,10 +84,10 @@ export default function DatePicker({
     }
 
     const baseInputClasses = `
-        w-full px-4 py-2 border rounded-lg transition-colors
+        w-full px-4 py-2 border rounded-lg transition-colors text-gray-900
         focus:ring-2 focus:ring-[#FFA700] focus:border-transparent
         disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed
-        ${error ? 'border-red-500 bg-red-50' : 'border-gray-300'}
+        ${error ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-white'}
         ${className}
     `
 

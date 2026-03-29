@@ -44,8 +44,10 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
                                 className="h-10 w-auto"
                                 priority
                             />
-                            <span className="text-xl font-semibold text-gray-900 hidden md:block">
-                                Zero Cento Training Platform
+                            <span className="text-xl font-semibold hidden md:block">
+                                <span className="text-gray-900">0-100</span>
+                                <span className="text-brand-primary"> Body Lab</span>
+                                <span className="text-gray-900"> Training Platform</span>
                             </span>
                         </Link>
 

@@ -76,10 +76,6 @@ export default function FeedbackForm({
         onSubmit({ sets, actualRpe, notes, completed })
     }
 
-    const calculateTotalVolume = () => {
-        return sets.reduce((total, set) => total + set.reps * set.weight, 0)
-    }
-
     return (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 rounded-lg bg-white p-6 shadow-lg">
             {/* Header */}
@@ -110,7 +106,6 @@ export default function FeedbackForm({
                             <th className="px-2 py-2 text-left font-semibold text-gray-700">Serie</th>
                             <th className="px-2 py-2 text-left font-semibold text-gray-700">Reps</th>
                             <th className="px-2 py-2 text-left font-semibold text-gray-700">Peso (kg)</th>
-                            <th className="px-2 py-2 text-left font-semibold text-gray-700">Volume</th>
                             <th className="px-2 py-2"></th>
                         </tr>
                     </thead>
@@ -145,9 +140,6 @@ export default function FeedbackForm({
                                         className="w-20 rounded border border-gray-300 px-2 py-1 text-center focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/50"
                                     />
                                 </td>
-                                <td className="px-2 py-2 text-gray-600">
-                                    {(set.reps * set.weight).toFixed(1)} kg
-                                </td>
                                 <td className="px-2 py-2">
                                     {sets.length > 1 && (
                                         <button
@@ -168,7 +160,6 @@ export default function FeedbackForm({
                             <td className="px-2 py-2">Totale</td>
                             <td className="px-2 py-2">{sets.reduce((sum, s) => sum + s.reps, 0)}</td>
                             <td className="px-2 py-2">-</td>
-                            <td className="px-2 py-2 text-brand-primary">{calculateTotalVolume().toFixed(1)} kg</td>
                             <td className="px-2 py-2"></td>
                         </tr>
                     </tfoot>
