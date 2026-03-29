@@ -206,3 +206,16 @@ DIRECT_URL=                    # Direct connection (port 5432)
 - Design completo: `design/` folder
 - Prompt implementazione: `prompts/implementation_prompt.md`
 - Schema Prisma: `prisma/schema.prisma`
+
+## 📂 Documentazione Implementazione
+
+Per guide operative dettagliate, checklist e stato avanzamento vedi:
+
+**[📁 implementation-docs/](implementation-docs/)** - Documentazione fase di implementazione
+
+Contiene:
+- **[QUICK_START.md](implementation-docs/QUICK_START.md)** - Guida rapida setup progetto
+- **[NEXT_ACTIONS.md](implementation-docs/NEXT_ACTIONS.md)** - Prossimi step immediati
+- **[UI_IMPLEMENTATION_CHECKLIST.md](implementation-docs/UI_IMPLEMENTATION_CHECKLIST.md)** - Checklist dettagliata UI/UX (~35% completato)
+- **[IMPLEMENTATION_SUMMARY.md](implementation-docs/IMPLEMENTATION_SUMMARY.md)** - Riepilogo avanzamento
+- **[IMPLEMENTATION_PROMPT.md](implementation-docs/IMPLEMENTATION_PROMPT.md)** - Requisiti e specifiche tecniche
