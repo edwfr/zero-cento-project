@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 
@@ -10,6 +10,40 @@ export default function LoginPage() {
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
+    const [checking, setChecking] = useState(true)
+
+    // Check if user is already logged in
+    useEffect(() => {
+        const checkSession = async () => {
+            try {
+                const supabase = createClient()
+                const { data: { session } } = await supabase.auth.getSession()
+
+                if (session) {
+                    // User is already logged in, get their role and redirect
+                    const response = await fetch('/api/auth/me', {
+                        headers: {
+                            'Authorization': `Bearer ${session.access_token}`
+                        }
+                    })
+
+                    if (response.ok) {
+                        const userData = await response.json()
+                        const role = userData.data.role
+                        router.push(`/${role}/dashboard`)
+                        return
+                    }
+                }
+            } catch (err) {
+                // Ignore errors, just show login form
+                console.error('Session check error:', err)
+            } finally {
+                setChecking(false)
+            }
+        }
+
+        checkSession()
+    }, [router])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -26,8 +60,19 @@ export default function LoginPage() {
             if (signInError) throw signInError
 
             if (data.session) {
-                // Get user role from metadata
-                const role = data.session.user.user_metadata?.role || 'trainee'
+                // Get user role from database via API
+                const response = await fetch('/api/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${data.session.access_token}`
+                    }
+                })
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch user data')
+                }
+
+                const userData = await response.json()
+                const role = userData.data.role
 
                 // Redirect to role-based dashboard
                 router.push(`/${role}/dashboard`)
@@ -38,6 +83,18 @@ export default function LoginPage() {
         } finally {
             setLoading(false)
         }
+    }
+
+    // Show loading while checking existing session
+    if (checking) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-gray-50">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Caricamento...</p>
+                </div>
+            </div>
+        )
     }
 
     return (

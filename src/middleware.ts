@@ -190,55 +190,6 @@ export async function middleware(request: NextRequest) {
         )
     }
 
-    // Role-based routing protection
-    if (session) {
-        const userRole = session.user.user_metadata?.role
-
-        // Redirect root to appropriate dashboard
-        if (pathname === '/') {
-            const url = request.nextUrl.clone()
-            url.pathname = `/${userRole}/dashboard`
-            return NextResponse.redirect(url)
-        }
-
-        // Check role-based access
-        if (pathname.startsWith('/admin') && userRole !== 'admin') {
-            return NextResponse.json(
-                {
-                    error: {
-                        code: 'FORBIDDEN',
-                        message: 'Access denied. Admin role required.',
-                    },
-                },
-                { status: 403 }
-            )
-        }
-
-        if (pathname.startsWith('/trainer') && userRole !== 'trainer' && userRole !== 'admin') {
-            return NextResponse.json(
-                {
-                    error: {
-                        code: 'FORBIDDEN',
-                        message: 'Access denied. Trainer role required.',
-                    },
-                },
-                { status: 403 }
-            )
-        }
-
-        if (pathname.startsWith('/trainee') && userRole !== 'trainee' && userRole !== 'admin') {
-            return NextResponse.json(
-                {
-                    error: {
-                        code: 'FORBIDDEN',
-                        message: 'Access denied. Trainee role required.',
-                    },
-                },
-                { status: 403 }
-            )
-        }
-    }
-
     return response
 }
 
