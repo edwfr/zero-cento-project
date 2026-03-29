@@ -22,7 +22,10 @@ import {
     ConfirmationModal,
     ErrorBoundary,
     NavigationCard,
+    DatePicker,
+    AutocompleteSearch,
 } from '@/components'
+import type { AutocompleteOption } from '@/components'
 
 function ComponentShowcase() {
     const { showToast } = useToast()
@@ -34,6 +37,25 @@ function ComponentShowcase() {
     const [confirmModalOpen, setConfirmModalOpen] = useState(false)
     const [confirmVariant, setConfirmVariant] = useState<'danger' | 'warning' | 'info' | 'success'>('danger')
     const [isConfirming, setIsConfirming] = useState(false)
+    const [dateValue, setDateValue] = useState<string>('')
+    const [dateWithDefault, setDateWithDefault] = useState<string>('2026-03-29')
+    const [selectedExercise, setSelectedExercise] = useState<AutocompleteOption | null>(null)
+    const [autocompleteQuery, setAutocompleteQuery] = useState<string>('')
+
+    const exerciseOptions: AutocompleteOption[] = [
+        { id: '1', label: 'Back Squat', sublabel: 'Squat · Quadricipiti, Glutei' },
+        { id: '2', label: 'Romanian Deadlift', sublabel: 'Hinge · Ischiocrurali' },
+        { id: '3', label: 'Bench Press', sublabel: 'Press · Pettorali, Deltoidi' },
+        { id: '4', label: 'Pull-Up', sublabel: 'Pull · Dorsali, Bicipiti' },
+        { id: '5', label: 'Overhead Press', sublabel: 'Press · Deltoidi, Tricipiti' },
+        { id: '6', label: 'Hip Thrust', sublabel: 'Hinge · Glutei' },
+        { id: '7', label: 'Lunges', sublabel: 'Lunge · Quadricipiti, Glutei' },
+        { id: '8', label: 'Farmer Carry', sublabel: 'Carry · Core, Trapezi' },
+    ].filter(o =>
+        !autocompleteQuery ||
+        o.label.toLowerCase().includes(autocompleteQuery.toLowerCase()) ||
+        (o.sublabel ?? '').toLowerCase().includes(autocompleteQuery.toLowerCase())
+    )
 
     return (
         <div className="min-h-screen bg-gray-50 p-6">
@@ -406,6 +428,77 @@ function ComponentShowcase() {
                             color="secondary"
                         />
                     </div>
+                </section>
+
+                {/* Date Picker */}
+                <section className="rounded-lg bg-white p-6 shadow">
+                    <h2 className="mb-4 text-2xl font-bold text-gray-900">Date Picker</h2>
+                    <p className="text-sm text-gray-600 mb-6">
+                        Input data con locale italiano (GG/MM/AAAA). Supporta selezione manuale e picker nativo.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <DatePicker
+                            label="Data inizio programma"
+                            value={dateValue}
+                            onChange={setDateValue}
+                            required
+                        />
+                        <DatePicker
+                            label="Data con valore default"
+                            value={dateWithDefault}
+                            onChange={setDateWithDefault}
+                            min="2026-01-01"
+                            max="2026-12-31"
+                        />
+                        <DatePicker
+                            label="Campo disabilitato"
+                            value="2026-06-15"
+                            onChange={() => { }}
+                            disabled
+                        />
+                    </div>
+                    {dateValue && (
+                        <p className="mt-4 text-sm text-gray-600">
+                            Valore selezionato (ISO): <span className="font-mono font-semibold text-brand-primary">{dateValue}</span>
+                        </p>
+                    )}
+                </section>
+
+                {/* Autocomplete Search */}
+                <section className="rounded-lg bg-white p-6 shadow">
+                    <h2 className="mb-4 text-2xl font-bold text-gray-900">Autocomplete Search</h2>
+                    <p className="text-sm text-gray-600 mb-6">
+                        Dropdown ricercabile con navigazione tastiera (↑↓ Enter Esc) e supporto ricerca asincrona.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <AutocompleteSearch
+                            label="Seleziona esercizio"
+                            options={exerciseOptions}
+                            value={selectedExercise?.id}
+                            onSelect={(opt) => {
+                                setSelectedExercise(opt)
+                                if (opt) showToast(`Selezionato: ${opt.label}`, 'success')
+                            }}
+                            onSearch={setAutocompleteQuery}
+                            placeholder="Cerca esercizio..."
+                            required
+                        />
+                        <AutocompleteSearch
+                            label="Campo disabilitato"
+                            options={[]}
+                            onSelect={() => { }}
+                            placeholder="Non modificabile..."
+                            disabled
+                        />
+                    </div>
+                    {selectedExercise && (
+                        <p className="mt-4 text-sm text-gray-600">
+                            Selezionato: <span className="font-semibold text-brand-primary">{selectedExercise.label}</span>
+                            {selectedExercise.sublabel && (
+                                <span className="text-gray-500"> — {selectedExercise.sublabel}</span>
+                            )}
+                        </p>
+                    )}
                 </section>
 
                 {/* Feedback Form */}
