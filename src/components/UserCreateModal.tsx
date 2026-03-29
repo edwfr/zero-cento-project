@@ -146,11 +146,11 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
                             id="role"
                             value={formData.role}
                             onChange={(e) => setFormData({ ...formData, role: e.target.value as 'trainer' | 'trainee' })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                             required
                         >
-                            <option value="trainee">Atleta</option>
-                            <option value="trainer">Trainer</option>
+                            <option value="trainee" className="text-gray-900">Atleta</option>
+                            <option value="trainer" className="text-gray-900">Trainer</option>
                         </select>
                     </div>
 

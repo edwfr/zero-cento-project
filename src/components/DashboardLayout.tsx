@@ -34,8 +34,8 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
             <header className="bg-white shadow-sm sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16">
-                        {/* Logo */}
-                        <Link href={`/${user.role}/dashboard`} className="flex-shrink-0">
+                        {/* Logo and App Name */}
+                        <Link href={`/${user.role}/dashboard`} className="flex items-center space-x-3 flex-shrink-0">
                             <Image
                                 src="/images/logo/logo.png"
                                 alt="ZeroCento Logo"
@@ -44,6 +44,9 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
                                 className="h-10 w-auto"
                                 priority
                             />
+                            <span className="text-xl font-semibold text-gray-900 hidden md:block">
+                                Zero Cento Training Platform
+                            </span>
                         </Link>
 
                         {/* User Menu */}

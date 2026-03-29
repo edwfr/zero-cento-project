@@ -25,13 +25,22 @@ export default async function AdminDashboard() {
                     Benvenuto, {session.user.firstName} {session.user.lastName}
                 </p>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <Link href="/admin/users" className="bg-blue-50 p-6 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer">
                         <h3 className="text-lg font-semibold text-blue-900 mb-2">
-                            📋 Gestione Anagrafiche
+                            👥 Gestione Anagrafiche Utenti
                         </h3>
                         <p className="text-blue-700 text-sm">
                             Visualizza e gestisci tutti gli utenti del sistema (CRUD completo)
+                        </p>
+                    </Link>
+
+                    <Link href="/admin/exercises" className="bg-orange-50 p-6 rounded-lg hover:bg-orange-100 transition-colors cursor-pointer">
+                        <h3 className="text-lg font-semibold text-orange-900 mb-2">
+                            💪 Gestione Libreria Esercizi
+                        </h3>
+                        <p className="text-orange-700 text-sm">
+                            Gestisci gli esercizi, gruppi muscolari e schemi motori
                         </p>
                     </Link>
 
@@ -56,7 +65,7 @@ export default async function AdminDashboard() {
 
                 <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-blue-800 text-sm">
-                        💡 <strong>Novità:</strong> Clicca su "Gestione Anagrafiche" per accedere alla gestione completa di tutti gli utenti con permessi CRUD.
+                        💡 <strong>Novità:</strong> Clicca su "Gestione Anagrafiche Utenti" per accedere alla gestione completa di tutti gli utenti, oppure su "Gestione Libreria Esercizi" per gestire esercizi e gruppi muscolari.
                     </p>
                 </div>
             </div>

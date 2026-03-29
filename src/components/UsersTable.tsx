@@ -136,12 +136,12 @@ export default function UsersTable() {
                     <select
                         value={filterRole}
                         onChange={(e) => setFilterRole(e.target.value)}
-                        className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                     >
-                        <option value="all">Tutti</option>
-                        <option value="admin">Admin</option>
-                        <option value="trainer">Trainer</option>
-                        <option value="trainee">Atleti</option>
+                        <option value="all" className="text-gray-900">Tutti</option>
+                        <option value="admin" className="text-gray-900">Admin</option>
+                        <option value="trainer" className="text-gray-900">Trainer</option>
+                        <option value="trainee" className="text-gray-900">Atleti</option>
                     </select>
                 </div>
 
@@ -208,8 +208,8 @@ export default function UsersTable() {
                                         <button
                                             onClick={() => handleToggleStatus(user)}
                                             className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full cursor-pointer ${user.isActive
-                                                    ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                                    : 'bg-red-100 text-red-800 hover:bg-red-200'
+                                                ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                                : 'bg-red-100 text-red-800 hover:bg-red-200'
                                                 }`}
                                         >
                                             {user.isActive ? 'Attivo' : 'Disattivo'}

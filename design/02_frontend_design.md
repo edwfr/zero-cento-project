@@ -298,13 +298,14 @@ Tutte le dashboard (admin, trainer, trainee) utilizzano il componente `Dashboard
 
 **File**: `src/components/UserDeleteModal.tsx`
 
-### Dashboard Admin — Link Gestione Anagrafiche
+### Dashboard Admin — Sezioni Principali (Aggiornato 29/03/2026)
 
-La dashboard admin (`/admin/dashboard`) include un card dedicato:
+La dashboard admin (`/admin/dashboard`) include card dedicati per le funzionalità principali:
 
+**1. Gestione Anagrafiche Utenti**
 ```
 ┌─────────────────────────────────────────┐
-│  📋 Gestione Anagrafiche               │
+│  👥 Gestione Anagrafiche Utenti      │
 │                                         │
 │  Visualizza e gestisci tutti gli       │
 │  utenti del sistema (CRUD completo)    │
@@ -313,11 +314,24 @@ La dashboard admin (`/admin/dashboard`) include un card dedicato:
 └─────────────────────────────────────────┘
 ```
 
+**2. Gestione Libreria Esercizi**
+```
+┌─────────────────────────────────────────┐
+│  💪 Gestione Libreria Esercizi       │
+│                                         │
+│  Gestisci gli esercizi, gruppi         │
+│  muscolari e schemi motori             │
+│                                         │
+│  [Link cliccabile a /admin/exercises]  │
+└─────────────────────────────────────────┘
+```
+
 **Implementazione**:
-- Card con background blu e hover effect
+- Card con background colorati (blu per utenti, arancione per esercizi) e hover effect
 - Link Next.js per navigazione client-side
-- Evidenziato come funzionalità principale della dashboard
-- Info tooltip su CRUD completo disponibile
+- Layout responsive: 1 colonna mobile, 2 colonne tablet, 3 colonne desktop
+- Evidenziate come funzionalità principali della dashboard
+- Info tooltip su funzionalità disponibili
 
 **File**: `src/app/admin/dashboard/page.tsx`
 

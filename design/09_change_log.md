@@ -1,5 +1,161 @@
 # Change Log
 
+## [2026-03-29] Implementazione Gestione Libreria Esercizi Admin
+
+### Modifiche
+
+**1. API Exercises - CRUD Completo**
+- **Contesto**: Necessità di API per gestire la libreria esercizi condivisa tra trainer e admin
+- **Problema**: Mancava endpoint API per esercizi con supporto filtering e pagination
+- **Soluzione**:
+  - Creato endpoint `GET /api/exercises` con filtering e cursor-based pagination
+    - Filtri supportati: type (fundamental/accessory), movementPatternId, muscleGroupId, search (nome/descrizione)
+    - Include: movementPattern, exerciseMuscleGroups con coefficienti, creator
+    - Ordinamento: tipo (fundamental prima) + nome alfabetico
+  - Creato endpoint `POST /api/exercises` per creazione (admin/trainer)
+    - Validazione completa con Zod schema esistente
+    - Verifica unicità nome esercizio (case-insensitive)
+    - Creazione atomica esercizio + muscle groups con coefficienti
+    - Validazione esistenza movement pattern e muscle groups
+    - Warning se somma coefficienti > 3.0 (anomalia)
+- **File creati**: 
+  - `src/app/api/exercises/route.ts`
+- **Impatto**: API completa per gestione esercizi, pronta per uso da admin e trainer
+
+**2. Componente ExercisesTable - Lista Esercizi**
+- **Contesto**: Necessità di UI per visualizzare e filtrare esercizi
+- **Problema**: Mancava componente per mostrare lista esercizi in formato tabellare
+- **Soluzione**:
+  - Creato componente `ExercisesTable` con:
+    - Tabella responsive con colonne: Nome, Tipo, Schema Motorio, Gruppi Muscolari, Creato da, Azioni
+    - Filtro per tipo (Tutti/Fondamentali/Accessori)
+    - Ricerca testuale su nome e descrizione
+    - Badge colorati per tipo esercizio (viola = fondamentale, blu = accessorio)
+    - Visualizzazione gruppi muscolari con percentuali (coefficienti)
+    - Link diretto a video YouTube
+    - Bottone "Crea Esercizio" per apertura modal
+    - Auto-refresh dopo creazione esercizio
+- **File creati**: 
+  - `src/components/ExercisesTable.tsx`
+- **Impatto**: Interfaccia completa per visualizzazione e gestione esercizi
+
+**3. Componente ExerciseCreateModal - Creazione Esercizi**
+- **Contesto**: Necessità di form per creare nuovi esercizi con tutti i parametri
+- **Problema**: Creazione esercizio richiede gestione complessa di relazioni (movement pattern, muscle groups con coefficienti)
+- **Soluzione**:
+  - Creato modal `ExerciseCreateModal` con form completo:
+    - Campi base: nome, descrizione, URL YouTube
+    - Selezione tipo (fundamental/accessory)
+    - Selezione schema motorio (dropdown caricato da API)
+    - Gestione dinamica gruppi muscolari:
+      - Aggiunta/rimozione fino a 5 gruppi
+      - Selezione dropdown per ogni gruppo
+      - Input numerico per coefficiente (0.0-1.0)
+      - Validazione minimo 1 gruppo richiesto
+    - Caricamento asincrono muscle groups e movement patterns
+    - Validazione client-side completa
+    - Gestione errori con messaggi user-friendly
+- **File creati**: 
+  - `src/components/ExerciseCreateModal.tsx`
+- **Impatto**: Form intuitivo per creazione esercizi con tutte le relazioni necessarie
+
+**4. Pagina Admin Exercises**
+- **Contesto**: Richiesta di schermata admin identica a quella trainer per gestione libreria
+- **Problema**: Link a `/admin/exercises` dalla dashboard restituiva 404
+- **Soluzione**:
+  - Creata pagina `src/app/admin/exercises/page.tsx`:
+    - Verifica sessione e permessi admin
+    - Utilizzo DashboardLayout per layout comune
+    - Integrazione componente ExercisesTable
+    - Titolo: "Gestione Libreria Esercizi"
+    - Info box su condivisione esercizi con trainer
+  - Identica a quella che sarà implementata per trainer (UI unificata)
+- **File creati**: 
+  - `src/app/admin/exercises/page.tsx`
+- **Impatto**: Admin può ora gestire completamente la libreria esercizi
+
+### Riepilogo File Modificati/Creati
+
+```
+src/app/api/exercises/route.ts           — API GET/POST per esercizi
+src/components/ExercisesTable.tsx         — Tabella lista esercizi con filtri
+src/components/ExerciseCreateModal.tsx    — Modal creazione esercizio
+src/app/admin/exercises/page.tsx          — Pagina admin gestione esercizi
+design/09_change_log.md                   — Documentazione modifiche
+```
+
+### Note Implementative
+
+- **Cursor-based pagination**: Implementata nell'API ma non utilizzata nel frontend (limit 100 per semplicità)
+- **Coefficienti muscle groups**: Somma > 3.0 genera warning log ma non blocca creazione
+- **Esercizi condivisi**: Campo `createdBy` è solo audit trail, non determina ownership (tutti i trainer possono usare tutti gli esercizi)
+- **UI unificata**: La stessa interfaccia sarà usata per `/trainer/exercises` quando implementato
+
+---
+
+## [2026-03-29] Miglioramenti UI Admin Dashboard e Correzioni Visibilità
+
+### Modifiche
+
+**1. Rinomina e Estensione Admin Dashboard**
+- **Contesto**: Necessità di chiarire la funzione della gestione anagrafiche e aggiungere accesso alla libreria esercizi
+- **Problema**: Il titolo "Gestione Anagrafiche" era generico e mancava un punto di accesso per gestire la libreria degli esercizi dall'admin dashboard
+- **Soluzione**:
+  - Rinominato "Gestione Anagrafiche" in "📋 Gestione Anagrafiche Utenti" per maggiore chiarezza
+  - Aggiunta nuova sezione "💪 Gestione Libreria Esercizi"
+    - Card cliccabile con link a `/admin/exercises`
+    - Colore distintivo arancione (bg-orange-50/100)
+    - Descrizione: "Gestisci gli esercizi, gruppi muscolari e schemi motori"
+  - Aggiornato layout da 3 colonne a layout responsive (1 col mobile, 2 col tablet, 3 col desktop)
+  - Aggiornato messaggio informativo per includere entrambe le nuove funzionalità
+- **File modificati**: 
+  - `src/app/admin/dashboard/page.tsx`
+- **Impatto**: Navigazione più chiara per admin, accesso diretto alla gestione esercizi
+
+**2. Aggiunta Nome Applicazione nell'Header**
+- **Contesto**: Richiesta di mostrare il brand dell'applicazione accanto al logo
+- **Problema**: L'header mostrava solo il logo senza identificazione testuale dell'applicazione
+- **Soluzione**:
+  - Aggiunto testo "Zero Cento Training Platform" accanto al logo nell'header
+  - Styling: text-xl font-semibold text-gray-900
+  - Responsive: visibile solo su schermi medio-grandi (hidden md:block)
+  - Il logo e il testo sono raggruppati insieme nel link cliccabile della dashboard
+- **File modificati**: 
+  - `src/components/DashboardLayout.tsx`
+- **Impatto**: Migliore brand awareness, identificazione immediata dell'applicazione anche senza logo
+
+**3. Correzione Visibilità Testo nei Menu a Tendina**
+- **Contesto**: Bug UI critico - testo bianco su sfondo bianco nei dropdown
+- **Problema**: Le opzioni nei select (`<option>`) non avevano colore testo specificato, risultando invisibili su alcuni browser/OS
+- **Soluzione**:
+  - Aggiunto `text-gray-900` sia ai `<select>` che alle `<option>` per garantire contrasto
+  - Applicato nei seguenti componenti:
+    - **UserCreateModal**: select per selezione ruolo (Atleta/Trainer)
+    - **UsersTable**: select per filtro ruolo (Tutti/Admin/Trainer/Atleti)
+  - Utilizzo di text-gray-900 per massimo contrasto su sfondo bianco
+- **File modificati**: 
+  - `src/components/UserCreateModal.tsx`
+  - `src/components/UsersTable.tsx`
+- **Impatto**: Fix critico accessibilità, menu dropdown ora utilizzabili correttamente
+
+### Riepilogo File Modificati
+
+```
+src/app/admin/dashboard/page.tsx      — Rinomina sezione + aggiunta libreria esercizi
+src/components/DashboardLayout.tsx     — Aggiunta nome app nell'header
+src/components/UserCreateModal.tsx     — Fix colore testo select ruolo
+src/components/UsersTable.tsx          — Fix colore testo filtro ruolo
+design/09_change_log.md                — Documentazione modifiche
+```
+
+### Note Implementative
+
+- I colori dei menu dropdown utilizzano **text-gray-900** che garantisce WCAG AAA compliance su sfondo bianco
+- La nuova sezione Libreria Esercizi punta a `/admin/exercises` (implementazione futura)
+- Il nome dell'app nell'header è responsive per non sovraffollare l'UI mobile
+
+---
+
 ## [2026-03-29] Implementazione Layout Dashboard Comuni e Gestione Anagrafiche Admin
 
 ### Modifiche
