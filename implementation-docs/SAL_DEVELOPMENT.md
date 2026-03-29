@@ -1,8 +1,8 @@
 # 📊 SAL (Stato Avanzamento Lavori) - ZeroCento Training Platform
 
 **Ultima modifica:** 29 Marzo 2026  
-**Versione:** 1.6  
-**Completamento generale:** 67%
+**Versione:** 1.7  
+**Completamento generale:** 74%
 
 ---
 
@@ -11,15 +11,15 @@
 | Categoria             | Completato | In Corso | Da Fare | Totale  | %       |
 | --------------------- | ---------- | -------- | ------- | ------- | ------- |
 | **Database & Infra**  | 12         | 0        | 0       | 12      | 100%    |
-| **Backend API**       | 46         | 0        | 17      | 63      | 73%     |
+| **Backend API**       | 50         | 0        | 13      | 63      | 79%     |
 | **Componenti UI**     | 12         | 0        | 7       | 19      | 63%     |
 | **Frontend Admin**    | 2          | 0        | 8       | 10      | 20%     |
-| **Frontend Trainer**  | 14         | 0        | 3       | 17      | 82%     |
+| **Frontend Trainer**  | 17         | 0        | 0       | 17      | 100%    |
 | **Frontend Trainee**  | 7          | 0        | 0       | 7       | 100%    |
 | **Auth & Security**   | 2          | 0        | 3       | 5       | 40%     |
 | **Testing & Quality** | 0          | 0        | 8       | 8       | 0%      |
 | **PWA & Mobile**      | 1          | 0        | 5       | 6       | 17%     |
-| **TOTALE**            | **96**     | **0**    | **57**  | **153** | **63%** |
+| **TOTALE**            | **107**    | **0**    | **46**  | **153** | **70%** |
 
 ---
 
@@ -179,7 +179,7 @@
 
 ## 👨‍🏫 5. FRONTEND TRAINER
 
-**Completamento:** 14/17 (82%)
+**Completamento:** 17/17 (100%) ✅
 
 ### 5.1 Trainer Dashboard
 - ✅ **FE-TR-001** - Dashboard con cards atleti/programmi/esercizi
@@ -194,8 +194,8 @@
 ### 5.3 Gestione Atleti
 - ✅ **FE-TR-007** - Pagina lista trainee con tabella
 - ✅ **FE-TR-008** - Form creazione trainee (new/page.tsx)
-- ❌ **FE-TR-009** - Profilo trainee ([id]/page.tsx con tabs)
-- ❌ **FE-TR-010** - Gestione massimali trainee ([id]/records/page.tsx)
+- ✅ **FE-TR-009** - Profilo trainee ([id]/page.tsx con tabs)
+- ✅ **FE-TR-010** - Gestione massimali trainee ([id]/records/page.tsx)
 
 ### 5.4 Gestione Programmi
 - ✅ **FE-TR-011** - Pagina lista programmi (tabs draft/active/completed)
@@ -205,8 +205,8 @@
 - ✅ **FE-TR-015** - Wizard Step 3: Publish ([id]/publish/page.tsx)
 
 ### 5.5 Monitoraggio
-- ❌ **FE-TR-016** - Dashboard avanzamento programma ([id]/progress/page.tsx)
-- ❌ **FE-TR-017** - Report SBD programma ([id]/reports/page.tsx)
+- ✅ **FE-TR-016** - Dashboard avanzamento programma ([id]/progress/page.tsx)
+- ✅ **FE-TR-017** - Report SBD programma ([id]/reports/page.tsx)
 
 ---
 
@@ -422,6 +422,6 @@ Un task è "Done" quando:
 
 ---
 
-**📌 PROSSIMA SESSIONE:** Sprint 2 — Monitoraggio, massimali trainee, report SBD
+**📌 PROSSIMA SESSIONE:** Sprint 3 — Admin completo + Auth (password recovery)
 
-**Ultima modifica:** 29 Marzo 2026 - v1.6
+**Ultima modifica:** 29 Marzo 2026 - v1.7
