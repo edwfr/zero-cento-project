@@ -15,10 +15,16 @@ export { default as ExerciseCard } from './ExerciseCard'
 export { default as MovementPatternTag } from './MovementPatternTag'
 export { default as YoutubeEmbed } from './YoutubeEmbed'
 export { default as WeekTypeBanner } from './WeekTypeBanner'
+export { default as ProgressBar } from './ProgressBar'
+export { default as StatCard } from './StatCard'
+export { default as NavigationCard } from './NavigationCard'
 
 // Loading & Feedback
 export { default as LoadingSpinner, FullPageLoader, InlineLoader } from './LoadingSpinner'
 export { default as ToastNotification, ToastProvider, useToast } from './ToastNotification'
+export { default as ConfirmationModal } from './ConfirmationModal'
+export { default as ErrorBoundary } from './ErrorBoundary'
+export { default as RoleGuard } from './RoleGuard'
 
 // Layout Components (existing)
 export { default as DashboardLayout } from './DashboardLayout'

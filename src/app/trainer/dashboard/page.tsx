@@ -2,6 +2,7 @@ import { getSession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import DashboardLayout from '@/components/DashboardLayout'
+import { NavigationCard } from '@/components'
 import { prisma } from '@/lib/prisma'
 
 export default async function TrainerDashboard() {
@@ -209,6 +210,41 @@ export default async function TrainerDashboard() {
                             <span className="mr-2">🏋️</span>
                             Crea Esercizio
                         </Link>
+                    </div>
+                </div>
+
+                {/* Navigation Cards */}
+                <div>
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4">Sezioni</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <NavigationCard
+                            href="/trainer/trainees"
+                            icon="👥"
+                            title="I Miei Atleti"
+                            description={`Gestisci i tuoi ${traineesCount} atleti. Visualizza progressi e assegna programmi.`}
+                            color="blue"
+                        />
+                        <NavigationCard
+                            href="/trainer/programs"
+                            icon="📋"
+                            title="Programmi"
+                            description={`${activeCount} programmi attivi, ${draftCount} bozze. Crea e modifica schede di allenamento.`}
+                            color="green"
+                        />
+                        <NavigationCard
+                            href="/trainer/exercises"
+                            icon="🏋️"
+                            title="Libreria Esercizi"
+                            description={`${exercisesCount} esercizi creati. Gestisci la tua libreria personalizzata.`}
+                            color="purple"
+                        />
+                        <NavigationCard
+                            href="/trainer/profile"
+                            icon="👤"
+                            title="Il Mio Profilo"
+                            description="Aggiorna le tue informazioni personali e preferenze."
+                            color="secondary"
+                        />
                     </div>
                 </div>
 

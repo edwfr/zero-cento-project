@@ -17,6 +17,11 @@ import {
     InlineLoader,
     ToastProvider,
     useToast,
+    ProgressBar,
+    StatCard,
+    ConfirmationModal,
+    ErrorBoundary,
+    NavigationCard,
 } from '@/components'
 
 function ComponentShowcase() {
@@ -26,6 +31,9 @@ function ComponentShowcase() {
     const [restTime, setRestTime] = useState<RestTime>('m2')
     const [reps, setReps] = useState<string>('8')
     const [showFullPageLoader, setShowFullPageLoader] = useState(false)
+    const [confirmModalOpen, setConfirmModalOpen] = useState(false)
+    const [confirmVariant, setConfirmVariant] = useState<'danger' | 'warning' | 'info' | 'success'>('danger')
+    const [isConfirming, setIsConfirming] = useState(false)
 
     return (
         <div className="min-h-screen bg-gray-50 p-6">
@@ -182,6 +190,220 @@ function ComponentShowcase() {
                         <YoutubeEmbed
                             videoUrl="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
                             title="Tutorial Back Squat"
+                        />
+                    </div>
+                </section>
+
+                {/* Progress Bars */}
+                <section className="rounded-lg bg-white p-6 shadow">
+                    <h2 className="mb-4 text-2xl font-bold text-gray-900">Progress Bars</h2>
+                    <div className="space-y-6">
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-700 mb-3">Sizes</h3>
+                            <div className="space-y-3">
+                                <ProgressBar current={3} total={10} label="Small Progress" size="sm" />
+                                <ProgressBar current={5} total={10} label="Medium Progress" size="md" />
+                                <ProgressBar current={7} total={10} label="Large Progress" size="lg" />
+                            </div>
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-700 mb-3">Colors</h3>
+                            <div className="space-y-3">
+                                <ProgressBar current={2} total={8} label="Primary" color="primary" showPercentage />
+                                <ProgressBar current={6} total={8} label="Success" color="success" showPercentage />
+                                <ProgressBar current={5} total={8} label="Warning" color="warning" showPercentage />
+                                <ProgressBar current={1} total={8} label="Danger" color="danger" showPercentage />
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Stat Cards */}
+                <section className="rounded-lg bg-white p-6 shadow">
+                    <h2 className="mb-4 text-2xl font-bold text-gray-900">Stat Cards</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <StatCard
+                            title="Utenti Attivi"
+                            value={1247}
+                            subtitle="Crescita mensile"
+                            icon="👥"
+                            color="primary"
+                            trend={{ value: 12, label: "+12%", isPositive: true }}
+                            onClick={() => showToast('Clicked Utenti Attivi', 'info')}
+                        />
+                        <StatCard
+                            title="Workout Completati"
+                            value={8432}
+                            subtitle="Questo mese"
+                            icon="💪"
+                            color="success"
+                            trend={{ value: 8, label: "+8%", isPositive: true }}
+                        />
+                        <StatCard
+                            title="Feedback Medi"
+                            value={4.7}
+                            subtitle="Soddisfazione utenti"
+                            icon="⭐"
+                            color="warning"
+                        />
+                        <StatCard
+                            title="Programmi Attivi"
+                            value={342}
+                            subtitle="In corso"
+                            icon="📋"
+                            color="info"
+                        />
+                        <StatCard
+                            title="Trainer Certificati"
+                            value={89}
+                            subtitle="Professionisti"
+                            icon="🏅"
+                            color="success"
+                        />
+                        <StatCard
+                            title="Tasso di Abbandono"
+                            value={2.3}
+                            subtitle="Diminuzione trimestrale"
+                            icon="📉"
+                            color="danger"
+                            trend={{ value: -1.2, label: "-1.2%", isPositive: true }}
+                        />
+                    </div>
+                </section>
+
+                {/* Confirmation Modals */}
+                <section className="rounded-lg bg-white p-6 shadow">
+                    <h2 className="mb-4 text-2xl font-bold text-gray-900">Confirmation Modals</h2>
+                    <div className="flex flex-wrap gap-3">
+                        <button
+                            onClick={() => {
+                                setConfirmVariant('danger')
+                                setConfirmModalOpen(true)
+                            }}
+                            className="rounded-lg bg-red-500 px-4 py-2 font-semibold text-white hover:bg-red-600"
+                        >
+                            Danger Modal
+                        </button>
+                        <button
+                            onClick={() => {
+                                setConfirmVariant('warning')
+                                setConfirmModalOpen(true)
+                            }}
+                            className="rounded-lg bg-yellow-500 px-4 py-2 font-semibold text-white hover:bg-yellow-600"
+                        >
+                            Warning Modal
+                        </button>
+                        <button
+                            onClick={() => {
+                                setConfirmVariant('info')
+                                setConfirmModalOpen(true)
+                            }}
+                            className="rounded-lg bg-blue-500 px-4 py-2 font-semibold text-white hover:bg-blue-600"
+                        >
+                            Info Modal
+                        </button>
+                        <button
+                            onClick={() => {
+                                setConfirmVariant('success')
+                                setConfirmModalOpen(true)
+                            }}
+                            className="rounded-lg bg-green-500 px-4 py-2 font-semibold text-white hover:bg-green-600"
+                        >
+                            Success Modal
+                        </button>
+                    </div>
+
+                    <ConfirmationModal
+                        isOpen={confirmModalOpen}
+                        onClose={() => setConfirmModalOpen(false)}
+                        onConfirm={async () => {
+                            setIsConfirming(true)
+                            await new Promise(resolve => setTimeout(resolve, 2000))
+                            setIsConfirming(false)
+                            setConfirmModalOpen(false)
+                            showToast('Azione confermata!', 'success')
+                        }}
+                        title={
+                            confirmVariant === 'danger' ? 'Elimina elemento' :
+                                confirmVariant === 'warning' ? 'Attenzione' :
+                                    confirmVariant === 'info' ? 'Informazione' :
+                                        'Operazione completata'
+                        }
+                        message={
+                            confirmVariant === 'danger' ? 'Sei sicuro di voler eliminare questo elemento? Questa azione non può essere annullata.' :
+                                confirmVariant === 'warning' ? 'Questa operazione potrebbe avere effetti collaterali. Vuoi continuare?' :
+                                    confirmVariant === 'info' ? 'Questa è una finestra informativa. Conferma per procedere.' :
+                                        'Operazione completata con successo. Conferma per chiudere.'
+                        }
+                        variant={confirmVariant}
+                        isLoading={isConfirming}
+                    />
+                </section>
+
+                {/* Error Boundary Demo */}
+                <section className="rounded-lg bg-white p-6 shadow">
+                    <h2 className="mb-4 text-2xl font-bold text-gray-900">Error Boundary</h2>
+                    <p className="text-sm text-gray-600 mb-4">
+                        L'ErrorBoundary cattura errori JavaScript nei componenti figli. Demo:
+                    </p>
+                    <ErrorBoundary>
+                        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                            <p className="text-green-800 font-semibold">✓ Componente funzionante</p>
+                            <p className="text-sm text-green-700 mt-1">
+                                Questo contenuto è protetto da ErrorBoundary e viene renderizzato correttamente.
+                            </p>
+                        </div>
+                    </ErrorBoundary>
+                </section>
+
+                {/* Navigation Cards */}
+                <section className="rounded-lg bg-white p-6 shadow">
+                    <h2 className="mb-4 text-2xl font-bold text-gray-900">Navigation Cards</h2>
+                    <p className="text-sm text-gray-600 mb-6">
+                        Card di navigazione utilizzate nelle dashboard per indirizzare l'utente alle sezioni principali.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <NavigationCard
+                            href="#"
+                            icon="👥"
+                            title="Gestione Utenti"
+                            description="Visualizza e gestisci tutti gli utenti del sistema."
+                            color="blue"
+                        />
+                        <NavigationCard
+                            href="#"
+                            icon="📋"
+                            title="Programmi"
+                            description="Crea e gestisci i programmi di allenamento."
+                            color="green"
+                        />
+                        <NavigationCard
+                            href="#"
+                            icon="💪"
+                            title="Libreria Esercizi"
+                            description="Gestisci la libreria globale di esercizi."
+                            color="primary"
+                        />
+                        <NavigationCard
+                            href="#"
+                            icon="📊"
+                            title="Statistiche"
+                            description="Analisi avanzate sull'utilizzo della piattaforma."
+                            color="purple"
+                        />
+                        <NavigationCard
+                            href="#"
+                            icon="🏆"
+                            title="Massimali"
+                            description="Visualizza i personal record degli atleti."
+                            color="yellow"
+                        />
+                        <NavigationCard
+                            href="#"
+                            icon="⚙️"
+                            title="Impostazioni"
+                            description="Configurazione generale dell'applicazione."
+                            color="secondary"
                         />
                     </div>
                 </section>

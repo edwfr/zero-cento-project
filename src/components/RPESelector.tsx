@@ -63,27 +63,27 @@ export default function RPESelector({
                 disabled={disabled}
                 onClick={() => setIsOpen(!isOpen)}
                 className={`
-                    min-h-touch flex items-center justify-between rounded-lg border-2 px-4 py-2
+                    flex items-center justify-between rounded-lg border-2 px-3 py-1.5
                     transition-all duration-200
                     ${value
-                        ? 'border-brand-primary bg-brand-primary/10 text-brand-primary'
+                        ? 'border-brand-primary bg-white text-gray-900'
                         : 'border-gray-300 bg-white text-gray-700'
                     }
-                    ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:border-brand-primary/50'}
-                    focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:ring-offset-2
+                    ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:border-brand-primary/70'}
+                    focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:ring-offset-1
                 `}
             >
-                <span className="font-semibold">
+                <span className="text-sm font-semibold">
                     {value ? `RPE ${value.toFixed(1)}` : 'Seleziona RPE'}
                 </span>
-                <span className="text-xs opacity-75">{getRPEDescription(value)}</span>
+                <span className="text-xs text-gray-600 ml-2">{getRPEDescription(value)}</span>
             </button>
 
             {/* Dropdown Grid */}
             {isOpen && !disabled && (
                 <div className="relative z-10">
-                    <div className="absolute left-0 right-0 mt-1 rounded-lg border border-gray-300 bg-white p-3 shadow-lg">
-                        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-6">
+                    <div className="absolute left-0 right-0 mt-1 rounded-lg border border-gray-300 bg-white p-2 shadow-lg">
+                        <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-6 lg:grid-cols-6">
                             {RPE_VALUES.map((rpe) => {
                                 const isSelected = value === rpe
                                 const baseRPE = Math.floor(rpe)
@@ -98,22 +98,22 @@ export default function RPESelector({
                                             setIsOpen(false)
                                         }}
                                         className={`
-                                            min-h-touch flex flex-col items-center justify-center rounded-lg border-2 px-2 py-2
-                                            transition-all duration-200
+                                            flex flex-col items-center justify-center rounded-md border-2 px-1.5 py-1.5
+                                            transition-all duration-200 bg-white
                                             ${isSelected
                                                 ? 'border-brand-primary scale-105 shadow-md'
-                                                : 'border-transparent hover:border-brand-primary/50 hover:scale-105'
+                                                : 'border-gray-200 hover:border-brand-primary/70 hover:scale-105'
                                             }
                                             focus:outline-none focus:ring-2 focus:ring-brand-primary/50
                                         `}
                                     >
-                                        <div className={`${colorClass} mb-1 h-3 w-full rounded`}></div>
-                                        <span className="text-sm font-bold">{rpe.toFixed(1)}</span>
+                                        <div className={`${colorClass} mb-1 h-2 w-full rounded`}></div>
+                                        <span className="text-sm font-bold text-gray-900">{rpe.toFixed(1)}</span>
                                     </button>
                                 )
                             })}
                         </div>
-                        <div className="mt-3 flex items-center justify-between">
+                        <div className="mt-2 flex items-center justify-between">
                             <button
                                 type="button"
                                 onClick={() => {

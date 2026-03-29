@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import { NavigationCard, ProgressBar } from '@/components'
 
 interface ActiveProgram {
     id: string
@@ -109,7 +110,7 @@ export default function TraineeDashboard() {
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <h1 className="text-3xl font-bold text-gray-900 mb-8">Dashboard</h1>
 
-                    <div className="bg-white rounded-lg shadow-md p-12 text-center">
+                    <div className="bg-white rounded-lg shadow-md p-12 text-center mb-8">
                         <div className="text-6xl mb-6">💪</div>
                         <h2 className="text-2xl font-bold text-gray-900 mb-4">
                             Nessun Programma Attivo
@@ -125,6 +126,31 @@ export default function TraineeDashboard() {
                         >
                             Visualizza i Tuoi Massimali
                         </Link>
+                    </div>
+
+                    {/* Navigation cards anche senza programma */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <NavigationCard
+                            href="/trainee/records"
+                            icon="🏆"
+                            title="I Miei Massimali"
+                            description="Visualizza e aggiorna i tuoi personal record su ogni esercizio."
+                            color="yellow"
+                        />
+                        <NavigationCard
+                            href="/trainee/history"
+                            icon="📊"
+                            title="Storico Allenamenti"
+                            description="Consulta i programmi completati e i feedback passati."
+                            color="blue"
+                        />
+                        <NavigationCard
+                            href="/trainee/profile"
+                            icon="👤"
+                            title="Il Mio Profilo"
+                            description="Aggiorna le tue informazioni personali e le impostazioni."
+                            color="secondary"
+                        />
                     </div>
                 </div>
             </div>
@@ -215,35 +241,38 @@ export default function TraineeDashboard() {
                 )}
 
                 {/* Quick Actions */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <Link
-                        href="/trainee/programs/current"
-                        className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow text-center"
-                    >
-                        <div className="text-4xl mb-3">📅</div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-2">Programma Attivo</h3>
-                        <p className="text-sm text-gray-600">
-                            Visualizza tutte le settimane e i workout
-                        </p>
-                    </Link>
-
-                    <Link
-                        href="/trainee/records"
-                        className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow text-center"
-                    >
-                        <div className="text-4xl mb-3">🏆</div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-2">Massimali</h3>
-                        <p className="text-sm text-gray-600">Visualizza i tuoi personal record</p>
-                    </Link>
-
-                    <Link
-                        href="/trainee/history"
-                        className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow text-center"
-                    >
-                        <div className="text-4xl mb-3">📊</div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-2">Storico</h3>
-                        <p className="text-sm text-gray-600">Programmi completati e feedback</p>
-                    </Link>
+                <div className="mb-8">
+                    <h2 className="text-xl font-bold text-gray-900 mb-4">Sezioni</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <NavigationCard
+                            href="/trainee/programs/current"
+                            icon="📅"
+                            title="Programma Attivo"
+                            description="Visualizza tutte le settimane, i workout e gli esercizi del tuo programma."
+                            color="primary"
+                        />
+                        <NavigationCard
+                            href="/trainee/records"
+                            icon="🏆"
+                            title="I Miei Massimali"
+                            description="Visualizza e aggiorna i tuoi personal record su ogni esercizio."
+                            color="yellow"
+                        />
+                        <NavigationCard
+                            href="/trainee/history"
+                            icon="📊"
+                            title="Storico Allenamenti"
+                            description="Consulta i programmi completati e i feedback passati."
+                            color="blue"
+                        />
+                        <NavigationCard
+                            href="/trainee/profile"
+                            icon="👤"
+                            title="Il Mio Profilo"
+                            description="Aggiorna le tue informazioni personali e le impostazioni."
+                            color="secondary"
+                        />
+                    </div>
                 </div>
 
                 {/* Recent Personal Records */}
