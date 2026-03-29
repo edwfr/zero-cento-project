@@ -640,7 +640,7 @@ Una feature è completa quando:
 ## 📚 RIFERIMENTI
 
 - **File design:** design/02_frontend_design.md, design/10_user_stories.md
-- **Checklist dettagliata:** UI_IMPLEMENTATION_CHECKLIST.md
+- **Stato implementazione:** ../SYSTEM_REVIEW.md (review completo sistema al 30/03/2026)
 - **API standards:** src/lib/api-response.ts (apiSuccess, apiError)
 - **Auth patterns:** src/lib/auth.ts (requireAuth, requireRole, ownership checks)
 - **Validation:** src/schemas/*.ts (Zod schemas esistenti)

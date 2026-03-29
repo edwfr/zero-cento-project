@@ -1,153 +1,286 @@
 # ⚡ NEXT ACTIONS - ZeroCento Training Platform
 
-## 🎯 Step Immediati (Da Fare ORA - 10 minuti)
-
-### 1. Verifica Installazione NPM ✅
-```bash
-npm list --depth=0
-# Se vedi errori, ri-esegui: npm install
-```
-
-### 2. Genera Prisma Client ✅ (In corso)
-```bash
-npm run prisma:generate
-```
-
-### 3. Configura Supabase (5 minuti) ⏳
-**OBBLIGATORIO prima di avviare il server!**
-
-1. Vai su https://supabase.com
-2. Clicca **New Project**
-3. **Configurazione**:
-   - Organization: Crea nuova o seleziona esistente
-   - Name: `zerocento-training`
-   - **Database Password**: Genera strong password e **SALVA** in luogo sicuro!
-   - **Region**: `Europe Central (Frankfurt)` - eu-central-1
-   - Pricing Plan: Free
-
-4. Attendi provisioning (2-3 minuti)
-
-5. Una volta ready, vai su **Settings** → **API**:
-   - Copia **Project URL**: `https://xxx.supabase.co`
-   - Copia **anon public**: `eyJ...`
-   - Copia **service_role**: `eyJ...` (secret!)
-
-6. Nella sidebar, clicca su **Database** → **Settings** (sotto "CONFIGURATION"):
-   - Vedrai "Connection string" o "Connection pooling"
-   - Copia **Connection pooling** (porta 6543) - usa questo per DATABASE_URL
-   - Copia **Direct connection** (porta 5432) - usa questo per DIRECT_URL
-   - Se hai problemi a trovarlo, cerca la tab "Connection info" o "Database settings"
-
-7. **Modifica `.env.local`**:
-```env
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co  # <-- INCOLLA QUI
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...              # <-- INCOLLA QUI
-SUPABASE_SERVICE_ROLE_KEY=eyJ...                  # <-- INCOLLA QUI
-
-# Database - MODIFICA con i tuoi valori
-DATABASE_URL=postgresql://postgres:TUA_PASSWORD@db.xxx.supabase.co:6543/postgres?pgbouncer=true
-DIRECT_URL=postgresql://postgres:TUA_PASSWORD@db.xxx.supabase.co:5432/postgres
-```
-
-**IMPORTANTE**: Sostituisci:
-- `xxx` con il tuo project ID Supabase
-- `TUA_PASSWORD` con la password database che hai salvato
-
-### 4. Prima Migration Database (2 minuti) ⏳
-```bash
-# Crea le tabelle nel database
-npm run prisma:migrate -- --name init
-
-# Se chiede conferma, digita: yes
-```
-
-### 5. Seed Database (1 minuto) ⏳
-```bash
-npm run prisma:seed
-```
-
-Questo crea:
-- ✅ 1 admin: `admin@zerocento.app`
-- ✅ 2 trainer: `trainer1@zerocento.app`, `trainer2@zerocento.app`
-- ✅ 10 trainee: `trainee1@zerocento.app` ... `trainee10@zerocento.app`
-- ✅ 5 gruppi muscolari
-- ✅ 5 schemi motori
-- ✅ 5 esercizi fondamentali
-- ✅ 2 programmi (1 draft + 1 active)
-- ✅ Massimali sample
-
-### 6. Crea Password Utenti in Supabase (3 minuti) ⏳
-**IMPORTANTE**: Il seed crea gli utenti ma NON le password!
-
-1. Vai su Supabase Dashboard → **Authentication** → **Users**
-2. Dovresti vedere 13 utenti (1 admin + 2 trainer + 10 trainee)
-3. Per `admin@zerocento.app`:
-   - Clicca sui 3 puntini (⋮) → **Reset Password**
-   - Imposta: `Admin1234!`
-   - Salva
-4. Per `trainer1@zerocento.app`:
-   - Reset Password → `Trainer1234!`
-5. Per `trainee1@zerocento.app`:
-   - Reset Password → `Trainee1234!`
-
-*Opzionale: ripeti per altri utenti se vuoi testarli*
-
-### 7. Avvia Dev Server (1 minuto) ⏳
-```bash
-npm run dev
-```
-
-Dovresti vedere:
-```
-  ▲ Next.js 14.2.5
-  - Local:        http://localhost:3000
-  - Network:      http://192.168.x.x:3000
-
- ✓ Ready in 2.5s
-```
-
-### 8. Test Funzionamento (2 minuti) ✅
-1. **Health Check**:
-   ```bash
-   curl http://localhost:3000/api/health
-   ```
-   
-   Risposta attesa:
-   ```json
-   {
-     "data": {
-       "status": "healthy",
-       "services": { "database": "up", "auth": "up" }
-     }
-   }
-   ```
-
-2. **Login Test**:
-   - Apri browser: http://localhost:3000
-   - Dovresti essere reindirizzato a `/login`
-   - Login con:
-     - Email: `admin@zerocento.app`
-     - Password: `Admin1234!`
-   - Dovresti essere reindirizzato a `/admin/dashboard`
-
-3. **API Users Test**:
-   - Dopo login, apri DevTools → Network
-   - Copia il token JWT dall'header Authorization
-   - Test con curl:
-     ```bash
-     curl http://localhost:3000/api/users \
-       -H "Authorization: Bearer TUO_TOKEN_QUI"
-     ```
+**Ultimo aggiornamento:** 30 Marzo 2026  
+**Progresso attuale:** ~58% completato  
+**Riferimento completo:** [SYSTEM_REVIEW.md](../SYSTEM_REVIEW.md)
 
 ---
 
-## 🔥 Troubleshooting
+## 🎯 PRIORITÀ IMMEDIATE
+
+### 🔴 CRITICO - Fix Sicurezza (Effort totale: ~4h)
+
+Questi fix devono essere implementati PRIMA di qualsiasi deployment in produzione.
+
+#### 1. Fix RBAC Bypass Personal Records (1h)
+**File:** `src/app/api/personal-records/route.ts`
+
+**Problema:** Trainer può accedere a massimali di trainee di altri trainer via `?traineeId=ANY_ID`
+
+**Fix richiesto:**
+```typescript
+if (traineeId && session.user.role === 'trainer') {
+  const isManaged = await prisma.trainerTrainee.findUnique({
+    where: { 
+      trainerId_traineeId: {
+        trainerId: session.user.id,
+        traineeId
+      }
+    }
+  })
+  if (!isManaged) return apiError('FORBIDDEN', 'Access denied', 403)
+}
+```
+
+#### 2. Validazione Range Personal Record (30min)
+**File:** `src/schemas/personal-record.ts`
+
+Aggiungere validazioni:
+- `weight: z.number().positive().max(1000)`
+- `reps: z.number().int().positive().max(100)`
+- `recordDate` con refine per date non future
+
+#### 3. Validazione Lunghezza Search Parameter (1h)
+**File:** `src/app/api/exercises/route.ts`, `programs/route.ts`, `feedback/route.ts`
+
+Prima dell'uso:
+```typescript
+if (search && (search.length < 2 || search.length > 100)) {
+  return apiError('VALIDATION_ERROR', 'Search deve essere 2-100 caratteri', 400)
+}
+```
+
+#### 4. Reject Coefficiente Esercizi > 3.0 (30min)
+**File:** `src/app/api/exercises/route.ts`
+
+Sostituire warning con errore HTTP 400 se `totalCoefficient > 3.0`
+
+#### 5. Fix Errori TypeScript Test Integrazione (30min)
+**File:** `tests/integration/programs.test.ts` (riga 86), `tests/integration/users.test.ts` (riga 101)
+
+Nel helper che crea `NextRequest`:
+```typescript
+const { signal, ...safeOptions } = options || {}
+return new NextRequest(url, safeOptions as any)
+```
+
+#### 6. Disabilitare Form Durante Submit (2h)
+**File:** ~8 componenti con form
+
+Pattern:
+```typescript
+const [isSubmitting, setIsSubmitting] = useState(false)
+// In onSubmit:
+setIsSubmitting(true)
+try { await api() } finally { setIsSubmitting(false) }
+// Su input/button: disabled={isSubmitting}
+```
+
+---
+
+## 🟠 ALTA PRIORITÀ - Backend Completo
+
+### API Endpoints Mancanti (Effort totale: ~11h)
+
+#### 7. POST /api/feedback - Creazione Feedback Trainee (3h)
+**File da creare:** `src/app/api/feedback/route.ts`
+
+Implementare `POST` per:
+- Nested create: `ExerciseFeedback` + multiple `SetPerformed`
+- Calcolare `totalVolume` e `avgRPE`
+- Validare trainee ownership del workout
+- Idempotency check su `workoutExerciseId`
+
+#### 8. GET /api/trainee/workouts/[id] - Vista Workout (4h)
+**File da creare:** `src/app/api/trainee/workouts/[id]/route.ts`
+
+Endpoint per trainee con:
+- WorkoutExercises con `calculateEffectiveWeight()` pre-calcolato
+- Exercise details + video URL
+- Feedback esistente (se presente)
+- RBAC: solo trainee proprietario
+
+#### 9. POST /api/programs/[id]/complete - Completamento Manuale (2h)
+**File da creare:** `src/app/api/programs/[id]/complete/route.ts`
+
+Permette a trainer di marcare programma come `completed` anche se non tutte le settimane finite
+
+#### 10. PATCH /api/weeks/[id] - Config Tipo Settimana (2h)
+**File da creare:** `src/app/api/weeks/[id]/route.ts`
+
+Permette di modificare `weekType` (normal/test/deload) post-pubblicazione
+
+---
+
+## 🟠 ALTA PRIORITÀ - Frontend Completo
+
+### Pagine Trainer (Effort totale: ~37h)
+
+Le seguenti route esistono ma hanno file vuoti:
+
+#### 11. Workout Detail Editor - Step 3 Wizard (8h)
+**File:** `src/app/trainer/programs/[id]/workouts/[wId]/page.tsx`
+
+- Lista esercizi nella workout (drag-drop per riordinare)
+- Modal aggiungi esercizio (search autocomplete)
+- Configura sets/reps/weight/RPE per ciascun esercizio
+- Pulsante "Salva e continua" → step 4 (publish)
+
+#### 12. Publish Programma - Step 4 Wizard (4h)
+**File:** `src/app/trainer/programs/[id]/publish/page.tsx`
+
+- Riepilogo programma completo
+- Input `startDate`
+- Validazione: ogni workout ha ≥1 esercizio
+- Chiamata `POST /api/programs/[id]/publish`
+- Redirect a `/trainer/programs` con toast success
+
+#### 13. Edit Esercizio (4h)
+**File:** `src/app/trainer/exercises/[id]/edit/page.tsx`
+
+Form simile a `exercises/new` con dati precar icati
+
+#### 14. Edit Programma (4h)
+**File:** `src/app/trainer/programs/[id]/edit/page.tsx`
+
+Modifica nome, durata, note (solo se status=draft, altrimenti mostra alert)
+
+#### 15. Progress Programma (4h)
+**File:** `src/app/trainer/programs/[id]/progress/page.tsx`
+
+**Dashboard con:**
+- Progress bar settimane (1-8)
+- Card per ogni workout: completato (✅) o no (⏳)
+- KPI: avg RPE, volume totale, feedback count
+- Grafico volume per settimana (chart.js o recharts)
+
+#### 16. Reports Programma (6h)
+**File:** `src/app/trainer/programs/[id]/reports/page.tsx`
+
+**Visualizzazione:**
+- SBD totals (Squat/Bench/Deadlift volume)
+- Volume per muscle group (bar chart)
+- Distribuzione RPE (pie chart)
+- Peso prescritto vs eseguito (scatter plot)
+
+#### 17. Dettaglio Trainee (4h)
+**File:** `src/app/trainer/trainees/[id]/page.tsx`
+
+- Dati anagrafici trainee
+- Lista programmi assegnati (storico + corrente)
+- Link a massimali (`/trainer/trainees/[id]/records`)
+- Pulsante "Crea nuovo programma per questo trainee"
+
+#### 18. Massimali Trainee (3h)
+**File:** `src/app/trainer/trainees/[id]/records/page.tsx`
+
+- Tabella personal records per esercizio
+- Mostra 1RM, 3RM, 5RM, 10RM
+- Pulsante "Aggiorna massimale"
+
+### Pagine Trainee (Effort totale: ~8h)
+
+#### 19. Workout View con Card Navigation (8h)
+**File:** `src/app/trainee/workouts/[id]/page.tsx`
+
+**UI mobile-first:**
+- Card swipeable per ogni esercizio (carousel)
+- Display: nome esercizio, video YouTube embed, sets/reps/peso effettivo
+- Input per ogni serie: reps eseguite, peso usato, RPE
+- Note testuali opzionali
+- Pulsante "Completa e invia feedback"
+- Auto-save su localStorage ogni 30s
+
+---
+
+## 🟡 MEDIA PRIORITÀ
+
+### Testing (Effort totale: ~27h)
+
+#### 20-27. Test Coverage Enhancement
+
+Vedi [SYSTEM_REVIEW.md - FASE 6](../SYSTEM_REVIEW.md#fase-6---testing-priorit%C3%A0-alta) per dettagli:
+- Unit test per `calculateEffectiveWeight()` con chain
+- Integration test per RBAC violations
+- Integration test per feedback/personal records CRUD
+- E2E test per flussi utente completi
+- **Target: 80% coverage**
+
+### i18n & UX Polish (Effort totale: ~23h)
+
+#### 28-32. Internazionalizzazione
+
+Vedi [SYSTEM_REVIEW.md - FASE 5](../SYSTEM_REVIEW.md#fase-5---i18n--ux-polish-priorit%C3%A0-media) per dettagli:
+- Integrare `useTranslation()` in componenti
+- Rimuovere stringhe hardcoded italiane
+- Skeleton loaders
+- ARIA labels e focus management
+
+---
+
+## 🔵 BASSA PRIORITÀ
+
+### CI/CD & Deployment (Effort totale: ~5h)
+
+Vedi [SYSTEM_REVIEW.md - Sezione 8](../SYSTEM_REVIEW.md#8-next-steps---cicd--devops) per dettagli completi.
+
+### PWA Completamento (Effort totale: ~7h)
+
+Vedi [SYSTEM_REVIEW.md - Sezione 8.5](../SYSTEM_REVIEW.md#85-pwa-completamento) per dettagli completi.
+
+---
+
+## 📊 Roadmap Suggerita
+
+| Sprint   | Focus                          | Task            | Effort |
+| -------- | ------------------------------ | --------------- | ------ |
+| Sprint 1 | Fix critici sicurezza          | #1-6            | ~4h    |
+| Sprint 2 | API mancanti + Program Builder | #7-10, #12, #14 | ~25h   |
+| Sprint 3 | Trainee Workout View           | #19             | ~8h    |
+| Sprint 4 | Trainer progress & reports     | #11, #15-18     | ~25h   |
+| Sprint 5 | Testing target 80%             | #20-27          | ~27h   |
+| Sprint 6 | i18n + UX Polish               | #13, #28-32     | ~27h   |
+| Sprint 7 | CI/CD + Deploy                 | CI/CD tasks     | ~5h    |
+| Sprint 8 | PWA + Final polish             | PWA tasks       | ~7h    |
+
+**Effort totale rimanente: ~129h**
+
+---
+
+## 🔥 Troubleshooting Comuni
 
 ### ❌ Errore: "Cannot find module '@prisma/client'"
 ```bash
 npm run prisma:generate
 ```
+
+### ❌ Errore: "Database connection failed"
+Verifica `.env.local`:
+- `DATABASE_URL` usa porta 6543 (pooling)
+- `DIRECT_URL` usa porta 5432 (direct)
+- Password corretta
+
+### ❌ Errore: "Rate limit exceeded" su login
+Il rate limiting è configurato a 5 tentativi / 15 minuti per login. Aspetta o resetta Redis/in-memory cache riavviando server.
+
+### ❌ Test falliscono con "NextRequest signal incompatibility"
+Applica fix #5 sopra.
+
+---
+
+## 📚 Documentazione Correlata
+
+- **Setup iniziale:** [QUICK_START.md](./QUICK_START.md)
+- **Stato completo:** [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)
+- **Review sistema:** [SYSTEM_REVIEW.md](../SYSTEM_REVIEW.md)
+- **Architettura:** [../design/01_architecture_overview.md](../design/01_architecture_overview.md)
+- **API Design:** [../design/03_backend_api.md](../design/03_backend_api.md)
+- **Frontend Design:** [../design/02_frontend_design.md](../design/02_frontend_design.md)
+- **User Stories:** [../design/10_user_stories.md](../design/10_user_stories.md)
+
+---
+
+**Ultimo update:** 30 Marzo 2026 - Documentazione sincronizzata con SYSTEM_REVIEW.md
 
 ### ❌ Errore: "P1001: Can't reach database server"
 1. Verifica `.env.local` con credenziali corrette

@@ -1,8 +1,11 @@
 # 🎉 ZeroCento Training Platform - Implementation Summary
 
-## ✅ Implementazione Completata (~40%)
+## ✅ Implementazione Completata (~58%)
 
-Ho completato con successo l'implementazione delle **fondamenta complete** della piattaforma ZeroCento Training. Il progetto è ora **configurato, strutturato e pronto per lo sviluppo** delle funzionalità frontend e dei restanti endpoint API.
+**Ultimo aggiornamento:** 30 Marzo 2026  
+**Stato:** Fondamenta complete + maggior parte API + Frontend funzionale
+
+La piattaforma ZeroCento Training ha raggiunto un livello di implementazione significativo con tutte le fondamenta complete, 29 endpoint API implementati su 34 previsti, e 21 pagine frontend funzionali su 32 previste.
 
 ---
 
@@ -89,47 +92,125 @@ Ho completato con successo l'implementazione delle **fondamenta complete** della
 - ✅ **`src/app/error.tsx`** - Error boundary
 - ✅ **`src/app/not-found.tsx`** - 404 page
 
-### 9. Authentication Pages (50%)
+### 9. Authentication Pages (90%)
 - ✅ **`src/app/login/page.tsx`** - Login form completo con:
   - Supabase auth integration
   - Error handling
   - Role-based redirect
-- ⏳ Forgot password, reset password, change password (TODO)
+- ✅ **`src/app/forgot-password/page.tsx`** - Password reset request
+- ✅ **`src/app/reset-password/page.tsx`** - Password reset con token
+- ✅ **`src/app/profile/page.tsx`** - Profilo utente
+- ✅ **`src/app/profile/change-password/page.tsx`** - Cambio password
 
-### 10. API Endpoints (40%)
+### 10. API Endpoints (~85%)
 
-#### ✅ Completati:
+**Riferimento completo:** Vedi [SYSTEM_REVIEW.md](../SYSTEM_REVIEW.md#21-api-endpoints-29-route-files-implementati)
+
+#### ✅ Completamente Implementati (29 endpoint):
 - **`GET /api/health`** - Health check (DB + Auth)
-- **Users CRUD**:
-  - `GET /api/users` - Lista (RBAC: admin vede tutti, trainer vede propri trainee)
-  - `POST /api/users` - Creazione con password temporanea + email auto-confirm
-  - `GET /api/users/[id]` - Dettaglio
-  - `PUT /api/users/[id]` - Modifica
-  - `DELETE /api/users/[id]` - Eliminazione fisica con cleanup
-  - `PATCH /api/users/[id]/activate` - Riattivazione trainee
-  - `PATCH /api/users/[id]/deactivate` - Disabilitazione trainee
-- **Muscle Groups CRUD**:
-  - `GET /api/muscle-groups` - Lista attivi
-  - `POST /api/muscle-groups` - Creazione
-  - `GET /api/muscle-groups/[id]` - Dettaglio
-  - `PUT /api/muscle-groups/[id]` - Modifica
-  - `DELETE /api/muscle-groups/[id]` - Eliminazione (409 se usato)
-  - `PATCH /api/muscle-groups/[id]/archive` - Archiviazione
-- **Movement Patterns CRUD**:
-  - `GET /api/movement-patterns` - Lista attivi
-  - `POST /api/movement-patterns` - Creazione
-  - `GET /api/movement-patterns/[id]` - Dettaglio
-  - `PUT /api/movement-patterns/[id]` - Modifica
-  - `DELETE /api/movement-patterns/[id]` - Eliminazione (409 se usato)
-  - `PATCH /api/movement-patterns/[id]/archive` - Archiviazione
+- **Users CRUD completo** (7 endpoint):
+  - `GET /api/users` - Lista con RBAC
+  - `POST /api/users` - Creazione
+  - `GET /api/users/[id]`, `PUT /api/users/[id]`, `DELETE /api/users/[id]`
+  - `PATCH /api/users/[id]/activate`, `PATCH /api/users/[id]/deactivate`
+- **Exercises CRUD completo** (4 endpoint):
+  - `GET /api/exercises` - Lista con cursor pagination
+  - `POST /api/exercises` - Creazione
+  - `GET /api/exercises/[id]`, `PUT /api/exercises/[id]`, `DELETE /api/exercises/[id]`
+- **Muscle Groups CRUD completo** (6 endpoint)
+- **Movement Patterns CRUD completo** (6 endpoint)
+- **Programs** (8 endpoint):
+  - CRUD base (`GET`, `POST`, `GET [id]`, `PUT [id]`, `DELETE [id]`)
+  - `POST /api/programs/[id]/publish` - Pubblicazione con validazione
+  - `GET /api/programs/[id]/progress` - Avanzamento programma
+  - `GET /api/programs/[id]/reports` - Reportistica SBD + muscle groups
+- **Workout Exercises** (4 endpoint):
+  - `POST /api/programs/[id]/workouts/[wId]/exercises`
+  - `PUT /api/programs/[id]/workouts/[wId]/exercises/[eId]`
+  - `DELETE /api/programs/[id]/workouts/[wId]/exercises/[eId]`
+  - `PATCH /api/programs/[id]/workouts/[wId]/exercises/reorder`
+- **Feedback** (3 endpoint):
+  - `GET /api/feedback` - Lista con cursor pagination
+  - `GET /api/feedback/[id]` - Dettaglio
+  - `PUT /api/feedback/[id]` - Modifica (24h window)
+- **Personal Records** (3 endpoint):
+  - `GET /api/personal-records` - Lista
+  - `POST /api/personal-records` - Creazione
+  - `DELETE /api/personal-records/[id]`
+- **Admin** (3 endpoint):
+  - `POST /api/admin/trainees/[id]/reassign`
+  - `PUT /api/admin/programs/[id]/override`
+  - `GET /api/admin/reports/global`
 
-#### ⏳ Da Implementare:
-- **Exercises** (priority: HIGH)
-- **Programs** (priority: HIGH)
-- **Feedback** (priority: HIGH)
-- **Personal Records**
-- **Admin Override**
-- **Reportistica**
+#### ⏳ Endpoint Mancanti (5 endpoint):
+- `POST /api/feedback` - Creazione feedback trainee
+- `POST /api/programs/[id]/complete` - Completamento manuale programma
+- `GET /api/trainee/workouts/[id]` - Vista workout con peso effettivo
+- `PATCH /api/weeks/[id]` - Configurazione tipo settimana
+- `GET /api/admin/programs` - Lista globale programmi admin
+
+### 11. Frontend (~52%)
+
+**Implementazione dettagliata:** Vedi [SYSTEM_REVIEW.md](../SYSTEM_REVIEW.md#22-frontend-pages-32-pagetsx-trovati)
+
+#### ✅ Pagine Funzionali (21 pagine):
+- **Authentication** (5 pagine): login, forgot-password, reset-password, profile, change-password
+- **Admin** (4 pagine): dashboard, users, exercises, programs
+- **Trainer** (8 pagine): 
+  - dashboard, exercises, exercises/new
+  - programs, programs/new
+  - trainees, trainees/new
+  - components-showcase
+- **Trainee** (4 pagine): dashboard, programs/current, history, records
+
+#### ⏳ Pagine da Completare (9 route create ma vuote):
+- **Trainer** (8 pagine):
+  - `exercises/[id]/edit` - Modifica esercizio
+  - `programs/[id]/edit` - Modifica programma
+  - `programs/[id]/publish` - Pubblicazione wizard step 4
+  - `programs/[id]/progress` - Monitoraggio avanzamento
+  - `programs/[id]/reports` - Reportistica
+  - `programs/[id]/workouts/[wId]` - Dettaglio workout (wizard step 3)
+  - `trainees/[id]` - Dettaglio trainee
+  - `trainees/[id]/records` - Massimali trainee
+- **Trainee** (1 pagina):
+  - `workouts/[id]` - Vista workout con card navigation
+
+### 12. Componenti UI (27+ componenti implementati)
+
+**Directory:** `src/components/`
+
+#### ✅ Componenti Completi:
+- **Layout & Navigation**: `DashboardLayout`, `NavigationCard`, `RoleGuard`
+- **Data Display**: `UsersTable`, `ExercisesTable`, `ProgramsTable`, `ExerciseCard`, `StatCard`
+- **Forms & Input**: `ProfileForm`, `AutocompleteSearch`, `DatePicker`
+- **Specialized Controls**: 
+  - `RPESelector` - Selettore RPE con gradient colore
+  - `RestTimeSelector` - Selettore tempi recupero
+  - `RepsInput` - Input ripetizioni validato
+  - `WeightTypeSelector` - Selettore tipo peso
+- **Modals**: `UserCreateModal`, `UserEditModal`, `UserDeleteModal`, `ExerciseCreateModal`, `ConfirmationModal`
+- **Feedback**: `ToastNotification`, `LoadingSpinner`, `ErrorBoundary`, `ProgressBar`
+- **Media**: `YoutubeEmbed` - YouTube embeds lazy-loading
+- **PWA**: `PWAInstallPrompt`
+- **Tags & Badges**: `MovementPatternTag`, `WeekTypeBanner`
+- **Forms**: `FeedbackForm` (da integrare in workout view)
+
+### 13. Testing (~30%)
+
+**File di test:** 8 file implementati
+
+- ✅ **Unit**: schemas, calculations, components
+- ✅ **Integration**: users, programs
+- ✅ **E2E**: trainer create program, trainee complete workout
+- ⏳ **Coverage attuale**: ~30% (target: 80%)
+
+**Test critici mancanti:**
+- Unit test per `calculateEffectiveWeight()` con chain `percentage_previous`
+- Integration test per RBAC violations
+- Integration test per feedback CRUD
+- E2E test per login + redirect ruolo
+- E2E test per flusso completo program lifecycle
 
 ---
 
@@ -249,50 +330,13 @@ calculateEffectiveWeight(workoutExercise, traineeId) // Max 10 livelli
 
 ### Sviluppo Successivo (Priority Order):
 
-#### 1. API Exercises (HIGH - 2h)
-- `GET /api/exercises` con **cursor-based pagination**
-- `POST`, `PUT`, `DELETE` con validazione
-- Gestione `ExerciseMuscleGroup` junction table
-
-#### 2. API Programs (HIGH - 3h)
-- `POST /api/programs` con auto-creazione Week + Workout
-- `POST /api/programs/[id]/publish` con validazione + date calculations
-- `GET /api/programs/[id]/progress`
-
-#### 3. API Feedback (HIGH - 2h)
-- `POST /api/feedback` con `SetPerformed` nested
-- Idempotency: UNIQUE(workoutExerciseId, traineeId, date)
-
-#### 4. Frontend Trainer (MEDIUM - 8h)
-- Dashboard con KPI
-- Libreria esercizi (lista + CRUD)
-- Creazione scheda (wizard 4 step)
-
-#### 5. Frontend Trainee (MEDIUM - 6h)
-- Dashboard mobile-first
-- Scheda corrente
-- Feedback form con auto-save localStorage
-
-#### 6. Frontend Admin (LOW - 4h)
-- Dashboard
-- Override schede
-- Riassegnazione trainee
-
----
-
-## 🎯 Metriche
-
-- **Progresso**: ~40% completato
-- **File creati**: 80+
-- **Righe di codice**: ~5000+
-- **API endpoints**: 19 / ~40 (47%)
-- **Test coverage target**: 80% (da implementare)
+Vedi [SYSTEM_REVIEW.md](../SYSTEM_REVIEW.md#7-next-steps---sviluppo) per roadmap dettagliata organizzata in 8 sprint.
 
 ---
 
 ## 🔑 Key Features Implemented
 
-✅ **AuthCompleteSupabase** con JWT 4h + refresh 30d  
+✅ **Auth Completo Supabase** con JWT 4h + refresh 30d  
 ✅ **RBAC Granulare** con ownership checks  
 ✅ **Rate Limiting Ibrido** (Redis + in-memory)  
 ✅ **percentage_previous Logic** (ricorsivo, max 10 livelli)  
@@ -303,6 +347,8 @@ calculateEffectiveWeight(workoutExercise, traineeId) // Max 10 livelli
 ✅ **CI/CD Pipeline** (GitHub Actions)  
 ✅ **Structured Logging** (Pino)  
 ✅ **Standard API Format** (data/error + meta)  
+✅ **Cursor-based Pagination** su liste grandi
+✅ **Business Logic Complessa** in lib/calculations.ts
 
 ---
 
@@ -310,29 +356,113 @@ calculateEffectiveWeight(workoutExercise, traineeId) // Max 10 livelli
 
 - ✅ **TypeScript Strict** mode
 - ✅ **Zod** per validazione condivisa client/server
-- ✅ **Prisma** con migrations + seed
+- ✅ **Prisma** con migrations + seed script
 - ✅ **Server/Client Components** separation
-- ✅ **API Route Handlers** con try/catch + logging
-- ✅ **Error Boundaries** ready
-- ✅ **Responsive Design** (desktop trainer, mobile trainee)
-- ✅ **WCAG 2.1 AA** targeting (@axe-core/playwright)
-- ✅ **GDPR Compliance** (EU region, HTTPS)
+- ✅ **API Route Handlers** con try/catch + structured logging
+- ✅ **Error Boundaries** implementati
+- ✅ **Responsive Design** (desktop trainer, mobile trainee priority)
+- ✅ **WCAG 2.1 AA** compliance target
+- ✅ **GDPR Compliance** (EU region, HTTPS, data minimization)
+- ✅ **Security Best Practices** (JWT short-lived, refresh tokens, rate limiting)
 
 ---
 
 ## 🎉 Conclusioni
 
-Il progetto **ZeroCento Training Platform** ha ora una **base solida e professionale**. Tutti i layer core sono implementati:
-- ✅ Configurazione completa
-- ✅ Database con schema e seed
-- ✅ Auth e security
-- ✅ Utility e helper
-- ✅ Validazione robusta
-- ✅ API base funzionanti
+Il progetto **ZeroCento Training Platform** ha raggiunto un livello di implementazione significativo (~58%) con:
+- ✅ Fondamenta solide e production-ready
+- ✅ Maggior parte API implementate (85%)
+- ✅ Frontend funzionante per flussi base
+- ✅ Business logic critica completata
+- ⏳ Testing da potenziare (target 80%)
+- ⏳ Alcune pagine dettaglio da completare
 
-**Prossimi step**: completare le API exercises, programs e feedback, poi implementare i frontend Trainer e Trainee seguendo le specifiche di design.
+**Effort rimanente stimato**: ~120h per raggiungere MVP production-ready al 100% con testing completo.
 
-**Tempo stimato per completamento**: 30-40 ore di sviluppo aggiuntivo.
+**Riferimenti documentazione:**
+- Setup iniziale: [QUICK_START.md](./QUICK_START.md)
+- Task immediati: [NEXT_ACTIONS.md](./NEXT_ACTIONS.md)
+- Review sistema: [SYSTEM_REVIEW.md](../SYSTEM_REVIEW.md)
+- Architettura: [design/01_architecture_overview.md](../design/01_architecture_overview.md)
+- API Design: [design/03_backend_api.md](../design/03_backend_api.md)
+
+---
+
+## 🎯 Metriche Attuali
+
+- **Progresso complessivo**: ~58% completato
+- **File creati**: 100+ (code + tests + docs)
+- **Righe di codice**: ~8000+
+- **API endpoints**: 29 / 34 (85%)
+- **Frontend pages**: 21 / 30 (70%)
+- **Componenti UI**: 27+ implementati
+- **Test coverage**: ~30% (target: 80%)
+- **Documentazione**: 17 file markdown
+
+---
+
+## 🎯 Priorità Sviluppo Rimanenti
+
+### 🔴 CRITICO - Fix Sicurezza (Effort: ~4h)
+1. Fix RBAC bypass personal records
+2. Validazione range personal-record schema
+3. Validazione lunghezza search param
+4. Reject coefficiente esercizi > 3.0
+5. Fix errori TypeScript test integrazione
+
+### 🟠 ALTA - API Mancanti (Effort: ~11h)
+1. `POST /api/feedback` - Creazione feedback trainee
+2. `GET /api/trainee/workouts/[id]` - Vista workout con calcolo peso effettivo
+3. `POST /api/programs/[id]/complete` - Completamento manuale
+4. `PATCH /api/weeks/[id]` - Configurazione tipo settimana
+5. `GET /api/admin/programs` - Lista globale admin
+
+### 🟠 ALTA - Frontend Trainer (Effort: ~37h)
+1. Workout detail editor (wizard step 3) - 8h
+2. Publish programma (wizard step 4) - 4h
+3. Edit esercizio - 4h
+4. Edit programma - 4h
+5. Progress programma - 4h
+6. Reports programma - 6h
+7. Dettaglio trainee - 4h
+8. Massimali trainee - 3h
+
+### 🟠 ALTA - Frontend Trainee (Effort: ~8h)
+1. Workout view con card navigation + FeedbackForm - 8h
+
+### 🟡 MEDIA - Testing (Effort: ~27h)
+1. Unit tests per business logic critiche
+2. Integration tests per RBAC + CRUD completi
+3. E2E tests per flussi utente principali
+4. Raggiungere coverage 80%
+
+### 🟡 MEDIA - i18n + UX Polish (Effort: ~23h)
+1. Integrazione `useTranslation()` in componenti
+2. Rimozione stringhe hardcoded italiane
+3. Skeleton loaders
+4. Form disabled durante submit
+5. ARIA labels e focus management
+
+### 🔵 BASSO - CI/CD & PWA (Effort: ~10h)
+1. Configurazione secrets GitHub
+2. Vercel deployment
+3. Service worker Serwist
+4. Cache offline workout attivo
+
+**Effort totale rimanente stimato: ~120h**
+
+---
+
+## 🚀 Come Continuare
+
+### Setup Immediato (se non fatto):
+Vedi [QUICK_START.md](./QUICK_START.md) per setup completo in 15 minuti.
+
+### Next Actions Dettagliate:
+Vedi [NEXT_ACTIONS.md](./NEXT_ACTIONS.md) per task specifici da eseguire.
+
+### Review Completo Sistema:
+Vedi [SYSTEM_REVIEW.md](../SYSTEM_REVIEW.md) per analisi dettagliata stato implementazione, issue di sicurezza, code quality e backlog prioritizzato.
 
 ---
 
