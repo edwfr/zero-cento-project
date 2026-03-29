@@ -1,0 +1,101 @@
+'use client'
+
+import { useState } from 'react'
+
+interface YoutubeEmbedProps {
+    videoUrl: string
+    title?: string
+    className?: string
+    autoplay?: boolean
+}
+
+/**
+ * YoutubeEmbed Component
+ * Responsive YouTube video embed with lazy loading
+ * Converts various YouTube URL formats to embed format
+ */
+export default function YoutubeEmbed({
+    videoUrl,
+    title = 'Video esercizio',
+    className = '',
+    autoplay = false,
+}: YoutubeEmbedProps) {
+    const [isLoaded, setIsLoaded] = useState(false)
+
+    // Extract YouTube video ID from various URL formats
+    const getYouTubeVideoId = (url: string): string | null => {
+        const patterns = [
+            /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+            /youtube\.com\/watch\?.*v=([^&\n?#]+)/,
+        ]
+
+        for (const pattern of patterns) {
+            const match = url.match(pattern)
+            if (match && match[1]) {
+                return match[1]
+            }
+        }
+        return null
+    }
+
+    const videoId = getYouTubeVideoId(videoUrl)
+
+    if (!videoId) {
+        return (
+            <div className="flex items-center justify-center rounded-lg bg-gray-100 p-6 text-gray-500">
+                URL video non valido
+            </div>
+        )
+    }
+
+    const embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0${autoplay ? '&autoplay=1' : ''}`
+    const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+
+    return (
+        <div className={`relative overflow-hidden rounded-lg bg-black ${className}`}>
+            <div className="relative pb-[56.25%]">
+                {/* Thumbnail with Play Button (shown before video loads) */}
+                {!isLoaded && (
+                    <button
+                        onClick={() => setIsLoaded(true)}
+                        className="absolute inset-0 flex items-center justify-center bg-black transition-opacity hover:opacity-90"
+                    >
+                        <img
+                            src={thumbnailUrl}
+                            alt={title}
+                            className="absolute inset-0 h-full w-full object-cover"
+                        />
+                        <div className="relative z-10 flex h-16 w-16 items-center justify-center rounded-full bg-red-600 shadow-lg transition-transform hover:scale-110">
+                            <svg
+                                className="ml-1 h-8 w-8 text-white"
+                                fill="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path d="M8 5v14l11-7z" />
+                            </svg>
+                        </div>
+                    </button>
+                )}
+
+                {/* YouTube iframe (loaded on click) */}
+                {isLoaded && (
+                    <iframe
+                        className="absolute inset-0 h-full w-full"
+                        src={embedUrl}
+                        title={title}
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                    ></iframe>
+                )}
+            </div>
+
+            {/* Video Title Overlay */}
+            {title && !isLoaded && (
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+                    <p className="text-sm font-semibold text-white">{title}</p>
+                </div>
+            )}
+        </div>
+    )
+}
