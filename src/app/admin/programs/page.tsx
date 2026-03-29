@@ -1,9 +1,9 @@
 import { getSession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
-import AdminUsersContent from './AdminUsersContent'
+import AdminProgramsContent from './AdminProgramsContent'
 
-export default async function AdminUsersPage() {
+export default async function AdminProgramsPage() {
     const session = await getSession()
 
     if (!session) {
@@ -19,15 +19,15 @@ export default async function AdminUsersPage() {
             <div className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-3xl font-bold text-gray-900">
-                        Gestione Anagrafiche
+                        Tutti i Programmi
                     </h1>
                 </div>
 
                 <p className="text-gray-600 mb-6">
-                    Visualizza e gestisci tutti gli utenti del sistema
+                    Visualizza e supervisiona tutti i programmi di allenamento del sistema
                 </p>
 
-                <AdminUsersContent />
+                <AdminProgramsContent />
             </div>
         </DashboardLayout>
     )

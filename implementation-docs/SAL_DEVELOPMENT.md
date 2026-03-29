@@ -1,8 +1,8 @@
 # 📊 SAL (Stato Avanzamento Lavori) - ZeroCento Training Platform
 
-**Ultima modifica:** 29 Marzo 2026  
-**Versione:** 1.7  
-**Completamento generale:** 74%
+**Ultima modifica:** 30 Marzo 2026  
+**Versione:** 1.8  
+**Completamento generale:** 83%
 
 ---
 
@@ -11,15 +11,15 @@
 | Categoria             | Completato | In Corso | Da Fare | Totale  | %       |
 | --------------------- | ---------- | -------- | ------- | ------- | ------- |
 | **Database & Infra**  | 12         | 0        | 0       | 12      | 100%    |
-| **Backend API**       | 50         | 0        | 13      | 63      | 79%     |
+| **Backend API**       | 53         | 0        | 10      | 63      | 84%     |
 | **Componenti UI**     | 12         | 0        | 7       | 19      | 63%     |
-| **Frontend Admin**    | 2          | 0        | 8       | 10      | 20%     |
+| **Frontend Admin**    | 9          | 0        | 1       | 10      | 90%     |
 | **Frontend Trainer**  | 17         | 0        | 0       | 17      | 100%    |
 | **Frontend Trainee**  | 7          | 0        | 0       | 7       | 100%    |
-| **Auth & Security**   | 2          | 0        | 3       | 5       | 40%     |
+| **Auth & Security**   | 5          | 0        | 0       | 5       | 100%    |
 | **Testing & Quality** | 0          | 0        | 8       | 8       | 0%      |
 | **PWA & Mobile**      | 1          | 0        | 5       | 6       | 17%     |
-| **TOTALE**            | **107**    | **0**    | **46**  | **153** | **70%** |
+| **TOTALE**            | **121**    | **0**    | **32**  | **153** | **79%** |
 
 ---
 
@@ -114,9 +114,9 @@
 - ✅ **API-PR-003** - DELETE /api/personal-records/[id] (elimina massimale)
 
 ### 2.10 Admin API
-- ❌ **API-ADM-001** - POST /api/admin/trainees/[traineeId]/reassign (riassegna trainee)
-- ❌ **API-ADM-002** - PUT /api/admin/programs/[id]/override (modifica programma attivo)
-- ❌ **API-ADM-003** - GET /api/admin/reports/global (report system-wide)
+- ✅ **API-ADM-001** - POST /api/admin/trainees/[traineeId]/reassign (riassegna trainee)
+- ✅ **API-ADM-002** - PUT /api/admin/programs/[id]/override (modifica programma attivo)
+- ✅ **API-ADM-003** - GET /api/admin/reports/global (report system-wide)
 
 ---
 
@@ -157,23 +157,24 @@
 
 ## 👨‍💼 4. FRONTEND ADMIN
 
-**Completamento:** 2/10 (20%)
+**Completamento:** 9/10 (90%)
 
 ### 4.1 Admin Dashboard
 - ✅ **FE-ADM-001** - Struttura base dashboard (placeholder)
-- ❌ **FE-ADM-002** - Cards statistiche aggregate (utenti/programmi/volume)
-- ❌ **FE-ADM-003** - Collegamenti funzionanti ai moduli
-- ❌ **FE-ADM-004** - Quick actions (crea utente, vedi report)
+- ✅ **FE-ADM-002** - Cards statistiche aggregate (utenti/programmi/volume)
+- ✅ **FE-ADM-003** - Collegamenti funzionanti ai moduli
+- ✅ **FE-ADM-004** - Quick actions (crea utente, vedi report)
 
 ### 4.2 Gestione Utenti
 - ✅ **FE-ADM-005** - Pagina lista utenti con tabella e modali CRUD
-- ❌ **FE-ADM-006** - Filtri avanzati (ruolo, status, trainerId)
-- ❌ **FE-ADM-007** - Ricerca full-text (nome, email)
-- ❌ **FE-ADM-008** - Pagination implementata
-- ❌ **FE-ADM-009** - Bulk actions (attiva/disattiva multipli)
+- ✅ **FE-ADM-006** - Filtri avanzati (ruolo, status, trainerId)
+- ✅ **FE-ADM-007** - Ricerca full-text (nome, email)
+- ✅ **FE-ADM-008** - Pagination implementata
+- ✅ **FE-ADM-009** - Bulk actions (attiva/disattiva multipli)
 
 ### 4.3 Gestione Programmi Globale
 - ❌ **FE-ADM-010** - Vista tutti programmi con filtri trainer/trainee/status
+  - ⚠️ Pagina AdminProgramsContent.tsx creata, richiede verifica API `/api/programs?limit=200`
 
 ---
 
@@ -237,9 +238,9 @@
 ### 7.1 Authentication
 - ✅ **AUTH-001** - Login page completa (app/login/page.tsx)
 - ✅ **AUTH-002** - Middleware con Supabase session check + RBAC
-- ❌ **AUTH-003** - Forgot password page (forgot-password/page.tsx)
-- ❌ **AUTH-004** - Reset password page (reset-password/page.tsx)
-- ❌ **AUTH-005** - Change password page (profile/change-password/page.tsx)
+- ✅ **AUTH-003** - Forgot password page (forgot-password/page.tsx)
+- ✅ **AUTH-004** - Reset password page (reset-password/page.tsx)
+- ✅ **AUTH-005** - Change password page (profile/change-password/page.tsx)
 
 ### 7.2 Security
 - ✅ **SEC-001** - Rate limiting (Redis + in-memory fallback)
