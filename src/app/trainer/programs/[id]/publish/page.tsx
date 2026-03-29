@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
+import LoadingSpinner from '@/components/LoadingSpinner'
 
 interface WorkoutSummary {
     id: string
@@ -48,7 +48,7 @@ export default function PublishProgramPage() {
 
     useEffect(() => {
         fetchProgram()
-        
+
         // Set default start date to next Monday
         const today = new Date()
         const nextMonday = new Date(today)
@@ -150,7 +150,7 @@ export default function PublishProgramPage() {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <LoadingSpinner size="lg" color="orange" />
+                <LoadingSpinner size="lg" color="primary" />
             </div>
         )
     }
@@ -287,11 +287,10 @@ export default function PublishProgramPage() {
                                             Settimana {week.weekNumber}
                                         </span>
                                         <span
-                                            className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                                                week.weekType === 'loading'
-                                                    ? 'bg-blue-100 text-blue-800'
-                                                    : 'bg-green-100 text-green-800'
-                                            }`}
+                                            className={`px-2 py-1 text-xs font-semibold rounded-full ${week.weekType === 'loading'
+                                                ? 'bg-blue-100 text-blue-800'
+                                                : 'bg-green-100 text-green-800'
+                                                }`}
                                         >
                                             {week.weekType === 'loading' ? 'Loading' : 'Deload'}
                                         </span>
@@ -301,11 +300,10 @@ export default function PublishProgramPage() {
                                             {week.workouts.map((w) => (
                                                 <div
                                                     key={w.id}
-                                                    className={`w-8 h-8 rounded flex items-center justify-center text-xs font-semibold ${
-                                                        w.exerciseCount > 0
-                                                            ? 'bg-green-500 text-white'
-                                                            : 'bg-gray-300 text-gray-600'
-                                                    }`}
+                                                    className={`w-8 h-8 rounded flex items-center justify-center text-xs font-semibold ${w.exerciseCount > 0
+                                                        ? 'bg-green-500 text-white'
+                                                        : 'bg-gray-300 text-gray-600'
+                                                        }`}
                                                     title={`${DAY_NAMES[w.dayOfWeek]}: ${w.exerciseCount} esercizi`}
                                                 >
                                                     {DAY_NAMES[w.dayOfWeek][0]}

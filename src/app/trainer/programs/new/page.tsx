@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
+import LoadingSpinner from '@/components/LoadingSpinner'
 
 interface Trainee {
     id: string
@@ -229,11 +229,10 @@ export default function NewProgramPage() {
                                         key={weeks}
                                         type="button"
                                         onClick={() => setDurationWeeks(weeks)}
-                                        className={`px-3 py-1 text-sm font-semibold rounded ${
-                                            durationWeeks === weeks
-                                                ? 'bg-[#FFA700] text-white'
-                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                        }`}
+                                        className={`px-3 py-1 text-sm font-semibold rounded ${durationWeeks === weeks
+                                            ? 'bg-[#FFA700] text-white'
+                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                            }`}
                                     >
                                         {weeks}
                                     </button>
@@ -263,11 +262,10 @@ export default function NewProgramPage() {
                                         key={workouts}
                                         type="button"
                                         onClick={() => setWorkoutsPerWeek(workouts)}
-                                        className={`px-3 py-1 text-sm font-semibold rounded ${
-                                            workoutsPerWeek === workouts
-                                                ? 'bg-[#FFA700] text-white'
-                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                        }`}
+                                        className={`px-3 py-1 text-sm font-semibold rounded ${workoutsPerWeek === workouts
+                                            ? 'bg-[#FFA700] text-white'
+                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                            }`}
                                     >
                                         {workouts}
                                     </button>

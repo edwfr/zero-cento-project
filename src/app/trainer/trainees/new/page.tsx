@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
+import LoadingSpinner from '@/components/LoadingSpinner'
 
 export default function NewTraineePage() {
     const router = useRouter()

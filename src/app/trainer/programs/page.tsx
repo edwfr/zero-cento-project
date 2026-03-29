@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
+import LoadingSpinner from '@/components/LoadingSpinner'
 
 interface Program {
     id: string
@@ -145,31 +145,28 @@ export default function TrainerProgramsPage() {
                         <nav className="-mb-px flex space-x-8">
                             <button
                                 onClick={() => setActiveTab('draft')}
-                                className={`pb-4 px-1 border-b-2 font-semibold text-sm ${
-                                    activeTab === 'draft'
-                                        ? 'border-[#FFA700] text-[#FFA700]'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                }`}
+                                className={`pb-4 px-1 border-b-2 font-semibold text-sm ${activeTab === 'draft'
+                                    ? 'border-[#FFA700] text-[#FFA700]'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    }`}
                             >
                                 📝 Bozze ({statusCounts.draft})
                             </button>
                             <button
                                 onClick={() => setActiveTab('active')}
-                                className={`pb-4 px-1 border-b-2 font-semibold text-sm ${
-                                    activeTab === 'active'
-                                        ? 'border-[#FFA700] text-[#FFA700]'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                }`}
+                                className={`pb-4 px-1 border-b-2 font-semibold text-sm ${activeTab === 'active'
+                                    ? 'border-[#FFA700] text-[#FFA700]'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    }`}
                             >
                                 ✅ Attivi ({statusCounts.active})
                             </button>
                             <button
                                 onClick={() => setActiveTab('completed')}
-                                className={`pb-4 px-1 border-b-2 font-semibold text-sm ${
-                                    activeTab === 'completed'
-                                        ? 'border-[#FFA700] text-[#FFA700]'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                }`}
+                                className={`pb-4 px-1 border-b-2 font-semibold text-sm ${activeTab === 'completed'
+                                    ? 'border-[#FFA700] text-[#FFA700]'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    }`}
                             >
                                 🏁 Completati ({statusCounts.completed})
                             </button>
@@ -204,19 +201,18 @@ export default function TrainerProgramsPage() {
                                         </p>
                                     </div>
                                     <span
-                                        className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                                            program.status === 'draft'
-                                                ? 'bg-yellow-100 text-yellow-800'
-                                                : program.status === 'active'
+                                        className={`px-3 py-1 text-xs font-semibold rounded-full ${program.status === 'draft'
+                                            ? 'bg-yellow-100 text-yellow-800'
+                                            : program.status === 'active'
                                                 ? 'bg-green-100 text-green-800'
                                                 : 'bg-gray-100 text-gray-800'
-                                        }`}
+                                            }`}
                                     >
                                         {program.status === 'draft'
                                             ? 'Bozza'
                                             : program.status === 'active'
-                                            ? 'Attivo'
-                                            : 'Completato'}
+                                                ? 'Attivo'
+                                                : 'Completato'}
                                     </span>
                                 </div>
 

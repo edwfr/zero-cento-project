@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
+import LoadingSpinner from '@/components/LoadingSpinner'
 
 interface Workout {
     id: string
@@ -124,7 +124,7 @@ export default function EditProgramPage() {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <LoadingSpinner size="lg" color="orange" />
+                <LoadingSpinner size="lg" color="primary" />
             </div>
         )
     }
@@ -227,11 +227,10 @@ export default function EditProgramPage() {
                                     <button
                                         onClick={() => handleToggleWeekType(week.id, week.weekType)}
                                         disabled={saving}
-                                        className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
-                                            week.weekType === 'loading'
-                                                ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                                                : 'bg-green-100 text-green-800 hover:bg-green-200'
-                                        }`}
+                                        className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${week.weekType === 'loading'
+                                            ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                                            : 'bg-green-100 text-green-800 hover:bg-green-200'
+                                            }`}
                                     >
                                         {week.weekType === 'loading' ? '📈 Loading' : '🧘 Deload'}
                                     </button>
@@ -247,11 +246,10 @@ export default function EditProgramPage() {
                                     <Link
                                         key={workout.id}
                                         href={`/trainer/programs/${programId}/workouts/${workout.id}`}
-                                        className={`border-2 rounded-lg p-4 transition-all hover:shadow-md ${
-                                            workout.exerciseCount > 0
-                                                ? 'border-green-300 bg-green-50 hover:border-green-400'
-                                                : 'border-gray-300 bg-white hover:border-[#FFA700]'
-                                        }`}
+                                        className={`border-2 rounded-lg p-4 transition-all hover:shadow-md ${workout.exerciseCount > 0
+                                            ? 'border-green-300 bg-green-50 hover:border-green-400'
+                                            : 'border-gray-300 bg-white hover:border-[#FFA700]'
+                                            }`}
                                     >
                                         <div className="flex items-center justify-between mb-2">
                                             <p className="font-semibold text-gray-900">
@@ -286,11 +284,10 @@ export default function EditProgramPage() {
                 <div className="flex space-x-4 mt-8">
                     <Link
                         href={`/trainer/programs/${programId}/publish`}
-                        className={`flex-1 py-3 px-6 rounded-lg font-semibold text-center transition-colors ${
-                            completedWorkouts === totalWorkouts
-                                ? 'bg-[#FFA700] hover:bg-[#FF9500] text-white'
-                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        }`}
+                        className={`flex-1 py-3 px-6 rounded-lg font-semibold text-center transition-colors ${completedWorkouts === totalWorkouts
+                            ? 'bg-[#FFA700] hover:bg-[#FF9500] text-white'
+                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            }`}
                         onClick={(e) => {
                             if (completedWorkouts < totalWorkouts) {
                                 e.preventDefault()

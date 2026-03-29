@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
+import LoadingSpinner from '@/components/LoadingSpinner'
 
 interface Trainee {
     id: string
@@ -185,11 +185,10 @@ export default function TrainerTraineesPage() {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span
-                                                className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                                                    trainee.isActive
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-red-100 text-red-800'
-                                                }`}
+                                                className={`px-3 py-1 text-xs font-semibold rounded-full ${trainee.isActive
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-red-100 text-red-800'
+                                                    }`}
                                             >
                                                 {trainee.isActive ? 'Attivo' : 'Disattivato'}
                                             </span>
@@ -212,11 +211,10 @@ export default function TrainerTraineesPage() {
                                                             trainee.isActive
                                                         )
                                                     }
-                                                    className={`font-semibold ${
-                                                        trainee.isActive
-                                                            ? 'text-red-600 hover:text-red-700'
-                                                            : 'text-green-600 hover:text-green-700'
-                                                    }`}
+                                                    className={`font-semibold ${trainee.isActive
+                                                        ? 'text-red-600 hover:text-red-700'
+                                                        : 'text-green-600 hover:text-green-700'
+                                                        }`}
                                                 >
                                                     {trainee.isActive ? 'Disattiva' : 'Attiva'}
                                                 </button>

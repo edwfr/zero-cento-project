@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
+import LoadingSpinner from '@/components/LoadingSpinner'
 
 interface Exercise {
     id: string
@@ -210,7 +210,7 @@ export default function WorkoutDetailPage() {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <LoadingSpinner size="lg" color="orange" />
+                <LoadingSpinner size="lg" color="primary" />
             </div>
         )
     }
@@ -261,11 +261,10 @@ export default function WorkoutDetailPage() {
                                                 {we.exercise.name}
                                             </h3>
                                             <span
-                                                className={`px-2 py-1 text-xs font-semibold rounded ${
-                                                    we.exercise.type === 'fundamental'
-                                                        ? 'bg-purple-100 text-purple-800'
-                                                        : 'bg-gray-100 text-gray-800'
-                                                }`}
+                                                className={`px-2 py-1 text-xs font-semibold rounded ${we.exercise.type === 'fundamental'
+                                                    ? 'bg-purple-100 text-purple-800'
+                                                    : 'bg-gray-100 text-gray-800'
+                                                    }`}
                                             >
                                                 {we.exercise.type === 'fundamental'
                                                     ? 'Fondamentale'
@@ -462,11 +461,10 @@ export default function WorkoutDetailPage() {
                                             key={rpe}
                                             type="button"
                                             onClick={() => setTargetRPE(rpe)}
-                                            className={`flex-1 py-2 text-sm font-semibold rounded transition-colors ${
-                                                targetRPE === rpe
-                                                    ? 'bg-[#FFA700] text-white'
-                                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                            }`}
+                                            className={`flex-1 py-2 text-sm font-semibold rounded transition-colors ${targetRPE === rpe
+                                                ? 'bg-[#FFA700] text-white'
+                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                                }`}
                                         >
                                             {rpe}
                                         </button>

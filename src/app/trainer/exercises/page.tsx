@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
+import LoadingSpinner from '@/components/LoadingSpinner'
 import Link from 'next/link'
 
 interface Exercise {
@@ -169,11 +169,10 @@ export default function TrainerExercisesPage() {
                                 {exercise.youtubeUrl && (
                                     <div className="aspect-video bg-gray-200">
                                         <img
-                                            src={`https://img.youtube.com/vi/${
-                                                exercise.youtubeUrl.match(
-                                                    /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/
-                                                )?.[1]
-                                            }/mqdefault.jpg`}
+                                            src={`https://img.youtube.com/vi/${exercise.youtubeUrl.match(
+                                                /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/
+                                            )?.[1]
+                                                }/mqdefault.jpg`}
                                             alt={exercise.name}
                                             className="w-full h-full object-cover"
                                         />
@@ -187,11 +186,10 @@ export default function TrainerExercisesPage() {
                                             {exercise.name}
                                         </h3>
                                         <span
-                                            className={`text-xs font-semibold px-2 py-1 rounded ${
-                                                exercise.type === 'fundamental'
-                                                    ? 'bg-red-100 text-red-800'
-                                                    : 'bg-blue-100 text-blue-800'
-                                            }`}
+                                            className={`text-xs font-semibold px-2 py-1 rounded ${exercise.type === 'fundamental'
+                                                ? 'bg-red-100 text-red-800'
+                                                : 'bg-blue-100 text-blue-800'
+                                                }`}
                                         >
                                             {exercise.type === 'fundamental'
                                                 ? 'FONDAMENTALE'

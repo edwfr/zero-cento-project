@@ -1,8 +1,8 @@
 # 📊 SAL (Stato Avanzamento Lavori) - ZeroCento Training Platform
 
 **Ultima modifica:** 29 Marzo 2026  
-**Versione:** 1.4  
-**Completamento generale:** 60%
+**Versione:** 1.5  
+**Completamento generale:** 64%
 
 ---
 
@@ -15,11 +15,11 @@
 | **Componenti UI**     | 11         | 0        | 8       | 19      | 58%     |
 | **Frontend Admin**    | 2          | 0        | 8       | 10      | 20%     |
 | **Frontend Trainer**  | 13         | 0        | 4       | 17      | 76%     |
-| **Frontend Trainee**  | 0          | 0        | 6       | 6       | 0%      |
+| **Frontend Trainee**  | 7          | 0        | 0       | 7       | 100%    |
 | **Auth & Security**   | 2          | 0        | 3       | 5       | 40%     |
 | **Testing & Quality** | 0          | 0        | 8       | 8       | 0%      |
 | **PWA & Mobile**      | 1          | 0        | 5       | 6       | 17%     |
-| **TOTALE**            | **87**     | **0**    | **59**  | **146** | **60%** |
+| **TOTALE**            | **94**     | **0**    | **59**  | **153** | **61%** |
 
 ---
 
@@ -212,21 +212,21 @@
 
 ## 🏋️ 6. FRONTEND TRAINEE
 
-**Completamento:** 0/6 (0%)
+**Completamento:** 7/7 (100%) ✅
 
 ### 6.1 Trainee Dashboard
-- ❌ **FE-TN-001** - Dashboard con hero programma attivo
-- ❌ **FE-TN-002** - Card prossimo allenamento
-- ❌ **FE-TN-003** - Link massimali e storico
+- ✅ **FE-TN-001** - Dashboard con hero programma attivo
+- ✅ **FE-TN-002** - Card prossimo allenamento
+- ✅ **FE-TN-003** - Link massimali e storico
 
 ### 6.2 Visualizzazione Programma
-- ❌ **FE-TN-004** - Vista programma attivo (programs/current/page.tsx)
-- ❌ **FE-TN-005** - Dettaglio workout + form feedback (workouts/[id]/page.tsx)
-  - **CRITICO:** Auto-save locale, input serie, calcolo volume live
-- ❌ **FE-TN-006** - Storico programmi completati (history/page.tsx)
+- ✅ **FE-TN-004** - Vista programma attivo (programs/current/page.tsx)
+- ✅ **FE-TN-005** - Dettaglio workout + form feedback (workouts/[id]/page.tsx)
+  - **CRITICO:** ✅ Auto-save locale, input serie, calcolo volume live
+- ✅ **FE-TN-006** - Storico programmi completati (history/page.tsx)
 
 ### 6.3 Massimali
-- ❌ **FE-TN-007** - Visualizzazione massimali read-only (records/page.tsx)
+- ✅ **FE-TN-007** - Visualizzazione massimali read-only (records/page.tsx)
 
 ---
 
