@@ -75,7 +75,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
             <div>
                 <button
                     onClick={() => setIsEditing(true)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 transition-colors"
                 >
                     Modifica Profilo
                 </button>
@@ -134,7 +134,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                        className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                     >
                         {loading ? 'Salvando...' : 'Salva Modifiche'}
                     </button>

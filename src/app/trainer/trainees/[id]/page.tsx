@@ -140,7 +140,7 @@ export default function TraineeProfilePage() {
                 <div className="mb-8">
                     <Link
                         href="/trainer/trainees"
-                        className="text-blue-600 hover:text-blue-700 text-sm font-semibold mb-4 inline-block"
+                        className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
                     >
                         ← Torna agli atleti
                     </Link>
@@ -154,8 +154,8 @@ export default function TraineeProfilePage() {
                         <div className="flex items-center space-x-4">
                             <span
                                 className={`px-4 py-2 text-sm font-semibold rounded-full ${trainee.isActive
-                                        ? 'bg-green-100 text-green-800'
-                                        : 'bg-red-100 text-red-800'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-red-100 text-red-800'
                                     }`}
                             >
                                 {trainee.isActive ? 'Attivo' : 'Disattivato'}
@@ -195,8 +195,8 @@ export default function TraineeProfilePage() {
                             <button
                                 onClick={() => setActiveTab('programs')}
                                 className={`pb-4 px-1 border-b-2 font-semibold text-sm ${activeTab === 'programs'
-                                        ? 'border-[#FFA700] text-[#FFA700]'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    ? 'border-[#FFA700] text-[#FFA700]'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
                                 📋 Programmi ({programs.length})
@@ -204,8 +204,8 @@ export default function TraineeProfilePage() {
                             <button
                                 onClick={() => setActiveTab('records')}
                                 className={`pb-4 px-1 border-b-2 font-semibold text-sm ${activeTab === 'records'
-                                        ? 'border-[#FFA700] text-[#FFA700]'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    ? 'border-[#FFA700] text-[#FFA700]'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
                                 💪 Massimali ({records.length})
@@ -281,7 +281,7 @@ export default function TraineeProfilePage() {
                                                 <td className="px-6 py-4 whitespace-nowrap text-right">
                                                     <Link
                                                         href={`/trainer/programs/${program.id}`}
-                                                        className="text-blue-600 hover:text-blue-800 text-sm font-semibold"
+                                                        className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold"
                                                     >
                                                         Visualizza →
                                                     </Link>

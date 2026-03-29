@@ -232,7 +232,7 @@ export default function TrainerExercisesPage() {
                                     <div className="flex space-x-2">
                                         <Link
                                             href={`/trainer/exercises/${exercise.id}/edit`}
-                                            className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-lg text-center transition-colors"
+                                            className="flex-1 flex items-center justify-center gap-2 bg-brand-primary hover:bg-brand-primary/90 text-white text-sm font-semibold py-2 px-4 rounded-lg text-center transition-colors"
                                             title="Modifica"
                                         >
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

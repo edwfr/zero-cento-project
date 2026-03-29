@@ -147,7 +147,7 @@ export default function ExercisesTable() {
 
                 <button
                     onClick={() => setIsCreateModalOpen(true)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center space-x-2 justify-center sm:justify-start"
+                    className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 transition-colors flex items-center space-x-2 justify-center sm:justify-start"
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -233,7 +233,7 @@ export default function ExercisesTable() {
                                             href={exercise.youtubeUrl}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-blue-600 hover:text-blue-900"
+                                            className="text-brand-primary hover:text-brand-primary/80"
                                         >
                                             Video
                                         </a>

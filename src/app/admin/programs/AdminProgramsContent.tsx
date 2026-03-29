@@ -190,7 +190,7 @@ export default function AdminProgramsContent() {
                                                 </Link>
                                                 <Link
                                                     href={`/trainer/programs/${program.id}/reports`}
-                                                    className="text-blue-600 hover:text-blue-800 font-semibold"
+                                                    className="text-brand-primary hover:text-brand-primary/80 font-semibold"
                                                 >
                                                     Report
                                                 </Link>
@@ -233,8 +233,8 @@ export default function AdminProgramsContent() {
                                     key={p}
                                     onClick={() => setPage(p)}
                                     className={`px-3 py-1 text-sm border rounded-lg transition-colors ${p === page
-                                            ? 'bg-[#FFA700] text-white border-[#FFA700]'
-                                            : 'border-gray-300 hover:bg-gray-50'
+                                        ? 'bg-[#FFA700] text-white border-[#FFA700]'
+                                        : 'border-gray-300 hover:bg-gray-50'
                                         }`}
                                 >
                                     {p}

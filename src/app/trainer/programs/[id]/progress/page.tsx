@@ -98,7 +98,7 @@ export default function ProgramProgressPage() {
                 <div className="mb-8">
                     <Link
                         href={`/trainer/programs/${programId}`}
-                        className="text-blue-600 hover:text-blue-700 text-sm font-semibold mb-4 inline-block"
+                        className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
                     >
                         ← Torna al programma
                     </Link>
@@ -240,7 +240,7 @@ export default function ProgramProgressPage() {
                                             <td className="px-6 py-4 whitespace-nowrap text-right">
                                                 <Link
                                                     href={`/trainer/programs/${programId}`}
-                                                    className="text-blue-600 hover:text-blue-800 text-sm font-semibold"
+                                                    className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold"
                                                 >
                                                     Dettagli →
                                                 </Link>
@@ -264,10 +264,10 @@ export default function ProgramProgressPage() {
                                 <span className="text-gray-600">Stato:</span>
                                 <span
                                     className={`font-semibold ${progress.status === 'active'
-                                            ? 'text-green-600'
-                                            : progress.status === 'completed'
-                                                ? 'text-gray-600'
-                                                : 'text-yellow-600'
+                                        ? 'text-green-600'
+                                        : progress.status === 'completed'
+                                            ? 'text-gray-600'
+                                            : 'text-yellow-600'
                                         }`}
                                 >
                                     {progress.status === 'active'

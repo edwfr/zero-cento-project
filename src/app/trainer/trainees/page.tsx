@@ -200,7 +200,7 @@ export default function TrainerTraineesPage() {
                                             <div className="flex justify-end space-x-2">
                                                 <Link
                                                     href={`/trainer/trainees/${trainee.id}`}
-                                                    className="text-blue-600 hover:text-blue-700 font-semibold"
+                                                    className="text-brand-primary hover:text-brand-primary/80 font-semibold"
                                                 >
                                                     Dettagli
                                                 </Link>

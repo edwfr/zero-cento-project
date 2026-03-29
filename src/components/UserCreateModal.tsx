@@ -73,7 +73,7 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
 
                     <button
                         onClick={onUserCreated}
-                        className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                        className="w-full px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 transition-colors"
                     >
                         Chiudi
                     </button>
@@ -158,7 +158,7 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
                         <button
                             type="submit"
                             disabled={loading}
-                            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                            className="flex-1 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                         >
                             {loading ? 'Creando...' : 'Crea Utente'}
                         </button>

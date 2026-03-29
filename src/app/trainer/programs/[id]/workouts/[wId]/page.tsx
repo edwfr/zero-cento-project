@@ -234,7 +234,7 @@ export default function WorkoutDetailPage() {
                 <div className="mb-8">
                     <Link
                         href={`/trainer/programs/${programId}/edit`}
-                        className="text-blue-600 hover:text-blue-700 text-sm font-semibold mb-4 inline-block"
+                        className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
                     >
                         ← Torna alla panoramica settimane
                     </Link>

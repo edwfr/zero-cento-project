@@ -241,7 +241,7 @@ export default function AdminUsersContent() {
                         </button>
                         <button
                             onClick={() => setSelectedIds(new Set())}
-                            className="ml-auto text-blue-600 hover:text-blue-800 text-sm font-semibold"
+                            className="ml-auto text-brand-primary hover:text-brand-primary/80 text-sm font-semibold"
                         >
                             Deseleziona
                         </button>
@@ -348,7 +348,7 @@ export default function AdminUsersContent() {
                                             <div className="flex justify-end space-x-3">
                                                 <button
                                                     onClick={() => setEditingUser(user)}
-                                                    className="text-blue-600 hover:text-blue-800"
+                                                    className="text-brand-primary hover:text-brand-primary/80"
                                                     title="Modifica"
                                                 >
                                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

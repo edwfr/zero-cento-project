@@ -118,14 +118,14 @@ export default function ProgramReportsPage() {
                     <div className="flex items-center space-x-4 mb-4">
                         <Link
                             href={`/trainer/programs/${programId}/progress`}
-                            className="text-blue-600 hover:text-blue-700 text-sm font-semibold"
+                            className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold"
                         >
                             ← Avanzamento
                         </Link>
                         <span className="text-gray-300">|</span>
                         <Link
                             href={`/trainer/programs/${programId}`}
-                            className="text-blue-600 hover:text-blue-700 text-sm font-semibold"
+                            className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold"
                         >
                             Programma
                         </Link>
@@ -199,10 +199,10 @@ export default function ProgramReportsPage() {
                                             <span className="text-gray-500">RPE Medio:</span>
                                             <span
                                                 className={`font-semibold ${data.avgRPE !== null && data.avgRPE >= 8.5
-                                                        ? 'text-red-600'
-                                                        : data.avgRPE !== null && data.avgRPE >= 7.5
-                                                            ? 'text-orange-500'
-                                                            : 'text-green-600'
+                                                    ? 'text-red-600'
+                                                    : data.avgRPE !== null && data.avgRPE >= 7.5
+                                                        ? 'text-orange-500'
+                                                        : 'text-green-600'
                                                     }`}
                                             >
                                                 {data.avgRPE !== null

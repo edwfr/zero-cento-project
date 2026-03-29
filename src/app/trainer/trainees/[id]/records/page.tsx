@@ -185,7 +185,7 @@ export default function TraineeRecordsManagementPage() {
                 <div className="mb-8">
                     <Link
                         href={`/trainer/trainees/${traineeId}`}
-                        className="text-blue-600 hover:text-blue-700 text-sm font-semibold mb-4 inline-block"
+                        className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
                     >
                         ← Torna al profilo atleta
                     </Link>

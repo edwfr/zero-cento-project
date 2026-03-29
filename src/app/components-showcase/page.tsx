@@ -103,7 +103,7 @@ function ComponentShowcase() {
                         </button>
                         <button
                             onClick={() => showToast('Informazione: caricamento completato', 'info')}
-                            className="rounded-lg bg-blue-500 px-4 py-2 font-semibold text-white hover:bg-blue-600"
+                            className="rounded-lg bg-brand-primary px-4 py-2 font-semibold text-white hover:bg-brand-primary/90"
                         >
                             Info Toast
                         </button>
@@ -320,7 +320,7 @@ function ComponentShowcase() {
                                 setConfirmVariant('info')
                                 setConfirmModalOpen(true)
                             }}
-                            className="rounded-lg bg-blue-500 px-4 py-2 font-semibold text-white hover:bg-blue-600"
+                            className="rounded-lg bg-brand-primary px-4 py-2 font-semibold text-white hover:bg-brand-primary/90"
                         >
                             Info Modal
                         </button>

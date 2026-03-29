@@ -100,7 +100,7 @@ export default function NewTraineePage() {
                                 navigator.clipboard.writeText(generatedPassword)
                                 alert('Password copiata negli appunti!')
                             }}
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                            className="w-full bg-brand-primary hover:bg-brand-primary/90 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
                         >
                             📋 Copia Password
                         </button>
@@ -123,7 +123,7 @@ export default function NewTraineePage() {
                 <div className="mb-8">
                     <Link
                         href="/trainer/trainees"
-                        className="text-blue-600 hover:text-blue-700 text-sm font-semibold mb-4 inline-block"
+                        className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
                     >
                         ← Torna agli atleti
                     </Link>

@@ -198,7 +198,7 @@ export default async function TrainerDashboard() {
                         </Link>
                         <Link
                             href="/trainer/trainees/new"
-                            className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                            className="flex items-center justify-center bg-brand-primary hover:bg-brand-primary/90 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
                         >
                             <span className="mr-2">👤</span>
                             Aggiungi Atleta

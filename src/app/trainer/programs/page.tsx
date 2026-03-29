@@ -246,7 +246,7 @@ export default function TrainerProgramsPage() {
                                 <div className="flex space-x-2 pt-4 border-t">
                                     <Link
                                         href={`/trainer/programs/${program.id}`}
-                                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-lg text-center transition-colors"
+                                        className="flex-1 bg-brand-primary hover:bg-brand-primary/90 text-white text-sm font-semibold py-2 px-4 rounded-lg text-center transition-colors"
                                     >
                                         Visualizza
                                     </Link>

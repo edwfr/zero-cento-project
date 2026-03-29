@@ -255,7 +255,7 @@ export default function ProgramsTable({
                                             <div className="flex items-center justify-end space-x-2">
                                                 <Link
                                                     href={`${basePath}/${program.id}`}
-                                                    className="text-blue-600 hover:text-blue-800 text-sm font-semibold"
+                                                    className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold"
                                                 >
                                                     Visualizza
                                                 </Link>

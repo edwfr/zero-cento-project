@@ -101,7 +101,7 @@ export default function PersonalRecordsPage() {
                 <div className="mb-8">
                     <Link
                         href="/trainee/dashboard"
-                        className="text-blue-600 hover:text-blue-700 text-sm font-semibold mb-4 inline-block"
+                        className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
                     >
                         ← Torna alla Dashboard
                     </Link>
@@ -160,8 +160,8 @@ export default function PersonalRecordsPage() {
                                                     )
                                                 }
                                                 className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors ${typeFilter === option.value
-                                                        ? 'bg-[#FFA700] text-white'
-                                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                                    ? 'bg-[#FFA700] text-white'
+                                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                                     }`}
                                             >
                                                 {option.label}
@@ -196,8 +196,8 @@ export default function PersonalRecordsPage() {
                                                     </h3>
                                                     <span
                                                         className={`px-2 py-1 text-xs font-semibold rounded ${pr.exercise.type === 'fundamental'
-                                                                ? 'bg-purple-100 text-purple-800'
-                                                                : 'bg-gray-100 text-gray-800'
+                                                            ? 'bg-purple-100 text-purple-800'
+                                                            : 'bg-gray-100 text-gray-800'
                                                             }`}
                                                     >
                                                         {pr.exercise.type === 'fundamental'

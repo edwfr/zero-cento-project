@@ -46,7 +46,7 @@ export default function ConfirmationModal({
         },
         info: {
             icon: 'ℹ️',
-            confirmBg: 'bg-blue-600 hover:bg-blue-700',
+            confirmBg: 'bg-brand-primary hover:bg-brand-primary/90',
             titleColor: 'text-blue-900',
             iconBg: 'bg-blue-100',
         },

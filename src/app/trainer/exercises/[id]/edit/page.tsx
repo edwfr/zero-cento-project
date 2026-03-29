@@ -180,7 +180,7 @@ export default function EditExercisePage() {
                 <div className="mb-8">
                     <Link
                         href="/trainer/exercises"
-                        className="text-blue-600 hover:text-blue-700 text-sm font-semibold mb-4 inline-block"
+                        className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
                     >
                         ← Torna alla libreria
                     </Link>
