@@ -32,9 +32,10 @@ export async function getSession(): Promise<AuthSession | null> {
         return null
     }
 
-    // Fetch user data from Prisma
+    // Fetch user data from Prisma using email (not ID)
+    // Supabase auth.users and our public.users may have different IDs
     const user = await prisma.user.findUnique({
-        where: { id: session.user.id },
+        where: { email: session.user.email },
         select: {
             id: true,
             email: true,

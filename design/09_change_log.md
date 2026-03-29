@@ -1,5 +1,123 @@
 # Change Log
 
+## [2026-03-29] Implementazione Layout Dashboard Comuni e Gestione Anagrafiche Admin
+
+### Modifiche
+
+**1. Creazione Layout Dashboard Comune**
+- **Contesto**: Richiesta implementazione layout unificato per tutte le dashboard con logo, profilo e logout
+- **Problema**: Necessità di avere un'interfaccia coerente con elementi di navigazione standard accessibili da ogni dashboard
+- **Soluzione**:
+  - Creato componente `src/components/DashboardLayout.tsx` che fornisce:
+    - Logo ZeroCento in alto a sinistra (cliccabile, ritorna alla dashboard del proprio ruolo)
+    - Informazioni utente (nome, cognome, ruolo) nel header
+    - Icona profilo per accedere a /profile
+    - Icona logout per disconnessione con redirect a /login
+  - Layout responsive con header sticky e contenuto centrato
+  - Applicato a tutte le dashboard esistenti (admin, trainer, trainee)
+- **File creati**: 
+  - `src/components/DashboardLayout.tsx` — Layout comune
+- **File modificati**: 
+  - `src/app/admin/dashboard/page.tsx` — Integrato DashboardLayout
+  - `src/app/trainer/dashboard/page.tsx` — Integrato DashboardLayout
+  - `src/app/trainee/dashboard/page.tsx` — Integrato DashboardLayout
+- **Impatto**: UX coerente, navigazione intuitiva, branding costante su tutte le schermate
+
+**2. Implementazione Pagina Profilo Universale**
+- **Contesto**: Tutti gli utenti devono poter visualizzare e modificare i propri dati anagrafici
+- **Problema**: Necessità di una pagina accessibile a tutti i ruoli per gestire informazioni personali dalla tabella `users`
+- **Soluzione**:
+  - Creato `src/app/profile/page.tsx` con:
+    - Visualizzazione dati account (email, ruolo, nome, cognome, ID)
+    - Form di modifica per nome e cognome
+    - Integrazione con API PUT /api/users/[id]
+    - Validazione e gestione errori client-side
+  - Creato `src/components/ProfileForm.tsx` per gestione form con stato
+  - Accessibile da icona profilo nel header del DashboardLayout
+- **File creati**: 
+  - `src/app/profile/page.tsx` — Pagina profilo
+  - `src/components/ProfileForm.tsx` — Form modifica dati
+- **Impatto**: Autonomia utenti nella gestione dati personali, riduzione carico admin per modifiche minori
+
+**3. Implementazione Gestione Anagrafiche Admin con CRUD Completo**
+- **Contesto**: Admin deve avere visibilità e controllo completo su tutte le anagrafiche del sistema
+- **Problema**: Necessità di interfaccia amministrativa per gestire utenti (visualizzazione, creazione, modifica, eliminazione, attivazione/disattivazione)
+- **Soluzione**:
+  - Creato `src/app/admin/users/page.tsx` — Pagina gestione anagrafiche con:
+    - Tabella utenti con colonne: nome, email, ruolo, stato, data creazione
+    - Filtro per ruolo (tutti, admin, trainer, atleta)
+    - Badge con colori per ruoli e stati
+    - Azioni inline: modifica, elimina, toggle attivo/disattivo
+  - Creato `src/components/UsersTable.tsx` — Componente tabella con:
+    - Fetch automatico da API GET /api/users
+    - Gestione stati loading/error
+    - Toggle attivazione/disattivazione con chiamata API POST /api/users/[id]/(de)activate
+    - Apertura modali per CRUD
+  - Creato `src/components/UserCreateModal.tsx` — Modal creazione utente con:
+    - Form per email, nome, cognome, ruolo (trainer/trainee)
+    - Validazione client-side
+    - Chiamata POST /api/users
+    - Visualizzazione password temporanea generata (mostrata solo una volta)
+    - Rispetta regole permessi: solo admin può creare trainer
+  - Creato `src/components/UserEditModal.tsx` — Modal modifica utente con:
+    - Form per nome e cognome (email e ruolo non modificabili)
+    - Chiamata PUT /api/users/[id]
+    - Feedback successo/errore
+  - Creato `src/components/UserDeleteModal.tsx` — Modal conferma eliminazione con:
+    - Warning messaggio per azione irreversibile
+    - Chiamata DELETE /api/users/[id]
+    - Conferma prima dell'eliminazione
+  - Aggiunto link "Gestione Anagrafiche" nella dashboard admin
+- **File creati**: 
+  - `src/app/admin/users/page.tsx` — Pagina gestione anagrafiche
+  - `src/components/UsersTable.tsx` — Tabella utenti
+  - `src/components/UserCreateModal.tsx` — Modal creazione
+  - `src/components/UserEditModal.tsx` — Modal modifica
+  - `src/components/UserDeleteModal.tsx` — Modal eliminazione
+- **File modificati**: 
+  - `src/app/admin/dashboard/page.tsx` — Aggiunto link a gestione anagrafiche
+- **Impatto**: Admin ha controllo completo su anagrafiche, implementate user stories US-A01 to US-A06, interfaccia intuitiva per operazioni CRUD
+
+**4. Fix Errori TypeScript**
+- **Problema**: Errori di compilazione in `src/schemas/workout-exercise.ts` e `vitest.config.ts`
+- **Soluzione**:
+  - In `workout-exercise.ts`: Separato base schema da schema con refinements per permettere uso di `.partial()` in `updateWorkoutExerciseSchema`
+  - In `vitest.config.ts`: Spostato threshold coverage nell'oggetto `thresholds` secondo nuova API vitest/coverage
+- **File modificati**: 
+  - `src/schemas/workout-exercise.ts` — Refactoring schema structure
+  - `vitest.config.ts` — Fix configurazione coverage
+- **Impatto**: Build TypeScript passa senza errori, codebase type-safe
+
+### Regole Permessi Implementate
+
+**Creazione Utenti** (già implementato in backend, UI ora allineata):
+- ❌ Nessuno può creare admin (solo via seed/database)
+- ✅ Solo admin può creare trainer
+- ✅ Admin e trainer possono creare trainee
+- ✅ Trainee creato da trainer viene automaticamente associato a quel trainer (tabella TrainerTrainee)
+
+**Modifica Utenti**:
+- ✅ Admin può modificare qualsiasi utente
+- ⚠️ Trainer può modificare solo i propri trainee assegnati
+- ✅ Tutti possono modificare il proprio profilo (solo nome e cognome)
+
+### Riepilogo File Modificati/Creati
+- `src/components/DashboardLayout.tsx` — NUOVO: Layout comune con logo, profilo, logout
+- `src/app/profile/page.tsx` — NUOVO: Pagina profilo universale
+- `src/components/ProfileForm.tsx` — NUOVO: Form modifica profilo
+- `src/app/admin/users/page.tsx` — NUOVO: Gestione anagrafiche admin
+- `src/components/UsersTable.tsx` — NUOVO: Tabella utenti
+- `src/components/UserCreateModal.tsx` — NUOVO: Modal creazione utente
+- `src/components/UserEditModal.tsx` — NUOVO: Modal modifica utente
+- `src/components/UserDeleteModal.tsx` — NUOVO: Modal eliminazione utente
+- `src/app/admin/dashboard/page.tsx` — Aggiunto DashboardLayout e link a gestione anagrafiche
+- `src/app/trainer/dashboard/page.tsx` — Integrato DashboardLayout
+- `src/app/trainee/dashboard/page.tsx` — Integrato DashboardLayout
+- `src/schemas/workout-exercise.ts` — Fix TypeScript per .partial()
+- `vitest.config.ts` — Fix configurazione coverage thresholds
+
+---
+
 ## [2026-03-28] Specifica Calcolo Pesi Server-Side per Trainee View
 
 ### Modifiche

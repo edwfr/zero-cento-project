@@ -52,6 +52,275 @@
 | `/trainee/records`                           | Visualizzazione massimali personali (1RM, nRM)    |
 | `/trainee/records/[exerciseId]`              | Storico massimali per esercizio specifico         |
 
+### Profilo (Accessibile a tutti i ruoli)
+| Route      | Descrizione                                                                   |
+| ---------- | ----------------------------------------------------------------------------- |
+| `/profile` | Visualizzazione e modifica dati personali (nome, cognome) dalla tabella users |
+
+## Layout Comune Dashboard (Implementato - 29/03/2026)
+
+### DashboardLayout Component
+
+Tutte le dashboard (admin, trainer, trainee) utilizzano il componente `DashboardLayout` che fornisce:
+
+**Header Sticky**:
+```
+┌────────────────────────────────────────────────────────────────┐
+│  [LOGO]                           Mario Rossi    [👤]  [🚪]    │
+│  ZeroCento                        Admin                        │
+└────────────────────────────────────────────────────────────────┘
+```
+
+**Elementi Header**:
+- **Logo** (sinistra): ZeroCento logo cliccabile → redirect a `/{role}/dashboard`
+- **User Info** (centro-destra): Nome completo + ruolo dell'utente (nascosto su mobile)
+- **Icona Profilo** (destra): Bottone circolare blu → link a `/profile`
+- **Icona Logout** (destra): Bottone circolare rosso → logout + redirect a `/login`
+
+**Comportamento**:
+- Header con posizione `sticky top-0` per rimanere visibile durante scroll
+- Layout responsive: su mobile nasconde nome utente, mantiene solo icone
+- Background bianco con ombra per separazione visiva dal contenuto
+- Contenuto centrato con `max-w-7xl` e padding responsive
+
+**File**: `src/components/DashboardLayout.tsx`
+
+## Pagina Profilo Universale (Implementato - 29/03/2026)
+
+**Route**: `/profile` (accessibile a tutti i ruoli)
+
+**Layout**:
+```
+┌─────────────────────────────────────────────────────┐
+│               Il Mio Profilo                        │
+│                                                     │
+│  ╔═══════════════════════════════════════════════╗  │
+│  ║ Informazioni Account                          ║  │
+│  ╠═══════════════════════════════════════════════╣  │
+│  ║ Email:     admin@zerocento.app                ║  │
+│  ║ Ruolo:     Amministratore                     ║  │
+│  ║ Nome:      Mario                              ║  │
+│  ║ Cognome:   Rossi                              ║  │
+│  ║ ID Utente: 123e4567-e89b-12d3-a456-42661...  ║  │
+│  ╚═══════════════════════════════════════════════╝  │
+│                                                     │
+│  [Modifica Profilo]  ← Apre form                   │
+│                                                     │
+│  ┌─────────────────────────────────────────────┐   │
+│  │ Modifica Dati Personali                     │   │
+│  │                                             │   │
+│  │ Nome:     [Mario____________]               │   │
+│  │ Cognome:  [Rossi____________]               │   │
+│  │                                             │   │
+│  │ [Salva Modifiche]  [Annulla]               │   │
+│  └─────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────┘
+```
+
+**Funzionalità**:
+- Visualizzazione dati dalla tabella `users`: email, ruolo, nome, cognome, ID
+- Form modifica in-place per nome e cognome
+- Validazione client-side con feedback errori
+- Chiamata API `PUT /api/users/[id]` per salvataggio
+- Refresh automatico pagina dopo update successo
+- Accessibile da icona profilo nel header
+
+**Permessi**:
+- Tutti gli utenti possono visualizzare il proprio profilo
+- Email e ruolo sono read-only (non modificabili)
+- Solo nome e cognome sono editabili
+- Admin può modificare altri utenti tramite `/admin/users`
+
+**File**: 
+- `src/app/profile/page.tsx` — Server Component con session check
+- `src/components/ProfileForm.tsx` — Client Component con form gestione
+
+## Gestione Anagrafiche Admin (Implementato - 29/03/2026)
+
+**Route**: `/admin/users` (solo admin)
+
+### Pagina Lista Utenti
+
+**Layout**:
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  Gestione Anagrafiche                      [+ Crea Utente]       │
+│                                                                  │
+│  Filtra per ruolo: [Tutti ▼]                                    │
+│                                                                  │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │ Utente      │ Email              │ Ruolo    │ Stato  │ ... │ │
+│  ├────────────────────────────────────────────────────────────┤ │
+│  │ Mario Rossi │ admin@...          │ [Admin]  │ [Attivo] │🖊️ 🗑️│ │
+│  │ Luca Verdi  │ trainer1@...       │ [Trainer]│ [Attivo] │🖊️ 🗑️│ │
+│  │ Anna Bianch │ trainee1@...       │ [Atleta] │ [Disatt] │🖊️ 🗑️│ │
+│  └────────────────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+**Funzionalità**:
+- **Tabella utenti** con colonne: nome, email, ruolo (badge colorato), stato (badge cliccabile), data creazione, azioni
+- **Filtro per ruolo**: dropdown con opzioni Tutti, Admin, Trainer, Atleti
+- **Badge ruolo** con colori:
+  - Admin → viola (`bg-purple-100 text-purple-800`)
+  - Trainer → blu (`bg-blue-100 text-blue-800`)
+  - Atleta → verde (`bg-green-100 text-green-800`)
+- **Toggle stato**: Click su badge stato → chiamata API `POST /api/users/[id]/(de)activate`
+- **Azioni inline**:
+  - 🖊️ Modifica → Apre `UserEditModal`
+  - 🗑️ Elimina → Apre `UserDeleteModal`
+- **Pulsante "Crea Utente"** (in alto a destra) → Apre `UserCreateModal`
+
+**File**: 
+- `src/app/admin/users/page.tsx` — Pagina container
+- `src/components/UsersTable.tsx` — Tabella con fetch e gestione stato
+
+### Modal Creazione Utente
+
+**Trigger**: Click su "Crea Utente" nella pagina `/admin/users`
+
+**Layout**:
+```
+┌──────────────────────────────────────────┐
+│         Crea Nuovo Utente           [×]  │
+│                                          │
+│  Email *    [_____________________]      │
+│  Nome *     [_____________________]      │
+│  Cognome *  [_____________________]      │
+│  Ruolo *    [Atleta ▼]                   │
+│             - Atleta                     │
+│             - Trainer                    │
+│                                          │
+│  [Crea Utente]  [Annulla]               │
+└──────────────────────────────────────────┘
+
+┌──────────────────────────────────────────┐
+│         ✅ Utente Creato            [×]  │
+│                                          │
+│  L'utente è stato creato con successo.  │
+│  Salva questa password temporanea:      │
+│                                          │
+│  ╔════════════════════════════════════╗  │
+│  ║ A3b9Kx7pQ2mN                       ║  │
+│  ╚════════════════════════════════════╝  │
+│                                          │
+│  ⚠️ Questa password verrà mostrata solo │
+│     una volta. L'utente dovrà cambiarla │
+│     al primo accesso.                   │
+│                                          │
+│  [Chiudi]                               │
+└──────────────────────────────────────────┘
+```
+
+**Funzionalità**:
+- Form con validazione client-side (tutti i campi obbligatori)
+- Dropdown ruolo: solo "Atleta" e "Trainer" (admin non creabile da UI)
+- Chiamata API `POST /api/users` con dati form
+- **Risposta API include password temporanea** generata dal backend
+- Modal success mostra password in chiaro (unica volta)
+- Auto-chiusura dopo 5 secondi o click su "Chiudi"
+- Refresh automatico lista utenti dopo creazione
+
+**Regole Permessi**:
+- Solo admin può accedere
+- Solo trainer e trainee possono essere creati
+- Admin non può essere creato da UI (solo via seed/database)
+
+**File**: `src/components/UserCreateModal.tsx`
+
+### Modal Modifica Utente
+
+**Trigger**: Click su icona modifica (🖊️) nella tabella utenti
+
+**Layout**:
+```
+┌──────────────────────────────────────────┐
+│         Modifica Utente            [×]   │
+│                                          │
+│  ┌────────────────────────────────────┐  │
+│  │ Email: admin@zerocento.app         │  │
+│  │ Ruolo: admin                       │  │
+│  └────────────────────────────────────┘  │
+│                                          │
+│  Nome *     [Mario______________]        │
+│  Cognome *  [Rossi______________]        │
+│                                          │
+│  [Salva Modifiche]  [Annulla]           │
+└──────────────────────────────────────────┘
+```
+
+**Funzionalità**:
+- Visualizza email e ruolo utente (read-only)
+- Form modifica per nome e cognome
+- Chiamata API `PUT /api/users/[id]`
+- Feedback successo con icona check verde
+- Refresh automatico lista dopo update
+
+**Limitazioni**:
+- Email e ruolo non sono modificabili
+- Solo dati anagrafici (nome, cognome) editabili
+
+**File**: `src/components/UserEditModal.tsx`
+
+### Modal Eliminazione Utente
+
+**Trigger**: Click su icona elimina (🗑️) nella tabella utenti
+
+**Layout**:
+```
+┌──────────────────────────────────────────┐
+│  ⚠️  Elimina Utente               [×]   │
+│                                          │
+│  Sei sicuro di voler eliminare questo   │
+│  utente? Questa azione è permanente e   │
+│  cancellerà tutti i dati associati.     │
+│                                          │
+│  ┌────────────────────────────────────┐  │
+│  │ Mario Rossi                        │  │
+│  │ admin@zerocento.app                │  │
+│  └────────────────────────────────────┘  │
+│                                          │
+│  [Elimina]  [Annulla]                   │
+└──────────────────────────────────────────┘
+```
+
+**Funzionalità**:
+- Modal di conferma con warning chiaro
+- Visualizza dati utente da eliminare
+- Chiamata API `DELETE /api/users/[id]`
+- Bottone rosso per enfatizzare pericolosità
+- Refresh automatico lista dopo eliminazione
+
+**Comportamento Backend**:
+- Eliminazione fisica da database (non soft delete)
+- Cleanup automatico dati correlati (cascade delete dove configurato)
+- Verifica permessi admin prima dell'eliminazione
+
+**File**: `src/components/UserDeleteModal.tsx`
+
+### Dashboard Admin — Link Gestione Anagrafiche
+
+La dashboard admin (`/admin/dashboard`) include un card dedicato:
+
+```
+┌─────────────────────────────────────────┐
+│  📋 Gestione Anagrafiche               │
+│                                         │
+│  Visualizza e gestisci tutti gli       │
+│  utenti del sistema (CRUD completo)    │
+│                                         │
+│  [Link cliccabile a /admin/users]      │
+└─────────────────────────────────────────┘
+```
+
+**Implementazione**:
+- Card con background blu e hover effect
+- Link Next.js per navigazione client-side
+- Evidenziato come funzionalità principale della dashboard
+- Info tooltip su CRUD completo disponibile
+
+**File**: `src/app/admin/dashboard/page.tsx`
+
 ## Flusso UX Trainee — Dettaglio Implementazione
 
 ### Dashboard e Navigazione Intelligente

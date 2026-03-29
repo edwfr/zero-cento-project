@@ -20,10 +20,12 @@ export default defineConfig({
                 '**/error.tsx',
                 '**/*.d.ts',
             ],
-            lines: 80,
-            functions: 80,
-            branches: 80,
-            statements: 80,
+            thresholds: {
+                lines: 80,
+                functions: 80,
+                branches: 80,
+                statements: 80,
+            },
         },
     },
     resolve: {

@@ -22,9 +22,7 @@ export default function LoginPage() {
                 if (session) {
                     // User is already logged in, get their role and redirect
                     const response = await fetch('/api/auth/me', {
-                        headers: {
-                            'Authorization': `Bearer ${session.access_token}`
-                        }
+                        credentials: 'include'
                     })
 
                     if (response.ok) {
@@ -62,9 +60,7 @@ export default function LoginPage() {
             if (data.session) {
                 // Get user role from database via API
                 const response = await fetch('/api/auth/me', {
-                    headers: {
-                        'Authorization': `Bearer ${data.session.access_token}`
-                    }
+                    credentials: 'include'
                 })
 
                 if (!response.ok) {
