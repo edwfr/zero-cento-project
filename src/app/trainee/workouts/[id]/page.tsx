@@ -6,6 +6,8 @@ import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import YoutubeEmbed from '@/components/YoutubeEmbed'
 import { useSwipe } from '@/lib/useSwipe'
+import { useToast } from '@/components/ToastNotification'
+import ConfirmationModal from '@/components/ConfirmationModal'
 
 interface Exercise {
     id: string
@@ -75,6 +77,14 @@ export default function WorkoutDetailPage() {
     const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>({})
     const [activeExerciseIndex, setActiveExerciseIndex] = useState(0)
     const exerciseRefs = useRef<Record<string, HTMLDivElement | null>>({})
+    const { showToast } = useToast()
+    const [confirmModal, setConfirmModal] = useState<{
+        title: string
+        message: string
+        onConfirm: () => void
+        confirmText?: string
+        variant?: 'danger' | 'warning' | 'info' | 'success'
+    } | null>(null)
 
     const STORAGE_KEY = `workout_${workoutId}_feedback`
 
@@ -229,48 +239,27 @@ export default function WorkoutDetailPage() {
         return Math.round((sum / validSets.length) * 10) / 10
     }
 
-    const handleSubmit = async () => {
-        if (!workout) return
-
-        // Validate all sets have data
-        const emptyExercises: string[] = []
-        workout.workoutExercises.forEach((we) => {
-            const sets = feedbackData[we.id] || []
-            const hasData = sets.some((s) => s.weight > 0 && s.reps > 0)
-            if (!hasData) {
-                emptyExercises.push(we.exercise.name)
-            }
-        })
-
-        if (emptyExercises.length > 0) {
-            if (
-                !confirm(
-                    `I seguenti esercizi non hanno dati: ${emptyExercises.join(', ')}. Vuoi continuare comunque?`
-                )
-            ) {
-                return
-            }
-        }
-
+    const doSubmit = async () => {
+        setConfirmModal(null)
         try {
             setSubmitting(true)
 
             // Prepare feedback payload
-            const exerciseFeedback: ExerciseFeedback[] = workout.workoutExercises.map((we) => ({
+            const exerciseFeedback: ExerciseFeedback[] = workout!.workoutExercises.map((we) => ({
                 workoutExerciseId: we.id,
                 sets: feedbackData[we.id] || [],
             }))
 
             const payload = {
-                workoutId: workout.id,
+                workoutId: workout!.id,
                 notes: globalNotes.trim() || null,
                 exerciseFeedback,
             }
 
             // POST or PUT depending on existing feedback
-            const method = workout.feedbackId ? 'PUT' : 'POST'
-            const url = workout.feedbackId
-                ? `/api/feedback/${workout.feedbackId}`
+            const method = workout!.feedbackId ? 'PUT' : 'POST'
+            const url = workout!.feedbackId
+                ? `/api/feedback/${workout!.feedbackId}`
                 : '/api/feedback'
 
             const res = await fetch(url, {
@@ -288,12 +277,39 @@ export default function WorkoutDetailPage() {
             // Clear local storage
             clearLocalData()
 
-            alert('✅ Feedback inviato con successo!')
+            showToast('Feedback inviato con successo!', 'success')
             router.push('/trainee/dashboard')
         } catch (err: any) {
-            alert(err.message)
+            showToast(err.message, 'error')
             setSubmitting(false)
         }
+    }
+
+    const handleSubmit = () => {
+        if (!workout) return
+
+        // Validate all sets have data
+        const emptyExercises: string[] = []
+        workout.workoutExercises.forEach((we) => {
+            const sets = feedbackData[we.id] || []
+            const hasData = sets.some((s) => s.weight > 0 && s.reps > 0)
+            if (!hasData) {
+                emptyExercises.push(we.exercise.name)
+            }
+        })
+
+        if (emptyExercises.length > 0) {
+            setConfirmModal({
+                title: 'Dati Mancanti',
+                message: `I seguenti esercizi non hanno dati: ${emptyExercises.join(', ')}. Vuoi continuare comunque?`,
+                confirmText: 'Continua',
+                variant: 'warning',
+                onConfirm: doSubmit,
+            })
+            return
+        }
+
+        doSubmit()
     }
 
     const toggleExercise = (workoutExerciseId: string) => {
@@ -355,6 +371,17 @@ export default function WorkoutDetailPage() {
 
     return (
         <div className="min-h-screen bg-gray-50" {...pageSwipeHandlers}>
+            {confirmModal && (
+                <ConfirmationModal
+                    isOpen={true}
+                    onClose={() => setConfirmModal(null)}
+                    onConfirm={confirmModal.onConfirm}
+                    title={confirmModal.title}
+                    message={confirmModal.message}
+                    confirmText={confirmModal.confirmText ?? 'Conferma'}
+                    variant={confirmModal.variant ?? 'danger'}
+                />
+            )}
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">

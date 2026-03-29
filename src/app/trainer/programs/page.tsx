@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import { useToast } from '@/components/ToastNotification'
+import ConfirmationModal from '@/components/ConfirmationModal'
 
 interface Program {
     id: string
@@ -22,11 +24,19 @@ interface Program {
 
 export default function TrainerProgramsPage() {
     const router = useRouter()
+    const { showToast } = useToast()
     const [programs, setPrograms] = useState<Program[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [activeTab, setActiveTab] = useState<'draft' | 'active' | 'completed'>('active')
     const [searchTerm, setSearchTerm] = useState('')
+    const [confirmModal, setConfirmModal] = useState<{
+        title: string
+        message: string
+        onConfirm: () => void
+        confirmText?: string
+        variant?: 'danger' | 'warning' | 'info' | 'success'
+    } | null>(null)
 
     useEffect(() => {
         fetchPrograms()
@@ -50,26 +60,30 @@ export default function TrainerProgramsPage() {
         }
     }
 
-    const handleDelete = async (id: string, title: string) => {
-        if (!confirm(`Sei sicuro di voler eliminare il programma "${title}"?`)) {
-            return
-        }
+    const handleDelete = (id: string, title: string) => {
+        setConfirmModal({
+            title: 'Elimina Programma',
+            message: `Sei sicuro di voler eliminare il programma "${title}"?`,
+            confirmText: 'Elimina',
+            onConfirm: async () => {
+                setConfirmModal(null)
+                try {
+                    const res = await fetch(`/api/programs/${id}`, {
+                        method: 'DELETE',
+                    })
 
-        try {
-            const res = await fetch(`/api/programs/${id}`, {
-                method: 'DELETE',
-            })
+                    const data = await res.json()
 
-            const data = await res.json()
+                    if (!res.ok) {
+                        throw new Error(data.error?.message || 'Errore eliminazione programma')
+                    }
 
-            if (!res.ok) {
-                throw new Error(data.error?.message || 'Errore eliminazione programma')
-            }
-
-            fetchPrograms()
-        } catch (err: any) {
-            alert(err.message)
-        }
+                    fetchPrograms()
+                } catch (err: any) {
+                    showToast(err.message, 'error')
+                }
+            },
+        })
     }
 
     const filteredPrograms = programs.filter((prog) => {
@@ -99,6 +113,17 @@ export default function TrainerProgramsPage() {
 
     return (
         <div className="min-h-screen bg-gray-50">
+            {confirmModal && (
+                <ConfirmationModal
+                    isOpen={true}
+                    onClose={() => setConfirmModal(null)}
+                    onConfirm={confirmModal.onConfirm}
+                    title={confirmModal.title}
+                    message={confirmModal.message}
+                    confirmText={confirmModal.confirmText ?? 'Conferma'}
+                    variant={confirmModal.variant ?? 'danger'}
+                />
+            )}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">

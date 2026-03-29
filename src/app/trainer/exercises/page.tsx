@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import { useToast } from '@/components/ToastNotification'
+import ConfirmationModal from '@/components/ConfirmationModal'
 import Link from 'next/link'
 
 interface Exercise {
@@ -30,11 +32,19 @@ interface Exercise {
 
 export default function TrainerExercisesPage() {
     const router = useRouter()
+    const { showToast } = useToast()
     const [exercises, setExercises] = useState<Exercise[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [searchTerm, setSearchTerm] = useState('')
     const [typeFilter, setTypeFilter] = useState<'all' | 'fundamental' | 'accessory'>('all')
+    const [confirmModal, setConfirmModal] = useState<{
+        title: string
+        message: string
+        onConfirm: () => void
+        confirmText?: string
+        variant?: 'danger' | 'warning' | 'info' | 'success'
+    } | null>(null)
 
     useEffect(() => {
         fetchExercises()
@@ -58,27 +68,30 @@ export default function TrainerExercisesPage() {
         }
     }
 
-    const handleDelete = async (id: string, name: string) => {
-        if (!confirm(`Sei sicuro di voler eliminare l'esercizio "${name}"?`)) {
-            return
-        }
+    const handleDelete = (id: string, name: string) => {
+        setConfirmModal({
+            title: 'Elimina Esercizio',
+            message: `Sei sicuro di voler eliminare l'esercizio "${name}"?`,
+            confirmText: 'Elimina',
+            onConfirm: async () => {
+                setConfirmModal(null)
+                try {
+                    const res = await fetch(`/api/exercises/${id}`, {
+                        method: 'DELETE',
+                    })
 
-        try {
-            const res = await fetch(`/api/exercises/${id}`, {
-                method: 'DELETE',
-            })
+                    const data = await res.json()
 
-            const data = await res.json()
+                    if (!res.ok) {
+                        throw new Error(data.error?.message || 'Errore eliminazione esercizio')
+                    }
 
-            if (!res.ok) {
-                throw new Error(data.error?.message || 'Errore eliminazione esercizio')
-            }
-
-            // Refresh list
-            fetchExercises()
-        } catch (err: any) {
-            alert(err.message)
-        }
+                    fetchExercises()
+                } catch (err: any) {
+                    showToast(err.message, 'error')
+                }
+            },
+        })
     }
 
     const filteredExercises = exercises.filter((ex) => {
@@ -97,6 +110,17 @@ export default function TrainerExercisesPage() {
 
     return (
         <div className="min-h-screen bg-gray-50">
+            {confirmModal && (
+                <ConfirmationModal
+                    isOpen={true}
+                    onClose={() => setConfirmModal(null)}
+                    onConfirm={confirmModal.onConfirm}
+                    title={confirmModal.title}
+                    message={confirmModal.message}
+                    confirmText={confirmModal.confirmText ?? 'Conferma'}
+                    variant={confirmModal.variant ?? 'danger'}
+                />
+            )}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">

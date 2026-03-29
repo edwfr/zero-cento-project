@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import { useToast } from '@/components/ToastNotification'
 
 interface Workout {
     id: string
@@ -38,6 +39,7 @@ export default function EditProgramPage() {
     const router = useRouter()
     const params = useParams()
     const programId = params.id as string
+    const { showToast } = useToast()
 
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
@@ -98,7 +100,7 @@ export default function EditProgramPage() {
                 ),
             })
         } catch (err: any) {
-            alert(err.message)
+            showToast(err.message, 'error')
         } finally {
             setSaving(false)
         }
@@ -291,7 +293,7 @@ export default function EditProgramPage() {
                         onClick={(e) => {
                             if (completedWorkouts < totalWorkouts) {
                                 e.preventDefault()
-                                alert('Configura tutti i workout prima di pubblicare')
+                                showToast('Configura tutti i workout prima di pubblicare', 'warning')
                             }
                         }}
                     >

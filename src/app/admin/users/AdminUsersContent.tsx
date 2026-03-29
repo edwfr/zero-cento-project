@@ -4,6 +4,8 @@ import { useState, useEffect, useMemo } from 'react'
 import UserCreateModal from '@/components/UserCreateModal'
 import UserEditModal from '@/components/UserEditModal'
 import UserDeleteModal from '@/components/UserDeleteModal'
+import { useToast } from '@/components/ToastNotification'
+import ConfirmationModal from '@/components/ConfirmationModal'
 
 interface User {
     id: string
@@ -45,6 +47,14 @@ export default function AdminUsersContent() {
     // Bulk selection
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
     const [bulkLoading, setBulkLoading] = useState(false)
+    const { showToast } = useToast()
+    const [confirmModal, setConfirmModal] = useState<{
+        title: string
+        message: string
+        onConfirm: () => void
+        confirmText?: string
+        variant?: 'danger' | 'warning' | 'info' | 'success'
+    } | null>(null)
 
     // Modals
     const [isCreateOpen, setIsCreateOpen] = useState(false)
@@ -123,30 +133,32 @@ export default function AdminUsersContent() {
     }
 
     // Bulk activation/deactivation
-    const handleBulkStatus = async (activate: boolean) => {
+    const handleBulkStatus = (activate: boolean) => {
         if (selectedIds.size === 0) return
-        if (
-            !confirm(
-                `Sei sicuro di voler ${activate ? 'attivare' : 'disattivare'} ${selectedIds.size} utenti?`
-            )
-        )
-            return
-
-        try {
-            setBulkLoading(true)
-            await Promise.all(
-                Array.from(selectedIds).map((id) =>
-                    fetch(`/api/users/${id}/${activate ? 'activate' : 'deactivate'}`, {
-                        method: 'PATCH',
-                    })
-                )
-            )
-            await fetchUsers()
-        } catch {
-            alert('Errore durante l\'operazione bulk')
-        } finally {
-            setBulkLoading(false)
-        }
+        setConfirmModal({
+            title: activate ? 'Attiva Utenti' : 'Disattiva Utenti',
+            message: `Sei sicuro di voler ${activate ? 'attivare' : 'disattivare'} ${selectedIds.size} utenti?`,
+            confirmText: activate ? 'Attiva' : 'Disattiva',
+            variant: activate ? 'info' : 'warning',
+            onConfirm: async () => {
+                setConfirmModal(null)
+                try {
+                    setBulkLoading(true)
+                    await Promise.all(
+                        Array.from(selectedIds).map((id) =>
+                            fetch(`/api/users/${id}/${activate ? 'activate' : 'deactivate'}`, {
+                                method: 'PATCH',
+                            })
+                        )
+                    )
+                    await fetchUsers()
+                } catch {
+                    showToast('Errore durante l\'operazione bulk', 'error')
+                } finally {
+                    setBulkLoading(false)
+                }
+            },
+        })
     }
 
     const handleToggleStatus = async (user: User) => {
@@ -175,6 +187,17 @@ export default function AdminUsersContent() {
 
     return (
         <div>
+            {confirmModal && (
+                <ConfirmationModal
+                    isOpen={true}
+                    onClose={() => setConfirmModal(null)}
+                    onConfirm={confirmModal.onConfirm}
+                    title={confirmModal.title}
+                    message={confirmModal.message}
+                    confirmText={confirmModal.confirmText ?? 'Conferma'}
+                    variant={confirmModal.variant ?? 'danger'}
+                />
+            )}
             {/* Toolbar */}
             <div className="flex flex-col gap-4 mb-6">
                 {/* Search + Filters row */}
@@ -215,7 +238,7 @@ export default function AdminUsersContent() {
                         onClick={() => setIsCreateOpen(true)}
                         className="ml-auto bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-2 rounded-lg transition-colors whitespace-nowrap"
                     >
-                        ➕ Crea Utente
+                        Crea Utente
                     </button>
                 </div>
 

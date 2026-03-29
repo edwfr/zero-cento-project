@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useToast } from '@/components/ToastNotification'
+import ConfirmationModal from '@/components/ConfirmationModal'
 
 interface Program {
     id: string
@@ -60,6 +62,14 @@ export default function ProgramsTable({
     const [activeTab, setActiveTab] = useState<'draft' | 'active' | 'completed'>('active')
     const [searchTerm, setSearchTerm] = useState('')
     const [deleting, setDeleting] = useState<string | null>(null)
+    const { showToast } = useToast()
+    const [confirmModal, setConfirmModal] = useState<{
+        title: string
+        message: string
+        onConfirm: () => void
+        confirmText?: string
+        variant?: 'danger' | 'warning' | 'info' | 'success'
+    } | null>(null)
 
     const fetchPrograms = async () => {
         try {
@@ -89,24 +99,30 @@ export default function ProgramsTable({
         }
     }, [externalPrograms])
 
-    const handleDelete = async (id: string, title: string) => {
-        if (!confirm(`Sei sicuro di voler eliminare il programma "${title}"?`)) return
-
-        try {
-            setDeleting(id)
-            const res = await fetch(`/api/programs/${id}`, { method: 'DELETE' })
-            const data = await res.json()
-            if (!res.ok) throw new Error(data.error?.message || 'Errore eliminazione')
-            if (externalPrograms && onRefresh) {
-                onRefresh()
-            } else {
-                fetchPrograms()
-            }
-        } catch (err: any) {
-            alert(err.message)
-        } finally {
-            setDeleting(null)
-        }
+    const handleDelete = (id: string, title: string) => {
+        setConfirmModal({
+            title: 'Elimina Programma',
+            message: `Sei sicuro di voler eliminare il programma "${title}"?`,
+            confirmText: 'Elimina',
+            onConfirm: async () => {
+                setConfirmModal(null)
+                try {
+                    setDeleting(id)
+                    const res = await fetch(`/api/programs/${id}`, { method: 'DELETE' })
+                    const data = await res.json()
+                    if (!res.ok) throw new Error(data.error?.message || 'Errore eliminazione')
+                    if (externalPrograms && onRefresh) {
+                        onRefresh()
+                    } else {
+                        fetchPrograms()
+                    }
+                } catch (err: any) {
+                    showToast(err.message, 'error')
+                } finally {
+                    setDeleting(null)
+                }
+            },
+        })
     }
 
     const filtered = programs.filter((p) => {
@@ -145,6 +161,17 @@ export default function ProgramsTable({
 
     return (
         <div>
+            {confirmModal && (
+                <ConfirmationModal
+                    isOpen={true}
+                    onClose={() => setConfirmModal(null)}
+                    onConfirm={confirmModal.onConfirm}
+                    title={confirmModal.title}
+                    message={confirmModal.message}
+                    confirmText={confirmModal.confirmText ?? 'Conferma'}
+                    variant={confirmModal.variant ?? 'danger'}
+                />
+            )}
             {/* Search */}
             <div className="mb-4">
                 <input

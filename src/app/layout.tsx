@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import PWAInstallPrompt from '@/components/PWAInstallPrompt'
+import { ToastProvider } from '@/components/ToastNotification'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -26,8 +27,10 @@ export default function RootLayout({
     return (
         <html lang="it">
             <body className={inter.className}>
-                {children}
-                <PWAInstallPrompt />
+                <ToastProvider>
+                    {children}
+                    <PWAInstallPrompt />
+                </ToastProvider>
             </body>
         </html>
     )

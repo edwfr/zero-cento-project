@@ -4,9 +4,11 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import { useToast } from '@/components/ToastNotification'
 
 export default function NewTraineePage() {
     const router = useRouter()
+    const { showToast } = useToast()
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [generatedPassword, setGeneratedPassword] = useState<string | null>(null)
@@ -98,7 +100,7 @@ export default function NewTraineePage() {
                         <button
                             onClick={() => {
                                 navigator.clipboard.writeText(generatedPassword)
-                                alert('Password copiata negli appunti!')
+                                showToast('Password copiata negli appunti!', 'success')
                             }}
                             className="w-full bg-brand-primary hover:bg-brand-primary/90 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
                         >

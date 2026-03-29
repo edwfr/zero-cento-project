@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import { useToast } from '@/components/ToastNotification'
 
 interface Trainee {
     id: string
@@ -16,6 +17,7 @@ interface Trainee {
 
 export default function TrainerTraineesPage() {
     const router = useRouter()
+    const { showToast } = useToast()
     const [trainees, setTrainees] = useState<Trainee[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -59,7 +61,7 @@ export default function TrainerTraineesPage() {
 
             fetchTrainees()
         } catch (err: any) {
-            alert(err.message)
+            showToast(err.message, 'error')
         }
     }
 

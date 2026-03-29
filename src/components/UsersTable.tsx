@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import UserCreateModal from './UserCreateModal'
 import UserEditModal from './UserEditModal'
 import UserDeleteModal from './UserDeleteModal'
+import { useToast } from '@/components/ToastNotification'
 
 interface User {
     id: string
@@ -23,6 +24,7 @@ export default function UsersTable() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
     const [editingUser, setEditingUser] = useState<User | null>(null)
     const [deletingUser, setDeletingUser] = useState<User | null>(null)
+    const { showToast } = useToast()
 
     const fetchUsers = async () => {
         try {
@@ -81,7 +83,7 @@ export default function UsersTable() {
 
             fetchUsers()
         } catch (err: any) {
-            alert(`Errore: ${err.message}`)
+            showToast(`Errore: ${err.message}`, 'error')
         }
     }
 

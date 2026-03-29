@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import { useToast } from '@/components/ToastNotification'
+import ConfirmationModal from '@/components/ConfirmationModal'
 
 interface WorkoutSummary {
     id: string
@@ -45,6 +47,14 @@ export default function PublishProgramPage() {
     const [error, setError] = useState<string | null>(null)
     const [startDate, setStartDate] = useState('')
     const [validationErrors, setValidationErrors] = useState<string[]>([])
+    const { showToast } = useToast()
+    const [confirmModal, setConfirmModal] = useState<{
+        title: string
+        message: string
+        onConfirm: () => void
+        confirmText?: string
+        variant?: 'danger' | 'warning' | 'info' | 'success'
+    } | null>(null)
 
     useEffect(() => {
         fetchProgram()
@@ -103,27 +113,8 @@ export default function PublishProgramPage() {
         setValidationErrors(errors)
     }
 
-    const handlePublish = async () => {
-        if (!program || validationErrors.length > 0) return
-
-        if (!startDate) {
-            alert('Seleziona una data di inizio')
-            return
-        }
-
-        const selectedDate = new Date(startDate)
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-
-        if (selectedDate < today) {
-            alert('La data di inizio non può essere nel passato')
-            return
-        }
-
-        if (!confirm('Pubblicare questo programma? L\'atleta potrà iniziare ad allenarsi.')) {
-            return
-        }
-
+    const doPublish = async () => {
+        setConfirmModal(null)
         try {
             setPublishing(true)
 
@@ -139,12 +130,38 @@ export default function PublishProgramPage() {
                 throw new Error(data.error?.message || 'Errore pubblicazione programma')
             }
 
-            alert('✅ Programma pubblicato con successo!')
+            showToast('Programma pubblicato con successo!', 'success')
             router.push('/trainer/programs')
         } catch (err: any) {
-            alert(err.message)
+            showToast(err.message, 'error')
             setPublishing(false)
         }
+    }
+
+    const handlePublish = () => {
+        if (!program || validationErrors.length > 0) return
+
+        if (!startDate) {
+            showToast('Seleziona una data di inizio', 'error')
+            return
+        }
+
+        const selectedDate = new Date(startDate)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+
+        if (selectedDate < today) {
+            showToast('La data di inizio non può essere nel passato', 'error')
+            return
+        }
+
+        setConfirmModal({
+            title: 'Pubblica Programma',
+            message: "Pubblicare questo programma? L'atleta potrà iniziare ad allenarsi.",
+            confirmText: 'Pubblica',
+            variant: 'info',
+            onConfirm: doPublish,
+        })
     }
 
     if (loading) {
@@ -179,6 +196,17 @@ export default function PublishProgramPage() {
 
     return (
         <div className="min-h-screen bg-gray-50">
+            {confirmModal && (
+                <ConfirmationModal
+                    isOpen={true}
+                    onClose={() => setConfirmModal(null)}
+                    onConfirm={confirmModal.onConfirm}
+                    title={confirmModal.title}
+                    message={confirmModal.message}
+                    confirmText={confirmModal.confirmText ?? 'Conferma'}
+                    variant={confirmModal.variant ?? 'danger'}
+                />
+            )}
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Progress Indicator */}
                 <div className="mb-8">

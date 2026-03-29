@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import { useToast } from '@/components/ToastNotification'
+import ConfirmationModal from '@/components/ConfirmationModal'
 
 interface Exercise {
     id: string
@@ -63,6 +65,14 @@ export default function WorkoutDetailPage() {
     const [restSeconds, setRestSeconds] = useState(120)
     const [targetRPE, setTargetRPE] = useState(7)
     const [notes, setNotes] = useState('')
+    const { showToast } = useToast()
+    const [confirmModal, setConfirmModal] = useState<{
+        title: string
+        message: string
+        onConfirm: () => void
+        confirmText?: string
+        variant?: 'danger' | 'warning' | 'info' | 'success'
+    } | null>(null)
 
     useEffect(() => {
         fetchData()
@@ -141,29 +151,35 @@ export default function WorkoutDetailPage() {
             setTargetRPE(7)
             setNotes('')
         } catch (err: any) {
-            alert(err.message)
+            showToast(err.message, 'error')
         } finally {
             setSaving(false)
         }
     }
 
-    const handleDeleteExercise = async (workoutExerciseId: string) => {
-        if (!confirm('Rimuovere questo esercizio dal workout?')) return
+    const handleDeleteExercise = (workoutExerciseId: string) => {
+        setConfirmModal({
+            title: 'Rimuovi Esercizio',
+            message: 'Rimuovere questo esercizio dal workout?',
+            confirmText: 'Rimuovi',
+            onConfirm: async () => {
+                setConfirmModal(null)
+                try {
+                    const res = await fetch(`/api/workouts/${workoutId}/exercises/${workoutExerciseId}`, {
+                        method: 'DELETE',
+                    })
 
-        try {
-            const res = await fetch(`/api/workouts/${workoutId}/exercises/${workoutExerciseId}`, {
-                method: 'DELETE',
-            })
+                    if (!res.ok) {
+                        const data = await res.json()
+                        throw new Error(data.error?.message || 'Errore rimozione esercizio')
+                    }
 
-            if (!res.ok) {
-                const data = await res.json()
-                throw new Error(data.error?.message || 'Errore rimozione esercizio')
-            }
-
-            await fetchData()
-        } catch (err: any) {
-            alert(err.message)
-        }
+                    await fetchData()
+                } catch (err: any) {
+                    showToast(err.message, 'error')
+                }
+            },
+        })
     }
 
     const handleMoveExercise = async (workoutExerciseId: string, direction: 'up' | 'down') => {
@@ -203,7 +219,7 @@ export default function WorkoutDetailPage() {
 
             await fetchData()
         } catch (err: any) {
-            alert(err.message)
+            showToast(err.message, 'error')
         }
     }
 
@@ -229,6 +245,17 @@ export default function WorkoutDetailPage() {
 
     return (
         <div className="min-h-screen bg-gray-50">
+            {confirmModal && (
+                <ConfirmationModal
+                    isOpen={true}
+                    onClose={() => setConfirmModal(null)}
+                    onConfirm={confirmModal.onConfirm}
+                    title={confirmModal.title}
+                    message={confirmModal.message}
+                    confirmText={confirmModal.confirmText ?? 'Conferma'}
+                    variant={confirmModal.variant ?? 'danger'}
+                />
+            )}
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">

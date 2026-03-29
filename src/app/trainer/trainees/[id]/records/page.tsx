@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import { useToast } from '@/components/ToastNotification'
+import ConfirmationModal from '@/components/ConfirmationModal'
 
 interface Trainee {
     id: string
@@ -44,6 +46,14 @@ export default function TraineeRecordsManagementPage() {
     const [reps, setReps] = useState('')
     const [recordDate, setRecordDate] = useState(new Date().toISOString().split('T')[0])
     const [notes, setNotes] = useState('')
+    const [confirmModal, setConfirmModal] = useState<{
+        title: string
+        message: string
+        onConfirm: () => void
+        confirmText?: string
+        variant?: 'danger' | 'warning' | 'info' | 'success'
+    } | null>(null)
+    const { showToast } = useToast()
 
     useEffect(() => {
         fetchData()
@@ -130,26 +140,30 @@ export default function TraineeRecordsManagementPage() {
         }
     }
 
-    const handleDeleteRecord = async (recordId: string, exerciseName: string) => {
-        if (!confirm(`Sei sicuro di voler eliminare il massimale di ${exerciseName}?`)) {
-            return
-        }
+    const handleDeleteRecord = (recordId: string, exerciseName: string) => {
+        setConfirmModal({
+            title: 'Elimina Massimale',
+            message: `Sei sicuro di voler eliminare il massimale di ${exerciseName}?`,
+            confirmText: 'Elimina',
+            onConfirm: async () => {
+                setConfirmModal(null)
+                try {
+                    const res = await fetch(`/api/personal-records/${recordId}`, {
+                        method: 'DELETE',
+                    })
 
-        try {
-            const res = await fetch(`/api/personal-records/${recordId}`, {
-                method: 'DELETE',
-            })
+                    const data = await res.json()
 
-            const data = await res.json()
+                    if (!res.ok) {
+                        throw new Error(data.error?.message || 'Errore eliminazione massimale')
+                    }
 
-            if (!res.ok) {
-                throw new Error(data.error?.message || 'Errore eliminazione massimale')
-            }
-
-            fetchData()
-        } catch (err: any) {
-            alert(err.message)
-        }
+                    fetchData()
+                } catch (err: any) {
+                    showToast(err.message, 'error')
+                }
+            },
+        })
     }
 
     const calculateOneRepMax = (weight: number, reps: number): number => {
@@ -180,6 +194,17 @@ export default function TraineeRecordsManagementPage() {
 
     return (
         <div className="min-h-screen bg-gray-50">
+            {confirmModal && (
+                <ConfirmationModal
+                    isOpen={true}
+                    onClose={() => setConfirmModal(null)}
+                    onConfirm={confirmModal.onConfirm}
+                    title={confirmModal.title}
+                    message={confirmModal.message}
+                    confirmText={confirmModal.confirmText ?? 'Conferma'}
+                    variant={confirmModal.variant ?? 'danger'}
+                />
+            )}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">
