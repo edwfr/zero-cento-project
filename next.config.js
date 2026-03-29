@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 const { withSentryConfig } = require('@sentry/nextjs');
+const withSerwist = require('@serwist/next').default({
+    swSrc: 'src/sw.ts',
+    swDest: 'public/sw.js',
+    disable: process.env.NODE_ENV === 'development',
+});
 
 const nextConfig = {
     reactStrictMode: true,
@@ -36,5 +41,5 @@ const sentryWebpackPluginOptions = {
 };
 
 module.exports = process.env.NEXT_PUBLIC_SENTRY_DSN
-    ? withSentryConfig(nextConfig, sentryWebpackPluginOptions)
-    : nextConfig;
+    ? withSerwist(withSentryConfig(nextConfig, sentryWebpackPluginOptions))
+    : withSerwist(nextConfig);

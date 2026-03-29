@@ -9,6 +9,9 @@ export { default as RPESelector } from './RPESelector'
 export { default as RestTimeSelector } from './RestTimeSelector'
 export { default as RepsInput } from './RepsInput'
 export { default as FeedbackForm } from './FeedbackForm'
+export { default as DatePicker } from './DatePicker'
+export { default as AutocompleteSearch } from './AutocompleteSearch'
+export type { AutocompleteOption } from './AutocompleteSearch'
 
 // Display Components
 export { default as ExerciseCard } from './ExerciseCard'

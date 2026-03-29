@@ -1,8 +1,8 @@
 # 📊 SAL (Stato Avanzamento Lavori) - ZeroCento Training Platform
 
-**Ultima modifica:** 30 Marzo 2026  
-**Versione:** 1.8  
-**Completamento generale:** 83%
+**Ultima modifica:** 29 Marzo 2026  
+**Versione:** 1.9  
+**Completamento generale:** 92%
 
 ---
 
@@ -12,14 +12,14 @@
 | --------------------- | ---------- | -------- | ------- | ------- | ------- |
 | **Database & Infra**  | 12         | 0        | 0       | 12      | 100%    |
 | **Backend API**       | 53         | 0        | 10      | 63      | 84%     |
-| **Componenti UI**     | 12         | 0        | 7       | 19      | 63%     |
+| **Componenti UI**     | 16         | 0        | 3       | 19      | 84%     |
 | **Frontend Admin**    | 9          | 0        | 1       | 10      | 90%     |
 | **Frontend Trainer**  | 17         | 0        | 0       | 17      | 100%    |
 | **Frontend Trainee**  | 7          | 0        | 0       | 7       | 100%    |
 | **Auth & Security**   | 5          | 0        | 0       | 5       | 100%    |
-| **Testing & Quality** | 0          | 0        | 8       | 8       | 0%      |
-| **PWA & Mobile**      | 1          | 0        | 5       | 6       | 17%     |
-| **TOTALE**            | **121**    | **0**    | **32**  | **153** | **79%** |
+| **Testing & Quality** | 7          | 0        | 1       | 8       | 88%     |
+| **PWA & Mobile**      | 5          | 0        | 1       | 6       | 83%     |
+| **TOTALE**            | **140**    | **0**    | **13**  | **153** | **92%** |
 
 ---
 
@@ -129,16 +129,16 @@
 - ✅ **UI-CTRL-002** - RPESelector (slider 5.0-10.0 con color gradient)
 - ✅ **UI-CTRL-003** - RestTimeSelector (button group 30s-5m)
 - ✅ **UI-CTRL-004** - RepsInput (input validato "8" o "6/8")
-- ❌ **UI-CTRL-005** - DatePicker (per date programmi/massimali)
-- ❌ **UI-CTRL-006** - AutocompleteSearch (per select esercizi)
+- ✅ **UI-CTRL-005** - DatePicker (per date programmi/massimali)
+- ✅ **UI-CTRL-006** - AutocompleteSearch (per select esercizi)
 
 ### 3.2 Display Components
 - ✅ **UI-DISP-001** - ExerciseCard (card esercizio con video/tags/actions)
 - ✅ **UI-DISP-002** - MovementPatternTag (badge con colore custom)
 - ✅ **UI-DISP-003** - YoutubeEmbed (lazy loading embed video)
 - ✅ **UI-DISP-004** - WeekTypeBanner (banner test/deload)
-- ❌ **UI-DISP-005** - ProgressBar (barra avanzamento programma)
-- ❌ **UI-DISP-006** - StatCard (card statistiche dashboard)
+- ✅ **UI-DISP-005** - ProgressBar (barra avanzamento programma)
+- ✅ **UI-DISP-006** - StatCard (card statistiche dashboard)
 
 ### 3.3 Forms & Tables
 - ✅ **UI-FORM-001** - FeedbackForm (form feedback trainee con serie)
@@ -149,9 +149,9 @@
 ### 3.4 Layout & Feedback
 - ✅ **UI-LAYOUT-001** - LoadingSpinner (spinner 4 sizes + variants)
 - ✅ **UI-LAYOUT-002** - ToastNotification (toast provider + hook)
-- ❌ **UI-LAYOUT-003** - RoleGuard (HOC protezione per ruolo)
-- ❌ **UI-LAYOUT-004** - ErrorFallback (error boundary UI)
-- ❌ **UI-LAYOUT-005** - ConfirmationModal (modale conferma azioni)
+- ✅ **UI-LAYOUT-003** - RoleGuard (HOC protezione per ruolo)
+- ✅ **UI-LAYOUT-004** - ErrorFallback (error boundary UI / ErrorBoundary class component)
+- ✅ **UI-LAYOUT-005** - ConfirmationModal (modale conferma azioni)
 
 ---
 
@@ -254,21 +254,21 @@
 **Completamento:** 0/8 (0%)
 
 ### 8.1 Unit Tests
-- ❌ **TEST-UNIT-001** - Tests lib/calculations.ts
-- ❌ **TEST-UNIT-002** - Tests validation schemas
-- ❌ **TEST-UNIT-003** - Tests componenti UI
+- ✅ **TEST-UNIT-001** - Tests lib/calculations.ts (tests/unit/calculations.test.ts)
+- ✅ **TEST-UNIT-002** - Tests validation schemas (tests/unit/schemas.test.ts)
+- ✅ **TEST-UNIT-003** - Tests componenti UI (tests/unit/components.test.tsx)
 
 ### 8.2 Integration Tests
-- ❌ **TEST-INT-001** - API tests Users CRUD
-- ❌ **TEST-INT-002** - API tests Programs flow
+- ✅ **TEST-INT-001** - API tests Users CRUD (tests/integration/users.test.ts)
+- ✅ **TEST-INT-002** - API tests Programs flow (tests/integration/programs.test.ts)
 
 ### 8.3 E2E Tests
-- ❌ **TEST-E2E-001** - Flow trainer: crea programma completo
-- ❌ **TEST-E2E-002** - Flow trainee: completa workout
+- ✅ **TEST-E2E-001** - Flow trainer: crea programma completo (tests/e2e/trainer-create-program.spec.ts)
+- ✅ **TEST-E2E-002** - Flow trainee: completa workout (tests/e2e/trainee-complete-workout.spec.ts)
 
 ### 8.4 Quality
-- ❌ **QA-001** - Lighthouse score ≥90
-- ❌ **QA-002** - Accessibility tests (axe-core)
+- ❌ **QA-001** - Lighthouse score ≥90 (richiede prod build)
+- ✅ **QA-002** - Accessibility tests (axe-core integrato in E2E)
 
 ---
 
@@ -278,13 +278,13 @@
 
 ### 9.1 PWA Setup
 - ✅ **PWA-001** - Manifest.json configurato
-- ❌ **PWA-002** - Service Worker con offline support
-- ❌ **PWA-003** - PWA install prompt banner
+- ✅ **PWA-002** - Service Worker con offline support (@serwist/next, src/sw.ts)
+- ✅ **PWA-003** - PWA install prompt banner (PWAInstallPrompt.tsx)
 
 ### 9.2 Mobile UX
-- ❌ **MOBILE-001** - Touch-friendly buttons (min 44x44px)
-- ❌ **MOBILE-002** - Swipe gestures workout trainee
-- ❌ **MOBILE-003** - Keyboard numerico per input peso/reps
+- ✅ **MOBILE-001** - Touch-friendly buttons (min-h-touch class già presente)
+- ❌ **MOBILE-002** - Swipe gestures workout trainee (nice-to-have, richiede libreria touch)
+- ✅ **MOBILE-003** - Keyboard numerico per input peso/reps (inputMode="decimal"/"numeric")
 
 ---
 

@@ -121,6 +121,7 @@ export default function FeedbackForm({
                                 <td className="px-2 py-2">
                                     <input
                                         type="number"
+                                        inputMode="numeric"
                                         min="0"
                                         max="50"
                                         value={set.reps || ''}
@@ -133,6 +134,7 @@ export default function FeedbackForm({
                                 <td className="px-2 py-2">
                                     <input
                                         type="number"
+                                        inputMode="decimal"
                                         min="0"
                                         max="500"
                                         step="0.5"

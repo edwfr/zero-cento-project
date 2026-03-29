@@ -57,6 +57,7 @@ export default function RepsInput({
             {showLabel && <label className="text-sm font-medium text-gray-700">Ripetizioni</label>}
             <input
                 type="text"
+                inputMode="numeric"
                 value={value}
                 onChange={handleChange}
                 disabled={disabled}
