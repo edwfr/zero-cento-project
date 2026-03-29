@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import YoutubeEmbed from '@/components/YoutubeEmbed'
+import { useSwipe } from '@/lib/useSwipe'
 
 interface Exercise {
     id: string
@@ -72,6 +73,8 @@ export default function WorkoutDetailPage() {
     const [feedbackData, setFeedbackData] = useState<Record<string, SetPerformed[]>>({})
     const [globalNotes, setGlobalNotes] = useState('')
     const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>({})
+    const [activeExerciseIndex, setActiveExerciseIndex] = useState(0)
+    const exerciseRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
     const STORAGE_KEY = `workout_${workoutId}_feedback`
 
@@ -300,6 +303,34 @@ export default function WorkoutDetailPage() {
         }))
     }
 
+    const navigateToExercise = useCallback(
+        (index: number) => {
+            if (!workout) return
+            const sorted = [...workout.workoutExercises].sort((a, b) => a.order - b.order)
+            const clamped = Math.max(0, Math.min(index, sorted.length - 1))
+            setActiveExerciseIndex(clamped)
+            const target = sorted[clamped]
+            if (target) {
+                // Expand the target exercise and scroll to it
+                setExpandedExercises((prev) => ({ ...prev, [target.id]: true }))
+                setTimeout(() => {
+                    exerciseRefs.current[target.id]?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start',
+                    })
+                }, 50)
+            }
+        },
+        [workout]
+    )
+
+    // Page-level swipe: left = next exercise, right = previous exercise
+    const { handlers: pageSwipeHandlers } = useSwipe({
+        onSwipeLeft: () => navigateToExercise(activeExerciseIndex + 1),
+        onSwipeRight: () => navigateToExercise(activeExerciseIndex - 1),
+        threshold: 80,
+    })
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -323,7 +354,7 @@ export default function WorkoutDetailPage() {
     const avgRPE = calculateAverageRPE()
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50" {...pageSwipeHandlers}>
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">
@@ -373,6 +404,31 @@ export default function WorkoutDetailPage() {
                     </p>
                 </div>
 
+                {/* Mobile swipe hint — shown only on touch devices */}
+                {sortedExercises.length > 1 && (
+                    <div className="flex items-center justify-center gap-2 mb-4 md:hidden">
+                        <button
+                            onClick={() => navigateToExercise(activeExerciseIndex - 1)}
+                            disabled={activeExerciseIndex === 0}
+                            className="p-2 rounded-full bg-white shadow disabled:opacity-30 text-gray-600"
+                            aria-label="Esercizio precedente"
+                        >
+                            ‹
+                        </button>
+                        <span className="text-xs text-gray-500 select-none">
+                            Scorri ← → per navigare tra gli esercizi ({activeExerciseIndex + 1}/{sortedExercises.length})
+                        </span>
+                        <button
+                            onClick={() => navigateToExercise(activeExerciseIndex + 1)}
+                            disabled={activeExerciseIndex === sortedExercises.length - 1}
+                            className="p-2 rounded-full bg-white shadow disabled:opacity-30 text-gray-600"
+                            aria-label="Prossimo esercizio"
+                        >
+                            ›
+                        </button>
+                    </div>
+                )}
+
                 {/* Exercises List */}
                 <div className="space-y-4 mb-8">
                     {sortedExercises.map((we, idx) => {
@@ -380,7 +436,12 @@ export default function WorkoutDetailPage() {
                         const volume = calculateExerciseVolume(we.id)
 
                         return (
-                            <div key={we.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+                            <div
+                                key={we.id}
+                                ref={(el) => { exerciseRefs.current[we.id] = el }}
+                                className={`bg-white rounded-lg shadow-md overflow-hidden transition-shadow ${idx === activeExerciseIndex ? 'ring-2 ring-[#FFA700]' : ''
+                                    }`}
+                            >
                                 {/* Exercise Header */}
                                 <div
                                     className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
@@ -397,8 +458,8 @@ export default function WorkoutDetailPage() {
                                                 </h3>
                                                 <span
                                                     className={`px-2 py-1 text-xs font-semibold rounded ${we.exercise.type === 'fundamental'
-                                                            ? 'bg-purple-100 text-purple-800'
-                                                            : 'bg-gray-100 text-gray-800'
+                                                        ? 'bg-purple-100 text-purple-800'
+                                                        : 'bg-gray-100 text-gray-800'
                                                         }`}
                                                 >
                                                     {we.exercise.type === 'fundamental'
