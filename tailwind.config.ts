@@ -10,9 +10,9 @@ const config: Config = {
         extend: {
             colors: {
                 brand: {
-                    primary: '#3b82f6',
-                    secondary: '#10b981',
-                    accent: '#f59e0b',
+                    primary: '#FFA700',
+                    secondary: '#000000',
+                    accent: '#FFFFFF',
                 },
                 week: {
                     test: {

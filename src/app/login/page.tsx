@@ -48,6 +48,23 @@ export default function LoginPage() {
                     <p className="mt-2 text-sm text-gray-600">
                         Accedi alla tua piattaforma di training
                     </p>
+
+                    {/* Logo - Se manca il file, verrà mostrato un placeholder */}
+                    <div className="mt-6 mb-4 flex justify-center">
+                        <img
+                            src="/images/logo/logo.png"
+                            alt="ZeroCento Logo"
+                            className="w-24 h-24 object-contain"
+                            onError={(e) => {
+                                // Fallback al placeholder se l'immagine non esiste
+                                e.currentTarget.style.display = 'none'
+                                e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                            }}
+                        />
+                        <div className="hidden w-24 h-24 rounded-full bg-gradient-to-br from-[#FFA700] to-[#FF8C00] flex items-center justify-center shadow-lg">
+                            <span className="text-white text-4xl font-bold">0→100</span>
+                        </div>
+                    </div>
                 </div>
 
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -70,7 +87,7 @@ export default function LoginPage() {
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 shadow-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
                                 placeholder="email@example.com"
                             />
                         </div>
@@ -87,7 +104,7 @@ export default function LoginPage() {
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 shadow-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
                                 placeholder="••••••••"
                             />
                         </div>
@@ -97,7 +114,7 @@ export default function LoginPage() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-brand-primary hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-brand-primary hover:bg-[#E69500] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? 'Accesso in corso...' : 'Accedi'}
                         </button>
@@ -106,7 +123,7 @@ export default function LoginPage() {
                     <div className="text-center">
                         <a
                             href="/forgot-password"
-                            className="text-sm text-brand-primary hover:text-blue-600"
+                            className="text-sm text-brand-primary hover:text-[#E69500]"
                         >
                             Password dimenticata?
                         </a>

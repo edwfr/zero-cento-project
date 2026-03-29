@@ -19,7 +19,7 @@ export default function Error({
             <p className="text-gray-600 mb-6">Riprova più tardi</p>
             <button
                 onClick={reset}
-                className="px-6 py-2 bg-brand-primary text-white rounded-lg hover:bg-blue-600"
+                className="px-6 py-2 bg-brand-primary text-white rounded-lg hover:bg-[#E69500]"
             >
                 Riprova
             </button>
