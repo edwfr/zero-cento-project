@@ -1,8 +1,8 @@
 # 📊 SAL (Stato Avanzamento Lavori) - ZeroCento Training Platform
 
 **Ultima modifica:** 29 Marzo 2026  
-**Versione:** 1.0  
-**Completamento generale:** 40%
+**Versione:** 1.4  
+**Completamento generale:** 60%
 
 ---
 
@@ -11,15 +11,15 @@
 | Categoria             | Completato | In Corso | Da Fare | Totale  | %       |
 | --------------------- | ---------- | -------- | ------- | ------- | ------- |
 | **Database & Infra**  | 12         | 0        | 0       | 12      | 100%    |
-| **Backend API**       | 28         | 0        | 35      | 63      | 44%     |
+| **Backend API**       | 46         | 0        | 17      | 63      | 73%     |
 | **Componenti UI**     | 11         | 0        | 8       | 19      | 58%     |
 | **Frontend Admin**    | 2          | 0        | 8       | 10      | 20%     |
-| **Frontend Trainer**  | 0          | 0        | 15      | 15      | 0%      |
+| **Frontend Trainer**  | 13         | 0        | 4       | 17      | 76%     |
 | **Frontend Trainee**  | 0          | 0        | 6       | 6       | 0%      |
 | **Auth & Security**   | 2          | 0        | 3       | 5       | 40%     |
 | **Testing & Quality** | 0          | 0        | 8       | 8       | 0%      |
 | **PWA & Mobile**      | 1          | 0        | 5       | 6       | 17%     |
-| **TOTALE**            | **56**     | **0**    | **88**  | **144** | **39%** |
+| **TOTALE**            | **87**     | **0**    | **59**  | **146** | **60%** |
 
 ---
 
@@ -82,19 +82,19 @@
 ### 2.5 Exercises API
 - ✅ **API-EX-001** - GET /api/exercises (lista con pagination cursor-based)
 - ✅ **API-EX-002** - POST /api/exercises (creazione)
-- ❌ **API-EX-003** - GET /api/exercises/[id] (dettaglio singolo)
-- ❌ **API-EX-004** - PUT /api/exercises/[id] (modifica)
-- ❌ **API-EX-005** - DELETE /api/exercises/[id] (eliminazione con check riferimenti)
+- ✅ **API-EX-003** - GET /api/exercises/[id] (dettaglio singolo)
+- ✅ **API-EX-004** - PUT /api/exercises/[id] (modifica)
+- ✅ **API-EX-005** - DELETE /api/exercises/[id] (eliminazione con check riferimenti)
 
 ### 2.6 Training Programs API
-- ❌ **API-PROG-001** - GET /api/programs (lista con filtri RBAC)
-- ❌ **API-PROG-002** - POST /api/programs (creazione draft + auto-create weeks/workouts)
-- ❌ **API-PROG-003** - GET /api/programs/[id] (dettaglio completo con weeks/workouts/exercises)
-- ❌ **API-PROG-004** - PUT /api/programs/[id] (modifica solo se draft)
-- ❌ **API-PROG-005** - DELETE /api/programs/[id] (eliminazione solo se draft)
-- ❌ **API-PROG-006** - POST /api/programs/[id]/publish (pubblica con date)
-- ❌ **API-PROG-007** - GET /api/programs/[id]/progress (avanzamento trainee)
-- ❌ **API-PROG-008** - GET /api/programs/[id]/reports (reportistica SBD + volume)
+- ✅ **API-PROG-001** - GET /api/programs (lista con filtri RBAC)
+- ✅ **API-PROG-002** - POST /api/programs (creazione draft + auto-create weeks/workouts)
+- ✅ **API-PROG-003** - GET /api/programs/[id] (dettaglio completo con weeks/workouts/exercises)
+- ✅ **API-PROG-004** - PUT /api/programs/[id] (modifica solo se draft)
+- ✅ **API-PROG-005** - DELETE /api/programs/[id] (eliminazione solo se draft)
+- ✅ **API-PROG-006** - POST /api/programs/[id]/publish (pubblica con date)
+- ✅ **API-PROG-007** - GET /api/programs/[id]/progress (avanzamento trainee)
+- ✅ **API-PROG-008** - GET /api/programs/[id]/reports (reportistica SBD + volume)
 
 ### 2.7 Workout Exercises API
 - ✅ **API-WE-001** - POST /api/programs/[id]/workouts/[workoutId]/exercises (aggiungi esercizio)
@@ -103,15 +103,15 @@
 - ✅ **API-WE-004** - PATCH /api/programs/[id]/workouts/[workoutId]/exercises/reorder (riordina)
 
 ### 2.8 Feedback API
-- ❌ **API-FB-001** - POST /api/feedback (crea feedback + nested sets)
-- ❌ **API-FB-002** - GET /api/feedback (lista con filtri traineeId/programId/exerciseId)
-- ❌ **API-FB-003** - GET /api/feedback/[id] (dettaglio con setsPerformed)
-- ❌ **API-FB-004** - PUT /api/feedback/[id] (modifica entro 24h)
+- ✅ **API-FB-001** - POST /api/feedback (crea feedback + nested sets)
+- ✅ **API-FB-002** - GET /api/feedback (lista con filtri traineeId/programId/exerciseId)
+- ✅ **API-FB-003** - GET /api/feedback/[id] (dettaglio con setsPerformed)
+- ✅ **API-FB-004** - PUT /api/feedback/[id] (modifica entro 24h)
 
 ### 2.9 Personal Records API
-- ❌ **API-PR-001** - GET /api/personal-records (lista massimali trainee)
-- ❌ **API-PR-002** - POST /api/personal-records (crea/upsert massimale)
-- ❌ **API-PR-003** - DELETE /api/personal-records/[id] (elimina massimale)
+- ✅ **API-PR-001** - GET /api/personal-records (lista massimali trainee)
+- ✅ **API-PR-002** - POST /api/personal-records (crea/upsert massimale)
+- ✅ **API-PR-003** - DELETE /api/personal-records/[id] (elimina massimale)
 
 ### 2.10 Admin API
 - ❌ **API-ADM-001** - POST /api/admin/trainees/[traineeId]/reassign (riassegna trainee)
@@ -179,30 +179,30 @@
 
 ## 👨‍🏫 5. FRONTEND TRAINER
 
-**Completamento:** 0/15 (0%)
+**Completamento:** 13/17 (76%)
 
 ### 5.1 Trainer Dashboard
-- ❌ **FE-TR-001** - Dashboard con cards atleti/programmi/esercizi
-- ❌ **FE-TR-002** - Feed recenti feedback
-- ❌ **FE-TR-003** - Quick actions (crea programma/trainee/esercizio)
+- ✅ **FE-TR-001** - Dashboard con cards atleti/programmi/esercizi
+- ✅ **FE-TR-002** - Feed recenti feedback
+- ✅ **FE-TR-003** - Quick actions (crea programma/trainee/esercizio)
 
 ### 5.2 Gestione Esercizi
-- ❌ **FE-TR-004** - Pagina lista esercizi con tabella e filtri
-- ❌ **FE-TR-005** - Form creazione esercizio (new/page.tsx)
+- ✅ **FE-TR-004** - Pagina lista esercizi con tabella e filtri
+- ✅ **FE-TR-005** - Form creazione esercizio (new/page.tsx)
 - ❌ **FE-TR-006** - Form modifica esercizio ([id]/edit/page.tsx)
 
 ### 5.3 Gestione Atleti
-- ❌ **FE-TR-007** - Pagina lista trainee con tabella
-- ❌ **FE-TR-008** - Form creazione trainee (new/page.tsx)
+- ✅ **FE-TR-007** - Pagina lista trainee con tabella
+- ✅ **FE-TR-008** - Form creazione trainee (new/page.tsx)
 - ❌ **FE-TR-009** - Profilo trainee ([id]/page.tsx con tabs)
 - ❌ **FE-TR-010** - Gestione massimali trainee ([id]/records/page.tsx)
 
 ### 5.4 Gestione Programmi
-- ❌ **FE-TR-011** - Pagina lista programmi (tabs draft/active/completed)
-- ❌ **FE-TR-012** - Wizard Step 1: Setup programma (new/page.tsx)
-- ❌ **FE-TR-013** - Wizard Step 2: Week Overview ([id]/week-overview/page.tsx)
-- ❌ **FE-TR-014** - Wizard Step 3: Workout Detail ([id]/workouts/[wId]/edit/page.tsx)
-- ❌ **FE-TR-015** - Wizard Step 4: Publish ([id]/publish/page.tsx)
+- ✅ **FE-TR-011** - Pagina lista programmi (tabs draft/active/completed)
+- ✅ **FE-TR-012** - Wizard Step 1: Setup programma (new/page.tsx)
+- ✅ **FE-TR-013** - Wizard Step 2A: Week Overview ([id]/edit/page.tsx)
+- ✅ **FE-TR-014** - Wizard Step 2B: Workout Detail ([id]/workouts/[wId]/page.tsx)
+- ✅ **FE-TR-015** - Wizard Step 3: Publish ([id]/publish/page.tsx)
 
 ### 5.5 Monitoraggio
 - ❌ **FE-TR-016** - Dashboard avanzamento programma ([id]/progress/page.tsx)
@@ -422,6 +422,6 @@ Un task è "Done" quando:
 
 ---
 
-**📌 PROSSIMA SESSIONE:** Implementare API-EX-003, API-EX-004, API-EX-005 (Exercises detail)
+**📌 PROSSIMA SESSIONE:** Implementare Frontend Trainer - Gestione Esercizi e Atleti
 
-**Ultima modifica:** 29 Marzo 2026 - v1.0
+**Ultima modifica:** 29 Marzo 2026 - v1.3
