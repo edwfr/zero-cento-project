@@ -26,6 +26,9 @@ export { default as ConfirmationModal } from './ConfirmationModal'
 export { default as ErrorBoundary } from './ErrorBoundary'
 export { default as RoleGuard } from './RoleGuard'
 
+// Tables
+export { default as ProgramsTable } from './ProgramsTable'
+
 // Layout Components (existing)
 export { default as DashboardLayout } from './DashboardLayout'
 export { default as ProfileForm } from './ProfileForm'

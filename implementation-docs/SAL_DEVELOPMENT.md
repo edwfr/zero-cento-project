@@ -1,8 +1,8 @@
 # 📊 SAL (Stato Avanzamento Lavori) - ZeroCento Training Platform
 
 **Ultima modifica:** 29 Marzo 2026  
-**Versione:** 1.5  
-**Completamento generale:** 64%
+**Versione:** 1.6  
+**Completamento generale:** 67%
 
 ---
 
@@ -12,14 +12,14 @@
 | --------------------- | ---------- | -------- | ------- | ------- | ------- |
 | **Database & Infra**  | 12         | 0        | 0       | 12      | 100%    |
 | **Backend API**       | 46         | 0        | 17      | 63      | 73%     |
-| **Componenti UI**     | 11         | 0        | 8       | 19      | 58%     |
+| **Componenti UI**     | 12         | 0        | 7       | 19      | 63%     |
 | **Frontend Admin**    | 2          | 0        | 8       | 10      | 20%     |
-| **Frontend Trainer**  | 13         | 0        | 4       | 17      | 76%     |
+| **Frontend Trainer**  | 14         | 0        | 3       | 17      | 82%     |
 | **Frontend Trainee**  | 7          | 0        | 0       | 7       | 100%    |
 | **Auth & Security**   | 2          | 0        | 3       | 5       | 40%     |
 | **Testing & Quality** | 0          | 0        | 8       | 8       | 0%      |
 | **PWA & Mobile**      | 1          | 0        | 5       | 6       | 17%     |
-| **TOTALE**            | **94**     | **0**    | **59**  | **153** | **61%** |
+| **TOTALE**            | **96**     | **0**    | **57**  | **153** | **63%** |
 
 ---
 
@@ -122,7 +122,7 @@
 
 ## 🎨 3. COMPONENTI UI
 
-**Completamento:** 11/19 (58%)
+**Completamento:** 12/19 (63%)
 
 ### 3.1 Form Controls
 - ✅ **UI-CTRL-001** - WeightTypeSelector (dropdown tipo peso + input valore)
@@ -144,7 +144,7 @@
 - ✅ **UI-FORM-001** - FeedbackForm (form feedback trainee con serie)
 - ✅ **UI-TABLE-001** - ExercisesTable (tabella esercizi con filtri)
 - ✅ **UI-TABLE-002** - UsersTable (tabella utenti con CRUD)
-- ❌ **UI-TABLE-003** - ProgramsTable (tabella programmi con filtri)
+- ✅ **UI-TABLE-003** - ProgramsTable (tabella programmi con filtri)
 
 ### 3.4 Layout & Feedback
 - ✅ **UI-LAYOUT-001** - LoadingSpinner (spinner 4 sizes + variants)
@@ -179,7 +179,7 @@
 
 ## 👨‍🏫 5. FRONTEND TRAINER
 
-**Completamento:** 13/17 (76%)
+**Completamento:** 14/17 (82%)
 
 ### 5.1 Trainer Dashboard
 - ✅ **FE-TR-001** - Dashboard con cards atleti/programmi/esercizi
@@ -189,7 +189,7 @@
 ### 5.2 Gestione Esercizi
 - ✅ **FE-TR-004** - Pagina lista esercizi con tabella e filtri
 - ✅ **FE-TR-005** - Form creazione esercizio (new/page.tsx)
-- ❌ **FE-TR-006** - Form modifica esercizio ([id]/edit/page.tsx)
+- ✅ **FE-TR-006** - Form modifica esercizio ([id]/edit/page.tsx)
 
 ### 5.3 Gestione Atleti
 - ✅ **FE-TR-007** - Pagina lista trainee con tabella
@@ -422,6 +422,6 @@ Un task è "Done" quando:
 
 ---
 
-**📌 PROSSIMA SESSIONE:** Implementare Frontend Trainer - Gestione Esercizi e Atleti
+**📌 PROSSIMA SESSIONE:** Sprint 2 — Monitoraggio, massimali trainee, report SBD
 
-**Ultima modifica:** 29 Marzo 2026 - v1.3
+**Ultima modifica:** 29 Marzo 2026 - v1.6
