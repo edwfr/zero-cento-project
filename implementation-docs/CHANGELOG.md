@@ -19,6 +19,14 @@ Registro cronologico degli sviluppi effettuati.
 
 ## Storico
 
+### [30 Marzo 2026] — Validazione lunghezza parametro search
+
+**Task checklist:** #1.3  
+**File modificati:** `src/app/api/exercises/route.ts`, `src/app/api/programs/route.ts`  
+**Note:** Aggiunta validazione lunghezza parametro search (2-100 caratteri) per prevenire query DB pesanti con stringhe troppo lunghe. La validazione viene eseguita dopo il parsing degli schema Zod e restituisce HTTP 400 se fuori range.
+
+---
+
 ### [30 Marzo 2026] — Fix RBAC bypass personal records
 
 **Task checklist:** #1.1  

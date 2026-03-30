@@ -24,6 +24,11 @@ export async function GET(request: NextRequest) {
         const cursor = searchParams.get('cursor') || undefined
         const limit = parseInt(searchParams.get('limit') || '20')
 
+        // Validate search parameter length
+        if (search && (search.length < 2 || search.length > 100)) {
+            return apiError('VALIDATION_ERROR', 'Search parameter must be between 2 and 100 characters', 400)
+        }
+
         // Build where clause based on RBAC
         const where: any = {}
 

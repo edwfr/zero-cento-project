@@ -32,6 +32,11 @@ export async function GET(request: NextRequest) {
 
         const { type, movementPatternId, muscleGroupId, search, cursor, limit } = validation.data
 
+        // Validate search parameter length
+        if (search && (search.length < 2 || search.length > 100)) {
+            return apiError('VALIDATION_ERROR', 'Search parameter must be between 2 and 100 characters', 400)
+        }
+
         // Build where clause
         const where: any = {}
 
