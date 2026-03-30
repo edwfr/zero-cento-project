@@ -19,6 +19,14 @@ Registro cronologico degli sviluppi effettuati.
 
 ## Storico
 
+### [30 Marzo 2026] — Completato Publish Programma (Step 4 Program Builder)
+
+**Task checklist:** #2.6  
+**File modificati:** `src/app/trainer/programs/[id]/publish/page.tsx`  
+**Note:** Verificato e ottimizzato il programma di pubblicazione (step 4 del wizard). Implementazioni complete: (1) **Riepilogo programma** con statistiche: atleta, durata, workout configurati/totali, numero totale esercizi; (2) **Panoramica settimane** con badge tipo settimana (loading/deload), visualizzazione stato workout per giorno (badge colorati: verde=configurato, grigio=vuoto), indicatori visivi workout/settimana; (3) **Validazione pre-pubblicazione** automatica che blocca con messaggi chiari: workout senza esercizi, settimane incomplete; (4) **Input data inizio** con default al prossimo lunedì, validazione contro date passate, suggerimento UX per iniziare di lunedì; (5) **Conferma pubblicazione** con modal di conferma, chiamata POST `/api/programs/[id]/publish` con gestione errori, redirect automatico a `/trainer/programs` con toast success; (6) **Progress indicator wizard** che mostra step completati (Setup✓, Esercizi✓, Pubblica→); (7) **Info box** che spiega conseguenze pubblicazione (status Active, visibilità trainee, limitazioni modifica). Fix minore: aggiunta trasformazione dati API → frontend per calcolare `exerciseCount` da `workoutExercises.length`.
+
+---
+
 ### [30 Marzo 2026] — Completato Workout Detail Editor (Step 3 Program Builder)
 
 **Task checklist:** #2.5  

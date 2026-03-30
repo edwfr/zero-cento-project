@@ -77,8 +77,23 @@ export default function PublishProgramPage() {
                 throw new Error(data.error?.message || 'Errore caricamento programma')
             }
 
-            setProgram(data.data.program)
-            validateProgram(data.data.program)
+            // Transform API data to match frontend interface
+            const programData = data.data.program
+            const transformedProgram: Program = {
+                ...programData,
+                weeks: programData.weeks.map((week: any) => ({
+                    weekNumber: week.weekNumber,
+                    weekType: week.weekType,
+                    workouts: week.workouts.map((workout: any) => ({
+                        id: workout.id,
+                        dayOfWeek: workout.dayOfWeek,
+                        exerciseCount: workout.workoutExercises?.length || 0,
+                    })),
+                })),
+            }
+
+            setProgram(transformedProgram)
+            validateProgram(transformedProgram)
         } catch (err: any) {
             setError(err.message)
         } finally {

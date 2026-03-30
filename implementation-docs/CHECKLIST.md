@@ -1,7 +1,7 @@
 # ✅ CHECKLIST SVILUPPO - ZeroCento Training Platform
 
-**Stato attuale:** ~58% completato  
-**Effort rimanente stimato:** ~129h  
+**Stato attuale:** ~61% completato (27h/129h - Sprint 1 + 2.1-2.6 completati)  
+**Effort rimanente stimato:** ~125h  
 **Riferimenti:** [SYSTEM_REVIEW.md](../SYSTEM_REVIEW.md) · [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md) · [CHANGELOG.md](./CHANGELOG.md)
 
 ---
@@ -49,7 +49,7 @@
 - [x] **2.5** Workout Detail Editor — step 3 wizard (8h)  
       File: `src/app/trainer/programs/[id]/workouts/[wId]/page.tsx`  
       Spec: [NEXT_ACTIONS.md § 11](./NEXT_ACTIONS.md#11-workout-detail-editor---step-3-wizard-8h)
-- [ ] **2.6** Publish Programma — step 4 wizard (4h)  
+- [x] **2.6** Publish Programma — step 4 wizard (4h)  
       File: `src/app/trainer/programs/[id]/publish/page.tsx`  
       Spec: [NEXT_ACTIONS.md § 12](./NEXT_ACTIONS.md#12-publish-programma---step-4-wizard-4h)
 - [ ] **2.7** Edit Programma (4h)  
