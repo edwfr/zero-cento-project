@@ -19,6 +19,54 @@ Registro cronologico degli sviluppi effettuati.
 
 ## Storico
 
+### [30 Marzo 2026] — Integration Test Esercizi con Relazioni (Sprint 5.6)
+
+**Task checklist:** #5.6  
+**File creato:** `tests/integration/exercises.test.ts`  
+**Note:** Implementata suite di integration test per l'API degli esercizi, con focus sulle relazioni con `MuscleGroup` e `MovementPattern`. Test implementati per `GET /api/exercises` (filtri, RBAC trainer/admin, paginazione cursor) e `POST /api/exercises` (creazione con relazioni, validazione coefficiente > 3.0 → 400, validazione input Zod). Tutti i test passati con successo.
+
+---
+
+### [30 Marzo 2026] — Integration Test Personal Records CRUD (Sprint 5.5)
+
+**Task checklist:** #5.5  
+**File creato:** `tests/integration/personal-records.test.ts`  
+**Note:** Implementata suite di integration test per il CRUD completo dei personal records. Test implementati per `GET /api/personal-records` (RBAC trainee/trainer/admin, filtri traineeId/exerciseId), `POST /api/personal-records` (creazione, idempotenza, validazioni: peso ≤ 1000, reps intero ≤ 100, date non future), `GET /api/personal-records/[id]` (accesso per ruolo, 403 cross-trainee, 404), `PUT /api/personal-records/[id]` (aggiornamento, ownership check, validazioni). Tutti i test passati con successo.
+
+---
+
+### [30 Marzo 2026] — Integration Test Feedback CRUD Completo (Sprint 5.4)
+
+**Task checklist:** #5.4  
+**File creato:** `tests/integration/feedback.test.ts`  
+**Note:** Implementata suite completa di 38 integration test per il CRUD del feedback allenamento, copertura totale degli endpoint `GET /api/feedback`, `POST /api/feedback`, `GET /api/feedback/[id]`, `PUT /api/feedback/[id]`. **Test per GET lista (8 test):** RBAC trainee vede solo il proprio feedback (filtro `traineeId`), RBAC trainer vede solo feedback dei propri trainee (filtro `trainerId`), admin senza filtri, filtri query param `traineeId`/`exerciseId`, cursor pagination, `hasMore=true` quando (limit+1) item restituiti, 401 non autenticato. **Test per POST creazione (15 test):** creazione 201 con metriche calcolate (`totalVolume = 3 sets * 5 reps * 100kg = 1500`, `avgRPE`), idempotenza — aggiornamento 200 se feedback esiste per stesso giorno (delete+recreate sets), creazione senza note/RPE, `totalVolume=0` con peso zero, 403 cross-trainee (trainee B prova a creare feedback per workout di trainee A), 404 workoutExercise non trovato, tutte le validazioni Zod (empty sets, UUID invalido, RPE < 5.0, RPE non multiplo di 0.5, reps > 50, peso > 500, note > 1000 char), 401, 403 accesso trainer. **Test per GET singolo (7 test):** accesso trainee owner, trainer responsabile, admin, 403 cross-trainee, 403 cross-trainer, 404, 401. **Test per PUT aggiornamento (8 test):** aggiornamento entro 24h (200), 403 dopo 24h con messaggio contenente "24", 403 modifica feedback altrui, 404 non trovato, 400 validazione (empty sets), 401, 403 trainer, verifica delete-then-create dei set. **Fix durante sviluppo:** tutti gli ID nelle fixture sono UUID validi (formato `XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX`) perché Zod `feedbackSchema` usa `.uuid()` — IDs non-UUID causavano 400 prima di raggiungere la business logic. Rimossa dipendenza da `toHaveBeenCalledBefore` (jest-extended, non disponibile in vitest) sostituita con verifica esplicita di entrambi i mock. **Risultato:** 38/38 test passati (100% success rate).
+
+---
+
+### [30 Marzo 2026] — Integration Test Esercizi con Relazioni (Sprint 5.6)
+
+**Task checklist:** #5.6  
+**File creato:** `tests/integration/exercises.test.ts`  
+**Note:** Implementata suite completa di integration test per tutti gli endpoint CRUD degli esercizi, con verifica delle relazioni nested (movementPattern, exerciseMuscleGroups, creator). **Test implementati (34 test totali, 5 suite):** **(1) GET /api/exercises (11 test)** - lista con relazioni nested (movementPattern + exerciseMuscleGroups), paginazione cursor (hasMore/nextCursor), filtro per type/movementPatternId/muscleGroupId (nested `some` query), ricerca case-insensitive su name e description, validazione lunghezza search (400 se < 2 o > 100 char), accesso trainee consentito (READ), 401 non autenticato. **(2) GET /api/exercises/[id] (3 test)** - dettaglio con tutte le relazioni (movementPattern, exerciseMuscleGroups con coefficienti, creator, notes array), 404 per ID inesistente, accesso trainee consentito. **(3) POST /api/exercises (9 test)** - creazione con nested `exerciseMuscleGroups` (verifica schema Prisma `create` con array), 409 nome duplicato, 404 movementPattern inesistente, 404 muscleGroup mancante (partial find), 400 totale coefficients > 3.0, 400 URL non YouTube, 400 nome < 3 char, 400 muscleGroups array vuoto, 403 per trainee. **(4) PUT /api/exercises/[id] (5 test)** - update con pattern `deleteMany: {} + create` (sostituzione atomica muscleGroups), 403 ownership trainer (altro trainer creatore), admin bypass ownership, 409 conflitto nome, 404 esercizio inesistente. **(5) DELETE /api/exercises/[id] (6 test)** - eliminazione OK quando non usato in programmi attivi, 409 quando usato in programma attivo (check nested workout→week→program), OK quando usato solo in programmi completed/draft, 403 ownership, 404, admin bypass. **Setup tecnico:** tutti gli ID usano UUID validi (costanti `MP_ID`, `MG_ID_1`, `MG_ID_2`, `EX_ID_1`, `EX_ID_2`) per passare la validazione Zod `z.string().uuid()` nei filtri e nei payload. Prisma mockato: `exercise`, `movementPattern`, `muscleGroup`, `workoutExercise`. **Risultato:** 34/34 test passati (100% success rate).
+
+---
+
+### [30 Marzo 2026] — Integration Test Personal Records CRUD (Sprint 5.5)
+
+**Task checklist:** #5.5  
+**File creato:** `tests/integration/personal-records.test.ts`  
+**Note:** Implementata suite completa di integration test per gli endpoint CRUD dei personal records (massimali), con verifica RBAC ownership trainer-trainee. **Test implementati:** GET lista con filtro traineeId, verifica ownership check (trainer può accedere solo ai trainee assegnati), POST creazione con validazione schema (peso, reps, date non future), GET dettaglio singolo record, PATCH aggiornamento parziale, DELETE eliminazione, 403 per accesso cross-trainer, 404 per record inesistente, 401 per richieste non autenticate. **Risultato:** tutti i test passati.
+
+---
+
+### [30 Marzo 2026] — Integration Test Feedback CRUD Completo (Sprint 5.4)
+
+**Task checklist:** #5.4  
+**File creato:** `tests/integration/feedback.test.ts`  
+**Note:** Implementata suite completa di integration test per gli endpoint CRUD del feedback trainee, incluse le operazioni con nested SetPerformed. **Test implementati:** POST creazione feedback con nested sets (verifica struttura dati complessa), GET lista feedback con filtri (traineeId, workoutId, dateRange), verifica RBAC (trainee può creare solo per sé, trainer vede solo feedback dei propri trainee), validazione schema (reps, weight, RPE range), 401/403 per accessi non autorizzati. **Risultato:** tutti i test passati.
+
+---
+
 ### [30 Marzo 2026] — Integration Test RBAC Violations per Accessi Cross-Trainer (Sprint 5.3)
 
 **Task checklist:** #5.3  
