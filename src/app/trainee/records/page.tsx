@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import LoadingSpinner from '@/components/LoadingSpinner'
+import { SkeletonTable } from '@/components'
 import { formatDate } from '@/lib/date-format'
 
 interface PersonalRecord {
@@ -79,8 +79,8 @@ export default function PersonalRecordsPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <LoadingSpinner size="lg" color="primary" />
+            <div className="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 py-8">
+                <SkeletonTable rows={8} columns={4} />
             </div>
         )
     }

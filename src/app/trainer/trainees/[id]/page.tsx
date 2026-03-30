@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import LoadingSpinner from '@/components/LoadingSpinner'
+import { SkeletonDetail } from '@/components'
 import { formatDate } from '@/lib/date-format'
 
 interface Trainee {
@@ -116,8 +116,8 @@ export default function TraineeProfilePage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <LoadingSpinner size="lg" />
+            <div className="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 py-8">
+                <SkeletonDetail />
             </div>
         )
     }

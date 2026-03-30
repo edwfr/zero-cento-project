@@ -24,6 +24,17 @@ export { default as NavigationCard } from './NavigationCard'
 
 // Loading & Feedback
 export { default as LoadingSpinner, FullPageLoader, InlineLoader } from './LoadingSpinner'
+export {
+    default as Skeleton,
+    SkeletonText,
+    SkeletonCard,
+    SkeletonTable,
+    SkeletonList,
+    SkeletonDashboard,
+    SkeletonForm,
+    SkeletonNavigation,
+    SkeletonDetail,
+} from './Skeleton'
 export { default as ToastNotification, ToastProvider, useToast } from './ToastNotification'
 export { default as ConfirmationModal } from './ConfirmationModal'
 export { default as ErrorBoundary } from './ErrorBoundary'

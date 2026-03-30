@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import LoadingSpinner from '@/components/LoadingSpinner'
+import { SkeletonDashboard } from '@/components'
 import ProgressBar from '@/components/ProgressBar'
 import { formatNumber } from '@/lib/date-format'
 import {
@@ -87,8 +87,8 @@ export default function ProgramProgressPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <LoadingSpinner size="lg" />
+            <div className="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 py-8">
+                <SkeletonDashboard cards={3} showTable={true} />
             </div>
         )
     }

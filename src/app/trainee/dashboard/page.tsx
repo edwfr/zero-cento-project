@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import LoadingSpinner from '@/components/LoadingSpinner'
-import { NavigationCard, ProgressBar } from '@/components'
+import { NavigationCard, ProgressBar, SkeletonDashboard } from '@/components'
 
 interface ActiveProgram {
     id: string
@@ -87,8 +86,8 @@ export default function TraineeDashboard() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <LoadingSpinner size="lg" color="primary" />
+            <div className="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 py-8">
+                <SkeletonDashboard cards={3} showTable={false} />
             </div>
         )
     }

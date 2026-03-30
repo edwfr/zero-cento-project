@@ -1,6 +1,6 @@
 # ✅ CHECKLIST SVILUPPO - ZeroCento Training Platform
 
-**Stato attuale:** ~84% completato (60h/129h - Sprint 1 + 2 + 3 + 4 + Sprint 7.1-7.2 completati)  
+**Stato attuale:** ~86% completato (64h/129h - Sprint 1 + 2 + 3 + 4 + Sprint 7.1-7.4 completati)  
 **Effort rimanente stimato:** ~69h  
 **Riferimenti:** [SYSTEM_REVIEW.md](../SYSTEM_REVIEW.md) · [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md) · [CHANGELOG.md](./CHANGELOG.md)
 
@@ -115,7 +115,7 @@
 - [x] **7.1** Integrare `useTranslation()` in tutti i componenti (8h) ✅ _30 Mar 2026_
 - [x] **7.2** Rimuovere tutte le stringhe hardcoded italiane (4h) ✅ _30 Mar 2026_
 - [x] **7.3** Standardizzare formato date con locale i18n (2h) ✅ _30 Mar 2026_
-- [ ] **7.4** Aggiungere skeleton loader al posto dei spinner (4h)
+- [x] **7.4** Aggiungere skeleton loader al posto dei spinner (4h) ✅ _30 Mar 2026_
 - [ ] **7.5** ARIA labels e focus management su modali (3h)
 - [ ] **7.6** Standardizzare formato risposte API — struttura `{ items, pagination? }` uniforme (4h)
 

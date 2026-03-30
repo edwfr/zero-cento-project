@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { LoadingSpinner, StatCard, NavigationCard } from '@/components'
+import { StatCard, NavigationCard, SkeletonDashboard } from '@/components'
 
 interface DashboardStats {
     totalUsers: number
@@ -64,11 +64,7 @@ export default function AdminDashboardContent() {
     }
 
     if (loading) {
-        return (
-            <div className="flex items-center justify-center py-20">
-                <LoadingSpinner size="lg" color="primary" />
-            </div>
-        )
+        return <SkeletonDashboard cards={6} showTable={false} />
     }
 
     if (error || !stats) {
