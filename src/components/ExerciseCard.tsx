@@ -38,7 +38,7 @@ export default function ExerciseCard({
     className = '',
 }: ExerciseCardProps) {
     const { t } = useTranslation(['trainer', 'common'])
-    
+
     const typeColors = {
         fundamental: 'bg-red-100 text-red-700 border-red-300',
         accessory: 'bg-blue-100 text-blue-700 border-blue-300',

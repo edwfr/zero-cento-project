@@ -46,7 +46,7 @@ export default function ProgramsTable({
     onRefresh,
 }: ProgramsTableProps) {
     const { t } = useTranslation(['trainer', 'common'])
-    
+
     const STATUS_LABELS: Record<string, string> = {
         draft: t('trainer:programs.draft'),
         active: t('common:common.active'),
@@ -57,13 +57,13 @@ export default function ProgramsTable({
         active: t('common:common.active'),
         completed: t('common:common.completed'),
     }
-    
+
     const STATUS_BADGE: Record<string, string> = {
         draft: 'bg-yellow-100 text-yellow-800',
         active: 'bg-green-100 text-green-800',
         completed: 'bg-gray-100 text-gray-600',
     }
-    
+
     const [programs, setPrograms] = useState<Program[]>(externalPrograms ?? [])
     const [loading, setLoading] = useState(!externalPrograms)
     const [error, setError] = useState<string | null>(null)
@@ -217,10 +217,10 @@ export default function ProgramsTable({
                         {searchTerm
                             ? t('trainer:programs.noProgramsFound')
                             : activeTab === 'draft'
-                            ? t('trainer:programs.noDraftPrograms')
-                            : activeTab === 'active'
-                            ? t('trainer:programs.noActivePrograms')
-                            : t('trainer:programs.noCompletedPrograms')}
+                                ? t('trainer:programs.noDraftPrograms')
+                                : activeTab === 'active'
+                                    ? t('trainer:programs.noActivePrograms')
+                                    : t('trainer:programs.noCompletedPrograms')}
                     </p>
                 </div>
             ) : (
