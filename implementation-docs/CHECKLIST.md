@@ -92,7 +92,7 @@
 - [x] **5.6** Integration test: esercizi con relazioni (2h) ✅ _30 Mar 2026_
 - [x] **5.7** E2E test: login → redirect per ruolo (2h) ✅ _30 Mar 2026_
 - [x] **5.8** E2E test: trainer crea programma → pubblica → trainee lo vede (4h) ✅ _30 Mar 2026_
-- [ ] **5.9** E2E test: trainee completa workout con feedback (3h)
+- [x] **5.9** E2E test: trainee completa workout con feedback (3h) ✅ _30 Mar 2026_
 - [ ] **5.10** Raggiungere copertura minima 80% (3h refactor + gap fill)
 
 ---
