@@ -98,7 +98,8 @@ const mockUsers = [
 ]
 
 function makeRequest(url = 'http://localhost:3000/api/users', options?: RequestInit) {
-    return new NextRequest(url, options)
+    const { signal, ...safeOptions } = options || {}
+    return new NextRequest(url, safeOptions as any)
 }
 
 describe('GET /api/users', () => {
