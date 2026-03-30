@@ -10,15 +10,19 @@ export const personalRecordSchema = z.object({
         .number()
         .int('Ripetizioni deve essere intero')
         .min(1, 'Minimo 1 ripetizione')
-        .max(20, 'Massimo 20 ripetizioni'),
+        .max(100, 'Massimo 100 ripetizioni'),
     weight: z
         .number()
-        .min(0, 'Peso minimo 0 kg')
+        .positive('Peso deve essere maggiore di 0')
         .max(1000, 'Peso massimo 1000 kg'),
     recordDate: z
         .string()
         .datetime('Data non valida')
-        .or(z.date()),
+        .or(z.date())
+        .refine((date) => {
+            const recordDate = typeof date === 'string' ? new Date(date) : date
+            return recordDate <= new Date()
+        }, 'La data del record non può essere futura'),
     notes: z.string().max(500).optional(),
 })
 

@@ -18,7 +18,7 @@
 
 - [x] **1.1** Fix RBAC bypass personal records — aggiungere ownership check trainer-trainee  
       File: `src/app/api/personal-records/route.ts` · Dettagli: [SYSTEM_REVIEW § 3.1](../SYSTEM_REVIEW.md#31-critico---rbac-bypass-su-personal-records)
-- [ ] **1.2** Validazione range personal-record schema (peso ≤ 1000, reps intero ≤ 100, date non future)  
+- [x] **1.2** Validazione range personal-record schema (peso ≤ 1000, reps intero ≤ 100, date non future)  
       File: `src/schemas/personal-record.ts` · Dettagli: [SYSTEM_REVIEW § 3.3](../SYSTEM_REVIEW.md#33-medio---validazione-input-mancante)
 - [ ] **1.3** Validazione lunghezza parametro search (2-100 char) su exercises, programs, feedback  
       File: `src/app/api/exercises/route.ts`, `programs/route.ts`, `feedback/route.ts` · Dettagli: [SYSTEM_REVIEW § 3.4](../SYSTEM_REVIEW.md#34-medio---search-parameter-length-non-validata)
@@ -135,17 +135,17 @@
 
 ## Riepilogo per priorità
 
-| Priorità | Sprint   | Task   | Effort stimato |
-| -------- | -------- | ------ | -------------- |
-| 🔴 Critico | Sprint 1 | 1.1–1.6 | ~4h          |
-| 🔴 Critico | Sprint 2 | 2.1–2.7 | ~29h         |
-| 🔴 Critico | Sprint 3 | 3.1     | ~8h          |
-| 🟠 Alto    | Sprint 4 | 4.1–4.5 | ~21h         |
-| 🟠 Alto    | Sprint 5 | 5.1–5.10 | ~27h        |
-| 🟡 Medio   | Sprint 6 | 6.1–6.7 | ~5h          |
-| 🟡 Medio   | Sprint 7 | 7.1–7.6 | ~23h         |
-| 🔵 Basso   | Sprint 8 | 8.1–8.7 | ~11h         |
-| **Totale** |          | **49 task** | **~129h**  |
+| Priorità   | Sprint   | Task        | Effort stimato |
+| ---------- | -------- | ----------- | -------------- |
+| 🔴 Critico  | Sprint 1 | 1.1–1.6     | ~4h            |
+| 🔴 Critico  | Sprint 2 | 2.1–2.7     | ~29h           |
+| 🔴 Critico  | Sprint 3 | 3.1         | ~8h            |
+| 🟠 Alto     | Sprint 4 | 4.1–4.5     | ~21h           |
+| 🟠 Alto     | Sprint 5 | 5.1–5.10    | ~27h           |
+| 🟡 Medio    | Sprint 6 | 6.1–6.7     | ~5h            |
+| 🟡 Medio    | Sprint 7 | 7.1–7.6     | ~23h           |
+| 🔵 Basso    | Sprint 8 | 8.1–8.7     | ~11h           |
+| **Totale** |          | **49 task** | **~129h**      |
 
 ---
 
