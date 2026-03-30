@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/components/ToastNotification'
+import EditProgramMetadata from './EditProgramMetadata'
 
 interface Workout {
     id: string
@@ -25,6 +26,7 @@ interface Program {
     title: string
     status: 'draft' | 'active' | 'completed'
     trainee: {
+        id: string
         firstName: string
         lastName: string
     }
@@ -182,12 +184,25 @@ export default function EditProgramPage() {
                     >
                         ← Torna ai programmi
                     </Link>
-                    <h1 className="text-3xl font-bold text-gray-900">{program.title}</h1>
-                    <p className="text-gray-600 mt-2">
-                        per {program.trainee.firstName} {program.trainee.lastName} •{' '}
-                        {program.durationWeeks} settimane • {program.workoutsPerWeek}{' '}
-                        allenamenti/settimana
-                    </p>
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900">{program.title}</h1>
+                            <p className="text-gray-600 mt-2">
+                                per {program.trainee.firstName} {program.trainee.lastName} •{' '}
+                                {program.durationWeeks} settimane • {program.workoutsPerWeek}{' '}
+                                allenamenti/settimana
+                            </p>
+                        </div>
+                        <EditProgramMetadata
+                            programId={programId}
+                            initialTitle={program.title}
+                            initialTraineeId={program.trainee.id}
+                            initialDurationWeeks={program.durationWeeks}
+                            initialWorkoutsPerWeek={program.workoutsPerWeek}
+                            status={program.status}
+                            onUpdate={fetchProgram}
+                        />
+                    </div>
                 </div>
 
                 {/* Progress Card */}

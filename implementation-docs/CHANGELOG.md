@@ -19,6 +19,15 @@ Registro cronologico degli sviluppi effettuati.
 
 ## Storico
 
+### [30 Marzo 2026] — Implementato Edit Programma Metadata
+
+**Task checklist:** #2.7  
+**File modificati:** `src/app/trainer/programs/[id]/edit/page.tsx`, `src/app/api/programs/[id]/route.ts`  
+**File creati:** `src/app/trainer/programs/[id]/edit/EditProgramMetadata.tsx`  
+**Note:** Implementata funzionalità di modifica delle informazioni base del programma. Creato componente modale `EditProgramMetadata` che permette di modificare: (1) **Nome programma** - titolo con validazione 3-100 caratteri; (2) **Atleta assegnato** - riassegnazione del programma a un diverso trainee con verifica ownership via TrainerTrainee; (3) **Durata settimane** - con warning che spiega che le settimane esistenti vengono mantenute; (4) **Allenamenti per settimana** - con warning simile per i workout esistenti. Il componente è integrato nella pagina edit esistente (workflow configuration) tramite un pulsante "✏️ Modifica Info Programma" nell'header. **Validazione rigorosa**: (1) Solo programmi in status=draft possono essere modificati (check client e server-side); (2) Se status≠draft, mostra alert warning e disabilita il form; (3) Aggiornamento API per supportare durationWeeks e workoutsPerWeek oltre a title e traineeId. Il modal si apre al click, carica dinamicamente la lista trainees, e dopo il salvataggio ricarica i dati del programma aggiornati con toast success.
+
+---
+
 ### [30 Marzo 2026] — Completato Publish Programma (Step 4 Program Builder)
 
 **Task checklist:** #2.6  

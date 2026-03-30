@@ -116,7 +116,7 @@ export async function PUT(
             return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors)
         }
 
-        const { title, traineeId } = validation.data
+        const { title, traineeId, durationWeeks, workoutsPerWeek } = validation.data
 
         // Check if program exists
         const existing = await prisma.trainingProgram.findUnique({
@@ -144,29 +144,31 @@ export async function PUT(
             )
         }
 
-        // Verify trainee exists and is a trainee role
-        const trainee = await prisma.user.findUnique({
-            where: { id: traineeId },
-        })
-
-        if (!trainee) {
-            return apiError('NOT_FOUND', 'Trainee not found', 404)
-        }
-
-        if (trainee.role !== 'trainee') {
-            return apiError('VALIDATION_ERROR', 'User must have trainee role', 400)
-        }
-
-        // If trainer, verify they own/manage this trainee via TrainerTrainee
-        if (session.user.role === 'trainer') {
-            const trainerRelation = await prisma.trainerTrainee.findFirst({
-                where: {
-                    trainerId: session.user.id,
-                    traineeId,
-                },
+        // Verify trainee exists and is a trainee role (if traineeId is being updated)
+        if (traineeId) {
+            const trainee = await prisma.user.findUnique({
+                where: { id: traineeId },
             })
-            if (!trainerRelation) {
-                return apiError('FORBIDDEN', 'You can only assign programs to your own trainees', 403)
+
+            if (!trainee) {
+                return apiError('NOT_FOUND', 'Trainee not found', 404)
+            }
+
+            if (trainee.role !== 'trainee') {
+                return apiError('VALIDATION_ERROR', 'User must have trainee role', 400)
+            }
+
+            // If trainer, verify they own/manage this trainee via TrainerTrainee
+            if (session.user.role === 'trainer') {
+                const trainerRelation = await prisma.trainerTrainee.findFirst({
+                    where: {
+                        trainerId: session.user.id,
+                        traineeId,
+                    },
+                })
+                if (!trainerRelation) {
+                    return apiError('FORBIDDEN', 'You can only assign programs to your own trainees', 403)
+                }
             }
         }
 
@@ -176,6 +178,8 @@ export async function PUT(
             data: {
                 ...(title && { title }),
                 ...(traineeId && { traineeId }),
+                ...(durationWeeks !== undefined && { durationWeeks }),
+                ...(workoutsPerWeek !== undefined && { workoutsPerWeek }),
             },
             include: {
                 trainer: {
