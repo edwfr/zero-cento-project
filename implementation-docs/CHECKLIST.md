@@ -46,7 +46,7 @@
 
 ### Frontend — Program Builder Wizard (Trainer)
 
-- [ ] **2.5** Workout Detail Editor — step 3 wizard (8h)  
+- [x] **2.5** Workout Detail Editor — step 3 wizard (8h)  
       File: `src/app/trainer/programs/[id]/workouts/[wId]/page.tsx`  
       Spec: [NEXT_ACTIONS.md § 11](./NEXT_ACTIONS.md#11-workout-detail-editor---step-3-wizard-8h)
 - [ ] **2.6** Publish Programma — step 4 wizard (4h)  
