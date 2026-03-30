@@ -16,7 +16,7 @@
 
 ## Sprint 1 — Fix Critici & Sicurezza (~4h)
 
-- [ ] **1.1** Fix RBAC bypass personal records — aggiungere ownership check trainer-trainee  
+- [x] **1.1** Fix RBAC bypass personal records — aggiungere ownership check trainer-trainee  
       File: `src/app/api/personal-records/route.ts` · Dettagli: [SYSTEM_REVIEW § 3.1](../SYSTEM_REVIEW.md#31-critico---rbac-bypass-su-personal-records)
 - [ ] **1.2** Validazione range personal-record schema (peso ≤ 1000, reps intero ≤ 100, date non future)  
       File: `src/schemas/personal-record.ts` · Dettagli: [SYSTEM_REVIEW § 3.3](../SYSTEM_REVIEW.md#33-medio---validazione-input-mancante)

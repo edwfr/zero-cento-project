@@ -19,6 +19,14 @@ Registro cronologico degli sviluppi effettuati.
 
 ## Storico
 
+### [30 Marzo 2026] — Fix RBAC bypass personal records
+
+**Task checklist:** #1.1  
+**File modificati:** `src/app/api/personal-records/route.ts`  
+**Note:** Aggiunto ownership check per trainer quando richiedono personal records con parametro traineeId. Previene accesso a massimali di trainee di altri trainer. Utilizza la relazione TrainerTrainee con chiave composita per validare l'ownership.
+
+---
+
 ### [28 Marzo 2026] — Setup iniziale database
 
 **Cosa è stato fatto:**

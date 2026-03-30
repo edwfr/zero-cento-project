@@ -40,6 +40,20 @@ export async function GET(request: NextRequest) {
 
         // Apply additional filters
         if (traineeId) {
+            // For trainers, verify ownership before applying filter
+            if (session.user.role === 'trainer') {
+                const isManaged = await prisma.trainerTrainee.findUnique({
+                    where: {
+                        trainerId_traineeId: {
+                            trainerId: session.user.id,
+                            traineeId: traineeId,
+                        },
+                    },
+                })
+                if (!isManaged) {
+                    return apiError('FORBIDDEN', 'Access denied', 403)
+                }
+            }
             where.traineeId = traineeId
         }
 
