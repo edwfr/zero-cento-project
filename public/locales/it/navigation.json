@@ -1,0 +1,28 @@
+{
+    "navigation": {
+        "dashboard": "Dashboard",
+        "programs": "Programmi",
+        "exercises": "Libreria Esercizi",
+        "trainees": "Atleti",
+        "settings": "Impostazioni",
+        "logout": "Esci",
+        "myProfile": "Il Mio Profilo",
+        "activeProgram": "Programma Attivo",
+        "globalPrograms": "Programmi Globali",
+        "myRecords": "I Miei Massimali",
+        "trainingHistory": "Storico Allenamenti"
+    },
+    "breadcrumbs": {
+        "backToLibrary": "← Torna alla libreria",
+        "backToAthletes": "← Torna agli atleti",
+        "backToAthleteProfile": "← Torna al profilo atleta",
+        "backToPrograms": "← Torna ai programmi",
+        "backToProgram": "← Torna al Programma",
+        "backToHome": "← Torna alla Home",
+        "backToWeeks": "← Torna alla panoramica settimane",
+        "goToAthletesList": "Vai alla Lista Atleti",
+        "nextPublish": "Avanti: Pubblica Programma →",
+        "saveContinuePublish": "Salva e Continua alla Pubblicazione →",
+        "backToEdit": "Torna alla modifica"
+    }
+}

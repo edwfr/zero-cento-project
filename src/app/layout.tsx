@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import PWAInstallPrompt from '@/components/PWAInstallPrompt'
 import { ToastProvider } from '@/components/ToastNotification'
+import { I18nProvider } from '@/lib/i18n/provider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -27,10 +28,12 @@ export default function RootLayout({
     return (
         <html lang="it">
             <body className={inter.className}>
-                <ToastProvider>
-                    {children}
-                    <PWAInstallPrompt />
-                </ToastProvider>
+                <I18nProvider>
+                    <ToastProvider>
+                        {children}
+                        <PWAInstallPrompt />
+                    </ToastProvider>
+                </I18nProvider>
             </body>
         </html>
     )

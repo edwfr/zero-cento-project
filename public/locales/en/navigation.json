@@ -1,0 +1,28 @@
+{
+    "navigation": {
+        "dashboard": "Dashboard",
+        "programs": "Programs",
+        "exercises": "Exercise Library",
+        "trainees": "Trainees",
+        "settings": "Settings",
+        "logout": "Logout",
+        "myProfile": "My Profile",
+        "activeProgram": "Active Program",
+        "globalPrograms": "Global Programs",
+        "myRecords": "My Personal Records",
+        "trainingHistory": "Training History"
+    },
+    "breadcrumbs": {
+        "backToLibrary": "← Back to library",
+        "backToAthletes": "← Back to athletes",
+        "backToAthleteProfile": "← Back to athlete profile",
+        "backToPrograms": "← Back to programs",
+        "backToProgram": "← Back to Program",
+        "backToHome": "← Back to Home",
+        "backToWeeks": "← Back to weeks overview",
+        "goToAthletesList": "Go to Athletes List",
+        "nextPublish": "Next: Publish Program →",
+        "saveContinuePublish": "Save and Continue to Publication →",
+        "backToEdit": "Back to edit"
+    }
+}

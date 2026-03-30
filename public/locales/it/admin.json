@@ -1,0 +1,35 @@
+{
+    "dashboard": {
+        "title": "Dashboard Admin",
+        "welcome": "Benvenuto",
+        "description": "gestire utenti, visualizzare programmi e accedere ai report",
+        "statistics": "Statistiche & Report"
+    },
+    "users": {
+        "title": "Gestione Utenti",
+        "description": "Visualizza e gestisci tutti gli utenti del sistema",
+        "createUser": "Crea Utente",
+        "createNewUser": "Crea Nuovo Utente",
+        "editUser": "Modifica Utente",
+        "deleteUser": "Elimina Utente",
+        "userCreated": "Utente Creato",
+        "userUpdated": "Utente aggiornato con successo",
+        "role": "Ruolo",
+        "created": "Creato",
+        "createdSuccess": "L'utente è stato creato con successo",
+        "savePassword": "Salva questa password temporanea",
+        "passwordOnce": "Questa password verrà mostrata solo una volta",
+        "mustChange": "L'utente dovrà cambiarla al primo accesso",
+        "confirmDelete": "Sei sicuro di voler eliminare questo utente?",
+        "deleteWarning": "Questa azione è permanente e cancellerà tutti i dati associati",
+        "activateUsers": "Attiva Utenti",
+        "deactivateUsers": "Disattiva Utenti",
+        "activateAll": "Attiva tutti",
+        "deactivateAll": "Disattiva tutti",
+        "confirmActivate": "Sei sicuro di voler attivare {{count}} utenti?",
+        "confirmDeactivate": "Sei sicuro di voler disattivare {{count}} utenti?",
+        "totalUsers": "Utenti Totali",
+        "feedbackReceived": "Feedback Ricevuti",
+        "loadingError": "Errore caricamento utenti"
+    }
+}

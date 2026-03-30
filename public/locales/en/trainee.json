@@ -1,0 +1,16 @@
+{
+    "dashboard": {
+        "noActiveProgram": "No Active Program",
+        "noActiveProgramDesc": "Your trainer hasn't assigned you a training program yet",
+        "contactTrainer": "Contact them to start!",
+        "viewRecords": "View Your Personal Records",
+        "myRecords": "My Personal Records",
+        "recordsDescription": "View and update your personal records on each exercise",
+        "viewCompleted": "View completed programs and past feedback",
+        "noCompletedPrograms": "No Completed Programs"
+    },
+    "workouts": {
+        "nextExercise": "Next exercise",
+        "confirmContinue": "The following exercises have no data: {{exercises}}. Continue anyway?"
+    }
+}

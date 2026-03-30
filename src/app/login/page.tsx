@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
+import { useTranslation } from 'react-i18next'
 
 export default function LoginPage() {
     const router = useRouter()
+    const { t } = useTranslation(['auth', 'common'])
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
@@ -75,7 +77,7 @@ export default function LoginPage() {
                 router.refresh()
             }
         } catch (err: any) {
-            setError(err.message || 'Email o password errati')
+            setError(err.message || t('auth:login.error'))
         } finally {
             setLoading(false)
         }
@@ -87,7 +89,7 @@ export default function LoginPage() {
             <div className="flex min-h-screen items-center justify-center bg-gray-50">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Caricamento...</p>
+                    <p className="mt-4 text-gray-600">{t('common:common.loading')}</p>
                 </div>
             </div>
         )
@@ -97,9 +99,9 @@ export default function LoginPage() {
         <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
             <div className="w-full max-w-md space-y-8">
                 <div className="text-center">
-                    <h2 className="text-3xl font-bold text-gray-900">ZeroCento Training</h2>
+                    <h2 className="text-3xl font-bold text-gray-900">{t('common:app.name')}</h2>
                     <p className="mt-2 text-sm text-gray-600">
-                        Accedi alla tua piattaforma di training
+                        {t('auth:login.title')}
                     </p>
 
                     {/* Logo - Se manca il file, verrà mostrato un placeholder */}
@@ -130,7 +132,7 @@ export default function LoginPage() {
                     <div className="space-y-4">
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                                Email
+                                {t('common:common.email')}
                             </label>
                             <input
                                 id="email"
@@ -148,7 +150,7 @@ export default function LoginPage() {
 
                         <div>
                             <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                                Password
+                                {t('common:common.password')}
                             </label>
                             <input
                                 id="password"
@@ -171,7 +173,7 @@ export default function LoginPage() {
                             disabled={loading}
                             className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-brand-primary hover:bg-[#E69500] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {loading ? 'Accesso in corso...' : 'Accedi'}
+                            {loading ? t('common:common.loadingProgress') : t('auth:login.submit')}
                         </button>
                     </div>
 
@@ -180,7 +182,7 @@ export default function LoginPage() {
                             href="/forgot-password"
                             className="text-sm text-brand-primary hover:text-[#E69500]"
                         >
-                            Password dimenticata?
+                            {t('auth:login.forgotPassword')}
                         </a>
                     </div>
                 </form>

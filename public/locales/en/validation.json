@@ -1,0 +1,24 @@
+{
+    "validation": {
+        "invalidExerciseId": "Invalid exercise ID",
+        "invalidMuscleGroupId": "Invalid muscle group ID",
+        "invalidMovementPatternId": "Invalid movement pattern ID",
+        "invalidWeekId": "Invalid week ID",
+        "invalidTraineeId": "Invalid trainee ID",
+        "invalidWorkoutExerciseId": "Invalid workout exercise ID",
+        "invalidExerciseType": "Invalid exercise type",
+        "invalidWeightType": "Invalid weight type",
+        "invalidWeekType": "Invalid week type",
+        "invalidRestTime": "Invalid rest time",
+        "invalidUrl": "Invalid URL",
+        "setsInteger": "Number of sets must be integer",
+        "minSets": "Minimum 1 set",
+        "maxSets": "Maximum 20 sets",
+        "minMuscleGroup": "At least one muscle group required",
+        "minExercise": "At least one exercise required",
+        "weightRequired": "Weight is required for percentage types",
+        "selectMuscleGroup": "Select at least one muscle group",
+        "manualPasswordOrAuto": "Enter a manual password or enable automatic generation",
+        "enterPassword": "Enter password (min 8 characters)"
+    }
+}

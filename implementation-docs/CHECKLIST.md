@@ -112,7 +112,7 @@
 
 ## Sprint 7 — i18n & UX Polish (~23h)
 
-- [ ] **7.1** Integrare `useTranslation()` in tutti i componenti (8h)
+- [x] **7.1** Integrare `useTranslation()` in tutti i componenti (8h) ✅ _30 Mar 2026_
 - [ ] **7.2** Rimuovere tutte le stringhe hardcoded italiane (4h)
 - [ ] **7.3** Standardizzare formato date con locale i18n (2h)
 - [ ] **7.4** Aggiungere skeleton loader al posto dei spinner (4h)

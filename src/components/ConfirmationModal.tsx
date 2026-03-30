@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from 'react-i18next'
 import LoadingSpinner from './LoadingSpinner'
 
 interface ConfirmationModalProps {
@@ -24,12 +25,17 @@ export default function ConfirmationModal({
     onConfirm,
     title,
     message,
-    confirmText = 'Conferma',
-    cancelText = 'Annulla',
+    confirmText,
+    cancelText,
     variant = 'danger',
     isLoading = false,
 }: ConfirmationModalProps) {
+    const { t } = useTranslation('common')
+
     if (!isOpen) return null
+
+    const finalConfirmText = confirmText || t('common.confirm')
+    const finalCancelText = cancelText || t('common.cancel')
 
     const variantStyles = {
         danger: {
@@ -89,7 +95,7 @@ export default function ConfirmationModal({
                         disabled={isLoading}
                         className={`flex-1 ${styles.confirmBg} disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center`}
                     >
-                        {isLoading ? <LoadingSpinner size="sm" color="white" /> : confirmText}
+                        {isLoading ? <LoadingSpinner size="sm" color="white" /> : finalConfirmText}
                     </button>
 
                     <button
@@ -97,7 +103,7 @@ export default function ConfirmationModal({
                         disabled={isLoading}
                         className="flex-1 bg-gray-300 hover:bg-gray-400 disabled:bg-gray-200 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
                     >
-                        {cancelText}
+                        {finalCancelText}
                     </button>
                 </div>
             </div>

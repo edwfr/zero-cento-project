@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface BeforeInstallPromptEvent extends Event {
     readonly platforms: string[]
@@ -14,6 +15,7 @@ interface BeforeInstallPromptEvent extends Event {
  * Persists dismissal in localStorage.
  */
 export default function PWAInstallPrompt() {
+    const { t } = useTranslation('components')
     const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null)
     const [dismissed, setDismissed] = useState(false)
     const [isInstalled, setIsInstalled] = useState(false)
@@ -81,22 +83,22 @@ export default function PWAInstallPrompt() {
 
             {/* Content */}
             <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-bold text-gray-900">Installa ZeroCento</h3>
+                <h3 className="text-sm font-bold text-gray-900">{t('pwaPrompt.install')}</h3>
                 <p className="text-xs text-gray-500 mt-0.5">
-                    Aggiungi alla home per un accesso rapido e il supporto offline
+                    {t('pwaPrompt.description')}
                 </p>
                 <div className="flex gap-2 mt-3">
                     <button
                         onClick={handleInstall}
                         className="flex-1 bg-[#FFA700] hover:bg-[#FF9500] text-white text-xs font-semibold py-2 rounded-lg transition-colors"
                     >
-                        Installa
+                        {t('pwaPrompt.installButton')}
                     </button>
                     <button
                         onClick={handleDismiss}
                         className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold py-2 rounded-lg transition-colors"
                     >
-                        Non ora
+                        {t('pwaPrompt.notNow')}
                     </button>
                 </div>
             </div>

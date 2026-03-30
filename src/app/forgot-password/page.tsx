@@ -3,8 +3,10 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase-client'
+import { useTranslation } from 'react-i18next'
 
 export default function ForgotPasswordPage() {
+    const { t } = useTranslation(['auth', 'common'])
     const [email, setEmail] = useState('')
     const [loading, setLoading] = useState(false)
     const [sent, setSent] = useState(false)
@@ -38,9 +40,9 @@ export default function ForgotPasswordPage() {
                     <div className="inline-flex items-center justify-center w-16 h-16 bg-[#FFA700] rounded-2xl mb-4">
                         <span className="text-white font-bold text-2xl">0c</span>
                     </div>
-                    <h1 className="text-2xl font-bold text-gray-900">Password dimenticata</h1>
+                    <h1 className="text-2xl font-bold text-gray-900">{t('auth:forgotPassword.title')}</h1>
                     <p className="text-gray-600 mt-2 text-sm">
-                        Inserisci la tua email per ricevere le istruzioni di ripristino
+                        {t('auth:forgotPassword.description')}
                     </p>
                 </div>
 
@@ -52,7 +54,7 @@ export default function ForgotPasswordPage() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
-                            <h2 className="text-lg font-semibold text-gray-900 mb-2">Email inviata!</h2>
+                            <h2 className="text-lg font-semibold text-gray-900 mb-2">{t('auth:forgotPassword.success')}</h2>
                             <p className="text-gray-600 text-sm mb-6">
                                 Controlla la tua casella di posta. Se l&apos;indirizzo è registrato, riceverai a breve un link per reimpostare la password.
                             </p>
@@ -60,7 +62,7 @@ export default function ForgotPasswordPage() {
                                 href="/login"
                                 className="text-[#FFA700] hover:text-[#FF9500] font-semibold text-sm"
                             >
-                                ← Torna al login
+                                {t('auth:forgotPassword.backToLogin')}
                             </Link>
                         </div>
                     ) : (
@@ -73,7 +75,7 @@ export default function ForgotPasswordPage() {
 
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                    Email
+                                    {t('common:common.email')}
                                 </label>
                                 <input
                                     type="email"
@@ -91,13 +93,13 @@ export default function ForgotPasswordPage() {
                                 disabled={loading || !email}
                                 className="w-full bg-[#FFA700] hover:bg-[#FF9500] disabled:bg-gray-300 text-white font-semibold py-3 rounded-lg transition-colors"
                             >
-                                {loading ? 'Invio in corso...' : 'Invia istruzioni'}
+                                {loading ? t('common:common.loadingProgress') : t('auth:forgotPassword.submit')}
                             </button>
 
                             <div className="text-center text-sm text-gray-600">
                                 Ricordi la password?{' '}
                                 <Link href="/login" className="text-[#FFA700] hover:text-[#FF9500] font-semibold">
-                                    Accedi
+                                    {t('auth:login.title')}
                                 </Link>
                             </div>
                         </form>

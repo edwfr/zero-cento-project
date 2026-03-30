@@ -1,0 +1,35 @@
+{
+    "dashboard": {
+        "title": "Admin Dashboard",
+        "welcome": "Welcome",
+        "description": "manage users, view programs and access reports",
+        "statistics": "Statistics & Reports"
+    },
+    "users": {
+        "title": "User Management",
+        "description": "View and manage all system users",
+        "createUser": "Create User",
+        "createNewUser": "Create New User",
+        "editUser": "Edit User",
+        "deleteUser": "Delete User",
+        "userCreated": "User Created",
+        "userUpdated": "User updated successfully",
+        "role": "Role",
+        "created": "Created",
+        "createdSuccess": "User was created successfully",
+        "savePassword": "Save this temporary password",
+        "passwordOnce": "This password will be shown only once",
+        "mustChange": "User must change it on first login",
+        "confirmDelete": "Are you sure you want to delete this user?",
+        "deleteWarning": "This action is permanent and will delete all associated data",
+        "activateUsers": "Activate Users",
+        "deactivateUsers": "Deactivate Users",
+        "activateAll": "Activate all",
+        "deactivateAll": "Deactivate all",
+        "confirmActivate": "Are you sure you want to activate {{count}} users?",
+        "confirmDeactivate": "Are you sure you want to deactivate {{count}} users?",
+        "totalUsers": "Total Users",
+        "feedbackReceived": "Feedback Received",
+        "loadingError": "Error loading users"
+    }
+}

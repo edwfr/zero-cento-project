@@ -1,0 +1,11 @@
+{
+    "profile": {
+        "title": "Il Mio Profilo",
+        "titleLower": "Il mio profilo",
+        "userId": "ID Utente",
+        "editProfile": "Modifica Profilo",
+        "editPersonalData": "Modifica Dati Personali",
+        "updated": "Profilo aggiornato con successo",
+        "invalidSession": "Sessione non valida. Effettua nuovamente il login"
+    }
+}

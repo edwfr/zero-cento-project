@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import UserCreateModal from '@/components/UserCreateModal'
 import UserEditModal from '@/components/UserEditModal'
 import UserDeleteModal from '@/components/UserDeleteModal'
@@ -25,13 +26,8 @@ const ROLE_BADGE: Record<string, string> = {
     trainee: 'bg-green-100 text-green-800',
 }
 
-const ROLE_LABEL: Record<string, string> = {
-    admin: 'Admin',
-    trainer: 'Trainer',
-    trainee: 'Atleta',
-}
-
 export default function AdminUsersContent() {
+    const { t } = useTranslation(['admin', 'common'])
     const [users, setUsers] = useState<User[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -66,7 +62,7 @@ export default function AdminUsersContent() {
             setLoading(true)
             const res = await fetch('/api/users')
             const data = await res.json()
-            if (!res.ok) throw new Error(data.error?.message || 'Errore caricamento utenti')
+            if (!res.ok) throw new Error(data.error?.message || t('admin:users.loadingError'))
             setUsers(data.data.users)
             setSelectedIds(new Set())
             setPage(1)
@@ -350,7 +346,7 @@ export default function AdminUsersContent() {
                                             <span
                                                 className={`px-2 py-1 text-xs font-semibold rounded-full ${ROLE_BADGE[user.role]}`}
                                             >
-                                                {ROLE_LABEL[user.role]}
+                                                {t(`common:roles.${user.role}`)}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">

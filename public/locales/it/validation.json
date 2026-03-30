@@ -1,0 +1,24 @@
+{
+    "validation": {
+        "invalidExerciseId": "ID esercizio non valido",
+        "invalidMuscleGroupId": "ID gruppo muscolare non valido",
+        "invalidMovementPatternId": "ID schema motorio non valido",
+        "invalidWeekId": "ID settimana non valido",
+        "invalidTraineeId": "ID trainee non valido",
+        "invalidWorkoutExerciseId": "ID esercizio workout non valido",
+        "invalidExerciseType": "Tipo esercizio non valido",
+        "invalidWeightType": "Tipo peso non valido",
+        "invalidWeekType": "Tipo settimana non valido",
+        "invalidRestTime": "Tempo recupero non valido",
+        "invalidUrl": "URL non valido",
+        "setsInteger": "Numero di serie deve essere intero",
+        "minSets": "Minimo 1 serie",
+        "maxSets": "Massimo 20 serie",
+        "minMuscleGroup": "Almeno un gruppo muscolare richiesto",
+        "minExercise": "Almeno un esercizio richiesto",
+        "weightRequired": "Peso è obbligatorio per i tipi percentuale",
+        "selectMuscleGroup": "Seleziona almeno un gruppo muscolare",
+        "manualPasswordOrAuto": "Inserisci una password manuale o abilita la generazione automatica",
+        "enterPassword": "Inserisci password (min 8 caratteri)"
+    }
+}

@@ -1,0 +1,16 @@
+{
+    "dashboard": {
+        "noActiveProgram": "Nessun Programma Attivo",
+        "noActiveProgramDesc": "Il tuo trainer non ti ha ancora assegnato un programma di allenamento",
+        "contactTrainer": "Contattalo per iniziare!",
+        "viewRecords": "Visualizza i Tuoi Massimali",
+        "myRecords": "I Miei Massimali",
+        "recordsDescription": "Visualizza e aggiorna i tuoi personal record su ogni esercizio",
+        "viewCompleted": "Consulta i programmi completati e i feedback passati",
+        "noCompletedPrograms": "Nessun Programma Completato"
+    },
+    "workouts": {
+        "nextExercise": "Prossimo esercizio",
+        "confirmContinue": "I seguenti esercizi non hanno dati: {{exercises}}. Vuoi continuare comunque?"
+    }
+}
