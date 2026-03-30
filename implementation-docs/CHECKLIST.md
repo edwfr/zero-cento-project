@@ -41,7 +41,7 @@
       Spec: [NEXT_ACTIONS.md § 8](./NEXT_ACTIONS.md#8-get-apitraineeworkoutsid---vista-workout-4h)
 - [x] **2.3** `POST /api/programs/[id]/complete` — completamento manuale programma (2h)  
       Spec: [NEXT_ACTIONS.md § 9](./NEXT_ACTIONS.md#9-post-apiprogramsidcomplete---completamento-manuale-2h)
-- [ ] **2.4** `PATCH /api/weeks/[id]` — config tipo settimana post-pubblicazione (2h)  
+- [x] **2.4** `PATCH /api/weeks/[id]` — config tipo settimana post-pubblicazione (2h)  
       Spec: [NEXT_ACTIONS.md § 10](./NEXT_ACTIONS.md#10-patch-apiweeksid---config-tipo-settimana-2h)
 
 ### Frontend — Program Builder Wizard (Trainer)
