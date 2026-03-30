@@ -85,7 +85,7 @@
 ## Sprint 5 — Testing Target 80% (~27h)
 
 - [x] **5.1** Unit test: `calculateEffectiveWeight()` con chain percentage_previous (3h)
-- [ ] **5.2** Unit test: generazione password sicura (1h)
+- [x] **5.2** Unit test: generazione password sicura (1h) ✅ _30 Mar 2026_
 - [ ] **5.3** Integration test: RBAC violations — accesso cross-trainer negato (4h)
 - [ ] **5.4** Integration test: feedback CRUD completo (3h)
 - [ ] **5.5** Integration test: personal records CRUD (2h)

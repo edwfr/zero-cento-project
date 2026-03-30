@@ -19,6 +19,14 @@ Registro cronologico degli sviluppi effettuati.
 
 ## Storico
 
+### [30 Marzo 2026] — Unit Test Generazione Password Sicura (Sprint 5.2)
+
+**Task checklist:** #5.2  
+**File creato:** `tests/unit/password-utils.test.ts`  
+**Note:** Implementata suite completa di unit test per la funzione `generateSecurePassword()` dal modulo `@/lib/password-utils`. **Test implementati (21 test totali):** **(1) Length Validation (4 test)** - password con lunghezza default 12 caratteri, custom length (16), lunghezza minima (8), lunghezza large (32). **(2) Character Variety Requirements (5 test)** - contiene almeno 1 uppercase letter (A-Z), almeno 1 lowercase letter (a-z), almeno 1 numero (0-9), almeno 1 simbolo (!@#$%^&*), verifica tutti i 4 tipi di caratteri presenti. **(3) Character Set Compliance (3 test)** - solo caratteri consentiti (regex `[A-Za-z0-9!@#$%^&*]`), nessuno spazio, nessun carattere ambiguo. **(4) Randomness and Unpredictability (4 test)** - **chiamate consecutive** generano password diverse, **batch test** 100 password tutte uniche (Set size = 100), **no predictable patterns** (no "abc", "123", caratteri ripetuti 4+ volte), **distribution test** 50 iterazioni confermano ogni categoria ha almeno 1 char per password. **(5) Edge Cases (2 test)** - **minimum viable length** 4 caratteri (1 per ogni categoria richiesta), **consistency test** 100 call consecutive verificano sempre le 4 categorie presenti. **(6) Security Properties (3 test)** - **sufficient entropy** per 12-char password (70^12 ≈ 73.7 bits), **resistant to dictionary attacks** (no "password", "admin", "user", "test", "qwerty", "12345678"), **OWASP compliance** per temporary passwords (min 12 char, mixed types, random). **Risultato:** 21/21 test passati (100% success rate), copertura completa della funzione `generateSecurePassword()`. **Validazione sicurezza:** i test confermano che le password generate soddisfano i requisiti OWASP per password temporanee (usate quando trainer/admin crea trainee account), con entropia sufficiente (>70 bit) e resistenza agli attacchi dizionario. **Tempo esecuzione:** 4.95s totali (42ms test puri + 4.9s setup Vitest/Vite).
+
+---
+
 ### [30 Marzo 2026] — Unit Test Completi per calculateEffectiveWeight con Chain Percentage_Previous (Sprint 5.1)
 
 **Task checklist:** #5.1  
