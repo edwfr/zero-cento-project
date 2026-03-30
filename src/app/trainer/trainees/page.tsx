@@ -39,7 +39,7 @@ export default function TrainerTraineesPage() {
                 throw new Error(data.error?.message || 'Errore nel caricamento atleti')
             }
 
-            setTrainees(data.data.users)
+            setTrainees(data.data.items)
         } catch (err: any) {
             setError(err.message)
         } finally {

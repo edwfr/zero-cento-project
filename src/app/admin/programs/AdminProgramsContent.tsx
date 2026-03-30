@@ -45,7 +45,7 @@ export default function AdminProgramsContent() {
                 const res = await fetch('/api/programs?limit=200')
                 const data = await res.json()
                 if (!res.ok) throw new Error(data.error?.message || 'Errore caricamento programmi')
-                setPrograms(data.data.programs)
+                setPrograms(data.data.items)
             } catch (err: any) {
                 setError(err.message)
             } finally {

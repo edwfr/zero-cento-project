@@ -64,7 +64,7 @@ export default function AdminUsersContent() {
             const res = await fetch('/api/users')
             const data = await res.json()
             if (!res.ok) throw new Error(data.error?.message || t('admin:users.loadingError'))
-            setUsers(data.data.users)
+            setUsers(data.data.items)
             setSelectedIds(new Set())
             setPage(1)
         } catch (err: any) {

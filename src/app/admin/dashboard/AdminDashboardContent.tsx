@@ -43,10 +43,10 @@ export default function AdminDashboardContent() {
                 throw new Error('Errore caricamento statistiche')
             }
 
-            const users = usersData.data.users
-            const programs = programsData.data.programs
-            const exercises = exercisesData.data.exercises
-            const feedback = feedbackData.data.feedback || []
+            const users = usersData.data.items
+            const programs = programsData.data.items
+            const exercises = exercisesData.data.items
+            const feedback = feedbackData.data.items || []
 
             setStats({
                 totalUsers: users.length,

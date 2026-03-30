@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
             ],
         })
 
-        return apiSuccess({ records })
+        return apiSuccess({ items: records })
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error fetching personal records')

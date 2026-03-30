@@ -60,7 +60,7 @@ export default function TrainerExercisesPage() {
                 throw new Error(data.error?.message || 'Errore nel caricamento esercizi')
             }
 
-            setExercises(data.data.exercises)
+            setExercises(data.data.items)
         } catch (err: any) {
             setError(err.message)
         } finally {

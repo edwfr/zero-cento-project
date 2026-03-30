@@ -117,10 +117,10 @@ export default function WorkoutDetailPage() {
             }
 
             setWorkout(foundWorkout)
-            setExercises(exercisesData.data.exercises)
+            setExercises(exercisesData.data.items)
 
-            if (exercisesData.data.exercises.length > 0) {
-                setSelectedExerciseId(exercisesData.data.exercises[0].id)
+            if (exercisesData.data.items.length > 0) {
+                setSelectedExerciseId(exercisesData.data.items[0].id)
             }
         } catch (err: any) {
             setError(err.message)
@@ -373,8 +373,8 @@ export default function WorkoutDetailPage() {
                                             </h3>
                                             <span
                                                 className={`px-2 py-1 text-xs font-semibold rounded ${we.exercise.type === 'fundamental'
-                                                        ? 'bg-purple-100 text-purple-800'
-                                                        : 'bg-gray-100 text-gray-800'
+                                                    ? 'bg-purple-100 text-purple-800'
+                                                    : 'bg-gray-100 text-gray-800'
                                                     }`}
                                             >
                                                 {we.exercise.type === 'fundamental'
@@ -559,8 +559,8 @@ export default function WorkoutDetailPage() {
                                             onClick={() => setTargetRpe(rpe)}
                                             disabled={saving}
                                             className={`px-4 py-2 text-sm font-semibold rounded transition-colors ${targetRpe === rpe
-                                                    ? 'bg-[#FFA700] text-white'
-                                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                                ? 'bg-[#FFA700] text-white'
+                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                                 } disabled:opacity-50`}
                                         >
                                             {rpe}
@@ -571,8 +571,8 @@ export default function WorkoutDetailPage() {
                                         onClick={() => setTargetRpe(undefined)}
                                         disabled={saving}
                                         className={`px-4 py-2 text-sm font-semibold rounded transition-colors ${targetRpe === undefined
-                                                ? 'bg-gray-400 text-white'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            ? 'bg-gray-400 text-white'
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                             } disabled:opacity-50`}
                                     >
                                         N/A

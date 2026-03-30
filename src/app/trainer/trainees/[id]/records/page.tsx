@@ -99,11 +99,11 @@ export default function TraineeRecordsManagementPage() {
             }
 
             setTrainee(traineeData.data.user)
-            setRecords(recordsData.data?.records || [])
-            setExercises(exercisesData.data?.exercises || [])
+            setRecords(recordsData.data?.items || [])
+            setExercises(exercisesData.data?.items || [])
 
-            if (exercisesData.data?.exercises?.length > 0) {
-                setSelectedExerciseId(exercisesData.data.exercises[0].id)
+            if (exercisesData.data?.items?.length > 0) {
+                setSelectedExerciseId(exercisesData.data.items[0].id)
             }
         } catch (err: any) {
             setError(err.message)

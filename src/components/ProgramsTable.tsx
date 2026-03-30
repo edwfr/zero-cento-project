@@ -85,7 +85,7 @@ export default function ProgramsTable({
             const res = await fetch('/api/programs')
             const data = await res.json()
             if (!res.ok) throw new Error(data.error?.message || t('trainer:programs.loadingError'))
-            setPrograms(data.data.programs)
+            setPrograms(data.data.items)
             setError(null)
         } catch (err: any) {
             setError(err.message)

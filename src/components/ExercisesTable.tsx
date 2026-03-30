@@ -61,7 +61,7 @@ export default function ExercisesTable() {
                 throw new Error(data.error?.message || t('common:errors.loadingError'))
             }
 
-            setExercises(data.data.exercises)
+            setExercises(data.data.items)
             setError('')
         } catch (err: any) {
             setError(err.message)

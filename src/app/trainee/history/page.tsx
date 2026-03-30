@@ -40,7 +40,7 @@ export default function HistoryPage() {
                 throw new Error(data.error?.message || 'Errore caricamento storico')
             }
 
-            setPrograms(data.data.programs)
+            setPrograms(data.data.items)
         } catch (err: any) {
             setError(err.message)
         } finally {

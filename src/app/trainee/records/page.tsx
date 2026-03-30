@@ -39,7 +39,7 @@ export default function PersonalRecordsPage() {
                 throw new Error(data.error?.message || 'Errore caricamento massimali')
             }
 
-            setRecords(data.data.personalRecords)
+            setRecords(data.data.items)
         } catch (err: any) {
             setError(err.message)
         } finally {

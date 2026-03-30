@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
             },
         })
 
-        return apiSuccess({ movementPatterns })
+        return apiSuccess({ items: movementPatterns })
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error fetching movement patterns')

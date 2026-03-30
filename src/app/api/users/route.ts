@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
             return apiError('FORBIDDEN', 'Access denied', 403)
         }
 
-        return apiSuccess({ users })
+        return apiSuccess({ items: users })
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error fetching users')

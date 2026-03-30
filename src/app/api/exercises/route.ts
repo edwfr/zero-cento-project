@@ -111,9 +111,11 @@ export async function GET(request: NextRequest) {
         const nextCursor = hasMore ? items[items.length - 1].id : null
 
         return apiSuccess({
-            exercises: items,
-            nextCursor,
-            hasMore,
+            items,
+            pagination: {
+                nextCursor,
+                hasMore,
+            },
         })
     } catch (error: any) {
         if (error instanceof Response) return error

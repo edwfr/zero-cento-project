@@ -102,10 +102,10 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                 const mpData = await mpResponse.json()
 
                 if (mgResponse.ok) {
-                    setMuscleGroups(mgData.data.muscleGroups)
+                    setMuscleGroups(mgData.data.items)
                 }
                 if (mpResponse.ok) {
-                    setMovementPatterns(mpData.data.movementPatterns)
+                    setMovementPatterns(mpData.data.items)
                 }
             } catch (err) {
                 console.error('Error loading data:', err)

@@ -95,8 +95,8 @@ export default function EditExercisePage() {
                 }))
             )
 
-            setMuscleGroups(mgData.data.muscleGroups)
-            setMovementPatterns(mpData.data.movementPatterns)
+            setMuscleGroups(mgData.data.items)
+            setMovementPatterns(mpData.data.items)
         } catch (err: any) {
             setError(err.message)
         } finally {

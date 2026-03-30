@@ -50,11 +50,11 @@ export default function NewExercisePage() {
             const mgData = await mgRes.json()
             const mpData = await mpRes.json()
 
-            setMuscleGroups(mgData.data.muscleGroups)
-            setMovementPatterns(mpData.data.movementPatterns)
+            setMuscleGroups(mgData.data.items)
+            setMovementPatterns(mpData.data.items)
 
-            if (mpData.data.movementPatterns.length > 0) {
-                setMovementPatternId(mpData.data.movementPatterns[0].id)
+            if (mpData.data.items.length > 0) {
+                setMovementPatternId(mpData.data.items[0].id)
             }
         } catch (err: any) {
             setError('Errore nel caricamento dati')

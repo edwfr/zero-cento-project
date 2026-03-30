@@ -42,7 +42,7 @@ export default function UsersTable() {
                 throw new Error(data.error?.message || t('common:errors.loadingError'))
             }
 
-            setUsers(data.data.users)
+            setUsers(data.data.items)
             setError('')
         } catch (err: any) {
             setError(err.message)

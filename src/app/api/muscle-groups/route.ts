@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
             },
         })
 
-        return apiSuccess({ muscleGroups })
+        return apiSuccess({ items: muscleGroups })
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error fetching muscle groups')

@@ -53,11 +53,11 @@ export default function CurrentProgramPage() {
                 throw new Error(data.error?.message || 'Errore caricamento programma')
             }
 
-            if (data.data.programs.length === 0) {
+            if (data.data.items.length === 0) {
                 throw new Error('Nessun programma attivo trovato')
             }
 
-            setProgram(data.data.programs[0])
+            setProgram(data.data.items[0])
         } catch (err: any) {
             setError(err.message)
         } finally {

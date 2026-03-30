@@ -57,8 +57,8 @@ export default function TraineeDashboard() {
             const programsRes = await fetch('/api/programs?status=active')
             const programsData = await programsRes.json()
 
-            if (programsRes.ok && programsData.data.programs.length > 0) {
-                const program = programsData.data.programs[0]
+            if (programsRes.ok && programsData.data.items.length > 0) {
+                const program = programsData.data.items[0]
                 setActiveProgram(program)
 
                 // Fetch next workout
@@ -75,7 +75,7 @@ export default function TraineeDashboard() {
             const prsData = await prsRes.json()
 
             if (prsRes.ok) {
-                setRecentPRs(prsData.data.personalRecords)
+                setRecentPRs(prsData.data.items)
             }
         } catch (err: any) {
             setError(err.message)

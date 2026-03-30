@@ -37,7 +37,7 @@ export default function NewProgramContent() {
                 throw new Error(data.error?.message || 'Errore caricamento atleti')
             }
 
-            const activeTrainees = data.data.users.filter((t: any) => t.isActive)
+            const activeTrainees = data.data.items.filter((t: any) => t.isActive)
             setTrainees(activeTrainees)
 
             // Check if traineeId is provided in URL params
