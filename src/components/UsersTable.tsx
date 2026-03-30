@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import UserCreateModal from './UserCreateModal'
 import UserEditModal from './UserEditModal'
 import UserDeleteModal from './UserDeleteModal'
@@ -17,6 +18,7 @@ interface User {
 }
 
 export default function UsersTable() {
+    const { t } = useTranslation(['admin', 'common'])
     const [users, setUsers] = useState<User[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -37,7 +39,7 @@ export default function UsersTable() {
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data.error?.message || 'Errore durante il caricamento')
+                throw new Error(data.error?.message || t('common:errors.loadingError'))
             }
 
             setUsers(data.data.users)
@@ -78,12 +80,12 @@ export default function UsersTable() {
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data.error?.message || 'Errore durante l\'aggiornamento')
+                throw new Error(data.error?.message || t('common:errors.updateError'))
             }
 
             fetchUsers()
         } catch (err: any) {
-            showToast(`Errore: ${err.message}`, 'error')
+            showToast(`${t('common:common.error')}: ${err.message}`, 'error')
         }
     }
 
@@ -103,11 +105,11 @@ export default function UsersTable() {
     const getRoleLabel = (role: string) => {
         switch (role) {
             case 'admin':
-                return 'Admin'
+                return t('common:roles.admin')
             case 'trainer':
-                return 'Trainer'
+                return t('common:roles.trainer')
             case 'trainee':
-                return 'Atleta'
+                return t('common:roles.trainee')
             default:
                 return role
         }
@@ -134,16 +136,16 @@ export default function UsersTable() {
             {/* Filters and Actions */}
             <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center space-x-4">
-                    <label className="text-sm font-medium text-gray-700">Filtra per ruolo:</label>
+                    <label className="text-sm font-medium text-gray-700">{t('admin:users.filterByRole')}</label>
                     <select
                         value={filterRole}
                         onChange={(e) => setFilterRole(e.target.value)}
                         className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                     >
-                        <option value="all" className="text-gray-900">Tutti</option>
-                        <option value="admin" className="text-gray-900">Admin</option>
-                        <option value="trainer" className="text-gray-900">Trainer</option>
-                        <option value="trainee" className="text-gray-900">Atleti</option>
+                        <option value="all" className="text-gray-900">{t('common:common.all')}</option>
+                        <option value="admin" className="text-gray-900">{t('common:roles.admin')}</option>
+                        <option value="trainer" className="text-gray-900">{t('common:roles.trainer')}</option>
+                        <option value="trainee" className="text-gray-900">{t('admin:users.athletes')}</option>
                     </select>
                 </div>
 
@@ -154,7 +156,7 @@ export default function UsersTable() {
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
-                    <span>Crea Utente</span>
+                    <span>{t('admin:users.createUser')}</span>
                 </button>
             </div>
 
@@ -164,22 +166,22 @@ export default function UsersTable() {
                     <thead className="bg-gray-50">
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Utente
+                                {t('admin:users.user')}
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Email
+                                {t('common:common.email')}
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Ruolo
+                                {t('admin:users.role')}
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Stato
+                                {t('common:common.status')}
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Data Creazione
+                                {t('admin:users.createdDate')}
                             </th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Azioni
+                                {t('common:common.actions')}
                             </th>
                         </tr>
                     </thead>
@@ -187,7 +189,7 @@ export default function UsersTable() {
                         {users.length === 0 ? (
                             <tr>
                                 <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
-                                    Nessun utente trovato
+                                    {t('admin:users.noUsersFound')}
                                 </td>
                             </tr>
                         ) : (
@@ -214,7 +216,7 @@ export default function UsersTable() {
                                                 : 'bg-red-100 text-red-800 hover:bg-red-200'
                                                 }`}
                                         >
-                                            {user.isActive ? 'Attivo' : 'Disattivo'}
+                                            {user.isActive ? t('common:common.active') : t('common:common.inactive')}
                                         </button>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -225,7 +227,7 @@ export default function UsersTable() {
                                             <button
                                                 onClick={() => setEditingUser(user)}
                                                 className="text-brand-primary hover:text-brand-primary/80"
-                                                title="Modifica"
+                                                title={t('common:common.edit')}
                                             >
                                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -234,7 +236,7 @@ export default function UsersTable() {
                                             <button
                                                 onClick={() => setDeletingUser(user)}
                                                 className="text-red-600 hover:text-red-900"
-                                                title="Elimina"
+                                                title={t('common:common.delete')}
                                             >
                                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

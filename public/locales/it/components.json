@@ -23,7 +23,9 @@
         "addSet": "Aggiungi Serie",
         "notes": "Note (opzionale)",
         "notesPlaceholder": "Eventuali note sull'esecuzione, sensazioni, difficoltà...",
-        "feedbackSaved": "Feedback salvato con successo!"
+        "feedbackSaved": "Feedback salvato con successo!",
+        "saveFeedback": "Salva Feedback",
+        "total": "Totale"
     },
     "navigationCard": {
         "description": "Card di navigazione utilizzate nelle dashboard per indirizzare l'utente alle sezioni principali"

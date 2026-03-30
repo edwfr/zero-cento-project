@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface User {
     id: string
@@ -16,6 +17,7 @@ interface UserDeleteModalProps {
 }
 
 export default function UserDeleteModal({ user, onClose, onUserDeleted }: UserDeleteModalProps) {
+    const { t } = useTranslation(['admin', 'common'])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
 
@@ -31,7 +33,7 @@ export default function UserDeleteModal({ user, onClose, onUserDeleted }: UserDe
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data.error?.message || 'Errore durante l\'eliminazione')
+                throw new Error(data.error?.message || t('common:errors.deletionError'))
             }
 
             onUserDeleted()
@@ -51,13 +53,13 @@ export default function UserDeleteModal({ user, onClose, onUserDeleted }: UserDe
                         </svg>
                     </div>
                     <h2 className="ml-3 text-xl font-bold text-gray-900">
-                        Elimina Utente
+                        {t('admin:users.deleteUser')}
                     </h2>
                 </div>
 
                 <div className="mb-4">
                     <p className="text-sm text-gray-600 mb-3">
-                        Sei sicuro di voler eliminare questo utente? Questa azione è permanente e cancellerà tutti i dati associati.
+                        {t('admin:users.confirmDelete')} {t('admin:users.deleteWarning')}.
                     </p>
 
                     <div className="p-3 bg-gray-50 rounded-md">
@@ -80,14 +82,14 @@ export default function UserDeleteModal({ user, onClose, onUserDeleted }: UserDe
                         disabled={loading}
                         className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                     >
-                        {loading ? 'Eliminando...' : 'Elimina'}
+                        {loading ? t('common:common.deleting') : t('common:common.delete')}
                     </button>
                     <button
                         onClick={onClose}
                         disabled={loading}
                         className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
                     >
-                        Annulla
+                        {t('common:common.cancel')}
                     </button>
                 </div>
             </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface User {
     id: string
@@ -17,6 +18,7 @@ interface UserEditModalProps {
 }
 
 export default function UserEditModal({ user, onClose, onUserUpdated }: UserEditModalProps) {
+    const { t } = useTranslation(['admin', 'common'])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const [success, setSuccess] = useState(false)
@@ -42,7 +44,7 @@ export default function UserEditModal({ user, onClose, onUserUpdated }: UserEdit
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data.error?.message || 'Errore durante l\'aggiornamento')
+                throw new Error(data.error?.message || t('common:errors.updateError'))
             }
 
             setSuccess(true)
@@ -66,7 +68,7 @@ export default function UserEditModal({ user, onClose, onUserUpdated }: UserEdit
                             </svg>
                         </div>
                         <h3 className="text-lg font-medium text-gray-900">
-                            Utente aggiornato con successo
+                            {t('admin:users.userUpdated')}
                         </h3>
                     </div>
                 </div>
@@ -78,15 +80,15 @@ export default function UserEditModal({ user, onClose, onUserUpdated }: UserEdit
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                    Modifica Utente
+                    {t('admin:users.editUser')}
                 </h2>
 
                 <div className="mb-4 p-3 bg-gray-50 rounded-md">
                     <p className="text-sm text-gray-600">
-                        <span className="font-medium">Email:</span> {user.email}
+                        <span className="font-medium">{t('common:common.email')}:</span> {user.email}
                     </p>
                     <p className="text-sm text-gray-600 mt-1">
-                        <span className="font-medium">Ruolo:</span> {user.role}
+                        <span className="font-medium">{t('admin:users.role')}:</span> {user.role}
                     </p>
                 </div>
 
@@ -99,7 +101,7 @@ export default function UserEditModal({ user, onClose, onUserUpdated }: UserEdit
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-                            Nome *
+                            {t('common:common.firstName')} *
                         </label>
                         <input
                             type="text"
@@ -114,7 +116,7 @@ export default function UserEditModal({ user, onClose, onUserUpdated }: UserEdit
 
                     <div>
                         <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-                            Cognome *
+                            {t('common:common.lastName')} *
                         </label>
                         <input
                             type="text"
@@ -133,7 +135,7 @@ export default function UserEditModal({ user, onClose, onUserUpdated }: UserEdit
                             disabled={loading}
                             className="flex-1 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                         >
-                            {loading ? 'Salvando...' : 'Salva Modifiche'}
+                            {loading ? t('common:common.saving') : t('common:common.saveChanges')}
                         </button>
                         <button
                             type="button"
@@ -141,7 +143,7 @@ export default function UserEditModal({ user, onClose, onUserUpdated }: UserEdit
                             disabled={loading}
                             className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
                         >
-                            Annulla
+                            {t('common:common.cancel')}
                         </button>
                     </div>
                 </form>

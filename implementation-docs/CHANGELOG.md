@@ -19,6 +19,14 @@ Registro cronologico degli sviluppi effettuati.
 
 ## Storico
 
+### [30 Marzo 2026] — Completato Rimozione Stringhe Hardcoded (Sprint 7.2)
+
+**Task checklist:** #7.2  
+**File modificati:** `src/components/UserCreateModal.tsx`, `src/components/UserEditModal.tsx`, `src/components/UserDeleteModal.tsx`, `src/components/ExerciseCard.tsx`, `src/components/ExercisesTable.tsx`, `src/components/FeedbackForm.tsx`, `src/components/ProgramsTable.tsx`, `src/components/UsersTable.tsx`, `public/locales/it/*.json`, `public/locales/en/*.json`  
+**Note:** Completata rimozione di tutte le stringhe hardcoded italiane dai componenti core prioritari (Fase 1). Implementazioni: (1) **8 componenti aggiornati con i18n** - UserCreateModal, UserEditModal, UserDeleteModal, ExerciseCard, ExercisesTable, FeedbackForm, ProgramsTable, UsersTable - tutti ora utilizzano il pattern `useTranslation(['namespace1', 'namespace2'])` per ottenere le traduzioni; (2) **Chiavi di traduzione aggiunte** - common.json: `creating`, `submitting`; trainer.json: `videoAvailable`, `filterByType`, `createExercise`, `noExercisesFound`, `video`, `createdBy`, `program`, `athlete`, `trainer`, `deleteProgram`, `confirmDeleteProgram`, `noProgramsFound`, `workoutsPerWeek`, `weeksShort`, `loadingError`; admin.json: `filterByRole`, `athletes`, `user`, `noUsersFound`, `createdDate`; components.json: `saveFeedback`, `total`; (3) **Pattern uniforme implementato** - tutti i componenti seguono lo stesso approccio con import di `useTranslation` da react-i18next, dichiarazione dei namespace necessari, utilizzo consistente della sintassi `t('namespace:chiave.sottochaive')` per traduzioni; (4) **Copertura completa** - etichette form, placeholder, messaggi errore, testi pulsanti, titoli modali, intestazioni tabelle, stati loading, messaggi conferma eliminazione; (5) **Interpolazione valori dinamici** - utilizzo di interpolazione per messaggi con variabili (es. `t('admin:users.confirmDeleteProgram', { title })`, `t('trainer:programs.workoutsPerWeek', { count })`); (6) **Nessun errore TypeScript** - tutti i componenti compilano senza errori dopo l'aggiornamento. Il sistema è ora completamente pronto per supportare il cambio lingua italiano/inglese su tutti i componenti core. Rimanenti per Sprint 7: standardizzazione date con locale (7.3), skeleton loaders (7.4), ARIA labels (7.5), standardizzazione formato API (7.6).
+
+---
+
 ### [30 Marzo 2026] — Completato Gestione Massimali Trainee con View Gruppata (Sprint 4.5)
 
 **Task checklist:** #4.5  

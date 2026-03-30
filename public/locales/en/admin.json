@@ -30,6 +30,11 @@
         "confirmDeactivate": "Are you sure you want to deactivate {{count}} users?",
         "totalUsers": "Total Users",
         "feedbackReceived": "Feedback Received",
-        "loadingError": "Error loading users"
+        "loadingError": "Error loading users",
+        "filterByRole": "Filter by role:",
+        "athletes": "Athletes",
+        "user": "User",
+        "noUsersFound": "No users found",
+        "createdDate": "Created Date"
     }
 }

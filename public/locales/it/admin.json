@@ -30,6 +30,11 @@
         "confirmDeactivate": "Sei sicuro di voler disattivare {{count}} utenti?",
         "totalUsers": "Utenti Totali",
         "feedbackReceived": "Feedback Ricevuti",
-        "loadingError": "Errore caricamento utenti"
+        "loadingError": "Errore caricamento utenti",
+        "filterByRole": "Filtra per ruolo:",
+        "athletes": "Atleti",
+        "user": "Utente",
+        "noUsersFound": "Nessun utente trovato",
+        "createdDate": "Data Creazione"
     }
 }

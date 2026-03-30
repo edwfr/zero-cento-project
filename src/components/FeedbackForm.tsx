@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import RPESelector from './RPESelector'
 
 interface SetPerformed {
@@ -33,6 +34,7 @@ export default function FeedbackForm({
     onCancel,
     isSubmitting = false,
 }: FeedbackFormProps) {
+    const { t } = useTranslation(['components', 'common'])
     const [sets, setSets] = useState<SetPerformed[]>(
         Array.from({ length: prescribedSets }, (_, i) => ({
             setNumber: i + 1,
@@ -82,7 +84,7 @@ export default function FeedbackForm({
             <div className="border-b border-gray-200 pb-4">
                 <h3 className="text-lg font-bold text-gray-900">{workoutExerciseName}</h3>
                 <p className="text-sm text-gray-600">
-                    Prescritto: {prescribedSets} serie × {prescribedReps} reps
+                    {t('components:feedbackForm.prescribed')}: {prescribedSets} {t('components:feedbackForm.sets')} × {prescribedReps} {t('components:feedbackForm.reps')}
                     {prescribedWeight && ` @ ${prescribedWeight}kg`}
                 </p>
             </div>
@@ -95,7 +97,7 @@ export default function FeedbackForm({
                     onChange={(e) => setCompleted(e.target.checked)}
                     className="h-5 w-5 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
                 />
-                <span className="text-sm font-medium text-gray-700">Esercizio completato</span>
+                <span className="text-sm font-medium text-gray-700">{t('components:feedbackForm.completed')}</span>
             </label>
 
             {/* Sets Table */}
@@ -103,9 +105,9 @@ export default function FeedbackForm({
                 <table className="w-full text-sm">
                     <thead>
                         <tr className="border-b border-gray-200 bg-gray-50">
-                            <th className="px-2 py-2 text-left font-semibold text-gray-700">Serie</th>
-                            <th className="px-2 py-2 text-left font-semibold text-gray-700">Reps</th>
-                            <th className="px-2 py-2 text-left font-semibold text-gray-700">Peso (kg)</th>
+                            <th className="px-2 py-2 text-left font-semibold text-gray-700">{t('components:feedbackForm.set')}</th>
+                            <th className="px-2 py-2 text-left font-semibold text-gray-700">{t('components:feedbackForm.reps')}</th>
+                            <th className="px-2 py-2 text-left font-semibold text-gray-700">{t('components:feedbackForm.weight')}</th>
                             <th className="px-2 py-2"></th>
                         </tr>
                     </thead>
@@ -146,7 +148,7 @@ export default function FeedbackForm({
                                             type="button"
                                             onClick={() => removeSet(index)}
                                             className="text-red-500 hover:text-red-700"
-                                            title="Rimuovi serie"
+                                            title={t('components:feedbackForm.removeSet')}
                                         >
                                             ✕
                                         </button>
@@ -157,7 +159,7 @@ export default function FeedbackForm({
                     </tbody>
                     <tfoot>
                         <tr className="bg-gray-50 font-semibold">
-                            <td className="px-2 py-2">Totale</td>
+                            <td className="px-2 py-2">{t('components:feedbackForm.total')}</td>
                             <td className="px-2 py-2">{sets.reduce((sum, s) => sum + s.reps, 0)}</td>
                             <td className="px-2 py-2">-</td>
                             <td className="px-2 py-2"></td>
@@ -172,7 +174,7 @@ export default function FeedbackForm({
                 onClick={addSet}
                 className="self-start rounded-lg border-2 border-dashed border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:border-brand-primary hover:text-brand-primary"
             >
-                + Aggiungi Serie
+                + {t('components:feedbackForm.addSet')}
             </button>
 
             {/* RPE Selector */}
@@ -180,16 +182,16 @@ export default function FeedbackForm({
 
             {/* Notes */}
             <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium text-gray-700">Note (opzionale)</label>
+                <label className="text-sm font-medium text-gray-700">{t('components:feedbackForm.notes')}</label>
                 <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     rows={3}
                     maxLength={1000}
-                    placeholder="Eventuali note sull'esecuzione, sensazioni, difficoltà..."
+                    placeholder={t('components:feedbackForm.notesPlaceholder')}
                     className="rounded-lg border-2 border-gray-300 px-4 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/50"
                 />
-                <span className="text-xs text-gray-500">{notes.length}/1000 caratteri</span>
+                <span className="text-xs text-gray-500">{notes.length}/1000 {t('common:common.characters')}</span>
             </div>
 
             {/* Actions */}
@@ -201,7 +203,7 @@ export default function FeedbackForm({
                         disabled={isSubmitting}
                         className="flex-1 rounded-lg border-2 border-gray-300 px-4 py-2 font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                        Annulla
+                        {t('common:common.cancel')}
                     </button>
                 )}
                 <button
@@ -209,7 +211,7 @@ export default function FeedbackForm({
                     disabled={isSubmitting}
                     className="flex-1 rounded-lg bg-brand-primary px-4 py-2 font-semibold text-white shadow-md hover:bg-brand-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                    {isSubmitting ? 'Invio...' : 'Salva Feedback'}
+                    {isSubmitting ? t('common:common.submitting') : t('components:feedbackForm.saveFeedback')}
                 </button>
             </div>
         </form>

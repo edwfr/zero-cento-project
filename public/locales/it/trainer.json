@@ -31,7 +31,13 @@
         "confirmDelete": "Sei sicuro di voler eliminare l'esercizio",
         "nameRequired": "Il nome è obbligatorio",
         "loadingError": "Errore caricamento esercizio",
-        "updateError": "Errore nell'aggiornamento esercizio"
+        "updateError": "Errore nell'aggiornamento esercizio",
+        "videoAvailable": "Video disponibile",
+        "filterByType": "Filtra per tipo:",
+        "createExercise": "Crea Esercizio",
+        "noExercisesFound": "Nessun esercizio trovato",
+        "video": "Video",
+        "createdBy": "Creato da"
     },
     "athletes": {
         "title": "I Tuoi Atleti",
@@ -80,7 +86,16 @@
         "noActivePrograms": "Nessun programma attivo",
         "noCompletedPrograms": "Nessun programma completato",
         "searchPlaceholder": "Cerca programma o atleta...",
-        "active": "attivi"
+        "active": "attivi",
+        "program": "Programma",
+        "athlete": "Atleta",
+        "trainer": "Trainer",
+        "deleteProgram": "Elimina Programma",
+        "confirmDeleteProgram": "Sei sicuro di voler eliminare il programma",
+        "noProgramsFound": "Nessun programma trovato con questi filtri",
+        "workoutsPerWeek": "allenamenti/settimana",
+        "weeksShort": "sett.",
+        "loadingError": "Errore caricamento programmi"
     },
     "weekTypes": {
         "standard": "Settimana Standard",

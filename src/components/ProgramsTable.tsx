@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import Link from 'next/link'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
@@ -38,24 +39,31 @@ interface ProgramsTableProps {
     onRefresh?: () => void
 }
 
-const STATUS_LABELS: Record<string, string> = {
-    draft: 'Bozza',
-    active: 'Attivo',
-    completed: 'Completato',
-}
-
-const STATUS_BADGE: Record<string, string> = {
-    draft: 'bg-yellow-100 text-yellow-800',
-    active: 'bg-green-100 text-green-800',
-    completed: 'bg-gray-100 text-gray-600',
-}
-
 export default function ProgramsTable({
     programs: externalPrograms,
     showTrainer = false,
     basePath = '/trainer/programs',
     onRefresh,
 }: ProgramsTableProps) {
+    const { t } = useTranslation(['trainer', 'common'])
+    
+    const STATUS_LABELS: Record<string, string> = {
+        draft: t('trainer:programs.draft'),
+        active: t('common:common.active'),
+        completed: t('common:common.completed'),
+    }
+    const STATUS_LABELS: Record<string, string> = {
+        draft: t('trainer:programs.draft'),
+        active: t('common:common.active'),
+        completed: t('common:common.completed'),
+    }
+    
+    const STATUS_BADGE: Record<string, string> = {
+        draft: 'bg-yellow-100 text-yellow-800',
+        active: 'bg-green-100 text-green-800',
+        completed: 'bg-gray-100 text-gray-600',
+    }
+    
     const [programs, setPrograms] = useState<Program[]>(externalPrograms ?? [])
     const [loading, setLoading] = useState(!externalPrograms)
     const [error, setError] = useState<string | null>(null)
@@ -76,7 +84,7 @@ export default function ProgramsTable({
             setLoading(true)
             const res = await fetch('/api/programs')
             const data = await res.json()
-            if (!res.ok) throw new Error(data.error?.message || 'Errore caricamento programmi')
+            if (!res.ok) throw new Error(data.error?.message || t('trainer:programs.loadingError'))
             setPrograms(data.data.programs)
             setError(null)
         } catch (err: any) {
@@ -101,16 +109,16 @@ export default function ProgramsTable({
 
     const handleDelete = (id: string, title: string) => {
         setConfirmModal({
-            title: 'Elimina Programma',
-            message: `Sei sicuro di voler eliminare il programma "${title}"?`,
-            confirmText: 'Elimina',
+            title: t('trainer:programs.deleteProgram'),
+            message: `${t('trainer:programs.confirmDeleteProgram')} "${title}"?`,
+            confirmText: t('common:common.delete'),
             onConfirm: async () => {
                 setConfirmModal(null)
                 try {
                     setDeleting(id)
                     const res = await fetch(`/api/programs/${id}`, { method: 'DELETE' })
                     const data = await res.json()
-                    if (!res.ok) throw new Error(data.error?.message || 'Errore eliminazione')
+                    if (!res.ok) throw new Error(data.error?.message || t('common:errors.deletionError'))
                     if (externalPrograms && onRefresh) {
                         onRefresh()
                     } else {
@@ -176,7 +184,7 @@ export default function ProgramsTable({
             <div className="mb-4">
                 <input
                     type="text"
-                    placeholder="🔍 Cerca programma o atleta..."
+                    placeholder={`🔍 ${t('trainer:programs.searchPlaceholder')}`}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full max-w-sm px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
@@ -207,8 +215,12 @@ export default function ProgramsTable({
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
                     <p className="text-gray-500 text-lg">
                         {searchTerm
-                            ? 'Nessun programma trovato con questi filtri'
-                            : `Nessun programma ${activeTab === 'draft' ? 'in bozza' : activeTab === 'active' ? 'attivo' : 'completato'}`}
+                            ? t('trainer:programs.noProgramsFound')
+                            : activeTab === 'draft'
+                            ? t('trainer:programs.noDraftPrograms')
+                            : activeTab === 'active'
+                            ? t('trainer:programs.noActivePrograms')
+                            : t('trainer:programs.noCompletedPrograms')}
                     </p>
                 </div>
             ) : (
@@ -218,27 +230,27 @@ export default function ProgramsTable({
                             <thead className="bg-gray-50">
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                        Programma
+                                        {t('trainer:programs.program')}
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                        Atleta
+                                        {t('trainer:programs.athlete')}
                                     </th>
                                     {showTrainer && (
                                         <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                            Trainer
+                                            {t('trainer:programs.trainer')}
                                         </th>
                                     )}
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                        Stato
+                                        {t('common:common.status')}
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                        Durata
+                                        {t('common:common.duration')}
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                        Inizio
+                                        {t('common:common.start')}
                                     </th>
                                     <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                        Azioni
+                                        {t('common:common.actions')}
                                     </th>
                                 </tr>
                             </thead>
@@ -250,7 +262,7 @@ export default function ProgramsTable({
                                                 {program.title}
                                             </div>
                                             <div className="text-xs text-gray-500 mt-1">
-                                                {program.workoutsPerWeek} allenamenti/settimana
+                                                {program.workoutsPerWeek} {t('trainer:programs.workoutsPerWeek')}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
@@ -271,7 +283,7 @@ export default function ProgramsTable({
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                            {program.durationWeeks} sett.
+                                            {program.durationWeeks} {t('trainer:programs.weeksShort')}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                             {program.startDate
@@ -284,14 +296,14 @@ export default function ProgramsTable({
                                                     href={`${basePath}/${program.id}`}
                                                     className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold"
                                                 >
-                                                    Visualizza
+                                                    {t('common:common.view')}
                                                 </Link>
                                                 {program.status === 'draft' && (
                                                     <>
                                                         <Link
                                                             href={`${basePath}/${program.id}/edit`}
                                                             className="text-green-600 hover:text-green-800"
-                                                            title="Modifica"
+                                                            title={t('common:common.edit')}
                                                         >
                                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -303,7 +315,7 @@ export default function ProgramsTable({
                                                             }
                                                             disabled={deleting === program.id}
                                                             className="text-red-600 hover:text-red-800 disabled:opacity-50"
-                                                            title="Elimina"
+                                                            title={t('common:common.delete')}
                                                         >
                                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

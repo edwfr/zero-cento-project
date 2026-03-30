@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface UserCreateModalProps {
     onClose: () => void
@@ -8,6 +9,7 @@ interface UserCreateModalProps {
 }
 
 export default function UserCreateModal({ onClose, onUserCreated }: UserCreateModalProps) {
+    const { t } = useTranslation(['admin', 'common'])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const [tempPassword, setTempPassword] = useState('')
@@ -35,7 +37,7 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data.error?.message || 'Errore durante la creazione')
+                throw new Error(data.error?.message || t('common:errors.creationError'))
             }
 
             // Show temporary password
@@ -56,18 +58,18 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                 <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
                     <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                        ✅ Utente Creato
+                        ✅ {t('admin:users.userCreated')}
                     </h2>
 
                     <div className="bg-green-50 border border-green-200 rounded-md p-4 mb-4">
                         <p className="text-sm text-green-800 mb-3">
-                            L'utente è stato creato con successo. Salva questa password temporanea:
+                            {t('admin:users.createdSuccess')}. {t('admin:users.savePassword')}:
                         </p>
                         <div className="bg-white p-3 rounded border border-green-300 font-mono text-sm break-all">
                             {tempPassword}
                         </div>
                         <p className="text-xs text-green-700 mt-2">
-                            ⚠️ Questa password verrà mostrata solo una volta. L'utente dovrà cambiarla al primo accesso.
+                            ⚠️ {t('admin:users.passwordOnce')}. {t('admin:users.mustChange')}.
                         </p>
                     </div>
 
@@ -75,7 +77,7 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
                         onClick={onUserCreated}
                         className="w-full px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 transition-colors"
                     >
-                        Chiudi
+                        {t('common:common.close')}
                     </button>
                 </div>
             </div>
@@ -86,7 +88,7 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                    Crea Nuovo Utente
+                    {t('admin:users.createNewUser')}
                 </h2>
 
                 {error && (
@@ -98,7 +100,7 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                            Email *
+                            {t('common:common.email')} *
                         </label>
                         <input
                             type="email"
@@ -113,7 +115,7 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
 
                     <div>
                         <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-                            Nome *
+                            {t('common:common.firstName')} *
                         </label>
                         <input
                             type="text"
@@ -128,7 +130,7 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
 
                     <div>
                         <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-                            Cognome *
+                            {t('common:common.lastName')} *
                         </label>
                         <input
                             type="text"
@@ -143,7 +145,7 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
 
                     <div>
                         <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
-                            Ruolo *
+                            {t('admin:users.role')} *
                         </label>
                         <select
                             id="role"
@@ -153,8 +155,8 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                             required
                         >
-                            <option value="trainee" className="text-gray-900">Atleta</option>
-                            <option value="trainer" className="text-gray-900">Trainer</option>
+                            <option value="trainee" className="text-gray-900">{t('common:roles.trainee')}</option>
+                            <option value="trainer" className="text-gray-900">{t('common:roles.trainer')}</option>
                         </select>
                     </div>
 
@@ -164,7 +166,7 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
                             disabled={loading}
                             className="flex-1 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                         >
-                            {loading ? 'Creando...' : 'Crea Utente'}
+                            {loading ? t('common:common.creating') : t('admin:users.createUser')}
                         </button>
                         <button
                             type="button"
@@ -172,7 +174,7 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
                             disabled={loading}
                             className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
                         >
-                            Annulla
+                            {t('common:common.cancel')}
                         </button>
                     </div>
                 </form>

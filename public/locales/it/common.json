@@ -19,6 +19,8 @@
         "loading": "Caricamento...",
         "loadingProgress": "Caricamento in corso...",
         "saving": "Salvando...",
+        "creating": "Creando...",
+        "submitting": "Invio...",
         "deleting": "Eliminando...",
         "noResults": "Nessun risultato",
         "error": "Errore",

@@ -31,7 +31,13 @@
         "confirmDelete": "Are you sure you want to delete the exercise",
         "nameRequired": "Name is required",
         "loadingError": "Error loading exercise",
-        "updateError": "Error updating exercise"
+        "updateError": "Error updating exercise",
+        "videoAvailable": "Video available",
+        "filterByType": "Filter by type:",
+        "createExercise": "Create Exercise",
+        "noExercisesFound": "No exercises found",
+        "video": "Video",
+        "createdBy": "Created by"
     },
     "athletes": {
         "title": "Your Athletes",
@@ -80,7 +86,16 @@
         "noActivePrograms": "No active programs",
         "noCompletedPrograms": "No completed programs",
         "searchPlaceholder": "Search program or athlete...",
-        "active": "active"
+        "active": "active",
+        "program": "Program",
+        "athlete": "Athlete",
+        "trainer": "Trainer",
+        "deleteProgram": "Delete Program",
+        "confirmDeleteProgram": "Are you sure you want to delete the program",
+        "noProgramsFound": "No programs found with these filters",
+        "workoutsPerWeek": "workouts/week",
+        "weeksShort": "wks.",
+        "loadingError": "Error loading programs"
     },
     "weekTypes": {
         "standard": "Standard Week",

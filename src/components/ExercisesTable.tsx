@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import ExerciseCreateModal from './ExerciseCreateModal'
 
 interface MuscleGroupAssignment {
@@ -30,6 +31,7 @@ interface Exercise {
 }
 
 export default function ExercisesTable() {
+    const { t } = useTranslation(['trainer', 'common'])
     const [exercises, setExercises] = useState<Exercise[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -56,7 +58,7 @@ export default function ExercisesTable() {
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data.error?.message || 'Errore durante il caricamento')
+                throw new Error(data.error?.message || t('common:errors.loadingError'))
             }
 
             setExercises(data.data.exercises)
@@ -75,9 +77,9 @@ export default function ExercisesTable() {
     const getTypeLabel = (type: string) => {
         switch (type) {
             case 'fundamental':
-                return 'Fondamentale'
+                return t('trainer:exercises.fundamental')
             case 'accessory':
-                return 'Accessorio'
+                return t('trainer:exercises.accessory')
             default:
                 return type
         }
@@ -122,22 +124,22 @@ export default function ExercisesTable() {
             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                     <div className="flex items-center space-x-4">
-                        <label className="text-sm font-medium text-gray-700">Filtra per tipo:</label>
+                        <label className="text-sm font-medium text-gray-700">{t('trainer:exercises.filterByType')}</label>
                         <select
                             value={filterType}
                             onChange={(e) => setFilterType(e.target.value)}
                             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                         >
-                            <option value="all" className="text-gray-900">Tutti</option>
-                            <option value="fundamental" className="text-gray-900">Fondamentali</option>
-                            <option value="accessory" className="text-gray-900">Accessori</option>
+                            <option value="all" className="text-gray-900">{t('common:common.all')}</option>
+                            <option value="fundamental" className="text-gray-900">{t('trainer:exercises.fundamental')}i</option>
+                            <option value="accessory" className="text-gray-900">{t('trainer:exercises.accessory')}i</option>
                         </select>
                     </div>
 
                     <div className="flex items-center space-x-2">
                         <input
                             type="text"
-                            placeholder="Cerca esercizio..."
+                            placeholder={t('trainer:exercises.searchExercise')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
@@ -152,7 +154,7 @@ export default function ExercisesTable() {
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
-                    <span>Crea Esercizio</span>
+                    <span>{t('trainer:exercises.createExercise')}</span>
                 </button>
             </div>
 
@@ -162,22 +164,22 @@ export default function ExercisesTable() {
                     <thead className="bg-gray-50">
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Nome
+                                {t('common:common.name')}
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Tipo
+                                {t('trainer:exercises.exerciseType')}
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Schema Motorio
+                                {t('trainer:exercises.movementPattern')}
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Gruppi Muscolari
+                                {t('trainer:exercises.muscleGroups')}
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Creato da
+                                {t('trainer:exercises.createdBy')}
                             </th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Azioni
+                                {t('common:common.actions')}
                             </th>
                         </tr>
                     </thead>
@@ -185,7 +187,7 @@ export default function ExercisesTable() {
                         {exercises.length === 0 ? (
                             <tr>
                                 <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
-                                    Nessun esercizio trovato
+                                    {t('trainer:exercises.noExercisesFound')}
                                 </td>
                             </tr>
                         ) : (
@@ -235,7 +237,7 @@ export default function ExercisesTable() {
                                             rel="noopener noreferrer"
                                             className="text-brand-primary hover:text-brand-primary/80"
                                         >
-                                            Video
+                                            {t('trainer:exercises.video')}
                                         </a>
                                     </td>
                                 </tr>
