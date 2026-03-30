@@ -92,13 +92,13 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/personal-records
- * Create personal record for session user (trainee)
- * Body: { exerciseId, reps, weight, recordDate, notes? }
- * RBAC: Only trainees and admins can create records
+ * Create personal record for trainee
+ * Body: { exerciseId, reps, weight, recordDate, notes?, traineeId? }
+ * RBAC: Trainees create own records, trainers create for their trainees, admins create for anyone
  */
 export async function POST(request: NextRequest) {
     try {
-        const session = await requireRole(['admin', 'trainee'])
+        const session = await requireRole(['admin', 'trainer', 'trainee'])
         const body = await request.json()
 
         const validation = personalRecordSchema.safeParse(body)
@@ -108,11 +108,32 @@ export async function POST(request: NextRequest) {
 
         const { exerciseId, reps, weight, recordDate, notes } = validation.data
 
-        // traineeId is derived from session (trainee creates their own record)
-        const traineeId = session.user.role === 'trainee' ? session.user.id : body.traineeId
+        // Determine traineeId based on role
+        let traineeId: string
+        if (session.user.role === 'trainee') {
+            // Trainees create records for themselves
+            traineeId = session.user.id
+        } else {
+            // Trainers and admins need to specify traineeId
+            traineeId = body.traineeId
+            if (!traineeId) {
+                return apiError('VALIDATION_ERROR', 'traineeId is required for trainer/admin requests', 400)
+            }
 
-        if (!traineeId) {
-            return apiError('VALIDATION_ERROR', 'traineeId required for admin requests', 400)
+            // For trainers, verify they manage this trainee
+            if (session.user.role === 'trainer') {
+                const isManaged = await prisma.trainerTrainee.findUnique({
+                    where: {
+                        trainerId_traineeId: {
+                            trainerId: session.user.id,
+                            traineeId: traineeId,
+                        },
+                    },
+                })
+                if (!isManaged) {
+                    return apiError('FORBIDDEN', 'You can only create records for your own trainees', 403)
+                }
+            }
         }
 
         // Verify trainee exists and is a trainee

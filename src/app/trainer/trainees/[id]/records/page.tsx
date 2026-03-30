@@ -28,6 +28,15 @@ interface PersonalRecord {
     exercise: Exercise
 }
 
+interface GroupedExerciseRecord {
+    exercise: Exercise
+    oneRM: PersonalRecord | null
+    threeRM: PersonalRecord | null
+    fiveRM: PersonalRecord | null
+    tenRM: PersonalRecord | null
+    allRecords: PersonalRecord[]
+}
+
 export default function TraineeRecordsManagementPage() {
     const params = useParams<{ id: string }>()
     const traineeId = params.id
@@ -35,12 +44,14 @@ export default function TraineeRecordsManagementPage() {
     const [loading, setLoading] = useState(true)
     const [trainee, setTrainee] = useState<Trainee | null>(null)
     const [records, setRecords] = useState<PersonalRecord[]>([])
+    const [groupedRecords, setGroupedRecords] = useState<GroupedExerciseRecord[]>([])
     const [exercises, setExercises] = useState<Exercise[]>([])
     const [error, setError] = useState<string | null>(null)
 
-    // Add modal state
-    const [showAddModal, setShowAddModal] = useState(false)
-    const [addLoading, setAddLoading] = useState(false)
+    // Add/Edit modal state
+    const [showModal, setShowModal] = useState(false)
+    const [modalLoading, setModalLoading] = useState(false)
+    const [editingRecord, setEditingRecord] = useState<PersonalRecord | null>(null)
     const [selectedExerciseId, setSelectedExerciseId] = useState('')
     const [weight, setWeight] = useState('')
     const [reps, setReps] = useState('')
@@ -58,6 +69,12 @@ export default function TraineeRecordsManagementPage() {
     useEffect(() => {
         fetchData()
     }, [traineeId])
+
+    useEffect(() => {
+        // Group records by exercise and find best records for each rep range
+        const grouped = groupRecordsByExercise(records)
+        setGroupedRecords(grouped)
+    }, [records])
 
     const fetchData = async () => {
         try {
@@ -93,7 +110,91 @@ export default function TraineeRecordsManagementPage() {
         }
     }
 
-    const handleAddRecord = async (e: React.FormEvent) => {
+    const groupRecordsByExercise = (records: PersonalRecord[]): GroupedExerciseRecord[] => {
+        const exerciseMap = new Map<string, GroupedExerciseRecord>()
+
+        records.forEach((record) => {
+            const exerciseId = record.exercise.id
+            if (!exerciseMap.has(exerciseId)) {
+                exerciseMap.set(exerciseId, {
+                    exercise: record.exercise,
+                    oneRM: null,
+                    threeRM: null,
+                    fiveRM: null,
+                    tenRM: null,
+                    allRecords: [],
+                })
+            }
+
+            const group = exerciseMap.get(exerciseId)!
+            group.allRecords.push(record)
+
+            // Find best record for each rep range based on estimated 1RM
+            const estimated1RM = calculateOneRepMax(record.weight, record.reps)
+
+            // 1RM: reps = 1
+            if (record.reps === 1) {
+                if (!group.oneRM || record.weight > group.oneRM.weight) {
+                    group.oneRM = record
+                }
+            }
+
+            // 3RM: reps between 2-4
+            if (record.reps >= 2 && record.reps <= 4) {
+                if (!group.threeRM || estimated1RM > calculateOneRepMax(group.threeRM.weight, group.threeRM.reps)) {
+                    group.threeRM = record
+                }
+            }
+
+            // 5RM: reps between 5-7
+            if (record.reps >= 5 && record.reps <= 7) {
+                if (!group.fiveRM || estimated1RM > calculateOneRepMax(group.fiveRM.weight, group.fiveRM.reps)) {
+                    group.fiveRM = record
+                }
+            }
+
+            // 10RM: reps between 8-12
+            if (record.reps >= 8 && record.reps <= 12) {
+                if (!group.tenRM || estimated1RM > calculateOneRepMax(group.tenRM.weight, group.tenRM.reps)) {
+                    group.tenRM = record
+                }
+            }
+        })
+
+        return Array.from(exerciseMap.values()).sort((a, b) => {
+            // Sort fundamentals first, then by name
+            if (a.exercise.type !== b.exercise.type) {
+                return a.exercise.type === 'fundamental' ? -1 : 1
+            }
+            return a.exercise.name.localeCompare(b.exercise.name)
+        })
+    }
+
+    const openAddModal = () => {
+        setEditingRecord(null)
+        setWeight('')
+        setReps('')
+        setNotes('')
+        setRecordDate(new Date().toISOString().split('T')[0])
+        if (exercises.length > 0) {
+            setSelectedExerciseId(exercises[0].id)
+        }
+        setShowModal(true)
+        setError(null)
+    }
+
+    const openEditModal = (record: PersonalRecord) => {
+        setEditingRecord(record)
+        setSelectedExerciseId(record.exercise.id)
+        setWeight(record.weight.toString())
+        setReps(record.reps.toString())
+        setRecordDate(new Date(record.recordDate).toISOString().split('T')[0])
+        setNotes(record.notes || '')
+        setShowModal(true)
+        setError(null)
+    }
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError(null)
 
@@ -103,40 +204,49 @@ export default function TraineeRecordsManagementPage() {
         }
 
         try {
-            setAddLoading(true)
+            setModalLoading(true)
 
-            const res = await fetch('/api/personal-records', {
-                method: 'POST',
+            const payload = {
+                ...(editingRecord ? {} : { traineeId }),
+                exerciseId: selectedExerciseId,
+                weight: parseFloat(weight),
+                reps: parseInt(reps),
+                recordDate,
+                notes: notes || undefined,
+            }
+
+            const url = editingRecord
+                ? `/api/personal-records/${editingRecord.id}`
+                : '/api/personal-records'
+            const method = editingRecord ? 'PATCH' : 'POST'
+
+            const res = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    traineeId,
-                    exerciseId: selectedExerciseId,
-                    weight: parseFloat(weight),
-                    reps: parseInt(reps),
-                    recordDate,
-                    notes: notes || undefined,
-                }),
+                body: JSON.stringify(payload),
             })
 
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || 'Errore creazione massimale')
+                throw new Error(data.error?.message || `Errore ${editingRecord ? 'aggiornamento' : 'creazione'} massimale`)
             }
 
+            showToast(
+                editingRecord ? 'Massimale aggiornato con successo' : 'Massimale aggiunto con successo',
+                'success'
+            )
+
             // Reset form
-            setWeight('')
-            setReps('')
-            setNotes('')
-            setRecordDate(new Date().toISOString().split('T')[0])
-            setShowAddModal(false)
+            setShowModal(false)
+            setEditingRecord(null)
 
             // Refresh data
             fetchData()
         } catch (err: any) {
             setError(err.message)
         } finally {
-            setAddLoading(false)
+            setModalLoading(false)
         }
     }
 
@@ -145,6 +255,7 @@ export default function TraineeRecordsManagementPage() {
             title: 'Elimina Massimale',
             message: `Sei sicuro di voler eliminare il massimale di ${exerciseName}?`,
             confirmText: 'Elimina',
+            variant: 'danger',
             onConfirm: async () => {
                 setConfirmModal(null)
                 try {
@@ -158,6 +269,7 @@ export default function TraineeRecordsManagementPage() {
                         throw new Error(data.error?.message || 'Errore eliminazione massimale')
                     }
 
+                    showToast('Massimale eliminato con successo', 'success')
                     fetchData()
                 } catch (err: any) {
                     showToast(err.message, 'error')
@@ -226,7 +338,7 @@ export default function TraineeRecordsManagementPage() {
                             )}
                         </div>
                         <button
-                            onClick={() => setShowAddModal(true)}
+                            onClick={openAddModal}
                             className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-2 rounded-lg transition-colors"
                         >
                             ➕ Aggiungi Massimale
@@ -241,8 +353,8 @@ export default function TraineeRecordsManagementPage() {
                     </div>
                 )}
 
-                {/* Records Table */}
-                {records.length === 0 ? (
+                {/* Grouped Records by Exercise */}
+                {groupedRecords.length === 0 ? (
                     <div className="bg-white rounded-lg shadow-md p-12 text-center">
                         <div className="text-5xl mb-4">💪</div>
                         <h2 className="text-2xl font-bold text-gray-900 mb-4">
@@ -252,94 +364,242 @@ export default function TraineeRecordsManagementPage() {
                             Inizia aggiungendo i massimali dell'atleta per monitorare i progressi
                         </p>
                         <button
-                            onClick={() => setShowAddModal(true)}
+                            onClick={openAddModal}
                             className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-3 rounded-lg transition-colors"
                         >
                             Aggiungi Primo Massimale
                         </button>
                     </div>
                 ) : (
-                    <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                                        Esercizio
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                                        Peso (kg)
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                                        Ripetizioni
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                                        1RM Stimato
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                                        Data
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                                        Note
-                                    </th>
-                                    <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">
-                                        Azioni
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {records.map((record) => (
-                                    <tr key={record.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4">
-                                            <div className="font-semibold text-gray-900">
-                                                {record.exercise.name}
-                                            </div>
-                                            <div className="text-xs text-gray-500">
-                                                {record.exercise.type === 'fundamental'
-                                                    ? 'Fondamentale'
-                                                    : 'Accessorio'}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                                            {record.weight} kg
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                            {record.reps} reps
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-[#FFA700]">
-                                            {calculateOneRepMax(record.weight, record.reps)} kg
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                            {new Date(record.recordDate).toLocaleDateString('it-IT')}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-600">
-                                            {record.notes || '—'}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                                            <button
-                                                onClick={() =>
-                                                    handleDeleteRecord(record.id, record.exercise.name)
-                                                }
-                                                className="text-red-600 hover:text-red-800 text-sm font-semibold"
-                                            >
-                                                Elimina
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                    <div className="space-y-6">
+                        {groupedRecords.map((group) => (
+                            <div key={group.exercise.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+                                {/* Exercise Header */}
+                                <div className="bg-gradient-to-r from-brand-primary to-brand-secondary px-6 py-4">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h2 className="text-xl font-bold text-white">
+                                                {group.exercise.name}
+                                            </h2>
+                                            <p className="text-xs text-white/80 mt-1">
+                                                {group.exercise.type === 'fundamental' ? 'Fondamentale' : 'Accessorio'}
+                                            </p>
+                                        </div>
+                                        <div className="text-xs text-white/90">
+                                            {group.allRecords.length} {group.allRecords.length === 1 ? 'record' : 'records'}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Rep Maxes Grid */}
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-6 bg-gray-50">
+                                    {/* 1RM */}
+                                    <div className="bg-white rounded-lg p-4 border-2 border-gray-200">
+                                        <div className="text-xs font-semibold text-gray-500 uppercase mb-2">1RM</div>
+                                        {group.oneRM ? (
+                                            <>
+                                                <div className="text-2xl font-bold text-[#FFA700] mb-1">
+                                                    {group.oneRM.weight} kg
+                                                </div>
+                                                <div className="text-xs text-gray-600">
+                                                    {new Date(group.oneRM.recordDate).toLocaleDateString('it-IT')}
+                                                </div>
+                                                <div className="mt-2 flex space-x-2">
+                                                    <button
+                                                        onClick={() => openEditModal(group.oneRM!)}
+                                                        className="text-xs text-blue-600 hover:text-blue-800 font-semibold"
+                                                    >
+                                                        Modifica
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteRecord(group.oneRM!.id, group.exercise.name)}
+                                                        className="text-xs text-red-600 hover:text-red-800 font-semibold"
+                                                    >
+                                                        Elimina
+                                                    </button>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="text-sm text-gray-400">—</div>
+                                        )}
+                                    </div>
+
+                                    {/* 3RM */}
+                                    <div className="bg-white rounded-lg p-4 border-2 border-gray-200">
+                                        <div className="text-xs font-semibold text-gray-500 uppercase mb-2">3RM</div>
+                                        {group.threeRM ? (
+                                            <>
+                                                <div className="text-2xl font-bold text-[#FFA700] mb-1">
+                                                    {group.threeRM.weight} kg
+                                                </div>
+                                                <div className="text-xs text-gray-600">
+                                                    {group.threeRM.reps} reps · {new Date(group.threeRM.recordDate).toLocaleDateString('it-IT')}
+                                                </div>
+                                                <div className="text-xs text-gray-500 mt-1">
+                                                    Est. 1RM: {calculateOneRepMax(group.threeRM.weight, group.threeRM.reps)} kg
+                                                </div>
+                                                <div className="mt-2 flex space-x-2">
+                                                    <button
+                                                        onClick={() => openEditModal(group.threeRM!)}
+                                                        className="text-xs text-blue-600 hover:text-blue-800 font-semibold"
+                                                    >
+                                                        Modifica
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteRecord(group.threeRM!.id, group.exercise.name)}
+                                                        className="text-xs text-red-600 hover:text-red-800 font-semibold"
+                                                    >
+                                                        Elimina
+                                                    </button>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="text-sm text-gray-400">—</div>
+                                        )}
+                                    </div>
+
+                                    {/* 5RM */}
+                                    <div className="bg-white rounded-lg p-4 border-2 border-gray-200">
+                                        <div className="text-xs font-semibold text-gray-500 uppercase mb-2">5RM</div>
+                                        {group.fiveRM ? (
+                                            <>
+                                                <div className="text-2xl font-bold text-[#FFA700] mb-1">
+                                                    {group.fiveRM.weight} kg
+                                                </div>
+                                                <div className="text-xs text-gray-600">
+                                                    {group.fiveRM.reps} reps · {new Date(group.fiveRM.recordDate).toLocaleDateString('it-IT')}
+                                                </div>
+                                                <div className="text-xs text-gray-500 mt-1">
+                                                    Est. 1RM: {calculateOneRepMax(group.fiveRM.weight, group.fiveRM.reps)} kg
+                                                </div>
+                                                <div className="mt-2 flex space-x-2">
+                                                    <button
+                                                        onClick={() => openEditModal(group.fiveRM!)}
+                                                        className="text-xs text-blue-600 hover:text-blue-800 font-semibold"
+                                                    >
+                                                        Modifica
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteRecord(group.fiveRM!.id, group.exercise.name)}
+                                                        className="text-xs text-red-600 hover:text-red-800 font-semibold"
+                                                    >
+                                                        Elimina
+                                                    </button>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="text-sm text-gray-400">—</div>
+                                        )}
+                                    </div>
+
+                                    {/* 10RM */}
+                                    <div className="bg-white rounded-lg p-4 border-2 border-gray-200">
+                                        <div className="text-xs font-semibold text-gray-500 uppercase mb-2">10RM</div>
+                                        {group.tenRM ? (
+                                            <>
+                                                <div className="text-2xl font-bold text-[#FFA700] mb-1">
+                                                    {group.tenRM.weight} kg
+                                                </div>
+                                                <div className="text-xs text-gray-600">
+                                                    {group.tenRM.reps} reps · {new Date(group.tenRM.recordDate).toLocaleDateString('it-IT')}
+                                                </div>
+                                                <div className="text-xs text-gray-500 mt-1">
+                                                    Est. 1RM: {calculateOneRepMax(group.tenRM.weight, group.tenRM.reps)} kg
+                                                </div>
+                                                <div className="mt-2 flex space-x-2">
+                                                    <button
+                                                        onClick={() => openEditModal(group.tenRM!)}
+                                                        className="text-xs text-blue-600 hover:text-blue-800 font-semibold"
+                                                    >
+                                                        Modifica
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteRecord(group.tenRM!.id, group.exercise.name)}
+                                                        className="text-xs text-red-600 hover:text-red-800 font-semibold"
+                                                    >
+                                                        Elimina
+                                                    </button>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="text-sm text-gray-400">—</div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* All Records Table */}
+                                {group.allRecords.length > 0 && (
+                                    <details className="border-t border-gray-200">
+                                        <summary className="px-6 py-3 cursor-pointer hover:bg-gray-50 text-sm font-semibold text-gray-700">
+                                            Mostra tutti i {group.allRecords.length} record
+                                        </summary>
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full divide-y divide-gray-200">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th className="px-6 py-2 text-left text-xs font-semibold text-gray-500">Peso</th>
+                                                        <th className="px-6 py-2 text-left text-xs font-semibold text-gray-500">Reps</th>
+                                                        <th className="px-6 py-2 text-left text-xs font-semibold text-gray-500">1RM Est.</th>
+                                                        <th className="px-6 py-2 text-left text-xs font-semibold text-gray-500">Data</th>
+                                                        <th className="px-6 py-2 text-left text-xs font-semibold text-gray-500">Note</th>
+                                                        <th className="px-6 py-2 text-right text-xs font-semibold text-gray-500">Azioni</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                    {group.allRecords
+                                                        .sort((a, b) => new Date(b.recordDate).getTime() - new Date(a.recordDate).getTime())
+                                                        .map((record) => (
+                                                            <tr key={record.id} className="hover:bg-gray-50">
+                                                                <td className="px-6 py-2 text-sm font-semibold text-gray-900">
+                                                                    {record.weight} kg
+                                                                </td>
+                                                                <td className="px-6 py-2 text-sm text-gray-700">
+                                                                    {record.reps}
+                                                                </td>
+                                                                <td className="px-6 py-2 text-sm font-semibold text-[#FFA700]">
+                                                                    {calculateOneRepMax(record.weight, record.reps)} kg
+                                                                </td>
+                                                                <td className="px-6 py-2 text-sm text-gray-700">
+                                                                    {new Date(record.recordDate).toLocaleDateString('it-IT')}
+                                                                </td>
+                                                                <td className="px-6 py-2 text-sm text-gray-600 max-w-xs truncate">
+                                                                    {record.notes || '—'}
+                                                                </td>
+                                                                <td className="px-6 py-2 text-sm text-right space-x-2">
+                                                                    <button
+                                                                        onClick={() => openEditModal(record)}
+                                                                        className="text-blue-600 hover:text-blue-800 font-semibold"
+                                                                    >
+                                                                        Modifica
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleDeleteRecord(record.id, group.exercise.name)}
+                                                                        className="text-red-600 hover:text-red-800 font-semibold"
+                                                                    >
+                                                                        Elimina
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </details>
+                                )}
+                            </div>
+                        ))}
                     </div>
                 )}
 
-                {/* Add Modal */}
-                {showAddModal && (
+                {/* Add/Edit Modal */}
+                {showModal && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                         <div className="bg-white rounded-lg max-w-2xl w-full p-6">
                             <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                                Aggiungi Massimale
+                                {editingRecord ? 'Modifica Massimale' : 'Aggiungi Massimale'}
                             </h2>
 
-                            <form onSubmit={handleAddRecord} className="space-y-4">
+                            <form onSubmit={handleSubmit} className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                                         Esercizio *
@@ -349,6 +609,7 @@ export default function TraineeRecordsManagementPage() {
                                         onChange={(e) => setSelectedExerciseId(e.target.value)}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
                                         required
+                                        disabled={!!editingRecord}
                                     >
                                         {exercises.map((ex) => (
                                             <option key={ex.id} value={ex.id}>
@@ -356,6 +617,11 @@ export default function TraineeRecordsManagementPage() {
                                             </option>
                                         ))}
                                     </select>
+                                    {editingRecord && (
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Non è possibile cambiare esercizio durante la modifica
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
@@ -367,6 +633,7 @@ export default function TraineeRecordsManagementPage() {
                                             type="number"
                                             step="0.5"
                                             min="0"
+                                            max="1000"
                                             value={weight}
                                             onChange={(e) => setWeight(e.target.value)}
                                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
@@ -381,7 +648,7 @@ export default function TraineeRecordsManagementPage() {
                                         <input
                                             type="number"
                                             min="1"
-                                            max="30"
+                                            max="100"
                                             value={reps}
                                             onChange={(e) => setReps(e.target.value)}
                                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
@@ -398,6 +665,7 @@ export default function TraineeRecordsManagementPage() {
                                     <input
                                         type="date"
                                         value={recordDate}
+                                        max={new Date().toISOString().split('T')[0]}
                                         onChange={(e) => setRecordDate(e.target.value)}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
                                         required
@@ -412,6 +680,7 @@ export default function TraineeRecordsManagementPage() {
                                         value={notes}
                                         onChange={(e) => setNotes(e.target.value)}
                                         rows={2}
+                                        maxLength={500}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
                                         placeholder="Note aggiuntive..."
                                     />
@@ -432,15 +701,22 @@ export default function TraineeRecordsManagementPage() {
                                 <div className="flex space-x-4 pt-4">
                                     <button
                                         type="submit"
-                                        disabled={addLoading}
+                                        disabled={modalLoading}
                                         className="flex-1 bg-[#FFA700] hover:bg-[#FF9500] disabled:bg-gray-400 text-white font-semibold py-3 rounded-lg transition-colors flex items-center justify-center"
                                     >
-                                        {addLoading ? <LoadingSpinner size="sm" color="white" /> : 'Salva Massimale'}
+                                        {modalLoading ? (
+                                            <LoadingSpinner size="sm" color="white" />
+                                        ) : editingRecord ? (
+                                            'Aggiorna Massimale'
+                                        ) : (
+                                            'Salva Massimale'
+                                        )}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            setShowAddModal(false)
+                                            setShowModal(false)
+                                            setEditingRecord(null)
                                             setError(null)
                                         }}
                                         className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 rounded-lg transition-colors"

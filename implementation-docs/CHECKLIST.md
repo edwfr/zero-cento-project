@@ -1,7 +1,7 @@
 # ✅ CHECKLIST SVILUPPO - ZeroCento Training Platform
 
-**Stato attuale:** ~78% completato (53h/129h - Sprint 1 + 2 + 3 + 4.1 + 4.2 + 4.3 + 4.4 completati)  
-**Effort rimanente stimato:** ~76h  
+**Stato attuale:** ~81% completato (56h/129h - Sprint 1 + 2 + 3 + 4 completati)  
+**Effort rimanente stimato:** ~73h  
 **Riferimenti:** [SYSTEM_REVIEW.md](../SYSTEM_REVIEW.md) · [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md) · [CHANGELOG.md](./CHANGELOG.md)
 
 ---
@@ -77,7 +77,7 @@
       File: `src/app/trainer/programs/[id]/reports/page.tsx`
 - [x] **4.4** Dettaglio Trainee — anagrafica, programmi assegnati, link massimali (4h)  
       File: `src/app/trainer/trainees/[id]/page.tsx`
-- [ ] **4.5** Massimali Trainee — tabella RM, aggiornamento (3h)  
+- [x] **4.5** Massimali Trainee — tabella RM, aggiornamento (3h)  
       File: `src/app/trainer/trainees/[id]/records/page.tsx`
 
 ---

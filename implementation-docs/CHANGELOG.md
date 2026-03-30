@@ -19,6 +19,14 @@ Registro cronologico degli sviluppi effettuati.
 
 ## Storico
 
+### [30 Marzo 2026] — Completato Gestione Massimali Trainee con View Gruppata (Sprint 4.5)
+
+**Task checklist:** #4.5  
+**File modificati:** `src/app/trainer/trainees/[id]/records/page.tsx`, `src/app/api/personal-records/route.ts`, `src/app/api/personal-records/[id]/route.ts`  
+**Note:** Completata implementazione della pagina Gestione Massimali con visualizzazione per rep maxes e funzionalità di aggiornamento. Implementazioni: (1) **API Enhancement - POST** - aggiornato endpoint POST `/api/personal-records` per consentire ai trainer di creare record per i propri trainee (in precedenza solo trainees e admin potevano creare), aggiunta validazione RBAC con controllo TrainerTrainee junction per verificare ownership; (2) **Nuovo endpoint PATCH** - implementato PATCH `/api/personal-records/[id]` per aggiornamento record esistenti con validazione partial schema, controllo ownership trainer-trainee, possibilità di modificare peso, reps, data, note, e esercizio; (3) **Visualizzazione gruppata per esercizio** - i record ora sono raggruppati per esercizio con card dedicata per ogni esercizio che mostra 4 categorie di rep maxes: 1RM (reps = 1), 3RM (reps 2-4), 5RM (reps 5-7), 10RM (reps 8-12), per ciascuna categoria viene mostrato il record migliore basato su 1RM stimato con formula Brzycki; (4) **Card Rep Maxes** - ogni categoria mostra: peso record, data registrazione, numero reps effettive (per 3RM/5RM/10RM), 1RM stimato calcolato, pulsanti "Modifica" e "Elimina" per rapido accesso; (5) **Tabella completa espandibile** - sezione "Mostra tutti i record" con details/summary per visualizzare storico completo record per esercizio, ordinati per data decrescente; (6) **Modal unico Add/Edit** - modal condiviso per aggiunta e modifica massimali con pre-popolamento campi in modalità edit, disabilitazione cambio esercizio durante modifica, validazione max peso 1000kg e max reps 100, data max oggi, preview live del 1RM stimato con formula Brzycki; (7) **Sorting intelligente** - esercizi fondamentali mostrati prima degli accessori, poi ordinamento alfabetico; (8) **Toast notifications** - feedback successo su creazione, aggiornamento, eliminazione; (9) **Empty state** - messaggio e CTA quando non ci sono massimali registrati; (10) **RBAC completo** - trainer vede solo massimali dei propri trainee con tutti i controlli API. La visualizzazione gruppata per rep maxes fornisce una visione immediata delle capacità dell'atleta a diverse intensità, facilitando la programmazione dei carichi negli allenamenti. Sprint 4 completato al 100%.
+
+---
+
 ### [30 Marzo 2026] — Completato Dettaglio Trainee con Creazione Programma (Sprint 4.4)
 
 **Task checklist:** #4.4  
