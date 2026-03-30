@@ -4,41 +4,41 @@ Questa cartella contiene la documentazione relativa alla fase di implementazione
 
 ## 📄 File Contenuti
 
+### Gestione Sviluppo
+
+- **[CHECKLIST.md](CHECKLIST.md)** - Checklist dei task da completare (49 task, 8 sprint, ~129h)
+  - Task organizzati per sprint e priorità
+  - Checkbox da spuntare al completamento
+  - Rimandi a spec dettagliate in NEXT_ACTIONS.md e SYSTEM_REVIEW.md
+
+- **[CHANGELOG.md](CHANGELOG.md)** - Registro cronologico degli sviluppi effettuati
+  - Entry per ogni sessione di sviluppo con file modificati
+  - Template per nuove annotazioni
+
 ### Guide Operative
 
-- **[QUICK_START.md](QUICK_START.md)** - Guida rapida per setup iniziale del progetto (15 minuti)
-  - Installazione dipendenze
-  - Configurazione Supabase
-  - Prima migrazione e seed
-  - Test login e API
+- **[QUICK_START.md](QUICK_START.md)** - Guida rapida per setup iniziale del progetto
+  - Installazione dipendenze, configurazione Supabase, migrazione e seed, test login
 
-- **[NEXT_ACTIONS.md](NEXT_ACTIONS.md)** - Prossime azioni da completare
-  - Task immediati prioritizzati
+- **[NEXT_ACTIONS.md](NEXT_ACTIONS.md)** - Specifiche dettagliate dei task pendenti
+  - Codice di esempio per ogni fix/feature
   - Troubleshooting comuni
 
 ### Documentazione Tecnica
 
 - **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** - Riepilogo avanzamento implementazione (~58%)
-  - Stato completamento per area
-  - Metriche attuali
-  - Key features implementate
-  - Best practices applicate
+  - Stato completamento per area, metriche, key features, best practices
 
 - **[IMPLEMENTATION_PROMPT.md](IMPLEMENTATION_PROMPT.md)** - Prompt originale per l'implementazione
-  - Requisiti funzionali
-  - Specifiche tecniche dettagliate
-  - Architettura e design decisions
+  - Requisiti funzionali e specifiche tecniche (documento storico, percentuali non aggiornate)
 
 ### Review Sistema
 
-Per analisi dettagliata dello stato del sistema, issue di sicurezza, code quality e backlog prioritizzato:
-
-**[../SYSTEM_REVIEW.md](../SYSTEM_REVIEW.md)** - Review completo del sistema
-- Stato implementazione per area (API, Frontend, Testing, CI/CD)
-- Issue di sicurezza con fix richiesti
-- Issue di qualità codice
-- Task backlog completo con effort stimati
-- Roadmap sviluppo in 8 sprint
+- **[../SYSTEM_REVIEW.md](../SYSTEM_REVIEW.md)** - Review completo del sistema (fonte di verità)
+  - Stato implementazione per area (API, Frontend, Testing, CI/CD)
+  - Issue di sicurezza con fix richiesti
+  - Task backlog completo con effort stimati
+  - Roadmap sviluppo in 8 sprint
 
 ## 📊 Stato Attuale
 
