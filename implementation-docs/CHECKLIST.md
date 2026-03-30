@@ -22,7 +22,7 @@
       File: `src/schemas/personal-record.ts` · Dettagli: [SYSTEM_REVIEW § 3.3](../SYSTEM_REVIEW.md#33-medio---validazione-input-mancante)
 - [x] **1.3** Validazione lunghezza parametro search (2-100 char) su exercises, programs, feedback  
       File: `src/app/api/exercises/route.ts`, `programs/route.ts`, `feedback/route.ts` · Dettagli: [SYSTEM_REVIEW § 3.4](../SYSTEM_REVIEW.md#34-medio---search-parameter-length-non-validata)
-- [ ] **1.4** Reject coefficiente esercizi > 3.0 con HTTP 400  
+- [x] **1.4** Reject coefficiente esercizi > 3.0 con HTTP 400  
       File: `src/app/api/exercises/route.ts` · Dettagli: [SYSTEM_REVIEW § 3.5](../SYSTEM_REVIEW.md#35-basso---coefficiente-esercizi-solo-warning)
 - [ ] **1.5** Fix errori TypeScript test integrazione (NextRequest signal)  
       File: `tests/integration/programs.test.ts`, `tests/integration/users.test.ts` · Dettagli: [SYSTEM_REVIEW § 6](../SYSTEM_REVIEW.md#6-errori-di-compilazione)
