@@ -1,7 +1,7 @@
 # ✅ CHECKLIST SVILUPPO - ZeroCento Training Platform
 
-**Stato attuale:** ~58% completato (74h/129h - Sprint 1 + 2 + 3 + 4 + Sprint 7.1-7.6 + Sprint 5.1 completati)  
-**Effort rimanente stimato:** ~55h  
+**Stato attuale:** ~72% completato (93h/129h - Sprint 1-4 + Sprint 7 + Sprint 5.1-5.3 completati)  
+**Effort rimanente stimato:** ~36h  
 **Riferimenti:** [SYSTEM_REVIEW.md](../SYSTEM_REVIEW.md) · [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md) · [CHANGELOG.md](./CHANGELOG.md)
 
 ---
@@ -84,9 +84,9 @@
 
 ## Sprint 5 — Testing Target 80% (~27h)
 
-- [x] **5.1** Unit test: `calculateEffectiveWeight()` con chain percentage_previous (3h)
+- [x] **5.1** Unit test: `calculateEffectiveWeight()` con chain percentage_previous (3h) ✅ _30 Mar 2026_
 - [x] **5.2** Unit test: generazione password sicura (1h) ✅ _30 Mar 2026_
-- [ ] **5.3** Integration test: RBAC violations — accesso cross-trainer negato (4h)
+- [x] **5.3** Integration test: RBAC violations — accesso cross-trainer negato (4h) ✅ _30 Mar 2026_
 - [ ] **5.4** Integration test: feedback CRUD completo (3h)
 - [ ] **5.5** Integration test: personal records CRUD (2h)
 - [ ] **5.6** Integration test: esercizi con relazioni (2h)
