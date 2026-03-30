@@ -19,6 +19,14 @@ Registro cronologico degli sviluppi effettuati.
 
 ## Storico
 
+### [30 Marzo 2026] — Completato POST /api/feedback con calcoli metriche
+
+**Task checklist:** #2.1  
+**File modificati:** `src/app/api/feedback/route.ts`  
+**Note:** Migliorata risposta endpoint POST /api/feedback per includere metriche calcolate: `totalVolume` (somma reps × weight di tutte le serie) e `avgRPE` (actualRpe del feedback). L'endpoint già implementava nested create di ExerciseFeedback + SetPerformed, validazione ownership trainee, e idempotency check per data. Ora la response include un oggetto `calculated` con le metriche derivate per facilitare UX e reportistica.
+
+---
+
 ### [30 Marzo 2026] — Reject coefficiente esercizi invalido
 
 **Task checklist:** #1.4  

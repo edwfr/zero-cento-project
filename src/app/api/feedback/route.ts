@@ -287,7 +287,23 @@ export async function POST(request: NextRequest) {
             logger.info({ feedbackId: feedback.id, workoutExerciseId }, 'Feedback created')
         }
 
-        return apiSuccess({ feedback }, existingFeedback ? 200 : 201)
+        // Calculate derived metrics
+        const totalVolume = feedback.setsPerformed.reduce(
+            (sum, set) => sum + set.reps * set.weight,
+            0
+        )
+        const avgRPE = feedback.actualRpe || null
+
+        return apiSuccess(
+            {
+                feedback,
+                calculated: {
+                    totalVolume: Math.round(totalVolume * 10) / 10, // Round to 1 decimal
+                    avgRPE,
+                },
+            },
+            existingFeedback ? 200 : 201
+        )
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error creating/updating feedback')
