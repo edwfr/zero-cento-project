@@ -137,6 +137,7 @@
 
 > **Obiettivo:** Ogni schermata autenticata deve wrappare il contenuto in `<DashboardLayout>` per mostrare logo, nome app, hamburger menu, e navigazione a tendina. Le pagine di autenticazione (login, forgot-password, reset-password) e le pagine di sistema (root redirect, offline) sono **escluse** intenzionalmente.
 
+> **Linee Guida:**
 ### Schermate Trainee (5)
 
 - [x] **9.1** `trainee/dashboard` — Aggiungere `DashboardLayout` (1h)  
@@ -182,9 +183,36 @@
 - [ ] **9.18** `profile/change-password` — Aggiungere `DashboardLayout` (0.5h)  
       File: `src/app/profile/change-password/page.tsx`
 
-> **Note implementative:** `DashboardLayout` richiede la prop `user: { id, email, firstName, lastName, role }`.  
-> Recuperare l'utente da Supabase (`createClient().auth.getUser()`) all'inizio di ogni pagina.  
-> Schermate già OK: `admin/*`, `trainer/dashboard`, `trainer/exercises`, `trainer/programs/new`, `profile`.
+> **Note implementative:**
+>
+> **Pattern di implementazione** (usato per tutte le schermate trainee come riferimento):
+>
+> 1. Se `page.tsx` è già un server component → aggiungere direttamente `getSession()` + `<DashboardLayout>` attorno al JSX esistente.
+> 2. Se `page.tsx` è un client component (`'use client'`) → **split in due file**:
+>    - `_content.tsx` — copia del client component con la funzione rinominata (es. `FooContent`)
+>    - `page.tsx` — server component che chiama `getSession()` e restituisce `<DashboardLayout user={session.user}><FooContent /></DashboardLayout>`
+>
+> **Recupero utente — pattern corretto:**
+> ```ts
+> import { getSession } from '@/lib/auth'
+> import { redirect } from 'next/navigation'
+> import DashboardLayout from '@/components/DashboardLayout'
+>
+> export default async function FooPage() {
+>     const session = await getSession()
+>     if (!session) redirect('/login')
+>     // opzionale: role guard
+>     // if (session.user.role !== 'trainer') redirect(`/${session.user.role}/dashboard`)
+>     return (
+>         <DashboardLayout user={session.user}>
+>             {/* contenuto */}
+>         </DashboardLayout>
+>     )
+> }
+> ```
+> `getSession()` (da `@/lib/auth`) usa il client Supabase server-side e arricchisce con i dati Prisma — **non usare** `createClient().auth.getUser()` che è solo client-side.
+>
+> **Schermate già OK:** `admin/*`, `trainer/dashboard`, `trainer/exercises`, `trainer/programs/new`, `profile`, `trainee/dashboard`, `trainee/history`, `trainee/programs/current`, `trainee/records`, `trainee/workouts/[id]`.
 
 ---
 
