@@ -19,6 +19,14 @@ Registro cronologico degli sviluppi effettuati.
 
 ## Storico
 
+### [30 Marzo 2026] — E2E Test Login con Redirect per Ruolo (Sprint 5.7)
+
+**Task checklist:** #5.7  
+**File creato:** `tests/e2e/login-redirect-by-role.spec.ts`  
+**Note:** Implementata suite completa di E2E test per il flusso di login con verifica dei redirect basati sul ruolo utente. **Test implementati (9 test in 2 suite):** **(1) Login: Role-based redirects (8 test)** - Admin login → `/admin/dashboard` (con verifica presenza contenuto H1/H2), Trainer login → `/trainer/dashboard`, Trainee login → `/trainee/dashboard`, error message per credenziali invalide (verifica presenza `.bg-red-50` o `role=alert`), error per campi vuoti (HTML5 validation), auto-redirect per utente già loggato (test sessione persistente: login → redirect dashboard → torna a /login → auto-redirect dashboard), disabilitazione form durante submit (verifica `disabled` attribute su button/input), preservation email input dopo login fallito. **(2) Login: Navigation links (1 test)** - verifica presenza link "forgot password" (se presente nel layout). **Credenziali test usate:** `admin@zerocento.it`, `trainer@zerocento.it`, `trainee1@zerocento.it` tutti con password `TestPass123!` (matching dei test esistenti trainer-create-program.spec.ts e trainee-complete-workout.spec.ts). **Configurazione:** timeout 10s per redirect, clearCookies() in beforeEach per garantire stato pulito. **Design:** segue pattern esistente dei test E2E (TEST-E2E-003), con commento header che elenca prerequisites e coverage. Test pronti per esecuzione con `npm run test:e2e`.
+
+---
+
 ### [30 Marzo 2026] — Integration Test Esercizi con Relazioni (Sprint 5.6)
 
 **Task checklist:** #5.6  
