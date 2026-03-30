@@ -19,6 +19,14 @@ Registro cronologico degli sviluppi effettuati.
 
 ## Storico
 
+### [30 Marzo 2026] — Completato Workout View Trainee (Sprint 3.1)
+
+**Task checklist:** #3.1  
+**File modificati:** `src/app/trainee/workouts/[id]/page.tsx`  
+**Note:** Implementata pagina workout view per trainee con tutte le funzionalità richieste. L'implementazione include: (1) **Interfacce TypeScript allineate** con la risposta API (WorkoutExerciseWithWeight, ExerciseFeedback, SetPerformed senza RPE per set); (2) **Chiamata API corretta** a `/api/trainee/workouts/[id]` che restituisce dati con effectiveWeight già calcolato server-side; (3) **Gestione peso effettivo** visualizzato nelle card esercizi con indicazione tipo peso (kg o %); (4) **Input serie** con tabella per peso e reps, RPE complessivo per esercizio (non per singola serie come da schema DB); (5) **Auto-save localStorage** che salva feedbackData, exerciseRPE e globalNotes ogni volta che cambiano; (6) **Feedback submission** con invio POST `/api/feedback` per ogni esercizio, gestione idempotency server-side, skip esercizi senza dati; (7) **UI mobile-first** con card espandibili, swipe navigation tra esercizi, YouTube embed per video, indicatori volume/RPE real-time; (8) **Gestione stati settimana** con badge colorati per deload/test; (9) **Caricamento feedback esistente** se presente nella risposta API. Fix importante: rimosso campo `actualRPE` da SetPerformed (non esiste nel DB), aggiunto stato separato `exerciseRPE` per RPE complessivo esercizio come da schema Prisma.
+
+---
+
 ### [30 Marzo 2026] — Implementato Edit Programma Metadata
 
 **Task checklist:** #2.7  
