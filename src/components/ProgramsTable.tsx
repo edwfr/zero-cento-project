@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import Link from 'next/link'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
+import { formatDate } from '@/lib/date-format'
 
 interface Program {
     id: string
@@ -47,11 +48,6 @@ export default function ProgramsTable({
 }: ProgramsTableProps) {
     const { t } = useTranslation(['trainer', 'common'])
 
-    const STATUS_LABELS: Record<string, string> = {
-        draft: t('trainer:programs.draft'),
-        active: t('common:common.active'),
-        completed: t('common:common.completed'),
-    }
     const STATUS_LABELS: Record<string, string> = {
         draft: t('trainer:programs.draft'),
         active: t('common:common.active'),
