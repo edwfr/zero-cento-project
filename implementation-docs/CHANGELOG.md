@@ -19,6 +19,14 @@ Registro cronologico degli sviluppi effettuati.
 
 ## Storico
 
+### [30 Marzo 2026] — E2E Test Trainer Pubblica Programma e Trainee lo Visualizza (Sprint 5.8)
+
+**Task checklist:** #5.8  
+**File creato:** `tests/e2e/trainer-publish-program-trainee-view.spec.ts`  
+**Note:** Implementato E2E test completo che verifica l'intero flusso di pubblicazione programma e visualizzazione lato trainee (TEST-E2E-002). **Test implementati (3 test in 2 suite):** **(1) Trainer publishes program → Trainee views (3 test)** - Flow completo: trainer login → crea programma (con titolo univoco timestamp, trainee1, 4 settimane, 3 workout/week) → aggiunge esercizio al primo workout → pubblica con startDate → logout → trainee login → verifica presenza programma in dashboard o `/trainee/programs/current` → accesso ai dettagli workout, verifica metadati programma (status active, durata 4 settimane, 3 workout/week), verifica trainees NON vedono programmi in draft. **(2) Error handling (1 test)** - verifica che tentativo di pubblicazione senza esercizi fallisca (validation error o publish button disabilitato). **Design:** usa helper functions `loginUser()` e `logout()` per riuso codice, `test.step()` per strutturare le fasi (Login → Create → Add Exercises → Publish → Logout → Trainee Login → Verify), cattura `programId` da URL dopo creazione per navigazioni successive, timeout generosi (10s redirect, 5s elementi) per evitare flakiness. **Credenziali:** `trainer1@zerocento.app` / `TestPass123!` e `trainee1@zerocento.app` / `TestPass123!` (matching login-redirect test). **Assunzioni UI:** selettori flessibili con multiple alternative (`text=` regex, data-testid, name attribute) per garantire compatibilità anche se UI cambia leggermente. Test pronto per esecuzione con `npm run test:e2e`.
+
+---
+
 ### [30 Marzo 2026] — E2E Test Login con Redirect per Ruolo (Sprint 5.7)
 
 **Task checklist:** #5.7  
