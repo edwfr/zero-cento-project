@@ -139,15 +139,15 @@
 
 ### Schermate Trainee (5)
 
-- [ ] **9.1** `trainee/dashboard` — Aggiungere `DashboardLayout` (1h)  
+- [x] **9.1** `trainee/dashboard` — Aggiungere `DashboardLayout` (1h)  
       File: `src/app/trainee/dashboard/page.tsx`
-- [ ] **9.2** `trainee/history` — Aggiungere `DashboardLayout` (0.5h)  
+- [x] **9.2** `trainee/history` — Aggiungere `DashboardLayout` (0.5h)  
       File: `src/app/trainee/history/page.tsx`
-- [ ] **9.3** `trainee/programs/current` — Aggiungere `DashboardLayout` (0.5h)  
+- [x] **9.3** `trainee/programs/current` — Aggiungere `DashboardLayout` (0.5h)  
       File: `src/app/trainee/programs/current/page.tsx`
-- [ ] **9.4** `trainee/records` — Aggiungere `DashboardLayout` (0.5h)  
+- [x] **9.4** `trainee/records` — Aggiungere `DashboardLayout` (0.5h)  
       File: `src/app/trainee/records/page.tsx`
-- [ ] **9.5** `trainee/workouts/[id]` — Aggiungere `DashboardLayout` (0.5h)  
+- [x] **9.5** `trainee/workouts/[id]` — Aggiungere `DashboardLayout` (0.5h)  
       File: `src/app/trainee/workouts/[id]/page.tsx`
 
 ### Schermate Trainer (12)
