@@ -137,7 +137,6 @@
 
 > **Obiettivo:** Ogni schermata autenticata deve wrappare il contenuto in `<DashboardLayout>` per mostrare logo, nome app, hamburger menu, e navigazione a tendina. Le pagine di autenticazione (login, forgot-password, reset-password) e le pagine di sistema (root redirect, offline) sono **escluse** intenzionalmente.
 
-> **Linee Guida:**
 ### Schermate Trainee (5)
 
 - [x] **9.1** `trainee/dashboard` — Aggiungere `DashboardLayout` (1h)  
@@ -153,7 +152,7 @@
 
 ### Schermate Trainer (12)
 
-- [ ] **9.6** `trainer/exercises/new` — Aggiungere `DashboardLayout` (0.5h)  
+- [x] **9.6** `trainer/exercises/new` — Aggiungere `DashboardLayout` (0.5h)  
       File: `src/app/trainer/exercises/new/page.tsx`
 - [ ] **9.7** `trainer/exercises/[id]/edit` — Aggiungere `DashboardLayout` (0.5h)  
       File: `src/app/trainer/exercises/[id]/edit/page.tsx`
