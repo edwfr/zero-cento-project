@@ -19,6 +19,14 @@ Registro cronologico degli sviluppi effettuati.
 
 ## Storico
 
+### [30 Marzo 2026] — Unit Test Completi per calculateEffectiveWeight con Chain Percentage_Previous (Sprint 5.1)
+
+**Task checklist:** #5.1  
+**File modificati:** `tests/unit/calculations.test.ts`  
+**Note:** Implementata suite completa di unit test per la funzione `calculateEffectiveWeight()` con focus su chain percentage_previous. **Test implementati (18 test totali, 36 test totali nel file):** **(1) Absolute weight type (2 test)** - test peso diretto e gestione peso zero. **(2) Percentage_1rm weight type (2 test)** - calcolo peso basato su personal record 1RM, gestione record mancante (return null). **(3) Percentage_rm weight type (4 test)** - calcolo peso basato su nRM personal record, gestione reps range "8-10", gestione record mancante, gestione formato reps invalido (AMRAP). **(4) Percentage_previous weight type (7 test)** - **chain semplice**: absolute → percentage_previous (+10%), **chain 2 livelli**: absolute → percentage_previous (+10%) → percentage_previous (+5%) = 115.5kg, **chain 3 livelli**: absolute → percentage_previous (+10%) → percentage_previous (+5%) → percentage_previous (+3%) = 118.965kg, **negative percentage** per drop set (-10%), **null propagation** quando base weight è null (missing personal record), **error handling** quando no previous occurrence found, **recursion limit** quando depth > 10 (throws error). **(5) Mixed weight type chains (3 test)** - **percentage_1rm → percentage_previous**: 150kg 1RM * 80% = 120kg → +10% = 132kg, **percentage_rm → percentage_previous**: 100kg 8RM * 90% = 90kg → -10% = 81kg, **absolute → percentage_previous → percentage_previous**: verifica chain complesso. **Copertura completa della logica:** (1) Tutti i 4 weightType testati (absolute, percentage_1rm, percentage_rm, percentage_previous), (2) Chain ricorsivi fino a 3 livelli di profondità, (3) Edge cases: missing records, invalid reps, no previous occurrence, recursion limit, (4) Floating point precision gestito con `toBeCloseTo()` per calcoli decimali, (5) Mock Prisma: `workoutExercise.findFirst` per previous occurrence, `personalRecord.findFirst` per 1RM/nRM records. **Risultato:** 36/36 test passati (100% success rate), copertura completa della funzione `calculateEffectiveWeight()` e delle sue dipendenze ricorsive. **Preparazione per Sprint 5 completo:** questa implementazione copre il task critico 5.1, foundation per i test integration successivi (5.3-5.6) che verificheranno RBAC, feedback CRUD, personal records CRUD, e esercizi con relazioni.
+
+---
+
 ### [30 Marzo 2026] — Standardizzato Formato Risposte API con Struttura Uniforme (Sprint 7.6)
 
 **Task checklist:** #7.6  
