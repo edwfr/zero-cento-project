@@ -26,7 +26,7 @@
       File: `src/app/api/exercises/route.ts` · Dettagli: [SYSTEM_REVIEW § 3.5](../SYSTEM_REVIEW.md#35-basso---coefficiente-esercizi-solo-warning)
 - [x] **1.5** Fix errori TypeScript test integrazione (NextRequest signal)  
       File: `tests/integration/programs.test.ts`, `tests/integration/users.test.ts` · Dettagli: [SYSTEM_REVIEW § 6](../SYSTEM_REVIEW.md#6-errori-di-compilazione)
-- [ ] **1.6** Disabilitare form durante submit (~8 componenti)  
+- [x] **1.6** Disabilitare form durante submit (~8 componenti)  
       Dettagli: [SYSTEM_REVIEW § 4.5](../SYSTEM_REVIEW.md#45-form-non-disabilitati-durante-submit)
 
 ---

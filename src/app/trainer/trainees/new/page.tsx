@@ -151,8 +151,9 @@ export default function NewTraineePage() {
                             type="text"
                             value={firstName}
                             onChange={(e) => setFirstName(e.target.value)}
+                            disabled={loading}
                             placeholder="es. Mario"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                             required
                         />
                     </div>
@@ -166,8 +167,9 @@ export default function NewTraineePage() {
                             type="text"
                             value={lastName}
                             onChange={(e) => setLastName(e.target.value)}
+                            disabled={loading}
                             placeholder="es. Rossi"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                             required
                         />
                     </div>
@@ -181,8 +183,9 @@ export default function NewTraineePage() {
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
+                            disabled={loading}
                             placeholder="mario.rossi@email.com"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                             required
                         />
                     </div>
@@ -195,7 +198,8 @@ export default function NewTraineePage() {
                                     type="checkbox"
                                     checked={autoPassword}
                                     onChange={(e) => setAutoPassword(e.target.checked)}
-                                    className="mr-2 h-5 w-5"
+                                    disabled={loading}
+                                    className="mr-2 h-5 w-5 disabled:cursor-not-allowed"
                                 />
                                 <span className="font-semibold text-gray-700">
                                     Genera password automatica (consigliato)
@@ -215,8 +219,9 @@ export default function NewTraineePage() {
                                     type="password"
                                     value={manualPassword}
                                     onChange={(e) => setManualPassword(e.target.value)}
+                                    disabled={loading}
                                     placeholder="Inserisci password (min 8 caratteri)"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                                     minLength={8}
                                 />
                             </div>

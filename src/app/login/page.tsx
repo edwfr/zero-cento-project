@@ -138,9 +138,10 @@ export default function LoginPage() {
                                 type="email"
                                 autoComplete="email"
                                 required
+                                disabled={loading}
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 shadow-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 shadow-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
                                 placeholder="email@example.com"
                             />
                         </div>
@@ -155,9 +156,10 @@ export default function LoginPage() {
                                 type="password"
                                 autoComplete="current-password"
                                 required
+                                disabled={loading}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 shadow-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white text-gray-900 px-3 py-2 shadow-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
                                 placeholder="••••••••"
                             />
                         </div>

@@ -147,7 +147,8 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                             id="name"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                            disabled={loading}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                             required
                             placeholder="es. Bench Press"
                         />
@@ -161,7 +162,8 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                             id="description"
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                            disabled={loading}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                             rows={3}
                             placeholder="Descrizione dell'esercizio..."
                         />
@@ -176,7 +178,8 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                             id="youtubeUrl"
                             value={formData.youtubeUrl}
                             onChange={(e) => setFormData({ ...formData, youtubeUrl: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                            disabled={loading}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                             required
                             placeholder="https://www.youtube.com/watch?v=..."
                         />
@@ -191,7 +194,8 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                                 id="type"
                                 value={formData.type}
                                 onChange={(e) => setFormData({ ...formData, type: e.target.value as 'fundamental' | 'accessory' })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                                disabled={loading}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                 required
                             >
                                 <option value="fundamental" className="text-gray-900">Fondamentale</option>
@@ -207,7 +211,8 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                                 id="movementPattern"
                                 value={formData.movementPatternId}
                                 onChange={(e) => setFormData({ ...formData, movementPatternId: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                                disabled={loading}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                 required
                             >
                                 <option value="" className="text-gray-900">Seleziona schema...</option>
@@ -228,7 +233,7 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                             <button
                                 type="button"
                                 onClick={handleAddMuscleGroup}
-                                disabled={selectedMuscleGroups.length >= 5}
+                                disabled={selectedMuscleGroups.length >= 5 || loading}
                                 className="text-sm px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                             >
                                 + Aggiungi
@@ -241,7 +246,8 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                                     <select
                                         value={mg.muscleGroupId}
                                         onChange={(e) => handleMuscleGroupChange(index, 'muscleGroupId', e.target.value)}
-                                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                                        disabled={loading}
+                                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                         required
                                     >
                                         <option value="" className="text-gray-900">Seleziona gruppo...</option>
@@ -259,7 +265,8 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                                         step="0.1"
                                         value={mg.coefficient}
                                         onChange={(e) => handleMuscleGroupChange(index, 'coefficient', parseFloat(e.target.value))}
-                                        className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                                        disabled={loading}
+                                        className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                         placeholder="0.0-1.0"
                                         required
                                     />
@@ -267,7 +274,8 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                                     <button
                                         type="button"
                                         onClick={() => handleRemoveMuscleGroup(index)}
-                                        className="px-3 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200"
+                                        disabled={loading}
+                                        className="px-3 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 disabled:bg-gray-300 disabled:cursor-not-allowed"
                                     >
                                         ✕
                                     </button>

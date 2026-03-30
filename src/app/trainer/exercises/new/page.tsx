@@ -171,8 +171,9 @@ export default function NewExercisePage() {
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
+                            disabled={loading}
                             placeholder="es. Squat Back"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                             required
                         />
                     </div>
@@ -184,9 +185,10 @@ export default function NewExercisePage() {
                         <textarea
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
+                            disabled={loading}
                             placeholder="Descrizione dell'esercizio..."
                             rows={3}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                         />
                     </div>
 
@@ -198,8 +200,9 @@ export default function NewExercisePage() {
                             type="url"
                             value={youtubeUrl}
                             onChange={(e) => setYoutubeUrl(e.target.value)}
+                            disabled={loading}
                             placeholder="https://www.youtube.com/watch?v=..."
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                         />
                     </div>
 
@@ -213,7 +216,8 @@ export default function NewExercisePage() {
                                     value="fundamental"
                                     checked={type === 'fundamental'}
                                     onChange={(e) => setType('fundamental')}
-                                    className="mr-2"
+                                    disabled={loading}
+                                    className="mr-2 disabled:cursor-not-allowed"
                                 />
                                 <span>Fondamentale (SBD)</span>
                             </label>
@@ -223,7 +227,8 @@ export default function NewExercisePage() {
                                     value="accessory"
                                     checked={type === 'accessory'}
                                     onChange={(e) => setType('accessory')}
-                                    className="mr-2"
+                                    disabled={loading}
+                                    className="mr-2 disabled:cursor-not-allowed"
                                 />
                                 <span>Accessorio</span>
                             </label>
@@ -238,7 +243,8 @@ export default function NewExercisePage() {
                         <select
                             value={movementPatternId}
                             onChange={(e) => setMovementPatternId(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                            disabled={loading}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                             required
                         >
                             {movementPatterns.map((mp) => (
@@ -258,7 +264,8 @@ export default function NewExercisePage() {
                             <button
                                 type="button"
                                 onClick={addMuscleGroup}
-                                className="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded transition-colors"
+                                disabled={loading}
+                                className="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                             >
                                 + Aggiungi
                             </button>
@@ -277,7 +284,8 @@ export default function NewExercisePage() {
                                             onChange={(e) =>
                                                 updateMuscleGroup(index, 'muscleGroupId', e.target.value)
                                             }
-                                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
+                                            disabled={loading}
+                                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed"
                                         >
                                             {muscleGroups.map((muscle) => (
                                                 <option key={muscle.id} value={muscle.id}>
@@ -298,12 +306,14 @@ export default function NewExercisePage() {
                                                     parseFloat(e.target.value)
                                                 )
                                             }
-                                            className="w-24 px-3 py-2 border border-gray-300 rounded-lg"
+                                            disabled={loading}
+                                            className="w-24 px-3 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed"
                                         />
                                         <button
                                             type="button"
                                             onClick={() => removeMuscleGroup(index)}
-                                            className="text-red-600 hover:text-red-700 font-semibold"
+                                            disabled={loading}
+                                            className="text-red-600 hover:text-red-700 font-semibold disabled:text-gray-400 disabled:cursor-not-allowed"
                                         >
                                             🗑️
                                         </button>
@@ -321,9 +331,10 @@ export default function NewExercisePage() {
                         <textarea
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
+                            disabled={loading}
                             placeholder="Note aggiuntive sull'esercizio..."
                             rows={2}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                         />
                     </div>
 
