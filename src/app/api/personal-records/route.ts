@@ -44,13 +44,10 @@ export async function GET(request: NextRequest) {
             if (session.user.role === 'trainer') {
                 const isManaged = await prisma.trainerTrainee.findUnique({
                     where: {
-                        trainerId_traineeId: {
-                            trainerId: session.user.id,
-                            traineeId: traineeId,
-                        },
+                        traineeId: traineeId,
                     },
                 })
-                if (!isManaged) {
+                if (!isManaged || isManaged.trainerId !== session.user.id) {
                     return apiError('FORBIDDEN', 'Access denied', 403)
                 }
             }
