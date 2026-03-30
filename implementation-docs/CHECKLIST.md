@@ -69,7 +69,7 @@
 
 ## Sprint 4 — Pagine Trainer Rimanenti (~21h)
 
-- [ ] **4.1** Edit Esercizio (4h)  
+- [x] **4.1** Edit Esercizio (4h)  
       File: `src/app/trainer/exercises/[id]/edit/page.tsx`
 - [ ] **4.2** Progress Programma — dashboard settimane, KPI, grafici (4h)  
       File: `src/app/trainer/programs/[id]/progress/page.tsx`

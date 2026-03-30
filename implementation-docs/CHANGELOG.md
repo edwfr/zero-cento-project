@@ -19,6 +19,14 @@ Registro cronologico degli sviluppi effettuati.
 
 ## Storico
 
+### [30 Marzo 2026] — Implementato Edit Esercizio (Sprint 4.1)
+
+**Task checklist:** #4.1  
+**File modificati:** `src/app/trainer/exercises/[id]/edit/page.tsx`  
+**Note:** Completata implementazione della pagina di modifica esercizio per i trainer. Funzionalità implementate: (1) **Caricamento dati esistenti** - fetch parallelo di esercizio corrente, gruppi muscolari e schemi motori con popolamento automatico del form; (2) **Form completo** con tutti i campi: nome (validazione 3-100 caratteri), descrizione opzionale, URL YouTube con validazione pattern, tipo (fundamental/accessory), schema motorio (dropdown con lista completa), gruppi muscolari multipli con coefficienti (somma 0.1-3.0), note/varianti multilinea; (3) **Gestione gruppi muscolari** dinamica - aggiunta/rimozione gruppi con validazione coefficienti, visualizzazione totale coefficienti in real-time, controllo max 5 gruppi; (4) **Validazione client e server-side** - controllo nome univoco, verifica ownership (trainer può modificare solo propri esercizi), validazione URL YouTube, controllo somma coefficienti; (5) **API integration** - PUT `/api/exercises/[id]` con gestione errori completa, conflict detection, redirect automatico a lista esercizi dopo salvataggio; (6) **UX optimizations** - loading spinner durante fetch iniziale, disabilitazione form durante salvataggio, messaggi errore chiari, pulsante annulla per tornare alla lista. Struttura UI coerente con pagina "new exercise" per familiarità utente. Note array gestito come textarea multilinea per facilità inserimento.
+
+---
+
 ### [30 Marzo 2026] — Completato Workout View Trainee (Sprint 3.1)
 
 **Task checklist:** #3.1  

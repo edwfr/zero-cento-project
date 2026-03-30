@@ -20,6 +20,24 @@ interface MuscleGroupInput {
     coefficient: number
 }
 
+interface Exercise {
+    id: string
+    name: string
+    description?: string
+    youtubeUrl?: string
+    type: 'fundamental' | 'accessory'
+    movementPatternId: string
+    notes: string[]
+    exerciseMuscleGroups: Array<{
+        muscleGroupId: string
+        coefficient: number
+        muscleGroup: {
+            id: string
+            name: string
+        }
+    }>
+}
+
 export default function EditExercisePage() {
     const router = useRouter()
     const params = useParams<{ id: string }>()
@@ -53,32 +71,32 @@ export default function EditExercisePage() {
                 fetch('/api/movement-patterns'),
             ])
 
-            const [exData, mgData, mpData] = await Promise.all([
-                exRes.json(),
-                mgRes.json(),
-                mpRes.json(),
-            ])
+            const exData = await exRes.json()
+            const mgData = await mgRes.json()
+            const mpData = await mpRes.json()
 
-            if (!exRes.ok)
-                throw new Error(exData.error?.message || 'Esercizio non trovato')
+            if (!exRes.ok) {
+                throw new Error(exData.error?.message || 'Errore caricamento esercizio')
+            }
 
-            const exercise = exData.data.exercise
-            setMuscleGroups(mgData.data.muscleGroups)
-            setMovementPatterns(mpData.data.movementPatterns)
+            const exercise: Exercise = exData.data.exercise
 
-            // Pre-populate form
+            // Populate form with existing data
             setName(exercise.name)
-            setDescription(exercise.description ?? '')
-            setYoutubeUrl(exercise.youtubeUrl ?? '')
+            setDescription(exercise.description || '')
+            setYoutubeUrl(exercise.youtubeUrl || '')
             setType(exercise.type)
-            setMovementPatternId(exercise.movementPattern.id)
-            setNotes(exercise.notes?.[0] ?? '')
+            setMovementPatternId(exercise.movementPatternId)
+            setNotes(exercise.notes.join('\n'))
             setSelectedMuscleGroups(
-                exercise.exerciseMuscleGroups.map((emg: any) => ({
-                    muscleGroupId: emg.muscleGroup.id,
+                exercise.exerciseMuscleGroups.map((emg) => ({
+                    muscleGroupId: emg.muscleGroupId,
                     coefficient: emg.coefficient,
                 }))
             )
+
+            setMuscleGroups(mgData.data.muscleGroups)
+            setMovementPatterns(mpData.data.movementPatterns)
         } catch (err: any) {
             setError(err.message)
         } finally {
@@ -99,11 +117,7 @@ export default function EditExercisePage() {
         setSelectedMuscleGroups(selectedMuscleGroups.filter((_, i) => i !== index))
     }
 
-    const updateMuscleGroup = (
-        index: number,
-        field: 'muscleGroupId' | 'coefficient',
-        value: any
-    ) => {
+    const updateMuscleGroup = (index: number, field: 'muscleGroupId' | 'coefficient', value: any) => {
         const updated = [...selectedMuscleGroups]
         updated[index] = { ...updated[index], [field]: value }
         setSelectedMuscleGroups(updated)
@@ -115,6 +129,7 @@ export default function EditExercisePage() {
         e.preventDefault()
         setError(null)
 
+        // Validation
         if (!name.trim()) {
             setError('Il nome è obbligatorio')
             return
@@ -130,8 +145,8 @@ export default function EditExercisePage() {
             return
         }
 
-        if (totalCoefficient > 1.0) {
-            setError('La somma dei coefficienti non può superare 1.0')
+        if (totalCoefficient < 0.1 || totalCoefficient > 3.0) {
+            setError('La somma dei coefficienti deve essere tra 0.1 e 3.0')
             return
         }
 
@@ -148,16 +163,17 @@ export default function EditExercisePage() {
                     type,
                     movementPatternId,
                     muscleGroups: selectedMuscleGroups,
-                    notes: notes ? [notes] : [],
+                    notes: notes ? notes.split('\n').filter((n) => n.trim()) : [],
                 }),
             })
 
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || 'Errore nella modifica esercizio')
+                throw new Error(data.error?.message || 'Errore nell\'aggiornamento esercizio')
             }
 
+            // Redirect to exercises list
             router.push('/trainer/exercises')
         } catch (err: any) {
             setError(err.message)
@@ -167,8 +183,8 @@ export default function EditExercisePage() {
 
     if (loadingData) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <LoadingSpinner size="lg" />
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <LoadingSpinner size="lg" color="primary" />
             </div>
         )
     }
@@ -185,7 +201,7 @@ export default function EditExercisePage() {
                         ← Torna alla libreria
                     </Link>
                     <h1 className="text-3xl font-bold text-gray-900">Modifica Esercizio</h1>
-                    <p className="text-gray-600 mt-2">Aggiorna le informazioni dell'esercizio</p>
+                    <p className="text-gray-600 mt-2">Aggiorna i dettagli dell'esercizio</p>
                 </div>
 
                 {/* Error */}
@@ -250,7 +266,7 @@ export default function EditExercisePage() {
                                     type="radio"
                                     value="fundamental"
                                     checked={type === 'fundamental'}
-                                    onChange={() => setType('fundamental')}
+                                    onChange={(e) => setType('fundamental')}
                                     disabled={saving}
                                     className="mr-2 disabled:cursor-not-allowed"
                                 />
@@ -261,7 +277,7 @@ export default function EditExercisePage() {
                                     type="radio"
                                     value="accessory"
                                     checked={type === 'accessory'}
-                                    onChange={() => setType('accessory')}
+                                    onChange={(e) => setType('accessory')}
                                     disabled={saving}
                                     className="mr-2 disabled:cursor-not-allowed"
                                 />
@@ -294,7 +310,7 @@ export default function EditExercisePage() {
                     <div>
                         <div className="flex items-center justify-between mb-2">
                             <label className="block text-sm font-semibold text-gray-700">
-                                Gruppi Muscolari * (Totale: {totalCoefficient.toFixed(2)} / 1.0)
+                                Gruppi Muscolari * (Totale: {totalCoefficient.toFixed(2)} / 3.0)
                             </label>
                             <button
                                 type="button"
@@ -367,10 +383,13 @@ export default function EditExercisePage() {
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             disabled={saving}
-                            placeholder="Note aggiuntive sull'esercizio..."
-                            rows={2}
+                            placeholder="Note aggiuntive sull'esercizio... (una per riga)"
+                            rows={3}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                         />
+                        <p className="text-xs text-gray-500 mt-1">
+                            Inserisci ogni nota su una riga separata
+                        </p>
                     </div>
 
                     {/* Actions */}
