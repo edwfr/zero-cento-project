@@ -305,10 +305,10 @@ describe('POST /api/users', () => {
         vi.mocked(prisma.user.create).mockResolvedValue(createdTrainee as any)
         // Mock for trainerTrainee.create
         const mockTrainerTraineeCreate = vi.fn().mockResolvedValue({})
-        ;(prisma as any).trainerTrainee = {
-            ...(prisma as any).trainerTrainee,
-            create: mockTrainerTraineeCreate,
-        }
+            ; (prisma as any).trainerTrainee = {
+                ...(prisma as any).trainerTrainee,
+                create: mockTrainerTraineeCreate,
+            }
 
         const req = makeRequest('http://localhost:3000/api/users', {
             method: 'POST',
