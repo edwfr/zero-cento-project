@@ -1,7 +1,7 @@
 # ✅ CHECKLIST SVILUPPO - ZeroCento Training Platform
 
-**Stato attuale:** ~63% completato (31h/129h - Sprint 1 + 2 completati)  
-**Effort rimanente stimato:** ~98h  
+**Stato attuale:** ~69% completato (39h/129h - Sprint 1 + 2 + 3 completati)  
+**Effort rimanente stimato:** ~90h  
 **Riferimenti:** [SYSTEM_REVIEW.md](../SYSTEM_REVIEW.md) · [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md) · [CHANGELOG.md](./CHANGELOG.md)
 
 ---
@@ -60,7 +60,7 @@
 
 ## Sprint 3 — Trainee Workout View + Feedback (~8h)
 
-- [ ] **3.1** Workout View con card navigation — mobile-first, swipeable cards, input serie (8h)  
+- [x] **3.1** Workout View con card navigation — mobile-first, swipeable cards, input serie (8h)  
       File: `src/app/trainee/workouts/[id]/page.tsx`  
       Include: integrazione `FeedbackForm`, auto-save localStorage, YouTube embed  
       Spec: [NEXT_ACTIONS.md § 19](./NEXT_ACTIONS.md#19-workout-view-con-card-navigation-8h) · Dipende da: **2.1**, **2.2**

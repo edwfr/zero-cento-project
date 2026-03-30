@@ -12,54 +12,63 @@ import ConfirmationModal from '@/components/ConfirmationModal'
 interface Exercise {
     id: string
     name: string
+    description: string | null
     type: 'fundamental' | 'accessory'
     youtubeUrl: string | null
+    notes: string | null
 }
 
-interface WorkoutExercise {
+interface ExerciseFeedback {
     id: string
-    order: number
-    sets: number
-    repsMin: number
-    repsMax: number
-    restSeconds: number
-    targetRPE: number
+    workoutExerciseId: string
+    traineeId: string
+    date: string
+    totalVolume: number
+    avgRPE: number | null
     notes: string | null
+    completed: boolean
+    setsPerformed: SetPerformed[]
+}
+
+interface WorkoutExerciseWithWeight {
+    id: string
     exercise: Exercise
+    sets: number
+    reps: string
+    targetRpe: number
+    weightType: 'absolute' | 'percentage_1rm' | 'percentage_rm' | 'percentage_previous'
+    weight: number | null
+    effectiveWeight: number | null
+    restTime: number
+    isWarmup: boolean
+    notes: string | null
+    order: number
+    feedback: ExerciseFeedback | null
 }
 
 interface SetPerformed {
     setNumber: number
     weight: number
     reps: number
-    actualRPE: number
 }
 
-interface ExerciseFeedback {
+interface ExerciseRPE {
     workoutExerciseId: string
-    sets: SetPerformed[]
+    rpe: number | null
 }
 
 interface Workout {
     id: string
-    dayOfWeek: number
-    week: {
-        weekNumber: number
-        weekType: 'loading' | 'deload'
-    }
+    dayLabel: string
+    notes: string | null
+    weekNumber: number
+    weekType: 'normal' | 'test' | 'deload'
     program: {
+        id: string
         title: string
-        trainer: {
-            firstName: string
-            lastName: string
-        }
     }
-    workoutExercises: WorkoutExercise[]
-    feedbackId?: string
-    feedbackNotes?: string
+    exercises: WorkoutExerciseWithWeight[]
 }
-
-const DAY_NAMES = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica']
 
 export default function WorkoutDetailPage() {
     const router = useRouter()
@@ -73,6 +82,7 @@ export default function WorkoutDetailPage() {
 
     // Feedback state
     const [feedbackData, setFeedbackData] = useState<Record<string, SetPerformed[]>>({})
+    const [exerciseRPE, setExerciseRPE] = useState<Record<string, number | null>>({})
     const [globalNotes, setGlobalNotes] = useState('')
     const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>({})
     const [activeExerciseIndex, setActiveExerciseIndex] = useState(0)
@@ -98,13 +108,13 @@ export default function WorkoutDetailPage() {
         if (Object.keys(feedbackData).length > 0) {
             saveLocalData()
         }
-    }, [feedbackData, globalNotes])
+    }, [feedbackData, exerciseRPE, globalNotes])
 
     const fetchWorkout = async () => {
         try {
             setLoading(true)
 
-            const res = await fetch(`/api/workouts/${workoutId}`)
+            const res = await fetch(`/api/trainee/workouts/${workoutId}`)
             const data = await res.json()
 
             if (!res.ok) {
@@ -115,53 +125,39 @@ export default function WorkoutDetailPage() {
 
             // Initialize feedback data structure
             const initialFeedback: Record<string, SetPerformed[]> = {}
-            data.data.workout.workoutExercises.forEach((we: WorkoutExercise) => {
-                initialFeedback[we.id] = Array.from({ length: we.sets }, (_, i) => ({
-                    setNumber: i + 1,
-                    weight: 0,
-                    reps: 0,
-                    actualRPE: we.targetRPE,
-                }))
+            const initialRPE: Record<string, number | null> = {}
+
+            data.data.workout.exercises.forEach((we: WorkoutExerciseWithWeight) => {
+                // If feedback exists, load it
+                if (we.feedback) {
+                    initialFeedback[we.id] = we.feedback.setsPerformed.map(sp => ({
+                        setNumber: sp.setNumber,
+                        weight: sp.weight,
+                        reps: sp.reps,
+                    }))
+                    initialRPE[we.id] = we.feedback.avgRPE
+                    if (we.feedback.notes) {
+                        setGlobalNotes(we.feedback.notes)
+                    }
+                } else {
+                    // Initialize empty sets with effectiveWeight as default
+                    initialFeedback[we.id] = Array.from({ length: we.sets }, (_, i) => ({
+                        setNumber: i + 1,
+                        weight: we.effectiveWeight || 0,
+                        reps: 0,
+                    }))
+                    initialRPE[we.id] = we.targetRpe
+                }
+                // Expand all exercises by default
                 setExpandedExercises((prev) => ({ ...prev, [we.id]: true }))
             })
 
             setFeedbackData(initialFeedback)
-
-            // Load existing feedback if available
-            if (data.data.workout.feedbackId) {
-                await loadExistingFeedback(data.data.workout.feedbackId)
-            }
+            setExerciseRPE(initialRPE)
         } catch (err: any) {
             setError(err.message)
         } finally {
             setLoading(false)
-        }
-    }
-
-    const loadExistingFeedback = async (feedbackId: string) => {
-        try {
-            const res = await fetch(`/api/feedback/${feedbackId}`)
-            const data = await res.json()
-
-            if (res.ok) {
-                const feedback = data.data.feedback
-                setGlobalNotes(feedback.notes || '')
-
-                // Map existing sets to feedbackData
-                const existingData: Record<string, SetPerformed[]> = {}
-                feedback.exerciseFeedback.forEach((ef: any) => {
-                    existingData[ef.workoutExerciseId] = ef.setsPerformed.map((sp: any) => ({
-                        setNumber: sp.setNumber,
-                        weight: sp.weight,
-                        reps: sp.reps,
-                        actualRPE: sp.actualRPE,
-                    }))
-                })
-
-                setFeedbackData(existingData)
-            }
-        } catch (err) {
-            console.error('Error loading existing feedback:', err)
         }
     }
 
@@ -171,6 +167,7 @@ export default function WorkoutDetailPage() {
             if (saved) {
                 const parsed = JSON.parse(saved)
                 setFeedbackData(parsed.feedbackData || {})
+                setExerciseRPE(parsed.exerciseRPE || {})
                 setGlobalNotes(parsed.globalNotes || '')
             }
         } catch (err) {
@@ -184,6 +181,7 @@ export default function WorkoutDetailPage() {
                 STORAGE_KEY,
                 JSON.stringify({
                     feedbackData,
+                    exerciseRPE,
                     globalNotes,
                     savedAt: new Date().toISOString(),
                 })
@@ -204,7 +202,7 @@ export default function WorkoutDetailPage() {
     const updateSet = (
         workoutExerciseId: string,
         setIndex: number,
-        field: 'weight' | 'reps' | 'actualRPE',
+        field: 'weight' | 'reps',
         value: number
     ) => {
         setFeedbackData((prev) => {
@@ -216,6 +214,13 @@ export default function WorkoutDetailPage() {
             }
             return updated
         })
+    }
+
+    const updateExerciseRPE = (workoutExerciseId: string, rpe: number) => {
+        setExerciseRPE((prev) => ({
+            ...prev,
+            [workoutExerciseId]: rpe,
+        }))
     }
 
     const calculateExerciseVolume = (workoutExerciseId: string): number => {
@@ -231,12 +236,10 @@ export default function WorkoutDetailPage() {
     }
 
     const calculateAverageRPE = (): number => {
-        const allSets = Object.values(feedbackData).flat()
-        if (allSets.length === 0) return 0
-        const validSets = allSets.filter((s) => s.actualRPE > 0)
-        if (validSets.length === 0) return 0
-        const sum = validSets.reduce((total, set) => total + set.actualRPE, 0)
-        return Math.round((sum / validSets.length) * 10) / 10
+        const rpeValues = Object.values(exerciseRPE).filter((rpe): rpe is number => rpe !== null && rpe > 0)
+        if (rpeValues.length === 0) return 0
+        const sum = rpeValues.reduce((total, rpe) => total + rpe, 0)
+        return Math.round((sum / rpeValues.length) * 10) / 10
     }
 
     const doSubmit = async () => {
@@ -244,35 +247,42 @@ export default function WorkoutDetailPage() {
         try {
             setSubmitting(true)
 
-            // Prepare feedback payload
-            const exerciseFeedback: ExerciseFeedback[] = workout!.workoutExercises.map((we) => ({
-                workoutExerciseId: we.id,
-                sets: feedbackData[we.id] || [],
-            }))
+            // Submit feedback for each exercise
+            const feedbackPromises = workout!.exercises.map(async (we) => {
+                const sets = feedbackData[we.id] || []
 
-            const payload = {
-                workoutId: workout!.id,
-                notes: globalNotes.trim() || null,
-                exerciseFeedback,
-            }
+                // Skip exercises with no data
+                if (sets.every(s => s.weight === 0 && s.reps === 0)) {
+                    return null
+                }
 
-            // POST or PUT depending on existing feedback
-            const method = workout!.feedbackId ? 'PUT' : 'POST'
-            const url = workout!.feedbackId
-                ? `/api/feedback/${workout!.feedbackId}`
-                : '/api/feedback'
+                const payload = {
+                    workoutExerciseId: we.id,
+                    notes: globalNotes.trim() || null,
+                    sets: sets.map(s => ({
+                        setNumber: s.setNumber,
+                        reps: s.reps,
+                        weight: s.weight,
+                    })),
+                    completed: true,
+                    actualRpe: exerciseRPE[we.id] || null
+                }
 
-            const res = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
+                const res = await fetch('/api/feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                })
+
+                if (!res.ok) {
+                    const data = await res.json()
+                    throw new Error(data.error?.message || 'Errore invio feedback')
+                }
+
+                return res.json()
             })
 
-            const data = await res.json()
-
-            if (!res.ok) {
-                throw new Error(data.error?.message || 'Errore invio feedback')
-            }
+            await Promise.all(feedbackPromises)
 
             // Clear local storage
             clearLocalData()
@@ -290,7 +300,7 @@ export default function WorkoutDetailPage() {
 
         // Validate all sets have data
         const emptyExercises: string[] = []
-        workout.workoutExercises.forEach((we) => {
+        workout.exercises.forEach((we) => {
             const sets = feedbackData[we.id] || []
             const hasData = sets.some((s) => s.weight > 0 && s.reps > 0)
             if (!hasData) {
@@ -322,7 +332,7 @@ export default function WorkoutDetailPage() {
     const navigateToExercise = useCallback(
         (index: number) => {
             if (!workout) return
-            const sorted = [...workout.workoutExercises].sort((a, b) => a.order - b.order)
+            const sorted = [...workout.exercises].sort((a, b) => a.order - b.order)
             const clamped = Math.max(0, Math.min(index, sorted.length - 1))
             setActiveExerciseIndex(clamped)
             const target = sorted[clamped]
@@ -365,7 +375,7 @@ export default function WorkoutDetailPage() {
         )
     }
 
-    const sortedExercises = [...workout.workoutExercises].sort((a, b) => a.order - b.order)
+    const sortedExercises = [...workout.exercises].sort((a, b) => a.order - b.order)
     const totalVolume = calculateTotalVolume()
     const avgRPE = calculateAverageRPE()
 
@@ -392,15 +402,19 @@ export default function WorkoutDetailPage() {
                         ← Torna al Programma
                     </Link>
                     <h1 className="text-3xl font-bold text-gray-900">
-                        {DAY_NAMES[workout.dayOfWeek]} - Settimana {workout.week.weekNumber}
+                        {workout.dayLabel} - Settimana {workout.weekNumber}
                     </h1>
                     <p className="text-gray-600 mt-2">
-                        {workout.program.title} • con {workout.program.trainer.firstName}{' '}
-                        {workout.program.trainer.lastName}
+                        {workout.program.title}
                     </p>
-                    {workout.week.weekType === 'deload' && (
+                    {workout.weekType === 'deload' && (
                         <div className="mt-3 inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
                             🧘 Settimana Deload - Recupero
+                        </div>
+                    )}
+                    {workout.weekType === 'test' && (
+                        <div className="mt-3 inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
+                            💪 Settimana Test - Massimali
                         </div>
                     )}
                 </div>
@@ -505,16 +519,24 @@ export default function WorkoutDetailPage() {
                                                 <div>
                                                     <p className="text-xs text-gray-600">Reps</p>
                                                     <p className="font-semibold text-gray-900">
-                                                        {we.repsMin === we.repsMax
-                                                            ? we.repsMin
-                                                            : `${we.repsMin}-${we.repsMax}`}
+                                                        {we.reps}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-gray-600">Peso</p>
+                                                    <p className="font-semibold text-gray-900">
+                                                        {we.effectiveWeight
+                                                            ? `${we.effectiveWeight.toFixed(1)} kg`
+                                                            : we.weight
+                                                                ? `${we.weight} ${we.weightType === 'absolute' ? 'kg' : '%'}`
+                                                                : '-'}
                                                     </p>
                                                 </div>
                                                 <div>
                                                     <p className="text-xs text-gray-600">Riposo</p>
                                                     <p className="font-semibold text-gray-900">
-                                                        {Math.floor(we.restSeconds / 60)}:
-                                                        {(we.restSeconds % 60)
+                                                        {Math.floor(we.restTime / 60)}:
+                                                        {(we.restTime % 60)
                                                             .toString()
                                                             .padStart(2, '0')}
                                                     </p>
@@ -522,7 +544,7 @@ export default function WorkoutDetailPage() {
                                                 <div>
                                                     <p className="text-xs text-gray-600">RPE Target</p>
                                                     <p className="font-semibold text-gray-900">
-                                                        {we.targetRPE}
+                                                        {we.targetRpe}
                                                     </p>
                                                 </div>
                                                 <div>
@@ -557,7 +579,7 @@ export default function WorkoutDetailPage() {
                                         )}
 
                                         {/* Sets Input Table */}
-                                        <div className="overflow-x-auto">
+                                        <div className="overflow-x-auto mb-4">
                                             <table className="w-full">
                                                 <thead>
                                                     <tr className="border-b border-gray-300">
@@ -569,9 +591,6 @@ export default function WorkoutDetailPage() {
                                                         </th>
                                                         <th className="text-center py-2 px-3 text-sm font-semibold text-gray-700">
                                                             Reps
-                                                        </th>
-                                                        <th className="text-center py-2 px-3 text-sm font-semibold text-gray-700">
-                                                            RPE
                                                         </th>
                                                     </tr>
                                                 </thead>
@@ -621,33 +640,31 @@ export default function WorkoutDetailPage() {
                                                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-center focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
                                                                 />
                                                             </td>
-                                                            <td className="py-3 px-3">
-                                                                <select
-                                                                    value={set.actualRPE}
-                                                                    onChange={(e) =>
-                                                                        updateSet(
-                                                                            we.id,
-                                                                            setIdx,
-                                                                            'actualRPE',
-                                                                            parseInt(e.target.value)
-                                                                        )
-                                                                    }
-                                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-center focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
-                                                                >
-                                                                    {[6, 7, 8, 9, 10].map((rpe) => (
-                                                                        <option
-                                                                            key={rpe}
-                                                                            value={rpe}
-                                                                        >
-                                                                            {rpe}
-                                                                        </option>
-                                                                    ))}
-                                                                </select>
-                                                            </td>
                                                         </tr>
                                                     ))}
                                                 </tbody>
                                             </table>
+                                        </div>
+
+                                        {/* Overall Exercise RPE */}
+                                        <div className="flex items-center justify-between bg-gray-100 p-4 rounded-lg">
+                                            <label className="text-sm font-semibold text-gray-700">
+                                                RPE Complessivo:
+                                            </label>
+                                            <select
+                                                value={exerciseRPE[we.id] || ''}
+                                                onChange={(e) =>
+                                                    updateExerciseRPE(we.id, parseFloat(e.target.value))
+                                                }
+                                                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                                            >
+                                                <option value="">Seleziona RPE</option>
+                                                {[5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10].map((rpe) => (
+                                                    <option key={rpe} value={rpe}>
+                                                        {rpe}
+                                                    </option>
+                                                ))}
+                                            </select>
                                         </div>
                                     </div>
                                 )}
