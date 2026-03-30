@@ -1,6 +1,7 @@
 'use client'
 
 import { useTranslation } from 'react-i18next'
+import { useEffect, useRef } from 'react'
 import LoadingSpinner from './LoadingSpinner'
 
 interface ConfirmationModalProps {
@@ -31,6 +32,61 @@ export default function ConfirmationModal({
     isLoading = false,
 }: ConfirmationModalProps) {
     const { t } = useTranslation('common')
+    const dialogRef = useRef<HTMLDivElement>(null)
+    const confirmButtonRef = useRef<HTMLButtonElement>(null)
+
+    // Generate unique IDs for ARIA labels
+    const titleId = useRef(`confirmation-title-${Math.random().toString(36).substr(2, 9)}`).current
+    const messageId = useRef(`confirmation-message-${Math.random().toString(36).substr(2, 9)}`).current
+
+    // Focus management and keyboard handling
+    useEffect(() => {
+        if (!isOpen) return
+
+        // Store currently focused element
+        const previouslyFocused = document.activeElement as HTMLElement
+
+        // Focus the confirm button when modal opens
+        setTimeout(() => {
+            confirmButtonRef.current?.focus()
+        }, 100)
+
+        // Handle ESC key to close
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                onClose()
+            }
+        }
+
+        // Focus trap
+        const handleTab = (e: KeyboardEvent) => {
+            if (e.key !== 'Tab' || !dialogRef.current) return
+
+            const focusableElements = dialogRef.current.querySelectorAll<HTMLElement>(
+                'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            )
+            const firstElement = focusableElements[0]
+            const lastElement = focusableElements[focusableElements.length - 1]
+
+            if (e.shiftKey && document.activeElement === firstElement) {
+                e.preventDefault()
+                lastElement?.focus()
+            } else if (!e.shiftKey && document.activeElement === lastElement) {
+                e.preventDefault()
+                firstElement?.focus()
+            }
+        }
+
+        document.addEventListener('keydown', handleEscape)
+        document.addEventListener('keydown', handleTab)
+
+        // Cleanup and restore focus
+        return () => {
+            document.removeEventListener('keydown', handleEscape)
+            document.removeEventListener('keydown', handleTab)
+            previouslyFocused?.focus()
+        }
+    }, [isOpen, onClose])
 
     if (!isOpen) return null
 
@@ -70,8 +126,14 @@ export default function ConfirmationModal({
         <div
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
             onClick={onClose}
+            role="presentation"
         >
             <div
+                ref={dialogRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={titleId}
+                aria-describedby={messageId}
                 className="bg-white rounded-lg shadow-2xl max-w-md w-full p-6 animate-fade-in"
                 onClick={(e) => e.stopPropagation()}
             >
@@ -83,17 +145,19 @@ export default function ConfirmationModal({
                 </div>
 
                 {/* Title */}
-                <h2 className={`text-2xl font-bold ${styles.titleColor} mb-3`}>{title}</h2>
+                <h2 id={titleId} className={`text-2xl font-bold ${styles.titleColor} mb-3`}>{title}</h2>
 
                 {/* Message */}
-                <p className="text-gray-700 mb-6 leading-relaxed">{message}</p>
+                <p id={messageId} className="text-gray-700 mb-6 leading-relaxed">{message}</p>
 
                 {/* Actions */}
                 <div className="flex space-x-3">
                     <button
+                        ref={confirmButtonRef}
                         onClick={onConfirm}
                         disabled={isLoading}
                         className={`flex-1 ${styles.confirmBg} disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center`}
+                        aria-label={`${finalConfirmText} - ${title}`}
                     >
                         {isLoading ? <LoadingSpinner size="sm" color="white" /> : finalConfirmText}
                     </button>
@@ -102,6 +166,7 @@ export default function ConfirmationModal({
                         onClick={onClose}
                         disabled={isLoading}
                         className="flex-1 bg-gray-300 hover:bg-gray-400 disabled:bg-gray-200 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
+                        aria-label={finalCancelText}
                     >
                         {finalCancelText}
                     </button>

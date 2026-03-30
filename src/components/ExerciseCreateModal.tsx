@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 interface MuscleGroup {
     id: string
@@ -35,6 +35,59 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
         movementPatternId: '',
     })
     const [selectedMuscleGroups, setSelectedMuscleGroups] = useState<MuscleGroupAssignment[]>([])
+
+    const dialogRef = useRef<HTMLDivElement>(null)
+    const firstInputRef = useRef<HTMLInputElement>(null)
+
+    // Generate unique IDs for ARIA labels
+    const titleId = useRef(`exercise-create-title-${Math.random().toString(36).substr(2, 9)}`).current
+
+    // Focus management and keyboard handling
+    useEffect(() => {
+        // Store currently focused element
+        const previouslyFocused = document.activeElement as HTMLElement
+
+        // Focus the first input when modal opens
+        setTimeout(() => {
+            firstInputRef.current?.focus()
+        }, 100)
+
+        // Handle ESC key to close
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && !loading) {
+                onClose()
+            }
+        }
+
+        // Focus trap
+        const handleTab = (e: KeyboardEvent) => {
+            if (e.key !== 'Tab' || !dialogRef.current) return
+
+            const focusableElements = dialogRef.current.querySelectorAll<HTMLElement>(
+                'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            )
+            const firstElement = focusableElements[0]
+            const lastElement = focusableElements[focusableElements.length - 1]
+
+            if (e.shiftKey && document.activeElement === firstElement) {
+                e.preventDefault()
+                lastElement?.focus()
+            } else if (!e.shiftKey && document.activeElement === lastElement) {
+                e.preventDefault()
+                firstElement?.focus()
+            }
+        }
+
+        document.addEventListener('keydown', handleEscape)
+        document.addEventListener('keydown', handleTab)
+
+        // Cleanup and restore focus
+        return () => {
+            document.removeEventListener('keydown', handleEscape)
+            document.removeEventListener('keydown', handleTab)
+            previouslyFocused?.focus()
+        }
+    }, [loading, onClose])
 
     useEffect(() => {
         // Load muscle groups and movement patterns
@@ -125,9 +178,15 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
     }
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" role="presentation">
+            <div
+                ref={dialogRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={titleId}
+                className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+            >
+                <h2 id={titleId} className="text-2xl font-bold text-gray-900 mb-4">
                     Crea Nuovo Esercizio
                 </h2>
 
@@ -143,6 +202,7 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                             Nome Esercizio *
                         </label>
                         <input
+                            ref={firstInputRef}
                             type="text"
                             id="name"
                             value={formData.name}

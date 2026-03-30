@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface User {
@@ -26,6 +26,61 @@ export default function UserEditModal({ user, onClose, onUserUpdated }: UserEdit
         firstName: user.firstName,
         lastName: user.lastName,
     })
+
+    const dialogRef = useRef<HTMLDivElement>(null)
+    const firstInputRef = useRef<HTMLInputElement>(null)
+
+    // Generate unique IDs for ARIA labels
+    const titleId = useRef(`user-edit-title-${Math.random().toString(36).substr(2, 9)}`).current
+
+    // Focus management and keyboard handling
+    useEffect(() => {
+        // Store currently focused element
+        const previouslyFocused = document.activeElement as HTMLElement
+
+        // Focus first input when modal opens (only in form state)
+        if (!success) {
+            setTimeout(() => {
+                firstInputRef.current?.focus()
+            }, 100)
+        }
+
+        // Handle ESC key to close
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && !loading) {
+                onClose()
+            }
+        }
+
+        // Focus trap
+        const handleTab = (e: KeyboardEvent) => {
+            if (e.key !== 'Tab' || !dialogRef.current) return
+
+            const focusableElements = dialogRef.current.querySelectorAll<HTMLElement>(
+                'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            )
+            const firstElement = focusableElements[0]
+            const lastElement = focusableElements[focusableElements.length - 1]
+
+            if (e.shiftKey && document.activeElement === firstElement) {
+                e.preventDefault()
+                lastElement?.focus()
+            } else if (!e.shiftKey && document.activeElement === lastElement) {
+                e.preventDefault()
+                firstElement?.focus()
+            }
+        }
+
+        document.addEventListener('keydown', handleEscape)
+        document.addEventListener('keydown', handleTab)
+
+        // Cleanup and restore focus
+        return () => {
+            document.removeEventListener('keydown', handleEscape)
+            document.removeEventListener('keydown', handleTab)
+            previouslyFocused?.focus()
+        }
+    }, [loading, onClose, success])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -59,15 +114,21 @@ export default function UserEditModal({ user, onClose, onUserUpdated }: UserEdit
 
     if (success) {
         return (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="presentation">
+                <div
+                    ref={dialogRef}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby={titleId}
+                    className="bg-white rounded-lg p-6 max-w-md w-full mx-4"
+                >
                     <div className="text-center">
                         <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-                            <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                         </div>
-                        <h3 className="text-lg font-medium text-gray-900">
+                        <h3 id={titleId} className="text-lg font-medium text-gray-900">
                             {t('admin:users.userUpdated')}
                         </h3>
                     </div>
@@ -77,9 +138,15 @@ export default function UserEditModal({ user, onClose, onUserUpdated }: UserEdit
     }
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="presentation">
+            <div
+                ref={dialogRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={titleId}
+                className="bg-white rounded-lg p-6 max-w-md w-full mx-4"
+            >
+                <h2 id={titleId} className="text-2xl font-bold text-gray-900 mb-4">
                     {t('admin:users.editUser')}
                 </h2>
 
@@ -104,6 +171,7 @@ export default function UserEditModal({ user, onClose, onUserUpdated }: UserEdit
                             {t('common:common.firstName')} *
                         </label>
                         <input
+                            ref={firstInputRef}
                             type="text"
                             id="firstName"
                             value={formData.firstName}
