@@ -19,6 +19,14 @@ Registro cronologico degli sviluppi effettuati.
 
 ## Storico
 
+### [30 Marzo 2026] — Implementato POST /api/programs/[id]/complete
+
+**Task checklist:** #2.3  
+**File creati:** `src/app/api/programs/[id]/complete/route.ts`  
+**Note:** Implementato endpoint POST per completamento manuale programma da parte del trainer. L'endpoint permette di marcare un programma come `completed` anche se non tutte le settimane sono finite. Validazioni implementate: verifica ownership (trainer può completare solo i propri programmi, admin può completare qualsiasi), verifica status (solo programmi `active` possono essere completati), supporto per `completionReason` opzionale (max 500 char). Il programma viene aggiornato con status='completed', completedAt=now(), e completionReason se fornito.
+
+---
+
 ### [30 Marzo 2026] — Implementato GET /api/trainee/workouts/[id]
 
 **Task checklist:** #2.2  
