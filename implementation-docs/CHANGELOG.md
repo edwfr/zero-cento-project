@@ -19,6 +19,14 @@ Registro cronologico degli sviluppi effettuati.
 
 ## Storico
 
+### [30 Marzo 2026] — Implementato GET /api/trainee/workouts/[id]
+
+**Task checklist:** #2.2  
+**File creati:** `src/app/api/trainee/workouts/[id]/route.ts`  
+**Note:** Implementato endpoint GET per visualizzazione workout da parte del trainee. Include calcolo server-side dei pesi effettivi per ogni esercizio tramite `calculateEffectiveWeight()`, che gestisce tutte le tipologie di peso (absolute, percentage_1rm, percentage_rm, percentage_previous). L'endpoint verifica ownership tramite la catena Workout → Week → Program → traineeId, e include feedback esistente per la data corrente. Gestisce gracefully i casi di massimali mancanti con `effectiveWeight: null`.
+
+---
+
 ### [30 Marzo 2026] — Completato POST /api/feedback con calcoli metriche
 
 **Task checklist:** #2.1  

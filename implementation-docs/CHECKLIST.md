@@ -37,7 +37,7 @@
 
 - [x] **2.1** `POST /api/feedback` — creazione feedback trainee con nested SetPerformed (3h)  
       Spec: [NEXT_ACTIONS.md § 7](./NEXT_ACTIONS.md#7-post-apifeedback---creazione-feedback-trainee-3h) · Design: [design/03_backend_api.md](../design/03_backend_api.md)
-- [ ] **2.2** `GET /api/trainee/workouts/[id]` — vista workout con peso effettivo pre-calcolato (4h)  
+- [x] **2.2** `GET /api/trainee/workouts/[id]` — vista workout con peso effettivo pre-calcolato (4h)  
       Spec: [NEXT_ACTIONS.md § 8](./NEXT_ACTIONS.md#8-get-apitraineeworkoutsid---vista-workout-4h)
 - [ ] **2.3** `POST /api/programs/[id]/complete` — completamento manuale programma (2h)  
       Spec: [NEXT_ACTIONS.md § 9](./NEXT_ACTIONS.md#9-post-apiprogramsidcomplete---completamento-manuale-2h)
