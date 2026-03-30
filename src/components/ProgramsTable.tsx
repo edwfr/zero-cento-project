@@ -286,9 +286,7 @@ export default function ProgramsTable({
                                             {program.durationWeeks} {t('trainer:programs.weeksShort')}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                            {program.startDate
-                                                ? new Date(program.startDate).toLocaleDateString('it-IT')
-                                                : '—'}
+                                            {formatDate(program.startDate)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right">
                                             <div className="flex items-center justify-end space-x-2">

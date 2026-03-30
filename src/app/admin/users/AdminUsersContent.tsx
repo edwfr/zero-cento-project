@@ -7,6 +7,7 @@ import UserEditModal from '@/components/UserEditModal'
 import UserDeleteModal from '@/components/UserDeleteModal'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
+import { formatDate } from '@/lib/date-format'
 
 interface User {
     id: string
@@ -361,7 +362,7 @@ export default function AdminUsersContent() {
                                             </button>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {new Date(user.createdAt).toLocaleDateString('it-IT')}
+                                            {formatDate(user.createdAt)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right">
                                             <div className="flex justify-end space-x-3">

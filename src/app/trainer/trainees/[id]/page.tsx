@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import { formatDate } from '@/lib/date-format'
 
 interface Trainee {
     id: string
@@ -278,11 +279,7 @@ export default function TraineeProfilePage() {
                                                     {program.durationWeeks} settimane
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                                    {program.startDate
-                                                        ? new Date(
-                                                            program.startDate
-                                                        ).toLocaleDateString('it-IT')
-                                                        : '—'}
+                                                    {formatDate(program.startDate)}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right">
                                                     <Link
@@ -359,9 +356,7 @@ export default function TraineeProfilePage() {
                                                     kg
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                                    {new Date(record.recordDate).toLocaleDateString(
-                                                        'it-IT'
-                                                    )}
+                                                    {formatDate(record.recordDate)}
                                                 </td>
                                             </tr>
                                         ))}

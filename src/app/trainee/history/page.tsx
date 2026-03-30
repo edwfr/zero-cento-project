@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import { formatDate } from '@/lib/date-format'
 
 interface Program {
     id: string
@@ -149,9 +150,7 @@ export default function HistoryPage() {
                                                     Data Inizio
                                                 </p>
                                                 <p className="font-semibold text-gray-900">
-                                                    {new Date(
-                                                        program.startDate
-                                                    ).toLocaleDateString('it-IT')}
+                                                    {formatDate(program.startDate)}
                                                 </p>
                                             </div>
                                             <div>
@@ -159,11 +158,7 @@ export default function HistoryPage() {
                                                     Data Fine
                                                 </p>
                                                 <p className="font-semibold text-gray-900">
-                                                    {program.endDate
-                                                        ? new Date(
-                                                            program.endDate
-                                                        ).toLocaleDateString('it-IT')
-                                                        : '-'}
+                                                    {formatDate(program.endDate)}
                                                 </p>
                                             </div>
                                             <div>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import { formatNumber } from '@/lib/date-format'
 
 interface SBDEntry {
     volume: number
@@ -148,7 +149,7 @@ export default function ProgramReportsPage() {
                     <div className="bg-white rounded-lg shadow-md p-6">
                         <div className="text-sm text-gray-500 mb-1">Volume Totale SBD</div>
                         <div className="text-3xl font-bold text-gray-900">
-                            {totalSBDVolume.toLocaleString()} kg
+                            {formatNumber(totalSBDVolume)} kg
                         </div>
                     </div>
                     <div className="bg-white rounded-lg shadow-md p-6">
@@ -185,7 +186,7 @@ export default function ProgramReportsPage() {
                                         <div className="flex justify-between text-sm">
                                             <span className="text-gray-500">Volume:</span>
                                             <span className="font-semibold text-gray-900">
-                                                {data.volume.toLocaleString()} kg
+                                                {formatNumber(data.volume)} kg
                                             </span>
                                         </div>
                                         <div className="flex justify-between text-sm">
@@ -277,7 +278,7 @@ export default function ProgramReportsPage() {
                                                 {mp.movementPatternName}
                                             </span>
                                             <span className="text-sm text-gray-600">
-                                                {mp.volume.toLocaleString()} kg ({mp.percentage}%)
+                                                {formatNumber(mp.volume)} kg ({mp.percentage}%)
                                             </span>
                                         </div>
                                         <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">

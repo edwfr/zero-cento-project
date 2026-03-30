@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/components/ToastNotification'
+import { formatDate } from '@/lib/date-format'
 
 interface Trainee {
     id: string
@@ -196,7 +197,7 @@ export default function TrainerTraineesPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                            {new Date(trainee.createdAt).toLocaleDateString('it-IT')}
+                                            {formatDate(trainee.createdAt)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <div className="flex justify-end space-x-2">

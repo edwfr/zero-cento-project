@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import { formatDate } from '@/lib/date-format'
 
 interface Workout {
     id: string
@@ -103,7 +104,7 @@ export default function CurrentProgramPage() {
                     <h1 className="text-3xl font-bold text-gray-900">{program.title}</h1>
                     <p className="text-gray-600 mt-2">
                         con {program.trainer.firstName} {program.trainer.lastName} • Iniziato il{' '}
-                        {new Date(program.startDate).toLocaleDateString('it-IT')}
+                        {formatDate(program.startDate)}
                     </p>
                 </div>
 

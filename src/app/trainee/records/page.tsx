@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import { formatDate } from '@/lib/date-format'
 
 interface PersonalRecord {
     id: string
@@ -232,9 +233,7 @@ export default function PersonalRecordsPage() {
                                                 <div className="border-t border-gray-200 pt-3">
                                                     <p className="text-xs text-gray-600">
                                                         Raggiunto il{' '}
-                                                        {new Date(
-                                                            pr.achievedAt
-                                                        ).toLocaleDateString('it-IT')}
+                                                        {formatDate(pr.achievedAt)}
                                                     </p>
                                                     {allPRs.length > 1 && (
                                                         <p className="text-xs text-gray-600 mt-1">

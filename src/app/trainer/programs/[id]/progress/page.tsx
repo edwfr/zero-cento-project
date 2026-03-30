@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ProgressBar from '@/components/ProgressBar'
+import { formatNumber } from '@/lib/date-format'
 import {
     LineChart,
     Line,
@@ -168,7 +169,7 @@ export default function ProgramProgressPage() {
                     <div className="bg-white rounded-lg shadow-md p-6">
                         <div className="text-sm text-gray-500 mb-1">Volume Totale</div>
                         <div className="text-3xl font-bold text-purple-600">
-                            {progress.totalVolume.toLocaleString()}
+                            {formatNumber(progress.totalVolume)}
                         </div>
                         <div className="text-xs text-gray-500 mt-1">kg sollevati</div>
                     </div>
@@ -215,7 +216,7 @@ export default function ProgramProgressPage() {
                                         />
                                         <Tooltip
                                             formatter={(value: number | string | undefined) =>
-                                                value ? `${Number(value).toLocaleString()} kg` : '0 kg'
+                                                value ? `${formatNumber(Number(value))} kg` : '0 kg'
                                             }
                                             labelFormatter={(label) => `Settimana ${label}`}
                                         />
@@ -483,9 +484,9 @@ export default function ProgramProgressPage() {
                                 <span className="text-gray-600">Volume medio:</span>
                                 <span className="font-semibold text-purple-600">
                                     {progress.completedWorkouts > 0
-                                        ? Math.round(
+                                        ? formatNumber(Math.round(
                                             progress.totalVolume / progress.completedWorkouts
-                                        ).toLocaleString()
+                                        ))
                                         : '0'}{' '}
                                     kg
                                 </span>

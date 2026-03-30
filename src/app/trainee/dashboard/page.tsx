@@ -301,7 +301,7 @@ export default function TraineeDashboard() {
                                             {pr.exercise.name}
                                         </p>
                                         <p className="text-sm text-gray-600">
-                                            {new Date(pr.achievedAt).toLocaleDateString('it-IT')}
+                                            {formatDate(pr.achievedAt)}
                                         </p>
                                     </div>
                                     <div className="text-right">

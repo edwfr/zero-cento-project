@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
+import { formatDate } from '@/lib/date-format'
 
 interface Program {
     id: string
@@ -171,14 +172,10 @@ export default function AdminProgramsContent() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {program.startDate
-                                                ? new Date(program.startDate).toLocaleDateString('it-IT')
-                                                : '—'}
+                                            {formatDate(program.startDate)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {program.endDate
-                                                ? new Date(program.endDate).toLocaleDateString('it-IT')
-                                                : '—'}
+                                            {formatDate(program.endDate)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                                             <div className="flex space-x-3">

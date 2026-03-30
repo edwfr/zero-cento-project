@@ -6,6 +6,7 @@ import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
+import { formatDate } from '@/lib/date-format'
 
 interface Program {
     id: string
@@ -259,9 +260,7 @@ export default function TrainerProgramsPage() {
                                         <div className="col-span-2">
                                             <span className="text-gray-500">Inizio:</span>
                                             <span className="ml-2 font-semibold text-gray-900">
-                                                {new Date(program.startDate).toLocaleDateString(
-                                                    'it-IT'
-                                                )}
+                                                {formatDate(program.startDate)}
                                             </span>
                                         </div>
                                     )}

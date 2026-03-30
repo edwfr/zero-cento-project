@@ -298,12 +298,7 @@ export default async function TrainerDashboard() {
                                                 </div>
                                             )}
                                             <div className="text-gray-400">
-                                                {new Date(
-                                                    feedback.createdAt
-                                                ).toLocaleDateString('it-IT', {
-                                                    month: 'short',
-                                                    day: 'numeric',
-                                                })}
+                                                {formatDate(feedback.createdAt, 'medium')}
                                             </div>
                                         </div>
                                     </div>

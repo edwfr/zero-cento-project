@@ -6,6 +6,7 @@ import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
+import { formatDate, formatDateForInput, getTodayForInput } from '@/lib/date-format'
 
 interface Trainee {
     id: string
@@ -55,7 +56,7 @@ export default function TraineeRecordsManagementPage() {
     const [selectedExerciseId, setSelectedExerciseId] = useState('')
     const [weight, setWeight] = useState('')
     const [reps, setReps] = useState('')
-    const [recordDate, setRecordDate] = useState(new Date().toISOString().split('T')[0])
+    const [recordDate, setRecordDate] = useState(getTodayForInput())
     const [notes, setNotes] = useState('')
     const [confirmModal, setConfirmModal] = useState<{
         title: string
@@ -175,7 +176,7 @@ export default function TraineeRecordsManagementPage() {
         setWeight('')
         setReps('')
         setNotes('')
-        setRecordDate(new Date().toISOString().split('T')[0])
+        setRecordDate(getTodayForInput())
         if (exercises.length > 0) {
             setSelectedExerciseId(exercises[0].id)
         }
@@ -188,7 +189,7 @@ export default function TraineeRecordsManagementPage() {
         setSelectedExerciseId(record.exercise.id)
         setWeight(record.weight.toString())
         setReps(record.reps.toString())
-        setRecordDate(new Date(record.recordDate).toISOString().split('T')[0])
+        setRecordDate(formatDateForInput(record.recordDate))
         setNotes(record.notes || '')
         setShowModal(true)
         setError(null)
@@ -402,7 +403,7 @@ export default function TraineeRecordsManagementPage() {
                                                     {group.oneRM.weight} kg
                                                 </div>
                                                 <div className="text-xs text-gray-600">
-                                                    {new Date(group.oneRM.recordDate).toLocaleDateString('it-IT')}
+                                                    {formatDate(group.oneRM.recordDate)}
                                                 </div>
                                                 <div className="mt-2 flex space-x-2">
                                                     <button
@@ -433,7 +434,7 @@ export default function TraineeRecordsManagementPage() {
                                                     {group.threeRM.weight} kg
                                                 </div>
                                                 <div className="text-xs text-gray-600">
-                                                    {group.threeRM.reps} reps · {new Date(group.threeRM.recordDate).toLocaleDateString('it-IT')}
+                                                    {group.threeRM.reps} reps · {formatDate(group.threeRM.recordDate)}
                                                 </div>
                                                 <div className="text-xs text-gray-500 mt-1">
                                                     Est. 1RM: {calculateOneRepMax(group.threeRM.weight, group.threeRM.reps)} kg
@@ -467,7 +468,7 @@ export default function TraineeRecordsManagementPage() {
                                                     {group.fiveRM.weight} kg
                                                 </div>
                                                 <div className="text-xs text-gray-600">
-                                                    {group.fiveRM.reps} reps · {new Date(group.fiveRM.recordDate).toLocaleDateString('it-IT')}
+                                                    {group.fiveRM.reps} reps · {formatDate(group.fiveRM.recordDate)}
                                                 </div>
                                                 <div className="text-xs text-gray-500 mt-1">
                                                     Est. 1RM: {calculateOneRepMax(group.fiveRM.weight, group.fiveRM.reps)} kg
@@ -501,7 +502,7 @@ export default function TraineeRecordsManagementPage() {
                                                     {group.tenRM.weight} kg
                                                 </div>
                                                 <div className="text-xs text-gray-600">
-                                                    {group.tenRM.reps} reps · {new Date(group.tenRM.recordDate).toLocaleDateString('it-IT')}
+                                                    {group.tenRM.reps} reps · {formatDate(group.tenRM.recordDate)}
                                                 </div>
                                                 <div className="text-xs text-gray-500 mt-1">
                                                     Est. 1RM: {calculateOneRepMax(group.tenRM.weight, group.tenRM.reps)} kg
@@ -560,7 +561,7 @@ export default function TraineeRecordsManagementPage() {
                                                                     {calculateOneRepMax(record.weight, record.reps)} kg
                                                                 </td>
                                                                 <td className="px-6 py-2 text-sm text-gray-700">
-                                                                    {new Date(record.recordDate).toLocaleDateString('it-IT')}
+                                                                    {formatDate(record.recordDate)}
                                                                 </td>
                                                                 <td className="px-6 py-2 text-sm text-gray-600 max-w-xs truncate">
                                                                     {record.notes || '—'}
@@ -665,7 +666,7 @@ export default function TraineeRecordsManagementPage() {
                                     <input
                                         type="date"
                                         value={recordDate}
-                                        max={new Date().toISOString().split('T')[0]}
+                                        max={getTodayForInput()}
                                         onChange={(e) => setRecordDate(e.target.value)}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
                                         required
