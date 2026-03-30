@@ -48,6 +48,13 @@ vi.mock('@/lib/prisma', () => ({
         workout: {
             createMany: vi.fn(),
         },
+        user: {
+            findUnique: vi.fn(),
+        },
+        trainerTrainee: {
+            findFirst: vi.fn(),
+            findUnique: vi.fn(),
+        },
     },
 }))
 
@@ -63,6 +70,7 @@ vi.mock('@/lib/logger', () => ({
 import { GET, POST } from '@/app/api/programs/route'
 import { requireRole } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import type { User } from '@prisma/client'
 
 const mockPrograms = [
     {
@@ -102,7 +110,7 @@ describe('GET /api/programs', () => {
         const body = await res.json()
 
         expect(res.status).toBe(200)
-        expect(body.data.programs).toHaveLength(1)
+        expect(body.data.items).toHaveLength(1)
         // Trainer's own programs filter should be applied
         expect(prisma.trainingProgram.findMany).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -159,6 +167,16 @@ describe('POST /api/programs', () => {
     it('creates a new program as trainer', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
 
+        const traineeId = '3fa85f64-5717-4562-b3fc-2c963f66afa6'
+        vi.mocked(prisma.user.findUnique).mockResolvedValue({
+            id: traineeId,
+            role: 'trainee',
+        } as any)
+        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue({
+            trainerId: 'trainer-uuid-1',
+            traineeId,
+        } as any)
+
         const newProgram = {
             ...mockPrograms[0],
             id: 'new-prog-id',
@@ -172,7 +190,7 @@ describe('POST /api/programs', () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 title: 'Powerlifting Block 1',
-                traineeId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+                traineeId,
                 durationWeeks: 8,
                 workoutsPerWeek: 4,
             }),

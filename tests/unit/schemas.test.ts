@@ -308,3 +308,259 @@ describe('loginSchema', () => {
         expect(result.success).toBe(false)
     })
 })
+
+// ─── MovementPattern Schema ───────────────────────────────────────────────────
+
+import {
+    movementPatternSchema,
+    updateMovementPatternSchema,
+    movementPatternColorSchema,
+} from '@/schemas/movement-pattern'
+
+describe('movementPatternSchema', () => {
+    it('accepts valid movement pattern', () => {
+        const result = movementPatternSchema.safeParse({ name: 'Spinta Orizzontale', description: 'Bench press variants' })
+        expect(result.success).toBe(true)
+    })
+
+    it('rejects name shorter than 2 chars', () => {
+        const result = movementPatternSchema.safeParse({ name: 'S' })
+        expect(result.success).toBe(false)
+    })
+
+    it('rejects name longer than 50 chars', () => {
+        const result = movementPatternSchema.safeParse({ name: 'A'.repeat(51) })
+        expect(result.success).toBe(false)
+    })
+
+    it('accepts pattern without description', () => {
+        const result = movementPatternSchema.safeParse({ name: 'Squat' })
+        expect(result.success).toBe(true)
+    })
+
+    it('rejects description longer than 200 chars', () => {
+        const result = movementPatternSchema.safeParse({ name: 'Squat', description: 'A'.repeat(201) })
+        expect(result.success).toBe(false)
+    })
+})
+
+describe('updateMovementPatternSchema', () => {
+    it('accepts partial update', () => {
+        const result = updateMovementPatternSchema.safeParse({ description: 'Updated' })
+        expect(result.success).toBe(true)
+    })
+
+    it('accepts empty object', () => {
+        const result = updateMovementPatternSchema.safeParse({})
+        expect(result.success).toBe(true)
+    })
+})
+
+describe('movementPatternColorSchema', () => {
+    it('accepts valid hex color', () => {
+        const result = movementPatternColorSchema.safeParse({ color: '#3B82F6' })
+        expect(result.success).toBe(true)
+    })
+
+    it('rejects invalid hex color', () => {
+        const result = movementPatternColorSchema.safeParse({ color: 'blue' })
+        expect(result.success).toBe(false)
+    })
+
+    it('rejects short hex', () => {
+        const result = movementPatternColorSchema.safeParse({ color: '#FFF' })
+        expect(result.success).toBe(false)
+    })
+})
+
+// ─── MuscleGroup Schema ───────────────────────────────────────────────────────
+
+import {
+    muscleGroupSchema,
+    updateMuscleGroupSchema,
+} from '@/schemas/muscle-group'
+
+describe('muscleGroupSchema', () => {
+    it('accepts valid muscle group', () => {
+        const result = muscleGroupSchema.safeParse({ name: 'Pettorali', description: 'Chest muscles' })
+        expect(result.success).toBe(true)
+    })
+
+    it('rejects name shorter than 2 chars', () => {
+        const result = muscleGroupSchema.safeParse({ name: 'P' })
+        expect(result.success).toBe(false)
+    })
+
+    it('rejects name longer than 50 chars', () => {
+        const result = muscleGroupSchema.safeParse({ name: 'A'.repeat(51) })
+        expect(result.success).toBe(false)
+    })
+
+    it('accepts without description', () => {
+        const result = muscleGroupSchema.safeParse({ name: 'Dorsali' })
+        expect(result.success).toBe(true)
+    })
+})
+
+describe('updateMuscleGroupSchema', () => {
+    it('accepts partial update', () => {
+        const result = updateMuscleGroupSchema.safeParse({ name: 'Updated' })
+        expect(result.success).toBe(true)
+    })
+})
+
+// ─── Week Schema ──────────────────────────────────────────────────────────────
+
+import { weekConfigSchema, updateWeekSchema } from '@/schemas/week'
+
+describe('weekConfigSchema', () => {
+    it('accepts normal week type', () => {
+        const result = weekConfigSchema.safeParse({ weekType: 'normal', feedbackRequested: false })
+        expect(result.success).toBe(true)
+    })
+
+    it('accepts test week type', () => {
+        const result = weekConfigSchema.safeParse({ weekType: 'test', feedbackRequested: true })
+        expect(result.success).toBe(true)
+    })
+
+    it('accepts deload week type', () => {
+        const result = weekConfigSchema.safeParse({ weekType: 'deload', feedbackRequested: false })
+        expect(result.success).toBe(true)
+    })
+
+    it('rejects invalid week type', () => {
+        const result = weekConfigSchema.safeParse({ weekType: 'invalid', feedbackRequested: false })
+        expect(result.success).toBe(false)
+    })
+
+    it('defaults feedbackRequested to false', () => {
+        const result = weekConfigSchema.safeParse({ weekType: 'normal' })
+        expect(result.success).toBe(true)
+        if (result.success) {
+            expect(result.data.feedbackRequested).toBe(false)
+        }
+    })
+})
+
+describe('updateWeekSchema', () => {
+    it('accepts partial update with only weekType', () => {
+        const result = updateWeekSchema.safeParse({ weekType: 'deload' })
+        expect(result.success).toBe(true)
+    })
+
+    it('accepts empty object', () => {
+        const result = updateWeekSchema.safeParse({})
+        expect(result.success).toBe(true)
+    })
+})
+
+// ─── WorkoutExercise Schema ───────────────────────────────────────────────────
+
+import {
+    workoutExerciseSchema,
+    updateWorkoutExerciseSchema,
+    bulkWorkoutExercisesSchema,
+} from '@/schemas/workout-exercise'
+
+const validWorkoutExercise = {
+    exerciseId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+    sets: 3,
+    reps: 8,
+    weightType: 'absolute' as const,
+    restTime: 'm2' as const,
+    isWarmup: false,
+    order: 1,
+}
+
+describe('workoutExerciseSchema', () => {
+    it('accepts valid absolute weight exercise', () => {
+        const result = workoutExerciseSchema.safeParse(validWorkoutExercise)
+        expect(result.success).toBe(true)
+    })
+
+    it('accepts reps as range string', () => {
+        const result = workoutExerciseSchema.safeParse({ ...validWorkoutExercise, reps: '8-10' })
+        expect(result.success).toBe(true)
+    })
+
+    it('accepts reps as drop string', () => {
+        const result = workoutExerciseSchema.safeParse({ ...validWorkoutExercise, reps: '6/8' })
+        expect(result.success).toBe(true)
+    })
+
+    it('rejects percentage weight type without weight value', () => {
+        const result = workoutExerciseSchema.safeParse({
+            ...validWorkoutExercise,
+            weightType: 'percentage_1rm',
+        })
+        expect(result.success).toBe(false)
+    })
+
+    it('accepts percentage weight type with weight value', () => {
+        const result = workoutExerciseSchema.safeParse({
+            ...validWorkoutExercise,
+            weightType: 'percentage_1rm',
+            weight: 80,
+        })
+        expect(result.success).toBe(true)
+    })
+
+    it('rejects sets less than 1', () => {
+        const result = workoutExerciseSchema.safeParse({ ...validWorkoutExercise, sets: 0 })
+        expect(result.success).toBe(false)
+    })
+
+    it('rejects sets more than 20', () => {
+        const result = workoutExerciseSchema.safeParse({ ...validWorkoutExercise, sets: 21 })
+        expect(result.success).toBe(false)
+    })
+
+    it('rejects invalid exerciseId UUID', () => {
+        const result = workoutExerciseSchema.safeParse({ ...validWorkoutExercise, exerciseId: 'not-uuid' })
+        expect(result.success).toBe(false)
+    })
+
+    it('rejects invalid restTime', () => {
+        const result = workoutExerciseSchema.safeParse({ ...validWorkoutExercise, restTime: 'm10' })
+        expect(result.success).toBe(false)
+    })
+
+    it('rejects RPE outside 5-10 range', () => {
+        const result = workoutExerciseSchema.safeParse({ ...validWorkoutExercise, targetRpe: 4.5 })
+        expect(result.success).toBe(false)
+    })
+
+    it('accepts valid optional RPE', () => {
+        const result = workoutExerciseSchema.safeParse({ ...validWorkoutExercise, targetRpe: 8.5 })
+        expect(result.success).toBe(true)
+    })
+})
+
+describe('updateWorkoutExerciseSchema', () => {
+    it('accepts partial update with id', () => {
+        const result = updateWorkoutExerciseSchema.safeParse({
+            id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+            sets: 4,
+        })
+        expect(result.success).toBe(true)
+    })
+})
+
+describe('bulkWorkoutExercisesSchema', () => {
+    it('accepts valid bulk with workoutId and exercises', () => {
+        const result = bulkWorkoutExercisesSchema.safeParse({
+            workoutId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+            exercises: [validWorkoutExercise],
+        })
+        expect(result.success).toBe(true)
+    })
+
+    it('rejects empty exercises array', () => {
+        const result = bulkWorkoutExercisesSchema.safeParse({
+            workoutId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+            exercises: [],
+        })
+        expect(result.success).toBe(false)
+    })
+})

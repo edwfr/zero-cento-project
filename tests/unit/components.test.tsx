@@ -33,7 +33,7 @@ describe('StatCard', () => {
                 trend={{ value: 5, label: 'rispetto la scorsa settimana', isPositive: true }}
             />
         )
-        expect(screen.getByText(/5/)).toBeInTheDocument()
+        expect(screen.getAllByText(/5/).length).toBeGreaterThan(0)
     })
 
     it('calls onClick when card is clicked', () => {

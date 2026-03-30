@@ -1,6 +1,6 @@
 # ✅ CHECKLIST SVILUPPO - ZeroCento Training Platform
 
-**Stato attuale:** ~75% completato (96h/129h - Sprint 1-4 + Sprint 7 + Sprint 5.1-5.4 completati)  
+**Stato attuale:** ~80% completato (99h/129h - Sprint 1-5 + Sprint 7 completati)  
 **Effort rimanente stimato:** ~36h  
 **Riferimenti:** [SYSTEM_REVIEW.md](../SYSTEM_REVIEW.md) · [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md) · [CHANGELOG.md](./CHANGELOG.md)
 
@@ -93,7 +93,7 @@
 - [x] **5.7** E2E test: login → redirect per ruolo (2h) ✅ _30 Mar 2026_
 - [x] **5.8** E2E test: trainer crea programma → pubblica → trainee lo vede (4h) ✅ _30 Mar 2026_
 - [x] **5.9** E2E test: trainee completa workout con feedback (3h) ✅ _30 Mar 2026_
-- [ ] **5.10** Raggiungere copertura minima 80% (3h refactor + gap fill)
+- [x] **5.10** Raggiungere copertura minima 80% (3h refactor + gap fill) ✅ _30 Mar 2026_
 
 ---
 
