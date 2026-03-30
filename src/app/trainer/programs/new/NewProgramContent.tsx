@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
@@ -13,6 +13,7 @@ interface Trainee {
 
 export default function NewProgramContent() {
     const router = useRouter()
+    const searchParams = useSearchParams()
     const [loading, setLoading] = useState(false)
     const [trainees, setTrainees] = useState<Trainee[]>([])
     const [error, setError] = useState<string | null>(null)
@@ -39,7 +40,11 @@ export default function NewProgramContent() {
             const activeTrainees = data.data.users.filter((t: any) => t.isActive)
             setTrainees(activeTrainees)
 
-            if (activeTrainees.length > 0) {
+            // Check if traineeId is provided in URL params
+            const urlTraineeId = searchParams.get('traineeId')
+            if (urlTraineeId && activeTrainees.some((t: Trainee) => t.id === urlTraineeId)) {
+                setTraineeId(urlTraineeId)
+            } else if (activeTrainees.length > 0) {
                 setTraineeId(activeTrainees[0].id)
             }
         } catch (err: any) {

@@ -19,6 +19,14 @@ Registro cronologico degli sviluppi effettuati.
 
 ## Storico
 
+### [30 Marzo 2026] — Completato Dettaglio Trainee con Creazione Programma (Sprint 4.4)
+
+**Task checklist:** #4.4  
+**File modificati:** `src/app/trainer/trainees/[id]/page.tsx`, `src/app/trainer/programs/new/NewProgramContent.tsx`  
+**Note:** Completato miglioramento della pagina Dettaglio Trainee per trainer. La pagina già esisteva ma mancava il pulsante per creare nuovi programmi secondo specifiche. Implementazioni: (1) **Pulsante "Crea Programma" sempre visibile** aggiunto nell'header della pagina, posizionato accanto al pulsante "Gestisci Massimali", con stile verde per differenziarlo; (2) **Pre-popolamento trainee nel form creazione** - il pulsante passa il parametro URL `?traineeId=${traineeId}` alla pagina di creazione programma, il componente NewProgramContent ora legge searchParams e se presente e valido pre-seleziona il trainee corretto nel dropdown; (3) **Aggiornato link empty state** - anche quando non ci sono programmi, il pulsante "Crea Nuovo Programma" ora passa il traineeId come parametro URL; (4) **UX migliorata** - il trainer può rapidamente creare un nuovo programma per uno specifico trainee direttamente dalla sua pagina profilo senza dover selezionare manualmente il trainee dal dropdown. Funzionalità già presenti e mantenute: anagrafica trainee (nome, email, status), lista completa programmi con storico (tabella con titolo, stato, durata, data inizio), statistiche aggregate (programmi totali, programmi attivi, massimali registrati), tabs per programmi e massimali, tabella massimali con calcolo 1RM stimato via formula Brzycki, link diretto pagina gestione massimali. Tutte le API esistenti (`GET /api/users/[id]`, `GET /api/programs?traineeId=...`, `GET /api/personal-records?traineeId=...`) già implementate e funzionanti con RBAC corretto (trainer vede solo i propri trainee).
+
+---
+
 ### [30 Marzo 2026] — Completato Reports Programma con Distribuzione RPE (Sprint 4.3)
 
 **Task checklist:** #4.3  
