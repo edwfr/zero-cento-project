@@ -123,6 +123,50 @@ export async function GET(
             })
         )
 
+        // Calculate weekly statistics for charts
+        const weeklyStats = program.weeks.map((week) => {
+            const weekWorkouts = week.workouts
+            const weekFeedbacks = weekWorkouts
+                .flatMap((w) => w.workoutExercises)
+                .flatMap((ex) => ex.exerciseFeedbacks)
+
+            // Calculate volume for this week
+            const weekVolume = weekFeedbacks.reduce((sum, f) => {
+                const feedbackVolume = f.setsPerformed.reduce(
+                    (setSum, set) => setSum + set.reps * set.weight,
+                    0
+                )
+                return sum + feedbackVolume
+            }, 0)
+
+            // Calculate avg RPE for this week
+            const weekRpeValues = weekFeedbacks
+                .filter((f) => f.actualRpe !== null)
+                .map((f) => f.actualRpe!)
+            const weekAvgRPE =
+                weekRpeValues.length > 0
+                    ? weekRpeValues.reduce((a, b) => a + b, 0) / weekRpeValues.length
+                    : null
+
+            // Count completed workouts for this week
+            const weekCompletedWorkouts = weekWorkouts.filter((w) => {
+                return (
+                    w.workoutExercises.length > 0 &&
+                    w.workoutExercises.every((ex) => ex.exerciseFeedbacks.length > 0)
+                )
+            }).length
+
+            return {
+                weekNumber: week.weekNumber,
+                weekType: week.weekType,
+                totalVolume: Math.round(weekVolume),
+                avgRPE: weekAvgRPE !== null ? Math.round(weekAvgRPE * 10) / 10 : null,
+                completedWorkouts: weekCompletedWorkouts,
+                totalWorkouts: weekWorkouts.length,
+                feedbackCount: weekFeedbacks.length,
+            }
+        })
+
         return apiSuccess({
             programId: program.id,
             programName: program.title,
@@ -135,6 +179,7 @@ export async function GET(
             avgRPE: avgRPE !== null ? Math.round(avgRPE * 10) / 10 : null,
             totalVolume: Math.round(totalVolume),
             workouts: workoutsList,
+            weeklyStats,
         })
     } catch (error: any) {
         if (error instanceof Response) return error

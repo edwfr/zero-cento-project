@@ -19,6 +19,15 @@ Registro cronologico degli sviluppi effettuati.
 
 ## Storico
 
+### [30 Marzo 2026] — Completato Progress Programma con Grafici (Sprint 4.2)
+
+**Task checklist:** #4.2  
+**File modificati:** `src/app/trainer/programs/[id]/progress/page.tsx`, `src/app/api/programs/[id]/progress/route.ts`  
+**Dipendenze aggiunte:** `recharts` (libreria grafici React)  
+**Note:** Implementata dashboard completa di monitoraggio progresso programma con statistiche settimanali e visualizzazioni grafiche. Miglioramenti implementati: (1) **API enhancement** - aggiunto calcolo `weeklyStats` nell'endpoint GET `/api/programs/[id]/progress` che include per ogni settimana: volume totale, RPE medio, workout completati/totali, count feedback, tipo settimana; (2) **Grafici interattivi** con recharts - Line chart "Volume per Settimana" (kg sollevati totali), Line chart "RPE Medio per Settimana" (percezione sforzo), Bar chart "Completamento Allenamenti" (completati vs totali per settimana); (3) **KPI cards** già presenti con statistiche aggregate: settimana corrente, allenamenti completati con percentuale, RPE medio complessivo, volume totale; (4) **Progress bar** visuale per completamento programma; (5) **Filtro settimane** per tabella workout dettagliata; (6) **Quick stats panels** con status programma, feedback count, performance metrics; (7) **Grafici responsive** - tutti i chart usano ResponsiveContainer per adattarsi a mobile/desktop; (8) **Colori brand-consistent** - arancione (#FFA700) per RPE, viola (#8b5cf6) per volume, verde (#10b981) per completati; (9) **Tooltip informativi** con formatter per unità misura (kg, RPE decimale); (10) **Gestione edge cases** - filtro RPE chart per escludere settimane senza feedback, graceful handling dati mancanti. La pagina fornisce al trainer una vista completa e visuale del progresso dell'atleta con trend nel tempo per volume e intensità (RPE).
+
+---
+
 ### [30 Marzo 2026] — Implementato Edit Esercizio (Sprint 4.1)
 
 **Task checklist:** #4.1  

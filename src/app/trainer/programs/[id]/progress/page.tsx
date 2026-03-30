@@ -5,6 +5,28 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ProgressBar from '@/components/ProgressBar'
+import {
+    LineChart,
+    Line,
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    Legend,
+    ResponsiveContainer,
+} from 'recharts'
+
+interface WeeklyStat {
+    weekNumber: number
+    weekType: 'loading' | 'deload' | 'test'
+    totalVolume: number
+    avgRPE: number | null
+    completedWorkouts: number
+    totalWorkouts: number
+    feedbackCount: number
+}
 
 interface ProgressData {
     programId: string
@@ -25,6 +47,7 @@ interface ProgressData {
         completed: boolean
         feedbackCount: number
     }>
+    weeklyStats: WeeklyStat[]
 }
 
 export default function ProgramProgressPage() {
@@ -162,6 +185,145 @@ export default function ProgramProgressPage() {
                         color="success"
                     />
                 </div>
+
+                {/* Charts Section */}
+                {progress.weeklyStats && progress.weeklyStats.length > 0 && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                        {/* Volume per Settimana */}
+                        <div className="bg-white rounded-lg shadow-md p-6">
+                            <h2 className="text-lg font-bold text-gray-900 mb-4">
+                                📊 Volume per Settimana
+                            </h2>
+                            <div className="h-64">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={progress.weeklyStats}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis
+                                            dataKey="weekNumber"
+                                            label={{
+                                                value: 'Settimana',
+                                                position: 'insideBottom',
+                                                offset: -5,
+                                            }}
+                                        />
+                                        <YAxis
+                                            label={{
+                                                value: 'Volume (kg)',
+                                                angle: -90,
+                                                position: 'insideLeft',
+                                            }}
+                                        />
+                                        <Tooltip
+                                            formatter={(value: number | string | undefined) =>
+                                                value ? `${Number(value).toLocaleString()} kg` : '0 kg'
+                                            }
+                                            labelFormatter={(label) => `Settimana ${label}`}
+                                        />
+                                        <Legend />
+                                        <Line
+                                            type="monotone"
+                                            dataKey="totalVolume"
+                                            stroke="#8b5cf6"
+                                            strokeWidth={2}
+                                            name="Volume Totale"
+                                            dot={{ fill: '#8b5cf6', r: 4 }}
+                                            activeDot={{ r: 6 }}
+                                        />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        {/* RPE Medio per Settimana */}
+                        <div className="bg-white rounded-lg shadow-md p-6">
+                            <h2 className="text-lg font-bold text-gray-900 mb-4">
+                                🎯 RPE Medio per Settimana
+                            </h2>
+                            <div className="h-64">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart
+                                        data={progress.weeklyStats.filter((w) => w.avgRPE !== null)}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis
+                                            dataKey="weekNumber"
+                                            label={{
+                                                value: 'Settimana',
+                                                position: 'insideBottom',
+                                                offset: -5,
+                                            }}
+                                        />
+                                        <YAxis
+                                            domain={[0, 10]}
+                                            label={{
+                                                value: 'RPE',
+                                                angle: -90,
+                                                position: 'insideLeft',
+                                            }}
+                                        />
+                                        <Tooltip
+                                            formatter={(value: number | string | undefined) =>
+                                                value ? Number(value).toFixed(1) : '0'
+                                            }
+                                            labelFormatter={(label) => `Settimana ${label}`}
+                                        />
+                                        <Legend />
+                                        <Line
+                                            type="monotone"
+                                            dataKey="avgRPE"
+                                            stroke="#FFA700"
+                                            strokeWidth={2}
+                                            name="RPE Medio"
+                                            dot={{ fill: '#FFA700', r: 4 }}
+                                            activeDot={{ r: 6 }}
+                                        />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        {/* Completamento Workout per Settimana */}
+                        <div className="bg-white rounded-lg shadow-md p-6 lg:col-span-2">
+                            <h2 className="text-lg font-bold text-gray-900 mb-4">
+                                ✅ Completamento Allenamenti per Settimana
+                            </h2>
+                            <div className="h-64">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={progress.weeklyStats}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis
+                                            dataKey="weekNumber"
+                                            label={{
+                                                value: 'Settimana',
+                                                position: 'insideBottom',
+                                                offset: -5,
+                                            }}
+                                        />
+                                        <YAxis
+                                            label={{
+                                                value: 'Allenamenti',
+                                                angle: -90,
+                                                position: 'insideLeft',
+                                            }}
+                                        />
+                                        <Tooltip labelFormatter={(label) => `Settimana ${label}`} />
+                                        <Legend />
+                                        <Bar
+                                            dataKey="completedWorkouts"
+                                            fill="#10b981"
+                                            name="Completati"
+                                        />
+                                        <Bar
+                                            dataKey="totalWorkouts"
+                                            fill="#e5e7eb"
+                                            name="Totali"
+                                        />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Week Filter */}
                 <div className="bg-white rounded-lg shadow-md p-6 mb-6">
