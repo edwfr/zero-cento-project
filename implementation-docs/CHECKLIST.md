@@ -133,6 +133,61 @@
 
 ---
 
+## Sprint 9 — Header Globale su Tutte le Schermate (~9h)
+
+> **Obiettivo:** Ogni schermata autenticata deve wrappare il contenuto in `<DashboardLayout>` per mostrare logo, nome app, hamburger menu, e navigazione a tendina. Le pagine di autenticazione (login, forgot-password, reset-password) e le pagine di sistema (root redirect, offline) sono **escluse** intenzionalmente.
+
+### Schermate Trainee (5)
+
+- [ ] **9.1** `trainee/dashboard` — Aggiungere `DashboardLayout` (1h)  
+      File: `src/app/trainee/dashboard/page.tsx`
+- [ ] **9.2** `trainee/history` — Aggiungere `DashboardLayout` (0.5h)  
+      File: `src/app/trainee/history/page.tsx`
+- [ ] **9.3** `trainee/programs/current` — Aggiungere `DashboardLayout` (0.5h)  
+      File: `src/app/trainee/programs/current/page.tsx`
+- [ ] **9.4** `trainee/records` — Aggiungere `DashboardLayout` (0.5h)  
+      File: `src/app/trainee/records/page.tsx`
+- [ ] **9.5** `trainee/workouts/[id]` — Aggiungere `DashboardLayout` (0.5h)  
+      File: `src/app/trainee/workouts/[id]/page.tsx`
+
+### Schermate Trainer (12)
+
+- [ ] **9.6** `trainer/exercises/new` — Aggiungere `DashboardLayout` (0.5h)  
+      File: `src/app/trainer/exercises/new/page.tsx`
+- [ ] **9.7** `trainer/exercises/[id]/edit` — Aggiungere `DashboardLayout` (0.5h)  
+      File: `src/app/trainer/exercises/[id]/edit/page.tsx`
+- [ ] **9.8** `trainer/programs` (lista programmi) — Aggiungere `DashboardLayout` (0.5h)  
+      File: `src/app/trainer/programs/page.tsx`
+- [ ] **9.9** `trainer/programs/[id]/edit` — Aggiungere `DashboardLayout` (0.5h)  
+      File: `src/app/trainer/programs/[id]/edit/page.tsx`
+- [ ] **9.10** `trainer/programs/[id]/progress` — Aggiungere `DashboardLayout` (0.5h)  
+      File: `src/app/trainer/programs/[id]/progress/page.tsx`
+- [ ] **9.11** `trainer/programs/[id]/publish` — Aggiungere `DashboardLayout` (0.5h)  
+      File: `src/app/trainer/programs/[id]/publish/page.tsx`
+- [ ] **9.12** `trainer/programs/[id]/reports` — Aggiungere `DashboardLayout` (0.5h)  
+      File: `src/app/trainer/programs/[id]/reports/page.tsx`
+- [ ] **9.13** `trainer/programs/[id]/workouts/[wId]` — Aggiungere `DashboardLayout` (0.5h)  
+      File: `src/app/trainer/programs/[id]/workouts/[wId]/page.tsx`
+- [ ] **9.14** `trainer/trainees` (lista atleti) — Aggiungere `DashboardLayout` (0.5h)  
+      File: `src/app/trainer/trainees/page.tsx`
+- [ ] **9.15** `trainer/trainees/new` — Aggiungere `DashboardLayout` (0.5h)  
+      File: `src/app/trainer/trainees/new/page.tsx`
+- [ ] **9.16** `trainer/trainees/[id]` (dettaglio atleta) — Aggiungere `DashboardLayout` (0.5h)  
+      File: `src/app/trainer/trainees/[id]/page.tsx`
+- [ ] **9.17** `trainer/trainees/[id]/records` — Aggiungere `DashboardLayout` (0.5h)  
+      File: `src/app/trainer/trainees/[id]/records/page.tsx`
+
+### Schermate Profilo (1)
+
+- [ ] **9.18** `profile/change-password` — Aggiungere `DashboardLayout` (0.5h)  
+      File: `src/app/profile/change-password/page.tsx`
+
+> **Note implementative:** `DashboardLayout` richiede la prop `user: { id, email, firstName, lastName, role }`.  
+> Recuperare l'utente da Supabase (`createClient().auth.getUser()`) all'inizio di ogni pagina.  
+> Schermate già OK: `admin/*`, `trainer/dashboard`, `trainer/exercises`, `trainer/programs/new`, `profile`.
+
+---
+
 ## Riepilogo per priorità
 
 | Priorità   | Sprint   | Task        | Effort stimato |
@@ -145,7 +200,8 @@
 | 🟡 Medio    | Sprint 6 | 6.1–6.7     | ~5h            |
 | 🟡 Medio    | Sprint 7 | 7.1–7.6     | ~23h           |
 | 🔵 Basso    | Sprint 8 | 8.1–8.7     | ~11h           |
-| **Totale** |          | **49 task** | **~129h**      |
+| 🟠 Alto     | Sprint 9 | 9.1–9.18    | ~9h            |
+| **Totale** |          | **67 task** | **~138h**      |
 
 ---
 
