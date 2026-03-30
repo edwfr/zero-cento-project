@@ -276,6 +276,47 @@ export async function GET(
             mp.percentage = totalMPVolume > 0 ? Math.round((mp.volume / totalMPVolume) * 100) : 0
         })
 
+        // --- RPE DISTRIBUTION ---
+        const rpeDistribution: Record<string, number> = {
+            '6.0-6.5': 0,
+            '7.0-7.5': 0,
+            '8.0-8.5': 0,
+            '9.0-10.0': 0,
+        }
+
+        allWorkoutExercises.forEach((we) => {
+            if (we.isWarmup) return
+
+            we.exerciseFeedbacks.forEach((fb: any) => {
+                if (fb.actualRpe === null) return
+
+                const rpe = fb.actualRpe
+                // Each feedback has multiple sets performed
+                const setsCount = fb.setsPerformed.length
+
+                if (rpe >= 6.0 && rpe < 7.0) {
+                    rpeDistribution['6.0-6.5'] += setsCount
+                } else if (rpe >= 7.0 && rpe < 8.0) {
+                    rpeDistribution['7.0-7.5'] += setsCount
+                } else if (rpe >= 8.0 && rpe < 9.0) {
+                    rpeDistribution['8.0-8.5'] += setsCount
+                } else if (rpe >= 9.0 && rpe <= 10.0) {
+                    rpeDistribution['9.0-10.0'] += setsCount
+                }
+            })
+        })
+
+        const rpeDistributionReport = Object.entries(rpeDistribution).map(([range, count]) => ({
+            range,
+            count,
+        }))
+
+        const totalRPESets = rpeDistributionReport.reduce((sum, item) => sum + item.count, 0)
+
+        rpeDistributionReport.forEach((item: any) => {
+            item.percentage = totalRPESets > 0 ? Math.round((item.count / totalRPESets) * 100) : 0
+        })
+
         logger.info({ programId, userId: session.user.id }, 'Program reports fetched successfully')
 
         return apiSuccess({
@@ -285,6 +326,7 @@ export async function GET(
             sbd: sbdReport,
             muscleGroups: muscleGroupReport,
             movementPatterns: movementPatternReport,
+            rpeDistribution: rpeDistributionReport,
         })
     } catch (error: any) {
         if (error instanceof Response) return error

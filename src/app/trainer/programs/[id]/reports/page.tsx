@@ -26,6 +26,12 @@ interface MovementPatternEntry {
     percentage: number
 }
 
+interface RPEDistributionEntry {
+    range: string
+    count: number
+    percentage: number
+}
+
 interface ReportData {
     programId: string
     programName: string
@@ -41,6 +47,7 @@ interface ReportData {
     }
     muscleGroups: MuscleGroupEntry[]
     movementPatterns: MovementPatternEntry[]
+    rpeDistribution: RPEDistributionEntry[]
 }
 
 const SBD_LABELS: Record<string, string> = {
@@ -284,6 +291,56 @@ export default function ProgramReportsPage() {
                             </div>
                         )}
                     </div>
+                </div>
+
+                {/* RPE Distribution */}
+                <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+                    <h2 className="text-xl font-bold text-gray-900 mb-6">
+                        🎯 Distribuzione RPE
+                    </h2>
+                    {report.rpeDistribution.every((item) => item.count === 0) ? (
+                        <p className="text-gray-500 text-sm">Nessun dato RPE disponibile</p>
+                    ) : (
+                        <div className="space-y-4">
+                            {report.rpeDistribution.map((item) => {
+                                // Color coding based on RPE range
+                                const getColor = (range: string) => {
+                                    if (range === '6.0-6.5') return 'bg-green-500'
+                                    if (range === '7.0-7.5') return 'bg-yellow-500'
+                                    if (range === '8.0-8.5') return 'bg-orange-500'
+                                    if (range === '9.0-10.0') return 'bg-red-500'
+                                    return 'bg-gray-500'
+                                }
+
+                                const getLabel = (range: string) => {
+                                    if (range === '6.0-6.5') return 'RPE 6.0-6.5 (Facile)'
+                                    if (range === '7.0-7.5') return 'RPE 7.0-7.5 (Moderato)'
+                                    if (range === '8.0-8.5') return 'RPE 8.0-8.5 (Impegnativo)'
+                                    if (range === '9.0-10.0') return 'RPE 9.0-10.0 (Massimale)'
+                                    return range
+                                }
+
+                                return (
+                                    <div key={item.range}>
+                                        <div className="flex items-center justify-between mb-1">
+                                            <span className="text-sm font-semibold text-gray-700">
+                                                {getLabel(item.range)}
+                                            </span>
+                                            <span className="text-sm text-gray-600">
+                                                {item.count} serie ({item.percentage}%)
+                                            </span>
+                                        </div>
+                                        <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                                            <div
+                                                className={`${getColor(item.range)} h-4 rounded-full transition-all duration-500`}
+                                                style={{ width: `${item.percentage}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

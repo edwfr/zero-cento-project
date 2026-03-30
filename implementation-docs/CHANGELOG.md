@@ -19,6 +19,14 @@ Registro cronologico degli sviluppi effettuati.
 
 ## Storico
 
+### [30 Marzo 2026] — Completato Reports Programma con Distribuzione RPE (Sprint 4.3)
+
+**Task checklist:** #4.3  
+**File modificati:** `src/app/trainer/programs/[id]/reports/page.tsx`, `src/app/api/programs/[id]/reports/route.ts`  
+**Note:** Completata implementazione della pagina Reports Programma con tutte le analitiche richieste: SBD, Volume per Muscle Group, e **Distribuzione RPE**. L'implementazione include: (1) **Backend - Distribuzione RPE** aggiunta all'endpoint GET `/api/programs/[id]/reports` che calcola il numero di serie eseguite per range RPE: 6.0-6.5 (Facile), 7.0-7.5 (Moderato), 8.0-8.5 (Impegnativo), 9.0-10.0 (Massimale), con percentuali relative sul totale serie con RPE registrato; (2) **Frontend - Visualizzazione distribuzione RPE** con barre colorate: verde per RPE 6.0-6.5, giallo per 7.0-7.5, arancione per 8.0-8.5, rosso per 9.0-10.0, mostra numero serie e percentuale per ciascun range; (3) **Report SBD già esistente** con analisi separata per Squat, Bench Press, Deadlift: volume totale (kg), serie eseguite, intensità media (% 1RM calcolata da personal records), RPE medio per lift con colori basati su intensità; (4) **Gruppi muscolari già esistente** con serie ponderate per coefficiente, percentuale relativa sul totale, visualizzazione con progress bar arancione; (5) **Movement patterns già esistente** con volume totale per schema motorio (kg), percentuale relativa, progress bar viola; (6) **Summary cards** con metriche aggregate: volume totale SBD, serie totali SBD, numero lifts SBD con dati; (7) **RBAC completo** - trainer può vedere solo propri programmi, trainee i programmi assegnati, admin tutti; (8) **Gestione dati mancanti** - graceful handling quando non ci sono feedback registrati o personal records non disponibili (mostra "—" o messaggi "Nessun dato"). La distribuzione RPE fornisce insight rapidi sull'intensità complessiva del programma e aiuta il trainer a validare se la distribuzione dei carichi è bilanciata.
+
+---
+
 ### [30 Marzo 2026] — Completato Progress Programma con Grafici (Sprint 4.2)
 
 **Task checklist:** #4.2  
