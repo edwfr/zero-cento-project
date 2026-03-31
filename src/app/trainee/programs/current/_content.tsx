@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { SkeletonDashboard } from '@/components'
+import { TrendingUp, Wind } from 'lucide-react'
 import { formatDate } from '@/lib/date-format'
 
 interface Workout {
@@ -154,8 +155,8 @@ export default function CurrentProgramContent() {
                                             }`}
                                     >
                                         {week.weekType === 'loading'
-                                            ? '📈 Loading'
-                                            : '🧘 Deload'}
+                                            ? <><TrendingUp className="w-3 h-3 inline mr-1" />Loading</>
+                                            : <><Wind className="w-3 h-3 inline mr-1" />Deload</>}
                                     </span>
                                     {weekCompleted && (
                                         <span className="text-green-600 text-sm font-semibold">

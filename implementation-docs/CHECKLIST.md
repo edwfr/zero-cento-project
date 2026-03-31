@@ -371,27 +371,27 @@
 
 ### Pagine Trainee
 
-- [ ] **10.21** `trainee/dashboard/_content.tsx` — sostituire emoji inline (0.25h)  
+- [x] **10.21** `trainee/dashboard/_content.tsx` — sostituire emoji inline (0.25h)  
   File: `src/app/trainee/dashboard/_content.tsx`  
   Rimozione: `💪` (empty state hero), `🏆` `📊` `👤` `📅` nelle `StatCard`  
   Mapping: `💪` → `<Dumbbell />` + classe CSS `w-16 h-16`
 
-- [ ] **10.22** `trainee/history/_content.tsx` — sostituire emoji empty state (0.25h)  
+- [x] **10.22** `trainee/history/_content.tsx` — sostituire emoji empty state (0.25h)  
   File: `src/app/trainee/history/_content.tsx`  
   Rimozione: `📋` (empty state `text-5xl`)  
   Mapping: `📋` → `<ClipboardList />` + classe `w-16 h-16 text-gray-300`
 
-- [ ] **10.23** `trainee/records/_content.tsx` — sostituire emoji empty state (0.25h)  
+- [x] **10.23** `trainee/records/_content.tsx` — sostituire emoji empty state (0.25h)  
   File: `src/app/trainee/records/_content.tsx`  
   Rimozione: `📊` (empty state `text-5xl`)  
   Mapping: `📊` → `<BarChart2 />` + classe `w-16 h-16 text-gray-300`
 
-- [ ] **10.24** `trainee/programs/current/_content.tsx` — sostituire emoji week type (0.25h)  
+- [x] **10.24** `trainee/programs/current/_content.tsx` — sostituire emoji week type (0.25h)  
   File: `src/app/trainee/programs/current/_content.tsx`  
   Rimozione: `📈` nel badge week type "Loading"  
   Mapping: `📈` → `<TrendingUp />`
 
-- [ ] **10.25** `trainee/workouts/[id]/_content.tsx` — sostituire emoji inline (0.25h)  
+- [x] **10.25** `trainee/workouts/[id]/_content.tsx` — sostituire emoji inline (0.25h)  
   File: `src/app/trainee/workouts/[id]/_content.tsx`  
   Rimozione: `📝` (note esercizio)  
   Mapping: `📝` → `<FileText />`

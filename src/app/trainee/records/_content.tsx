@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { SkeletonTable } from '@/components'
+import { BarChart2 } from 'lucide-react'
 import { formatDate } from '@/lib/date-format'
 
 interface PersonalRecord {
@@ -116,7 +117,7 @@ export default function PersonalRecordsContent() {
 
             {records.length === 0 ? (
                 <div className="bg-white rounded-lg shadow-md p-12 text-center">
-                    <div className="text-5xl mb-4">📊</div>
+                    <div className="mb-4"><BarChart2 className="w-16 h-16 mx-auto text-gray-300" /></div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-4">
                         {t('records.noRecords')}
                     </h2>

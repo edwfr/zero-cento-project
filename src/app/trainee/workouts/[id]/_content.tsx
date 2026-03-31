@@ -6,6 +6,7 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { SkeletonDetail } from '@/components'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import { FileText } from 'lucide-react'
 import YoutubeEmbed from '@/components/YoutubeEmbed'
 import { useSwipe } from '@/lib/useSwipe'
 import { useToast } from '@/components/ToastNotification'
@@ -559,7 +560,7 @@ export default function WorkoutDetailContent() {
 
                                             {we.notes && (
                                                 <p className="text-sm text-gray-600 mt-3 italic">
-                                                    📝 {we.notes}
+                                                    <FileText className="w-4 h-4 inline mr-1" />{we.notes}
                                                 </p>
                                             )}
                                         </div>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { NavigationCard, ProgressBar, SkeletonDashboard } from '@/components'
+import { Dumbbell, Trophy, BarChart2, User, CalendarDays } from 'lucide-react'
 import { formatDate } from '@/lib/date-format'
 
 interface ActiveProgram {
@@ -111,7 +112,7 @@ export default function TraineeDashboardContent() {
                 <h1 className="text-3xl font-bold text-gray-900 mb-8">{t('trainee:dashboard.title')}</h1>
 
                 <div className="bg-white rounded-lg shadow-md p-12 text-center mb-8">
-                    <div className="text-6xl mb-6">💪</div>
+                    <div className="mb-6"><Dumbbell className="w-16 h-16 mx-auto text-gray-400" /></div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-4">
                         {t('trainee:dashboard.noActiveProgram')}
                     </h2>
@@ -250,28 +251,28 @@ export default function TraineeDashboardContent() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <NavigationCard
                         href="/trainee/programs/current"
-                        icon="📅"
+                        icon={<CalendarDays className="w-6 h-6" />}
                         title={t('navigation:navigation.activeProgram')}
                         description={t('trainee:dashboard.activeProgramDesc')}
                         color="primary"
                     />
                     <NavigationCard
                         href="/trainee/records"
-                        icon="🏆"
+                        icon={<Trophy className="w-6 h-6" />}
                         title={t('navigation:navigation.myRecords')}
                         description={t('trainee:dashboard.recordsDescription')}
                         color="yellow"
                     />
                     <NavigationCard
                         href="/trainee/history"
-                        icon="📊"
+                        icon={<BarChart2 className="w-6 h-6" />}
                         title={t('navigation:navigation.trainingHistory')}
                         description={t('trainee:dashboard.viewCompleted')}
                         color="blue"
                     />
                     <NavigationCard
                         href="/trainee/profile"
-                        icon="👤"
+                        icon={<User className="w-6 h-6" />}
                         title={t('navigation:navigation.myProfile')}
                         description={t('trainee:dashboard.profileDescription')}
                         color="secondary"
