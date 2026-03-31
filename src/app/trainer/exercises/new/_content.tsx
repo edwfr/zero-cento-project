@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslation } from 'react-i18next'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
 interface MuscleGroup {
@@ -22,6 +23,7 @@ interface MuscleGroupInput {
 
 export default function NewExerciseContent() {
     const router = useRouter()
+    const { t } = useTranslation('trainer')
     const [loading, setLoading] = useState(false)
     const [muscleGroups, setMuscleGroups] = useState<MuscleGroup[]>([])
     const [movementPatterns, setMovementPatterns] = useState<MovementPattern[]>([])
@@ -56,8 +58,8 @@ export default function NewExerciseContent() {
             if (mpData.data.items.length > 0) {
                 setMovementPatternId(mpData.data.items[0].id)
             }
-        } catch (err: any) {
-            setError('Errore nel caricamento dati')
+        } catch (err: unknown) {
+            setError(t('exercises.loadingDataError'))
         }
     }
 
@@ -88,22 +90,22 @@ export default function NewExerciseContent() {
 
         // Validation
         if (!name.trim()) {
-            setError('Il nome è obbligatorio')
+            setError(t('exercises.nameRequired'))
             return
         }
 
         if (!movementPatternId) {
-            setError('Seleziona uno schema motorio')
+            setError(t('exercises.movementPatternRequired'))
             return
         }
 
         if (selectedMuscleGroups.length === 0) {
-            setError('Aggiungi almeno un gruppo muscolare')
+            setError(t('exercises.addMuscleGroup'))
             return
         }
 
         if (totalCoefficient > 1.0) {
-            setError('La somma dei coefficienti non può superare 1.0')
+            setError(t('exercises.coefficientError'))
             return
         }
 
@@ -127,13 +129,13 @@ export default function NewExerciseContent() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || 'Errore nella creazione esercizio')
+                throw new Error(data.error?.message || t('exercises.createError'))
             }
 
             // Redirect to exercises list
             router.push('/trainer/exercises')
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : t('exercises.createError'))
             setLoading(false)
         }
     }
@@ -146,10 +148,10 @@ export default function NewExerciseContent() {
                     href="/trainer/exercises"
                     className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
                 >
-                    ← Torna alla libreria
+                    {t('exercises.backToLibrary')}
                 </Link>
-                <h1 className="text-3xl font-bold text-gray-900">Nuovo Esercizio</h1>
-                <p className="text-gray-600 mt-2">Crea un nuovo esercizio per la tua libreria</p>
+                <h1 className="text-3xl font-bold text-gray-900">{t('exercises.newExerciseTitle')}</h1>
+                <p className="text-gray-600 mt-2">{t('exercises.newExerciseDescription')}</p>
             </div>
 
             {/* Error */}
@@ -164,14 +166,14 @@ export default function NewExerciseContent() {
                 {/* Basic Info */}
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Nome Esercizio *
+                        {t('exercises.exerciseNameLabel')}
                     </label>
                     <input
                         type="text"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         disabled={loading}
-                        placeholder="es. Squat Back"
+                        placeholder={t('exercises.exerciseNamePlaceholder')}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                         required
                     />
@@ -179,13 +181,13 @@ export default function NewExerciseContent() {
 
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Descrizione
+                        {t('exercises.descriptionLabel')}
                     </label>
                     <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         disabled={loading}
-                        placeholder="Descrizione dell'esercizio..."
+                        placeholder={t('exercises.descriptionPlaceholder')}
                         rows={3}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                     />
@@ -193,7 +195,7 @@ export default function NewExerciseContent() {
 
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        URL Video YouTube
+                        {t('exercises.youtubeUrlLabel')}
                     </label>
                     <input
                         type="url"
@@ -207,7 +209,7 @@ export default function NewExerciseContent() {
 
                 {/* Type */}
                 <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Tipo *</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">{t('exercises.typeLabel')}</label>
                     <div className="flex space-x-4">
                         <label className="flex items-center">
                             <input
@@ -218,7 +220,7 @@ export default function NewExerciseContent() {
                                 disabled={loading}
                                 className="mr-2 disabled:cursor-not-allowed"
                             />
-                            <span>Fondamentale (SBD)</span>
+                            <span>{t('exercises.fundamentalSBD')}</span>
                         </label>
                         <label className="flex items-center">
                             <input
@@ -229,7 +231,7 @@ export default function NewExerciseContent() {
                                 disabled={loading}
                                 className="mr-2 disabled:cursor-not-allowed"
                             />
-                            <span>Accessorio</span>
+                            <span>{t('exercises.accessory')}</span>
                         </label>
                     </div>
                 </div>
@@ -237,7 +239,7 @@ export default function NewExerciseContent() {
                 {/* Movement Pattern */}
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Schema Motorio *
+                        {t('exercises.movementPattern')} *
                     </label>
                     <select
                         value={movementPatternId}
@@ -258,7 +260,7 @@ export default function NewExerciseContent() {
                 <div>
                     <div className="flex items-center justify-between mb-2">
                         <label className="block text-sm font-semibold text-gray-700">
-                            Gruppi Muscolari * (Totale: {totalCoefficient.toFixed(2)} / 1.0)
+                            {t('exercises.muscleGroupsTotal', { total: totalCoefficient.toFixed(2) })}
                         </label>
                         <button
                             type="button"
@@ -266,13 +268,13 @@ export default function NewExerciseContent() {
                             disabled={loading}
                             className="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                         >
-                            + Aggiungi
+                            {t('exercises.addButton')}
                         </button>
                     </div>
 
                     {selectedMuscleGroups.length === 0 ? (
                         <p className="text-gray-500 text-sm italic">
-                            Nessun gruppo muscolare aggiunto
+                            {t('exercises.noMuscleGroups')}
                         </p>
                     ) : (
                         <div className="space-y-2">
@@ -325,13 +327,13 @@ export default function NewExerciseContent() {
                 {/* Notes */}
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Note/Varianti
+                        {t('exercises.notesVariantsLabel')}
                     </label>
                     <textarea
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                         disabled={loading}
-                        placeholder="Note aggiuntive sull'esercizio..."
+                        placeholder={t('exercises.notesVariantsPlaceholder')}
                         rows={2}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                     />
@@ -344,13 +346,13 @@ export default function NewExerciseContent() {
                         disabled={loading}
                         className="flex-1 bg-[#FFA700] hover:bg-[#FF9500] disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
                     >
-                        {loading ? <LoadingSpinner size="sm" color="white" /> : 'Crea Esercizio'}
+                        {loading ? <LoadingSpinner size="sm" color="white" /> : t('exercises.createExercise')}
                     </button>
                     <Link
                         href="/trainer/exercises"
                         className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-lg text-center transition-colors"
                     >
-                        Annulla
+                        {t('exercises.cancel')}
                     </Link>
                 </div>
             </form>
