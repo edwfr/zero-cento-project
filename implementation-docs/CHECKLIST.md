@@ -181,7 +181,7 @@
 
 - [x] **9.18** `profile/change-password` — Aggiungere `DashboardLayout` (0.5h)  
       File: `src/app/profile/change-password/page.tsx` ✅ _31 Mar 2026_
-- [ ] **9.19** `trainer/exercises` — Refactoring per split client/server e `DashboardLayout` (0.5h)
+- [x] **9.19** `trainer/exercises` — Refactoring per split client/server e `DashboardLayout` (0.5h)
       File: `src/app/trainer/exercises/page.tsx`
 
 > **Note implementative:**
