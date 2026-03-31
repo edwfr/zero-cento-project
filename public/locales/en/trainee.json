@@ -1,5 +1,7 @@
 {
     "dashboard": {
+        "title": "Dashboard",
+        "welcome": "Welcome, here is your active program",
         "noActiveProgram": "No Active Program",
         "noActiveProgramDesc": "Your trainer hasn't assigned you a training program yet",
         "contactTrainer": "Contact them to start!",
@@ -7,7 +9,33 @@
         "myRecords": "My Personal Records",
         "recordsDescription": "View and update your personal records on each exercise",
         "viewCompleted": "View completed programs and past feedback",
-        "noCompletedPrograms": "No Completed Programs"
+        "noCompletedPrograms": "No Completed Programs",
+        "profileDescription": "Update your personal information and settings.",
+        "trainerWith": "with {{firstName}} {{lastName}}",
+        "viewFullProgram": "View Full Program",
+        "duration": "Duration",
+        "weeks": "{{count}} weeks",
+        "progression": "Progress",
+        "workoutsProgress": "{{completed}} / {{total}} workouts",
+        "completion": "Completion",
+        "nextWorkout": "Next Workout",
+        "workoutDay": "{{day}} - Week {{week}}",
+        "exercisesToComplete": "{{count}} exercises to complete",
+        "startWorkout": "Start Workout 🚀",
+        "sections": "Sections",
+        "activeProgramDesc": "View all weeks, workouts and exercises of your program.",
+        "latestRecords": "🏆 Latest Personal Records",
+        "viewAll": "View All →",
+        "reps": "x {{count}} reps",
+        "dayNames": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday"
+        ]
     },
     "workouts": {
         "nextExercise": "Next exercise",

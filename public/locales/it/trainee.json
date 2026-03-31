@@ -1,5 +1,7 @@
 {
     "dashboard": {
+        "title": "Dashboard",
+        "welcome": "Benvenuto, ecco il tuo programma attivo",
         "noActiveProgram": "Nessun Programma Attivo",
         "noActiveProgramDesc": "Il tuo trainer non ti ha ancora assegnato un programma di allenamento",
         "contactTrainer": "Contattalo per iniziare!",
@@ -7,7 +9,33 @@
         "myRecords": "I Miei Massimali",
         "recordsDescription": "Visualizza e aggiorna i tuoi personal record su ogni esercizio",
         "viewCompleted": "Consulta i programmi completati e i feedback passati",
-        "noCompletedPrograms": "Nessun Programma Completato"
+        "noCompletedPrograms": "Nessun Programma Completato",
+        "profileDescription": "Aggiorna le tue informazioni personali e le impostazioni.",
+        "trainerWith": "con {{firstName}} {{lastName}}",
+        "viewFullProgram": "Vedi Programma Completo",
+        "duration": "Durata",
+        "weeks": "{{count}} settimane",
+        "progression": "Progressione",
+        "workoutsProgress": "{{completed}} / {{total}} workout",
+        "completion": "Completamento",
+        "nextWorkout": "Prossimo Allenamento",
+        "workoutDay": "{{day}} - Settimana {{week}}",
+        "exercisesToComplete": "{{count}} esercizi da completare",
+        "startWorkout": "Inizia Workout 🚀",
+        "sections": "Sezioni",
+        "activeProgramDesc": "Visualizza tutte le settimane, i workout e gli esercizi del tuo programma.",
+        "latestRecords": "🏆 Ultimi Massimali",
+        "viewAll": "Vedi Tutti →",
+        "reps": "x {{count}} reps",
+        "dayNames": [
+            "Lunedì",
+            "Martedì",
+            "Mercoledì",
+            "Giovedì",
+            "Venerdì",
+            "Sabato",
+            "Domenica"
+        ]
     },
     "workouts": {
         "nextExercise": "Prossimo esercizio",

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useTranslation } from 'react-i18next'
 import { NavigationCard, ProgressBar, SkeletonDashboard } from '@/components'
 import { formatDate } from '@/lib/date-format'
 
@@ -37,9 +38,9 @@ interface PersonalRecord {
     achievedAt: string
 }
 
-const DAY_NAMES = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica']
-
 export default function TraineeDashboardContent() {
+    const { t } = useTranslation(['trainee', 'navigation'])
+    const dayNames = t('trainee:dashboard.dayNames', { returnObjects: true }) as string[]
     const [loading, setLoading] = useState(true)
     const [activeProgram, setActiveProgram] = useState<ActiveProgram | null>(null)
     const [nextWorkout, setNextWorkout] = useState<NextWorkout | null>(null)
@@ -107,23 +108,23 @@ export default function TraineeDashboardContent() {
     if (!activeProgram) {
         return (
             <div className="max-w-4xl mx-auto">
-                <h1 className="text-3xl font-bold text-gray-900 mb-8">Dashboard</h1>
+                <h1 className="text-3xl font-bold text-gray-900 mb-8">{t('trainee:dashboard.title')}</h1>
 
                 <div className="bg-white rounded-lg shadow-md p-12 text-center mb-8">
                     <div className="text-6xl mb-6">💪</div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                        Nessun Programma Attivo
+                        {t('trainee:dashboard.noActiveProgram')}
                     </h2>
                     <p className="text-gray-600 mb-6">
-                        Il tuo trainer non ti ha ancora assegnato un programma di allenamento.
+                        {t('trainee:dashboard.noActiveProgramDesc')}
                         <br />
-                        Contattalo per iniziare!
+                        {t('trainee:dashboard.contactTrainer')}
                     </p>
                     <Link
                         href="/trainee/records"
                         className="inline-block bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-3 rounded-lg transition-colors"
                     >
-                        Visualizza i Tuoi Massimali
+                        {t('trainee:dashboard.viewRecords')}
                     </Link>
                 </div>
 
@@ -132,22 +133,22 @@ export default function TraineeDashboardContent() {
                     <NavigationCard
                         href="/trainee/records"
                         icon="🏆"
-                        title="I Miei Massimali"
-                        description="Visualizza e aggiorna i tuoi personal record su ogni esercizio."
+                        title={t('navigation:navigation.myRecords')}
+                        description={t('trainee:dashboard.recordsDescription')}
                         color="yellow"
                     />
                     <NavigationCard
                         href="/trainee/history"
                         icon="📊"
-                        title="Storico Allenamenti"
-                        description="Consulta i programmi completati e i feedback passati."
+                        title={t('navigation:navigation.trainingHistory')}
+                        description={t('trainee:dashboard.viewCompleted')}
                         color="blue"
                     />
                     <NavigationCard
                         href="/trainee/profile"
                         icon="👤"
-                        title="Il Mio Profilo"
-                        description="Aggiorna le tue informazioni personali e le impostazioni."
+                        title={t('navigation:navigation.myProfile')}
+                        description={t('trainee:dashboard.profileDescription')}
                         color="secondary"
                     />
                 </div>
@@ -163,8 +164,8 @@ export default function TraineeDashboardContent() {
         <div className="max-w-6xl mx-auto">
             {/* Header */}
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-                <p className="text-gray-600 mt-2">Benvenuto, ecco il tuo programma attivo</p>
+                <h1 className="text-3xl font-bold text-gray-900">{t('trainee:dashboard.title')}</h1>
+                <p className="text-gray-600 mt-2">{t('trainee:dashboard.welcome')}</p>
             </div>
 
             {/* Active Program Hero */}
@@ -173,34 +174,38 @@ export default function TraineeDashboardContent() {
                     <div>
                         <h2 className="text-3xl font-bold mb-2">{activeProgram.title}</h2>
                         <p className="text-white/90">
-                            con {activeProgram.trainer.firstName}{' '}
-                            {activeProgram.trainer.lastName}
+                            {t('trainee:dashboard.trainerWith', {
+                                firstName: activeProgram.trainer.firstName,
+                                lastName: activeProgram.trainer.lastName,
+                            })}
                         </p>
                     </div>
                     <Link
                         href="/trainee/programs/current"
                         className="bg-white/20 hover:bg-white/30 text-white font-semibold px-6 py-3 rounded-lg transition-colors backdrop-blur-sm"
                     >
-                        Vedi Programma Completo
+                        {t('trainee:dashboard.viewFullProgram')}
                     </Link>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                     <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
-                        <p className="text-white/80 text-sm mb-1">Durata</p>
+                        <p className="text-white/80 text-sm mb-1">{t('trainee:dashboard.duration')}</p>
                         <p className="text-2xl font-bold">
-                            {activeProgram.durationWeeks} settimane
+                            {t('trainee:dashboard.weeks', { count: activeProgram.durationWeeks })}
                         </p>
                     </div>
                     <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
-                        <p className="text-white/80 text-sm mb-1">Progressione</p>
+                        <p className="text-white/80 text-sm mb-1">{t('trainee:dashboard.progression')}</p>
                         <p className="text-2xl font-bold">
-                            {activeProgram.completedWorkouts} / {activeProgram.totalWorkouts}{' '}
-                            workout
+                            {t('trainee:dashboard.workoutsProgress', {
+                                completed: activeProgram.completedWorkouts,
+                                total: activeProgram.totalWorkouts,
+                            })}
                         </p>
                     </div>
                     <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
-                        <p className="text-white/80 text-sm mb-1">Completamento</p>
+                        <p className="text-white/80 text-sm mb-1">{t('trainee:dashboard.completion')}</p>
                         <p className="text-2xl font-bold">{progressPercent}%</p>
                     </div>
                 </div>
@@ -218,20 +223,22 @@ export default function TraineeDashboardContent() {
                 <div className="bg-white rounded-lg shadow-md p-6 mb-8">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-gray-600 mb-1">Prossimo Allenamento</p>
+                            <p className="text-sm text-gray-600 mb-1">{t('trainee:dashboard.nextWorkout')}</p>
                             <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                                {DAY_NAMES[nextWorkout.dayOfWeek]} - Settimana{' '}
-                                {nextWorkout.weekNumber}
+                                {t('trainee:dashboard.workoutDay', {
+                                    day: dayNames[nextWorkout.dayOfWeek],
+                                    week: nextWorkout.weekNumber,
+                                })}
                             </h3>
                             <p className="text-gray-700">
-                                {nextWorkout.exerciseCount} esercizi da completare
+                                {t('trainee:dashboard.exercisesToComplete', { count: nextWorkout.exerciseCount })}
                             </p>
                         </div>
                         <Link
                             href={`/trainee/workouts/${nextWorkout.id}`}
                             className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-8 py-4 rounded-lg transition-colors text-lg"
                         >
-                            Inizia Workout 🚀
+                            {t('trainee:dashboard.startWorkout')}
                         </Link>
                     </div>
                 </div>
@@ -239,34 +246,34 @@ export default function TraineeDashboardContent() {
 
             {/* Quick Actions */}
             <div className="mb-8">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Sezioni</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">{t('trainee:dashboard.sections')}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <NavigationCard
                         href="/trainee/programs/current"
                         icon="📅"
-                        title="Programma Attivo"
-                        description="Visualizza tutte le settimane, i workout e gli esercizi del tuo programma."
+                        title={t('navigation:navigation.activeProgram')}
+                        description={t('trainee:dashboard.activeProgramDesc')}
                         color="primary"
                     />
                     <NavigationCard
                         href="/trainee/records"
                         icon="🏆"
-                        title="I Miei Massimali"
-                        description="Visualizza e aggiorna i tuoi personal record su ogni esercizio."
+                        title={t('navigation:navigation.myRecords')}
+                        description={t('trainee:dashboard.recordsDescription')}
                         color="yellow"
                     />
                     <NavigationCard
                         href="/trainee/history"
                         icon="📊"
-                        title="Storico Allenamenti"
-                        description="Consulta i programmi completati e i feedback passati."
+                        title={t('navigation:navigation.trainingHistory')}
+                        description={t('trainee:dashboard.viewCompleted')}
                         color="blue"
                     />
                     <NavigationCard
                         href="/trainee/profile"
                         icon="👤"
-                        title="Il Mio Profilo"
-                        description="Aggiorna le tue informazioni personali e le impostazioni."
+                        title={t('navigation:navigation.myProfile')}
+                        description={t('trainee:dashboard.profileDescription')}
                         color="secondary"
                     />
                 </div>
@@ -277,13 +284,13 @@ export default function TraineeDashboardContent() {
                 <div className="bg-white rounded-lg shadow-md p-6">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-xl font-bold text-gray-900">
-                            🏆 Ultimi Massimali
+                            {t('trainee:dashboard.latestRecords')}
                         </h3>
                         <Link
                             href="/trainee/records"
                             className="text-[#FFA700] hover:text-[#FF9500] font-semibold text-sm"
                         >
-                            Vedi Tutti →
+                            {t('trainee:dashboard.viewAll')}
                         </Link>
                     </div>
 
@@ -305,7 +312,7 @@ export default function TraineeDashboardContent() {
                                     <p className="text-2xl font-bold text-[#FFA700]">
                                         {pr.weight}kg
                                     </p>
-                                    <p className="text-sm text-gray-600">x {pr.reps} reps</p>
+                                    <p className="text-sm text-gray-600">{t('trainee:dashboard.reps', { count: pr.reps })}</p>
                                 </div>
                             </div>
                         ))}
