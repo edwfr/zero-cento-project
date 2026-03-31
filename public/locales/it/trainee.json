@@ -57,6 +57,32 @@
         "statsTotalWeeks": "Totale Settimane",
         "statsTotalWorkouts": "Totale Workout"
     },
+    "currentProgram": {
+        "backToDashboard": "← Torna alla Dashboard",
+        "programProgress": "Progressione Programma",
+        "workoutsCompleted": "{{completed}} / {{total}} workout completati",
+        "completion": "completamento",
+        "trainerWith": "con {{firstName}} {{lastName}}",
+        "startedOn": "Iniziato il",
+        "week": "Settimana {{number}}",
+        "completed": "✓ Completata",
+        "inProgress": "⏳ In Corso",
+        "weekCompleted": "{{completed}} / {{total}} completati",
+        "exercises": "{{count}} esercizi",
+        "feedbackSent": "✓ Feedback inviato",
+        "reviewFeedback": "Rivedi Feedback →",
+        "startWorkout": "Inizia Workout →",
+        "errorNotFound": "Programma non trovato",
+        "dayNames": [
+            "Lunedì",
+            "Martedì",
+            "Mercoledì",
+            "Giovedì",
+            "Venerdì",
+            "Sabato",
+            "Domenica"
+        ]
+    },
     "workouts": {
         "nextExercise": "Prossimo esercizio",
         "confirmContinue": "I seguenti esercizi non hanno dati: {{exercises}}. Vuoi continuare comunque?"

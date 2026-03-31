@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useTranslation } from 'react-i18next'
 import { SkeletonDashboard } from '@/components'
 import { formatDate } from '@/lib/date-format'
 
@@ -31,9 +32,9 @@ interface Program {
     weeks: Week[]
 }
 
-const DAY_NAMES = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica']
-
 export default function CurrentProgramContent() {
+    const { t } = useTranslation('trainee')
+    const DAY_NAMES = t('currentProgram.dayNames', { returnObjects: true }) as string[]
     const [loading, setLoading] = useState(true)
     const [program, setProgram] = useState<Program | null>(null)
     const [error, setError] = useState<string | null>(null)
@@ -50,16 +51,16 @@ export default function CurrentProgramContent() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || 'Errore caricamento programma')
+                throw new Error(data.error?.message || t('currentProgram.errorNotFound'))
             }
 
             if (data.data.items.length === 0) {
-                throw new Error('Nessun programma attivo trovato')
+                throw new Error(t('currentProgram.errorNotFound'))
             }
 
             setProgram(data.data.items[0])
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : t('currentProgram.errorNotFound'))
         } finally {
             setLoading(false)
         }
@@ -77,7 +78,7 @@ export default function CurrentProgramContent() {
         return (
             <div className="flex items-center justify-center py-16">
                 <div className="bg-red-50 border border-red-200 text-red-800 px-6 py-4 rounded-lg">
-                    {error || 'Programma non trovato'}
+                    {error || t('currentProgram.errorNotFound')}
                 </div>
             </div>
         )
@@ -98,11 +99,11 @@ export default function CurrentProgramContent() {
                     href="/trainee/dashboard"
                     className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
                 >
-                    ← Torna alla Dashboard
+                    {t('currentProgram.backToDashboard')}
                 </Link>
                 <h1 className="text-3xl font-bold text-gray-900">{program.title}</h1>
                 <p className="text-gray-600 mt-2">
-                    con {program.trainer.firstName} {program.trainer.lastName} • Iniziato il{' '}
+                    {t('currentProgram.trainerWith', { firstName: program.trainer.firstName, lastName: program.trainer.lastName })} • {t('currentProgram.startedOn')}{' '}
                     {formatDate(program.startDate)}
                 </p>
             </div>
@@ -112,15 +113,15 @@ export default function CurrentProgramContent() {
                 <div className="flex items-center justify-between mb-4">
                     <div>
                         <p className="text-sm font-semibold text-gray-700">
-                            Progressione Programma
+                            {t('currentProgram.programProgress')}
                         </p>
                         <p className="text-2xl font-bold text-gray-900 mt-1">
-                            {completedWorkouts} / {totalWorkouts} workout completati
+                            {t('currentProgram.workoutsCompleted', { completed: completedWorkouts, total: totalWorkouts })}
                         </p>
                     </div>
                     <div className="text-right">
                         <p className="text-3xl font-bold text-[#FFA700]">{progressPercent}%</p>
-                        <p className="text-sm text-gray-600">completamento</p>
+                        <p className="text-sm text-gray-600">{t('currentProgram.completion')}</p>
                     </div>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
@@ -144,7 +145,7 @@ export default function CurrentProgramContent() {
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center space-x-4">
                                     <h3 className="text-xl font-bold text-gray-900">
-                                        Settimana {week.weekNumber}
+                                        {t('currentProgram.week', { number: week.weekNumber })}
                                     </h3>
                                     <span
                                         className={`px-3 py-1 text-xs font-semibold rounded-full ${week.weekType === 'loading'
@@ -158,18 +159,17 @@ export default function CurrentProgramContent() {
                                     </span>
                                     {weekCompleted && (
                                         <span className="text-green-600 text-sm font-semibold">
-                                            ✓ Completata
+                                            {t('currentProgram.completed')}
                                         </span>
                                     )}
                                     {weekInProgress && !weekCompleted && (
                                         <span className="text-[#FFA700] text-sm font-semibold">
-                                            ⏳ In Corso
+                                            {t('currentProgram.inProgress')}
                                         </span>
                                     )}
                                 </div>
                                 <p className="text-sm text-gray-600">
-                                    {week.workouts.filter((w) => w.completed).length} /{' '}
-                                    {week.workouts.length} completati
+                                    {t('currentProgram.weekCompleted', { completed: week.workouts.filter((w) => w.completed).length, total: week.workouts.length })}
                                 </p>
                             </div>
 
@@ -199,16 +199,16 @@ export default function CurrentProgramContent() {
                                         {workout.completed ? (
                                             workout.feedbackSubmitted ? (
                                                 <p className="text-xs text-green-600 font-semibold">
-                                                    ✓ Feedback inviato
+                                                    {t('currentProgram.feedbackSent')}
                                                 </p>
                                             ) : (
                                                 <p className="text-xs text-[#FFA700] font-semibold">
-                                                    Rivedi Feedback →
+                                                    {t('currentProgram.reviewFeedback')}
                                                 </p>
                                             )
                                         ) : (
                                             <p className="text-xs text-[#FFA700] font-semibold">
-                                                Inizia Workout →
+                                                {t('currentProgram.startWorkout')}
                                             </p>
                                         )}
                                     </Link>
