@@ -115,7 +115,7 @@ export default function WorkoutDetailContent() {
                 .find((wo: any) => wo.id === workoutId)
 
             if (!foundWorkout) {
-                throw new Error('Workout non trovato')
+                throw new Error(t('workoutDetail.errorNotFound'))
             }
 
             setWorkout(foundWorkout)
@@ -124,8 +124,8 @@ export default function WorkoutDetailContent() {
             if (exercisesData.data.items.length > 0) {
                 setSelectedExerciseId(exercisesData.data.items[0].id)
             }
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : String(err))
         } finally {
             setLoading(false)
         }
@@ -199,10 +199,10 @@ export default function WorkoutDetailContent() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || 'Errore salvataggio esercizio')
+                throw new Error(data.error?.message || t('workoutDetail.errorSave'))
             }
 
-            showToast(editingExerciseId ? 'Esercizio aggiornato' : 'Esercizio aggiunto', 'success')
+            showToast(editingExerciseId ? t('workoutDetail.exerciseSaved') : t('workoutDetail.exerciseAdded'), 'success')
 
             // Refresh workout
             await fetchData()
@@ -210,8 +210,8 @@ export default function WorkoutDetailContent() {
             // Reset form
             setShowAddForm(false)
             resetForm()
-        } catch (err: any) {
-            showToast(err.message, 'error')
+        } catch (err: unknown) {
+            showToast(err instanceof Error ? err.message : String(err), 'error')
         } finally {
             setSaving(false)
         }
@@ -219,9 +219,9 @@ export default function WorkoutDetailContent() {
 
     const handleDeleteExercise = (workoutExerciseId: string) => {
         setConfirmModal({
-            title: 'Rimuovi Esercizio',
-            message: 'Rimuovere questo esercizio dal workout?',
-            confirmText: 'Rimuovi',
+            title: t('workoutDetail.removeExerciseTitle'),
+            message: t('workoutDetail.removeExerciseMessage'),
+            confirmText: t('workoutDetail.removeExerciseConfirm'),
             variant: 'danger',
             onConfirm: async () => {
                 setConfirmModal(null)
@@ -232,13 +232,13 @@ export default function WorkoutDetailContent() {
 
                     if (!res.ok) {
                         const data = await res.json()
-                        throw new Error(data.error?.message || 'Errore rimozione esercizio')
+                        throw new Error(data.error?.message || t('workoutDetail.errorRemove'))
                     }
 
-                    showToast('Esercizio rimosso', 'success')
+                    showToast(t('workoutDetail.exerciseRemoved'), 'success')
                     await fetchData()
-                } catch (err: any) {
-                    showToast(err.message, 'error')
+                } catch (err: unknown) {
+                    showToast(err instanceof Error ? err.message : String(err), 'error')
                 }
             },
         })
@@ -280,8 +280,8 @@ export default function WorkoutDetailContent() {
             ])
 
             await fetchData()
-        } catch (err: any) {
-            showToast(err.message, 'error')
+        } catch (err: unknown) {
+            showToast(err instanceof Error ? err.message : String(err), 'error')
         }
     }
 
@@ -297,7 +297,7 @@ export default function WorkoutDetailContent() {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="bg-red-50 border border-red-200 text-red-800 px-6 py-4 rounded-lg">
-                    {error || 'Workout non trovato'}
+                    {error || t('workoutDetail.errorNotFound')}
                 </div>
             </div>
         )
@@ -352,7 +352,7 @@ export default function WorkoutDetailContent() {
                         {workout.dayLabel} - {program.title}
                     </h1>
                     <p className="text-gray-600 mt-2">
-                        per {program.trainee.firstName} {program.trainee.lastName}
+                        {t('workoutDetail.forTrainee')} {program.trainee.firstName} {program.trainee.lastName}
                     </p>
                     {workout.notes && (
                         <p className="text-gray-700 mt-2 italic">📝 {workout.notes}</p>
@@ -385,46 +385,46 @@ export default function WorkoutDetailContent() {
                                             </span>
                                             {we.isWarmup && (
                                                 <span className="px-2 py-1 text-xs font-semibold rounded bg-yellow-100 text-yellow-800">
-                                                    🔥 Riscaldamento
+                                                    🔥 {t('workoutDetail.warmupTag')}
                                                 </span>
                                             )}
                                         </div>
 
                                         <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mt-4">
                                             <div>
-                                                <p className="text-xs text-gray-600 mb-1">Serie</p>
+                                                <p className="text-xs text-gray-600 mb-1">{t('workoutDetail.setsCol')}</p>
                                                 <p className="text-lg font-semibold text-gray-900">
                                                     {we.sets}
                                                 </p>
                                             </div>
                                             <div>
                                                 <p className="text-xs text-gray-600 mb-1">
-                                                    Ripetizioni
+                                                    {t('workoutDetail.repsCol')}
                                                 </p>
                                                 <p className="text-lg font-semibold text-gray-900">
                                                     {we.reps}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-xs text-gray-600 mb-1">Riposo</p>
+                                                <p className="text-xs text-gray-600 mb-1">{t('workoutDetail.restCol')}</p>
                                                 <p className="text-lg font-semibold text-gray-900">
                                                     {getRestTimeLabel(we.restTime)}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-xs text-gray-600 mb-1">RPE</p>
+                                                <p className="text-xs text-gray-600 mb-1">{t('workoutDetail.rpeCol')}</p>
                                                 <p className="text-lg font-semibold text-gray-900">
                                                     {we.targetRpe ?? '-'}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-xs text-gray-600 mb-1">Tipo Peso</p>
+                                                <p className="text-xs text-gray-600 mb-1">{t('workoutDetail.weightTypeCol')}</p>
                                                 <p className="text-lg font-semibold text-gray-900">
                                                     {getWeightTypeLabel(we.weightType)}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-xs text-gray-600 mb-1">Peso</p>
+                                                <p className="text-xs text-gray-600 mb-1">{t('workoutDetail.weightCol')}</p>
                                                 <p className="text-lg font-semibold text-gray-900">
                                                     {we.weight ? `${we.weight}` : '-'}
                                                 </p>
@@ -443,7 +443,7 @@ export default function WorkoutDetailContent() {
                                             onClick={() => handleMoveExercise(we.id, 'up')}
                                             disabled={index === 0}
                                             className="p-2 text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed"
-                                            title="Sposta su"
+                                            title={t('workoutDetail.moveUp')}
                                         >
                                             ▲
                                         </button>
@@ -451,21 +451,21 @@ export default function WorkoutDetailContent() {
                                             onClick={() => handleMoveExercise(we.id, 'down')}
                                             disabled={index === sortedExercises.length - 1}
                                             className="p-2 text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed"
-                                            title="Sposta giù"
+                                            title={t('workoutDetail.moveDown')}
                                         >
                                             ▼
                                         </button>
                                         <button
                                             onClick={() => loadExerciseForEdit(we)}
                                             className="p-2 text-blue-600 hover:text-blue-800"
-                                            title="Modifica"
+                                            title={t('workoutDetail.editBtn')}
                                         >
                                             ✏️
                                         </button>
                                         <button
                                             onClick={() => handleDeleteExercise(we.id)}
                                             className="p-2 text-red-600 hover:text-red-800"
-                                            title="Elimina"
+                                            title={t('workoutDetail.deleteBtn')}
                                         >
                                             🗑️
                                         </button>
@@ -481,7 +481,7 @@ export default function WorkoutDetailContent() {
                             {t('workouts.noExercises')}
                         </h3>
                         <p className="text-gray-600">
-                            Inizia ad aggiungere esercizi a questo workout
+                            {t('workoutDetail.noExercisesDesc')}
                         </p>
                     </div>
                 )}
@@ -495,7 +495,7 @@ export default function WorkoutDetailContent() {
                         }}
                         className="w-full bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold py-4 px-6 rounded-lg transition-colors mb-6"
                     >
-                        + Aggiungi Esercizio
+                        {t('workoutDetail.addExercise')}
                     </button>
                 )}
 
@@ -503,7 +503,7 @@ export default function WorkoutDetailContent() {
                 {showAddForm && (
                     <div className="bg-white rounded-lg shadow-md p-6 mb-6">
                         <h3 className="text-xl font-bold text-gray-900 mb-4">
-                            {editingExerciseId ? 'Modifica Esercizio' : 'Aggiungi Esercizio'}
+                            {editingExerciseId ? t('workoutDetail.editExerciseTitle') : t('workoutDetail.addExerciseTitle')}
                         </h3>
 
                         <div className="space-y-6">
@@ -512,7 +512,7 @@ export default function WorkoutDetailContent() {
                                 options={exerciseOptions}
                                 value={selectedExerciseId}
                                 onSelect={(option) => setSelectedExerciseId(option?.id || '')}
-                                label="Esercizio *"
+                                label={t('workoutDetail.exerciseLabel')}
                                 placeholder={t('exercises.searchExercise')}
                                 required
                                 disabled={!!editingExerciseId} // Cannot change exercise when editing
@@ -521,7 +521,7 @@ export default function WorkoutDetailContent() {
                             {/* Sets */}
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Serie *
+                                    {t('workoutDetail.setsLabel')}
                                 </label>
                                 <input
                                     type="number"
@@ -551,7 +551,7 @@ export default function WorkoutDetailContent() {
                             {/* RPE Target */}
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    RPE Target (opzionale)
+                                    {t('workoutDetail.rpeTargetLabel')}
                                 </label>
                                 <div className="flex flex-wrap gap-2">
                                     {[5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10].map((rpe) => (
@@ -592,7 +592,7 @@ export default function WorkoutDetailContent() {
                             {/* Weight Amount */}
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Peso {weightType.startsWith('percentage') ? '*' : '(opzionale)'}
+                                    {weightType.startsWith('percentage') ? t('workoutDetail.weightRequired') : t('workoutDetail.weightLabel')}
                                 </label>
                                 <input
                                     type="number"
@@ -606,10 +606,10 @@ export default function WorkoutDetailContent() {
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
                                 />
                                 <p className="text-xs text-gray-500 mt-1">
-                                    {weightType === 'absolute' && 'Peso in kg'}
-                                    {weightType === 'percentage_1rm' && 'Percentuale del massimale (1RM)'}
-                                    {weightType === 'percentage_rm' && 'Percentuale di nRM'}
-                                    {weightType === 'percentage_previous' && 'Percentuale rispetto alla prima occorrenza'}
+                                    {weightType === 'absolute' && t('workoutDetail.weightKg')}
+                                    {weightType === 'percentage_1rm' && t('workoutDetail.weightPct1rm')}
+                                    {weightType === 'percentage_rm' && t('workoutDetail.weightPctRm')}
+                                    {weightType === 'percentage_previous' && t('workoutDetail.weightPctPrev')}
                                 </p>
                             </div>
 
@@ -624,26 +624,26 @@ export default function WorkoutDetailContent() {
                                     className="w-5 h-5 text-[#FFA700] border-gray-300 rounded focus:ring-[#FFA700]"
                                 />
                                 <label htmlFor="isWarmup" className="text-sm font-semibold text-gray-700">
-                                    🔥 Serie di riscaldamento
+                                    {t('workoutDetail.warmupLabel')}
                                 </label>
                             </div>
 
                             {/* Notes */}
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Note (opzionali)
+                                    {t('workoutDetail.notesLabel')}
                                 </label>
                                 <textarea
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
                                     disabled={saving}
-                                    placeholder="es. Pausa di 2 secondi al petto"
+                                    placeholder={t('workoutDetail.notesPlaceholder')}
                                     rows={3}
                                     maxLength={500}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
                                 />
                                 <p className="text-xs text-gray-500 mt-1">
-                                    {notes.length}/500 caratteri
+                                    {t('workoutDetail.charCount', { count: notes.length })}
                                 </p>
                             </div>
 
@@ -657,9 +657,9 @@ export default function WorkoutDetailContent() {
                                     {saving ? (
                                         <LoadingSpinner size="sm" color="white" />
                                     ) : editingExerciseId ? (
-                                        'Salva Modifiche'
+                                        t('workoutDetail.saveChanges')
                                     ) : (
-                                        'Aggiungi'
+                                        t('workoutDetail.add')
                                     )}
                                 </button>
                                 <button
@@ -670,7 +670,7 @@ export default function WorkoutDetailContent() {
                                     disabled={saving}
                                     className="bg-gray-300 hover:bg-gray-400 disabled:bg-gray-200 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
                                 >
-                                    Annulla
+                                    {t('workoutDetail.cancel')}
                                 </button>
                             </div>
                         </div>
@@ -683,14 +683,14 @@ export default function WorkoutDetailContent() {
                         href={`/trainer/programs/${programId}/edit`}
                         className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-lg text-center transition-colors"
                     >
-                        ← Torna alla Panoramica
+                        {t('workoutDetail.backToOverview')}
                     </Link>
                     {program.status === 'draft' && sortedExercises.length > 0 && (
                         <Link
                             href={`/trainer/programs/${programId}/publish`}
                             className="flex-1 bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold py-3 px-6 rounded-lg text-center transition-colors"
                         >
-                            Salva e Continua alla Pubblicazione →
+                            {t('workoutDetail.saveAndPublish')}
                         </Link>
                     )}
                 </div>
