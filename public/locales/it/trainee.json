@@ -37,6 +37,26 @@
             "Domenica"
         ]
     },
+    "history": {
+        "title": "📊 Storico Programmi",
+        "backToDashboard": "← Torna alla Dashboard",
+        "description": "Rivedi i tuoi programmi di allenamento completati",
+        "noPrograms": "Nessun Programma Completato",
+        "noProgramsDesc": "Hai appena iniziato! Completa il tuo primo programma per vederlo qui",
+        "goToDashboard": "Vai alla Dashboard",
+        "completed": "✓ Completato",
+        "completion": "completamento",
+        "trainerWith": "con {{firstName}} {{lastName}}",
+        "startDate": "Data Inizio",
+        "endDate": "Data Fine",
+        "duration": "Durata",
+        "weeks": "{{count}} settimane",
+        "workouts": "Workout",
+        "viewDetails": "Visualizza Dettagli (Coming Soon)",
+        "statsCompleted": "Programmi Completati",
+        "statsTotalWeeks": "Totale Settimane",
+        "statsTotalWorkouts": "Totale Workout"
+    },
     "workouts": {
         "nextExercise": "Prossimo esercizio",
         "confirmContinue": "I seguenti esercizi non hanno dati: {{exercises}}. Vuoi continuare comunque?"

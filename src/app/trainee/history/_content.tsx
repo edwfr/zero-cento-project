@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useTranslation } from 'react-i18next'
 import { SkeletonList } from '@/components'
 import { formatDate } from '@/lib/date-format'
 
@@ -21,6 +22,7 @@ interface Program {
 }
 
 export default function HistoryContent() {
+    const { t } = useTranslation('trainee')
     const [loading, setLoading] = useState(true)
     const [programs, setPrograms] = useState<Program[]>([])
     const [error, setError] = useState<string | null>(null)
@@ -41,8 +43,8 @@ export default function HistoryContent() {
             }
 
             setPrograms(data.data.items)
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err: unknown) {
+            setError((err as Error).message)
         } finally {
             setLoading(false)
         }
@@ -79,11 +81,11 @@ export default function HistoryContent() {
                     href="/trainee/dashboard"
                     className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
                 >
-                    ← Torna alla Dashboard
+                    {t('history.backToDashboard')}
                 </Link>
-                <h1 className="text-3xl font-bold text-gray-900">📊 Storico Programmi</h1>
+                <h1 className="text-3xl font-bold text-gray-900">{t('history.title')}</h1>
                 <p className="text-gray-600 mt-2">
-                    Rivedi i tuoi programmi di allenamento completati
+                    {t('history.description')}
                 </p>
             </div>
 
@@ -91,16 +93,16 @@ export default function HistoryContent() {
                 <div className="bg-white rounded-lg shadow-md p-12 text-center">
                     <div className="text-5xl mb-4">📋</div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                        Nessun Programma Completato
+                        {t('history.noPrograms')}
                     </h2>
                     <p className="text-gray-600 mb-6">
-                        Hai appena iniziato! Completa il tuo primo programma per vederlo qui
+                        {t('history.noProgramsDesc')}
                     </p>
                     <Link
                         href="/trainee/dashboard"
                         className="inline-block bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-3 rounded-lg transition-colors"
                     >
-                        Vai alla Dashboard
+                        {t('history.goToDashboard')}
                     </Link>
                 </div>
             ) : (
@@ -126,12 +128,11 @@ export default function HistoryContent() {
                                                     {program.title}
                                                 </h3>
                                                 <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                                    ✓ Completato
+                                                    {t('history.completed')}
                                                 </span>
                                             </div>
                                             <p className="text-gray-600">
-                                                con {program.trainer.firstName}{' '}
-                                                {program.trainer.lastName}
+                                                {t('history.trainerWith', { firstName: program.trainer.firstName, lastName: program.trainer.lastName })}
                                             </p>
                                         </div>
 
@@ -139,31 +140,31 @@ export default function HistoryContent() {
                                             <p className="text-3xl font-bold text-green-600">
                                                 {completionPercent}%
                                             </p>
-                                            <p className="text-sm text-gray-600">completamento</p>
+                                            <p className="text-sm text-gray-600">{t('history.completion')}</p>
                                         </div>
                                     </div>
 
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-4">
                                         <div>
-                                            <p className="text-sm text-gray-600 mb-1">Data Inizio</p>
+                                            <p className="text-sm text-gray-600 mb-1">{t('history.startDate')}</p>
                                             <p className="font-semibold text-gray-900">
                                                 {formatDate(program.startDate)}
                                             </p>
                                         </div>
                                         <div>
-                                            <p className="text-sm text-gray-600 mb-1">Data Fine</p>
+                                            <p className="text-sm text-gray-600 mb-1">{t('history.endDate')}</p>
                                             <p className="font-semibold text-gray-900">
                                                 {formatDate(program.endDate)}
                                             </p>
                                         </div>
                                         <div>
-                                            <p className="text-sm text-gray-600 mb-1">Durata</p>
+                                            <p className="text-sm text-gray-600 mb-1">{t('history.duration')}</p>
                                             <p className="font-semibold text-gray-900">
-                                                {program.durationWeeks} settimane
+                                                {t('history.weeks', { count: program.durationWeeks })}
                                             </p>
                                         </div>
                                         <div>
-                                            <p className="text-sm text-gray-600 mb-1">Workout</p>
+                                            <p className="text-sm text-gray-600 mb-1">{t('history.workouts')}</p>
                                             <p className="font-semibold text-gray-900">
                                                 {program.completedWorkouts} /{' '}
                                                 {program.totalWorkouts}
@@ -183,7 +184,7 @@ export default function HistoryContent() {
                                             disabled
                                             className="flex-1 bg-gray-300 text-gray-600 font-semibold py-2 px-4 rounded-lg cursor-not-allowed"
                                         >
-                                            Visualizza Dettagli (Coming Soon)
+                                            {t('history.viewDetails')}
                                         </button>
                                     </div>
                                 </div>
@@ -196,17 +197,17 @@ export default function HistoryContent() {
             {programs.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
                     <div className="bg-white rounded-lg shadow-md p-6 text-center">
-                        <p className="text-sm text-gray-600 mb-1">Programmi Completati</p>
+                        <p className="text-sm text-gray-600 mb-1">{t('history.statsCompleted')}</p>
                         <p className="text-3xl font-bold text-[#FFA700]">{programs.length}</p>
                     </div>
                     <div className="bg-white rounded-lg shadow-md p-6 text-center">
-                        <p className="text-sm text-gray-600 mb-1">Totale Settimane</p>
+                        <p className="text-sm text-gray-600 mb-1">{t('history.statsTotalWeeks')}</p>
                         <p className="text-3xl font-bold text-[#FFA700]">
                             {programs.reduce((sum, p) => sum + p.durationWeeks, 0)}
                         </p>
                     </div>
                     <div className="bg-white rounded-lg shadow-md p-6 text-center">
-                        <p className="text-sm text-gray-600 mb-1">Totale Workout</p>
+                        <p className="text-sm text-gray-600 mb-1">{t('history.statsTotalWorkouts')}</p>
                         <p className="text-3xl font-bold text-[#FFA700]">
                             {programs.reduce((sum, p) => sum + p.completedWorkouts, 0)}
                         </p>

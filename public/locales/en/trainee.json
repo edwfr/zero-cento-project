@@ -37,6 +37,26 @@
             "Sunday"
         ]
     },
+    "history": {
+        "title": "📊 Program History",
+        "backToDashboard": "← Back to Dashboard",
+        "description": "Review your completed training programs",
+        "noPrograms": "No Completed Programs",
+        "noProgramsDesc": "You just started! Complete your first program to see it here",
+        "goToDashboard": "Go to Dashboard",
+        "completed": "✓ Completed",
+        "completion": "completion",
+        "trainerWith": "with {{firstName}} {{lastName}}",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "duration": "Duration",
+        "weeks": "{{count}} weeks",
+        "workouts": "Workouts",
+        "viewDetails": "View Details (Coming Soon)",
+        "statsCompleted": "Completed Programs",
+        "statsTotalWeeks": "Total Weeks",
+        "statsTotalWorkouts": "Total Workouts"
+    },
     "workouts": {
         "nextExercise": "Next exercise",
         "confirmContinue": "The following exercises have no data: {{exercises}}. Continue anyway?"
