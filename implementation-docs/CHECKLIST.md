@@ -174,8 +174,8 @@
       File: `src/app/trainer/trainees/new/page.tsx`
 - [x] **9.16** `trainer/trainees/[id]` (dettaglio atleta) — Aggiungere `DashboardLayout` (0.5h)  
       File: `src/app/trainer/trainees/[id]/page.tsx` ✅ _31 Mar 2026_
-- [ ] **9.17** `trainer/trainees/[id]/records` — Aggiungere `DashboardLayout` (0.5h)  
-      File: `src/app/trainer/trainees/[id]/records/page.tsx`
+- [x] **9.17** `trainer/trainees/[id]/records` — Aggiungere `DashboardLayout` (0.5h)  
+      File: `src/app/trainer/trainees/[id]/records/page.tsx` ✅ _31 Mar 2026_
 
 ### Schermate Profilo (1)
 
