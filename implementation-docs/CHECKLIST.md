@@ -234,21 +234,227 @@
 
 ---
 
-## Riepilogo per priorità
+## Sprint 10 — Rimozione Emoji e Introduzione Icon System (~5h)
 
-| Priorità   | Sprint   | Task        | Effort stimato |
-| ---------- | -------- | ----------- | -------------- |
-| 🔴 Critico  | Sprint 1 | 1.1–1.6     | ~4h            |
-| 🔴 Critico  | Sprint 2 | 2.1–2.7     | ~29h           |
-| 🔴 Critico  | Sprint 3 | 3.1         | ~8h            |
-| 🟠 Alto     | Sprint 4 | 4.1–4.5     | ~21h           |
-| 🟠 Alto     | Sprint 5 | 5.1–5.10    | ~27h           |
-| 🟡 Medio    | Sprint 6 | 6.1–6.7     | ~5h            |
-| 🟡 Medio    | Sprint 7 | 7.1–7.6     | ~23h           |
-| 🔵 Basso    | Sprint 8 | 8.1–8.7     | ~11h           |
-| 🟠 Alto     | Sprint 9 | 9.1–9.18    | ~9h            |
-| **Totale** |          | **67 task** | **~138h**      |
+> **Obiettivo:** Eliminare completamente l'uso di emoji dall'intera implementazione (UI, componenti, navigazione, documentazione generata) e sostituirle con icone semantiche standard dalla libreria **Lucide React** (`lucide-react`).
+>
+> **Scope rilevato:** UI components, pagine trainer/trainee/admin, navigazione globale, modal, banner, documentazione.
+
+### Setup Icon Library (prerequisito)
+
+- [x] **10.1** Installare `lucide-react` come dipendenza (0.25h)
+  ```
+  npm install lucide-react
+  ```
+  Verifica: importare `import { Dumbbell } from 'lucide-react'` in un componente e confermare che TypeScript non segnali errori.
+
+### Componenti Shared
+
+- [ ] **10.2** `DashboardLayout.tsx` — sostituire emoji nelle voci di navigazione (0.5h)  
+  File: `src/components/DashboardLayout.tsx`  
+  Rimozione: `📋` `🏋️` `👤` `📅` `🏆` `📊` `💪`  
+  Il campo `icon` del tipo `NavItem` deve diventare `icon: ReactNode` (JSX) invece di `string`.  
+  Mapping sostituzioni:
+
+  | Emoji | Lucide icon         | Uso                   |
+  | ----- | ------------------- | --------------------- |
+  | `📋`   | `<ClipboardList />` | Programmi             |
+  | `🏋️`   | `<Dumbbell />`      | Libreria Esercizi     |
+  | `👤`   | `<User />`          | Profilo               |
+  | `📅`   | `<CalendarDays />`  | Programma Attivo      |
+  | `🏆`   | `<Trophy />`        | Massimali             |
+  | `📊`   | `<BarChart2 />`     | Storico / Statistiche |
+  | `💪`   | `<Dumbbell />`      | Esercizi Admin        |
+
+- [ ] **10.3** `WeekTypeBanner.tsx` — sostituire emoji week-type (0.25h)  
+  File: `src/components/WeekTypeBanner.tsx`  
+  Rimozione: `📋` (normal), `🔥` (test), `💆` (deload)  
+  Mapping:
+
+  | Emoji | Lucide icon         | Week type |
+  | ----- | ------------------- | --------- |
+  | `📋`   | `<ClipboardList />` | normal    |
+  | `🔥`   | `<Flame />`         | test      |
+  | `💆`   | `<Wind />`          | deload    |
+
+- [ ] **10.4** `ConfirmationModal.tsx` — sostituire emoji alert icon (0.25h)  
+  File: `src/components/ConfirmationModal.tsx`  
+  Rimozione: `⚠️` (warning), `⚡` (danger/action)  
+  Mapping:
+
+  | Emoji | Lucide icon         | Tipo    |
+  | ----- | ------------------- | ------- |
+  | `⚠️`   | `<AlertTriangle />` | warning |
+  | `⚡`   | `<Zap />`           | danger  |
+
+- [ ] **10.5** `UserCreateModal.tsx` — sostituire emoji inline (0.25h)  
+  File: `src/components/UserCreateModal.tsx`  
+  Rimozione: `✅` (successo), `⚠️` (avvertimento password)  
+  Mapping: `✅` → `<CheckCircle2 />`, `⚠️` → `<AlertTriangle />`
+
+- [ ] **10.6** `ProgramsTable.tsx` — sostituire emoji tab stato programma (0.25h)  
+  File: `src/components/ProgramsTable.tsx`  
+  Rimozione: `📝` (draft), `✅` (active), `🏁` (completed), `🔍` in placeholder  
+  Mapping: `📝` → `<FileEdit />`, `✅` → `<CheckCircle2 />`, `🏁` → `<FlagTriangleRight />`, rimuovere `🔍` dal placeholder (il campo search ha già contesto semantico)
+
+- [ ] **10.7** `StatCard.tsx` — aggiornare tipo prop `icon` da `string` a `ReactNode` (0.5h)  
+  File: `src/components/StatCard.tsx`  
+  Il componente riceve `icon?: string` — cambiare a `icon?: ReactNode` e aggiornare la regione di rendering.  
+  Tutti i call site (trainee dashboard, admin dashboard, trainer dashboard, components-showcase) dovranno passare il JSX dell'icona invece dell'emoji.
+
+### Pagine Trainer
+
+- [ ] **10.8** `trainer/dashboard/page.tsx` — sostituire tutte le emoji (0.5h)  
+  File: `src/app/trainer/dashboard/page.tsx`  
+  Rimozione: `📋` `🏋️` `💬` `➕` `👤` nei link azione rapida e nelle `StatCard`  
+  Mapping: `💬` → `<MessageSquare />`, `➕` → `<Plus />`
+
+- [ ] **10.9** `trainer/programs/_content.tsx` — sostituire emoji inline (0.25h)  
+  File: `src/app/trainer/programs/_content.tsx`  
+  Rimozione: `🔍` nel placeholder, `➕` nel bottone, `📝` `✅` nei tab, `🗑️` nel bottone elimina  
+  Mapping: `➕` → `<Plus />`, `🗑️` → `<Trash2 />`; rimuovere `🔍` dal placeholder
+
+- [ ] **10.10** `trainer/exercises/_content.tsx` — sostituire emoji inline (0.25h)  
+  File: `src/app/trainer/exercises/_content.tsx`  
+  Rimozione: `🔍` nel placeholder, `➕` nel bottone  
+  Mapping: `➕` → `<Plus />`; rimuovere `🔍` dal placeholder
+
+- [ ] **10.11** `trainer/exercises/new/_content.tsx` — sostituire emoji inline (0.25h)  
+  File: `src/app/trainer/exercises/new/_content.tsx`  
+  Rimozione: `🗑️` nel bottone rimozione set  
+  Mapping: `🗑️` → `<Trash2 />`
+
+- [ ] **10.12** `trainer/exercises/[id]/edit/_content.tsx` — sostituire emoji inline (0.25h)  
+  File: `src/app/trainer/exercises/[id]/edit/_content.tsx`  
+  Rimozione: `🗑️` nel bottone rimozione set  
+  Mapping: `🗑️` → `<Trash2 />`
+
+- [ ] **10.13** `trainer/programs/[id]/edit/_content.tsx` — sostituire emoji inline (0.25h)  
+  File: `src/app/trainer/programs/[id]/edit/_content.tsx`  
+  Rimozione: `📈` `🧘` nei tag week type, `⚠️` nell'avviso  
+  Mapping: `📈` → `<TrendingUp />`, `🧘` → `<Wind />`, `⚠️` → `<AlertTriangle />`
+
+- [ ] **10.14** `trainer/programs/[id]/edit/EditProgramMetadata.tsx` — sostituire emoji inline (0.25h)  
+  File: `src/app/trainer/programs/[id]/edit/EditProgramMetadata.tsx`  
+  Rimozione: `✏️` nel titolo sezione, `⚠️` × 3 negli avvisi, `📊` nel riepilogo  
+  Mapping: `✏️` → `<Pencil />`, `⚠️` → `<AlertTriangle />`, `📊` → `<BarChart2 />`
+
+- [ ] **10.15** `trainer/programs/new/NewProgramContent.tsx` — sostituire emoji inline (0.25h)  
+  File: `src/app/trainer/programs/new/NewProgramContent.tsx`  
+  Rimozione: `📊` nel riepilogo  
+  Mapping: `📊` → `<BarChart2 />`
+
+- [ ] **10.16** `trainer/programs/[id]/workouts/[wId]/_content.tsx` — sostituire emoji inline (0.25h)  
+  File: `src/app/trainer/programs/[id]/workouts/[wId]/_content.tsx`  
+  Rimozione: `📝` × 2 (note), `✏️` (edit), `🗑️` (delete), `💪` (empty state)  
+  Mapping: `📝` → `<FileText />`, `✏️` → `<Pencil />`, `🗑️` → `<Trash2 />`, `💪` → `<Dumbbell />`
+
+- [ ] **10.17** `trainer/programs/[id]/progress/_content.tsx` — sostituire emoji inline (0.5h)  
+  File: `src/app/trainer/programs/[id]/progress/_content.tsx`  
+  Rimozione: `📊` × 2 (titoli sezioni), `📈` (link report), `🎯` (RPE), `✅` (completamento)  
+  Mapping: `📊` → `<BarChart2 />`, `📈` → `<TrendingUp />`, `🎯` → `<Target />`, `✅` → `<CheckCircle2 />`
+
+- [ ] **10.18** `trainer/trainees/_content.tsx` — sostituire emoji inline (0.25h)  
+  File: `src/app/trainer/trainees/_content.tsx`  
+  Rimozione: `🔍` nel placeholder, `➕` nel bottone  
+  Mapping: `➕` → `<Plus />`; rimuovere `🔍` dal placeholder
+
+- [ ] **10.19** `trainer/trainees/[id]/_content.tsx` — sostituire emoji inline (0.25h)  
+  File: `src/app/trainer/trainees/[id]/_content.tsx`  
+  Rimozione: `➕` nel bottone crea programma  
+  Mapping: `➕` → `<Plus />`
+
+- [ ] **10.20** `trainer/trainees/[id]/records/_content.tsx` — sostituire emoji inline (0.25h)  
+  File: `src/app/trainer/trainees/[id]/records/_content.tsx`  
+  Rimozione: `➕` nel bottone, `💪` nell'empty state  
+  Mapping: `➕` → `<Plus />`, `💪` → `<Dumbbell />`
+
+### Pagine Trainee
+
+- [ ] **10.21** `trainee/dashboard/_content.tsx` — sostituire emoji inline (0.25h)  
+  File: `src/app/trainee/dashboard/_content.tsx`  
+  Rimozione: `💪` (empty state hero), `🏆` `📊` `👤` `📅` nelle `StatCard`  
+  Mapping: `💪` → `<Dumbbell />` + classe CSS `w-16 h-16`
+
+- [ ] **10.22** `trainee/history/_content.tsx` — sostituire emoji empty state (0.25h)  
+  File: `src/app/trainee/history/_content.tsx`  
+  Rimozione: `📋` (empty state `text-5xl`)  
+  Mapping: `📋` → `<ClipboardList />` + classe `w-16 h-16 text-gray-300`
+
+- [ ] **10.23** `trainee/records/_content.tsx` — sostituire emoji empty state (0.25h)  
+  File: `src/app/trainee/records/_content.tsx`  
+  Rimozione: `📊` (empty state `text-5xl`)  
+  Mapping: `📊` → `<BarChart2 />` + classe `w-16 h-16 text-gray-300`
+
+- [ ] **10.24** `trainee/programs/current/_content.tsx` — sostituire emoji week type (0.25h)  
+  File: `src/app/trainee/programs/current/_content.tsx`  
+  Rimozione: `📈` nel badge week type "Loading"  
+  Mapping: `📈` → `<TrendingUp />`
+
+- [ ] **10.25** `trainee/workouts/[id]/_content.tsx` — sostituire emoji inline (0.25h)  
+  File: `src/app/trainee/workouts/[id]/_content.tsx`  
+  Rimozione: `📝` (note esercizio)  
+  Mapping: `📝` → `<FileText />`
+
+### Pagine Admin
+
+- [ ] **10.26** `admin/dashboard/_content.tsx` — sostituire emoji nelle `StatCard` e nelle quick actions (0.25h)  
+  File: `src/app/admin/dashboard/_content.tsx`  
+  Rimozione: `🏋️` `💪` `📊` `🏃` nelle `StatCard`, `💪` `📋` `📊` nelle quick actions
+
+- [ ] **10.27** `admin/exercises/_content.tsx` — sostituire emoji inline (0.25h)  
+  File: `src/app/admin/exercises/_content.tsx`  
+  Rimozione: `💡` nel banner informativo  
+  Mapping: `💡` → `<Lightbulb />`
+
+### Pagina Trainer Nuovi atleti
+
+- [ ] **10.28** `trainer/trainees/new/_content.tsx` — sostituire emoji success state (0.25h)  
+  File: `src/app/trainer/trainees/new/_content.tsx`  
+  Rimozione: `✅` (success state `text-5xl`)  
+  Mapping: `✅` → `<CheckCircle2 />` + classe `w-16 h-16 text-green-500`
+
+### Pagina Showcase
+
+- [ ] **10.29** `components-showcase/page.tsx` — aggiornare esempi `StatCard` (0.25h)  
+  File: `src/app/components-showcase/page.tsx`  
+  Rimozione: `💪` `⭐` `📋` `📊` `🏆` nelle `StatCard` di demo  
+  Sostituire con icone Lucide corrispondenti dopo il task 10.7 sul tipo `ReactNode`
 
 ---
 
-*Ultimo aggiornamento: 30 Marzo 2026*
+> **Nota tecnica — Pattern di rendering icone:**
+>
+> Dopo la migrazione, il prop `icon` di `StatCard` e i campi `icon` in `DashboardLayout` devono accettare `ReactNode`:
+> ```tsx
+> import { Dumbbell } from 'lucide-react'
+>
+> // Prima (emoji string)
+> <StatCard icon="💪" ... />
+>
+> // Dopo (ReactNode)
+> <StatCard icon={<Dumbbell className="w-5 h-5" />} ... />
+> ```
+> Dimensioni standard: `w-5 h-5` per icone inline, `w-6 h-6` per navigazione, `w-16 h-16` per empty state hero.
+
+---
+
+## Riepilogo per priorità
+
+| Priorità   | Sprint    | Task        | Effort stimato |
+| ---------- | --------- | ----------- | -------------- |
+| Critico    | Sprint 1  | 1.1–1.6     | ~4h            |
+| Critico    | Sprint 2  | 2.1–2.7     | ~29h           |
+| Critico    | Sprint 3  | 3.1         | ~8h            |
+| Alto       | Sprint 4  | 4.1–4.5     | ~21h           |
+| Alto       | Sprint 5  | 5.1–5.10    | ~27h           |
+| Medio      | Sprint 6  | 6.1–6.7     | ~5h            |
+| Medio      | Sprint 7  | 7.1–7.6     | ~23h           |
+| Basso      | Sprint 8  | 8.1–8.7     | ~11h           |
+| Alto       | Sprint 9  | 9.1–9.23    | ~9h            |
+| Medio      | Sprint 10 | 10.1–10.29  | ~5h            |
+| **Totale** |           | **96 task** | **~143h**      |
+
+---
+
+*Ultimo aggiornamento: 31 Marzo 2026*
