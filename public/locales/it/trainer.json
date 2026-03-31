@@ -168,7 +168,18 @@
         "weeksShort": "sett.",
         "loadingError": "Errore caricamento programmi",
         "startDate": "Inizio",
-        "durationWeeks": "{{count}} settimane"
+        "durationWeeks": "{{count}} settimane",
+        "description": "Gestisci i programmi dei tuoi atleti",
+        "newProgram": "Nuovo Programma",
+        "tabDraft": "Bozze",
+        "tabActive": "Attivi",
+        "tabCompleted": "Completati",
+        "statusCompleted": "Completato",
+        "durationLabel": "Durata",
+        "deleteError": "Errore eliminazione programma",
+        "delete": "Elimina",
+        "confirm": "Conferma",
+        "viewProgram": "Visualizza"
     },
     "weekTypes": {
         "standard": "Settimana Standard",

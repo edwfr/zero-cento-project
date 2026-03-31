@@ -7,6 +7,7 @@ import { SkeletonTable } from '@/components'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import { formatDate } from '@/lib/date-format'
+import { useTranslation } from 'react-i18next'
 
 interface Program {
     id: string
@@ -25,6 +26,7 @@ interface Program {
 
 export default function TrainerProgramsContent() {
     const router = useRouter()
+    const { t } = useTranslation('trainer')
     const { showToast } = useToast()
     const [programs, setPrograms] = useState<Program[]>([])
     const [loading, setLoading] = useState(true)
@@ -50,12 +52,12 @@ export default function TrainerProgramsContent() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || 'Errore nel caricamento programmi')
+                throw new Error(data.error?.message || t('programs.loadingError'))
             }
 
             setPrograms(data.data.items)
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : t('programs.loadingError'))
         } finally {
             setLoading(false)
         }
@@ -63,9 +65,9 @@ export default function TrainerProgramsContent() {
 
     const handleDelete = (id: string, title: string) => {
         setConfirmModal({
-            title: 'Elimina Programma',
-            message: `Sei sicuro di voler eliminare il programma "${title}"?`,
-            confirmText: 'Elimina',
+            title: t('programs.deleteProgram'),
+            message: `${t('programs.confirmDeleteProgram')} "${title}"?`,
+            confirmText: t('programs.delete'),
             onConfirm: async () => {
                 setConfirmModal(null)
                 try {
@@ -76,12 +78,12 @@ export default function TrainerProgramsContent() {
                     const data = await res.json()
 
                     if (!res.ok) {
-                        throw new Error(data.error?.message || 'Errore eliminazione programma')
+                        throw new Error(data.error?.message || t('programs.deleteError'))
                     }
 
                     fetchPrograms()
-                } catch (err: any) {
-                    showToast(err.message, 'error')
+                } catch (err: unknown) {
+                    showToast(err instanceof Error ? err.message : t('programs.deleteError'), 'error')
                 }
             },
         })
@@ -121,16 +123,16 @@ export default function TrainerProgramsContent() {
                     onConfirm={confirmModal.onConfirm}
                     title={confirmModal.title}
                     message={confirmModal.message}
-                    confirmText={confirmModal.confirmText ?? 'Conferma'}
+                    confirmText={confirmModal.confirmText ?? t('programs.confirm')}
                     variant={confirmModal.variant ?? 'danger'}
                 />
             )}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Programmi di Allenamento</h1>
+                    <h1 className="text-3xl font-bold text-gray-900">{t('programs.title')}</h1>
                     <p className="text-gray-600 mt-2">
-                        Gestisci i programmi dei tuoi atleti
+                        {t('programs.description')}
                     </p>
                 </div>
 
@@ -141,7 +143,7 @@ export default function TrainerProgramsContent() {
                         <div className="flex-1 max-w-md">
                             <input
                                 type="text"
-                                placeholder="🔍 Cerca programma o atleta..."
+                                placeholder={`🔍 ${t('programs.searchPlaceholder')}`}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
@@ -153,7 +155,7 @@ export default function TrainerProgramsContent() {
                             href="/trainer/programs/new"
                             className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-2 rounded-lg transition-colors"
                         >
-                            ➕ Nuovo Programma
+                            ➕ {t('programs.newProgram')}
                         </Link>
                     </div>
                 </div>
@@ -176,7 +178,7 @@ export default function TrainerProgramsContent() {
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
-                                📝 Bozze ({statusCounts.draft})
+                                📝 {t('programs.tabDraft')} ({statusCounts.draft})
                             </button>
                             <button
                                 onClick={() => setActiveTab('active')}
@@ -185,7 +187,7 @@ export default function TrainerProgramsContent() {
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
-                                ✅ Attivi ({statusCounts.active})
+                                ✅ {t('programs.tabActive')} ({statusCounts.active})
                             </button>
                             <button
                                 onClick={() => setActiveTab('completed')}
@@ -194,7 +196,7 @@ export default function TrainerProgramsContent() {
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
-                                🏁 Completati ({statusCounts.completed})
+                                🏁 {t('programs.tabCompleted')} ({statusCounts.completed})
                             </button>
                         </nav>
                     </div>
@@ -205,8 +207,8 @@ export default function TrainerProgramsContent() {
                     <div className="bg-white rounded-lg shadow-md p-12 text-center">
                         <p className="text-gray-500 text-lg">
                             {searchTerm
-                                ? 'Nessun programma trovato con questi filtri'
-                                : `Nessun programma ${activeTab === 'draft' ? 'in bozza' : activeTab === 'active' ? 'attivo' : 'completato'}`}
+                                ? t('programs.noProgramsFound')
+                                : activeTab === 'draft' ? t('programs.noDraftPrograms') : activeTab === 'active' ? t('programs.noActivePrograms') : t('programs.noCompletedPrograms')}
                         </p>
                     </div>
                 ) : (
@@ -235,30 +237,30 @@ export default function TrainerProgramsContent() {
                                             }`}
                                     >
                                         {program.status === 'draft'
-                                            ? 'Bozza'
+                                            ? t('programs.draft')
                                             : program.status === 'active'
-                                                ? 'Attivo'
-                                                : 'Completato'}
+                                                ? t('programs.tabActive')
+                                                : t('programs.statusCompleted')}
                                     </span>
                                 </div>
 
                                 {/* Info */}
                                 <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
                                     <div>
-                                        <span className="text-gray-500">Durata:</span>
+                                        <span className="text-gray-500">{t('programs.durationLabel')}:</span>
                                         <span className="ml-2 font-semibold text-gray-900">
-                                            {program.durationWeeks} settimane
+                                            {t('programs.durationWeeks', { count: program.durationWeeks })}
                                         </span>
                                     </div>
                                     <div>
-                                        <span className="text-gray-500">Allenamenti/sett:</span>
+                                        <span className="text-gray-500">{t('programs.workoutsPerWeek')}:</span>
                                         <span className="ml-2 font-semibold text-gray-900">
                                             {program.workoutsPerWeek}
                                         </span>
                                     </div>
                                     {program.startDate && (
                                         <div className="col-span-2">
-                                            <span className="text-gray-500">Inizio:</span>
+                                            <span className="text-gray-500">{t('programs.startDate')}:</span>
                                             <span className="ml-2 font-semibold text-gray-900">
                                                 {formatDate(program.startDate)}
                                             </span>
@@ -272,7 +274,7 @@ export default function TrainerProgramsContent() {
                                         href={`/trainer/programs/${program.id}`}
                                         className="flex-1 bg-brand-primary hover:bg-brand-primary/90 text-white text-sm font-semibold py-2 px-4 rounded-lg text-center transition-colors"
                                     >
-                                        Visualizza
+                                        {t('programs.viewProgram')}
                                     </Link>
                                     {program.status === 'draft' && (
                                         <>
