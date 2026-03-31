@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Users, Dumbbell, Star, ClipboardList, Medal, TrendingDown, BarChart2, Trophy, Settings } from 'lucide-react'
 import { WeightType, RestTime, ExerciseType, WeekType } from '@prisma/client'
 import {
     WeightTypeSelector,
@@ -248,7 +249,7 @@ function ComponentShowcase() {
                             title="Utenti Attivi"
                             value={1247}
                             subtitle="Crescita mensile"
-                            icon="👥"
+                            icon={<Users className="w-5 h-5" />}
                             color="primary"
                             trend={{ value: 12, label: "+12%", isPositive: true }}
                             onClick={() => showToast('Clicked Utenti Attivi', 'info')}
@@ -257,7 +258,7 @@ function ComponentShowcase() {
                             title="Workout Completati"
                             value={8432}
                             subtitle="Questo mese"
-                            icon="💪"
+                            icon={<Dumbbell className="w-5 h-5" />}
                             color="success"
                             trend={{ value: 8, label: "+8%", isPositive: true }}
                         />
@@ -265,28 +266,28 @@ function ComponentShowcase() {
                             title="Feedback Medi"
                             value={4.7}
                             subtitle="Soddisfazione utenti"
-                            icon="⭐"
+                            icon={<Star className="w-5 h-5" />}
                             color="warning"
                         />
                         <StatCard
                             title="Programmi Attivi"
                             value={342}
                             subtitle="In corso"
-                            icon="📋"
+                            icon={<ClipboardList className="w-5 h-5" />}
                             color="info"
                         />
                         <StatCard
                             title="Trainer Certificati"
                             value={89}
                             subtitle="Professionisti"
-                            icon="🏅"
+                            icon={<Medal className="w-5 h-5" />}
                             color="success"
                         />
                         <StatCard
                             title="Tasso di Abbandono"
                             value={2.3}
                             subtitle="Diminuzione trimestrale"
-                            icon="📉"
+                            icon={<TrendingDown className="w-5 h-5" />}
                             color="danger"
                             trend={{ value: -1.2, label: "-1.2%", isPositive: true }}
                         />
@@ -387,42 +388,42 @@ function ComponentShowcase() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <NavigationCard
                             href="#"
-                            icon="👥"
+                            icon={<Users className="w-6 h-6" />}
                             title="Gestione Utenti"
                             description="Visualizza e gestisci tutti gli utenti del sistema."
                             color="blue"
                         />
                         <NavigationCard
                             href="#"
-                            icon="📋"
+                            icon={<ClipboardList className="w-6 h-6" />}
                             title="Programmi"
                             description="Crea e gestisci i programmi di allenamento."
                             color="green"
                         />
                         <NavigationCard
                             href="#"
-                            icon="💪"
+                            icon={<Dumbbell className="w-6 h-6" />}
                             title="Libreria Esercizi"
                             description="Gestisci la libreria globale di esercizi."
                             color="primary"
                         />
                         <NavigationCard
                             href="#"
-                            icon="📊"
+                            icon={<BarChart2 className="w-6 h-6" />}
                             title="Statistiche"
                             description="Analisi avanzate sull'utilizzo della piattaforma."
                             color="purple"
                         />
                         <NavigationCard
                             href="#"
-                            icon="🏆"
+                            icon={<Trophy className="w-6 h-6" />}
                             title="Massimali"
                             description="Visualizza i personal record degli atleti."
                             color="yellow"
                         />
                         <NavigationCard
                             href="#"
-                            icon="⚙️"
+                            icon={<Settings className="w-6 h-6" />}
                             title="Impostazioni"
                             description="Configurazione generale dell'applicazione."
                             color="secondary"

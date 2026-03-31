@@ -409,14 +409,14 @@
 
 ### Pagina Trainer Nuovi atleti
 
-- [ ] **10.28** `trainer/trainees/new/_content.tsx` — sostituire emoji success state (0.25h)  
+- [x] **10.28** `trainer/trainees/new/_content.tsx` — sostituire emoji success state (0.25h)  
   File: `src/app/trainer/trainees/new/_content.tsx`  
   Rimozione: `✅` (success state `text-5xl`)  
   Mapping: `✅` → `<CheckCircle2 />` + classe `w-16 h-16 text-green-500`
 
 ### Pagina Showcase
 
-- [ ] **10.29** `components-showcase/page.tsx` — aggiornare esempi `StatCard` (0.25h)  
+- [x] **10.29** `components-showcase/page.tsx` — aggiornare esempi `StatCard` (0.25h)  
   File: `src/app/components-showcase/page.tsx`  
   Rimozione: `💪` `⭐` `📋` `📊` `🏆` nelle `StatCard` di demo  
   Sostituire con icone Lucide corrispondenti dopo il task 10.7 sul tipo `ReactNode`

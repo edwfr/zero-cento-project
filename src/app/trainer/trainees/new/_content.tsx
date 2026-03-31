@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import Link from 'next/link'
+import { CheckCircle2 } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/components/ToastNotification'
 
@@ -77,7 +78,7 @@ export default function NewTraineePageContent() {
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
                     <div className="text-center mb-6">
-                        <div className="text-5xl mb-4">✅</div>
+                        <CheckCircle2 className="w-16 h-16 text-green-500 mb-4" />
                         <h2 className="text-2xl font-bold text-gray-900 mb-2">
                             {t('athletes.athleteCreatedSuccess')}
                         </h2>
