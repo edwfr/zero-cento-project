@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
@@ -51,11 +52,7 @@ interface ReportData {
     rpeDistribution: RPEDistributionEntry[]
 }
 
-const SBD_LABELS: Record<string, string> = {
-    squat: '🏋️ Squat',
-    bench: '🏋️ Panca',
-    deadlift: '🏋️ Stacco',
-}
+
 
 const SBD_COLORS: Record<string, string> = {
     squat: 'bg-blue-500',
@@ -64,6 +61,7 @@ const SBD_COLORS: Record<string, string> = {
 }
 
 export default function ProgramReportsContent() {
+    const { t } = useTranslation('trainer')
     const params = useParams<{ id: string }>()
     const programId = params.id
 
@@ -86,8 +84,8 @@ export default function ProgramReportsContent() {
             }
 
             setReport(data.data)
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : t('reports.loadingError'))
         } finally {
             setLoading(false)
         }
@@ -106,7 +104,7 @@ export default function ProgramReportsContent() {
             <div className="min-h-screen bg-gray-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="bg-red-50 border border-red-200 text-red-800 px-6 py-4 rounded-lg">
-                        {error || 'Report non disponibile'}
+                        {error || t('reports.notAvailable')}
                     </div>
                 </div>
             </div>
@@ -128,17 +126,17 @@ export default function ProgramReportsContent() {
                             href={`/trainer/programs/${programId}/progress`}
                             className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold"
                         >
-                            ← Avanzamento
+                            {t('reports.backToProgress')}
                         </Link>
                         <span className="text-gray-300">|</span>
                         <Link
                             href={`/trainer/programs/${programId}`}
                             className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold"
                         >
-                            Programma
+                            {t('reports.backToProgram')}
                         </Link>
                     </div>
-                    <h1 className="text-3xl font-bold text-gray-900">📈 Report SBD</h1>
+                    <h1 className="text-3xl font-bold text-gray-900">{t('reports.sbdReport')}</h1>
                     <p className="text-gray-600 mt-2">
                         {report.programName} — {report.trainee.firstName} {report.trainee.lastName}
                     </p>
@@ -147,17 +145,17 @@ export default function ProgramReportsContent() {
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div className="bg-white rounded-lg shadow-md p-6">
-                        <div className="text-sm text-gray-500 mb-1">Volume Totale SBD</div>
+                        <div className="text-sm text-gray-500 mb-1">{t('reports.totalVolume')}</div>
                         <div className="text-3xl font-bold text-gray-900">
                             {formatNumber(totalSBDVolume)} kg
                         </div>
                     </div>
                     <div className="bg-white rounded-lg shadow-md p-6">
-                        <div className="text-sm text-gray-500 mb-1">Serie Totali SBD</div>
+                        <div className="text-sm text-gray-500 mb-1">{t('reports.totalSets')}</div>
                         <div className="text-3xl font-bold text-blue-600">{totalSBDSets}</div>
                     </div>
                     <div className="bg-white rounded-lg shadow-md p-6">
-                        <div className="text-sm text-gray-500 mb-1">Esercizi SBD Registrati</div>
+                        <div className="text-sm text-gray-500 mb-1">{t('reports.exercisesRegistered')}</div>
                         <div className="text-3xl font-bold text-[#FFA700]">
                             {
                                 [
@@ -180,31 +178,31 @@ export default function ProgramReportsContent() {
                                 <div className={`h-2 ${SBD_COLORS[lift]}`} />
                                 <div className="p-6">
                                     <h2 className="text-xl font-bold text-gray-900 mb-4">
-                                        {SBD_LABELS[lift]}
+                                        {t(`reports.${lift}`)}
                                     </h2>
                                     <div className="space-y-3">
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-gray-500">Volume:</span>
+                                            <span className="text-gray-500">{t('reports.volume')}:</span>
                                             <span className="font-semibold text-gray-900">
-                                                {formatNumber(data.volume)} kg
+                                                {formatNumber(data.volume)} {t('reports.kgUnit')}
                                             </span>
                                         </div>
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-gray-500">Serie Eseguite:</span>
+                                            <span className="text-gray-500">{t('reports.setsPerformed')}:</span>
                                             <span className="font-semibold text-gray-900">
                                                 {data.trainingSets}
                                             </span>
                                         </div>
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-gray-500">Intensità Media:</span>
+                                            <span className="text-gray-500">{t('reports.avgIntensity')}:</span>
                                             <span className="font-semibold text-gray-900">
                                                 {data.avgIntensity !== null
                                                     ? `${data.avgIntensity.toFixed(1)}% 1RM`
-                                                    : '— (no 1RM)'}
+                                                    : t('reports.noOrm')}
                                             </span>
                                         </div>
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-gray-500">RPE Medio:</span>
+                                            <span className="text-gray-500">{t('reports.avgRpe')}:</span>
                                             <span
                                                 className={`font-semibold ${data.avgRPE !== null && data.avgRPE >= 8.5
                                                     ? 'text-red-600'
@@ -221,7 +219,7 @@ export default function ProgramReportsContent() {
                                     </div>
                                     {data.trainingSets === 0 && (
                                         <p className="text-gray-400 text-xs mt-4 italic">
-                                            Nessun dato registrato
+                                            {t('reports.noData')}
                                         </p>
                                     )}
                                 </div>
@@ -234,10 +232,10 @@ export default function ProgramReportsContent() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                     <div className="bg-white rounded-lg shadow-md p-6">
                         <h2 className="text-xl font-bold text-gray-900 mb-6">
-                            💪 Serie per Gruppo Muscolare
+                            {t('reports.muscleGroups')}
                         </h2>
                         {report.muscleGroups.length === 0 ? (
-                            <p className="text-gray-500 text-sm">Nessun dato disponibile</p>
+                            <p className="text-gray-500 text-sm">{t('reports.noDataAvailable')}</p>
                         ) : (
                             <div className="space-y-4">
                                 {report.muscleGroups.map((mg) => (
@@ -247,7 +245,7 @@ export default function ProgramReportsContent() {
                                                 {mg.muscleGroupName}
                                             </span>
                                             <span className="text-sm text-gray-600">
-                                                {mg.trainingSets} serie ({mg.percentage}%)
+                                                {mg.trainingSets} {t('reports.seriesLabel')} ({mg.percentage}%)
                                             </span>
                                         </div>
                                         <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
@@ -265,10 +263,10 @@ export default function ProgramReportsContent() {
                     {/* Movement Patterns */}
                     <div className="bg-white rounded-lg shadow-md p-6">
                         <h2 className="text-xl font-bold text-gray-900 mb-6">
-                            🔄 Volume per Schema Motorio
+                            {t('reports.movementPatterns')}
                         </h2>
                         {report.movementPatterns.length === 0 ? (
-                            <p className="text-gray-500 text-sm">Nessun dato disponibile</p>
+                            <p className="text-gray-500 text-sm">{t('reports.noDataAvailable')}</p>
                         ) : (
                             <div className="space-y-4">
                                 {report.movementPatterns.map((mp) => (
@@ -278,7 +276,7 @@ export default function ProgramReportsContent() {
                                                 {mp.movementPatternName}
                                             </span>
                                             <span className="text-sm text-gray-600">
-                                                {formatNumber(mp.volume)} kg ({mp.percentage}%)
+                                                {formatNumber(mp.volume)} {t('reports.kgUnit')} ({mp.percentage}%)
                                             </span>
                                         </div>
                                         <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
@@ -297,10 +295,10 @@ export default function ProgramReportsContent() {
                 {/* RPE Distribution */}
                 <div className="bg-white rounded-lg shadow-md p-6 mb-8">
                     <h2 className="text-xl font-bold text-gray-900 mb-6">
-                        🎯 Distribuzione RPE
+                        {t('reports.rpeDistribution')}
                     </h2>
                     {report.rpeDistribution.every((item) => item.count === 0) ? (
-                        <p className="text-gray-500 text-sm">Nessun dato RPE disponibile</p>
+                        <p className="text-gray-500 text-sm">{t('reports.noRpeData')}</p>
                     ) : (
                         <div className="space-y-4">
                             {report.rpeDistribution.map((item) => {
@@ -314,10 +312,10 @@ export default function ProgramReportsContent() {
                                 }
 
                                 const getLabel = (range: string) => {
-                                    if (range === '6.0-6.5') return 'RPE 6.0-6.5 (Facile)'
-                                    if (range === '7.0-7.5') return 'RPE 7.0-7.5 (Moderato)'
-                                    if (range === '8.0-8.5') return 'RPE 8.0-8.5 (Impegnativo)'
-                                    if (range === '9.0-10.0') return 'RPE 9.0-10.0 (Massimale)'
+                                    if (range === '6.0-6.5') return t('reports.rpeEasy')
+                                    if (range === '7.0-7.5') return t('reports.rpeModerate')
+                                    if (range === '8.0-8.5') return t('reports.rpeHard')
+                                    if (range === '9.0-10.0') return t('reports.rpeMax')
                                     return range
                                 }
 
@@ -328,7 +326,7 @@ export default function ProgramReportsContent() {
                                                 {getLabel(item.range)}
                                             </span>
                                             <span className="text-sm text-gray-600">
-                                                {item.count} serie ({item.percentage}%)
+                                                {item.count} {t('reports.seriesLabel')} ({item.percentage}%)
                                             </span>
                                         </div>
                                         <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
