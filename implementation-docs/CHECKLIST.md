@@ -156,7 +156,7 @@
       File: `src/app/trainer/exercises/new/page.tsx`
 - [x] **9.7** `trainer/exercises/[id]/edit` — Aggiungere `DashboardLayout` (0.5h)  
       File: `src/app/trainer/exercises/[id]/edit/page.tsx`
-- [ ] **9.8** `trainer/programs` (lista programmi) — Aggiungere `DashboardLayout` (0.5h)  
+- [x] **9.8** `trainer/programs` (lista programmi) — Aggiungere `DashboardLayout` (0.5h)  
       File: `src/app/trainer/programs/page.tsx`
 - [ ] **9.9** `trainer/programs/[id]/edit` — Aggiungere `DashboardLayout` (0.5h)  
       File: `src/app/trainer/programs/[id]/edit/page.tsx`
