@@ -86,5 +86,28 @@
     "workouts": {
         "nextExercise": "Next exercise",
         "confirmContinue": "The following exercises have no data: {{exercises}}. Continue anyway?"
+    },
+    "records": {
+        "backToDashboard": "← Back to Dashboard",
+        "title": "🏆 Your Personal Records",
+        "description": "View your personal records and 1RM calculations",
+        "noRecords": "No Personal Records Yet",
+        "noRecordsDesc": "Your records will be saved automatically when you complete workouts",
+        "searchLabel": "Search Exercise",
+        "searchPlaceholder": "e.g. Squat, Bench Press...",
+        "typeLabel": "Type",
+        "typeAll": "All",
+        "typeFundamental": "Fundamentals",
+        "typeAccessory": "Accessories",
+        "noRecordsFound": "No records found",
+        "tagFundamental": "Fund.",
+        "tagAccessory": "Acc.",
+        "bestRecord": "Best Record",
+        "reps": "x {{count}} reps",
+        "calculatedOrm": "Calculated 1RM (Brzycki)",
+        "achievedOn": "Achieved on",
+        "totalPRs": "{{count}} total PRs for this exercise",
+        "infoNote": "Records are saved automatically when you complete workouts. The 1RM calculation uses the Brzycki formula to estimate your theoretical max from multi-rep sets.",
+        "errorLoading": "Error loading records"
     }
 }

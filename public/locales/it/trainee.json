@@ -86,5 +86,28 @@
     "workouts": {
         "nextExercise": "Prossimo esercizio",
         "confirmContinue": "I seguenti esercizi non hanno dati: {{exercises}}. Vuoi continuare comunque?"
+    },
+    "records": {
+        "backToDashboard": "← Torna alla Dashboard",
+        "title": "🏆 I Tuoi Massimali",
+        "description": "Visualizza i tuoi personal record e calcoli 1RM",
+        "noRecords": "Nessun Massimale Registrato",
+        "noRecordsDesc": "I tuoi massimali verranno registrati automaticamente quando completi i workout",
+        "searchLabel": "Cerca Esercizio",
+        "searchPlaceholder": "es. Squat, Panca...",
+        "typeLabel": "Tipologia",
+        "typeAll": "Tutti",
+        "typeFundamental": "Fondamentali",
+        "typeAccessory": "Accessori",
+        "noRecordsFound": "Nessun massimale trovato",
+        "tagFundamental": "Fond.",
+        "tagAccessory": "Acc.",
+        "bestRecord": "Massimale Registrato",
+        "reps": "x {{count}} reps",
+        "calculatedOrm": "1RM Calcolato (Brzycki)",
+        "achievedOn": "Raggiunto il",
+        "totalPRs": "{{count}} PR totali per questo esercizio",
+        "infoNote": "I massimali vengono registrati automaticamente quando completi i workout. Il calcolo 1RM utilizza la formula di Brzycki per stimare il tuo massimale teorico da serie con più ripetizioni.",
+        "errorLoading": "Errore caricamento massimali"
     }
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useTranslation } from 'react-i18next'
 import { SkeletonTable } from '@/components'
 import { formatDate } from '@/lib/date-format'
 
@@ -18,6 +19,7 @@ interface PersonalRecord {
 }
 
 export default function PersonalRecordsContent() {
+    const { t } = useTranslation('trainee')
     const [loading, setLoading] = useState(true)
     const [records, setRecords] = useState<PersonalRecord[]>([])
     const [error, setError] = useState<string | null>(null)
@@ -36,12 +38,13 @@ export default function PersonalRecordsContent() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || 'Errore caricamento massimali')
+                throw new Error(data.error?.message || t('records.errorLoading'))
             }
 
             setRecords(data.data.items)
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : t('records.errorLoading')
+            setError(message)
         } finally {
             setLoading(false)
         }
@@ -103,11 +106,11 @@ export default function PersonalRecordsContent() {
                     href="/trainee/dashboard"
                     className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
                 >
-                    ← Torna alla Dashboard
+                    {t('records.backToDashboard')}
                 </Link>
-                <h1 className="text-3xl font-bold text-gray-900">🏆 I Tuoi Massimali</h1>
+                <h1 className="text-3xl font-bold text-gray-900">{t('records.title')}</h1>
                 <p className="text-gray-600 mt-2">
-                    Visualizza i tuoi personal record e calcoli 1RM
+                    {t('records.description')}
                 </p>
             </div>
 
@@ -115,11 +118,10 @@ export default function PersonalRecordsContent() {
                 <div className="bg-white rounded-lg shadow-md p-12 text-center">
                     <div className="text-5xl mb-4">📊</div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                        Nessun Massimale Registrato
+                        {t('records.noRecords')}
                     </h2>
                     <p className="text-gray-600">
-                        I tuoi massimali verranno registrati automaticamente quando completi i
-                        workout
+                        {t('records.noRecordsDesc')}
                     </p>
                 </div>
             ) : (
@@ -130,13 +132,13 @@ export default function PersonalRecordsContent() {
                             {/* Search */}
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Cerca Esercizio
+                                    {t('records.searchLabel')}
                                 </label>
                                 <input
                                     type="text"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="es. Squat, Panca..."
+                                    placeholder={t('records.searchPlaceholder')}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
                                 />
                             </div>
@@ -144,13 +146,13 @@ export default function PersonalRecordsContent() {
                             {/* Type Filter */}
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Tipologia
+                                    {t('records.typeLabel')}
                                 </label>
                                 <div className="flex space-x-2">
                                     {[
-                                        { value: 'all', label: 'Tutti' },
-                                        { value: 'fundamental', label: 'Fondamentali' },
-                                        { value: 'accessory', label: 'Accessori' },
+                                        { value: 'all', label: t('records.typeAll') },
+                                        { value: 'fundamental', label: t('records.typeFundamental') },
+                                        { value: 'accessory', label: t('records.typeAccessory') },
                                     ].map((option) => (
                                         <button
                                             key={option.value}
@@ -173,7 +175,7 @@ export default function PersonalRecordsContent() {
                     {/* Records Grid */}
                     {bestRecords.length === 0 ? (
                         <div className="bg-white rounded-lg shadow-md p-8 text-center">
-                            <p className="text-gray-600">Nessun massimale trovato</p>
+                            <p className="text-gray-600">{t('records.noRecordsFound')}</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -199,27 +201,27 @@ export default function PersonalRecordsContent() {
                                                         }`}
                                                 >
                                                     {pr.exercise.type === 'fundamental'
-                                                        ? 'Fond.'
-                                                        : 'Acc.'}
+                                                        ? t('records.tagFundamental')
+                                                        : t('records.tagAccessory')}
                                                 </span>
                                             </div>
 
                                             <div className="space-y-3 mb-4">
                                                 <div>
                                                     <p className="text-sm text-gray-600 mb-1">
-                                                        Massimale Registrato
+                                                        {t('records.bestRecord')}
                                                     </p>
                                                     <p className="text-3xl font-bold text-[#FFA700]">
                                                         {pr.weight} kg
                                                     </p>
                                                     <p className="text-sm text-gray-600">
-                                                        x {pr.reps} reps
+                                                        {t('records.reps', { count: pr.reps })}
                                                     </p>
                                                 </div>
 
                                                 <div>
                                                     <p className="text-sm text-gray-600 mb-1">
-                                                        1RM Calcolato (Brzycki)
+                                                        {t('records.calculatedOrm')}
                                                     </p>
                                                     <p className="text-2xl font-bold text-gray-900">
                                                         {oneRepMax} kg
@@ -229,12 +231,11 @@ export default function PersonalRecordsContent() {
 
                                             <div className="border-t border-gray-200 pt-3">
                                                 <p className="text-xs text-gray-600">
-                                                    Raggiunto il {formatDate(pr.achievedAt)}
+                                                    {t('records.achievedOn')} {formatDate(pr.achievedAt)}
                                                 </p>
                                                 {allPRs.length > 1 && (
                                                     <p className="text-xs text-gray-600 mt-1">
-                                                        {allPRs.length} PR totali per questo
-                                                        esercizio
+                                                        {t('records.totalPRs', { count: allPRs.length })}
                                                     </p>
                                                 )}
                                             </div>
@@ -249,10 +250,7 @@ export default function PersonalRecordsContent() {
             {/* Info Box */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-8">
                 <p className="text-sm text-blue-900">
-                    <span className="font-semibold">ℹ️ Nota:</span> I massimali vengono
-                    registrati automaticamente quando completi i workout. Il calcolo 1RM
-                    utilizza la formula di Brzycki per stimare il tuo massimale teorico da
-                    serie con più ripetizioni.
+                    <span className="font-semibold">ℹ️</span> {t('records.infoNote')}
                 </p>
             </div>
         </div>
