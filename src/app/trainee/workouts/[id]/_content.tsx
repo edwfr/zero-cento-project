@@ -1,6 +1,7 @@
 ﻿'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { SkeletonDetail } from '@/components'
@@ -72,6 +73,7 @@ interface Workout {
 }
 
 export default function WorkoutDetailContent() {
+    const { t } = useTranslation('trainee')
     const router = useRouter()
     const params = useParams()
     const workoutId = params.id as string
@@ -119,7 +121,7 @@ export default function WorkoutDetailContent() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || 'Errore caricamento workout')
+                throw new Error(data.error?.message || t('workouts.errorLoading'))
             }
 
             setWorkout(data.data.workout)
@@ -155,8 +157,8 @@ export default function WorkoutDetailContent() {
 
             setFeedbackData(initialFeedback)
             setExerciseRPE(initialRPE)
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : t('workouts.errorLoading'))
         } finally {
             setLoading(false)
         }
@@ -277,7 +279,7 @@ export default function WorkoutDetailContent() {
 
                 if (!res.ok) {
                     const data = await res.json()
-                    throw new Error(data.error?.message || 'Errore invio feedback')
+                    throw new Error(data.error?.message || t('workouts.errorFeedback'))
                 }
 
                 return res.json()
@@ -288,10 +290,10 @@ export default function WorkoutDetailContent() {
             // Clear local storage
             clearLocalData()
 
-            showToast('Feedback inviato con successo!', 'success')
+            showToast(t('workouts.feedbackSuccess'), 'success')
             router.push('/trainee/dashboard')
-        } catch (err: any) {
-            showToast(err.message, 'error')
+        } catch (err: unknown) {
+            showToast(err instanceof Error ? err.message : t('workouts.errorFeedback'), 'error')
             setSubmitting(false)
         }
     }
@@ -311,9 +313,9 @@ export default function WorkoutDetailContent() {
 
         if (emptyExercises.length > 0) {
             setConfirmModal({
-                title: 'Dati Mancanti',
-                message: `I seguenti esercizi non hanno dati: ${emptyExercises.join(', ')}. Vuoi continuare comunque?`,
-                confirmText: 'Continua',
+                title: t('workouts.missingDataTitle'),
+                message: t('workouts.confirmContinue', { exercises: emptyExercises.join(', ') }),
+                confirmText: t('workouts.continueBtn'),
                 variant: 'warning',
                 onConfirm: doSubmit,
             })
@@ -370,7 +372,7 @@ export default function WorkoutDetailContent() {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="bg-red-50 border border-red-200 text-red-800 px-6 py-4 rounded-lg">
-                    {error || 'Workout non trovato'}
+                    {error || t('workouts.errorNotFound')}
                 </div>
             </div>
         )
@@ -389,7 +391,7 @@ export default function WorkoutDetailContent() {
                     onConfirm={confirmModal.onConfirm}
                     title={confirmModal.title}
                     message={confirmModal.message}
-                    confirmText={confirmModal.confirmText ?? 'Conferma'}
+                    confirmText={confirmModal.confirmText ?? t('workouts.confirmBtn')}
                     variant={confirmModal.variant ?? 'danger'}
                 />
             )}
@@ -400,22 +402,22 @@ export default function WorkoutDetailContent() {
                         href="/trainee/programs/current"
                         className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
                     >
-                        ← Torna al Programma
+                        {t('workouts.backToProgram')}
                     </Link>
                     <h1 className="text-3xl font-bold text-gray-900">
-                        {workout.dayLabel} - Settimana {workout.weekNumber}
+                        {workout.dayLabel} - {t('workouts.weekLabel', { number: workout.weekNumber })}
                     </h1>
                     <p className="text-gray-600 mt-2">
                         {workout.program.title}
                     </p>
                     {workout.weekType === 'deload' && (
                         <div className="mt-3 inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
-                            🧘 Settimana Deload - Recupero
+                            {t('workouts.weekDeload')}
                         </div>
                     )}
                     {workout.weekType === 'test' && (
                         <div className="mt-3 inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
-                            💪 Settimana Test - Massimali
+                            {t('workouts.weekTest')}
                         </div>
                     )}
                 </div>
@@ -423,15 +425,15 @@ export default function WorkoutDetailContent() {
                 {/* Summary Stats */}
                 <div className="grid grid-cols-3 gap-4 mb-8">
                     <div className="bg-white rounded-lg shadow-md p-4 text-center">
-                        <p className="text-sm text-gray-600 mb-1">Volume Totale</p>
+                        <p className="text-sm text-gray-600 mb-1">{t('workouts.totalVolume')}</p>
                         <p className="text-2xl font-bold text-[#FFA700]">{totalVolume} kg</p>
                     </div>
                     <div className="bg-white rounded-lg shadow-md p-4 text-center">
-                        <p className="text-sm text-gray-600 mb-1">RPE Medio</p>
+                        <p className="text-sm text-gray-600 mb-1">{t('workouts.avgRpe')}</p>
                         <p className="text-2xl font-bold text-[#FFA700]">{avgRPE || '-'}</p>
                     </div>
                     <div className="bg-white rounded-lg shadow-md p-4 text-center">
-                        <p className="text-sm text-gray-600 mb-1">Esercizi</p>
+                        <p className="text-sm text-gray-600 mb-1">{t('workouts.exercisesCount')}</p>
                         <p className="text-2xl font-bold text-gray-900">
                             {sortedExercises.length}
                         </p>
@@ -441,8 +443,7 @@ export default function WorkoutDetailContent() {
                 {/* Auto-save indicator */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
                     <p className="text-sm text-blue-900">
-                        💾 <span className="font-semibold">Auto-Save Attivo:</span> I tuoi dati
-                        vengono salvati automaticamente sul dispositivo
+                        💾 <span className="font-semibold">{t('workouts.autosaveTitle')}</span> {t('workouts.autosaveDesc')}
                     </p>
                 </div>
 
@@ -453,18 +454,18 @@ export default function WorkoutDetailContent() {
                             onClick={() => navigateToExercise(activeExerciseIndex - 1)}
                             disabled={activeExerciseIndex === 0}
                             className="p-2 rounded-full bg-white shadow disabled:opacity-30 text-gray-600"
-                            aria-label="Esercizio precedente"
+                            aria-label={t('workouts.prevExercise')}
                         >
                             ‹
                         </button>
                         <span className="text-xs text-gray-500 select-none">
-                            Scorri ← → per navigare tra gli esercizi ({activeExerciseIndex + 1}/{sortedExercises.length})
+                            {t('workouts.swipeHint', { current: activeExerciseIndex + 1, total: sortedExercises.length })}
                         </span>
                         <button
                             onClick={() => navigateToExercise(activeExerciseIndex + 1)}
                             disabled={activeExerciseIndex === sortedExercises.length - 1}
                             className="p-2 rounded-full bg-white shadow disabled:opacity-30 text-gray-600"
-                            aria-label="Prossimo esercizio"
+                            aria-label={t('workouts.nextExercise')}
                         >
                             ›
                         </button>
@@ -505,26 +506,26 @@ export default function WorkoutDetailContent() {
                                                         }`}
                                                 >
                                                     {we.exercise.type === 'fundamental'
-                                                        ? 'Fondamentale'
-                                                        : 'Accessorio'}
+                                                        ? t('workouts.tagFundamental')
+                                                        : t('workouts.tagAccessory')}
                                                 </span>
                                             </div>
 
                                             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                                                 <div>
-                                                    <p className="text-xs text-gray-600">Serie</p>
+                                                    <p className="text-xs text-gray-600">{t('workouts.sets')}</p>
                                                     <p className="font-semibold text-gray-900">
                                                         {we.sets}
                                                     </p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs text-gray-600">Reps</p>
+                                                    <p className="text-xs text-gray-600">{t('workouts.reps')}</p>
                                                     <p className="font-semibold text-gray-900">
                                                         {we.reps}
                                                     </p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs text-gray-600">Peso</p>
+                                                    <p className="text-xs text-gray-600">{t('workouts.weightLabel')}</p>
                                                     <p className="font-semibold text-gray-900">
                                                         {we.effectiveWeight
                                                             ? `${we.effectiveWeight.toFixed(1)} kg`
@@ -534,7 +535,7 @@ export default function WorkoutDetailContent() {
                                                     </p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs text-gray-600">Riposo</p>
+                                                    <p className="text-xs text-gray-600">{t('workouts.rest')}</p>
                                                     <p className="font-semibold text-gray-900">
                                                         {Math.floor(we.restTime / 60)}:
                                                         {(we.restTime % 60)
@@ -543,13 +544,13 @@ export default function WorkoutDetailContent() {
                                                     </p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs text-gray-600">RPE Target</p>
+                                                    <p className="text-xs text-gray-600">{t('workouts.rpeTarget')}</p>
                                                     <p className="font-semibold text-gray-900">
                                                         {we.targetRpe}
                                                     </p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs text-gray-600">Volume</p>
+                                                    <p className="text-xs text-gray-600">{t('workouts.volume')}</p>
                                                     <p className="font-semibold text-[#FFA700]">
                                                         {volume} kg
                                                     </p>
@@ -585,13 +586,13 @@ export default function WorkoutDetailContent() {
                                                 <thead>
                                                     <tr className="border-b border-gray-300">
                                                         <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700">
-                                                            Serie
+                                                            {t('workouts.sets')}
                                                         </th>
                                                         <th className="text-center py-2 px-3 text-sm font-semibold text-gray-700">
-                                                            Peso (kg)
+                                                            {t('workouts.weightKg')}
                                                         </th>
                                                         <th className="text-center py-2 px-3 text-sm font-semibold text-gray-700">
-                                                            Reps
+                                                            {t('workouts.reps')}
                                                         </th>
                                                     </tr>
                                                 </thead>
@@ -650,7 +651,7 @@ export default function WorkoutDetailContent() {
                                         {/* Overall Exercise RPE */}
                                         <div className="flex items-center justify-between bg-gray-100 p-4 rounded-lg">
                                             <label className="text-sm font-semibold text-gray-700">
-                                                RPE Complessivo:
+                                                {t('workouts.overallRpe')}
                                             </label>
                                             <select
                                                 value={exerciseRPE[we.id] || ''}
@@ -659,7 +660,7 @@ export default function WorkoutDetailContent() {
                                                 }
                                                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
                                             >
-                                                <option value="">Seleziona RPE</option>
+                                                <option value="">{t('workouts.selectRpe')}</option>
                                                 {[5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10].map((rpe) => (
                                                     <option key={rpe} value={rpe}>
                                                         {rpe}
@@ -677,12 +678,12 @@ export default function WorkoutDetailContent() {
                 {/* Global Notes */}
                 <div className="bg-white rounded-lg shadow-md p-6 mb-8">
                     <label className="block text-lg font-bold text-gray-900 mb-3">
-                        Note Workout (opzionali)
+                        {t('workouts.notesLabel')}
                     </label>
                     <textarea
                         value={globalNotes}
                         onChange={(e) => setGlobalNotes(e.target.value)}
-                        placeholder="Come ti sei sentito? Difficoltà? Note per il trainer..."
+                        placeholder={t('workouts.notesPlaceholder')}
                         rows={4}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
                     />
@@ -697,7 +698,7 @@ export default function WorkoutDetailContent() {
                     {submitting ? (
                         <LoadingSpinner size="sm" color="white" />
                     ) : (
-                        '✅ Completa Workout e Invia Feedback'
+                        t('workouts.completeWorkout')
                     )}
                 </button>
             </div>
