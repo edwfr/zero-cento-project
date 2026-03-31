@@ -160,7 +160,7 @@
       File: `src/app/trainer/programs/page.tsx`
 - [x] **9.9** `trainer/programs/[id]/edit` — Aggiungere `DashboardLayout` (0.5h)  
       File: `src/app/trainer/programs/[id]/edit/page.tsx`
-- [ ] **9.10** `trainer/programs/[id]/progress` — Aggiungere `DashboardLayout` (0.5h)  
+- [x] **9.10** `trainer/programs/[id]/progress` — Aggiungere `DashboardLayout` (0.5h)  
       File: `src/app/trainer/programs/[id]/progress/page.tsx`
 - [ ] **9.11** `trainer/programs/[id]/publish` — Aggiungere `DashboardLayout` (0.5h)  
       File: `src/app/trainer/programs/[id]/publish/page.tsx`

@@ -19,6 +19,14 @@ Registro cronologico degli sviluppi effettuati.
 
 ## Storico
 
+### [31 Marzo 2026] — DashboardLayout su Pagina Progress Programma (Sprint 9.10)
+
+**Task checklist:** #9.10  
+**File modificati:** `src/app/trainer/programs/[id]/progress/page.tsx`, `src/app/trainer/programs/[id]/progress/_content.tsx`  
+**Note:** Aggiunto `DashboardLayout` alla pagina di monitoraggio avanzamento programma. Split del client component originale in `_content.tsx` (logica client) e `page.tsx` (server component con getSession() + DashboardLayout wrapper). Role guard per 'trainer' implementato. La pagina ora mostra header globale con logo, menu hamburger, e navigazione consistente con il resto dell'applicazione.
+
+---
+
 ### [30 Marzo 2026] — E2E Test Trainer Pubblica Programma e Trainee lo Visualizza (Sprint 5.8)
 
 **Task checklist:** #5.8  
