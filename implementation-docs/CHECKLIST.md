@@ -184,12 +184,29 @@
 - [x] **9.19** `trainer/exercises` — Refactoring per split client/server e `DashboardLayout` (0.5h)
       File: `src/app/trainer/exercises/page.tsx`
 
+### Schermate Admin (4)
+
+- [x] **9.20** `admin/dashboard` — `DashboardLayout` + split client/server (0.5h)  
+      File: `src/app/admin/dashboard/page.tsx` + `AdminDashboardContent.tsx` ✅ _31 Mar 2026_
+- [x] **9.21** `admin/exercises` — `DashboardLayout` + `getSession()` (0.5h)  
+      File: `src/app/admin/exercises/page.tsx` ✅ _31 Mar 2026_
+- [x] **9.22** `admin/programs` — `DashboardLayout` + split client/server (0.5h)  
+      File: `src/app/admin/programs/page.tsx` + `AdminProgramsContent.tsx` ✅ _31 Mar 2026_
+- [x] **9.23** `admin/users` — `DashboardLayout` + split client/server (0.5h)  
+      File: `src/app/admin/users/page.tsx` + `AdminUsersContent.tsx` ✅ _31 Mar 2026_
+
 > **Note implementative:**
 >
 > **Pattern di implementazione** (usato per tutte le schermate trainee come riferimento):
 >
 > 1. Se `page.tsx` è già un server component → aggiungere direttamente `getSession()` + `<DashboardLayout>` attorno al JSX esistente.
 > 2. Se `page.tsx` è un client component (`'use client'`) → **split in due file**:
+> 3. **Tokenizzazione i18n obbligatoria** — ogni `_content.tsx` deve:
+>    - Importare `useTranslation` da `react-i18next` e chiamare `const { t } = useTranslation('trainee' | 'trainer')`
+>    - Sostituire **tutte** le stringhe hardcoded con `t('sezione.chiave')`
+>    - Aggiungere le chiavi mancanti in **entrambi** i file `public/locales/en/<namespace>.json` e `public/locales/it/<namespace>.json`
+>    - Correggere `err: any` in `err: unknown` nei blocchi catch
+>    - Sostituire array hardcoded (es. nomi giorni) con `t('sezione.chiave', { returnObjects: true })`
 >    - `_content.tsx` — copia del client component con la funzione rinominata (es. `FooContent`)
 >    - `page.tsx` — server component che chiama `getSession()` e restituisce `<DashboardLayout user={session.user}><FooContent /></DashboardLayout>`
 >

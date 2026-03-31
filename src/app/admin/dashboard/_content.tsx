@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { StatCard, NavigationCard, SkeletonDashboard } from '@/components'
 
 interface DashboardStats {
@@ -13,6 +14,7 @@ interface DashboardStats {
 }
 
 export default function AdminDashboardContent() {
+    const { t } = useTranslation('admin')
     const [loading, setLoading] = useState(true)
     const [stats, setStats] = useState<DashboardStats | null>(null)
     const [error, setError] = useState<string | null>(null)
@@ -40,7 +42,7 @@ export default function AdminDashboardContent() {
             ])
 
             if (!usersRes.ok || !programsRes.ok || !exercisesRes.ok || !feedbackRes.ok) {
-                throw new Error('Errore caricamento statistiche')
+                throw new Error(t('dashboard.errorLoadStats'))
             }
 
             const users = usersData.data.items
@@ -50,14 +52,14 @@ export default function AdminDashboardContent() {
 
             setStats({
                 totalUsers: users.length,
-                totalTrainers: users.filter((u: any) => u.role === 'trainer').length,
-                totalTrainees: users.filter((u: any) => u.role === 'trainee').length,
-                activePrograms: programs.filter((p: any) => p.status === 'active').length,
+                totalTrainers: users.filter((u: { role: string }) => u.role === 'trainer').length,
+                totalTrainees: users.filter((u: { role: string }) => u.role === 'trainee').length,
+                activePrograms: programs.filter((p: { status: string }) => p.status === 'active').length,
                 totalExercises: exercises.length,
                 totalFeedback: feedback.length,
             })
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : t('dashboard.errorLoadDashboard'))
         } finally {
             setLoading(false)
         }
@@ -70,7 +72,7 @@ export default function AdminDashboardContent() {
     if (error || !stats) {
         return (
             <div className="bg-red-50 border border-red-200 text-red-800 px-6 py-4 rounded-lg">
-                {error || 'Errore caricamento dashboard'}
+                {error || t('dashboard.errorLoadDashboard')}
             </div>
         )
     }
@@ -79,57 +81,57 @@ export default function AdminDashboardContent() {
         <div>
             {/* Header */}
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">Dashboard Amministratore</h1>
-                <p className="text-gray-600 mt-2">Panoramica statistiche piattaforma</p>
+                <h1 className="text-3xl font-bold text-gray-900">{t('dashboard.statsTitle')}</h1>
+                <p className="text-gray-600 mt-2">{t('dashboard.statsDescription')}</p>
             </div>
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 <StatCard
-                    title="Utenti Totali"
+                    title={t('dashboard.totalUsers')}
                     value={stats.totalUsers}
-                    subtitle={`${stats.totalTrainers} trainer • ${stats.totalTrainees} atleti`}
+                    subtitle={t('dashboard.trainersSubCount', { trainers: stats.totalTrainers, trainees: stats.totalTrainees })}
                     icon="👥"
                     color="primary"
                     onClick={() => (window.location.href = '/admin/users')}
                 />
 
                 <StatCard
-                    title="Programmi Attivi"
+                    title={t('dashboard.activePrograms')}
                     value={stats.activePrograms}
-                    subtitle="In corso di esecuzione"
+                    subtitle={t('dashboard.activeProgramsSub')}
                     icon="🏋️"
                     color="success"
                 />
 
                 <StatCard
-                    title="Esercizi Libreria"
+                    title={t('dashboard.exercisesLib')}
                     value={stats.totalExercises}
-                    subtitle="Disponibili per i trainer"
+                    subtitle={t('dashboard.exercisesLibSub')}
                     icon="💪"
                     color="info"
                 />
 
                 <StatCard
-                    title="Feedback Ricevuti"
+                    title={t('dashboard.feedbackReceived')}
                     value={stats.totalFeedback}
-                    subtitle="Workout completati"
+                    subtitle={t('dashboard.feedbackSub')}
                     icon="📊"
                     color="warning"
                 />
 
                 <StatCard
-                    title="Trainer Attivi"
+                    title={t('dashboard.trainers')}
                     value={stats.totalTrainers}
-                    subtitle="Professionisti registrati"
+                    subtitle={t('dashboard.trainersSub')}
                     icon="👨‍🏫"
                     color="info"
                 />
 
                 <StatCard
-                    title="Atleti"
+                    title={t('dashboard.athletes')}
                     value={stats.totalTrainees}
-                    subtitle="Utenti in allenamento"
+                    subtitle={t('dashboard.athletesSub')}
                     icon="🏃"
                     color="success"
                 />
@@ -137,41 +139,41 @@ export default function AdminDashboardContent() {
 
             {/* Navigation Cards */}
             <div className="mb-4">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Navigazione Rapida</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">{t('dashboard.quickNav')}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <NavigationCard
                         href="/admin/users"
                         icon="👥"
-                        title="Gestione Utenti"
-                        description="Visualizza e gestisci trainer e atleti. Crea, modifica ed elimina profili."
+                        title={t('dashboard.navUsers')}
+                        description={t('dashboard.navUsersDesc')}
                         color="blue"
                     />
                     <NavigationCard
                         href="/admin/exercises"
                         icon="💪"
-                        title="Libreria Esercizi"
-                        description="Gestisci la libreria globale di esercizi con pattern motori e gruppi muscolari."
+                        title={t('dashboard.navExercises')}
+                        description={t('dashboard.navExercisesDesc')}
                         color="primary"
                     />
                     <NavigationCard
                         href="/admin/programs"
                         icon="📋"
-                        title="Programmi Globali"
-                        description="Visualizza tutti i programmi di allenamento attivi in piattaforma."
+                        title={t('dashboard.navPrograms')}
+                        description={t('dashboard.navProgramsDesc')}
                         color="green"
                     />
                     <NavigationCard
                         href="/admin/statistics"
                         icon="📊"
-                        title="Statistiche & Report"
-                        description="Analisi avanzate sull'utilizzo della piattaforma e performance degli atleti."
+                        title={t('dashboard.navStats')}
+                        description={t('dashboard.navStatsDesc')}
                         color="purple"
                     />
                     <NavigationCard
                         href="/admin/settings"
                         icon="⚙️"
-                        title="Impostazioni"
-                        description="Configurazione generale dell'applicazione e preferenze di sistema."
+                        title={t('dashboard.navSettings')}
+                        description={t('dashboard.navSettingsDesc')}
                         color="secondary"
                     />
                 </div>
@@ -180,9 +182,7 @@ export default function AdminDashboardContent() {
             {/* Info Box */}
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                 <p className="text-sm text-orange-900">
-                    <span className="font-semibold">ℹ️ Nota:</span> Come amministratore hai accesso
-                    completo a tutte le funzionalità della piattaforma. Usa i link sopra per
-                    gestire utenti, visualizzare programmi e accedere ai report.
+                    <span className="font-semibold">ℹ️ {t('dashboard.infoNoteLabel')}</span> {t('dashboard.infoNote')}
                 </p>
             </div>
         </div>

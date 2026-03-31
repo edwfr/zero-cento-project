@@ -42,8 +42,8 @@ export default function TrainerTraineesContent() {
             }
 
             setTrainees(data.data.items)
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : String(err))
         } finally {
             setLoading(false)
         }
@@ -63,8 +63,8 @@ export default function TrainerTraineesContent() {
             }
 
             fetchTrainees()
-        } catch (err: any) {
-            showToast(err.message, 'error')
+        } catch (err: unknown) {
+            showToast(err instanceof Error ? err.message : String(err), 'error')
         }
     }
 

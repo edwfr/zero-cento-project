@@ -1,7 +1,7 @@
 import { getSession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
-import AdminDashboardContent from './AdminDashboardContent'
+import AdminDashboardContent from './_content'
 
 export default async function AdminDashboard() {
     const session = await getSession()
