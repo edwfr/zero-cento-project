@@ -19,6 +19,15 @@ Registro cronologico degli sviluppi effettuati.
 
 ## Storico
 
+### [31 Marzo 2026] — DashboardLayout su Pagina Dettaglio Atleta con i18n (Sprint 9.16)
+
+**Task checklist:** #9.16  
+**File modificati:** `src/app/trainer/trainees/[id]/page.tsx`, `src/app/trainer/trainees/[id]/_content.tsx` (creato)  
+**File i18n aggiornati:** `public/locales/it/trainer.json`, `public/locales/en/trainer.json`  
+**Note:** Aggiunto `DashboardLayout` alla pagina di dettaglio atleta (`trainer/trainees/[id]`). Implementato pattern split client/server: `page.tsx` convertito in server component con `getSession()`, role guard per 'trainer', e wrapper `<DashboardLayout>`. Tutta la logica UI spostata in `_content.tsx` (client component) con integrazione completa i18n usando `useTranslation()`. **Token i18n aggiunti:** `athletes.totalPrograms`, `athletes.activePrograms`, `athletes.recordsRegistered`, `athletes.programsTab`, `athletes.recordsTab`, `athletes.noProgramsAssigned`, `athletes.createNewProgram`, `athletes.manageRecords`, `athletes.viewProgram`, `athletes.estimated1RM`, `programs.startDate`, `programs.durationWeeks`, `personalRecords.exercise`, `personalRecords.date`, `personalRecords.addRecordButton`. Tutte le stringhe hardcoded italiane ora usano token i18n riutilizzabili. Pagina ora mostra header globale con logo, menu hamburger, e navigazione consistente.
+
+---
+
 ### [31 Marzo 2026] — DashboardLayout su Pagina Progress Programma (Sprint 9.10)
 
 **Task checklist:** #9.10  

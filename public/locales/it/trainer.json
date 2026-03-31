@@ -88,7 +88,17 @@
         "passwordCopied": "Password copiata negli appunti!",
         "fillAllFields": "Compila tutti i campi obbligatori",
         "manualPasswordRequired": "Inserisci una password manuale o abilita la generazione automatica",
-        "creationError": "Errore nella creazione atleta"
+        "creationError": "Errore nella creazione atleta",
+        "totalPrograms": "Programmi Totali",
+        "activePrograms": "Programmi Attivi",
+        "recordsRegistered": "Massimali Registrati",
+        "programsTab": "📋 Programmi",
+        "recordsTab": "💪 Massimali",
+        "noProgramsAssigned": "Nessun programma assegnato",
+        "createNewProgram": "Crea Nuovo Programma",
+        "manageRecords": "📊 Gestisci Massimali",
+        "viewProgram": "Visualizza →",
+        "estimated1RM": "1RM Stimato"
     },
     "personalRecords": {
         "title": "Massimali e Record",
@@ -113,7 +123,11 @@
         "createError": "Errore creazione massimale",
         "fillAllFields": "Compila tutti i campi obbligatori",
         "cannotChangeExercise": "Non è possibile cambiare esercizio durante la modifica",
-        "showAllRecords": "Mostra tutti i {{count}} record"
+        "showAllRecords": "Mostra tutti i {{count}} record",
+        "exercise": "Esercizio",
+        "estimated1RM": "1RM Stimato",
+        "date": "Data",
+        "addRecordButton": "Aggiungi Massimale"
     },
     "programs": {
         "title": "Programmi di Allenamento",
@@ -131,7 +145,9 @@
         "noProgramsFound": "Nessun programma trovato con questi filtri",
         "workoutsPerWeek": "allenamenti/settimana",
         "weeksShort": "sett.",
-        "loadingError": "Errore caricamento programmi"
+        "loadingError": "Errore caricamento programmi",
+        "startDate": "Inizio",
+        "durationWeeks": "{{count}} settimane"
     },
     "weekTypes": {
         "standard": "Settimana Standard",

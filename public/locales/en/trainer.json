@@ -88,7 +88,17 @@
         "passwordCopied": "Password copied to clipboard!",
         "fillAllFields": "Fill in all required fields",
         "manualPasswordRequired": "Enter a manual password or enable automatic generation",
-        "creationError": "Error creating athlete"
+        "creationError": "Error creating athlete",
+        "totalPrograms": "Total Programs",
+        "activePrograms": "Active Programs",
+        "recordsRegistered": "Records Registered",
+        "programsTab": "📋 Programs",
+        "recordsTab": "💪 Records",
+        "noProgramsAssigned": "No programs assigned",
+        "createNewProgram": "Create New Program",
+        "manageRecords": "📊 Manage Records",
+        "viewProgram": "View →",
+        "estimated1RM": "Estimated 1RM"
     },
     "personalRecords": {
         "title": "Personal Records and Maxes",
@@ -113,7 +123,11 @@
         "createError": "Error creating personal record",
         "fillAllFields": "Fill in all required fields",
         "cannotChangeExercise": "Cannot change exercise during editing",
-        "showAllRecords": "Show all {{count}} records"
+        "showAllRecords": "Show all {{count}} records",
+        "exercise": "Exercise",
+        "estimated1RM": "Estimated 1RM",
+        "date": "Date",
+        "addRecordButton": "Add Record"
     },
     "programs": {
         "title": "Training Programs",
@@ -131,7 +145,9 @@
         "noProgramsFound": "No programs found with these filters",
         "workoutsPerWeek": "workouts/week",
         "weeksShort": "wks.",
-        "loadingError": "Error loading programs"
+        "loadingError": "Error loading programs",
+        "startDate": "Start",
+        "durationWeeks": "{{count}} weeks"
     },
     "weekTypes": {
         "standard": "Standard Week",
