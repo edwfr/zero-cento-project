@@ -71,5 +71,31 @@
         "description": "Visualizza e gestisci tutti gli esercizi, gruppi muscolari e schemi motori del sistema",
         "infoNoteLabel": "Nota:",
         "infoNote": "Gli esercizi creati sono condivisi con tutti i trainer per la creazione delle schede. Assicurati di inserire URL YouTube validi per i video dimostrativi."
+    },
+    "programsPage": {
+        "title": "Tutti i Programmi",
+        "description": "Visualizza e supervisiona tutti i programmi di allenamento del sistema",
+        "searchPlaceholder": "🔍 Cerca per titolo, atleta o trainer...",
+        "filterAll": "Tutti gli stati",
+        "statusDraft": "Bozza",
+        "statusActive": "Attivo",
+        "statusCompleted": "Completato",
+        "status_draft": "Bozza",
+        "status_active": "Attivo",
+        "status_completed": "Completato",
+        "foundCount": "{{found}} programmi trovati su {{total}} totali",
+        "colTitle": "Titolo",
+        "colAthlete": "Atleta",
+        "colTrainer": "Trainer",
+        "colStatus": "Stato",
+        "colStart": "Inizio",
+        "colEnd": "Fine",
+        "colActions": "Azioni",
+        "noResults": "Nessun programma trovato",
+        "page": "Pagina {{page}} di {{total}}",
+        "actionProgress": "Progress",
+        "actionReport": "Report",
+        "loadingError": "Errore caricamento programmi"
     }
+}
 }

@@ -1,7 +1,7 @@
 import { getSession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
-import AdminProgramsContent from './AdminProgramsContent'
+import AdminProgramsPageContent from './_content'
 
 export default async function AdminProgramsPage() {
     const session = await getSession()
@@ -16,19 +16,7 @@ export default async function AdminProgramsPage() {
 
     return (
         <DashboardLayout user={session.user}>
-            <div className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-3xl font-bold text-gray-900">
-                        Tutti i Programmi
-                    </h1>
-                </div>
-
-                <p className="text-gray-600 mb-6">
-                    Visualizza e supervisiona tutti i programmi di allenamento del sistema
-                </p>
-
-                <AdminProgramsContent />
-            </div>
+            <AdminProgramsPageContent />
         </DashboardLayout>
     )
 }

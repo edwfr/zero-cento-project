@@ -71,5 +71,30 @@
         "description": "View and manage all exercises, muscle groups and movement patterns in the system",
         "infoNoteLabel": "Note:",
         "infoNote": "Exercises created are shared with all trainers for program creation. Make sure to add valid YouTube URLs for demo videos."
+    },
+    "programsPage": {
+        "title": "All Programs",
+        "description": "View and supervise all training programs in the system",
+        "searchPlaceholder": "🔍 Search by title, athlete or trainer...",
+        "filterAll": "All statuses",
+        "statusDraft": "Draft",
+        "statusActive": "Active",
+        "statusCompleted": "Completed",
+        "status_draft": "Draft",
+        "status_active": "Active",
+        "status_completed": "Completed",
+        "foundCount": "{{found}} programs found out of {{total}} total",
+        "colTitle": "Title",
+        "colAthlete": "Athlete",
+        "colTrainer": "Trainer",
+        "colStatus": "Status",
+        "colStart": "Start",
+        "colEnd": "End",
+        "colActions": "Actions",
+        "noResults": "No programs found",
+        "page": "Page {{page}} of {{total}}",
+        "actionProgress": "Progress",
+        "actionReport": "Report",
+        "loadingError": "Error loading programs"
     }
 }

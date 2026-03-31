@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
+import { useTranslation } from 'react-i18next'
 import { formatDate } from '@/lib/date-format'
 
 interface Program {
@@ -21,15 +22,10 @@ const STATUS_BADGE: Record<string, string> = {
     completed: 'bg-gray-100 text-gray-800',
 }
 
-const STATUS_LABEL: Record<string, string> = {
-    draft: 'Bozza',
-    active: 'Attivo',
-    completed: 'Completato',
-}
-
 const PAGE_SIZE = 15
 
-export default function AdminProgramsContent() {
+export default function AdminProgramsPageContent() {
+    const { t } = useTranslation('admin')
     const [programs, setPrograms] = useState<Program[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -44,16 +40,16 @@ export default function AdminProgramsContent() {
                 setLoading(true)
                 const res = await fetch('/api/programs?limit=200')
                 const data = await res.json()
-                if (!res.ok) throw new Error(data.error?.message || 'Errore caricamento programmi')
+                if (!res.ok) throw new Error(data.error?.message || t('programsPage.loadingError'))
                 setPrograms(data.data.items)
-            } catch (err: any) {
-                setError(err.message)
+            } catch (err: unknown) {
+                setError(err instanceof Error ? err.message : t('programsPage.loadingError'))
             } finally {
                 setLoading(false)
             }
         }
         fetchPrograms()
-    }, [])
+    }, [t])
 
     useEffect(() => {
         setPage(1)
@@ -97,7 +93,7 @@ export default function AdminProgramsContent() {
             <div className="flex flex-col md:flex-row gap-3 mb-4 items-start md:items-center">
                 <input
                     type="text"
-                    placeholder="🔍 Cerca per titolo, atleta o trainer..."
+                    placeholder={t('programsPage.searchPlaceholder')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="flex-1 max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
@@ -107,15 +103,15 @@ export default function AdminProgramsContent() {
                     onChange={(e) => setFilterStatus(e.target.value)}
                     className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
                 >
-                    <option value="all">Tutti gli stati</option>
-                    <option value="draft">Bozza</option>
-                    <option value="active">Attivo</option>
-                    <option value="completed">Completato</option>
+                    <option value="all">{t('programsPage.filterAll')}</option>
+                    <option value="draft">{t('programsPage.statusDraft')}</option>
+                    <option value="active">{t('programsPage.statusActive')}</option>
+                    <option value="completed">{t('programsPage.statusCompleted')}</option>
                 </select>
             </div>
 
             <div className="text-sm text-gray-500 mb-4">
-                {filtered.length} programmi trovati su {programs.length} totali
+                {t('programsPage.foundCount', { found: filtered.length, total: programs.length })}
             </div>
 
             {/* Table */}
@@ -124,16 +120,22 @@ export default function AdminProgramsContent() {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                {['Titolo', 'Atleta', 'Trainer', 'Stato', 'Inizio', 'Fine', 'Azioni'].map(
-                                    (h) => (
-                                        <th
-                                            key={h}
-                                            className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase"
-                                        >
-                                            {h}
-                                        </th>
-                                    )
-                                )}
+                                {[
+                                    t('programsPage.colTitle'),
+                                    t('programsPage.colAthlete'),
+                                    t('programsPage.colTrainer'),
+                                    t('programsPage.colStatus'),
+                                    t('programsPage.colStart'),
+                                    t('programsPage.colEnd'),
+                                    t('programsPage.colActions'),
+                                ].map((h) => (
+                                    <th
+                                        key={h}
+                                        className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase"
+                                    >
+                                        {h}
+                                    </th>
+                                ))}
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -143,7 +145,7 @@ export default function AdminProgramsContent() {
                                         colSpan={7}
                                         className="px-6 py-12 text-center text-gray-500 text-sm"
                                     >
-                                        Nessun programma trovato
+                                        {t('programsPage.noResults')}
                                     </td>
                                 </tr>
                             ) : (
@@ -168,7 +170,7 @@ export default function AdminProgramsContent() {
                                             <span
                                                 className={`px-2 py-1 text-xs font-semibold rounded-full ${STATUS_BADGE[program.status]}`}
                                             >
-                                                {STATUS_LABEL[program.status]}
+                                                {t(`programsPage.status_${program.status}`)}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -183,13 +185,13 @@ export default function AdminProgramsContent() {
                                                     href={`/trainer/programs/${program.id}/progress`}
                                                     className="text-[#FFA700] hover:text-[#FF9500] font-semibold"
                                                 >
-                                                    Progress
+                                                    {t('programsPage.actionProgress')}
                                                 </Link>
                                                 <Link
                                                     href={`/trainer/programs/${program.id}/reports`}
                                                     className="text-brand-primary hover:text-brand-primary/80 font-semibold"
                                                 >
-                                                    Report
+                                                    {t('programsPage.actionReport')}
                                                 </Link>
                                             </div>
                                         </td>
@@ -205,7 +207,7 @@ export default function AdminProgramsContent() {
             {totalPages > 1 && (
                 <div className="flex items-center justify-between">
                     <div className="text-sm text-gray-500">
-                        Pagina {page} di {totalPages}
+                        {t('programsPage.page', { page, total: totalPages })}
                     </div>
                     <div className="flex items-center space-x-2">
                         <button
