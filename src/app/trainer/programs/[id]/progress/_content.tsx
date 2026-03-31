@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslation } from 'react-i18next'
 import { SkeletonDashboard } from '@/components'
 import ProgressBar from '@/components/ProgressBar'
 import { formatNumber } from '@/lib/date-format'
@@ -54,6 +55,7 @@ interface ProgressData {
 export default function ProgramProgressContent() {
     const params = useParams<{ id: string }>()
     const programId = params.id
+    const { t } = useTranslation('trainer')
 
     const [loading, setLoading] = useState(true)
     const [progress, setProgress] = useState<ProgressData | null>(null)
