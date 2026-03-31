@@ -398,11 +398,11 @@
 
 ### Pagine Admin
 
-- [ ] **10.26** `admin/dashboard/_content.tsx` — sostituire emoji nelle `StatCard` e nelle quick actions (0.25h)  
+- [x] **10.26** `admin/dashboard/_content.tsx` — sostituire emoji nelle `StatCard` e nelle quick actions (0.25h)  
   File: `src/app/admin/dashboard/_content.tsx`  
   Rimozione: `🏋️` `💪` `📊` `🏃` nelle `StatCard`, `💪` `📋` `📊` nelle quick actions
 
-- [ ] **10.27** `admin/exercises/_content.tsx` — sostituire emoji inline (0.25h)  
+- [x] **10.27** `admin/exercises/_content.tsx` — sostituire emoji inline (0.25h)  
   File: `src/app/admin/exercises/_content.tsx`  
   Rimozione: `💡` nel banner informativo  
   Mapping: `💡` → `<Lightbulb />`

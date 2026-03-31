@@ -1,6 +1,7 @@
 'use client'
 
 import { useTranslation } from 'react-i18next'
+import { Lightbulb } from 'lucide-react'
 import ExercisesTable from '@/components/ExercisesTable'
 
 export default function AdminExercisesContent() {
@@ -21,7 +22,7 @@ export default function AdminExercisesContent() {
 
             <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-blue-800 text-sm">
-                    💡 <strong>{t('exercisesPage.infoNoteLabel')}</strong> {t('exercisesPage.infoNote')}
+                    <Lightbulb className="w-4 h-4 inline mr-1" /><strong>{t('exercisesPage.infoNoteLabel')}</strong> {t('exercisesPage.infoNote')}
                 </p>
             </div>
         </div>

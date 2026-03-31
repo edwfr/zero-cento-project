@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Users, Dumbbell, BarChart2, TrendingUp, GraduationCap, PersonStanding, ClipboardList, Info, Settings } from 'lucide-react'
 import { StatCard, NavigationCard, SkeletonDashboard } from '@/components'
 
 interface DashboardStats {
@@ -91,7 +92,7 @@ export default function AdminDashboardContent() {
                     title={t('dashboard.totalUsers')}
                     value={stats.totalUsers}
                     subtitle={t('dashboard.trainersSubCount', { trainers: stats.totalTrainers, trainees: stats.totalTrainees })}
-                    icon="👥"
+                    icon={<Users className="w-5 h-5" />}
                     color="primary"
                     onClick={() => (window.location.href = '/admin/users')}
                 />
@@ -100,7 +101,7 @@ export default function AdminDashboardContent() {
                     title={t('dashboard.activePrograms')}
                     value={stats.activePrograms}
                     subtitle={t('dashboard.activeProgramsSub')}
-                    icon="🏋️"
+                    icon={<Dumbbell className="w-5 h-5" />}
                     color="success"
                 />
 
@@ -108,7 +109,7 @@ export default function AdminDashboardContent() {
                     title={t('dashboard.exercisesLib')}
                     value={stats.totalExercises}
                     subtitle={t('dashboard.exercisesLibSub')}
-                    icon="💪"
+                    icon={<Dumbbell className="w-5 h-5" />}
                     color="info"
                 />
 
@@ -116,7 +117,7 @@ export default function AdminDashboardContent() {
                     title={t('dashboard.feedbackReceived')}
                     value={stats.totalFeedback}
                     subtitle={t('dashboard.feedbackSub')}
-                    icon="📊"
+                    icon={<BarChart2 className="w-5 h-5" />}
                     color="warning"
                 />
 
@@ -124,7 +125,7 @@ export default function AdminDashboardContent() {
                     title={t('dashboard.trainers')}
                     value={stats.totalTrainers}
                     subtitle={t('dashboard.trainersSub')}
-                    icon="👨‍🏫"
+                    icon={<GraduationCap className="w-5 h-5" />}
                     color="info"
                 />
 
@@ -132,7 +133,7 @@ export default function AdminDashboardContent() {
                     title={t('dashboard.athletes')}
                     value={stats.totalTrainees}
                     subtitle={t('dashboard.athletesSub')}
-                    icon="🏃"
+                    icon={<PersonStanding className="w-5 h-5" />}
                     color="success"
                 />
             </div>
@@ -143,35 +144,35 @@ export default function AdminDashboardContent() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <NavigationCard
                         href="/admin/users"
-                        icon="👥"
+                        icon={<Users className="w-6 h-6" />}
                         title={t('dashboard.navUsers')}
                         description={t('dashboard.navUsersDesc')}
                         color="blue"
                     />
                     <NavigationCard
                         href="/admin/exercises"
-                        icon="💪"
+                        icon={<Dumbbell className="w-6 h-6" />}
                         title={t('dashboard.navExercises')}
                         description={t('dashboard.navExercisesDesc')}
                         color="primary"
                     />
                     <NavigationCard
                         href="/admin/programs"
-                        icon="📋"
+                        icon={<ClipboardList className="w-6 h-6" />}
                         title={t('dashboard.navPrograms')}
                         description={t('dashboard.navProgramsDesc')}
                         color="green"
                     />
                     <NavigationCard
                         href="/admin/statistics"
-                        icon="📊"
+                        icon={<BarChart2 className="w-6 h-6" />}
                         title={t('dashboard.navStats')}
                         description={t('dashboard.navStatsDesc')}
                         color="purple"
                     />
                     <NavigationCard
                         href="/admin/settings"
-                        icon="⚙️"
+                        icon={<Settings className="w-6 h-6" />}
                         title={t('dashboard.navSettings')}
                         description={t('dashboard.navSettingsDesc')}
                         color="secondary"
@@ -182,7 +183,7 @@ export default function AdminDashboardContent() {
             {/* Info Box */}
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                 <p className="text-sm text-orange-900">
-                    <span className="font-semibold">ℹ️ {t('dashboard.infoNoteLabel')}</span> {t('dashboard.infoNote')}
+                    <span className="font-semibold"><Info className="w-4 h-4 inline mr-1" />{t('dashboard.infoNoteLabel')}</span> {t('dashboard.infoNote')}
                 </p>
             </div>
         </div>
