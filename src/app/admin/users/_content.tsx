@@ -67,8 +67,8 @@ export default function AdminUsersContent() {
             setUsers(data.data.items)
             setSelectedIds(new Set())
             setPage(1)
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : t('admin:users.loadingError'))
         } finally {
             setLoading(false)
         }
@@ -133,9 +133,11 @@ export default function AdminUsersContent() {
     const handleBulkStatus = (activate: boolean) => {
         if (selectedIds.size === 0) return
         setConfirmModal({
-            title: activate ? 'Attiva Utenti' : 'Disattiva Utenti',
-            message: `Sei sicuro di voler ${activate ? 'attivare' : 'disattivare'} ${selectedIds.size} utenti?`,
-            confirmText: activate ? 'Attiva' : 'Disattiva',
+            title: activate ? t('admin:users.activateUsers') : t('admin:users.deactivateUsers'),
+            message: activate
+                ? t('admin:users.confirmActivate', { count: selectedIds.size })
+                : t('admin:users.confirmDeactivate', { count: selectedIds.size }),
+            confirmText: activate ? t('admin:users.activateAll') : t('admin:users.deactivateAll'),
             variant: activate ? 'info' : 'warning',
             onConfirm: async () => {
                 setConfirmModal(null)
@@ -150,7 +152,7 @@ export default function AdminUsersContent() {
                     )
                     await fetchUsers()
                 } catch {
-                    showToast('Errore durante l\'operazione bulk', 'error')
+                    showToast(t('admin:users.bulkError'), 'error')
                 } finally {
                     setBulkLoading(false)
                 }
@@ -191,7 +193,7 @@ export default function AdminUsersContent() {
                     onConfirm={confirmModal.onConfirm}
                     title={confirmModal.title}
                     message={confirmModal.message}
-                    confirmText={confirmModal.confirmText ?? 'Conferma'}
+                    confirmText={confirmModal.confirmText ?? t('admin:users.confirm')}
                     variant={confirmModal.variant ?? 'danger'}
                 />
             )}
@@ -202,7 +204,7 @@ export default function AdminUsersContent() {
                     {/* Search */}
                     <input
                         type="text"
-                        placeholder="🔍 Cerca per nome, cognome o email..."
+                        placeholder={t('admin:users.searchPlaceholder')}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="flex-1 max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
@@ -214,10 +216,10 @@ export default function AdminUsersContent() {
                         onChange={(e) => setFilterRole(e.target.value)}
                         className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
                     >
-                        <option value="all">Tutti i ruoli</option>
-                        <option value="admin">Admin</option>
-                        <option value="trainer">Trainer</option>
-                        <option value="trainee">Atleta</option>
+                        <option value="all">{t('admin:users.filterAllRoles')}</option>
+                        <option value="admin">{t('common:roles.admin')}</option>
+                        <option value="trainer">{t('common:roles.trainer')}</option>
+                        <option value="trainee">{t('common:roles.trainee')}</option>
                     </select>
 
                     {/* Status filter */}
@@ -226,16 +228,16 @@ export default function AdminUsersContent() {
                         onChange={(e) => setFilterStatus(e.target.value)}
                         className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
                     >
-                        <option value="all">Tutti gli stati</option>
-                        <option value="active">Attivi</option>
-                        <option value="inactive">Disattivati</option>
+                        <option value="all">{t('admin:users.filterAllStatuses')}</option>
+                        <option value="active">{t('admin:users.filterStatusActive')}</option>
+                        <option value="inactive">{t('admin:users.filterStatusInactive')}</option>
                     </select>
 
                     <button
                         onClick={() => setIsCreateOpen(true)}
                         className="ml-auto bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-2 rounded-lg transition-colors whitespace-nowrap"
                     >
-                        Crea Utente
+                        {t('admin:users.createUser')}
                     </button>
                 </div>
 
@@ -243,36 +245,37 @@ export default function AdminUsersContent() {
                 {selectedIds.size > 0 && (
                     <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-2">
                         <span className="text-sm font-semibold text-blue-800">
-                            {selectedIds.size} selezionati
+                            {t('admin:users.selectedCount', { count: selectedIds.size })}
                         </span>
                         <button
                             onClick={() => handleBulkStatus(true)}
                             disabled={bulkLoading}
                             className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white text-sm font-semibold px-4 py-1 rounded-lg transition-colors"
                         >
-                            ✓ Attiva tutti
+                            ✓ {t('admin:users.activateAll')}
                         </button>
                         <button
                             onClick={() => handleBulkStatus(false)}
                             disabled={bulkLoading}
                             className="bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white text-sm font-semibold px-4 py-1 rounded-lg transition-colors"
                         >
-                            ✗ Disattiva tutti
+                            ✗ {t('admin:users.deactivateAll')}
                         </button>
                         <button
                             onClick={() => setSelectedIds(new Set())}
                             className="ml-auto text-brand-primary hover:text-brand-primary/80 text-sm font-semibold"
                         >
-                            Deseleziona
+                            {t('admin:users.deselect')}
                         </button>
                     </div>
                 )}
 
                 {/* Results count */}
                 <div className="text-sm text-gray-500">
-                    {filtered.length} utenti trovati
-                    {(searchTerm || filterRole !== 'all' || filterStatus !== 'all') &&
-                        ` su ${users.length} totali`}
+                    {(searchTerm || filterRole !== 'all' || filterStatus !== 'all')
+                        ? t('admin:users.foundCountFiltered', { found: filtered.length, total: users.length })
+                        : t('admin:users.foundCount', { found: filtered.length })
+                    }
                 </div>
             </div>
 
@@ -291,22 +294,22 @@ export default function AdminUsersContent() {
                                     />
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                                    Utente
+                                    {t('admin:users.colUser')}
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                                    Email
+                                    {t('admin:users.colEmail')}
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                                    Ruolo
+                                    {t('admin:users.colRole')}
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                                    Stato
+                                    {t('admin:users.colStatus')}
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                                    Creato
+                                    {t('admin:users.colCreated')}
                                 </th>
                                 <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">
-                                    Azioni
+                                    {t('admin:users.colActions')}
                                 </th>
                             </tr>
                         </thead>
@@ -317,7 +320,7 @@ export default function AdminUsersContent() {
                                         colSpan={7}
                                         className="px-6 py-12 text-center text-gray-500 text-sm"
                                     >
-                                        Nessun utente trovato con questi filtri
+                                        {t('admin:users.noUsersFound')}
                                     </td>
                                 </tr>
                             ) : (
@@ -358,7 +361,7 @@ export default function AdminUsersContent() {
                                                     : 'bg-red-100 text-red-800 hover:bg-red-200'
                                                     }`}
                                             >
-                                                {user.isActive ? 'Attivo' : 'Disattivo'}
+                                                {user.isActive ? t('admin:users.statusActive') : t('admin:users.statusInactive')}
                                             </button>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -369,7 +372,7 @@ export default function AdminUsersContent() {
                                                 <button
                                                     onClick={() => setEditingUser(user)}
                                                     className="text-brand-primary hover:text-brand-primary/80"
-                                                    title="Modifica"
+                                                    title={t('admin:users.editUser')}
                                                 >
                                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -378,7 +381,7 @@ export default function AdminUsersContent() {
                                                 <button
                                                     onClick={() => setDeletingUser(user)}
                                                     className="text-red-600 hover:text-red-800"
-                                                    title="Elimina"
+                                                    title={t('admin:users.deleteUser')}
                                                 >
                                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -398,7 +401,7 @@ export default function AdminUsersContent() {
             {totalPages > 1 && (
                 <div className="flex items-center justify-between">
                     <div className="text-sm text-gray-500">
-                        Pagina {page} di {totalPages} — {filtered.length} risultati
+                        {t('admin:users.pageInfo', { page, total: totalPages, count: filtered.length })}
                     </div>
                     <div className="flex items-center space-x-2">
                         <button
@@ -416,7 +419,6 @@ export default function AdminUsersContent() {
                             ‹
                         </button>
 
-                        {/* Page numbers (show up to 5) */}
                         {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                             const start = Math.max(1, Math.min(page - 2, totalPages - 4))
                             const p = start + i
