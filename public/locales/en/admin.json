@@ -65,5 +65,11 @@
         "user": "User",
         "noUsersFound": "No users found",
         "createdDate": "Created Date"
+    },
+    "exercisesPage": {
+        "title": "Exercise Library Management",
+        "description": "View and manage all exercises, muscle groups and movement patterns in the system",
+        "infoNoteLabel": "Note:",
+        "infoNote": "Exercises created are shared with all trainers for program creation. Make sure to add valid YouTube URLs for demo videos."
     }
 }

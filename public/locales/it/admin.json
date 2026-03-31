@@ -65,5 +65,11 @@
         "user": "Utente",
         "noUsersFound": "Nessun utente trovato",
         "createdDate": "Data Creazione"
+    },
+    "exercisesPage": {
+        "title": "Gestione Libreria Esercizi",
+        "description": "Visualizza e gestisci tutti gli esercizi, gruppi muscolari e schemi motori del sistema",
+        "infoNoteLabel": "Nota:",
+        "infoNote": "Gli esercizi creati sono condivisi con tutti i trainer per la creazione delle schede. Assicurati di inserire URL YouTube validi per i video dimostrativi."
     }
 }
