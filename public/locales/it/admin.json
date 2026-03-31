@@ -95,7 +95,7 @@
     "programsPage": {
         "title": "Tutti i Programmi",
         "description": "Visualizza e supervisiona tutti i programmi di allenamento del sistema",
-        "searchPlaceholder": "🔍 Cerca per titolo, atleta o trainer...",
+        "searchPlaceholder": "Cerca per titolo, atleta o trainer...",
         "filterAll": "Tutti gli stati",
         "statusDraft": "Bozza",
         "statusActive": "Attivo",
@@ -117,5 +117,4 @@
         "actionReport": "Report",
         "loadingError": "Errore caricamento programmi"
     }
-}
 }

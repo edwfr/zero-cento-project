@@ -6,6 +6,7 @@ import { SkeletonTable } from '@/components'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import Link from 'next/link'
+import { Plus } from 'lucide-react'
 
 interface Exercise {
     id: string
@@ -136,7 +137,7 @@ export default function TrainerExercisesContent() {
                         <div className="flex-1 max-w-md">
                             <input
                                 type="text"
-                                placeholder="🔍 Cerca esercizio..."
+                                placeholder="Cerca esercizio..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
@@ -159,7 +160,7 @@ export default function TrainerExercisesContent() {
                                 href="/trainer/exercises/new"
                                 className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-2 rounded-lg transition-colors"
                             >
-                                ➕ Nuovo Esercizio
+                                <Plus className="w-4 h-4 inline mr-2" />Nuovo Esercizio
                             </Link>
                         </div>
                     </div>

@@ -1,10 +1,12 @@
 'use client'
 
+import { ReactNode } from 'react'
+
 interface StatCardProps {
     title: string
     value: string | number
     subtitle?: string
-    icon?: string
+    icon?: ReactNode
     trend?: {
         value: number
         label: string
@@ -59,7 +61,7 @@ export default function StatCard({
 
                 {icon && (
                     <div
-                        className={`text-4xl p-3 rounded-lg ${colorClasses[color]}`}
+                        className={`p-3 rounded-lg ${colorClasses[color]}`}
                         aria-hidden="true"
                     >
                         {icon}

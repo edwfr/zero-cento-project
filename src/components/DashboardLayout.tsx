@@ -5,6 +5,17 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
+import {
+    Home,
+    Users,
+    ClipboardList,
+    Dumbbell,
+    User,
+    CalendarDays,
+    Trophy,
+    BarChart2,
+    Settings,
+} from 'lucide-react'
 
 interface User {
     id: string
@@ -19,28 +30,28 @@ interface DashboardLayoutProps {
     children: ReactNode
 }
 
-const NAV_ITEMS: Record<string, { href: string; icon: string; title: string }[]> = {
+const NAV_ITEMS: Record<string, { href: string; icon: ReactNode; title: string }[]> = {
     trainer: [
-        { href: '/trainer/dashboard', icon: '🏠', title: 'Dashboard' },
-        { href: '/trainer/trainees', icon: '👥', title: 'I Miei Atleti' },
-        { href: '/trainer/programs', icon: '📋', title: 'Programmi' },
-        { href: '/trainer/exercises', icon: '🏋️', title: 'Libreria Esercizi' },
-        { href: '/profile', icon: '👤', title: 'Il Mio Profilo' },
+        { href: '/trainer/dashboard', icon: <Home className="w-5 h-5" />, title: 'Dashboard' },
+        { href: '/trainer/trainees', icon: <Users className="w-5 h-5" />, title: 'I Miei Atleti' },
+        { href: '/trainer/programs', icon: <ClipboardList className="w-5 h-5" />, title: 'Programmi' },
+        { href: '/trainer/exercises', icon: <Dumbbell className="w-5 h-5" />, title: 'Libreria Esercizi' },
+        { href: '/profile', icon: <User className="w-5 h-5" />, title: 'Il Mio Profilo' },
     ],
     trainee: [
-        { href: '/trainee/dashboard', icon: '🏠', title: 'Dashboard' },
-        { href: '/trainee/programs/current', icon: '📅', title: 'Programma Attivo' },
-        { href: '/trainee/records', icon: '🏆', title: 'I Miei Massimali' },
-        { href: '/trainee/history', icon: '📊', title: 'Storico Allenamenti' },
-        { href: '/profile', icon: '👤', title: 'Il Mio Profilo' },
+        { href: '/trainee/dashboard', icon: <Home className="w-5 h-5" />, title: 'Dashboard' },
+        { href: '/trainee/programs/current', icon: <CalendarDays className="w-5 h-5" />, title: 'Programma Attivo' },
+        { href: '/trainee/records', icon: <Trophy className="w-5 h-5" />, title: 'I Miei Massimali' },
+        { href: '/trainee/history', icon: <BarChart2 className="w-5 h-5" />, title: 'Storico Allenamenti' },
+        { href: '/profile', icon: <User className="w-5 h-5" />, title: 'Il Mio Profilo' },
     ],
     admin: [
-        { href: '/admin/dashboard', icon: '🏠', title: 'Dashboard' },
-        { href: '/admin/users', icon: '👥', title: 'Gestione Utenti' },
-        { href: '/admin/exercises', icon: '💪', title: 'Libreria Esercizi' },
-        { href: '/admin/programs', icon: '📋', title: 'Programmi Globali' },
-        { href: '/admin/statistics', icon: '📊', title: 'Statistiche & Report' },
-        { href: '/admin/settings', icon: '⚙️', title: 'Impostazioni' },
+        { href: '/admin/dashboard', icon: <Home className="w-5 h-5" />, title: 'Dashboard' },
+        { href: '/admin/users', icon: <Users className="w-5 h-5" />, title: 'Gestione Utenti' },
+        { href: '/admin/exercises', icon: <Dumbbell className="w-5 h-5" />, title: 'Libreria Esercizi' },
+        { href: '/admin/programs', icon: <ClipboardList className="w-5 h-5" />, title: 'Programmi Globali' },
+        { href: '/admin/statistics', icon: <BarChart2 className="w-5 h-5" />, title: 'Statistiche & Report' },
+        { href: '/admin/settings', icon: <Settings className="w-5 h-5" />, title: 'Impostazioni' },
     ],
 }
 
@@ -189,7 +200,7 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
                                             onClick={() => setMenuOpen(false)}
                                             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-brand-primary/10 hover:text-brand-primary font-medium transition-colors"
                                         >
-                                            <span className="text-xl w-7 text-center">{item.icon}</span>
+                                            <span className="w-5 h-5 flex-shrink-0">{item.icon}</span>
                                             <span>{item.title}</span>
                                         </Link>
                                     </li>

@@ -8,6 +8,7 @@ import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import { formatDate } from '@/lib/date-format'
 import { useTranslation } from 'react-i18next'
+import { Plus, FileEdit, CheckCircle2, Trash2, FlagTriangleRight } from 'lucide-react'
 
 interface Program {
     id: string
@@ -143,7 +144,7 @@ export default function TrainerProgramsContent() {
                         <div className="flex-1 max-w-md">
                             <input
                                 type="text"
-                                placeholder={`🔍 ${t('programs.searchPlaceholder')}`}
+                                placeholder={t('programs.searchPlaceholder')}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
@@ -155,7 +156,7 @@ export default function TrainerProgramsContent() {
                             href="/trainer/programs/new"
                             className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-2 rounded-lg transition-colors"
                         >
-                            ➕ {t('programs.newProgram')}
+                            <Plus className="w-4 h-4 inline mr-2" />{t('programs.newProgram')}
                         </Link>
                     </div>
                 </div>
@@ -178,7 +179,7 @@ export default function TrainerProgramsContent() {
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
-                                📝 {t('programs.tabDraft')} ({statusCounts.draft})
+                                <FileEdit className="w-4 h-4 inline mr-1" />{t('programs.tabDraft')} ({statusCounts.draft})
                             </button>
                             <button
                                 onClick={() => setActiveTab('active')}
@@ -187,7 +188,7 @@ export default function TrainerProgramsContent() {
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
-                                ✅ {t('programs.tabActive')} ({statusCounts.active})
+                                <CheckCircle2 className="w-4 h-4 inline mr-1" />{t('programs.tabActive')} ({statusCounts.active})
                             </button>
                             <button
                                 onClick={() => setActiveTab('completed')}
@@ -196,7 +197,7 @@ export default function TrainerProgramsContent() {
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
-                                🏁 {t('programs.tabCompleted')} ({statusCounts.completed})
+                                <FlagTriangleRight className="w-4 h-4 inline mr-1" />{t('programs.tabCompleted')} ({statusCounts.completed})
                             </button>
                         </nav>
                     </div>
@@ -293,7 +294,7 @@ export default function TrainerProgramsContent() {
                                                 }
                                                 className="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2 px-4 rounded-lg transition-colors"
                                             >
-                                                🗑️
+                                                <Trash2 className="w-4 h-4" />
                                             </button>
                                         </>
                                     )}

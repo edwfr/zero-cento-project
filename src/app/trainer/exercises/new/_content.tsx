@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import { Trash2 } from 'lucide-react'
 
 interface MuscleGroup {
     id: string
@@ -316,7 +317,7 @@ export default function NewExerciseContent() {
                                         disabled={loading}
                                         className="text-red-600 hover:text-red-700 font-semibold disabled:text-gray-400 disabled:cursor-not-allowed"
                                     >
-                                        🗑️
+                                        <Trash2 className="w-4 h-4" />
                                     </button>
                                 </div>
                             ))}

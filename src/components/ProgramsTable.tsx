@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import { formatDate } from '@/lib/date-format'
+import { FileEdit, CheckCircle2, FlagTriangleRight } from 'lucide-react'
 
 interface Program {
     id: string
@@ -180,7 +181,7 @@ export default function ProgramsTable({
             <div className="mb-4">
                 <input
                     type="text"
-                    placeholder={`🔍 ${t('trainer:programs.searchPlaceholder')}`}
+                    placeholder={t('trainer:programs.searchPlaceholder')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full max-w-sm px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
@@ -199,7 +200,7 @@ export default function ProgramsTable({
                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                 }`}
                         >
-                            {tab === 'draft' ? '📝' : tab === 'active' ? '✅' : '🏁'}{' '}
+                            {tab === 'draft' ? <FileEdit className="inline w-4 h-4 mr-1" /> : tab === 'active' ? <CheckCircle2 className="inline w-4 h-4 mr-1" /> : <FlagTriangleRight className="inline w-4 h-4 mr-1" />}
                             {STATUS_LABELS[tab]} ({counts[tab]})
                         </button>
                     ))}

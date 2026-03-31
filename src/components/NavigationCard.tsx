@@ -1,10 +1,11 @@
 'use client'
 
 import Link from 'next/link'
+import { ReactNode } from 'react'
 
 interface NavigationCardProps {
     href: string
-    icon: string
+    icon: ReactNode
     title: string
     description: string
     color?: 'primary' | 'secondary' | 'blue' | 'green' | 'purple' | 'red' | 'yellow'
@@ -91,7 +92,7 @@ export default function NavigationCard({
                 {/* Icon */}
                 <div
                     className={`
-                        flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg text-2xl
+                        flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg
                         ${colors.icon}
                         group-hover:scale-110 transition-transform duration-200
                     `}

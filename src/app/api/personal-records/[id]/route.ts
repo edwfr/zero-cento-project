@@ -40,14 +40,11 @@ export async function PATCH(
         if (session.user.role === 'trainer') {
             const trainerRelation = await prisma.trainerTrainee.findUnique({
                 where: {
-                    trainerId_traineeId: {
-                        trainerId: session.user.id,
-                        traineeId: record.traineeId,
-                    },
+                    traineeId: record.traineeId,
                 },
             })
 
-            if (!trainerRelation) {
+            if (!trainerRelation || trainerRelation.trainerId !== session.user.id) {
                 return apiError('FORBIDDEN', 'You can only update records for your own trainees', 403)
             }
         }

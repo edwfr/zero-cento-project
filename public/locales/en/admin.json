@@ -95,7 +95,7 @@
     "programsPage": {
         "title": "All Programs",
         "description": "View and supervise all training programs in the system",
-        "searchPlaceholder": "🔍 Search by title, athlete or trainer...",
+        "searchPlaceholder": "Search by title, athlete or trainer...",
         "filterAll": "All statuses",
         "statusDraft": "Draft",
         "statusActive": "Active",

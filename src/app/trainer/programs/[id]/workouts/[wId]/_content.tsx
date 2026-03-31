@@ -12,6 +12,7 @@ import RestTimeSelector from '@/components/RestTimeSelector'
 import RepsInput from '@/components/RepsInput'
 import { WeightType, RestTime } from '@prisma/client'
 import { useTranslation } from 'react-i18next'
+import { FileText, Pencil, Trash2, Dumbbell } from 'lucide-react'
 
 interface Exercise {
     id: string
@@ -467,7 +468,7 @@ export default function WorkoutDetailContent() {
                                             className="p-2 text-red-600 hover:text-red-800"
                                             title={t('workoutDetail.deleteBtn')}
                                         >
-                                            🗑️
+                                            <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
                                 </div>

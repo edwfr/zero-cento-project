@@ -3,6 +3,7 @@
 import { useTranslation } from 'react-i18next'
 import { useEffect, useRef } from 'react'
 import LoadingSpinner from './LoadingSpinner'
+import { AlertTriangle, Zap, Info, CheckCircle2 } from 'lucide-react'
 
 interface ConfirmationModalProps {
     isOpen: boolean
@@ -95,25 +96,25 @@ export default function ConfirmationModal({
 
     const variantStyles = {
         danger: {
-            icon: '⚠️',
+            icon: <AlertTriangle className="w-7 h-7 text-red-600" />,
             confirmBg: 'bg-red-600 hover:bg-red-700',
             titleColor: 'text-red-900',
             iconBg: 'bg-red-100',
         },
         warning: {
-            icon: '⚡',
+            icon: <Zap className="w-7 h-7 text-yellow-600" />,
             confirmBg: 'bg-yellow-600 hover:bg-yellow-700',
             titleColor: 'text-yellow-900',
             iconBg: 'bg-yellow-100',
         },
         info: {
-            icon: 'ℹ️',
+            icon: <Info className="w-7 h-7 text-blue-600" />,
             confirmBg: 'bg-brand-primary hover:bg-brand-primary/90',
             titleColor: 'text-blue-900',
             iconBg: 'bg-blue-100',
         },
         success: {
-            icon: '✓',
+            icon: <CheckCircle2 className="w-7 h-7 text-green-600" />,
             confirmBg: 'bg-green-600 hover:bg-green-700',
             titleColor: 'text-green-900',
             iconBg: 'bg-green-100',
@@ -139,7 +140,7 @@ export default function ConfirmationModal({
             >
                 {/* Icon */}
                 <div className={`w-14 h-14 rounded-full ${styles.iconBg} flex items-center justify-center mb-4`}>
-                    <span className="text-3xl" aria-hidden="true">
+                    <span aria-hidden="true">
                         {styles.icon}
                     </span>
                 </div>

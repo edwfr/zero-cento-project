@@ -1,6 +1,7 @@
 'use client'
 
 import { WeekType } from '@prisma/client'
+import { ClipboardList, Flame, Wind } from 'lucide-react'
 
 interface WeekTypeBannerProps {
     weekType: WeekType
@@ -21,7 +22,7 @@ export default function WeekTypeBanner({ weekType, weekNumber, className = '' }:
             bg: 'bg-gray-100',
             border: 'border-gray-300',
             text: 'text-gray-700',
-            icon: '📋',
+            icon: <ClipboardList className="w-7 h-7" />,
             label: 'Settimana Standard',
             description: 'Allenamento normale secondo programma',
         },
@@ -29,7 +30,7 @@ export default function WeekTypeBanner({ weekType, weekNumber, className = '' }:
             bg: 'bg-week-test-light',
             border: 'border-week-test',
             text: 'text-week-test-dark',
-            icon: '🔥',
+            icon: <Flame className="w-7 h-7" />,
             label: 'Settimana Test',
             description: 'Valutazione massimali e test',
         },
@@ -37,7 +38,7 @@ export default function WeekTypeBanner({ weekType, weekNumber, className = '' }:
             bg: 'bg-week-deload-light',
             border: 'border-week-deload',
             text: 'text-week-deload-dark',
-            icon: '💆',
+            icon: <Wind className="w-7 h-7" />,
             label: 'Settimana Scarico',
             description: 'Recupero e rigenerazione',
         },
@@ -54,7 +55,7 @@ export default function WeekTypeBanner({ weekType, weekNumber, className = '' }:
             `}
         >
             {/* Icon */}
-            <span className="text-3xl" role="img" aria-label={config.label}>
+            <span className="flex-shrink-0" aria-label={config.label}>
                 {config.icon}
             </span>
 

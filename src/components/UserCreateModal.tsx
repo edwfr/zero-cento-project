@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { CheckCircle2, AlertTriangle } from 'lucide-react'
 
 interface UserCreateModalProps {
     onClose: () => void
@@ -126,7 +127,8 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
                     className="bg-white rounded-lg p-6 max-w-md w-full mx-4"
                 >
                     <h2 id={titleId} className="text-2xl font-bold text-gray-900 mb-4">
-                        ✅ {t('admin:users.userCreated')}
+                        <CheckCircle2 className="inline w-6 h-6 text-green-500 mr-2" />
+                        {t('admin:users.userCreated')}
                     </h2>
 
                     <div className="bg-green-50 border border-green-200 rounded-md p-4 mb-4">
@@ -137,7 +139,8 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
                             {tempPassword}
                         </div>
                         <p className="text-xs text-green-700 mt-2">
-                            ⚠️ {t('admin:users.passwordOnce')}. {t('admin:users.mustChange')}.
+                            <AlertTriangle className="inline w-3 h-3 mr-1" />
+                            {t('admin:users.passwordOnce')}. {t('admin:users.mustChange')}.
                         </p>
                     </div>
 

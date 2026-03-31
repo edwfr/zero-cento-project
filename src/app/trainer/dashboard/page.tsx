@@ -4,6 +4,8 @@ import Link from 'next/link'
 import DashboardLayout from '@/components/DashboardLayout'
 import { NavigationCard } from '@/components'
 import { prisma } from '@/lib/prisma'
+import { formatDate } from '@/lib/date-format'
+import { Users, ClipboardList, Dumbbell, MessageSquare, Plus, User } from 'lucide-react'
 
 export default async function TrainerDashboard() {
     const session = await getSession()
@@ -125,7 +127,7 @@ export default async function TrainerDashboard() {
                         className="bg-blue-50 hover:bg-blue-100 p-6 rounded-lg transition-colors border border-blue-200"
                     >
                         <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-lg font-semibold text-blue-900">👥 Atleti</h3>
+                            <h3 className="text-lg font-semibold text-blue-900"><Users className="w-5 h-5 inline mr-2" />Atleti</h3>
                             <span className="text-3xl font-bold text-blue-600">
                                 {traineesCount}
                             </span>
@@ -142,7 +144,7 @@ export default async function TrainerDashboard() {
                     >
                         <div className="flex items-center justify-between mb-2">
                             <h3 className="text-lg font-semibold text-green-900">
-                                📋 Programmi
+                                <ClipboardList className="w-5 h-5 inline mr-2" />Programmi
                             </h3>
                             <span className="text-3xl font-bold text-green-600">
                                 {draftCount + activeCount + completedCount}
@@ -160,7 +162,7 @@ export default async function TrainerDashboard() {
                     >
                         <div className="flex items-center justify-between mb-2">
                             <h3 className="text-lg font-semibold text-purple-900">
-                                🏋️ Esercizi
+                                <Dumbbell className="w-5 h-5 inline mr-2" />Esercizi
                             </h3>
                             <span className="text-3xl font-bold text-purple-600">
                                 {exercisesCount}
@@ -173,7 +175,7 @@ export default async function TrainerDashboard() {
                     <div className="bg-orange-50 p-6 rounded-lg border border-orange-200">
                         <div className="flex items-center justify-between mb-2">
                             <h3 className="text-lg font-semibold text-orange-900">
-                                💬 Feedback
+                                <MessageSquare className="w-5 h-5 inline mr-2" />Feedback
                             </h3>
                             <span className="text-3xl font-bold text-orange-600">
                                 {recentFeedback.length}
@@ -193,21 +195,21 @@ export default async function TrainerDashboard() {
                             href="/trainer/programs/new"
                             className="flex items-center justify-center bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold py-3 px-6 rounded-lg transition-colors"
                         >
-                            <span className="mr-2">➕</span>
+                            <Plus className="w-5 h-5 mr-2" />
                             Crea Programma
                         </Link>
                         <Link
                             href="/trainer/trainees/new"
                             className="flex items-center justify-center bg-brand-primary hover:bg-brand-primary/90 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
                         >
-                            <span className="mr-2">👤</span>
+                            <User className="w-5 h-5 mr-2" />
                             Aggiungi Atleta
                         </Link>
                         <Link
                             href="/trainer/exercises/new"
                             className="flex items-center justify-center bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
                         >
-                            <span className="mr-2">🏋️</span>
+                            <Dumbbell className="w-5 h-5 mr-2" />
                             Crea Esercizio
                         </Link>
                     </div>
@@ -219,28 +221,28 @@ export default async function TrainerDashboard() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <NavigationCard
                             href="/trainer/trainees"
-                            icon="👥"
+                            icon={<Users className="w-6 h-6" />}
                             title="I Miei Atleti"
                             description={`Gestisci i tuoi ${traineesCount} atleti. Visualizza progressi e assegna programmi.`}
                             color="blue"
                         />
                         <NavigationCard
                             href="/trainer/programs"
-                            icon="📋"
+                            icon={<ClipboardList className="w-6 h-6" />}
                             title="Programmi"
                             description={`${activeCount} programmi attivi, ${draftCount} bozze. Crea e modifica schede di allenamento.`}
                             color="green"
                         />
                         <NavigationCard
                             href="/trainer/exercises"
-                            icon="🏋️"
+                            icon={<Dumbbell className="w-6 h-6" />}
                             title="Libreria Esercizi"
                             description={`${exercisesCount} esercizi creati. Gestisci la tua libreria personalizzata.`}
                             color="purple"
                         />
                         <NavigationCard
                             href="/trainer/profile"
-                            icon="👤"
+                            icon={<User className="w-6 h-6" />}
                             title="Il Mio Profilo"
                             description="Aggiorna le tue informazioni personali e preferenze."
                             color="secondary"
