@@ -212,6 +212,39 @@
         "noExercises": "Nessun Esercizio Configurato",
         "backToWeeks": "Torna alla panoramica settimane"
     },
+    "editProgram": {
+        "backToPrograms": "← Torna ai programmi",
+        "stepSetup": "Setup",
+        "stepExercises": "Esercizi",
+        "stepPublish": "Pubblica",
+        "progressTitle": "Progressione Configurazione",
+        "workoutsConfigured": "{{completed}} / {{total}} workout configurati",
+        "completion": "completamento",
+        "totalExercises": "Totale esercizi configurati:",
+        "forTrainee": "per {{name}}",
+        "programMeta": "{{duration}} settimane • {{perWeek}} allenamenti/settimana",
+        "week": "Settimana",
+        "workoutsConfiguredShort": "{{done}} / {{total}} workout configurati",
+        "exercisesCount": "{{count}} esercizi",
+        "noExercises": "Nessun esercizio",
+        "edit": "Modifica →",
+        "configure": "Configura →",
+        "nextPublish": "Avanti: Pubblica Programma →",
+        "saveDraft": "Salva Bozza",
+        "configureAllFirst": "Configura tutti i workout prima di pubblicare",
+        "errorLoading": "Errore caricamento programma",
+        "notFound": "Programma non trovato",
+        "errorEditWeek": "Errore modifica settimana",
+        "dayNames": [
+            "Lunedì",
+            "Martedì",
+            "Mercoledì",
+            "Giovedì",
+            "Venerdì",
+            "Sabato",
+            "Domenica"
+        ]
+    },
     "tips": {
         "startMonday": "💡 Consiglio: inizia il programma di lunedì per allineare le settimane"
     }
