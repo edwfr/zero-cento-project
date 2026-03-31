@@ -179,8 +179,10 @@
 
 ### Schermate Profilo (1)
 
-- [ ] **9.18** `profile/change-password` — Aggiungere `DashboardLayout` (0.5h)  
-      File: `src/app/profile/change-password/page.tsx`
+- [x] **9.18** `profile/change-password` — Aggiungere `DashboardLayout` (0.5h)  
+      File: `src/app/profile/change-password/page.tsx` ✅ _31 Mar 2026_
+- [ ] **9.19** `trainer/exercises` — Refactoring per split client/server e `DashboardLayout` (0.5h)
+      File: `src/app/trainer/exercises/page.tsx`
 
 > **Note implementative:**
 >
@@ -211,7 +213,7 @@
 > ```
 > `getSession()` (da `@/lib/auth`) usa il client Supabase server-side e arricchisce con i dati Prisma — **non usare** `createClient().auth.getUser()` che è solo client-side.
 >
-> **Schermate già OK:** `admin/*`, `trainer/dashboard`, `trainer/exercises`, `trainer/programs/new`, `profile`, `trainee/dashboard`, `trainee/history`, `trainee/programs/current`, `trainee/records`, `trainee/workouts/[id]`.
+> **Schermate già OK:** `admin/*`, `trainer/dashboard`, `trainer/programs/new`, `profile`, `trainee/dashboard`, `trainee/history`, `trainee/programs/current`, `trainee/records`, `trainee/workouts/[id]`.
 
 ---
 
