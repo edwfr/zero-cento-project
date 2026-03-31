@@ -7,6 +7,7 @@ import { SkeletonTable } from '@/components'
 import { useToast } from '@/components/ToastNotification'
 import { formatDate } from '@/lib/date-format'
 import { useTranslation } from 'react-i18next'
+import { Plus, Eye, UserX, UserCheck } from 'lucide-react'
 
 interface Trainee {
     id: string
@@ -129,9 +130,9 @@ export default function TrainerTraineesContent() {
 
                             <Link
                                 href="/trainer/trainees/new"
-                                className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-2 rounded-lg transition-colors"
-                            >
-                                ➕ {t('athletes.newAthlete')}
+                                className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-2 rounded-lg transition-colors flex items-center gap-2"
+                                >
+                                <Plus className="w-4 h-4" />{t('athletes.newAthlete')}
                             </Link>
                         </div>
                     </div>
@@ -205,9 +206,10 @@ export default function TrainerTraineesContent() {
                                             <div className="flex justify-end space-x-2">
                                                 <Link
                                                     href={`/trainer/trainees/${trainee.id}`}
-                                                    className="text-brand-primary hover:text-brand-primary/80 font-semibold"
+                                                    className="text-brand-primary hover:text-brand-primary/80 p-1 rounded"
+                                                    title={t('athletes.details')}
                                                 >
-                                                    {t('athletes.details')}
+                                                    <Eye className="w-4 h-4" />
                                                 </Link>
                                                 <button
                                                     onClick={() =>
@@ -216,12 +218,13 @@ export default function TrainerTraineesContent() {
                                                             trainee.isActive
                                                         )
                                                     }
-                                                    className={`font-semibold ${trainee.isActive
+                                                    className={`p-1 rounded ${trainee.isActive
                                                         ? 'text-red-600 hover:text-red-700'
                                                         : 'text-green-600 hover:text-green-700'
                                                         }`}
+                                                    title={trainee.isActive ? t('athletes.deactivate') : t('athletes.activate')}
                                                 >
-                                                    {trainee.isActive ? t('athletes.deactivate') : t('athletes.activate')}
+                                                    {trainee.isActive ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
                                                 </button>
                                             </div>
                                         </td>

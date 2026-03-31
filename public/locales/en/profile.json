@@ -1,11 +1,11 @@
 {
-    "profile": {
-        "title": "My Profile",
-        "titleLower": "My profile",
-        "userId": "User ID",
-        "editProfile": "Edit Profile",
-        "editPersonalData": "Edit Personal Data",
-        "updated": "Profile updated successfully",
-        "invalidSession": "Invalid session. Please log in again"
-    }
+"profile": {
+"title":"My Profile",
+"titleLower":"My profile",
+"userId":"User ID",
+"editProfile":"Edit Profile",
+"editPersonalData":"Edit Personal Data",
+"updated":"Profile updated successfully",
+"invalidSession":"Invalid session. Please log in again"
+ }
 }

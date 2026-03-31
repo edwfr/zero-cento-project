@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import Link from 'next/link'
 import { SkeletonDetail } from '@/components'
 import { formatDate } from '@/lib/date-format'
+import { Plus, Eye } from 'lucide-react'
 
 interface Trainee {
     id: string
@@ -156,9 +157,9 @@ export default function TraineeDetailContent() {
                             </span>
                             <Link
                                 href={`/trainer/programs/new?traineeId=${traineeId}`}
-                                className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-lg transition-colors"
+                                className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-lg transition-colors inline-flex items-center gap-2"
                             >
-                                ➕ {t('athletes.createProgram')}
+                                <Plus size={16} />{t('athletes.createProgram')}
                             </Link>
                             <Link
                                 href={`/trainer/trainees/${traineeId}/records`}
@@ -277,9 +278,10 @@ export default function TraineeDetailContent() {
                                                 <td className="px-6 py-4 whitespace-nowrap text-right">
                                                     <Link
                                                         href={`/trainer/programs/${program.id}`}
-                                                        className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold"
+                                                        className="text-brand-primary hover:text-brand-primary/80"
+                                                        title={t('athletes.viewProgram')}
                                                     >
-                                                        {t('athletes.viewProgram')}
+                                                        <Eye size={18} />
                                                     </Link>
                                                 </td>
                                             </tr>

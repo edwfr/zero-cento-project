@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { SkeletonTable } from '@/components'
+import { Plus, Pencil, Trash2, Dumbbell } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
@@ -341,9 +342,9 @@ export default function TraineeRecordsContent() {
                         </div>
                         <button
                             onClick={openAddModal}
-                            className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-2 rounded-lg transition-colors"
+                            className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-2 rounded-lg transition-colors inline-flex items-center gap-2"
                         >
-                            ➕ Aggiungi Massimale
+                            <Plus size={16} /> Aggiungi Massimale
                         </button>
                     </div>
                 </div>
@@ -358,7 +359,7 @@ export default function TraineeRecordsContent() {
                 {/* Grouped Records by Exercise */}
                 {groupedRecords.length === 0 ? (
                     <div className="bg-white rounded-lg shadow-md p-12 text-center">
-                        <div className="text-5xl mb-4">💪</div>
+                        <div className="mb-4 flex justify-center"><Dumbbell size={48} className="text-gray-300" /></div>
                         <h2 className="text-2xl font-bold text-gray-900 mb-4">
                             Nessun Massimale Registrato
                         </h2>
@@ -407,18 +408,8 @@ export default function TraineeRecordsContent() {
                                                     {formatDate(group.oneRM.recordDate)}
                                                 </div>
                                                 <div className="mt-2 flex space-x-2">
-                                                    <button
-                                                        onClick={() => openEditModal(group.oneRM!)}
-                                                        className="text-xs text-blue-600 hover:text-blue-800 font-semibold"
-                                                    >
-                                                        Modifica
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteRecord(group.oneRM!.id, group.exercise.name)}
-                                                        className="text-xs text-red-600 hover:text-red-800 font-semibold"
-                                                    >
-                                                        Elimina
-                                                    </button>
+                                                    <button onClick={() => openEditModal(group.oneRM!)} className="text-blue-600 hover:text-blue-800" title="Modifica"><Pencil size={14} /></button>
+                                                    <button onClick={() => handleDeleteRecord(group.oneRM!.id, group.exercise.name)} className="text-red-600 hover:text-red-800" title="Elimina"><Trash2 size={14} /></button>
                                                 </div>
                                             </>
                                         ) : (
@@ -441,18 +432,8 @@ export default function TraineeRecordsContent() {
                                                     Est. 1RM: {calculateOneRepMax(group.threeRM.weight, group.threeRM.reps)} kg
                                                 </div>
                                                 <div className="mt-2 flex space-x-2">
-                                                    <button
-                                                        onClick={() => openEditModal(group.threeRM!)}
-                                                        className="text-xs text-blue-600 hover:text-blue-800 font-semibold"
-                                                    >
-                                                        Modifica
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteRecord(group.threeRM!.id, group.exercise.name)}
-                                                        className="text-xs text-red-600 hover:text-red-800 font-semibold"
-                                                    >
-                                                        Elimina
-                                                    </button>
+                                                    <button onClick={() => openEditModal(group.threeRM!)} className="text-blue-600 hover:text-blue-800" title="Modifica"><Pencil size={14} /></button>
+                                                    <button onClick={() => handleDeleteRecord(group.threeRM!.id, group.exercise.name)} className="text-red-600 hover:text-red-800" title="Elimina"><Trash2 size={14} /></button>
                                                 </div>
                                             </>
                                         ) : (
@@ -475,18 +456,8 @@ export default function TraineeRecordsContent() {
                                                     Est. 1RM: {calculateOneRepMax(group.fiveRM.weight, group.fiveRM.reps)} kg
                                                 </div>
                                                 <div className="mt-2 flex space-x-2">
-                                                    <button
-                                                        onClick={() => openEditModal(group.fiveRM!)}
-                                                        className="text-xs text-blue-600 hover:text-blue-800 font-semibold"
-                                                    >
-                                                        Modifica
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteRecord(group.fiveRM!.id, group.exercise.name)}
-                                                        className="text-xs text-red-600 hover:text-red-800 font-semibold"
-                                                    >
-                                                        Elimina
-                                                    </button>
+                                                    <button onClick={() => openEditModal(group.fiveRM!)} className="text-blue-600 hover:text-blue-800" title="Modifica"><Pencil size={14} /></button>
+                                                    <button onClick={() => handleDeleteRecord(group.fiveRM!.id, group.exercise.name)} className="text-red-600 hover:text-red-800" title="Elimina"><Trash2 size={14} /></button>
                                                 </div>
                                             </>
                                         ) : (
@@ -509,18 +480,8 @@ export default function TraineeRecordsContent() {
                                                     Est. 1RM: {calculateOneRepMax(group.tenRM.weight, group.tenRM.reps)} kg
                                                 </div>
                                                 <div className="mt-2 flex space-x-2">
-                                                    <button
-                                                        onClick={() => openEditModal(group.tenRM!)}
-                                                        className="text-xs text-blue-600 hover:text-blue-800 font-semibold"
-                                                    >
-                                                        Modifica
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteRecord(group.tenRM!.id, group.exercise.name)}
-                                                        className="text-xs text-red-600 hover:text-red-800 font-semibold"
-                                                    >
-                                                        Elimina
-                                                    </button>
+                                                    <button onClick={() => openEditModal(group.tenRM!)} className="text-blue-600 hover:text-blue-800" title="Modifica"><Pencil size={14} /></button>
+                                                    <button onClick={() => handleDeleteRecord(group.tenRM!.id, group.exercise.name)} className="text-red-600 hover:text-red-800" title="Elimina"><Trash2 size={14} /></button>
                                                 </div>
                                             </>
                                         ) : (
@@ -568,18 +529,8 @@ export default function TraineeRecordsContent() {
                                                                     {record.notes || '—'}
                                                                 </td>
                                                                 <td className="px-6 py-2 text-sm text-right space-x-2">
-                                                                    <button
-                                                                        onClick={() => openEditModal(record)}
-                                                                        className="text-blue-600 hover:text-blue-800 font-semibold"
-                                                                    >
-                                                                        Modifica
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => handleDeleteRecord(record.id, group.exercise.name)}
-                                                                        className="text-red-600 hover:text-red-800 font-semibold"
-                                                                    >
-                                                                        Elimina
-                                                                    </button>
+                                                                    <button onClick={() => openEditModal(record)} className="text-blue-600 hover:text-blue-800" title="Modifica"><Pencil size={14} /></button>
+                                                                    <button onClick={() => handleDeleteRecord(record.id, group.exercise.name)} className="text-red-600 hover:text-red-800" title="Elimina"><Trash2 size={14} /></button>
                                                                 </td>
                                                             </tr>
                                                         ))}

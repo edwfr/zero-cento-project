@@ -1,13 +1,13 @@
 {
-    "errors": {
-        "generic": "Si è verificato un errore",
-        "networkError": "Errore di connessione. Riprova più tardi.",
-        "unauthorized": "Accesso non autorizzato",
-        "forbidden": "Accesso negato",
-        "notFound": "Risorsa non trovata",
-        "validationError": "Errore di validazione",
-        "conflict": "Conflitto nei dati",
-        "rateLimitExceeded": "Troppe richieste. Riprova più tardi.",
-        "internalError": "Errore interno del server"
-    }
+"errors": {
+"generic":"Si è verificato un errore",
+"networkError":"Errore di connessione. Riprova più tardi.",
+"unauthorized":"Accesso non autorizzato",
+"forbidden":"Accesso negato",
+"notFound":"Risorsa non trovata",
+"validationError":"Errore di validazione",
+"conflict":"Conflitto nei dati",
+"rateLimitExceeded":"Troppe richieste. Riprova più tardi.",
+"internalError":"Errore interno del server"
+ }
 }
