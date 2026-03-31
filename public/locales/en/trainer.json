@@ -55,7 +55,10 @@
         "movementPatternRequired": "Select a movement pattern",
         "coefficientError": "Sum of coefficients cannot exceed 1.0",
         "createError": "Error creating exercise",
-        "loadingDataError": "Error loading data"
+        "loadingDataError": "Error loading data",
+        "editMuscleGroupsTotal": "Muscle Groups * (Total: {{total}} / 3.0)",
+        "saveChanges": "Save Changes",
+        "coefficientRangeError": "The sum of coefficients must be between 0.1 and 3.0"
     },
     "athletes": {
         "title": "Your Athletes",

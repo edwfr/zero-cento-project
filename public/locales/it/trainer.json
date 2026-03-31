@@ -55,7 +55,10 @@
         "movementPatternRequired": "Seleziona uno schema motorio",
         "coefficientError": "La somma dei coefficienti non può superare 1.0",
         "createError": "Errore nella creazione esercizio",
-        "loadingDataError": "Errore nel caricamento dati"
+        "loadingDataError": "Errore nel caricamento dati",
+        "editMuscleGroupsTotal": "Gruppi Muscolari * (Totale: {{total}} / 3.0)",
+        "saveChanges": "Salva Modifiche",
+        "coefficientRangeError": "La somma dei coefficienti deve essere tra 0.1 e 3.0"
     },
     "athletes": {
         "title": "I Tuoi Atleti",

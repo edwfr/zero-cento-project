@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslation } from 'react-i18next'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
 interface MuscleGroup {
@@ -39,6 +40,7 @@ interface Exercise {
 }
 
 export default function EditExerciseContent() {
+    const { t } = useTranslation('trainer')
     const router = useRouter()
     const params = useParams<{ id: string }>()
     const exerciseId = params.id
@@ -97,8 +99,8 @@ export default function EditExerciseContent() {
 
             setMuscleGroups(mgData.data.items)
             setMovementPatterns(mpData.data.items)
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : t('exercises.loadingError'))
         } finally {
             setLoadingData(false)
         }
@@ -131,22 +133,22 @@ export default function EditExerciseContent() {
 
         // Validation
         if (!name.trim()) {
-            setError('Il nome è obbligatorio')
+            setError(t('exercises.nameRequired'))
             return
         }
 
         if (!movementPatternId) {
-            setError('Seleziona uno schema motorio')
+            setError(t('exercises.movementPatternRequired'))
             return
         }
 
         if (selectedMuscleGroups.length === 0) {
-            setError('Aggiungi almeno un gruppo muscolare')
+            setError(t('exercises.addMuscleGroup'))
             return
         }
 
         if (totalCoefficient < 0.1 || totalCoefficient > 3.0) {
-            setError('La somma dei coefficienti deve essere tra 0.1 e 3.0')
+            setError(t('exercises.coefficientRangeError'))
             return
         }
 
@@ -170,13 +172,13 @@ export default function EditExerciseContent() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || 'Errore nell\'aggiornamento esercizio')
+                throw new Error(data.error?.message || t('exercises.updateError'))
             }
 
             // Redirect to exercises list
             router.push('/trainer/exercises')
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : t('exercises.updateError'))
             setSaving(false)
         }
     }
@@ -198,10 +200,10 @@ export default function EditExerciseContent() {
                         href="/trainer/exercises"
                         className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
                     >
-                        ← Torna alla libreria
+                        {t('exercises.backToLibrary')}
                     </Link>
-                    <h1 className="text-3xl font-bold text-gray-900">Modifica Esercizio</h1>
-                    <p className="text-gray-600 mt-2">Aggiorna i dettagli dell'esercizio</p>
+                    <h1 className="text-3xl font-bold text-gray-900">{t('exercises.editExercise')}</h1>
+                    <p className="text-gray-600 mt-2">{t('exercises.updateDetails')}</p>
                 </div>
 
                 {/* Error */}
@@ -216,14 +218,14 @@ export default function EditExerciseContent() {
                     {/* Basic Info */}
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Nome Esercizio *
+                            {t('exercises.exerciseNameLabel')}
                         </label>
                         <input
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             disabled={saving}
-                            placeholder="es. Squat Back"
+                            placeholder={t('exercises.exerciseNamePlaceholder')}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                             required
                         />
@@ -231,13 +233,13 @@ export default function EditExerciseContent() {
 
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Descrizione
+                            {t('exercises.descriptionLabel')}
                         </label>
                         <textarea
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             disabled={saving}
-                            placeholder="Descrizione dell'esercizio..."
+                            placeholder={t('exercises.descriptionPlaceholder')}
                             rows={3}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                         />
@@ -245,7 +247,7 @@ export default function EditExerciseContent() {
 
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            URL Video YouTube
+                            {t('exercises.youtubeUrlLabel')}
                         </label>
                         <input
                             type="url"
@@ -259,7 +261,7 @@ export default function EditExerciseContent() {
 
                     {/* Type */}
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Tipo *</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">{t('exercises.typeLabel')}</label>
                         <div className="flex space-x-4">
                             <label className="flex items-center">
                                 <input
@@ -270,7 +272,7 @@ export default function EditExerciseContent() {
                                     disabled={saving}
                                     className="mr-2 disabled:cursor-not-allowed"
                                 />
-                                <span>Fondamentale (SBD)</span>
+                                <span>{t('exercises.fundamentalSBD')}</span>
                             </label>
                             <label className="flex items-center">
                                 <input
@@ -281,7 +283,7 @@ export default function EditExerciseContent() {
                                     disabled={saving}
                                     className="mr-2 disabled:cursor-not-allowed"
                                 />
-                                <span>Accessorio</span>
+                                <span>{t('exercises.accessory')}</span>
                             </label>
                         </div>
                     </div>
@@ -289,7 +291,7 @@ export default function EditExerciseContent() {
                     {/* Movement Pattern */}
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Schema Motorio *
+                            {t('exercises.movementPattern')}
                         </label>
                         <select
                             value={movementPatternId}
@@ -310,7 +312,7 @@ export default function EditExerciseContent() {
                     <div>
                         <div className="flex items-center justify-between mb-2">
                             <label className="block text-sm font-semibold text-gray-700">
-                                Gruppi Muscolari * (Totale: {totalCoefficient.toFixed(2)} / 3.0)
+                                {t('exercises.editMuscleGroupsTotal', { total: totalCoefficient.toFixed(2) })}
                             </label>
                             <button
                                 type="button"
@@ -318,13 +320,13 @@ export default function EditExerciseContent() {
                                 disabled={saving}
                                 className="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                             >
-                                + Aggiungi
+                                {t('exercises.addButton')}
                             </button>
                         </div>
 
                         {selectedMuscleGroups.length === 0 ? (
                             <p className="text-gray-500 text-sm italic">
-                                Nessun gruppo muscolare aggiunto
+                                {t('exercises.noMuscleGroups')}
                             </p>
                         ) : (
                             <div className="space-y-2">
@@ -377,18 +379,18 @@ export default function EditExerciseContent() {
                     {/* Notes */}
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Note/Varianti
+                            {t('exercises.notesVariantsLabel')}
                         </label>
                         <textarea
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             disabled={saving}
-                            placeholder="Note aggiuntive sull'esercizio... (una per riga)"
+                            placeholder={t('exercises.notesVariantsPlaceholder')}
                             rows={3}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                         />
                         <p className="text-xs text-gray-500 mt-1">
-                            Inserisci ogni nota su una riga separata
+                            {t('exercises.notesPlaceholder')}
                         </p>
                     </div>
 
@@ -399,13 +401,13 @@ export default function EditExerciseContent() {
                             disabled={saving}
                             className="flex-1 bg-[#FFA700] hover:bg-[#FF9500] disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
                         >
-                            {saving ? <LoadingSpinner size="sm" color="white" /> : 'Salva Modifiche'}
+                            {saving ? <LoadingSpinner size="sm" color="white" /> : t('exercises.saveChanges')}
                         </button>
                         <Link
                             href="/trainer/exercises"
                             className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-lg text-center transition-colors"
                         >
-                            Annulla
+                            {t('exercises.cancel')}
                         </Link>
                     </div>
                 </form>
