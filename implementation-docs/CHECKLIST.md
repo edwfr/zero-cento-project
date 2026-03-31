@@ -166,7 +166,7 @@
       File: `src/app/trainer/programs/[id]/publish/page.tsx`
 - [x] **9.12** `trainer/programs/[id]/reports` — Aggiungere `DashboardLayout` (0.5h)  
       File: `src/app/trainer/programs/[id]/reports/page.tsx`
-- [ ] **9.13** `trainer/programs/[id]/workouts/[wId]` — Aggiungere `DashboardLayout` (0.5h)  
+- [x] **9.13** `trainer/programs/[id]/workouts/[wId]` — Aggiungere `DashboardLayout` (0.5h)  
       File: `src/app/trainer/programs/[id]/workouts/[wId]/page.tsx`
 - [ ] **9.14** `trainer/trainees` (lista atleti) — Aggiungere `DashboardLayout` (0.5h)  
       File: `src/app/trainer/trainees/page.tsx`
