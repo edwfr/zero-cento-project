@@ -315,11 +315,13 @@ export default function WorkoutDetailContent() {
 
     const sortedExercises = [...workout.workoutExercises].sort((a, b) => a.order - b.order)
 
-    const exerciseOptions: AutocompleteOption[] = exercises.map(ex => ({
-        id: ex.id,
-        label: ex.name,
-        sublabel: ex.type === 'fundamental' ? t('exercises.fundamental') : t('exercises.accessory')
-    }))
+    const exerciseOptions: AutocompleteOption[] = exercises
+        .map(ex => ({
+            id: ex.id,
+            label: ex.name,
+            sublabel: ex.type === 'fundamental' ? t('exercises.fundamental') : t('exercises.accessory')
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label, 'it', { sensitivity: 'base' }))
 
     const getRestTimeLabel = (rt: RestTime): string => {
         const opts = { s30: '30s', m1: '1m', m2: '2m', m3: '3m', m5: '5m' }
