@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import Link from 'next/link'
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, ArrowLeft } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/components/ToastNotification'
 
@@ -129,8 +129,9 @@ export default function NewTraineePageContent() {
                 <div className="mb-8">
                     <Link
                         href="/trainer/trainees"
-                        className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
+                        className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-flex items-center gap-1"
                     >
+                        <ArrowLeft className="w-4 h-4" />
                         {t('athletes.backToAthletes')}
                     </Link>
                     <h1 className="text-3xl font-bold text-gray-900">{t('athletes.newAthleteTitle')}</h1>
