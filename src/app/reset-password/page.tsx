@@ -63,8 +63,20 @@ export default function ResetPasswordPage() {
             <div className="max-w-md w-full">
                 {/* Logo */}
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-[#FFA700] rounded-2xl mb-4">
-                        <span className="text-white font-bold text-2xl">0c</span>
+                    <div className="flex justify-center mb-4">
+                        <img
+                            src="/images/logo/logo.png"
+                            alt="ZeroCento Logo"
+                            className="w-24 h-24 object-contain"
+                            onError={(e) => {
+                                // Fallback al placeholder se l'immagine non esiste
+                                e.currentTarget.style.display = 'none'
+                                e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                            }}
+                        />
+                        <div className="hidden w-24 h-24 rounded-full bg-gradient-to-br from-[#FFA700] to-[#FF8C00] flex items-center justify-center shadow-lg">
+                            <span className="text-white text-4xl font-bold">0→100</span>
+                        </div>
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900">Nuova password</h1>
                     <p className="text-gray-600 mt-2 text-sm">
