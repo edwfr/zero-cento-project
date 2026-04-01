@@ -6,10 +6,11 @@ import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import ConfirmationModal from '@/components/ConfirmationModal'
 import { useToast } from '@/components/ToastNotification'
 import EditProgramMetadata from './EditProgramMetadata'
 import MovementPatternTag from '@/components/MovementPatternTag'
-import { ClipboardList, Flame, Wind, ArrowLeft, FileEdit } from 'lucide-react'
+import { ClipboardList, Flame, Wind, ArrowLeft, FileEdit, Copy } from 'lucide-react'
 
 // Brand primary color - default per movement pattern senza colore personalizzato
 const PRIMARY_COLOR = '#FFA700'
@@ -62,9 +63,11 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
+    const [copyingFirstWeek, setCopyingFirstWeek] = useState(false)
     const [program, setProgram] = useState<Program | null>(null)
     const [error, setError] = useState<string | null>(null)
     const loadingRef = useRef(false)
+    const [confirmCopyOpen, setConfirmCopyOpen] = useState(false)
 
     useEffect(() => {
         fetchProgram()
@@ -182,6 +185,32 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             showToast(err instanceof Error ? err.message : t('editProgram.errorEditWeek'), 'error')
         } finally {
             setSaving(false)
+        }
+    }
+
+    const handleCopyFirstWeekWorkouts = async () => {
+        try {
+            setCopyingFirstWeek(true)
+
+            const res = await fetch(`/api/programs/${programId}/copy-first-week`, {
+                method: 'POST',
+            })
+            const data = await res.json()
+
+            if (!res.ok) {
+                throw new Error(getApiErrorMessage(data, t('editProgram.copyFirstWeekError'), t))
+            }
+
+            await fetchProgram()
+            showToast(t('editProgram.copyFirstWeekSuccess'), 'success')
+            setConfirmCopyOpen(false)
+        } catch (err: unknown) {
+            showToast(
+                err instanceof Error ? err.message : t('editProgram.copyFirstWeekError'),
+                'error'
+            )
+        } finally {
+            setCopyingFirstWeek(false)
         }
     }
 
@@ -333,6 +362,21 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                     <h3 className="text-xl font-bold text-gray-900">
                                         {t('editProgram.week')} {week.weekNumber}
                                     </h3>
+                                    {!readOnly && week.weekNumber === 1 && program.weeks.length > 1 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setConfirmCopyOpen(true)}
+                                            disabled={copyingFirstWeek || saving}
+                                            className="inline-flex items-center gap-2 rounded-lg border border-brand-primary/20 bg-brand-primary/10 px-3 py-2 text-sm font-semibold text-brand-primary transition-colors hover:bg-brand-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                            {copyingFirstWeek ? (
+                                                <LoadingSpinner size="sm" color="primary" />
+                                            ) : (
+                                                <Copy className="h-4 w-4" />
+                                            )}
+                                            {t('editProgram.copyFirstWeekButton')}
+                                        </button>
+                                    )}
                                     {readOnly ? (
                                         <div className="flex items-center gap-2">
                                             {week.weekType === 'test' && (
@@ -488,6 +532,21 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                         </Link>
                     </div>
                 )}
+
+                <ConfirmationModal
+                    isOpen={confirmCopyOpen}
+                    onClose={() => {
+                        if (!copyingFirstWeek) {
+                            setConfirmCopyOpen(false)
+                        }
+                    }}
+                    onConfirm={handleCopyFirstWeekWorkouts}
+                    title={t('editProgram.copyFirstWeekTitle')}
+                    message={t('editProgram.copyFirstWeekMessage')}
+                    confirmText={t('editProgram.copyFirstWeekConfirm')}
+                    variant="warning"
+                    isLoading={copyingFirstWeek}
+                />
             </div>
         </div>
     )
