@@ -439,22 +439,195 @@
 
 ---
 
-## Riepilogo per priorità
+---
 
-| Priorità   | Sprint    | Task        | Effort stimato |
-| ---------- | --------- | ----------- | -------------- |
-| Critico    | Sprint 1  | 1.1–1.6     | ~4h            |
-| Critico    | Sprint 2  | 2.1–2.7     | ~29h           |
-| Critico    | Sprint 3  | 3.1         | ~8h            |
-| Alto       | Sprint 4  | 4.1–4.5     | ~21h           |
-| Alto       | Sprint 5  | 5.1–5.10    | ~27h           |
-| Medio      | Sprint 6  | 6.1–6.7     | ~5h            |
-| Medio      | Sprint 7  | 7.1–7.6     | ~23h           |
-| Basso      | Sprint 8  | 8.1–8.7     | ~11h           |
-| Alto       | Sprint 9  | 9.1–9.23    | ~9h            |
-| Medio      | Sprint 10 | 10.1–10.29  | ~5h            |
-| **Totale** |           | **96 task** | **~143h**      |
+## Sprint 11 — API Error i18n: Option A (~15h)
+
+> **Obiettivo:** Eliminare completamente la dipendenza del frontend dalle stringhe di errore in English hardcodate nelle API routes. Le route restituiscono un campo semantico `error.key` (es. `"exercise.notFound"`); il frontend traduce la chiave tramite il namespace i18n `errors`. Il campo `error.message` rimane per debug/logging ma non viene mai mostrato in UI.
+>
+> **Pattern API (dopo la modifica):**
+> ```ts
+> // route.ts
+> return apiError('NOT_FOUND', 'Exercise not found', 404, undefined, 'exercise.notFound')
+> //                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> //                                                              nuovo parametro key
+> ```
+>
+> **Pattern Frontend (dopo la modifica):**
+> ```tsx
+> // _content.tsx / componente
+> import { getApiErrorMessage } from '@/lib/api-error'
+>
+> const msg = getApiErrorMessage(data, t('exercises.createError'), t)
+> // ↳ usa data.error.key per t(key, {ns:'errors'}) se presente, altrimenti usa il fallback
+> ```
+>
+> **Riferimento chiavi `errors` namespace (completo):**
+>
+> | Chiave | IT | EN |
+> |--------|----|----|
+> | `auth.required` | Autenticazione richiesta | Authentication required |
+> | `auth.accessDenied` | Accesso negato | Access denied |
+> | `exercise.notFound` | Esercizio non trovato | Exercise not found |
+> | `exercise.nameExists` | Un esercizio con questo nome esiste già | An exercise with this name already exists |
+> | `exercise.modifyDenied` | Puoi modificare solo gli esercizi che hai creato | You can only modify exercises you created |
+> | `exercise.deleteDenied` | Puoi eliminare solo gli esercizi che hai creato | You can only delete exercises you created |
+> | `feedback.notFound` | Feedback non trovato | Feedback not found |
+> | `feedback.createDenied` | Puoi creare feedback solo per i tuoi workout | You can only create feedback for your own workouts |
+> | `feedback.modifyDenied` | Puoi modificare solo il tuo feedback | You can only modify your own feedback |
+> | `feedback.viewDenied` | Puoi visualizzare solo il feedback dei tuoi atleti | You can only view feedback from your trainees |
+> | `feedback.viewOwnDenied` | Puoi visualizzare solo il tuo feedback | You can only view your own feedback |
+> | `movementPattern.notFound` | Schema motorio non trovato | Movement pattern not found |
+> | `movementPattern.nameExists` | Uno schema motorio con questo nome esiste già | A movement pattern with this name already exists |
+> | `muscleGroup.notFound` | Gruppo muscolare non trovato | Muscle group not found |
+> | `muscleGroup.someNotFound` | Uno o più gruppi muscolari non trovati | One or more muscle groups not found |
+> | `muscleGroup.nameExists` | Un gruppo muscolare con questo nome esiste già | A muscle group with this name already exists |
+> | `personalRecord.notFound` | Massimale non trovato | Personal record not found |
+> | `personalRecord.createDenied` | Puoi creare massimali solo per i tuoi atleti | You can only create records for your own trainees |
+> | `personalRecord.updateDenied` | Puoi aggiornare i massimali solo dei tuoi atleti | You can only update records for your own trainees |
+> | `personalRecord.deleteDenied` | Puoi eliminare i massimali solo dei tuoi atleti | You can only delete records for your own trainees |
+> | `program.notFound` | Programma non trovato | Program not found |
+> | `program.createDenied` | Puoi creare programmi solo per i tuoi atleti | You can only create programs for your own trainees |
+> | `program.assignDenied` | Puoi assegnare programmi solo ai tuoi atleti | You can only assign programs to your own trainees |
+> | `program.modifyDenied` | Puoi modificare solo i tuoi programmi | You can only modify your own programs |
+> | `program.deleteDenied` | Puoi eliminare solo i tuoi programmi | You can only delete your own programs |
+> | `program.publishDenied` | Puoi pubblicare solo i tuoi programmi | You can only publish your own programs |
+> | `program.completeDenied` | Puoi completare solo i tuoi programmi | You can only complete your own programs |
+> | `program.viewDenied` | Puoi visualizzare solo i tuoi programmi | You can only view your own programs |
+> | `program.viewAssignedDenied` | Puoi visualizzare solo i programmi assegnati a te | You can only view programs assigned to you |
+> | `program.alreadyCompleted` | Il programma è già completato | Program is already completed |
+> | `program.alreadyPublished` | Il programma è già pubblicato o completato | Program is already published or completed |
+> | `program.cannotCompleteDraft` | Non puoi completare un programma in bozza. Pubblicalo prima. | Cannot complete a draft program. Publish it first. |
+> | `trainee.notFound` | Atleta non trovato | Trainee not found |
+> | `trainer.notFound` | Trainer non trovato | Trainer not found |
+> | `user.notFound` | Utente non trovato | User not found |
+> | `user.emailExists` | Email già in uso | Email already exists |
+> | `user.cannotCreateAdmin` | Non è possibile creare utenti admin | Cannot create admin users |
+> | `user.cannotDeleteAdmin` | Non è possibile eliminare utenti admin | Cannot delete admin users |
+> | `user.cannotModifyStatus` | Non è possibile modificare lo stato di questo utente | Cannot modify user status |
+> | `user.canOnlyActivateTrainee` | È possibile attivare solo account atleta | Can only activate trainee accounts |
+> | `user.canOnlyDeactivateTrainee` | È possibile disattivare solo account atleta | Can only deactivate trainee accounts |
+> | `user.onlyAdminCreateTrainer` | Solo gli admin possono creare trainer | Only admins can create trainers |
+> | `user.onlyAdminTrainerCreateTrainee` | Solo admin e trainer possono creare atleti | Only admins and trainers can create trainees |
+> | `week.notFound` | Settimana non trovata | Week not found |
+> | `week.modifyDenied` | Puoi modificare solo le settimane dei tuoi programmi | You can only modify weeks from your own programs |
+> | `workout.notFound` | Workout non trovato | Workout not found |
+> | `workout.notFoundInProgram` | Workout non trovato in questo programma | Workout not found in this program |
+> | `workout.accessDenied` | Puoi accedere solo ai tuoi workout | You can only access your own workouts |
+> | `workout.exercisesNotFound` | Uno o più esercizi non trovati in questo workout | One or more exercises not found in this workout |
+> | `workoutExercise.notFound` | Esercizio workout non trovato | Workout exercise not found |
+> | `validation.invalidInput` | Dati non validi | Invalid input |
+> | `validation.invalidFilterParams` | Parametri filtro non validi | Invalid filter parameters |
+> | `validation.searchLength` | Il parametro di ricerca deve avere tra 2 e 100 caratteri | Search parameter must be between 2 and 100 characters |
+> | `validation.atLeastOneField` | È richiesto almeno un campo da aggiornare | At least one field to update is required |
+> | `validation.newTrainerIdRequired` | Il campo newTrainerId è obbligatorio | newTrainerId is required |
+> | `validation.traineeIdRequired` | Il traineeId è obbligatorio per le richieste trainer/admin | traineeId is required for trainer/admin requests |
+> | `validation.targetMustBeTrainee` | L'utente destinatario deve avere il ruolo atleta | Target user must have trainee role |
+> | `validation.targetMustBeTrainer` | L'utente destinatario deve avere il ruolo trainer | Target user must have trainer role |
+> | `validation.userMustBeTrainee` | L'utente deve avere il ruolo atleta | User must have trainee role |
+> | `internal.default` | Si è verificato un errore. Riprova. | An error occurred. Please try again. |
+
+### Phase 1 — Foundation
+
+- [ ] **11.1** Aggiornare `src/lib/api-response.ts` — aggiungere `key?: string` all'interfaccia `ApiErrorResponse` e come 5° parametro opzionale alla funzione `apiError()`
+- [ ] **11.2** Creare `public/locales/it/errors.json` e `public/locales/en/errors.json` con tutte le 57 chiavi della tabella sopra
+- [ ] **11.3** Registrare namespace `errors` in `src/i18n/config.ts` + creare `src/lib/api-error.ts` con helper `getApiErrorMessage(data, fallback, t)`  
+      Signature: `getApiErrorMessage(data: unknown, fallback: string, t: TFunction): string`  
+      Logica: se `data?.error?.key` è presente → `t(data.error.key, { ns: 'errors', defaultValue: fallback })`; altrimenti → `fallback`
+
+### Phase 2 — API Routes (aggiungere `key` a ogni chiamata `apiError`)
+
+- [ ] **11.4** `src/app/api/exercises/route.ts` — aggiungere `key` a tutte le chiamate `apiError()`
+- [ ] **11.5** `src/app/api/exercises/[id]/route.ts` — aggiungere `key`
+- [ ] **11.6** `src/app/api/feedback/route.ts` — aggiungere `key`
+- [ ] **11.7** `src/app/api/feedback/[id]/route.ts` — aggiungere `key`
+- [ ] **11.8** `src/app/api/movement-patterns/route.ts` — aggiungere `key`
+- [ ] **11.9** `src/app/api/movement-patterns/[id]/route.ts` — aggiungere `key`
+- [ ] **11.10** `src/app/api/movement-patterns/[id]/archive/route.ts` — aggiungere `key`
+- [ ] **11.11** `src/app/api/muscle-groups/route.ts` — aggiungere `key`
+- [ ] **11.12** `src/app/api/muscle-groups/[id]/route.ts` — aggiungere `key`
+- [ ] **11.13** `src/app/api/muscle-groups/[id]/archive/route.ts` — aggiungere `key`
+- [ ] **11.14** `src/app/api/personal-records/route.ts` — aggiungere `key`
+- [ ] **11.15** `src/app/api/personal-records/[id]/route.ts` — aggiungere `key`
+- [ ] **11.16** `src/app/api/programs/route.ts` — aggiungere `key`
+- [ ] **11.17** `src/app/api/programs/[id]/route.ts` — aggiungere `key`
+- [ ] **11.18** `src/app/api/programs/[id]/complete/route.ts` — aggiungere `key`
+- [ ] **11.19** `src/app/api/programs/[id]/publish/route.ts` — aggiungere `key`
+- [ ] **11.20** `src/app/api/programs/[id]/progress/route.ts` — aggiungere `key`
+- [ ] **11.21** `src/app/api/programs/[id]/reports/route.ts` — aggiungere `key`
+- [ ] **11.22** `src/app/api/programs/[id]/workouts/[workoutId]/exercises/route.ts` — aggiungere `key`
+- [ ] **11.23** `src/app/api/programs/[id]/workouts/[workoutId]/exercises/[exerciseId]/route.ts` — aggiungere `key`
+- [ ] **11.24** `src/app/api/programs/[id]/workouts/[workoutId]/exercises/reorder/route.ts` — aggiungere `key`
+- [ ] **11.25** `src/app/api/trainee/workouts/[id]/route.ts` — aggiungere `key`
+- [ ] **11.26** `src/app/api/users/route.ts` — aggiungere `key`
+- [ ] **11.27** `src/app/api/users/[id]/route.ts` — aggiungere `key`
+- [ ] **11.28** `src/app/api/users/[id]/activate/route.ts` — aggiungere `key`
+- [ ] **11.29** `src/app/api/users/[id]/deactivate/route.ts` — aggiungere `key`
+- [ ] **11.30** `src/app/api/weeks/[id]/route.ts` — aggiungere `key`
+- [ ] **11.31** `src/app/api/admin/programs/[id]/override/route.ts` — aggiungere `key`
+- [ ] **11.32** `src/app/api/admin/trainees/[traineeId]/reassign/route.ts` — aggiungere `key`
+- [ ] **11.33** `src/app/api/auth/me/route.ts` — aggiungere `key`
+
+### Phase 3 — Frontend _content.tsx (sostituire `data.error?.message` con `getApiErrorMessage`)
+
+- [ ] **11.34** `src/app/trainer/exercises/new/_content.tsx`
+- [ ] **11.35** `src/app/trainer/exercises/[id]/edit/_content.tsx`
+- [ ] **11.36** `src/app/trainer/exercises/_content.tsx`
+- [ ] **11.37** `src/app/trainer/programs/_content.tsx`
+- [ ] **11.38** `src/app/trainer/programs/[id]/edit/_content.tsx`
+- [ ] **11.39** `src/app/trainer/programs/[id]/publish/_content.tsx`
+- [ ] **11.40** `src/app/trainer/programs/[id]/workouts/[wId]/_content.tsx`
+- [ ] **11.41** `src/app/trainer/programs/[id]/progress/_content.tsx`
+- [ ] **11.42** `src/app/trainer/programs/[id]/reports/_content.tsx`
+- [ ] **11.43** `src/app/trainer/trainees/_content.tsx`
+- [ ] **11.44** `src/app/trainer/trainees/new/_content.tsx`
+- [ ] **11.45** `src/app/trainer/trainees/[id]/_content.tsx`
+- [ ] **11.46** `src/app/trainer/trainees/[id]/records/_content.tsx`
+- [ ] **11.47** `src/app/trainee/workouts/[id]/_content.tsx`
+- [ ] **11.48** `src/app/trainee/history/_content.tsx`
+- [ ] **11.49** `src/app/trainee/records/_content.tsx`
+- [ ] **11.50** `src/app/trainee/programs/current/_content.tsx`
+- [ ] **11.51** `src/app/trainee/dashboard/_content.tsx`
+- [ ] **11.52** `src/app/admin/dashboard/_content.tsx`
+- [ ] **11.53** `src/app/admin/users/_content.tsx`
+- [ ] **11.54** `src/app/admin/programs/_content.tsx`
+- [ ] **11.55** `src/app/profile/change-password/_content.tsx`
+
+### Phase 4 — Componenti condivisi (sostituire `data.error?.message`)
+
+- [ ] **11.56** `src/components/ExerciseCreateModal.tsx`
+- [ ] **11.57** `src/components/ExercisesTable.tsx`
+- [ ] **11.58** `src/components/ProfileForm.tsx`
+- [ ] **11.59** `src/components/ProgramsTable.tsx`
+- [ ] **11.60** `src/components/UserCreateModal.tsx`
+- [ ] **11.61** `src/components/UserDeleteModal.tsx`
+- [ ] **11.62** `src/components/UserEditModal.tsx`
+- [ ] **11.63** `src/components/UsersTable.tsx`
+
+### Phase 5 — Test
+
+- [ ] **11.64** Aggiornare i test di integrazione che assertano messaggi di errore in inglese (stringhe hardcoded → chiavi semantiche nel campo `key`)  
+      File da verificare: `tests/integration/`
 
 ---
 
-*Ultimo aggiornamento: 31 Marzo 2026*
+## Riepilogo per priorità
+
+| Priorità   | Sprint    | Task         | Effort stimato |
+| ---------- | --------- | ------------ | -------------- |
+| Critico    | Sprint 1  | 1.1–1.6      | ~4h            |
+| Critico    | Sprint 2  | 2.1–2.7      | ~29h           |
+| Critico    | Sprint 3  | 3.1          | ~8h            |
+| Alto       | Sprint 4  | 4.1–4.5      | ~21h           |
+| Alto       | Sprint 5  | 5.1–5.10     | ~27h           |
+| Medio      | Sprint 6  | 6.1–6.7      | ~5h            |
+| Medio      | Sprint 7  | 7.1–7.6      | ~23h           |
+| Basso      | Sprint 8  | 8.1–8.7      | ~11h           |
+| Alto       | Sprint 9  | 9.1–9.23     | ~9h            |
+| Medio      | Sprint 10 | 10.1–10.29   | ~5h            |
+| Medio      | Sprint 11 | 11.1–11.64   | ~15h           |
+| **Totale** |           | **160 task** | **~157h**      |
+
+---
+
+*Ultimo aggiornamento: 1 Aprile 2026*
