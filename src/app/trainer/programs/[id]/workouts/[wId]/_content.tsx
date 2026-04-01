@@ -363,88 +363,106 @@ export default function WorkoutDetailContent() {
 
                 {/* Exercises List */}
                 {sortedExercises.length > 0 ? (
-                    <div className="space-y-4 mb-6">
+                    <div className="space-y-3 mb-6">
                         {sortedExercises.map((we, index) => (
-                            <div key={we.id} className="bg-white rounded-lg shadow-md p-6">
+                            <div key={we.id} className="bg-white rounded-lg shadow-md p-4">
                                 <div className="flex items-start justify-between">
                                     <div className="flex-1">
-                                        <div className="flex items-center space-x-3 mb-2">
-                                            <span className="text-2xl font-bold text-gray-400">
-                                                {index + 1}
-                                            </span>
-                                            <h3 className="text-xl font-bold text-gray-900">
-                                                {we.exercise.name}
-                                            </h3>
-                                            <span
-                                                className={`px-2 py-1 text-xs font-semibold rounded ${we.exercise.type === 'fundamental'
-                                                    ? 'bg-purple-100 text-purple-800'
-                                                    : 'bg-gray-100 text-gray-800'
-                                                    }`}
-                                            >
-                                                {we.exercise.type === 'fundamental'
-                                                    ? t('exercises.fundamental')
-                                                    : t('exercises.accessory')}
-                                            </span>
-                                            {we.isWarmup && (
-                                                <span className="px-2 py-1 text-xs font-semibold rounded bg-yellow-100 text-yellow-800">
-                                                    🔥 {t('workoutDetail.warmupTag')}
+                                        <div className="flex items-center justify-between mb-1">
+                                            <div className="flex items-center space-x-2">
+                                                <span className="text-xl font-bold text-gray-400">
+                                                    {index + 1}
                                                 </span>
-                                            )}
+                                                <h3 className="text-lg font-bold text-gray-900">
+                                                    {we.exercise.name}
+                                                </h3>
+                                                <span
+                                                    className={`px-1.5 py-0.5 text-xs font-semibold rounded ${we.exercise.type === 'fundamental'
+                                                        ? 'bg-purple-100 text-purple-800'
+                                                        : 'bg-gray-100 text-gray-800'
+                                                        }`}
+                                                >
+                                                    {we.exercise.type === 'fundamental'
+                                                        ? t('exercises.fundamental')
+                                                        : t('exercises.accessory')}
+                                                </span>
+                                                {we.isWarmup && (
+                                                    <span className="px-1.5 py-0.5 text-xs font-semibold rounded bg-yellow-100 text-yellow-800">
+                                                        🔥 {t('workoutDetail.warmupTag')}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <button
+                                                    onClick={() => loadExerciseForEdit(we)}
+                                                    className="p-1.5 text-[#FFA700] hover:text-[#FF9500] hover:bg-orange-50 rounded transition-colors"
+                                                    title={t('workoutDetail.editBtn')}
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteExercise(we.id)}
+                                                    className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                                                    title={t('workoutDetail.deleteBtn')}
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </div>
 
-                                        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mt-4">
+                                        <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mt-3">
                                             <div>
-                                                <p className="text-xs text-gray-600 mb-1">{t('workoutDetail.setsCol')}</p>
-                                                <p className="text-lg font-semibold text-gray-900">
+                                                <p className="text-xs text-gray-500 mb-0.5">{t('workoutDetail.setsCol')}</p>
+                                                <p className="text-base font-semibold text-gray-900">
                                                     {we.sets}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-xs text-gray-600 mb-1">
+                                                <p className="text-xs text-gray-500 mb-0.5">
                                                     {t('workoutDetail.repsCol')}
                                                 </p>
-                                                <p className="text-lg font-semibold text-gray-900">
+                                                <p className="text-base font-semibold text-gray-900">
                                                     {we.reps}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-xs text-gray-600 mb-1">{t('workoutDetail.restCol')}</p>
-                                                <p className="text-lg font-semibold text-gray-900">
+                                                <p className="text-xs text-gray-500 mb-0.5">{t('workoutDetail.restCol')}</p>
+                                                <p className="text-base font-semibold text-gray-900">
                                                     {getRestTimeLabel(we.restTime)}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-xs text-gray-600 mb-1">{t('workoutDetail.rpeCol')}</p>
-                                                <p className="text-lg font-semibold text-gray-900">
+                                                <p className="text-xs text-gray-500 mb-0.5">{t('workoutDetail.rpeCol')}</p>
+                                                <p className="text-base font-semibold text-gray-900">
                                                     {we.targetRpe ?? '-'}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-xs text-gray-600 mb-1">{t('workoutDetail.weightTypeCol')}</p>
-                                                <p className="text-lg font-semibold text-gray-900">
+                                                <p className="text-xs text-gray-500 mb-0.5">{t('workoutDetail.weightTypeCol')}</p>
+                                                <p className="text-base font-semibold text-gray-900">
                                                     {getWeightTypeLabel(we.weightType)}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-xs text-gray-600 mb-1">{t('workoutDetail.weightCol')}</p>
-                                                <p className="text-lg font-semibold text-gray-900">
+                                                <p className="text-xs text-gray-500 mb-0.5">{t('workoutDetail.weightCol')}</p>
+                                                <p className="text-base font-semibold text-gray-900">
                                                     {we.weight ? `${we.weight}` : '-'}
                                                 </p>
                                             </div>
                                         </div>
 
                                         {we.notes && (
-                                            <p className="text-sm text-gray-600 mt-3 italic">
+                                            <p className="text-sm text-gray-600 mt-2 italic">
                                                 📝 {we.notes}
                                             </p>
                                         )}
                                     </div>
 
-                                    <div className="flex flex-col space-y-2 ml-4">
+                                    <div className="flex flex-col space-y-1 ml-3">
                                         <button
                                             onClick={() => handleMoveExercise(we.id, 'up')}
                                             disabled={index === 0}
-                                            className="p-2 text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed"
+                                            className="p-1 text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed"
                                             title={t('workoutDetail.moveUp')}
                                         >
                                             ▲
@@ -452,24 +470,10 @@ export default function WorkoutDetailContent() {
                                         <button
                                             onClick={() => handleMoveExercise(we.id, 'down')}
                                             disabled={index === sortedExercises.length - 1}
-                                            className="p-2 text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed"
+                                            className="p-1 text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed"
                                             title={t('workoutDetail.moveDown')}
                                         >
                                             ▼
-                                        </button>
-                                        <button
-                                            onClick={() => loadExerciseForEdit(we)}
-                                            className="p-2 text-blue-600 hover:text-blue-800"
-                                            title={t('workoutDetail.editBtn')}
-                                        >
-                                            ✏️
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteExercise(we.id)}
-                                            className="p-2 text-red-600 hover:text-red-800"
-                                            title={t('workoutDetail.deleteBtn')}
-                                        >
-                                            <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
                                 </div>

@@ -17,7 +17,7 @@ interface WorkoutSummary {
 
 interface WeekSummary {
     weekNumber: number
-    weekType: 'loading' | 'deload'
+    weekType: 'normal' | 'test' | 'deload'
     workouts: WorkoutSummary[]
 }
 
@@ -328,12 +328,14 @@ export default function PublishProgramPage() {
                                             {t('publish.weekLabel', { week: week.weekNumber })}
                                         </span>
                                         <span
-                                            className={`px-2 py-1 text-xs font-semibold rounded-full ${week.weekType === 'loading'
-                                                ? 'bg-blue-100 text-blue-800'
-                                                : 'bg-green-100 text-green-800'
+                                            className={`px-2 py-1 text-xs font-semibold rounded-full ${week.weekType === 'normal'
+                                                    ? 'bg-blue-100 text-blue-800'
+                                                    : week.weekType === 'test'
+                                                        ? 'bg-orange-100 text-orange-800'
+                                                        : 'bg-green-100 text-green-800'
                                                 }`}
                                         >
-                                            {week.weekType === 'loading' ? t('publish.weekTypeLoading') : t('publish.weekTypeDeload')}
+                                            {week.weekType === 'normal' ? 'Normale' : week.weekType === 'test' ? 'Test' : 'Scarico'}
                                         </span>
                                     </div>
                                     <div className="flex items-center space-x-4">

@@ -23,7 +23,7 @@ import {
 
 interface WeeklyStat {
     weekNumber: number
-    weekType: 'loading' | 'deload' | 'test'
+    weekType: 'normal' | 'test' | 'deload'
     totalVolume: number
     avgRPE: number | null
     completedWorkouts: number

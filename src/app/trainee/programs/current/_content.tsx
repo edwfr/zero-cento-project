@@ -18,7 +18,7 @@ interface Workout {
 
 interface Week {
     weekNumber: number
-    weekType: 'loading' | 'deload'
+    weekType: 'normal' | 'test' | 'deload'
     workouts: Workout[]
 }
 
@@ -150,14 +150,18 @@ export default function CurrentProgramContent() {
                                         {t('currentProgram.week', { number: week.weekNumber })}
                                     </h3>
                                     <span
-                                        className={`px-3 py-1 text-xs font-semibold rounded-full ${week.weekType === 'loading'
-                                            ? 'bg-blue-100 text-blue-800'
-                                            : 'bg-green-100 text-green-800'
+                                        className={`px-3 py-1 text-xs font-semibold rounded-full ${week.weekType === 'normal'
+                                                ? 'bg-blue-100 text-blue-800'
+                                                : week.weekType === 'test'
+                                                    ? 'bg-orange-100 text-orange-800'
+                                                    : 'bg-green-100 text-green-800'
                                             }`}
                                     >
-                                        {week.weekType === 'loading'
-                                            ? <><TrendingUp className="w-3 h-3 inline mr-1" />Loading</>
-                                            : <><Wind className="w-3 h-3 inline mr-1" />Deload</>}
+                                        {week.weekType === 'normal'
+                                            ? <><TrendingUp className="w-3 h-3 inline mr-1" />Normale</>
+                                            : week.weekType === 'test'
+                                                ? <>🎯 Test</>
+                                                : <><Wind className="w-3 h-3 inline mr-1" />Scarico</>}
                                     </span>
                                     {weekCompleted && (
                                         <span className="text-green-600 text-sm font-semibold">

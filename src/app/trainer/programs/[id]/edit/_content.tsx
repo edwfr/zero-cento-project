@@ -19,7 +19,7 @@ interface Workout {
 interface Week {
     id: string
     weekNumber: number
-    weekType: 'loading' | 'deload'
+    weekType: 'normal' | 'test' | 'deload'
     workouts: Workout[]
 }
 
@@ -71,10 +71,8 @@ export default function EditProgramContent() {
         }
     }
 
-    const handleToggleWeekType = async (weekId: string, currentType: string) => {
+    const handleWeekTypeChange = async (weekId: string, newType: 'normal' | 'test' | 'deload') => {
         if (!program) return
-
-        const newType = currentType === 'loading' ? 'deload' : 'loading'
 
         try {
             setSaving(true)
@@ -241,16 +239,38 @@ export default function EditProgramContent() {
                                     <h3 className="text-xl font-bold text-gray-900">
                                         {t('editProgram.week')} {week.weekNumber}
                                     </h3>
-                                    <button
-                                        onClick={() => handleToggleWeekType(week.id, week.weekType)}
-                                        disabled={saving}
-                                        className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${week.weekType === 'loading'
-                                            ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                                            : 'bg-green-100 text-green-800 hover:bg-green-200'
-                                            }`}
-                                    >
-                                        {week.weekType === 'loading' ? '📈 Loading' : '🧘 Deload'}
-                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => handleWeekTypeChange(week.id, 'normal')}
+                                            disabled={saving}
+                                            className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all ${week.weekType === 'normal'
+                                                    ? 'bg-blue-500 text-white border-blue-500'
+                                                    : 'bg-white text-blue-800 border-blue-300 hover:bg-blue-50'
+                                                }`}
+                                        >
+                                            Normale
+                                        </button>
+                                        <button
+                                            onClick={() => handleWeekTypeChange(week.id, 'test')}
+                                            disabled={saving}
+                                            className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all ${week.weekType === 'test'
+                                                    ? 'bg-orange-500 text-white border-orange-500'
+                                                    : 'bg-white text-orange-800 border-orange-300 hover:bg-orange-50'
+                                                }`}
+                                        >
+                                            Test
+                                        </button>
+                                        <button
+                                            onClick={() => handleWeekTypeChange(week.id, 'deload')}
+                                            disabled={saving}
+                                            className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all ${week.weekType === 'deload'
+                                                    ? 'bg-green-500 text-white border-green-500'
+                                                    : 'bg-white text-green-800 border-green-300 hover:bg-green-50'
+                                                }`}
+                                        >
+                                            Scarico
+                                        </button>
+                                    </div>
                                 </div>
                                 <p className="text-sm text-gray-600">
                                     {t('editProgram.workoutsConfiguredShort', { done: week.workouts.filter((w) => w.exerciseCount > 0).length, total: week.workouts.length })}
