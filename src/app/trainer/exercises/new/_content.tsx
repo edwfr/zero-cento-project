@@ -135,7 +135,8 @@ export default function NewExerciseContent() {
                 throw new Error(getApiErrorMessage(data, t('exercises.createError'), t))
             }
 
-            // Redirect to exercises list
+            // Invalidate cache and redirect to exercises list
+            router.refresh()
             router.push('/trainer/exercises')
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : t('exercises.createError'))

@@ -146,10 +146,11 @@ Ambito review: design + implementation-docs
   Recommended action: mantenere CHECKLIST/NEXT_ACTIONS come fonte canonica e marcare i numeri storici come legacy  
   Area: Tech / Process
 
-- [ ] Normalizzare contratti API e metodi endpoint  
+- [x] Normalizzare contratti API e metodi endpoint  
   Severity: High  
   Recommended action: contract tests + tabella endpoint canonica versionata  
-  Area: Tech
+  Area: Tech  
+  Completato: 2026-04-01 — docs/api-contracts.md + tests/integration/api-contracts.test.ts
 
 - [ ] Formalizzare policy safety fitness  
   Severity: High  

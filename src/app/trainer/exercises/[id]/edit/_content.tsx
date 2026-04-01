@@ -55,11 +55,10 @@ export default function EditExerciseContent() {
 
     // Form state
     const [name, setName] = useState('')
-    const [description, setDescription] = useState('')
     const [youtubeUrl, setYoutubeUrl] = useState('')
     const [type, setType] = useState<'fundamental' | 'accessory'>('accessory')
     const [movementPatternId, setMovementPatternId] = useState('')
-    const [notes, setNotes] = useState('')
+    const [variants, setVariants] = useState<string[]>([])
     const [selectedMuscleGroups, setSelectedMuscleGroups] = useState<MuscleGroupInput[]>([])
 
     useEffect(() => {
@@ -87,11 +86,10 @@ export default function EditExerciseContent() {
 
             // Populate form with existing data
             setName(exercise.name)
-            setDescription(exercise.description || '')
             setYoutubeUrl(exercise.youtubeUrl || '')
             setType(exercise.type)
             setMovementPatternId(exercise.movementPatternId)
-            setNotes(exercise.notes.join('\n'))
+            setVariants(exercise.notes)
             setSelectedMuscleGroups(
                 exercise.exerciseMuscleGroups.map((emg) => ({
                     muscleGroupId: emg.muscleGroupId,
@@ -106,6 +104,14 @@ export default function EditExerciseContent() {
         } finally {
             setLoadingData(false)
         }
+    }
+
+    const addVariant = () => setVariants([...variants, ''])
+    const removeVariant = (index: number) => setVariants(variants.filter((_, i) => i !== index))
+    const updateVariant = (index: number, value: string) => {
+        const updated = [...variants]
+        updated[index] = value
+        setVariants(updated)
     }
 
     const addMuscleGroup = () => {
@@ -162,12 +168,11 @@ export default function EditExerciseContent() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name,
-                    description: description || undefined,
                     youtubeUrl: youtubeUrl || undefined,
                     type,
                     movementPatternId,
                     muscleGroups: selectedMuscleGroups,
-                    notes: notes ? notes.split('\n').filter((n) => n.trim()) : [],
+                    notes: variants.filter((v) => v.trim()),
                 }),
             })
 
@@ -177,7 +182,8 @@ export default function EditExerciseContent() {
                 throw new Error(getApiErrorMessage(data, t('exercises.updateError'), t))
             }
 
-            // Redirect to exercises list
+            // Invalidate cache and redirect to exercises list
+            router.refresh()
             router.push('/trainer/exercises')
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : t('exercises.updateError'))
@@ -233,18 +239,47 @@ export default function EditExerciseContent() {
                         />
                     </div>
 
+                    {/* Variants */}
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            {t('exercises.descriptionLabel')}
-                        </label>
-                        <textarea
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            disabled={saving}
-                            placeholder={t('exercises.descriptionPlaceholder')}
-                            rows={3}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                        />
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="block text-sm font-semibold text-gray-700">
+                                {t('exercises.notesVariantsLabel')}
+                            </label>
+                            <button
+                                type="button"
+                                onClick={addVariant}
+                                disabled={saving}
+                                className="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                            >
+                                {t('exercises.addVariant')}
+                            </button>
+                        </div>
+                        {variants.length === 0 ? (
+                            <p className="text-gray-500 text-sm italic">{t('exercises.noVariants')}</p>
+                        ) : (
+                            <div className="space-y-2">
+                                {variants.map((variant, index) => (
+                                    <div key={index} className="flex items-center space-x-2">
+                                        <input
+                                            type="text"
+                                            value={variant}
+                                            onChange={(e) => updateVariant(index, e.target.value)}
+                                            disabled={saving}
+                                            placeholder={t('exercises.variantPlaceholder')}
+                                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => removeVariant(index)}
+                                            disabled={saving}
+                                            className="text-red-600 hover:text-red-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     <div>
@@ -376,24 +411,6 @@ export default function EditExerciseContent() {
                                 ))}
                             </div>
                         )}
-                    </div>
-
-                    {/* Notes */}
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            {t('exercises.notesVariantsLabel')}
-                        </label>
-                        <textarea
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            disabled={saving}
-                            placeholder={t('exercises.notesVariantsPlaceholder')}
-                            rows={3}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                            {t('exercises.notesPlaceholder')}
-                        </p>
                     </div>
 
                     {/* Actions */}

@@ -4,7 +4,7 @@ import type { TFunction } from 'i18next'
  * Extracts a user-facing error message from an API response.
  *
  * If the response contains a semantic `error.key` (e.g. "exercise.notFound"),
- * it is translated via the `errors` i18n namespace.
+ * it is translated via the `errors` i18n namespace using the syntax `errors:key`.
  * Otherwise the provided `fallback` string is returned.
  */
 export function getApiErrorMessage(
@@ -24,7 +24,8 @@ export function getApiErrorMessage(
             : undefined
 
     if (key) {
-        return t(key, { ns: 'errors', defaultValue: fallback })
+        // Use namespace:key syntax for more reliable translation
+        return t(`errors:${key}`, { defaultValue: fallback })
     }
 
     return fallback
