@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 
 interface User {
     id: string
@@ -99,7 +100,7 @@ export default function UserEditModal({ user, onClose, onUserUpdated }: UserEdit
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data.error?.message || t('common:errors.updateError'))
+                throw new Error(getApiErrorMessage(data, t('common:errors.updateError'), t))
             }
 
             setSuccess(true)

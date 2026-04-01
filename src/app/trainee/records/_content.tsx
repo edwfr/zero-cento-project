@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { SkeletonTable } from '@/components'
 import { BarChart2 } from 'lucide-react'
 import { formatDate } from '@/lib/date-format'
@@ -39,7 +40,7 @@ export default function PersonalRecordsContent() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || t('records.errorLoading'))
+                throw new Error(getApiErrorMessage(data, t('records.errorLoading'), t))
             }
 
             setRecords(data.data.items)

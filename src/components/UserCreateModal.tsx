@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { CheckCircle2, AlertTriangle } from 'lucide-react'
 
 interface UserCreateModalProps {
@@ -100,7 +101,7 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data.error?.message || t('common:errors.creationError'))
+                throw new Error(getApiErrorMessage(data, t('common:errors.creationError'), t))
             }
 
             // Show temporary password

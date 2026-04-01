@@ -12,6 +12,7 @@ import RestTimeSelector from '@/components/RestTimeSelector'
 import RepsInput from '@/components/RepsInput'
 import { WeightType, RestTime } from '@prisma/client'
 import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { FileText, Pencil, Trash2, Dumbbell } from 'lucide-react'
 
 interface Exercise {
@@ -200,7 +201,7 @@ export default function WorkoutDetailContent() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || t('workoutDetail.errorSave'))
+                throw new Error(getApiErrorMessage(data, t('workoutDetail.errorSave'), t))
             }
 
             showToast(editingExerciseId ? t('workoutDetail.exerciseSaved') : t('workoutDetail.exerciseAdded'), 'success')
@@ -233,7 +234,7 @@ export default function WorkoutDetailContent() {
 
                     if (!res.ok) {
                         const data = await res.json()
-                        throw new Error(data.error?.message || t('workoutDetail.errorRemove'))
+                        throw new Error(getApiErrorMessage(data, t('workoutDetail.errorRemove'), t))
                     }
 
                     showToast(t('workoutDetail.exerciseRemoved'), 'success')

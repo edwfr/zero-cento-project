@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { Trash2 } from 'lucide-react'
 
@@ -79,7 +80,7 @@ export default function EditExerciseContent() {
             const mpData = await mpRes.json()
 
             if (!exRes.ok) {
-                throw new Error(exData.error?.message || 'Errore caricamento esercizio')
+                throw new Error(getApiErrorMessage(exData, 'Errore caricamento esercizio', t))
             }
 
             const exercise: Exercise = exData.data.exercise
@@ -173,7 +174,7 @@ export default function EditExerciseContent() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || t('exercises.updateError'))
+                throw new Error(getApiErrorMessage(data, t('exercises.updateError'), t))
             }
 
             // Redirect to exercises list

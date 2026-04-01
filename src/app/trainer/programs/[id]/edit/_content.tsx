@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/components/ToastNotification'
 import EditProgramMetadata from './EditProgramMetadata'
@@ -59,7 +60,7 @@ export default function EditProgramContent() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || t('editProgram.errorLoading'))
+                throw new Error(getApiErrorMessage(data, t('editProgram.errorLoading'), t))
             }
 
             setProgram(data.data.program)
@@ -91,7 +92,7 @@ export default function EditProgramContent() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || t('editProgram.errorEditWeek'))
+                throw new Error(getApiErrorMessage(data, t('editProgram.errorEditWeek'), t))
             }
 
             // Update local state

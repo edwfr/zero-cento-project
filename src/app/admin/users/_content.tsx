@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 import UserCreateModal from '@/components/UserCreateModal'
 import UserEditModal from '@/components/UserEditModal'
 import UserDeleteModal from '@/components/UserDeleteModal'
@@ -63,7 +64,7 @@ export default function AdminUsersContent() {
             setLoading(true)
             const res = await fetch('/api/users')
             const data = await res.json()
-            if (!res.ok) throw new Error(data.error?.message || t('admin:users.loadingError'))
+            if (!res.ok) throw new Error(getApiErrorMessage(data, t('admin:users.loadingError'), t))
             setUsers(data.data.items)
             setSelectedIds(new Set())
             setPage(1)

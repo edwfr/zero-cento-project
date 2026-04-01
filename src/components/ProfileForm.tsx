@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 
 interface User {
     id: string
@@ -16,6 +18,7 @@ interface ProfileFormProps {
 
 export default function ProfileForm({ user }: ProfileFormProps) {
     const router = useRouter()
+    const { t } = useTranslation('common')
     const [isEditing, setIsEditing] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
@@ -43,7 +46,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data.error?.message || 'Errore durante l\'aggiornamento')
+                throw new Error(getApiErrorMessage(data, 'Errore durante l\'aggiornamento', t))
             }
 
             setSuccess('Profilo aggiornato con successo')

@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 import UserCreateModal from './UserCreateModal'
 import UserEditModal from './UserEditModal'
 import UserDeleteModal from './UserDeleteModal'
 import { useToast } from '@/components/ToastNotification'
+import { formatDate } from '@/lib/date-format'
 
 interface User {
     id: string
@@ -39,7 +41,7 @@ export default function UsersTable() {
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data.error?.message || t('common:errors.loadingError'))
+                throw new Error(getApiErrorMessage(data, t('common:errors.loadingError'), t))
             }
 
             setUsers(data.data.items)
@@ -80,7 +82,7 @@ export default function UsersTable() {
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data.error?.message || t('common:errors.updateError'))
+                throw new Error(getApiErrorMessage(data, t('common:errors.updateError'), t))
             }
 
             fetchUsers()

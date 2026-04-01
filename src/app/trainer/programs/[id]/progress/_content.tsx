@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { SkeletonDashboard } from '@/components'
 import ProgressBar from '@/components/ProgressBar'
 import { formatNumber } from '@/lib/date-format'
@@ -73,7 +74,7 @@ export default function ProgramProgressContent() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || 'Errore caricamento progress')
+                throw new Error(getApiErrorMessage(data, 'Errore caricamento progress', t))
             }
 
             setProgress(data.data)

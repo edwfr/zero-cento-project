@@ -8,6 +8,7 @@ import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import { formatDate } from '@/lib/date-format'
 import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { Plus, FileEdit, CheckCircle2, Trash2, FlagTriangleRight } from 'lucide-react'
 
 interface Program {
@@ -53,7 +54,7 @@ export default function TrainerProgramsContent() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || t('programs.loadingError'))
+                throw new Error(getApiErrorMessage(data, t('programs.loadingError'), t))
             }
 
             setPrograms(data.data.items)
@@ -79,7 +80,7 @@ export default function TrainerProgramsContent() {
                     const data = await res.json()
 
                     if (!res.ok) {
-                        throw new Error(data.error?.message || t('programs.deleteError'))
+                        throw new Error(getApiErrorMessage(data, t('programs.deleteError'), t))
                     }
 
                     fetchPrograms()

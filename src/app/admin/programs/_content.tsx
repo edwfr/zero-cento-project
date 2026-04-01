@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { formatDate } from '@/lib/date-format'
 
 interface Program {
@@ -40,7 +41,7 @@ export default function AdminProgramsPageContent() {
                 setLoading(true)
                 const res = await fetch('/api/programs?limit=200')
                 const data = await res.json()
-                if (!res.ok) throw new Error(data.error?.message || t('programsPage.loadingError'))
+                if (!res.ok) throw new Error(getApiErrorMessage(data, t('programsPage.loadingError'), t))
                 setPrograms(data.data.items)
             } catch (err: unknown) {
                 setError(err instanceof Error ? err.message : t('programsPage.loadingError'))

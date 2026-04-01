@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { SkeletonDashboard } from '@/components'
 import { TrendingUp, Wind } from 'lucide-react'
 import { formatDate } from '@/lib/date-format'
@@ -52,7 +53,7 @@ export default function CurrentProgramContent() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || t('currentProgram.errorNotFound'))
+                throw new Error(getApiErrorMessage(data, t('currentProgram.errorNotFound'), t))
             }
 
             if (data.data.items.length === 0) {

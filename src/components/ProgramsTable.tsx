@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 import Link from 'next/link'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
@@ -81,7 +82,7 @@ export default function ProgramsTable({
             setLoading(true)
             const res = await fetch('/api/programs')
             const data = await res.json()
-            if (!res.ok) throw new Error(data.error?.message || t('trainer:programs.loadingError'))
+            if (!res.ok) throw new Error(getApiErrorMessage(data, t('trainer:programs.loadingError'), t))
             setPrograms(data.data.items)
             setError(null)
         } catch (err: any) {
@@ -115,7 +116,7 @@ export default function ProgramsTable({
                     setDeleting(id)
                     const res = await fetch(`/api/programs/${id}`, { method: 'DELETE' })
                     const data = await res.json()
-                    if (!res.ok) throw new Error(data.error?.message || t('common:errors.deletionError'))
+                    if (!res.ok) throw new Error(getApiErrorMessage(data, t('common:errors.deletionError'), t))
                     if (externalPrograms && onRefresh) {
                         onRefresh()
                     } else {

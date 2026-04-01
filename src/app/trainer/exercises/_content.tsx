@@ -7,6 +7,8 @@ import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 
 interface Exercise {
     id: string
@@ -33,6 +35,7 @@ interface Exercise {
 export default function TrainerExercisesContent() {
     const router = useRouter()
     const { showToast } = useToast()
+    const { t } = useTranslation('trainer')
     const [exercises, setExercises] = useState<Exercise[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -57,7 +60,7 @@ export default function TrainerExercisesContent() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || 'Errore nel caricamento esercizi')
+                throw new Error(getApiErrorMessage(data, 'Errore nel caricamento esercizi', t))
             }
 
             setExercises(data.data.items)
@@ -83,7 +86,7 @@ export default function TrainerExercisesContent() {
                     const data = await res.json()
 
                     if (!res.ok) {
-                        throw new Error(data.error?.message || 'Errore eliminazione esercizio')
+                        throw new Error(getApiErrorMessage(data, 'Errore eliminazione esercizio', t))
                     }
 
                     fetchExercises()

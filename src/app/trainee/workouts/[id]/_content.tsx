@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { SkeletonDetail } from '@/components'
@@ -122,7 +123,7 @@ export default function WorkoutDetailContent() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || t('workouts.errorLoading'))
+                throw new Error(getApiErrorMessage(data, t('workouts.errorLoading'), t))
             }
 
             setWorkout(data.data.workout)
@@ -280,7 +281,7 @@ export default function WorkoutDetailContent() {
 
                 if (!res.ok) {
                     const data = await res.json()
-                    throw new Error(data.error?.message || t('workouts.errorFeedback'))
+                    throw new Error(getApiErrorMessage(data, t('workouts.errorFeedback'), t))
                 }
 
                 return res.json()

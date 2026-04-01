@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 
 interface MuscleGroup {
     id: string
@@ -23,6 +25,7 @@ interface ExerciseCreateModalProps {
 }
 
 export default function ExerciseCreateModal({ onClose, onExerciseCreated }: ExerciseCreateModalProps) {
+    const { t } = useTranslation('trainer')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const [muscleGroups, setMuscleGroups] = useState<MuscleGroup[]>([])
@@ -167,7 +170,7 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data.error?.message || 'Errore durante la creazione')
+                throw new Error(getApiErrorMessage(data, 'Errore durante la creazione', t))
             }
 
             onExerciseCreated()

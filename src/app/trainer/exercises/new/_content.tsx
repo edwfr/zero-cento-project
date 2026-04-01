@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { Trash2 } from 'lucide-react'
 
@@ -131,7 +132,7 @@ export default function NewExerciseContent() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || t('exercises.createError'))
+                throw new Error(getApiErrorMessage(data, t('exercises.createError'), t))
             }
 
             // Redirect to exercises list

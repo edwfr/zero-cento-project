@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 import ExerciseCreateModal from './ExerciseCreateModal'
 
 interface MuscleGroupAssignment {
@@ -58,7 +59,7 @@ export default function ExercisesTable() {
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data.error?.message || t('common:errors.loadingError'))
+                throw new Error(getApiErrorMessage(data, t('common:errors.loadingError'), t))
             }
 
             setExercises(data.data.items)

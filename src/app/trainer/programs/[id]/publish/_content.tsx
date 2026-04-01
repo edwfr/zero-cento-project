@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
@@ -74,7 +75,7 @@ export default function PublishProgramPage() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || t('publish.errorLoading', { defaultValue: 'Error loading program' }))
+                throw new Error(getApiErrorMessage(data, t('publish.errorLoading', { defaultValue: 'Error loading program' }), t))
             }
 
             // Transform API data to match frontend interface
@@ -142,7 +143,7 @@ export default function PublishProgramPage() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || t('publish.publishError'))
+                throw new Error(getApiErrorMessage(data, t('publish.publishError'), t))
             }
 
             showToast(t('publish.publishSuccess'), 'success')

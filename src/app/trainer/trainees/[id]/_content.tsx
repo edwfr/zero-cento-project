@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 import Link from 'next/link'
 import { SkeletonDetail } from '@/components'
 import { formatDate } from '@/lib/date-format'
@@ -72,7 +73,7 @@ export default function TraineeDetailContent() {
             ])
 
             if (!traineeRes.ok) {
-                throw new Error(traineeData.error?.message || t('athletes.athleteNotFound'))
+                throw new Error(getApiErrorMessage(traineeData, t('athletes.athleteNotFound'), t))
             }
 
             setTrainee(traineeData.data.user)

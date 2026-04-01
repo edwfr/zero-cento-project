@@ -9,6 +9,8 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import { formatDate, formatDateForInput, getTodayForInput } from '@/lib/date-format'
+import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 
 interface Trainee {
     id: string
@@ -43,7 +45,7 @@ interface GroupedExerciseRecord {
 export default function TraineeRecordsContent() {
     const params = useParams<{ id: string }>()
     const traineeId = params.id
-
+    const { t } = useTranslation('trainer')
     const [loading, setLoading] = useState(true)
     const [trainee, setTrainee] = useState<Trainee | null>(null)
     const [records, setRecords] = useState<PersonalRecord[]>([])
@@ -96,7 +98,7 @@ export default function TraineeRecordsContent() {
             ])
 
             if (!traineeRes.ok) {
-                throw new Error(traineeData.error?.message || 'Atleta non trovato')
+                throw new Error(getApiErrorMessage(traineeData, 'Atleta non trovato', t))
             }
 
             setTrainee(traineeData.data.user)
@@ -232,7 +234,7 @@ export default function TraineeRecordsContent() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || `Errore ${editingRecord ? 'aggiornamento' : 'creazione'} massimale`)
+                throw new Error(getApiErrorMessage(data, editingRecord ? 'Errore aggiornamento massimale' : 'Errore creazione massimale', t))
             }
 
             showToast(
@@ -269,7 +271,7 @@ export default function TraineeRecordsContent() {
                     const data = await res.json()
 
                     if (!res.ok) {
-                        throw new Error(data.error?.message || 'Errore eliminazione massimale')
+                        throw new Error(getApiErrorMessage(data, 'Errore eliminazione massimale', t))
                     }
 
                     showToast('Massimale eliminato con successo', 'success')

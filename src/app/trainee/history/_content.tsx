@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { SkeletonList } from '@/components'
 import { ClipboardList } from 'lucide-react'
 import { formatDate } from '@/lib/date-format'
@@ -40,7 +41,7 @@ export default function HistoryContent() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || 'Errore caricamento storico')
+                throw new Error(getApiErrorMessage(data, 'Errore caricamento storico', t))
             }
 
             setPrograms(data.data.items)

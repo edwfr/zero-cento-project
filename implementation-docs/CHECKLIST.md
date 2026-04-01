@@ -570,39 +570,39 @@
 
 ### Phase 3 — Frontend _content.tsx (sostituire `data.error?.message` con `getApiErrorMessage`)
 
-- [ ] **11.34** `src/app/trainer/exercises/new/_content.tsx`
-- [ ] **11.35** `src/app/trainer/exercises/[id]/edit/_content.tsx`
-- [ ] **11.36** `src/app/trainer/exercises/_content.tsx`
-- [ ] **11.37** `src/app/trainer/programs/_content.tsx`
-- [ ] **11.38** `src/app/trainer/programs/[id]/edit/_content.tsx`
-- [ ] **11.39** `src/app/trainer/programs/[id]/publish/_content.tsx`
-- [ ] **11.40** `src/app/trainer/programs/[id]/workouts/[wId]/_content.tsx`
-- [ ] **11.41** `src/app/trainer/programs/[id]/progress/_content.tsx`
-- [ ] **11.42** `src/app/trainer/programs/[id]/reports/_content.tsx`
-- [ ] **11.43** `src/app/trainer/trainees/_content.tsx`
-- [ ] **11.44** `src/app/trainer/trainees/new/_content.tsx`
-- [ ] **11.45** `src/app/trainer/trainees/[id]/_content.tsx`
-- [ ] **11.46** `src/app/trainer/trainees/[id]/records/_content.tsx`
-- [ ] **11.47** `src/app/trainee/workouts/[id]/_content.tsx`
-- [ ] **11.48** `src/app/trainee/history/_content.tsx`
-- [ ] **11.49** `src/app/trainee/records/_content.tsx`
-- [ ] **11.50** `src/app/trainee/programs/current/_content.tsx`
+- [x] **11.34** `src/app/trainer/exercises/new/_content.tsx`
+- [x] **11.35** `src/app/trainer/exercises/[id]/edit/_content.tsx`
+- [x] **11.36** `src/app/trainer/exercises/_content.tsx`
+- [x] **11.37** `src/app/trainer/programs/_content.tsx`
+- [x] **11.38** `src/app/trainer/programs/[id]/edit/_content.tsx`
+- [x] **11.39** `src/app/trainer/programs/[id]/publish/_content.tsx`
+- [x] **11.40** `src/app/trainer/programs/[id]/workouts/[wId]/_content.tsx`
+- [x] **11.41** `src/app/trainer/programs/[id]/progress/_content.tsx`
+- [x] **11.42** `src/app/trainer/programs/[id]/reports/_content.tsx`
+- [x] **11.43** `src/app/trainer/trainees/_content.tsx`
+- [x] **11.44** `src/app/trainer/trainees/new/_content.tsx`
+- [x] **11.45** `src/app/trainer/trainees/[id]/_content.tsx`
+- [x] **11.46** `src/app/trainer/trainees/[id]/records/_content.tsx`
+- [x] **11.47** `src/app/trainee/workouts/[id]/_content.tsx`
+- [x] **11.48** `src/app/trainee/history/_content.tsx`
+- [x] **11.49** `src/app/trainee/records/_content.tsx`
+- [x] **11.50** `src/app/trainee/programs/current/_content.tsx`
 - [ ] **11.51** `src/app/trainee/dashboard/_content.tsx`
 - [ ] **11.52** `src/app/admin/dashboard/_content.tsx`
-- [ ] **11.53** `src/app/admin/users/_content.tsx`
-- [ ] **11.54** `src/app/admin/programs/_content.tsx`
+- [x] **11.53** `src/app/admin/users/_content.tsx`
+- [x] **11.54** `src/app/admin/programs/_content.tsx`
 - [ ] **11.55** `src/app/profile/change-password/_content.tsx`
 
 ### Phase 4 — Componenti condivisi (sostituire `data.error?.message`)
 
-- [ ] **11.56** `src/components/ExerciseCreateModal.tsx`
-- [ ] **11.57** `src/components/ExercisesTable.tsx`
-- [ ] **11.58** `src/components/ProfileForm.tsx`
-- [ ] **11.59** `src/components/ProgramsTable.tsx`
-- [ ] **11.60** `src/components/UserCreateModal.tsx`
-- [ ] **11.61** `src/components/UserDeleteModal.tsx`
-- [ ] **11.62** `src/components/UserEditModal.tsx`
-- [ ] **11.63** `src/components/UsersTable.tsx`
+- [x] **11.56** `src/components/ExerciseCreateModal.tsx`
+- [x] **11.57** `src/components/ExercisesTable.tsx`
+- [x] **11.58** `src/components/ProfileForm.tsx`
+- [x] **11.59** `src/components/ProgramsTable.tsx`
+- [x] **11.60** `src/components/UserCreateModal.tsx`
+- [x] **11.61** `src/components/UserDeleteModal.tsx`
+- [x] **11.62** `src/components/UserEditModal.tsx`
+- [x] **11.63** `src/components/UsersTable.tsx`
 
 ### Phase 5 — Test
 

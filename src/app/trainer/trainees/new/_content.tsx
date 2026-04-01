@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 import Link from 'next/link'
 import { CheckCircle2 } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
@@ -56,7 +57,7 @@ export default function NewTraineePageContent() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || t('athletes.creationError'))
+                throw new Error(getApiErrorMessage(data, t('athletes.creationError'), t))
             }
 
             // Show generated password if auto-generated

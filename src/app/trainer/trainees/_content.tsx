@@ -7,6 +7,7 @@ import { SkeletonTable } from '@/components'
 import { useToast } from '@/components/ToastNotification'
 import { formatDate } from '@/lib/date-format'
 import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { Plus, Eye, UserX, UserCheck } from 'lucide-react'
 
 interface Trainee {
@@ -39,7 +40,7 @@ export default function TrainerTraineesContent() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || t('athletes.loadingError'))
+                throw new Error(getApiErrorMessage(data, t('athletes.loadingError'), t))
             }
 
             setTrainees(data.data.items)
@@ -60,7 +61,7 @@ export default function TrainerTraineesContent() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || t('athletes.statusUpdateError'))
+                throw new Error(getApiErrorMessage(data, t('athletes.statusUpdateError'), t))
             }
 
             fetchTrainees()
@@ -131,7 +132,7 @@ export default function TrainerTraineesContent() {
                             <Link
                                 href="/trainer/trainees/new"
                                 className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-2 rounded-lg transition-colors flex items-center gap-2"
-                                >
+                            >
                                 <Plus className="w-4 h-4" />{t('athletes.newAthlete')}
                             </Link>
                         </div>
