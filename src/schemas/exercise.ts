@@ -21,7 +21,8 @@ export const exerciseSchema = z.object({
     youtubeUrl: z
         .string()
         .url('URL non valido')
-        .regex(/(youtube\.com|youtu\.be)/, 'Deve essere un link YouTube'),
+        .regex(/(youtube\.com|youtu\.be)/, 'Deve essere un link YouTube')
+        .optional(),
     type: z.enum(['fundamental', 'accessory'], {
         errorMap: () => ({ message: 'Tipo esercizio non valido' }),
     }),

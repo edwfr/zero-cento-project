@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/components/ToastNotification'
+import { Pencil } from 'lucide-react'
 
 interface Trainee {
     id: string
@@ -116,7 +117,10 @@ export default function EditProgramMetadata({
                 onClick={handleOpen}
                 className="text-sm text-brand-primary hover:text-brand-primary/80 font-semibold"
             >
-                ✏️ Modifica Info Programma
+                <span className="inline-flex items-center gap-1.5">
+                    <Pencil className="w-4 h-4" />
+                    Modifica Info Programma
+                </span>
             </button>
         )
     }

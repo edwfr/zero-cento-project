@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next'
 import '@/lib/i18n/client'
 import { getApiErrorMessage } from '@/lib/api-error'
 import LoadingSpinner from '@/components/LoadingSpinner'
-import { Trash2 } from 'lucide-react'
+import { Trash2, ArrowLeft } from 'lucide-react'
 
 interface MuscleGroup {
     id: string
@@ -151,8 +151,9 @@ export default function NewExerciseContent() {
             <div className="mb-8">
                 <Link
                     href="/trainer/exercises"
-                    className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
+                    className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-flex items-center gap-1"
                 >
+                    <ArrowLeft className="w-4 h-4" />
                     {t('exercises.backToLibrary')}
                 </Link>
                 <h1 className="text-3xl font-bold text-gray-900">{t('exercises.newExerciseTitle')}</h1>

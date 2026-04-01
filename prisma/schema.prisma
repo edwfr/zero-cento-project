@@ -154,7 +154,7 @@ model Exercise {
   id                String       @id @default(uuid())
   name              String
   description       String?
-  youtubeUrl        String
+  youtubeUrl        String?
   type              ExerciseType
   movementPatternId String
   notes             String[]     // Array di note/varianti
