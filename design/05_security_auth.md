@@ -1,5 +1,7 @@
 # Security & Authentication
 
+> Nota posizionamento (Apr 2026): ZeroCento e una training management platform trainer-led; controlli sicurezza e autorizzazioni proteggono i flussi operativi tra admin, trainer e trainee.
+
 ## Autenticazione
 - **Provider**: **Supabase Auth** — gestione completa autenticazione integrata con DB.
 - **Metodo primario**: **Email + password** per MVP.
@@ -537,7 +539,7 @@ Obbligatorio per cookie non strettamente necessari:
 // Cookie essenziali: Supabase auth JWT (legittimo interesse)
 // Cookie analytics: Google Analytics (consenso richiesto)
 ```
-**Libreria consigliata**: `react-cookie-consent` (coverage AI alta)
+**Libreria consigliata**: `react-cookie-consent` (ampia adozione e documentazione)
 
 #### 2. Privacy Policy (obbligatoria)
 Documento accessibile da `/privacy-policy` contenente:

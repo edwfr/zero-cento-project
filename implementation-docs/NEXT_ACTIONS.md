@@ -1,12 +1,51 @@
 # ⚡ NEXT ACTIONS - ZeroCento Training Platform
 
-**Ultimo aggiornamento:** 30 Marzo 2026  
-**Progresso attuale:** ~58% completato  
-**Riferimento completo:** [SYSTEM_REVIEW.md](../SYSTEM_REVIEW.md)
+**Ultimo aggiornamento:** 1 Aprile 2026  
+**Posizionamento prodotto:** training management platform trainer-led  
+**Stato canonico:** 142/160 task completati (~89%), 18 task aperti  
+**Fonte di verità stato task:** [CHECKLIST.md](./CHECKLIST.md)
 
 ---
 
-## 🎯 PRIORITÀ IMMEDIATE
+## ✅ Backlog Attivo (Task Residui)
+
+Questa sezione contiene solo il backlog attivo allineato alla checklist corrente.
+
+### 🔴 Priorità 1 - Sprint 6 (CI/CD & Deploy)
+
+- [ ] **6.1** Aggiungere script `prisma:migrate:prod` a `package.json` (o usare `npx prisma migrate deploy` nel workflow)
+- [ ] **6.2** Aggiungere step `npm run build` nel job test CI
+- [ ] **6.3** Creare `vercel.json` con build config e route rewrites
+- [ ] **6.4** Configurare secrets GitHub: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, `STAGING_URL`, `PRODUCTION_DATABASE_URL`
+- [ ] **6.5** Collegare repo GitHub a Vercel per auto-deploy + preview su PR
+- [ ] **6.6** Completare integrazione Sentry
+- [ ] **6.7** Configurare UptimeRobot su `/api/health`
+
+### 🟠 Priorità 2 - Sprint 8 (PWA & Final Polish)
+
+- [ ] **8.1** Verificare/completare integrazione service worker con Serwist
+- [ ] **8.2** Sostituire icone placeholder con loghi reali
+- [ ] **8.3** Testare installazione PWA su mobile
+- [ ] **8.4** Implementare strategia cache offline per workout attivo
+- [ ] **8.5** Aggiungere indice su `ExerciseFeedback.traineeId`
+- [ ] **8.6** Aggiungere indice composto su `SetPerformed(feedbackId, setNumber)`
+- [ ] **8.7** Caching admin reports con TTL 5min
+
+### 🟡 Priorità 3 - Sprint 11 (I18n Error Keys)
+
+- [ ] **11.51** `src/app/trainee/dashboard/_content.tsx`
+- [ ] **11.52** `src/app/admin/dashboard/_content.tsx`
+- [ ] **11.55** `src/app/profile/change-password/_content.tsx`
+- [ ] **11.64** Aggiornare i test di integrazione che assertano messaggi di errore hardcoded
+
+---
+
+## 📚 Archivio Task Storici
+
+Le sezioni sottostanti sono mantenute come archivio di dettaglio tecnico.
+Per pianificazione corrente e stato reale usare sempre [CHECKLIST.md](./CHECKLIST.md).
+
+## 🎯 PRIORITÀ IMMEDIATE (storico)
 
 ### 🔴 CRITICO - Fix Sicurezza (Effort totale: ~4h)
 
@@ -243,7 +282,7 @@ Vedi [SYSTEM_REVIEW.md - Sezione 8.5](../SYSTEM_REVIEW.md#85-pwa-completamento) 
 | Sprint 7 | CI/CD + Deploy                 | CI/CD tasks     | ~5h    |
 | Sprint 8 | PWA + Final polish             | PWA tasks       | ~7h    |
 
-**Effort totale rimanente: ~129h**
+**Effort storico stimato: ~129h (non più baseline corrente)**
 
 ---
 
@@ -280,7 +319,7 @@ Applica fix #5 sopra.
 
 ---
 
-**Ultimo update:** 30 Marzo 2026 - Documentazione sincronizzata con SYSTEM_REVIEW.md
+**Ultimo update sezione storica:** 30 Marzo 2026
 
 ### ❌ Errore: "P1001: Can't reach database server"
 1. Verifica `.env.local` con credenziali corrette

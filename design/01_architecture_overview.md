@@ -1,10 +1,12 @@
 # Architecture Overview
 
+> Nota posizionamento (Apr 2026): ZeroCento e una training management platform trainer-led. Eventuali riferimenti ad "AI" in questo documento riguardano solo criteri di produttivita nello sviluppo.
+
 ## Stack tecnologico
 - **Framework**: Next.js (App Router) — gestisce sia il frontend che il backend.
 - **Runtime backend**: Next.js API Routes / Server Actions (Node.js serverless su Vercel).
 - **Database**: **Supabase PostgreSQL** — connection pooling (PgBouncer) incluso, dashboard admin, free tier generoso (500MB DB).
-- **ORM**: **Prisma** — type-safety automatica, migrations robuste, coverage AI eccellente.
+- **ORM**: **Prisma** — type-safety automatica, migrations robuste, ecosistema maturo e documentazione ampia.
 - **Hosting / Cloud**: Vercel (frontend + serverless functions).
 - **Autenticazione**: **Supabase Auth** — email/password, OAuth integrato, gestione sessioni JWT.
 

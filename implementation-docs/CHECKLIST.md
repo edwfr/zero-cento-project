@@ -1,7 +1,8 @@
 # ✅ CHECKLIST SVILUPPO - ZeroCento Training Platform
 
-**Stato attuale:** ~80% completato (99h/129h - Sprint 1-5 + Sprint 7 completati)  
-**Effort rimanente stimato:** ~36h  
+**Posizionamento prodotto:** training management platform trainer-led  
+**Stato attuale:** 142/160 task completati (~89%)  
+**Task rimanenti:** 18 (Sprint 6: 7 task, Sprint 8: 7 task, Sprint 11: 4 task)  
 **Riferimenti:** [SYSTEM_REVIEW.md](../SYSTEM_REVIEW.md) · [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md) · [CHANGELOG.md](./CHANGELOG.md)
 
 ---

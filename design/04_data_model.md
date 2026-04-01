@@ -1,5 +1,7 @@
 # Data Model
 
+> Nota posizionamento (Apr 2026): ZeroCento e una training management platform trainer-led. Il modello dati riflette la collaborazione trainer/trainee e il monitoraggio operativo.
+
 ## Database & ORM
 - **Database**: **Supabase PostgreSQL** (connection pooling PgBouncer incluso)
 - **ORM**: **Prisma** (schema dichiarativo, type-safety, migrations)

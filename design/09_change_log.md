@@ -1,5 +1,7 @@
 # Change Log
 
+> Nota posizionamento (Apr 2026): ZeroCento e una training management platform trainer-led. In questo changelog, eventuali riferimenti ad "AI-first" o "coverage AI" riguardano solo produttivita e scelte di sviluppo.
+
 ## [2026-03-29] Implementazione Gestione Libreria Esercizi Admin
 
 ### Modifiche
@@ -333,17 +335,17 @@ design/09_change_log.md                — Documentazione modifiche
 - **File modificati**: `design/03_backend_api.md`, `design/04_data_model.md`, `prisma/schema.prisma`, `design-review/00_design_review_v2.md`
 - **Impatto**: Maggiore flessibilità per trainer, tracking motivazione completamento anticipato
 
-**4. Chiarimento feedback real-time visibili al trainer**
+**4. Chiarimento feedback disponibili subito al trainer**
 - **Problema**: Non chiaro se feedback erano "bozze" fino al submit o visibili immediatamente
 - **Soluzione**:
-  - Documentato esplicitamente che trainer vede feedback in **real-time** (appena trainee compila con `POST /api/feedback`)
+  - Documentato esplicitamente che trainer vede feedback appena disponibili dopo `POST /api/feedback`
   - `POST /api/programs/[id]/submit` serve per: validazione completezza, timestamp formale, trigger notifica trainer (non blocco visibilità)
-  - Dashboard trainer mostra feedback in tempo reale tramite `GET /api/programs/[id]/progress`
+  - Dashboard trainer mostra feedback aggiornati tramite `GET /api/programs/[id]/progress`
 - **File modificati**: `design/03_backend_api.md`, `design-review/00_design_review_v2.md`
 - **Impatto**: UX più naturale per contesto palestra, monitoraggio continuo allenamento trainee da parte del trainer
 
 ### Riepilogo File Modificati
-- `design/03_backend_api.md` — Rimozione duplicati Zod, chiarimento calculateEffectiveWeight, nuovo endpoint complete, feedback real-time
+- `design/03_backend_api.md` — Rimozione duplicati Zod, chiarimento calculateEffectiveWeight, nuovo endpoint complete, feedback disponibili subito
 - `design/04_data_model.md` — Aggiornamento schema TrainingProgram con completedAt/completionReason, note workflow completamento
 - `design/07_testing_strategy.md` — Test unit calculateEffectiveWeight con comportamento corretto catena
 - `prisma/schema.prisma` — Aggiunti campi completedAt e completionReason a TrainingProgram

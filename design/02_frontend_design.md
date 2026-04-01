@@ -1,5 +1,7 @@
 # Frontend Design
 
+> Nota posizionamento (Apr 2026): ZeroCento e una training management platform trainer-led. La UX supporta l'esecuzione e il monitoraggio del piano definito dal trainer.
+
 ## Pagine principali
 
 ### Condivise
@@ -337,9 +339,9 @@ La dashboard admin (`/admin/dashboard`) include card dedicati per le funzionalit
 
 ## Flusso UX Trainee — Dettaglio Implementazione
 
-### Dashboard e Navigazione Intelligente
+### Dashboard e Navigazione Guidata dal Piano Trainer
 
-La dashboard trainee (`/trainee/dashboard`) implementa un sistema di **redirect automatico** alla prossima sessione da completare:
+La dashboard trainee (`/trainee/dashboard`) mostra in evidenza la prossima sessione pianificata dal trainer e fornisce accesso rapido:
 
 ```typescript
 // app/trainee/dashboard/page.tsx
@@ -976,7 +978,7 @@ const WeightTypeSelector: React.FC<WeightTypeSelectorProps> = ({
 ## Gestione stato
 - **Locale**: `useState` / `useReducer` per form e UI state effimero.
 - **Globale**: **Context API** per sessione utente e dati condivisi semplici (React nativo, zero dipendenze).
-- **Server state**: **TanStack Query (React Query)** per fetching, caching, sincronizzazione con API; pattern consolidati e ottima coverage AI.
+- **Server state**: **TanStack Query (React Query)** per fetching, caching, sincronizzazione con API; pattern consolidati e documentazione ampia.
 - **React Server Components**: Utilizzati per rendering SSR di pagine statiche/semi-statiche dove possibile.
 
 ## UX states
@@ -1174,10 +1176,10 @@ export default function WorkoutPage() {
 - Service worker cache meno aggressiva (contenuti cambiano frequentemente)
 
 ## Design system
-- **Librerie UI**: **Tailwind CSS** (styling utility-first, coverage AI eccellente) + **Material UI (MUI)** (componenti accessibili pronti, vastissima documentazione nei training data AI).
-  - **Alternativa valutata**: shadcn/ui + Tailwind (più moderno, ma MUI ha maggiore coverage AI).
+- **Librerie UI**: **Tailwind CSS** (styling utility-first, ecosistema molto maturo) + **Material UI (MUI)** (componenti accessibili pronti, documentazione molto estesa).
+  - **Alternativa valutata**: shadcn/ui + Tailwind (più moderno, ma MUI ha maggiore stabilità e copertura componenti).
 - **Responsive**: mobile-first; breakpoint standard Tailwind (sm: 640px / md: 768px / lg: 1024px / xl: 1280px).
-- **Gestione form**: **React Hook Form** (performance ottimale, pattern semplici) + **Zod** (validation type-safe, schema riutilizzabili, altissima presenza training data AI).
+- **Gestione form**: **React Hook Form** (performance ottimale, pattern semplici) + **Zod** (validation type-safe, schema riutilizzabili).
 - **Convenzioni CSS**: utility-first con Tailwind; MUI styled con `sx` prop o Emotion quando necessario; nessun CSS globale custom salvo reset e variabili tema.
 
 ## Ottimizzazione UI per ruolo
@@ -1197,7 +1199,7 @@ export default function WorkoutPage() {
 
 ### Trainee → Mobile portrait-first
 - **Target primario**: Mobile portrait (360px - 428px)
-- **Rationale**: Uso principale in palestra durante allenamento (consultazione scheda, inserimento feedback immediato)
+- **Rationale**: Uso principale in palestra durante allenamento (consultazione scheda, inserimento feedback rapido per revisione trainer)
 - **Layout**: Single column, CTA prominenti, input touch-friendly (min 44px), bottom navigation
 - **UX mobile-centric**:
   - Workout cards a stack verticale con scroll
@@ -1241,10 +1243,10 @@ const useRoleLayout = () => {
 
 **Nota**: Entrambe le esperienze rimangono **responsive** (funzionali su tutti i device), ma l'ottimizzazione UX è polarizzata per il caso d'uso principale di ciascun ruolo.
 
-## Rationale scelte per sviluppo AI-first
-Stack selezionato per massimizzare efficacia generazione codice AI:
-- **Tailwind CSS**: sintassi concisa, pattern ripetitivi, coverage eccellente nei training data.
+## Rationale scelte tecnologiche per sviluppo rapido e manutenibile
+Stack selezionato per massimizzare produttivita del team, qualita e manutenibilita:
+- **Tailwind CSS**: sintassi concisa, pattern ripetitivi, ecosistema molto diffuso.
 - **Material UI**: libreria matura (2014+), vastissima documentazione pubblica, componenti accessibili WCAG, pattern consolidati.
 - **React Hook Form + Zod**: standard de facto industry per form validation, schemi dichiarativi, typing forte.
-- **TanStack Query**: pattern fetchint/caching consolidati, hooks semantici, documentazione dettagliata.
+- **TanStack Query**: pattern fetching/caching consolidati, hooks semantici, documentazione dettagliata.
 - **Context API**: React nativo, nessuna libreria esterna, pattern semplici e universali.

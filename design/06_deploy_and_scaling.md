@@ -1,5 +1,7 @@
 # Deploy & Scaling
 
+> Nota posizionamento (Apr 2026): ZeroCento e una training management platform trainer-led; le scelte di deploy/scaling sono orientate all'affidabilita dei workflow trainer/trainee.
+
 ## Ambienti (OD-33 ✅)
 
 ### Architettura 3-tier ottimizzata

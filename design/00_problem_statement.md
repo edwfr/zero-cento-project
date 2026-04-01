@@ -1,5 +1,7 @@
 # Problem Statement
 
+> Nota posizionamento (Apr 2026): ZeroCento e una training management platform trainer-led. La logica decisionale su programmazione e coaching resta in capo al trainer.
+
 ## Obiettivo
 Realizzare una piattaforma web per la gestione di servizi di training sportivo/fitness. La piattaforma permette ai trainer di costruire e assegnare programmi di allenamento personalizzati (schede) e ai trainee di seguirli e fornire feedback, eliminando la gestione manuale su fogli di calcolo o app generiche.
 

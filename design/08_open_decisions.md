@@ -1,5 +1,7 @@
 # Open Decisions
 
+> Nota posizionamento (Apr 2026): ZeroCento e una training management platform trainer-led. Eventuali riferimenti ad "AI" indicano solo criteri di produttivita nello sviluppo, non feature runtime per utenti finali.
+
 > Formato: `[ ]` = aperta · `[~]` = in discussione · `[x]` = chiusa (vedi 09_change_log.md)
 
 ---
@@ -29,16 +31,16 @@
 ## 02 — Frontend Design
 
 - [x] **OD-13** Pagine principali → definite per ruolo (admin/trainer/trainee) in 02_frontend_design.md.
-- [x] **OD-14** Libreria UI → **Tailwind CSS** (coverage AI ottima) + **Material UI (MUI)** (vastissima documentazione nei training data, componenti accessibili pronti). Alternativa: shadcn/ui se si preferisce modernità.
-- [x] **OD-15** State management → **TanStack Query** per server state (ottima coverage AI, pattern consolidati) + **Context API** per state globale semplice (React nativo, nessuna dipendenza).
-- [x] **OD-16** Gestione form → **React Hook Form** + **Zod** (standard de facto, altissima presenza training data AI, pattern validation consolidati).
+- [x] **OD-14** Libreria UI → **Tailwind CSS** (ecosistema molto maturo) + **Material UI (MUI)** (documentazione estesa, componenti accessibili pronti). Alternativa: shadcn/ui se si preferisce modernità.
+- [x] **OD-15** State management → **TanStack Query** per server state (pattern consolidati) + **Context API** per state globale semplice (React nativo, nessuna dipendenza).
+- [x] **OD-16** Gestione form → **React Hook Form** + **Zod** (standard de facto, pattern validation consolidati).
 - [x] **OD-17** SSR vs SPA → Next.js App Router usa SSR/RSC di default; client components per parti interattive.
 
 ---
 
 ## 03 — Backend & API
 
-- [x] **OD-18** Stile API → **REST** con endpoint HTTP standard. Coverage AI eccellente, pattern consolidati, semantics chiare. Server Actions opzionali per form.
+- [x] **OD-18** Stile API → **REST** con endpoint HTTP standard. Pattern consolidati e semantics chiare. Server Actions opzionali per form.
 - [x] **OD-19** Validazione input → **Zod** confermato. Schema riutilizzabili, type-safety, integrazione React Hook Form.
 - [x] **OD-20** Formato standard errori API → definito in 03_backend_api.md (`{data}` per success, `{error: {code, message, details?}}` per errori).
 - [x] **OD-21** Rate limiting / throttling? → **Middleware custom Next.js** con in-memory store per MVP. Limiti: 5 tentativi/15min su auth, 30 req/min su feedback, 100 req/min per utente autenticato. Upstash Redis opzionale per production scaling.
@@ -49,8 +51,8 @@
 ## 04 — Data Model
 
 - [x] **OD-23** Entità principali → User, TrainerTrainee, Exercise, TrainingProgram, Week, Workout, WorkoutExercise, ExerciseFeedback, PersonalRecord.
-- [x] **OD-24** DB engine → **Supabase PostgreSQL**. Connection pooling PgBouncer incluso, dashboard admin ricca, free tier 500MB, coverage AI eccellente.
-- [x] **OD-25** ORM → **Prisma**. Type-safety automatica, schema dichiarativo, Prisma Studio, migrations robuste, coverage AI eccellentissima.
+- [x] **OD-24** DB engine → **Supabase PostgreSQL**. Connection pooling PgBouncer incluso, dashboard admin ricca, free tier 500MB, ecosistema maturo.
+- [x] **OD-25** ORM → **Prisma**. Type-safety automatica, schema dichiarativo, Prisma Studio, migrations robuste, ecosistema consolidato.
 - [x] **OD-26** Strategia migrazioni → **Prisma Migrate** con migration files. Trackable (Git), rollback-capable, environment-safe (DIRECT_URL per migrations).
 - [x] **OD-27** Crescita dati → ~14.400 WorkoutExercise + ~14.400 Feedback nel primo ciclo (50 trainee × 1 scheda × 12 settimane × 4 allenamenti × 6 esercizi). Dimensioni molto contenute, nessuna ottimizzazione sharding necessaria.
 
@@ -59,7 +61,7 @@
 ## 05 — Security & Auth
 
 - [x] **OD-28** Metodo autenticazione → **Email+password** per MVP (Supabase Auth). OAuth (Google/GitHub) e Magic Link opzionali post-MVP.
-- [x] **OD-29** Provider auth → **Supabase Auth**. Integrazione nativa Supabase, JWT session, coverage AI ottima, zero setup auth infra. Collegamento auth.users ↔ public.User.
+- [x] **OD-29** Provider auth → **Supabase Auth**. Integrazione nativa Supabase, JWT session, zero setup auth infra. Collegamento auth.users ↔ public.User.
 - [x] **OD-30** Ruoli → `admin` · `trainer` · `trainee`. Matrice permessi in 05_security_auth.md.
 - [x] **OD-31** Gestione segreti → **Vercel Environment Variables** confermate (DATABASE_URL, SUPABASE_SERVICE_ROLE_KEY, etc). No vault necessario per MVP.
 - [x] **OD-32** Compliance GDPR → Dettagliato in 05_security_auth.md. Requisiti MVP: Cookie consent banner, Privacy Policy + Terms, Delete Account feature, Supabase region EU, data retention policy. Checklist implementativa completa.
@@ -79,7 +81,7 @@
 
 ## 07 — Testing Strategy
 
-- [x] **OD-38** Framework unit test → **Vitest** confermato (best-in-class per Next.js, compatibilità Vite, coverage integrato, vastissima presenza training data AI). Unit test su tutta la business logic.
+- [x] **OD-38** Framework unit test → **Vitest** confermato (best-in-class per Next.js, compatibilità Vite, coverage integrato). Unit test su tutta la business logic.
 - [x] **OD-39** Framework E2E → **Playwright** confermato in scope MVP. Flussi critici: creazione utente, creazione/pubblicazione scheda, invio feedback. E2E bloccante per deploy prod.
 - [x] **OD-40** Soglia minima coverage → **80% minimo** su business logic (calcolo volume, RPE, massimali, validazioni Zod, helper functions). Esclusi: config files, componenti puramente presentazionali, boilerplate API Routes.
 - [x] **OD-41** Test E2E in CI → **Sì, bloccanti per deploy prod**. GitHub Actions esegue E2E su staging prima di permettere merge su main. Se E2E fail, deploy prod bloccato.

@@ -1,15 +1,30 @@
 # 🎉 ZeroCento Training Platform - Implementation Summary
 
-## ✅ Implementazione Completata (~58%)
+## ✅ Snapshot Corrente (Canonico)
 
-**Ultimo aggiornamento:** 30 Marzo 2026  
-**Stato:** Fondamenta complete + maggior parte API + Frontend funzionale
+**Ultimo aggiornamento:** 1 Aprile 2026  
+**Posizionamento prodotto:** training management platform trainer-led
 
-La piattaforma ZeroCento Training ha raggiunto un livello di implementazione significativo con tutte le fondamenta complete, 29 endpoint API implementati su 34 previsti, e 21 pagine frontend funzionali su 32 previste.
+### Stato operativo sintetico
+
+- **Task completati:** 142/160 (~89%)
+- **Task aperti:** 18
+- **Sprint completati:** 1, 2, 3, 4, 5, 7, 9, 10
+- **Sprint aperti:** 6 (CI/CD), 8 (PWA), 11 (i18n error key rollout)
+
+### Fonte di verità
+
+Per stato task e priorità usare:
+- [CHECKLIST.md](./CHECKLIST.md)
+- [NEXT_ACTIONS.md](./NEXT_ACTIONS.md)
+- [CHANGELOG.md](./CHANGELOG.md)
 
 ---
 
-## 📦 Cosa È Stato Implementato
+## 📚 Appendice Storica (Non Canonica)
+
+Le sezioni seguenti descrivono snapshot precedenti e note di implementazione utili come contesto tecnico.
+Non devono essere usate come baseline di avanzamento corrente.
 
 ### 1. Configurazione Progetto Completa (100%)
 - ✅ **Next.js 14** con App Router
@@ -369,7 +384,7 @@ Vedi [SYSTEM_REVIEW.md](../SYSTEM_REVIEW.md#7-next-steps---sviluppo) per roadmap
 
 ## 🎉 Conclusioni
 
-Il progetto **ZeroCento Training Platform** ha raggiunto un livello di implementazione significativo (~58%) con:
+Il progetto **ZeroCento Training Platform** ha raggiunto un livello di implementazione significativo (snapshot storico marzo 2026) con:
 - ✅ Fondamenta solide e production-ready
 - ✅ Maggior parte API implementate (85%)
 - ✅ Frontend funzionante per flussi base
@@ -377,7 +392,7 @@ Il progetto **ZeroCento Training Platform** ha raggiunto un livello di implement
 - ⏳ Testing da potenziare (target 80%)
 - ⏳ Alcune pagine dettaglio da completare
 
-**Effort rimanente stimato**: ~120h per raggiungere MVP production-ready al 100% con testing completo.
+**Effort rimanente stimato (storico)**: ~120h per raggiungere MVP production-ready al 100% con testing completo.
 
 **Riferimenti documentazione:**
 - Setup iniziale: [QUICK_START.md](./QUICK_START.md)
@@ -390,7 +405,7 @@ Il progetto **ZeroCento Training Platform** ha raggiunto un livello di implement
 
 ## 🎯 Metriche Attuali
 
-- **Progresso complessivo**: ~58% completato
+- **Progresso complessivo (storico)**: ~58% completato
 - **File creati**: 100+ (code + tests + docs)
 - **Righe di codice**: ~8000+
 - **API endpoints**: 29 / 34 (85%)
@@ -449,7 +464,7 @@ Il progetto **ZeroCento Training Platform** ha raggiunto un livello di implement
 3. Service worker Serwist
 4. Cache offline workout attivo
 
-**Effort totale rimanente stimato: ~120h**
+**Effort totale rimanente stimato (storico): ~120h**
 
 ---
 

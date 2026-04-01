@@ -1,5 +1,9 @@
 # ZeroCento Training Platform - Implementation Status
 
+> Nota: questo file contiene anche snapshot storici di avanzamento.
+> Per stato operativo corrente usa `implementation-docs/CHECKLIST.md` e `implementation-docs/NEXT_ACTIONS.md`.
+> Posizionamento prodotto ufficiale: training management platform trainer-led.
+
 ## 📊 Project Overview
 
 ZeroCento è una piattaforma web per la gestione di servizi di training sportivo/fitness con tre ruoli principali:
@@ -188,7 +192,7 @@ Per task immediati e prioritizzati: [implementation-docs/NEXT_ACTIONS.md](implem
 
 ## 📊 Stato Complessivo
 
-**Completamento:** ~58%
+**Completamento (snapshot storico):** ~58%
 
 | Area                    | % Completamento | Note                                          |
 | ----------------------- | --------------- | --------------------------------------------- |

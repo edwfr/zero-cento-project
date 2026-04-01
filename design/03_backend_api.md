@@ -1,9 +1,11 @@
 # Backend & API
 
+> Nota posizionamento (Apr 2026): ZeroCento e una training management platform trainer-led. Le API supportano operativita e monitoraggio trainer/trainee, non un coaching AI runtime autonomo.
+
 ## Pattern backend
 - **Runtime**: Next.js API Routes (App Router — `app/api/`) su Vercel Serverless Functions.
 - **Stile API**: **REST** con endpoint HTTP standard + Server Actions opzionali per form submissions.
-  - Coverage AI eccellente (pattern consolidati, vastissima presenza training data)
+  - Pattern consolidati, ben documentati e facili da manutenere
   - Type-safety via TypeScript + Zod validation
   - HTTP semantics chiare (GET/POST/PUT/DELETE)
 - Nessun servizio backend separato: Next.js è il BFF.
@@ -230,8 +232,8 @@
 | `POST` | `/api/programs/[id]/submit` | Invio esplicito feedback settimanali al trainer |
 
 **Note workflow feedback**:
-- `POST /api/feedback`: Il trainee registra feedback per un singolo `WorkoutExercise` (RPE, serie eseguite, note). Il feedback viene salvato e **immediatamente visibile al trainer** (real-time).
-- **Visibilità real-time**: Il trainer può visualizzare i feedback appena compilati dal trainee tramite `GET /api/programs/[id]/progress` senza attendere submit esplicito. Questo permette monitoraggio continuo dell'allenamento.
+- `POST /api/feedback`: Il trainee registra feedback per un singolo `WorkoutExercise` (RPE, serie eseguite, note). Il feedback viene salvato e reso disponibile al trainer nella vista di monitoraggio.
+- **Visibilità operativa**: Il trainer può visualizzare i feedback appena compilati dal trainee tramite `GET /api/programs/[id]/progress` senza attendere submit esplicito. Questo abilita monitoraggio continuo del piano allenante.
 - Feedback richiesti (`Week.feedbackRequested=true`):
   - Il trainee deve compilare feedback per TUTTI gli esercizi della settimana richiesta
   - Sistema mostra badge "🔴 Feedback Obbligatorio" nella UI trainee
@@ -670,7 +672,7 @@ export async function apiCall(endpoint: string, options?: RequestInit) {
 
 **Obiettivo**: Tracciare eventi applicativi, diagnosticare errori, monitorare performance.
 
-**Libreria**: **Pino** — logger Node.js ad altissime performance, output JSON strutturato, vastissima coverage AI.
+**Libreria**: **Pino** — logger Node.js ad altissime performance, output JSON strutturato, ecosistema maturo.
 
 **Livelli abilitati per ambiente**:
 

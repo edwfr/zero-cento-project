@@ -1,5 +1,7 @@
 # Testing Strategy
 
+> Nota posizionamento (Apr 2026): ZeroCento e una training management platform trainer-led; la strategia test valida stabilita e affidabilita dei flussi operativi.
+
 ## Tipi di test
 
 ### Unit Testing (OD-38 ✅)
@@ -8,7 +10,7 @@
 
 **Rationale scelta**:
 - ✅ **Best-in-class per Next.js/React**: Setup zero-config con Vite, hot module reload ultra-rapido
-- ✅ **Coverage AI eccellente**: Vastissima presenza training data (crescita esplosiva 2023-2026)
+- ✅ **Ecosistema maturo**: ampia documentazione e community attiva
 - ✅ **API Jest-compatible**: Stessa sintassi `describe/it/expect`, migrazione facile
 - ✅ **Performance**: 10-20x più veloce di Jest su test suite grandi (parallel execution nativo)
 - ✅ **TypeScript first-class**: No config babel, supporto nativo decorators/enums
@@ -424,7 +426,7 @@ describe('workoutExerciseSchema', () => {
 
 ### E2E Testing (OD-39 ✅, OD-41 ✅)
 
-**Framework**: **Playwright** — E2E moderno multi-browser, auto-wait intelligente, debugging eccellente.
+**Framework**: **Playwright** — E2E moderno multi-browser, auto-wait robusto, debugging eccellente.
 
 **In scope per MVP**: ✅ **Sì, flussi critici obbligatori**.
 

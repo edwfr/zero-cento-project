@@ -1,5 +1,8 @@
 # Quick Start Guide - ZeroCento Training Platform
 
+> Posizionamento prodotto: ZeroCento e una training management platform trainer-led.
+> Per stato implementazione e backlog corrente usa sempre `CHECKLIST.md` e `NEXT_ACTIONS.md`.
+
 ## 📦 Setup Iniziale (5 minuti)
 
 ### 1. Verifica Prerequisiti
@@ -149,12 +152,9 @@ curl http://localhost:3000/api/users \
 ```
 
 ### Step 4: Continua Implementazione
-Segui l'ordine in `README.md` → **TODO** section:
-1. Completa pagine auth restanti
-2. API exercises (priorità alta)
-3. API programs (priorità alta)
-4. Frontend Trainer dashboard
-5. Frontend Trainee mobile
+Segui il backlog corrente in:
+1. `implementation-docs/CHECKLIST.md` (stato task canonico)
+2. `implementation-docs/NEXT_ACTIONS.md` (priorita operative residue)
 
 ## 🐛 Troubleshooting
 
@@ -203,11 +203,9 @@ Se vedi errore `RATE_LIMIT_EXCEEDED`, commenta il rate limiting nel middleware p
 ## 🎉 Hai Finito!
 
 Ora hai un progetto funzionante con:
-- ✅ Auth completa (Supabase)
-- ✅ Database con schema completo (Prisma)
-- ✅ API users funzionanti
-- ✅ Health check endpoint
-- ✅ Pagina login
-- ✅ Seed data per testing
+- ✅ Auth Supabase configurata
+- ✅ Database Prisma migrato e seedato
+- ✅ Health check disponibile
+- ✅ Login operativo per i ruoli previsti
 
-Continua lo sviluppo seguendo il piano in `README.md`!
+Continua lo sviluppo seguendo `CHECKLIST.md` e `NEXT_ACTIONS.md`.

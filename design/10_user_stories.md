@@ -2,6 +2,8 @@
 
 Questo documento contiene le user stories organizzate per tipo di utente/persona: Admin, Trainer e Trainee.
 
+> Nota posizionamento (Apr 2026): ZeroCento e una training management platform trainer-led. Le user stories descrivono supporto operativo al piano definito dal trainer.
+
 ---
 
 ## 🔑 Admin
@@ -138,7 +140,7 @@ Questo documento contiene le user stories organizzate per tipo di utente/persona
 
 ### Navigazione e UX Allenamento
 
-**US-U06a**: Come trainee, quando accedo alla dashboard e ho una scheda attiva, voglio essere automaticamente reindirizzato al primo allenamento non completato (o alla prima settimana se tutto è completo), per riprendere velocemente l'allenamento senza dover cercare manualmente dove ero rimasto.
+**US-U06a**: Come trainee, quando accedo alla dashboard e ho una scheda attiva, voglio vedere in evidenza il primo allenamento non completato (o la prima settimana se tutto è completo), per riprendere velocemente l'allenamento senza dover cercare manualmente dove ero rimasto.
 
 **US-U06b**: Come trainee, quando visualizzo un allenamento, voglio vedere una card per ogni esercizio con tutti i dettagli (video YouTube, serie/reps, RPE target, peso calcolato, recupero), per avere tutte le informazioni necessarie durante l'esecuzione.
 
@@ -186,6 +188,6 @@ Questo documento contiene le user stories organizzate per tipo di utente/persona
 | ------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Admin   | US-A01-A14                                           | Gestione utenti (CRUD), attivazione/disattivazione, associazioni trainer-trainee, **gestione operativa globale schede, riassegnazione trainee, report system-wide** |
 | Trainer | US-T01-T28                                           | Libreria esercizi, gruppi muscolari, schemi motori, gestione trainee, creazione schede, monitoraggio                                                                |
-| Trainee | US-U01-U13 + **US-U06a-U06e, US-U07a, US-U09a-U09b** | Visualizzazione schede, **navigazione intelligente, UX card-based**, feedback esercizi con autosave, visualizzazione massimali, sessione estesa                     |
+| Trainee | US-U01-U13 + **US-U06a-U06e, US-U07a, US-U09a-U09b** | Visualizzazione schede, **navigazione guidata dal piano trainer, UX card-based**, feedback esercizi con autosave, visualizzazione massimali, sessione estesa        |
 
 **Totale User Stories**: 56 (include US-T20a: riferimento carico riga precedente + US-A09-A14: gestione operativa globale admin + **US-U06a-U06e, US-U07a, US-U09a-U09b: flusso UX trainee**)
