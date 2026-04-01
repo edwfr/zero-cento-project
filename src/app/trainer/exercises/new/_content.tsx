@@ -32,11 +32,10 @@ export default function NewExerciseContent() {
 
     // Form state
     const [name, setName] = useState('')
-    const [description, setDescription] = useState('')
+    const [variants, setVariants] = useState<string[]>([])
     const [youtubeUrl, setYoutubeUrl] = useState('')
     const [type, setType] = useState<'fundamental' | 'accessory'>('accessory')
     const [movementPatternId, setMovementPatternId] = useState('')
-    const [notes, setNotes] = useState('')
     const [selectedMuscleGroups, setSelectedMuscleGroups] = useState<MuscleGroupInput[]>([])
 
     useEffect(() => {
@@ -62,6 +61,14 @@ export default function NewExerciseContent() {
         } catch (err: unknown) {
             setError(t('exercises.loadingDataError'))
         }
+    }
+
+    const addVariant = () => setVariants([...variants, ''])
+    const removeVariant = (index: number) => setVariants(variants.filter((_, i) => i !== index))
+    const updateVariant = (index: number, value: string) => {
+        const updated = [...variants]
+        updated[index] = value
+        setVariants(updated)
     }
 
     const addMuscleGroup = () => {
@@ -100,11 +107,6 @@ export default function NewExerciseContent() {
             return
         }
 
-        if (selectedMuscleGroups.length === 0) {
-            setError(t('exercises.addMuscleGroup'))
-            return
-        }
-
         if (totalCoefficient > 1.0) {
             setError(t('exercises.coefficientError'))
             return
@@ -118,12 +120,11 @@ export default function NewExerciseContent() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name,
-                    description: description || undefined,
                     youtubeUrl: youtubeUrl || undefined,
                     type,
                     movementPatternId,
                     muscleGroups: selectedMuscleGroups,
-                    notes: notes ? [notes] : [],
+                    notes: variants.filter((v) => v.trim()),
                 }),
             })
 
@@ -180,18 +181,47 @@ export default function NewExerciseContent() {
                     />
                 </div>
 
+                {/* Variants */}
                 <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        {t('exercises.descriptionLabel')}
-                    </label>
-                    <textarea
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        disabled={loading}
-                        placeholder={t('exercises.descriptionPlaceholder')}
-                        rows={3}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    />
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="block text-sm font-semibold text-gray-700">
+                            {t('exercises.notesVariantsLabel')}
+                        </label>
+                        <button
+                            type="button"
+                            onClick={addVariant}
+                            disabled={loading}
+                            className="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        >
+                            {t('exercises.addVariant')}
+                        </button>
+                    </div>
+                    {variants.length === 0 ? (
+                        <p className="text-gray-500 text-sm italic">{t('exercises.noVariants')}</p>
+                    ) : (
+                        <div className="space-y-2">
+                            {variants.map((variant, index) => (
+                                <div key={index} className="flex items-center space-x-2">
+                                    <input
+                                        type="text"
+                                        value={variant}
+                                        onChange={(e) => updateVariant(index, e.target.value)}
+                                        disabled={loading}
+                                        placeholder={t('exercises.variantPlaceholder')}
+                                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => removeVariant(index)}
+                                        disabled={loading}
+                                        className="text-red-600 hover:text-red-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 <div>
@@ -261,7 +291,7 @@ export default function NewExerciseContent() {
                 <div>
                     <div className="flex items-center justify-between mb-2">
                         <label className="block text-sm font-semibold text-gray-700">
-                            {t('exercises.muscleGroupsTotal', { total: totalCoefficient.toFixed(2) })}
+                            {t('exercises.muscleGroupsLabel', { total: totalCoefficient.toFixed(2) })}
                         </label>
                         <button
                             type="button"
@@ -323,21 +353,6 @@ export default function NewExerciseContent() {
                             ))}
                         </div>
                     )}
-                </div>
-
-                {/* Notes */}
-                <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        {t('exercises.notesVariantsLabel')}
-                    </label>
-                    <textarea
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        disabled={loading}
-                        placeholder={t('exercises.notesVariantsPlaceholder')}
-                        rows={2}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    />
                 </div>
 
                 {/* Actions */}

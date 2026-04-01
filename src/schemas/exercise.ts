@@ -28,7 +28,7 @@ export const exerciseSchema = z.object({
     movementPatternId: z.string().uuid('ID schema motorio non valido'),
     muscleGroups: z
         .array(muscleGroupAssignmentSchema)
-        .min(1, 'Almeno un gruppo muscolare richiesto')
+        .min(0)
         .max(5, 'Massimo 5 gruppi muscolari'),
     notes: z.array(z.string().max(200)).optional(),
 })

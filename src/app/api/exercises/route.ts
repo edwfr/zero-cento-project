@@ -164,25 +164,27 @@ export async function POST(request: NextRequest) {
         }
 
         // Verify all muscle groups exist
-        const muscleGroupIds = muscleGroups.map((mg) => mg.muscleGroupId)
-        const existingMuscleGroups = await prisma.muscleGroup.findMany({
-            where: {
-                id: { in: muscleGroupIds },
-            },
-        })
+        if (muscleGroups.length > 0) {
+            const muscleGroupIds = muscleGroups.map((mg) => mg.muscleGroupId)
+            const existingMuscleGroups = await prisma.muscleGroup.findMany({
+                where: {
+                    id: { in: muscleGroupIds },
+                },
+            })
 
-        if (existingMuscleGroups.length !== muscleGroupIds.length) {
-            return apiError('NOT_FOUND', 'One or more muscle groups not found', 404)
-        }
+            if (existingMuscleGroups.length !== muscleGroupIds.length) {
+                return apiError('NOT_FOUND', 'One or more muscle groups not found', 404)
+            }
 
-        // Validate coefficients sum (must be between 0.1 and 3.0)
-        const totalCoefficient = muscleGroups.reduce((sum, mg) => sum + mg.coefficient, 0)
-        if (totalCoefficient < 0.1 || totalCoefficient > 3.0) {
-            return apiError(
-                'VALIDATION_ERROR',
-                `Total coefficient must be between 0.1 and 3.0 (got ${totalCoefficient.toFixed(2)})`,
-                400
-            )
+            // Validate coefficients sum (must be between 0.1 and 3.0)
+            const totalCoefficient = muscleGroups.reduce((sum, mg) => sum + mg.coefficient, 0)
+            if (totalCoefficient < 0.1 || totalCoefficient > 3.0) {
+                return apiError(
+                    'VALIDATION_ERROR',
+                    `Total coefficient must be between 0.1 and 3.0 (got ${totalCoefficient.toFixed(2)})`,
+                    400
+                )
+            }
         }
 
         // Create exercise with muscle groups
