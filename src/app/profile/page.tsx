@@ -1,7 +1,7 @@
 import { getSession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
-import ProfileForm from '@/components/ProfileForm'
+import ChangePasswordSection from '@/components/ChangePasswordSection'
 
 export default async function ProfilePage() {
     const session = await getSession()
@@ -20,7 +20,7 @@ export default async function ProfilePage() {
 
                     <div className="space-y-6">
                         {/* User Info Display */}
-                        <div className="border-b border-gray-200 pb-6">
+                        <div>
                             <h2 className="text-lg font-semibold text-gray-900 mb-4">
                                 Informazioni Account
                             </h2>
@@ -57,8 +57,13 @@ export default async function ProfilePage() {
                             </dl>
                         </div>
 
-                        {/* Edit Form */}
-                        <ProfileForm user={session.user} />
+                        {/* Security Section */}
+                        <div className="border-t border-gray-200 pt-6">
+                            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                                Sicurezza
+                            </h2>
+                            <ChangePasswordSection />
+                        </div>
                     </div>
                 </div>
             </div>

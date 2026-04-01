@@ -13,7 +13,7 @@ const redis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_RE
     : null
 
 // Public routes that don't require authentication
-const PUBLIC_ROUTES = ['/login', '/forgot-password', '/reset-password']
+const PUBLIC_ROUTES = ['/login', '/forgot-password', '/reset-password', '/force-change-password']
 const API_PUBLIC_ROUTES = ['/api/health']
 
 /**
@@ -188,6 +188,16 @@ export async function middleware(request: NextRequest) {
             },
             { status: 401 }
         )
+    }
+
+    // Check if user must change password (except for force-change-password page and API)
+    if (session && !pathname.startsWith('/force-change-password') && !pathname.startsWith('/api')) {
+        const mustChangePassword = session.user.user_metadata?.mustChangePassword
+        if (mustChangePassword) {
+            const url = request.nextUrl.clone()
+            url.pathname = '/force-change-password'
+            return NextResponse.redirect(url)
+        }
     }
 
     return response

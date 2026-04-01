@@ -60,6 +60,15 @@ export default function LoginPage() {
             if (signInError) throw signInError
 
             if (data.session) {
+                // Check if user must change password
+                const mustChangePassword = data.user.user_metadata?.mustChangePassword
+
+                if (mustChangePassword) {
+                    // Redirect to force change password page
+                    router.push('/force-change-password')
+                    return
+                }
+
                 // Get user role from database via API
                 const response = await fetch('/api/auth/me', {
                     credentials: 'include'

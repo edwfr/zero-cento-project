@@ -19,7 +19,6 @@ interface ProfileFormProps {
 export default function ProfileForm({ user }: ProfileFormProps) {
     const router = useRouter()
     const { t } = useTranslation('common')
-    const [isEditing, setIsEditing] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const [success, setSuccess] = useState('')
@@ -50,7 +49,6 @@ export default function ProfileForm({ user }: ProfileFormProps) {
             }
 
             setSuccess('Profilo aggiornato con successo')
-            setIsEditing(false)
 
             // Refresh page to update session data
             setTimeout(() => {
@@ -68,22 +66,8 @@ export default function ProfileForm({ user }: ProfileFormProps) {
             firstName: user.firstName,
             lastName: user.lastName,
         })
-        setIsEditing(false)
         setError('')
         setSuccess('')
-    }
-
-    if (!isEditing) {
-        return (
-            <div>
-                <button
-                    onClick={() => setIsEditing(true)}
-                    className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 transition-colors"
-                >
-                    Modifica Profilo
-                </button>
-            </div>
-        )
     }
 
     return (
