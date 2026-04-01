@@ -69,10 +69,15 @@ if (!i18n.isInitialized) {
         .use(initReactI18next)
         .init({
             resources,
+            lng: defaultLocale,
             fallbackLng: defaultLocale,
             supportedLngs: locales,
             defaultNS: 'common',
             ns: ['common', 'auth', 'errors', 'navigation', 'trainer', 'trainee', 'admin', 'profile', 'components', 'validation'],
+            detection: {
+                order: ['localStorage', 'cookie', 'navigator'],
+                caches: ['localStorage', 'cookie'],
+            },
         })
 }
 

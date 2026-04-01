@@ -8,6 +8,7 @@ import ConfirmationModal from '@/components/ConfirmationModal'
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import '@/lib/i18n/client'
 import { getApiErrorMessage } from '@/lib/api-error'
 
 interface Exercise {
