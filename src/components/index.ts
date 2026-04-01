@@ -47,6 +47,9 @@ export { default as ProgramsTable } from './ProgramsTable'
 export { default as DashboardLayout } from './DashboardLayout'
 export { default as ProfileForm } from './ProfileForm'
 
+// Profile Components
+export { default as MovementPatternColorsSection } from './MovementPatternColorsSection'
+
 // User Management Components (existing)
 export { default as UsersTable } from './UsersTable'
 export { default as UserCreateModal } from './UserCreateModal'

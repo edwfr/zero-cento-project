@@ -2,6 +2,7 @@ import { getSession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import ChangePasswordSection from '@/components/ChangePasswordSection'
+import MovementPatternColorsSection from '@/components/MovementPatternColorsSection'
 
 export default async function ProfilePage() {
     const session = await getSession()
@@ -64,6 +65,16 @@ export default async function ProfilePage() {
                             </h2>
                             <ChangePasswordSection />
                         </div>
+
+                        {/* Movement Pattern Colors - Only for Trainers */}
+                        {session.user.role === 'trainer' && (
+                            <div className="border-t border-gray-200 pt-6">
+                                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                                    Colori Movement Pattern
+                                </h2>
+                                <MovementPatternColorsSection />
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
