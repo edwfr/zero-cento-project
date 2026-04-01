@@ -7,7 +7,7 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import Link from 'next/link'
 import { SkeletonDetail } from '@/components'
 import { formatDate } from '@/lib/date-format'
-import { Plus, Eye } from 'lucide-react'
+import { Plus, Eye, ArrowLeft } from 'lucide-react'
 
 interface Trainee {
     id: string
@@ -136,8 +136,9 @@ export default function TraineeDetailContent() {
                 <div className="mb-8">
                     <Link
                         href="/trainer/trainees"
-                        className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
+                        className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-flex items-center gap-1"
                     >
+                        <ArrowLeft className="w-4 h-4" />
                         {t('athletes.backToAthletes')}
                     </Link>
                     <div className="flex items-center justify-between">
