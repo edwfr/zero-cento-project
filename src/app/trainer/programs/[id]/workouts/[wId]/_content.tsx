@@ -13,7 +13,7 @@ import RepsInput from '@/components/RepsInput'
 import { WeightType, RestTime } from '@prisma/client'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { FileText, Pencil, Trash2, Dumbbell } from 'lucide-react'
+import { FileText, Pencil, Trash2, Dumbbell, Lock, Unlock } from 'lucide-react'
 
 interface Exercise {
     id: string
@@ -81,6 +81,7 @@ export default function WorkoutDetailContent() {
     const [weight, setWeight] = useState<number | undefined>(undefined)
     const [isWarmup, setIsWarmup] = useState(false)
     const [notes, setNotes] = useState('')
+    const [variantMode, setVariantMode] = useState<'select' | 'freetext'>('select')
     const { showToast } = useToast()
     const [confirmModal, setConfirmModal] = useState<{
         title: string
@@ -143,6 +144,7 @@ export default function WorkoutDetailContent() {
         setWeight(undefined)
         setIsWarmup(false)
         setNotes('')
+        setVariantMode('select')
         setEditingExerciseId(null)
     }
 
@@ -150,6 +152,13 @@ export default function WorkoutDetailContent() {
         setEditingExerciseId(we.id)
         setSelectedExerciseId(we.exercise.id)
         setVariant(we.variant ?? '')
+
+        // Determine if variant is from predefined options or free text
+        const exercise = exercises.find(ex => ex.id === we.exercise.id)
+        const hasVariant = (we.variant ?? '').trim() !== ''
+        const isVariantInOptions = hasVariant && (exercise?.notes?.includes(we.variant ?? '') ?? false)
+        setVariantMode(hasVariant && !isVariantInOptions ? 'freetext' : 'select')
+
         setSets(we.sets)
         setReps(we.reps)
         setRestTime(we.restTime)
@@ -539,28 +548,63 @@ export default function WorkoutDetailContent() {
 
                             {/* Variant */}
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    {t('workoutDetail.variantLabel') || 'Variante'}
-                                </label>
-                                <input
-                                    type="text"
-                                    value={variant}
-                                    onChange={(e) => setVariant(e.target.value)}
-                                    disabled={saving}
-                                    list="variant-options"
-                                    placeholder="es. bilanciere, manubri, presa stretta..."
-                                    maxLength={100}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
-                                />
-                                {selectedExerciseId && exercises.find(ex => ex.id === selectedExerciseId)?.notes && exercises.find(ex => ex.id === selectedExerciseId)!.notes!.length > 0 && (
-                                    <datalist id="variant-options">
-                                        {exercises.find(ex => ex.id === selectedExerciseId)!.notes!.map((note, index) => (
-                                            <option key={index} value={note} />
-                                        ))}
-                                    </datalist>
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="block text-sm font-semibold text-gray-700">
+                                        {t('workoutDetail.variantLabel') || 'Variante'}
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setVariantMode(variantMode === 'select' ? 'freetext' : 'select')
+                                        }}
+                                        disabled={saving}
+                                        className="flex items-center space-x-1 px-3 py-1 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+                                        title={variantMode === 'select' ? 'Passa a testo libero' : 'Passa a selezione'}
+                                    >
+                                        {variantMode === 'select' ? (
+                                            <>
+                                                <Lock className="w-3 h-3" />
+                                                <span>Testo libero</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Unlock className="w-3 h-3" />
+                                                <span>Selezione</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+
+                                {variantMode === 'select' ? (
+                                    <AutocompleteSearch
+                                        options={
+                                            selectedExerciseId && exercises.find(ex => ex.id === selectedExerciseId)?.notes
+                                                ? exercises.find(ex => ex.id === selectedExerciseId)!.notes!.map((note) => ({
+                                                    id: note,
+                                                    label: note,
+                                                }))
+                                                : []
+                                        }
+                                        value={variant}
+                                        onSelect={(option) => setVariant(option?.id || '')}
+                                        placeholder="es. bilanciere, manubri, presa stretta..."
+                                        disabled={saving || !selectedExerciseId}
+                                    />
+                                ) : (
+                                    <input
+                                        type="text"
+                                        value={variant}
+                                        onChange={(e) => setVariant(e.target.value)}
+                                        disabled={saving}
+                                        placeholder="es. bilanciere, manubri, presa stretta..."
+                                        maxLength={100}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                                    />
                                 )}
+
                                 <p className="text-xs text-gray-500 mt-1">
-                                    {t('workoutDetail.variantHelp')}
+                                    {variantMode === 'select' && 'Seleziona una variante predefinita o passa a testo libero'}
+                                    {variantMode === 'freetext' && t('workoutDetail.variantHelp')}
                                 </p>
                             </div>
 
@@ -677,25 +721,6 @@ export default function WorkoutDetailContent() {
                                 <label htmlFor="isWarmup" className="text-sm font-semibold text-gray-700">
                                     {t('workoutDetail.warmupLabel')}
                                 </label>
-                            </div>
-
-                            {/* Notes */}
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    {t('workoutDetail.notesLabel')}
-                                </label>
-                                <textarea
-                                    value={notes}
-                                    onChange={(e) => setNotes(e.target.value)}
-                                    disabled={saving}
-                                    placeholder={t('workoutDetail.notesPlaceholder')}
-                                    rows={3}
-                                    maxLength={500}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
-                                />
-                                <p className="text-xs text-gray-500 mt-1">
-                                    {t('workoutDetail.charCount', { count: notes.length })}
-                                </p>
                             </div>
 
                             {/* Actions */}
