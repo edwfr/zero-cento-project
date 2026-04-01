@@ -49,8 +49,23 @@ interface Program {
     title: string
     status: string
     trainee: {
+        id: string
         firstName: string
         lastName: string
+    }
+}
+
+interface PersonalRecord {
+    id: string
+    exerciseId: string
+    reps: number
+    weight: number
+    recordDate: string
+    notes: string | null
+    exercise: {
+        id: string
+        name: string
+        type: 'fundamental' | 'accessory'
     }
 }
 
@@ -66,6 +81,7 @@ export default function WorkoutDetailContent() {
     const [program, setProgram] = useState<Program | null>(null)
     const [workout, setWorkout] = useState<Workout | null>(null)
     const [exercises, setExercises] = useState<Exercise[]>([])
+    const [personalRecords, setPersonalRecords] = useState<PersonalRecord[]>([])
     const [error, setError] = useState<string | null>(null)
 
     // Add/Edit exercise form
@@ -126,6 +142,14 @@ export default function WorkoutDetailContent() {
 
             setWorkout(foundWorkout)
             setExercises(exercisesData.data.items)
+
+            // Fetch personal records for the trainee
+            const traineeId = programData.data.program.trainee.id
+            const recordsRes = await fetch(`/api/personal-records?traineeId=${traineeId}`)
+            if (recordsRes.ok) {
+                const recordsData = await recordsRes.json()
+                setPersonalRecords(recordsData.data.items || [])
+            }
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : String(err))
         } finally {
@@ -347,8 +371,29 @@ export default function WorkoutDetailContent() {
         return opts[wt] || wt
     }
 
+    // Group personal records by exercise
+    const recordsByExercise = personalRecords.reduce((acc, record) => {
+        const key = record.exerciseId
+        if (!acc[key]) {
+            acc[key] = []
+        }
+        acc[key].push(record)
+        return acc
+    }, {} as Record<string, PersonalRecord[]>)
+
+    // Get best PR for each exercise (by 1RM estimation)
+    const bestPRs = Object.entries(recordsByExercise).map(([exerciseId, records]) => {
+        const bestRecord = records.reduce((best, current) => {
+            // Simple 1RM estimation: weight * (1 + reps/30)
+            const currentEstimated1RM = current.weight * (1 + current.reps / 30)
+            const bestEstimated1RM = best.weight * (1 + best.reps / 30)
+            return currentEstimated1RM > bestEstimated1RM ? current : best
+        })
+        return bestRecord
+    })
+
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 relative">
             {confirmModal && (
                 <ConfirmationModal
                     isOpen={true}
@@ -360,6 +405,68 @@ export default function WorkoutDetailContent() {
                     variant={confirmModal.variant ?? 'danger'}
                 />
             )}
+
+            {/* Floating PR Panel */}
+            <div className="hidden xl:block fixed right-8 top-24 w-80 max-h-[calc(100vh-8rem)] overflow-y-auto bg-white rounded-lg shadow-lg border border-gray-200">
+                <div className="sticky top-0 bg-gradient-to-r from-[#FFA700] to-[#FF9500] text-white px-4 py-3 rounded-t-lg">
+                    <div className="flex items-center space-x-2">
+                        <Dumbbell className="w-5 h-5" />
+                        <h3 className="font-bold text-sm">
+                            Massimali di {program?.trainee.firstName}
+                        </h3>
+                    </div>
+                </div>
+                <div className="p-4">
+                    {bestPRs.length > 0 ? (
+                        <div className="space-y-3">
+                            {bestPRs.map((pr) => (
+                                <div key={pr.id} className="border-b border-gray-200 pb-3 last:border-b-0">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex-1">
+                                            <p className="text-sm font-semibold text-gray-900">
+                                                {pr.exercise.name}
+                                            </p>
+                                            <div className="mt-1 flex items-baseline space-x-2">
+                                                <span className="text-2xl font-bold text-[#FFA700]">
+                                                    {pr.weight}
+                                                </span>
+                                                <span className="text-xs text-gray-500">kg</span>
+                                                <span className="text-xs text-gray-500">×</span>
+                                                <span className="text-sm font-semibold text-gray-700">
+                                                    {pr.reps} {pr.reps === 1 ? 'rep' : 'reps'}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                {new Date(pr.recordDate).toLocaleDateString('it-IT', {
+                                                    day: 'numeric',
+                                                    month: 'short',
+                                                    year: 'numeric'
+                                                })}
+                                            </p>
+                                        </div>
+                                        <span
+                                            className={`px-2 py-0.5 text-xs font-medium rounded-full ${pr.exercise.type === 'fundamental'
+                                                ? 'bg-red-50 text-red-700'
+                                                : 'bg-blue-50 text-blue-700'
+                                                }`}
+                                        >
+                                            {pr.exercise.type === 'fundamental' ? 'F' : 'A'}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-8">
+                            <div className="text-4xl mb-2">📊</div>
+                            <p className="text-sm text-gray-600">
+                                Nessun massimale registrato
+                            </p>
+                        </div>
+                    )}
+                </div>
+            </div>
+
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">
