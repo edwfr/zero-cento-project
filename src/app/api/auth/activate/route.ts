@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
-import { requireAuth } from '@/lib/auth'
+import { requireAuthDuringOnboarding } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 
 /**
@@ -10,7 +10,7 @@ import { logger } from '@/lib/logger'
  */
 export async function POST(request: NextRequest) {
     try {
-        const session = await requireAuth()
+        const session = await requireAuthDuringOnboarding()
 
         // Activate the user
         await prisma.user.update({

@@ -17,33 +17,94 @@ export default function SetPasswordPage() {
     const [userData, setUserData] = useState<any>(null)
 
     useEffect(() => {
-        // Verify that the invitation token is valid
-        const checkInvitation = async () => {
+        const supabase = createClient()
+        let isSubscribed = true
+
+        const setupAuth = async () => {
             try {
-                const supabase = createClient()
-                const { data: { user }, error } = await supabase.auth.getUser()
+                // Check if we have tokens in the URL hash
+                const hashParams = new URLSearchParams(window.location.hash.substring(1))
+                const accessToken = hashParams.get('access_token')
+                const refreshToken = hashParams.get('refresh_token')
 
-                if (error || !user) {
-                    setError('Link di invito non valido o scaduto')
+                console.log('Hash params:', {
+                    hasAccessToken: !!accessToken,
+                    hasRefreshToken: !!refreshToken,
+                    hash: window.location.hash.substring(0, 50) + '...'
+                })
+
+                if (accessToken && refreshToken) {
+                    // Manually set the session with tokens from URL
+                    console.log('Setting session manually...')
+                    const { data, error: sessionError } = await supabase.auth.setSession({
+                        access_token: accessToken,
+                        refresh_token: refreshToken,
+                    })
+
+                    if (sessionError) {
+                        console.error('Session error:', sessionError)
+                        setError('Link di invito non valido o scaduto')
+                        setVerifying(false)
+                        return
+                    }
+
+                    console.log('Session set successfully, user:', data.user?.email)
+                    console.log('User metadata:', data.user?.user_metadata)
+                    console.log('Email confirmed:', data.user?.email_confirmed_at)
+                    console.log('Confirmed at:', data.user?.confirmed_at)
+
+                    // Clean up the URL hash
+                    window.history.replaceState(null, '', window.location.pathname)
+
+                    // For invited users, email_confirmed_at is set by the invite link
+                    // But they still need to set a password. Only redirect if they've
+                    // already completed onboarding (check isActive in metadata or if they have a real password)
+                    const isOnboardingComplete = data.user?.user_metadata?.isActive === true
+
+                    if (isOnboardingComplete) {
+                        console.log('User already completed onboarding, redirecting to login')
+                        router.push('/login')
+                        return
+                    }
+
+                    console.log('Showing password setup form')
+                    // Show the password form
+                    setUserData(data.user)
                     setVerifying(false)
-                    return
-                }
+                } else {
+                    // No tokens in URL, check if we have an existing session
+                    const { data: { user }, error } = await supabase.auth.getUser()
 
-                // If user already has a password set, redirect to login
-                if (user.confirmed_at) {
-                    router.push('/login')
-                    return
-                }
+                    if (error || !user) {
+                        console.log('No session found')
+                        setError('Link di invito non valido o scaduto')
+                        setVerifying(false)
+                        return
+                    }
 
-                setUserData(user)
-                setVerifying(false)
+                    // Check if already completed onboarding
+                    const isOnboardingComplete = user.user_metadata?.isActive === true
+
+                    if (isOnboardingComplete) {
+                        router.push('/login')
+                        return
+                    }
+
+                    setUserData(user)
+                    setVerifying(false)
+                }
             } catch (err) {
+                console.error('Setup error:', err)
                 setError('Errore durante la verifica dell\'invito')
                 setVerifying(false)
             }
         }
 
-        checkInvitation()
+        setupAuth()
+
+        return () => {
+            isSubscribed = false
+        }
     }, [router])
 
     const handleSubmit = async (e: React.FormEvent) => {

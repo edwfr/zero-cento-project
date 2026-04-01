@@ -64,6 +64,46 @@ export async function getSession(): Promise<AuthSession | null> {
 }
 
 /**
+ * Require authentication during onboarding - returns session without checking isActive
+ * Used for activate endpoint where user needs to be authenticated but not yet active
+ */
+export async function requireAuthDuringOnboarding(): Promise<{ user: any; supabaseUser: SupabaseUser }> {
+    const supabase = createClient()
+
+    // Use getUser() to authenticate the token
+    const {
+        data: { user: supabaseUser },
+        error,
+    } = await supabase.auth.getUser()
+
+    if (error || !supabaseUser) {
+        throw apiError('UNAUTHORIZED', 'Authentication required', 401)
+    }
+
+    // Fetch user data from Prisma using email (without checking isActive)
+    const user = await prisma.user.findUnique({
+        where: { email: supabaseUser.email },
+        select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+            isActive: true,
+        },
+    })
+
+    if (!user) {
+        throw apiError('UNAUTHORIZED', 'User not found', 401)
+    }
+
+    return {
+        user,
+        supabaseUser,
+    }
+}
+
+/**
  * Require authentication - returns session or throws 401 error response
  */
 export async function requireAuth(): Promise<AuthSession> {
