@@ -557,7 +557,7 @@ export default function TraineeRecordsContent() {
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Esercizio *
+                                        {t('personalRecords.exercise')} *
                                     </label>
                                     <select
                                         value={selectedExerciseId}
@@ -568,13 +568,13 @@ export default function TraineeRecordsContent() {
                                     >
                                         {exercises.map((ex) => (
                                             <option key={ex.id} value={ex.id}>
-                                                {ex.name} ({ex.type === 'fundamental' ? 'Fondamentale' : 'Accessorio'})
+                                                {ex.name} ({ex.type === 'fundamental' ? t('exercises.fundamental') : t('exercises.accessory')})
                                             </option>
                                         ))}
                                     </select>
                                     {editingRecord && (
                                         <p className="text-xs text-gray-500 mt-1">
-                                            Non è possibile cambiare esercizio durante la modifica
+                                            {t('personalRecords.cannotChangeExercise')}
                                         </p>
                                     )}
                                 </div>

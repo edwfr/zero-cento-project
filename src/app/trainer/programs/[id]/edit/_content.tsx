@@ -8,6 +8,7 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/components/ToastNotification'
 import EditProgramMetadata from './EditProgramMetadata'
+import { Activity, ClipboardCheck, TrendingDown, ArrowLeft } from 'lucide-react'
 
 interface Workout {
     id: string
@@ -179,8 +180,9 @@ export default function EditProgramContent() {
                 <div className="mb-8">
                     <Link
                         href="/trainer/programs"
-                        className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
+                        className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-flex items-center gap-1"
                     >
+                        <ArrowLeft className="w-4 h-4" />
                         {t('editProgram.backToPrograms')}
                     </Link>
                     <div className="flex items-start justify-between">
@@ -243,31 +245,34 @@ export default function EditProgramContent() {
                                         <button
                                             onClick={() => handleWeekTypeChange(week.id, 'normal')}
                                             disabled={saving}
-                                            className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all ${week.weekType === 'normal'
-                                                    ? 'bg-blue-500 text-white border-blue-500'
-                                                    : 'bg-white text-blue-800 border-blue-300 hover:bg-blue-50'
+                                            className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all flex items-center gap-1.5 ${week.weekType === 'normal'
+                                                ? 'bg-blue-500 text-white border-blue-500'
+                                                : 'bg-white text-blue-800 border-blue-300 hover:bg-blue-50'
                                                 }`}
                                         >
+                                            <Activity className="w-3.5 h-3.5" />
                                             Normale
                                         </button>
                                         <button
                                             onClick={() => handleWeekTypeChange(week.id, 'test')}
                                             disabled={saving}
-                                            className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all ${week.weekType === 'test'
-                                                    ? 'bg-orange-500 text-white border-orange-500'
-                                                    : 'bg-white text-orange-800 border-orange-300 hover:bg-orange-50'
+                                            className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all flex items-center gap-1.5 ${week.weekType === 'test'
+                                                ? 'bg-orange-500 text-white border-orange-500'
+                                                : 'bg-white text-orange-800 border-orange-300 hover:bg-orange-50'
                                                 }`}
                                         >
+                                            <ClipboardCheck className="w-3.5 h-3.5" />
                                             Test
                                         </button>
                                         <button
                                             onClick={() => handleWeekTypeChange(week.id, 'deload')}
                                             disabled={saving}
-                                            className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all ${week.weekType === 'deload'
-                                                    ? 'bg-green-500 text-white border-green-500'
-                                                    : 'bg-white text-green-800 border-green-300 hover:bg-green-50'
+                                            className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all flex items-center gap-1.5 ${week.weekType === 'deload'
+                                                ? 'bg-green-500 text-white border-green-500'
+                                                : 'bg-white text-green-800 border-green-300 hover:bg-green-50'
                                                 }`}
                                         >
+                                            <TrendingDown className="w-3.5 h-3.5" />
                                             Scarico
                                         </button>
                                     </div>
