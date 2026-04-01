@@ -6,7 +6,7 @@ import { SkeletonTable } from '@/components'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import Link from 'next/link'
-import { Plus } from 'lucide-react'
+import { Plus, ArrowLeft } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import '@/lib/i18n/client'
 import { getApiErrorMessage } from '@/lib/api-error'
@@ -37,6 +37,7 @@ export default function TrainerExercisesContent() {
     const router = useRouter()
     const { showToast } = useToast()
     const { t } = useTranslation('trainer')
+    const { t: tNav } = useTranslation('navigation')
     const [exercises, setExercises] = useState<Exercise[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -126,6 +127,15 @@ export default function TrainerExercisesContent() {
                 />
             )}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Back to Home Link */}
+                <Link
+                    href="/trainer/dashboard"
+                    className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-flex items-center gap-1"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    {tNav('breadcrumbs.backToHome')}
+                </Link>
+
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-gray-900">Libreria Esercizi</h1>

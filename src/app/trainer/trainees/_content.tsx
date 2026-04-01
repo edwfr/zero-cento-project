@@ -8,7 +8,7 @@ import { useToast } from '@/components/ToastNotification'
 import { formatDate } from '@/lib/date-format'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { Plus, Eye, UserX, UserCheck } from 'lucide-react'
+import { Plus, Eye, UserX, UserCheck, ArrowLeft } from 'lucide-react'
 
 interface Trainee {
     id: string
@@ -22,6 +22,7 @@ interface Trainee {
 export default function TrainerTraineesContent() {
     const router = useRouter()
     const { t } = useTranslation('trainer')
+    const { t: tNav } = useTranslation('navigation')
     const { showToast } = useToast()
     const [trainees, setTrainees] = useState<Trainee[]>([])
     const [loading, setLoading] = useState(true)
@@ -95,6 +96,15 @@ export default function TrainerTraineesContent() {
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Back to Home Link */}
+                <Link
+                    href="/trainer/dashboard"
+                    className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-flex items-center gap-1"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    {tNav('breadcrumbs.backToHome')}
+                </Link>
+
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-gray-900">{t('athletes.title')}</h1>

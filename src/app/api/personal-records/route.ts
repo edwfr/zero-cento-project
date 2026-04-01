@@ -123,14 +123,9 @@ export async function POST(request: NextRequest) {
             // For trainers, verify they manage this trainee
             if (session.user.role === 'trainer') {
                 const isManaged = await prisma.trainerTrainee.findUnique({
-                    where: {
-                        trainerId_traineeId: {
-                            trainerId: session.user.id,
-                            traineeId: traineeId,
-                        },
-                    },
+                    where: { traineeId: traineeId },
                 })
-                if (!isManaged) {
+                if (!isManaged || isManaged.trainerId !== session.user.id) {
                     return apiError('FORBIDDEN', 'You can only create records for your own trainees', 403, undefined, 'personalRecord.createDenied')
                 }
             }

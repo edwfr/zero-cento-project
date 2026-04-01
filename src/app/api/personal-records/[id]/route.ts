@@ -127,15 +127,10 @@ export async function DELETE(
         // If trainer, verify they own this trainee via TrainerTrainee junction
         if (session.user.role === 'trainer') {
             const trainerRelation = await prisma.trainerTrainee.findUnique({
-                where: {
-                    trainerId_traineeId: {
-                        trainerId: session.user.id,
-                        traineeId: record.traineeId,
-                    },
-                },
+                where: { traineeId: record.traineeId },
             })
 
-            if (!trainerRelation) {
+            if (!trainerRelation || trainerRelation.trainerId !== session.user.id) {
                 return apiError('FORBIDDEN', 'You can only delete records for your own trainees', 403, undefined, 'personalRecord.deleteDenied')
             }
         }

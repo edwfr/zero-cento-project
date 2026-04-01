@@ -26,9 +26,18 @@ export const updateProgramSchema = createProgramSchema.partial()
 
 export const publishProgramSchema = z.object({
     week1StartDate: z
-        .string()
-        .datetime('Data di inizio non valida')
-        .or(z.date()),
+        .union([z.string(), z.date()])
+        .transform((val) => {
+            if (typeof val === 'string') {
+                // Accept both date (YYYY-MM-DD) and datetime (ISO 8601) formats
+                const date = new Date(val)
+                if (isNaN(date.getTime())) {
+                    throw new Error('Data di inizio non valida')
+                }
+                return date
+            }
+            return val
+        }),
 })
 
 export const programFilterSchema = z.object({
