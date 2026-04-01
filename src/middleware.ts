@@ -13,7 +13,7 @@ const redis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_RE
     : null
 
 // Public routes that don't require authentication
-const PUBLIC_ROUTES = ['/login', '/forgot-password', '/reset-password', '/force-change-password']
+const PUBLIC_ROUTES = ['/login', '/forgot-password', '/reset-password', '/force-change-password', '/onboarding/set-password']
 const API_PUBLIC_ROUTES = ['/api/health']
 
 /**

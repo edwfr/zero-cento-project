@@ -14,7 +14,8 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
     const { t } = useTranslation(['admin', 'common'])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
-    const [tempPassword, setTempPassword] = useState('')
+    const [invitationSent, setInvitationSent] = useState(false)
+    const [createdUserEmail, setCreatedUserEmail] = useState('')
     const [formData, setFormData] = useState({
         email: '',
         firstName: '',
@@ -36,7 +37,7 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
 
         // Focus appropriate element based on state
         setTimeout(() => {
-            if (tempPassword) {
+            if (invitationSent) {
                 closeButtonRef.current?.focus()
             } else {
                 firstInputRef.current?.focus()
@@ -46,7 +47,7 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
         // Handle ESC key to close
         const handleEscape = (e: KeyboardEvent) => {
             if (e.key === 'Escape' && !loading) {
-                if (tempPassword) {
+                if (invitationSent) {
                     onUserCreated()
                 } else {
                     onClose()
@@ -82,7 +83,7 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
             document.removeEventListener('keydown', handleTab)
             previouslyFocused?.focus()
         }
-    }, [loading, onClose, onUserCreated, tempPassword])
+    }, [loading, onClose, onUserCreated, invitationSent])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -104,8 +105,10 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
                 throw new Error(getApiErrorMessage(data, t('common:errors.creationError'), t))
             }
 
-            // Show temporary password
-            setTempPassword(data.data.tempPassword)
+            // Show invitation sent confirmation
+            setCreatedUserEmail(formData.email)
+            setInvitationSent(true)
+            setLoading(false)
 
             // Auto-close after 5 seconds
             setTimeout(() => {
@@ -117,7 +120,7 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
         }
     }
 
-    if (tempPassword) {
+    if (invitationSent) {
         return (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="presentation">
                 <div
@@ -134,14 +137,14 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
 
                     <div className="bg-green-50 border border-green-200 rounded-md p-4 mb-4">
                         <p className="text-sm text-green-800 mb-3">
-                            {t('admin:users.createdSuccess')}. {t('admin:users.savePassword')}:
+                            L'utente è stato creato con successo! Un'email di invito è stata inviata a:
                         </p>
                         <div className="bg-white p-3 rounded border border-green-300 font-mono text-sm break-all">
-                            {tempPassword}
+                            {createdUserEmail}
                         </div>
-                        <p className="text-xs text-green-700 mt-2">
+                        <p className="text-xs text-green-700 mt-3">
                             <AlertTriangle className="inline w-3 h-3 mr-1" />
-                            {t('admin:users.passwordOnce')}. {t('admin:users.mustChange')}.
+                            L'utente riceverà un link per impostare la propria password e completare la registrazione.
                         </p>
                     </div>
 

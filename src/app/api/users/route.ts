@@ -4,7 +4,6 @@ import { createClient, createAdminClient } from '@/lib/supabase-server'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole, requireAuth } from '@/lib/auth'
 import { createUserSchema } from '@/schemas/user'
-import { generateSecurePassword } from '@/lib/password-utils'
 import { logger } from '@/lib/logger'
 
 /**
@@ -113,29 +112,29 @@ export async function POST(request: NextRequest) {
             return apiError('CONFLICT', 'Email already exists', 409, undefined, 'user.emailExists')
         }
 
-        // Generate secure temporary password
-        const tempPassword = generateSecurePassword(12)
-
-        // Create user in Supabase Auth using admin client
+        // Invite user via email (no temporary password needed)
         const supabase = createAdminClient()
-        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+
+        const { data: authData, error: authError } = await supabase.auth.admin.inviteUserByEmail(
             email,
-            password: tempPassword,
-            email_confirm: true, // Auto-confirm email
-            user_metadata: {
-                role,
-                mustChangePassword: true,
-                firstName,
-                lastName,
-            },
-        })
+            {
+                redirectTo: `${appUrl}/onboarding/set-password`,
+                data: {
+                    role,
+                    firstName,
+                    lastName,
+                    locale: body.locale || 'it', // Default Italian
+                },
+            }
+        )
 
         if (authError) {
-            logger.error({ error: authError }, 'Failed to create user in Supabase')
-            return apiError('INTERNAL_ERROR', 'Failed to create user account', 500, undefined, 'internal.default')
+            logger.error({ error: authError }, 'Failed to invite user')
+            return apiError('INTERNAL_ERROR', 'Failed to send invitation', 500, undefined, 'internal.default')
         }
 
-        // Create user in Prisma
+        // Create user in Prisma (inactive until they complete onboarding)
         const user = await prisma.user.create({
             data: {
                 id: authData.user.id,
@@ -143,7 +142,7 @@ export async function POST(request: NextRequest) {
                 firstName,
                 lastName,
                 role,
-                isActive: true,
+                isActive: false, // Will be activated after password setup
             },
         })
 
@@ -157,7 +156,7 @@ export async function POST(request: NextRequest) {
             })
         }
 
-        logger.info({ userId: user.id, role }, 'User created successfully')
+        logger.info({ userId: user.id, role }, 'User invited successfully')
 
         return apiSuccess(
             {
@@ -168,8 +167,9 @@ export async function POST(request: NextRequest) {
                     lastName: user.lastName,
                     role: user.role,
                     isActive: user.isActive,
+                    status: 'invitation_sent',
                 },
-                tempPassword, // Return password ONCE
+                message: 'Invitation email sent successfully',
             },
             201
         )
