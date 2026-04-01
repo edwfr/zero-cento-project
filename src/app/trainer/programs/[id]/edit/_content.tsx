@@ -93,7 +93,9 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         loadingRef.current = true
         try {
             setLoading(true)
-            const res = await fetch(`/api/programs/${programId}`)
+            const res = await fetch(`/api/programs/${programId}`, {
+                cache: 'no-store',
+            })
             const data = await res.json()
 
             if (!res.ok) {
@@ -170,13 +172,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 throw new Error(getApiErrorMessage(data, t('editProgram.errorEditWeek'), t))
             }
 
-            // Update local state
-            setProgram({
-                ...program,
-                weeks: program.weeks.map((w) =>
-                    w.id === weekId ? { ...w, weekType: newType } : w
-                ),
-            })
+            await fetchProgram()
         } catch (err: unknown) {
             showToast(err instanceof Error ? err.message : t('editProgram.errorEditWeek'), 'error')
         } finally {

@@ -162,7 +162,7 @@ export default function WorkoutDetailContent() {
             setLoading(true)
 
             const [programRes, exercisesRes, movementPatternsRes] = await Promise.all([
-                fetch(`/api/programs/${programId}`),
+                fetch(`/api/programs/${programId}`, { cache: 'no-store' }),
                 fetch('/api/exercises'),
                 fetch('/api/movement-patterns'),
             ])

@@ -69,7 +69,9 @@ export default function ReviewProgramContent() {
         const fetchProgram = async () => {
             try {
                 setLoading(true)
-                const res = await fetch(`/api/programs/${programId}`)
+                const res = await fetch(`/api/programs/${programId}`, {
+                    cache: 'no-store',
+                })
                 const data = await res.json()
 
                 if (!res.ok) {
