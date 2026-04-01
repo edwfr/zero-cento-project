@@ -229,21 +229,28 @@ export default function PublishProgramPage() {
                     <div className="flex items-center justify-center space-x-4 mb-4">
                         <div className="flex items-center">
                             <div className="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center font-bold">
-                                Ô£ô
+                                ✓
                             </div>
                             <span className="ml-2 font-semibold text-gray-900">{t('editProgram.stepSetup')}</span>
                         </div>
                         <div className="w-16 h-1 bg-green-500"></div>
                         <div className="flex items-center">
                             <div className="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center font-bold">
-                                Ô£ô
+                                ✓
                             </div>
                             <span className="ml-2 font-semibold text-gray-900">{t('editProgram.stepExercises')}</span>
+                        </div>
+                        <div className="w-16 h-1 bg-green-500"></div>
+                        <div className="flex items-center">
+                            <div className="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center font-bold">
+                                ✓
+                            </div>
+                            <span className="ml-2 font-semibold text-gray-900">{t('editProgram.stepReview')}</span>
                         </div>
                         <div className="w-16 h-1 bg-[#FFA700]"></div>
                         <div className="flex items-center">
                             <div className="w-10 h-10 bg-[#FFA700] text-white rounded-full flex items-center justify-center font-bold">
-                                3
+                                4
                             </div>
                             <span className="ml-2 font-semibold text-gray-900">{t('editProgram.stepPublish')}</span>
                         </div>
@@ -253,10 +260,10 @@ export default function PublishProgramPage() {
                 {/* Header */}
                 <div className="mb-8">
                     <Link
-                        href={`/trainer/programs/${programId}/edit`}
+                        href={`/trainer/programs/${programId}/review`}
                         className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
                     >
-                        {t('publish.backToEdit')}
+                        {t('publish.backToReview')}
                     </Link>
                     <h1 className="text-3xl font-bold text-gray-900">{t('publish.title')}</h1>
                     <p className="text-gray-600 mt-2">{t('publish.description')}</p>
@@ -276,9 +283,9 @@ export default function PublishProgramPage() {
                             ))}
                         </ul>
                         <Link
-                            href={`/trainer/programs/${programId}/edit`}
+                            href={`/trainer/programs/${programId}/review`}
                             className="inline-block mt-4 bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors"
-                        >{t('publish.backToEdit')}
+                        >{t('publish.backToReview')}
                         </Link>
                     </div>
                 )}
@@ -329,10 +336,10 @@ export default function PublishProgramPage() {
                                         </span>
                                         <span
                                             className={`px-2 py-1 text-xs font-semibold rounded-full ${week.weekType === 'normal'
-                                                    ? 'bg-blue-100 text-blue-800'
-                                                    : week.weekType === 'test'
-                                                        ? 'bg-orange-100 text-orange-800'
-                                                        : 'bg-green-100 text-green-800'
+                                                ? 'bg-blue-100 text-blue-800'
+                                                : week.weekType === 'test'
+                                                    ? 'bg-orange-100 text-orange-800'
+                                                    : 'bg-green-100 text-green-800'
                                                 }`}
                                         >
                                             {week.weekType === 'normal' ? 'Normale' : week.weekType === 'test' ? 'Test' : 'Scarico'}

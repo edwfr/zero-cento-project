@@ -158,14 +158,10 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         try {
             setSaving(true)
 
-            const res = await fetch(`/api/programs/${programId}`, {
-                method: 'PUT',
+            const res = await fetch(`/api/weeks/${weekId}`, {
+                method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    weeks: program.weeks.map((w) =>
-                        w.id === weekId ? { ...w, weekType: newType } : w
-                    ),
-                }),
+                body: JSON.stringify({ weekType: newType }),
             })
 
             const data = await res.json()
@@ -277,6 +273,13 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             <div className="flex items-center">
                                 <div className="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">
                                     3
+                                </div>
+                                <span className="ml-2 text-gray-500">{t('editProgram.stepReview')}</span>
+                            </div>
+                            <div className="w-16 h-1 bg-gray-300"></div>
+                            <div className="flex items-center">
+                                <div className="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">
+                                    4
                                 </div>
                                 <span className="ml-2 text-gray-500">{t('editProgram.stepPublish')}</span>
                             </div>
@@ -510,7 +513,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 {!readOnly && (
                     <div className="flex space-x-4 mt-8">
                         <Link
-                            href={`/trainer/programs/${programId}/publish`}
+                            href={`/trainer/programs/${programId}/review`}
                             className={`flex-1 py-3 px-6 rounded-lg font-semibold text-center transition-colors ${completedWorkouts === totalWorkouts
                                 ? 'bg-[#FFA700] hover:bg-[#FF9500] text-white'
                                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
@@ -522,7 +525,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                 }
                             }}
                         >
-                            {t('editProgram.nextPublish')}
+                            {t('editProgram.nextReview')}
                         </Link>
                         <Link
                             href="/trainer/programs"

@@ -924,10 +924,10 @@ export default function WorkoutDetailContent() {
                     </Link>
                     {program.status === 'draft' && sortedExercises.length > 0 && (
                         <Link
-                            href={`/trainer/programs/${programId}/publish`}
+                            href={`/trainer/programs/${programId}/review`}
                             className="flex-1 bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold py-3 px-6 rounded-lg text-center transition-colors"
                         >
-                            {t('workoutDetail.saveAndPublish')}
+                            {t('workoutDetail.saveAndReview')}
                         </Link>
                     )}
                 </div>
