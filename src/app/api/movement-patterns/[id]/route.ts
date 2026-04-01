@@ -31,14 +31,14 @@ export async function GET(request: NextRequest, { params }: Params) {
         })
 
         if (!movementPattern) {
-            return apiError('NOT_FOUND', 'Movement pattern not found', 404)
+            return apiError('NOT_FOUND', 'Movement pattern not found', 404, undefined, 'movementPattern.notFound')
         }
 
         return apiSuccess({ movementPattern })
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error fetching movement pattern')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch movement pattern', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to fetch movement pattern', 500, undefined, 'internal.default')
     }
 }
 
@@ -52,7 +52,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
         const validation = updateMovementPatternSchema.safeParse(body)
         if (!validation.success) {
-            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors)
+            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors, 'validation.invalidInput')
         }
 
         const movementPattern = await prisma.movementPattern.update({
@@ -66,7 +66,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error updating movement pattern')
-        return apiError('INTERNAL_ERROR', 'Failed to update movement pattern', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to update movement pattern', 500, undefined, 'internal.default')
     }
 }
 
@@ -100,6 +100,6 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error deleting movement pattern')
-        return apiError('INTERNAL_ERROR', 'Failed to delete movement pattern', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to delete movement pattern', 500, undefined, 'internal.default')
     }
 }

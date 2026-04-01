@@ -31,14 +31,14 @@ export async function GET(request: NextRequest, { params }: Params) {
         })
 
         if (!muscleGroup) {
-            return apiError('NOT_FOUND', 'Muscle group not found', 404)
+            return apiError('NOT_FOUND', 'Muscle group not found', 404, undefined, 'muscleGroup.notFound')
         }
 
         return apiSuccess({ muscleGroup })
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error fetching muscle group')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch muscle group', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to fetch muscle group', 500, undefined, 'internal.default')
     }
 }
 
@@ -52,7 +52,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
         const validation = updateMuscleGroupSchema.safeParse(body)
         if (!validation.success) {
-            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors)
+            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors, 'validation.invalidInput')
         }
 
         const muscleGroup = await prisma.muscleGroup.update({
@@ -66,7 +66,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error updating muscle group')
-        return apiError('INTERNAL_ERROR', 'Failed to update muscle group', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to update muscle group', 500, undefined, 'internal.default')
     }
 }
 
@@ -100,6 +100,6 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error deleting muscle group')
-        return apiError('INTERNAL_ERROR', 'Failed to delete muscle group', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to delete muscle group', 500, undefined, 'internal.default')
     }
 }

@@ -21,7 +21,7 @@ export async function PATCH(
         // Validate input
         const validation = updatePersonalRecordSchema.safeParse(body)
         if (!validation.success) {
-            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors)
+            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors, 'validation.invalidInput')
         }
 
         // Check if record exists
@@ -33,7 +33,7 @@ export async function PATCH(
         })
 
         if (!record) {
-            return apiError('NOT_FOUND', 'Personal record not found', 404)
+            return apiError('NOT_FOUND', 'Personal record not found', 404, undefined, 'personalRecord.notFound')
         }
 
         // If trainer, verify they own this trainee
@@ -45,7 +45,7 @@ export async function PATCH(
             })
 
             if (!trainerRelation || trainerRelation.trainerId !== session.user.id) {
-                return apiError('FORBIDDEN', 'You can only update records for your own trainees', 403)
+                return apiError('FORBIDDEN', 'You can only update records for your own trainees', 403, undefined, 'personalRecord.updateDenied')
             }
         }
 
@@ -63,7 +63,7 @@ export async function PATCH(
                 where: { id: validation.data.exerciseId },
             })
             if (!exercise) {
-                return apiError('NOT_FOUND', 'Exercise not found', 404)
+                return apiError('NOT_FOUND', 'Exercise not found', 404, undefined, 'exercise.notFound')
             }
             updateData.exerciseId = validation.data.exerciseId
         }
@@ -96,7 +96,7 @@ export async function PATCH(
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error, recordId: params.id }, 'Error updating personal record')
-        return apiError('INTERNAL_ERROR', 'Failed to update personal record', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to update personal record', 500, undefined, 'internal.default')
     }
 }
 
@@ -121,7 +121,7 @@ export async function DELETE(
         })
 
         if (!record) {
-            return apiError('NOT_FOUND', 'Personal record not found', 404)
+            return apiError('NOT_FOUND', 'Personal record not found', 404, undefined, 'personalRecord.notFound')
         }
 
         // If trainer, verify they own this trainee via TrainerTrainee junction
@@ -136,7 +136,7 @@ export async function DELETE(
             })
 
             if (!trainerRelation) {
-                return apiError('FORBIDDEN', 'You can only delete records for your own trainees', 403)
+                return apiError('FORBIDDEN', 'You can only delete records for your own trainees', 403, undefined, 'personalRecord.deleteDenied')
             }
         }
 
@@ -151,6 +151,6 @@ export async function DELETE(
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error, recordId: params.id }, 'Error deleting personal record')
-        return apiError('INTERNAL_ERROR', 'Failed to delete personal record', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to delete personal record', 500, undefined, 'internal.default')
     }
 }

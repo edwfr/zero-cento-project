@@ -55,12 +55,12 @@ export async function GET(
         })
 
         if (!workout) {
-            return apiError('NOT_FOUND', 'Workout not found', 404)
+            return apiError('NOT_FOUND', 'Workout not found', 404, undefined, 'workout.notFound')
         }
 
         // RBAC: Verify trainee owns this workout
         if (workout.week.program.traineeId !== session.user.id) {
-            return apiError('FORBIDDEN', 'You can only access your own workouts', 403)
+            return apiError('FORBIDDEN', 'You can only access your own workouts', 403, undefined, 'workout.accessDenied')
         }
 
         // Fetch existing feedback for all exercises in this workout
@@ -158,6 +158,6 @@ export async function GET(
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error, workoutId: params.id }, 'Error fetching workout details')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch workout details', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to fetch workout details', 500, undefined, 'internal.default')
     }
 }

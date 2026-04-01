@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
                     },
                 })
                 if (!isManaged || isManaged.trainerId !== session.user.id) {
-                    return apiError('FORBIDDEN', 'Access denied', 403)
+                    return apiError('FORBIDDEN', 'Access denied', 403, undefined, 'auth.accessDenied')
                 }
             }
             where.traineeId = traineeId
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error fetching personal records')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch personal records', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to fetch personal records', 500, undefined, 'internal.default')
     }
 }
 
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
 
         const validation = personalRecordSchema.safeParse(body)
         if (!validation.success) {
-            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors)
+            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors, 'validation.invalidInput')
         }
 
         const { exerciseId, reps, weight, recordDate, notes } = validation.data
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
             // Trainers and admins need to specify traineeId
             traineeId = body.traineeId
             if (!traineeId) {
-                return apiError('VALIDATION_ERROR', 'traineeId is required for trainer/admin requests', 400)
+                return apiError('VALIDATION_ERROR', 'traineeId is required for trainer/admin requests', 400, undefined, 'validation.traineeIdRequired')
             }
 
             // For trainers, verify they manage this trainee
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
                     },
                 })
                 if (!isManaged) {
-                    return apiError('FORBIDDEN', 'You can only create records for your own trainees', 403)
+                    return apiError('FORBIDDEN', 'You can only create records for your own trainees', 403, undefined, 'personalRecord.createDenied')
                 }
             }
         }
@@ -142,11 +142,11 @@ export async function POST(request: NextRequest) {
         })
 
         if (!trainee) {
-            return apiError('NOT_FOUND', 'Trainee not found', 404)
+            return apiError('NOT_FOUND', 'Trainee not found', 404, undefined, 'trainee.notFound')
         }
 
         if (trainee.role !== 'trainee') {
-            return apiError('VALIDATION_ERROR', 'User must have trainee role', 400)
+            return apiError('VALIDATION_ERROR', 'User must have trainee role', 400, undefined, 'validation.userMustBeTrainee')
         }
 
         // Verify exercise exists
@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
         })
 
         if (!exercise) {
-            return apiError('NOT_FOUND', 'Exercise not found', 404)
+            return apiError('NOT_FOUND', 'Exercise not found', 404, undefined, 'exercise.notFound')
         }
 
         // Create new personal record
@@ -202,6 +202,6 @@ export async function POST(request: NextRequest) {
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error creating personal record')
-        return apiError('INTERNAL_ERROR', 'Failed to create personal record', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to create personal record', 500, undefined, 'internal.default')
     }
 }

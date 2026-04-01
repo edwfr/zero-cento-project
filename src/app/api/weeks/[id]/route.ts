@@ -23,7 +23,7 @@ export async function PATCH(
         // Validate input
         const validation = updateWeekSchema.safeParse(body)
         if (!validation.success) {
-            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors)
+            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors, 'validation.invalidInput')
         }
 
         const { weekType, feedbackRequested } = validation.data
@@ -33,7 +33,9 @@ export async function PATCH(
             return apiError(
                 'VALIDATION_ERROR',
                 'At least one field (weekType or feedbackRequested) must be provided',
-                400
+                400,
+                undefined,
+                'validation.atLeastOneField'
             )
         }
 
@@ -53,12 +55,12 @@ export async function PATCH(
         })
 
         if (!week) {
-            return apiError('NOT_FOUND', 'Week not found', 404)
+            return apiError('NOT_FOUND', 'Week not found', 404, undefined, 'week.notFound')
         }
 
         // RBAC: Check ownership (admin can modify any, trainer only their own)
         if (session.user.role === 'trainer' && week.program.trainerId !== session.user.id) {
-            return apiError('FORBIDDEN', 'You can only modify weeks from your own programs', 403)
+            return apiError('FORBIDDEN', 'You can only modify weeks from your own programs', 403, undefined, 'week.modifyDenied')
         }
 
         // Update week configuration
@@ -104,6 +106,6 @@ export async function PATCH(
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error, weekId: params.id }, 'Error updating week configuration')
-        return apiError('INTERNAL_ERROR', 'Failed to update week configuration', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to update week configuration', 500, undefined, 'internal.default')
     }
 }

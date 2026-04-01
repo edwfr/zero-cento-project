@@ -73,16 +73,16 @@ export async function GET(
         })
 
         if (!program) {
-            return apiError('NOT_FOUND', 'Program not found', 404)
+            return apiError('NOT_FOUND', 'Program not found', 404, undefined, 'program.notFound')
         }
 
         // RBAC: Check access
         if (session.user.role === 'trainer' && program.trainerId !== session.user.id) {
-            return apiError('FORBIDDEN', 'You can only view your own programs', 403)
+            return apiError('FORBIDDEN', 'You can only view your own programs', 403, undefined, 'program.viewDenied')
         }
 
         if (session.user.role === 'trainee' && program.traineeId !== session.user.id) {
-            return apiError('FORBIDDEN', 'You can only view programs assigned to you', 403)
+            return apiError('FORBIDDEN', 'You can only view programs assigned to you', 403, undefined, 'program.viewAssignedDenied')
         }
 
         // Helper function to calculate training sets (excluding warmup)
@@ -331,6 +331,6 @@ export async function GET(
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error, programId: params.id }, 'Error fetching program reports')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch program reports', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to fetch program reports', 500, undefined, 'internal.default')
     }
 }

@@ -61,14 +61,14 @@ export async function GET(request: NextRequest) {
 
             users = traineeAssociations.map((assoc) => assoc.trainee)
         } else {
-            return apiError('FORBIDDEN', 'Access denied', 403)
+            return apiError('FORBIDDEN', 'Access denied', 403, undefined, 'auth.accessDenied')
         }
 
         return apiSuccess({ items: users })
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error fetching users')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch users', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to fetch users', 500, undefined, 'internal.default')
     }
 }
 
@@ -86,22 +86,22 @@ export async function POST(request: NextRequest) {
         // Validate input
         const validation = createUserSchema.safeParse(body)
         if (!validation.success) {
-            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors)
+            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors, 'validation.invalidInput')
         }
 
         const { email, firstName, lastName, role } = validation.data
 
         // Permission check
         if (role === 'admin') {
-            return apiError('FORBIDDEN', 'Cannot create admin users', 403)
+            return apiError('FORBIDDEN', 'Cannot create admin users', 403, undefined, 'user.cannotCreateAdmin')
         }
 
         if (role === 'trainer' && session.user.role !== 'admin') {
-            return apiError('FORBIDDEN', 'Only admins can create trainers', 403)
+            return apiError('FORBIDDEN', 'Only admins can create trainers', 403, undefined, 'user.onlyAdminCreateTrainer')
         }
 
         if (role === 'trainee' && session.user.role !== 'admin' && session.user.role !== 'trainer') {
-            return apiError('FORBIDDEN', 'Only admins and trainers can create trainees', 403)
+            return apiError('FORBIDDEN', 'Only admins and trainers can create trainees', 403, undefined, 'user.onlyAdminTrainerCreateTrainee')
         }
 
         // Check if email already exists
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
         })
 
         if (existingUser) {
-            return apiError('CONFLICT', 'Email already exists', 409)
+            return apiError('CONFLICT', 'Email already exists', 409, undefined, 'user.emailExists')
         }
 
         // Generate secure temporary password
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
 
         if (authError) {
             logger.error({ error: authError }, 'Failed to create user in Supabase')
-            return apiError('INTERNAL_ERROR', 'Failed to create user account', 500)
+            return apiError('INTERNAL_ERROR', 'Failed to create user account', 500, undefined, 'internal.default')
         }
 
         // Create user in Prisma
@@ -176,6 +176,6 @@ export async function POST(request: NextRequest) {
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error creating user')
-        return apiError('INTERNAL_ERROR', 'Failed to create user', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to create user', 500, undefined, 'internal.default')
     }
 }

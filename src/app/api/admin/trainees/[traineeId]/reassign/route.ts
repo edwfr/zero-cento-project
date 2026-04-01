@@ -21,7 +21,7 @@ export async function POST(
         const { newTrainerId } = body
 
         if (!newTrainerId) {
-            return apiError('VALIDATION_ERROR', 'newTrainerId is required', 400)
+            return apiError('VALIDATION_ERROR', 'newTrainerId is required', 400, undefined, 'validation.newTrainerIdRequired')
         }
 
         // Verify trainee exists and has trainee role
@@ -31,11 +31,11 @@ export async function POST(
         })
 
         if (!trainee) {
-            return apiError('NOT_FOUND', 'Trainee not found', 404)
+            return apiError('NOT_FOUND', 'Trainee not found', 404, undefined, 'trainee.notFound')
         }
 
         if (trainee.role !== 'trainee') {
-            return apiError('VALIDATION_ERROR', 'User must have trainee role', 400)
+            return apiError('VALIDATION_ERROR', 'User must have trainee role', 400, undefined, 'validation.userMustBeTrainee')
         }
 
         // Verify new trainer exists and has trainer role
@@ -45,11 +45,11 @@ export async function POST(
         })
 
         if (!newTrainer) {
-            return apiError('NOT_FOUND', 'New trainer not found', 404)
+            return apiError('NOT_FOUND', 'New trainer not found', 404, undefined, 'trainer.notFound')
         }
 
         if (newTrainer.role !== 'trainer') {
-            return apiError('VALIDATION_ERROR', 'Target user must have trainer role', 400)
+            return apiError('VALIDATION_ERROR', 'Target user must have trainer role', 400, undefined, 'validation.targetMustBeTrainer')
         }
 
         // Update the TrainerTrainee relationship (upsert: create if missing, update if exists)
@@ -75,6 +75,6 @@ export async function POST(
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error, traineeId: params.traineeId }, 'Error reassigning trainee')
-        return apiError('INTERNAL_ERROR', 'Failed to reassign trainee', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to reassign trainee', 500, undefined, 'internal.default')
     }
 }

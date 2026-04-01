@@ -29,6 +29,6 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error archiving movement pattern')
-        return apiError('INTERNAL_ERROR', 'Failed to archive movement pattern', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to archive movement pattern', 500, undefined, 'internal.default')
     }
 }

@@ -29,7 +29,7 @@ export async function POST(
 
         const validation = completeSchema.safeParse(body)
         if (!validation.success) {
-            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors)
+            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors, 'validation.invalidInput')
         }
 
         const { completionReason } = validation.data
@@ -45,21 +45,21 @@ export async function POST(
         })
 
         if (!program) {
-            return apiError('NOT_FOUND', 'Program not found', 404)
+            return apiError('NOT_FOUND', 'Program not found', 404, undefined, 'program.notFound')
         }
 
         // Check ownership (admin can complete any program)
         if (session.user.role === 'trainer' && program.trainerId !== session.user.id) {
-            return apiError('FORBIDDEN', 'You can only complete your own programs', 403)
+            return apiError('FORBIDDEN', 'You can only complete your own programs', 403, undefined, 'program.completeDenied')
         }
 
         // Check if program is active (can't complete draft or already completed)
         if (program.status === 'draft') {
-            return apiError('VALIDATION_ERROR', 'Cannot complete a draft program. Publish it first.', 400)
+            return apiError('VALIDATION_ERROR', 'Cannot complete a draft program. Publish it first.', 400, undefined, 'program.cannotCompleteDraft')
         }
 
         if (program.status === 'completed') {
-            return apiError('VALIDATION_ERROR', 'Program is already completed', 400)
+            return apiError('VALIDATION_ERROR', 'Program is already completed', 400, undefined, 'program.alreadyCompleted')
         }
 
         // Update program status to completed
@@ -110,6 +110,6 @@ export async function POST(
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error, programId: params.id }, 'Error completing program')
-        return apiError('INTERNAL_ERROR', 'Failed to complete program', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to complete program', 500, undefined, 'internal.default')
     }
 }

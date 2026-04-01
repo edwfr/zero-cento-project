@@ -20,7 +20,7 @@ export async function PUT(
 
         const validation = workoutExerciseSchema.safeParse(body)
         if (!validation.success) {
-            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors)
+            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors, 'validation.invalidInput')
         }
 
         const {
@@ -42,12 +42,12 @@ export async function PUT(
         })
 
         if (!program) {
-            return apiError('NOT_FOUND', 'Program not found', 404)
+            return apiError('NOT_FOUND', 'Program not found', 404, undefined, 'program.notFound')
         }
 
         // Check ownership
         if (session.user.role === 'trainer' && program.trainerId !== session.user.id) {
-            return apiError('FORBIDDEN', 'You can only modify your own programs', 403)
+            return apiError('FORBIDDEN', 'You can only modify your own programs', 403, undefined, 'program.modifyDenied')
         }
 
         // Check if program is draft
@@ -65,7 +65,7 @@ export async function PUT(
         })
 
         if (!existing || existing.workoutId !== workoutId) {
-            return apiError('NOT_FOUND', 'Workout exercise not found', 404)
+            return apiError('NOT_FOUND', 'Workout exercise not found', 404, undefined, 'workoutExercise.notFound')
         }
 
         // Verify new exercise exists if changing
@@ -75,7 +75,7 @@ export async function PUT(
             })
 
             if (!exercise) {
-                return apiError('NOT_FOUND', 'Exercise not found', 404)
+                return apiError('NOT_FOUND', 'Exercise not found', 404, undefined, 'exercise.notFound')
             }
         }
 
@@ -129,7 +129,7 @@ export async function PUT(
             },
             'Error updating workout exercise'
         )
-        return apiError('INTERNAL_ERROR', 'Failed to update workout exercise', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to update workout exercise', 500, undefined, 'internal.default')
     }
 }
 
@@ -152,12 +152,12 @@ export async function DELETE(
         })
 
         if (!programCheck) {
-            return apiError('NOT_FOUND', 'Program not found', 404)
+            return apiError('NOT_FOUND', 'Program not found', 404, undefined, 'program.notFound')
         }
 
         // Check ownership
         if (session.user.role === 'trainer' && programCheck.trainerId !== session.user.id) {
-            return apiError('FORBIDDEN', 'You can only modify your own programs', 403)
+            return apiError('FORBIDDEN', 'You can only modify your own programs', 403, undefined, 'program.modifyDenied')
         }
 
         // Check if program is draft
@@ -175,7 +175,7 @@ export async function DELETE(
         })
 
         if (!existing || existing.workoutId !== workoutId) {
-            return apiError('NOT_FOUND', 'Workout exercise not found', 404)
+            return apiError('NOT_FOUND', 'Workout exercise not found', 404, undefined, 'workoutExercise.notFound')
         }
 
         // Delete workout exercise
@@ -218,6 +218,6 @@ export async function DELETE(
             },
             'Error removing exercise from workout'
         )
-        return apiError('INTERNAL_ERROR', 'Failed to remove exercise from workout', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to remove exercise from workout', 500, undefined, 'internal.default')
     }
 }

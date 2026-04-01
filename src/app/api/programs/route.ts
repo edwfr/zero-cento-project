@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
         // Validate search parameter length
         if (search && (search.length < 2 || search.length > 100)) {
-            return apiError('VALIDATION_ERROR', 'Search parameter must be between 2 and 100 characters', 400)
+            return apiError('VALIDATION_ERROR', 'Search parameter must be between 2 and 100 characters', 400, undefined, 'validation.searchLength')
         }
 
         // Build where clause based on RBAC
@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error fetching programs')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch programs', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to fetch programs', 500, undefined, 'internal.default')
     }
 }
 
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
 
         const validation = createProgramSchema.safeParse(body)
         if (!validation.success) {
-            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors)
+            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors, 'validation.invalidInput')
         }
 
         const { title, traineeId, durationWeeks, workoutsPerWeek } = validation.data
@@ -143,11 +143,11 @@ export async function POST(request: NextRequest) {
         })
 
         if (!trainee) {
-            return apiError('NOT_FOUND', 'Trainee not found', 404)
+            return apiError('NOT_FOUND', 'Trainee not found', 404, undefined, 'trainee.notFound')
         }
 
         if (trainee.role !== 'trainee') {
-            return apiError('VALIDATION_ERROR', 'User must have trainee role', 400)
+            return apiError('VALIDATION_ERROR', 'User must have trainee role', 400, undefined, 'validation.userMustBeTrainee')
         }
 
         // If session user is trainer, verify they own/manage this trainee
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
                 },
             })
             if (!trainerRelation) {
-                return apiError('FORBIDDEN', 'You can only create programs for your own trainees', 403)
+                return apiError('FORBIDDEN', 'You can only create programs for your own trainees', 403, undefined, 'program.createDenied')
             }
         }
 
@@ -245,6 +245,6 @@ export async function POST(request: NextRequest) {
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error creating program')
-        return apiError('INTERNAL_ERROR', 'Failed to create program', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to create program', 500, undefined, 'internal.default')
     }
 }

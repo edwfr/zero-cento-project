@@ -29,7 +29,7 @@ export async function POST(
 
         const validation = publishSchema.safeParse(body)
         if (!validation.success) {
-            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors)
+            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors, 'validation.invalidInput')
         }
 
         const { startDate } = validation.data
@@ -52,17 +52,17 @@ export async function POST(
         })
 
         if (!program) {
-            return apiError('NOT_FOUND', 'Program not found', 404)
+            return apiError('NOT_FOUND', 'Program not found', 404, undefined, 'program.notFound')
         }
 
         // Check ownership
         if (session.user.role === 'trainer' && program.trainerId !== session.user.id) {
-            return apiError('FORBIDDEN', 'You can only publish your own programs', 403)
+            return apiError('FORBIDDEN', 'You can only publish your own programs', 403, undefined, 'program.publishDenied')
         }
 
         // Check if program is draft
         if (program.status !== 'draft') {
-            return apiError('VALIDATION_ERROR', 'Program is already published or completed', 400)
+            return apiError('VALIDATION_ERROR', 'Program is already published or completed', 400, undefined, 'program.alreadyPublished')
         }
 
         // Validate: each Workout must have at least 1 WorkoutExercise
@@ -166,6 +166,6 @@ export async function POST(
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error, programId: params.id }, 'Error publishing program')
-        return apiError('INTERNAL_ERROR', 'Failed to publish program', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to publish program', 500, undefined, 'internal.default')
     }
 }

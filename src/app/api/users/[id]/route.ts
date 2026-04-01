@@ -35,7 +35,7 @@ export async function GET(request: NextRequest, { params }: Params) {
         })
 
         if (!user) {
-            return apiError('NOT_FOUND', 'User not found', 404)
+            return apiError('NOT_FOUND', 'User not found', 404, undefined, 'user.notFound')
         }
 
         // Permission check
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest, { params }: Params) {
             })
 
             if (!association) {
-                return apiError('FORBIDDEN', 'Access denied', 403)
+                return apiError('FORBIDDEN', 'Access denied', 403, undefined, 'auth.accessDenied')
             }
         }
         // Admin can see anyone
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest, { params }: Params) {
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error fetching user')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch user', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to fetch user', 500, undefined, 'internal.default')
     }
 }
 
@@ -75,7 +75,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
         // Validate input
         const validation = updateUserSchema.safeParse(body)
         if (!validation.success) {
-            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors)
+            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors, 'validation.invalidInput')
         }
 
         // Check user exists
@@ -84,7 +84,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
         })
 
         if (!existingUser) {
-            return apiError('NOT_FOUND', 'User not found', 404)
+            return apiError('NOT_FOUND', 'User not found', 404, undefined, 'user.notFound')
         }
 
         // Permission check
@@ -98,12 +98,12 @@ export async function PUT(request: NextRequest, { params }: Params) {
             })
 
             if (!association) {
-                return apiError('FORBIDDEN', 'Access denied', 403)
+                return apiError('FORBIDDEN', 'Access denied', 403, undefined, 'auth.accessDenied')
             }
 
             // Trainers cannot change role or isActive
             if (validation.data.isActive !== undefined) {
-                return apiError('FORBIDDEN', 'Cannot modify user status', 403)
+                return apiError('FORBIDDEN', 'Cannot modify user status', 403, undefined, 'user.cannotModifyStatus')
             }
         }
 
@@ -127,7 +127,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error updating user')
-        return apiError('INTERNAL_ERROR', 'Failed to update user', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to update user', 500, undefined, 'internal.default')
     }
 }
 
@@ -146,7 +146,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
         })
 
         if (!existingUser) {
-            return apiError('NOT_FOUND', 'User not found', 404)
+            return apiError('NOT_FOUND', 'User not found', 404, undefined, 'user.notFound')
         }
 
         // Permission check
@@ -160,13 +160,13 @@ export async function DELETE(request: NextRequest, { params }: Params) {
             })
 
             if (!association) {
-                return apiError('FORBIDDEN', 'Access denied', 403)
+                return apiError('FORBIDDEN', 'Access denied', 403, undefined, 'auth.accessDenied')
             }
         }
 
         // Cannot delete admin users
         if (existingUser.role === 'admin') {
-            return apiError('FORBIDDEN', 'Cannot delete admin users', 403)
+            return apiError('FORBIDDEN', 'Cannot delete admin users', 403, undefined, 'user.cannotDeleteAdmin')
         }
 
         // Delete user (cascade delete will handle related records)
@@ -180,6 +180,6 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error deleting user')
-        return apiError('INTERNAL_ERROR', 'Failed to delete user', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to delete user', 500, undefined, 'internal.default')
     }
 }

@@ -22,7 +22,7 @@ export async function PUT(
         const { title, traineeId } = body
 
         if (!title && !traineeId) {
-            return apiError('VALIDATION_ERROR', 'At least one field to update is required', 400)
+            return apiError('VALIDATION_ERROR', 'At least one field to update is required', 400, undefined, 'validation.atLeastOneField')
         }
 
         // Verify program exists
@@ -32,7 +32,7 @@ export async function PUT(
         })
 
         if (!existing) {
-            return apiError('NOT_FOUND', 'Program not found', 404)
+            return apiError('NOT_FOUND', 'Program not found', 404, undefined, 'program.notFound')
         }
 
         // Validate traineeId if provided
@@ -43,11 +43,11 @@ export async function PUT(
             })
 
             if (!trainee) {
-                return apiError('NOT_FOUND', 'Trainee not found', 404)
+                return apiError('NOT_FOUND', 'Trainee not found', 404, undefined, 'trainee.notFound')
             }
 
             if (trainee.role !== 'trainee') {
-                return apiError('VALIDATION_ERROR', 'Target user must have trainee role', 400)
+                return apiError('VALIDATION_ERROR', 'Target user must have trainee role', 400, undefined, 'validation.targetMustBeTrainee')
             }
         }
 
@@ -76,6 +76,6 @@ export async function PUT(
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error, programId: params.id }, 'Error overriding program')
-        return apiError('INTERNAL_ERROR', 'Failed to override program', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to override program', 500, undefined, 'internal.default')
     }
 }

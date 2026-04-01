@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error fetching movement patterns')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch movement patterns', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to fetch movement patterns', 500, undefined, 'internal.default')
     }
 }
 
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
 
         const validation = movementPatternSchema.safeParse(body)
         if (!validation.success) {
-            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors)
+            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors, 'validation.invalidInput')
         }
 
         const { name, description } = validation.data
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
         })
 
         if (existing) {
-            return apiError('CONFLICT', 'Movement pattern with this name already exists', 409)
+            return apiError('CONFLICT', 'Movement pattern with this name already exists', 409, undefined, 'movementPattern.nameExists')
         }
 
         const movementPattern = await prisma.movementPattern.create({
@@ -79,6 +79,6 @@ export async function POST(request: NextRequest) {
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error creating movement pattern')
-        return apiError('INTERNAL_ERROR', 'Failed to create movement pattern', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to create movement pattern', 500, undefined, 'internal.default')
     }
 }

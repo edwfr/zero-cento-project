@@ -537,36 +537,36 @@
 
 ### Phase 2 — API Routes (aggiungere `key` a ogni chiamata `apiError`)
 
-- [ ] **11.4** `src/app/api/exercises/route.ts` — aggiungere `key` a tutte le chiamate `apiError()`
-- [ ] **11.5** `src/app/api/exercises/[id]/route.ts` — aggiungere `key`
-- [ ] **11.6** `src/app/api/feedback/route.ts` — aggiungere `key`
-- [ ] **11.7** `src/app/api/feedback/[id]/route.ts` — aggiungere `key`
-- [ ] **11.8** `src/app/api/movement-patterns/route.ts` — aggiungere `key`
-- [ ] **11.9** `src/app/api/movement-patterns/[id]/route.ts` — aggiungere `key`
-- [ ] **11.10** `src/app/api/movement-patterns/[id]/archive/route.ts` — aggiungere `key`
-- [ ] **11.11** `src/app/api/muscle-groups/route.ts` — aggiungere `key`
-- [ ] **11.12** `src/app/api/muscle-groups/[id]/route.ts` — aggiungere `key`
-- [ ] **11.13** `src/app/api/muscle-groups/[id]/archive/route.ts` — aggiungere `key`
-- [ ] **11.14** `src/app/api/personal-records/route.ts` — aggiungere `key`
-- [ ] **11.15** `src/app/api/personal-records/[id]/route.ts` — aggiungere `key`
-- [ ] **11.16** `src/app/api/programs/route.ts` — aggiungere `key`
-- [ ] **11.17** `src/app/api/programs/[id]/route.ts` — aggiungere `key`
-- [ ] **11.18** `src/app/api/programs/[id]/complete/route.ts` — aggiungere `key`
-- [ ] **11.19** `src/app/api/programs/[id]/publish/route.ts` — aggiungere `key`
-- [ ] **11.20** `src/app/api/programs/[id]/progress/route.ts` — aggiungere `key`
-- [ ] **11.21** `src/app/api/programs/[id]/reports/route.ts` — aggiungere `key`
-- [ ] **11.22** `src/app/api/programs/[id]/workouts/[workoutId]/exercises/route.ts` — aggiungere `key`
-- [ ] **11.23** `src/app/api/programs/[id]/workouts/[workoutId]/exercises/[exerciseId]/route.ts` — aggiungere `key`
-- [ ] **11.24** `src/app/api/programs/[id]/workouts/[workoutId]/exercises/reorder/route.ts` — aggiungere `key`
-- [ ] **11.25** `src/app/api/trainee/workouts/[id]/route.ts` — aggiungere `key`
-- [ ] **11.26** `src/app/api/users/route.ts` — aggiungere `key`
-- [ ] **11.27** `src/app/api/users/[id]/route.ts` — aggiungere `key`
-- [ ] **11.28** `src/app/api/users/[id]/activate/route.ts` — aggiungere `key`
-- [ ] **11.29** `src/app/api/users/[id]/deactivate/route.ts` — aggiungere `key`
-- [ ] **11.30** `src/app/api/weeks/[id]/route.ts` — aggiungere `key`
-- [ ] **11.31** `src/app/api/admin/programs/[id]/override/route.ts` — aggiungere `key`
-- [ ] **11.32** `src/app/api/admin/trainees/[traineeId]/reassign/route.ts` — aggiungere `key`
-- [ ] **11.33** `src/app/api/auth/me/route.ts` — aggiungere `key`
+- [x] **11.4** `src/app/api/exercises/route.ts` — aggiungere `key` a tutte le chiamate `apiError()`
+- [x] **11.5** `src/app/api/exercises/[id]/route.ts` — aggiungere `key`
+- [x] **11.6** `src/app/api/feedback/route.ts` — aggiungere `key`
+- [x] **11.7** `src/app/api/feedback/[id]/route.ts` — aggiungere `key`
+- [x] **11.8** `src/app/api/movement-patterns/route.ts` — aggiungere `key`
+- [x] **11.9** `src/app/api/movement-patterns/[id]/route.ts` — aggiungere `key`
+- [x] **11.10** `src/app/api/movement-patterns/[id]/archive/route.ts` — aggiungere `key`
+- [x] **11.11** `src/app/api/muscle-groups/route.ts` — aggiungere `key`
+- [x] **11.12** `src/app/api/muscle-groups/[id]/route.ts` — aggiungere `key`
+- [x] **11.13** `src/app/api/muscle-groups/[id]/archive/route.ts` — aggiungere `key`
+- [x] **11.14** `src/app/api/personal-records/route.ts` — aggiungere `key`
+- [x] **11.15** `src/app/api/personal-records/[id]/route.ts` — aggiungere `key`
+- [x] **11.16** `src/app/api/programs/route.ts` — aggiungere `key`
+- [x] **11.17** `src/app/api/programs/[id]/route.ts` — aggiungere `key`
+- [x] **11.18** `src/app/api/programs/[id]/complete/route.ts` — aggiungere `key`
+- [x] **11.19** `src/app/api/programs/[id]/publish/route.ts` — aggiungere `key`
+- [x] **11.20** `src/app/api/programs/[id]/progress/route.ts` — aggiungere `key`
+- [x] **11.21** `src/app/api/programs/[id]/reports/route.ts` — aggiungere `key`
+- [x] **11.22** `src/app/api/programs/[id]/workouts/[workoutId]/exercises/route.ts` — aggiungere `key`
+- [x] **11.23** `src/app/api/programs/[id]/workouts/[workoutId]/exercises/[exerciseId]/route.ts` — aggiungere `key`
+- [x] **11.24** `src/app/api/programs/[id]/workouts/[workoutId]/exercises/reorder/route.ts` — aggiungere `key`
+- [x] **11.25** `src/app/api/trainee/workouts/[id]/route.ts` — aggiungere `key`
+- [x] **11.26** `src/app/api/users/route.ts` — aggiungere `key`
+- [x] **11.27** `src/app/api/users/[id]/route.ts` — aggiungere `key`
+- [x] **11.28** `src/app/api/users/[id]/activate/route.ts` — aggiungere `key`
+- [x] **11.29** `src/app/api/users/[id]/deactivate/route.ts` — aggiungere `key`
+- [x] **11.30** `src/app/api/weeks/[id]/route.ts` — aggiungere `key`
+- [x] **11.31** `src/app/api/admin/programs/[id]/override/route.ts` — aggiungere `key`
+- [x] **11.32** `src/app/api/admin/trainees/[traineeId]/reassign/route.ts` — aggiungere `key`
+- [x] **11.33** `src/app/api/auth/me/route.ts` — aggiungere `key`
 
 ### Phase 3 — Frontend _content.tsx (sostituire `data.error?.message` con `getApiErrorMessage`)
 

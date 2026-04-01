@@ -29,7 +29,7 @@ export async function PATCH(
 
         const validation = reorderSchema.safeParse(body)
         if (!validation.success) {
-            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors)
+            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors, 'validation.invalidInput')
         }
 
         const { exercises } = validation.data
@@ -40,12 +40,12 @@ export async function PATCH(
         })
 
         if (!program) {
-            return apiError('NOT_FOUND', 'Program not found', 404)
+            return apiError('NOT_FOUND', 'Program not found', 404, undefined, 'program.notFound')
         }
 
         // Check ownership
         if (session.user.role === 'trainer' && program.trainerId !== session.user.id) {
-            return apiError('FORBIDDEN', 'You can only modify your own programs', 403)
+            return apiError('FORBIDDEN', 'You can only modify your own programs', 403, undefined, 'program.modifyDenied')
         }
 
         // Check if program is draft
@@ -67,7 +67,7 @@ export async function PATCH(
         })
 
         if (existingExercises.length !== exerciseIds.length) {
-            return apiError('NOT_FOUND', 'One or more exercises not found in this workout', 404)
+            return apiError('NOT_FOUND', 'One or more exercises not found in this workout', 404, undefined, 'workout.exercisesNotFound')
         }
 
         // Update order for each exercise
@@ -114,6 +114,6 @@ export async function PATCH(
             { error, programId: params.id, workoutId: params.workoutId },
             'Error reordering exercises'
         )
-        return apiError('INTERNAL_ERROR', 'Failed to reorder exercises', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to reorder exercises', 500, undefined, 'internal.default')
     }
 }

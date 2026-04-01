@@ -77,23 +77,23 @@ export async function GET(
         })
 
         if (!program) {
-            return apiError('NOT_FOUND', 'Program not found', 404)
+            return apiError('NOT_FOUND', 'Program not found', 404, undefined, 'program.notFound')
         }
 
         // RBAC: Check access
         if (session.user.role === 'trainer' && program.trainerId !== session.user.id) {
-            return apiError('FORBIDDEN', 'You can only view your own programs', 403)
+            return apiError('FORBIDDEN', 'You can only view your own programs', 403, undefined, 'program.viewDenied')
         }
 
         if (session.user.role === 'trainee' && program.traineeId !== session.user.id) {
-            return apiError('FORBIDDEN', 'You can only view programs assigned to you', 403)
+            return apiError('FORBIDDEN', 'You can only view programs assigned to you', 403, undefined, 'program.viewAssignedDenied')
         }
 
         return apiSuccess({ program })
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error, programId: params.id }, 'Error fetching program')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch program', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to fetch program', 500, undefined, 'internal.default')
     }
 }
 
@@ -113,7 +113,7 @@ export async function PUT(
 
         const validation = createProgramSchema.partial().safeParse(body)
         if (!validation.success) {
-            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors)
+            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors, 'validation.invalidInput')
         }
 
         const { title, traineeId, durationWeeks, workoutsPerWeek } = validation.data
@@ -127,12 +127,12 @@ export async function PUT(
         })
 
         if (!existing) {
-            return apiError('NOT_FOUND', 'Program not found', 404)
+            return apiError('NOT_FOUND', 'Program not found', 404, undefined, 'program.notFound')
         }
 
         // RBAC: Check ownership
         if (session.user.role === 'trainer' && existing.trainerId !== session.user.id) {
-            return apiError('FORBIDDEN', 'You can only modify your own programs', 403)
+            return apiError('FORBIDDEN', 'You can only modify your own programs', 403, undefined, 'program.modifyDenied')
         }
 
         // Immutability check: only draft programs can be modified (unless admin)
@@ -151,11 +151,11 @@ export async function PUT(
             })
 
             if (!trainee) {
-                return apiError('NOT_FOUND', 'Trainee not found', 404)
+                return apiError('NOT_FOUND', 'Trainee not found', 404, undefined, 'trainee.notFound')
             }
 
             if (trainee.role !== 'trainee') {
-                return apiError('VALIDATION_ERROR', 'User must have trainee role', 400)
+                return apiError('VALIDATION_ERROR', 'User must have trainee role', 400, undefined, 'validation.userMustBeTrainee')
             }
 
             // If trainer, verify they own/manage this trainee via TrainerTrainee
@@ -167,7 +167,7 @@ export async function PUT(
                     },
                 })
                 if (!trainerRelation) {
-                    return apiError('FORBIDDEN', 'You can only assign programs to your own trainees', 403)
+                    return apiError('FORBIDDEN', 'You can only assign programs to your own trainees', 403, undefined, 'program.assignDenied')
                 }
             }
         }
@@ -213,7 +213,7 @@ export async function PUT(
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error, programId: params.id }, 'Error updating program')
-        return apiError('INTERNAL_ERROR', 'Failed to update program', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to update program', 500, undefined, 'internal.default')
     }
 }
 
@@ -236,12 +236,12 @@ export async function DELETE(
         })
 
         if (!program) {
-            return apiError('NOT_FOUND', 'Program not found', 404)
+            return apiError('NOT_FOUND', 'Program not found', 404, undefined, 'program.notFound')
         }
 
         // RBAC: Check ownership
         if (session.user.role === 'trainer' && program.trainerId !== session.user.id) {
-            return apiError('FORBIDDEN', 'You can only delete your own programs', 403)
+            return apiError('FORBIDDEN', 'You can only delete your own programs', 403, undefined, 'program.deleteDenied')
         }
 
         // Check status: only draft can be deleted (unless admin)
@@ -264,6 +264,6 @@ export async function DELETE(
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error, programId: params.id }, 'Error deleting program')
-        return apiError('INTERNAL_ERROR', 'Failed to delete program', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to delete program', 500, undefined, 'internal.default')
     }
 }

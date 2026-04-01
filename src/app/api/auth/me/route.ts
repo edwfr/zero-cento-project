@@ -10,7 +10,7 @@ export async function GET() {
         const session = await getSession()
 
         if (!session) {
-            return apiError('UNAUTHORIZED', 'Authentication required', 401)
+            return apiError('UNAUTHORIZED', 'Authentication required', 401, undefined, 'auth.required')
         }
 
         return apiSuccess({
@@ -22,6 +22,6 @@ export async function GET() {
             isActive: session.user.isActive,
         })
     } catch (error: any) {
-        return apiError('INTERNAL_ERROR', error.message || 'Failed to fetch user data', 500)
+        return apiError('INTERNAL_ERROR', error.message || 'Failed to fetch user data', 500, undefined, 'internal.default')
     }
 }

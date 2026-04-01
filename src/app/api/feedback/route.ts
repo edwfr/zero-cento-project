@@ -147,7 +147,7 @@ export async function GET(request: NextRequest) {
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error fetching feedback')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch feedback', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to fetch feedback', 500, undefined, 'internal.default')
     }
 }
 
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
 
         const validation = feedbackSchema.safeParse(body)
         if (!validation.success) {
-            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors)
+            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors, 'validation.invalidInput')
         }
 
         const { workoutExerciseId, notes, sets, completed, actualRpe } = validation.data
@@ -189,12 +189,12 @@ export async function POST(request: NextRequest) {
         })
 
         if (!workoutExercise) {
-            return apiError('NOT_FOUND', 'Workout exercise not found', 404)
+            return apiError('NOT_FOUND', 'Workout exercise not found', 404, undefined, 'workoutExercise.notFound')
         }
 
         // Verify trainee owns this workout
         if (workoutExercise.workout.week.program.traineeId !== session.user.id) {
-            return apiError('FORBIDDEN', 'You can only create feedback for your own workouts', 403)
+            return apiError('FORBIDDEN', 'You can only create feedback for your own workouts', 403, undefined, 'feedback.createDenied')
         }
 
         // Check if feedback already exists (idempotency by date)
@@ -309,6 +309,6 @@ export async function POST(request: NextRequest) {
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error creating/updating feedback')
-        return apiError('INTERNAL_ERROR', 'Failed to save feedback', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to save feedback', 500, undefined, 'internal.default')
     }
 }

@@ -21,7 +21,7 @@ export async function POST(
 
         const validation = workoutExerciseSchema.safeParse(body)
         if (!validation.success) {
-            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors)
+            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors, 'validation.invalidInput')
         }
 
         const {
@@ -52,12 +52,12 @@ export async function POST(
         })
 
         if (!programwithWeeks) {
-            return apiError('NOT_FOUND', 'Program not found', 404)
+            return apiError('NOT_FOUND', 'Program not found', 404, undefined, 'program.notFound')
         }
 
         // Check ownership
         if (session.user.role === 'trainer' && programwithWeeks.trainerId !== session.user.id) {
-            return apiError('FORBIDDEN', 'You can only modify your own programs', 403)
+            return apiError('FORBIDDEN', 'You can only modify your own programs', 403, undefined, 'program.modifyDenied')
         }
 
         // Check if program is draft
@@ -72,7 +72,7 @@ export async function POST(
         // Verify workout exists in this program
         const workout = programwithWeeks.weeks.flatMap((w: any) => w.workouts).find((w: any) => w.id === workoutId)
         if (!workout) {
-            return apiError('NOT_FOUND', 'Workout not found in this program', 404)
+            return apiError('NOT_FOUND', 'Workout not found in this program', 404, undefined, 'workout.notFoundInProgram')
         }
 
         // Verify exercise exists
@@ -81,7 +81,7 @@ export async function POST(
         })
 
         if (!exercise) {
-            return apiError('NOT_FOUND', 'Exercise not found', 404)
+            return apiError('NOT_FOUND', 'Exercise not found', 404, undefined, 'exercise.notFound')
         }
 
         // If no order provided, add to end
@@ -141,6 +141,6 @@ export async function POST(
             { error, programId: params.id, workoutId: params.workoutId },
             'Error adding exercise to workout'
         )
-        return apiError('INTERNAL_ERROR', 'Failed to add exercise to workout', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to add exercise to workout', 500, undefined, 'internal.default')
     }
 }

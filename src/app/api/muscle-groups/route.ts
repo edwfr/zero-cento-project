@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error fetching muscle groups')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch muscle groups', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to fetch muscle groups', 500, undefined, 'internal.default')
     }
 }
 
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
 
         const validation = muscleGroupSchema.safeParse(body)
         if (!validation.success) {
-            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors)
+            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors, 'validation.invalidInput')
         }
 
         const { name, description } = validation.data
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
         })
 
         if (existing) {
-            return apiError('CONFLICT', 'Muscle group with this name already exists', 409)
+            return apiError('CONFLICT', 'Muscle group with this name already exists', 409, undefined, 'muscleGroup.nameExists')
         }
 
         const muscleGroup = await prisma.muscleGroup.create({
@@ -79,6 +79,6 @@ export async function POST(request: NextRequest) {
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error creating muscle group')
-        return apiError('INTERNAL_ERROR', 'Failed to create muscle group', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to create muscle group', 500, undefined, 'internal.default')
     }
 }

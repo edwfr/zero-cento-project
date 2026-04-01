@@ -57,25 +57,25 @@ export async function GET(
         })
 
         if (!feedback) {
-            return apiError('NOT_FOUND', 'Feedback not found', 404)
+            return apiError('NOT_FOUND', 'Feedback not found', 404, undefined, 'feedback.notFound')
         }
 
         // RBAC: Check access
         const program = feedback.workoutExercise.workout.week.program
 
         if (session.user.role === 'trainer' && program.trainerId !== session.user.id) {
-            return apiError('FORBIDDEN', 'You can only view feedback from your trainees', 403)
+            return apiError('FORBIDDEN', 'You can only view feedback from your trainees', 403, undefined, 'feedback.viewDenied')
         }
 
         if (session.user.role === 'trainee' && program.traineeId !== session.user.id) {
-            return apiError('FORBIDDEN', 'You can only view your own feedback', 403)
+            return apiError('FORBIDDEN', 'You can only view your own feedback', 403, undefined, 'feedback.viewOwnDenied')
         }
 
         return apiSuccess({ feedback })
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error, feedbackId: params.id }, 'Error fetching feedback')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch feedback', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to fetch feedback', 500, undefined, 'internal.default')
     }
 }
 
@@ -94,7 +94,7 @@ export async function PUT(
 
         const validation = feedbackSchema.safeParse(body)
         if (!validation.success) {
-            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors)
+            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors, 'validation.invalidInput')
         }
 
         const { workoutExerciseId, notes, sets, completed, actualRpe } = validation.data
@@ -120,12 +120,12 @@ export async function PUT(
         })
 
         if (!existing) {
-            return apiError('NOT_FOUND', 'Feedback not found', 404)
+            return apiError('NOT_FOUND', 'Feedback not found', 404, undefined, 'feedback.notFound')
         }
 
         // Verify trainee owns this feedback
         if (existing.workoutExercise.workout.week.program.traineeId !== session.user.id) {
-            return apiError('FORBIDDEN', 'You can only modify your own feedback', 403)
+            return apiError('FORBIDDEN', 'You can only modify your own feedback', 403, undefined, 'feedback.modifyDenied')
         }
 
         // Check 24h time limit
@@ -183,6 +183,6 @@ export async function PUT(
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error, feedbackId: params.id }, 'Error updating feedback')
-        return apiError('INTERNAL_ERROR', 'Failed to update feedback', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to update feedback', 500, undefined, 'internal.default')
     }
 }

@@ -27,14 +27,14 @@ export async function GET(request: NextRequest) {
 
         const validation = exerciseFilterSchema.safeParse(filterParams)
         if (!validation.success) {
-            return apiError('VALIDATION_ERROR', 'Invalid filter parameters', 400, validation.error.errors)
+            return apiError('VALIDATION_ERROR', 'Invalid filter parameters', 400, validation.error.errors, 'validation.invalidFilterParams')
         }
 
         const { type, movementPatternId, muscleGroupId, search, cursor, limit } = validation.data
 
         // Validate search parameter length
         if (search && (search.length < 2 || search.length > 100)) {
-            return apiError('VALIDATION_ERROR', 'Search parameter must be between 2 and 100 characters', 400)
+            return apiError('VALIDATION_ERROR', 'Search parameter must be between 2 and 100 characters', 400, undefined, 'validation.searchLength')
         }
 
         // Build where clause
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error fetching exercises')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch exercises', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to fetch exercises', 500, undefined, 'internal.default')
     }
 }
 
@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
 
         const validation = exerciseSchema.safeParse(body)
         if (!validation.success) {
-            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors)
+            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors, 'validation.invalidInput')
         }
 
         const { name, description, youtubeUrl, type, movementPatternId, muscleGroups, notes } = validation.data
@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
         })
 
         if (existing) {
-            return apiError('CONFLICT', 'Exercise with this name already exists', 409)
+            return apiError('CONFLICT', 'Exercise with this name already exists', 409, undefined, 'exercise.nameExists')
         }
 
         // Verify movement pattern exists
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
         })
 
         if (!movementPattern) {
-            return apiError('NOT_FOUND', 'Movement pattern not found', 404)
+            return apiError('NOT_FOUND', 'Movement pattern not found', 404, undefined, 'movementPattern.notFound')
         }
 
         // Verify all muscle groups exist
@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
             })
 
             if (existingMuscleGroups.length !== muscleGroupIds.length) {
-                return apiError('NOT_FOUND', 'One or more muscle groups not found', 404)
+                return apiError('NOT_FOUND', 'One or more muscle groups not found', 404, undefined, 'muscleGroup.someNotFound')
             }
 
             // Validate coefficients sum (must be between 0.1 and 3.0)
@@ -230,6 +230,6 @@ export async function POST(request: NextRequest) {
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error creating exercise')
-        return apiError('INTERNAL_ERROR', 'Failed to create exercise', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to create exercise', 500, undefined, 'internal.default')
     }
 }

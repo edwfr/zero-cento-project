@@ -29,6 +29,6 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error archiving muscle group')
-        return apiError('INTERNAL_ERROR', 'Failed to archive muscle group', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to archive muscle group', 500, undefined, 'internal.default')
     }
 }

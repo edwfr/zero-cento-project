@@ -51,14 +51,14 @@ export async function GET(
         })
 
         if (!exercise) {
-            return apiError('NOT_FOUND', 'Exercise not found', 404)
+            return apiError('NOT_FOUND', 'Exercise not found', 404, undefined, 'exercise.notFound')
         }
 
         return apiSuccess({ exercise })
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error, exerciseId: params.id }, 'Error fetching exercise')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch exercise', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to fetch exercise', 500, undefined, 'internal.default')
     }
 }
 
@@ -77,7 +77,7 @@ export async function PUT(
 
         const validation = exerciseSchema.safeParse(body)
         if (!validation.success) {
-            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors)
+            return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors, 'validation.invalidInput')
         }
 
         const { name, description, youtubeUrl, type, movementPatternId, muscleGroups, notes } = validation.data
@@ -88,12 +88,12 @@ export async function PUT(
         })
 
         if (!existing) {
-            return apiError('NOT_FOUND', 'Exercise not found', 404)
+            return apiError('NOT_FOUND', 'Exercise not found', 404, undefined, 'exercise.notFound')
         }
 
         // Check ownership: trainers can only modify their own exercises, admins can modify any
         if (session.user.role === 'trainer' && existing.createdBy !== session.user.id) {
-            return apiError('FORBIDDEN', 'You can only modify exercises you created', 403)
+            return apiError('FORBIDDEN', 'You can only modify exercises you created', 403, undefined, 'exercise.modifyDenied')
         }
 
         // Check if new name conflicts with another exercise
@@ -111,7 +111,7 @@ export async function PUT(
             })
 
             if (nameConflict) {
-                return apiError('CONFLICT', 'Exercise with this name already exists', 409)
+                return apiError('CONFLICT', 'Exercise with this name already exists', 409, undefined, 'exercise.nameExists')
             }
         }
 
@@ -121,7 +121,7 @@ export async function PUT(
         })
 
         if (!movementPattern) {
-            return apiError('NOT_FOUND', 'Movement pattern not found', 404)
+            return apiError('NOT_FOUND', 'Movement pattern not found', 404, undefined, 'movementPattern.notFound')
         }
 
         // Verify all muscle groups exist
@@ -133,7 +133,7 @@ export async function PUT(
         })
 
         if (existingMuscleGroups.length !== muscleGroupIds.length) {
-            return apiError('NOT_FOUND', 'One or more muscle groups not found', 404)
+            return apiError('NOT_FOUND', 'One or more muscle groups not found', 404, undefined, 'muscleGroup.someNotFound')
         }
 
         // Validate coefficients sum (must be between 0.1 and 3.0)
@@ -200,7 +200,7 @@ export async function PUT(
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error, exerciseId: params.id }, 'Error updating exercise')
-        return apiError('INTERNAL_ERROR', 'Failed to update exercise', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to update exercise', 500, undefined, 'internal.default')
     }
 }
 
@@ -222,12 +222,12 @@ export async function DELETE(
         })
 
         if (!exercise) {
-            return apiError('NOT_FOUND', 'Exercise not found', 404)
+            return apiError('NOT_FOUND', 'Exercise not found', 404, undefined, 'exercise.notFound')
         }
 
         // Check ownership: trainers can only delete their own exercises, admins can delete any
         if (session.user.role === 'trainer' && exercise.createdBy !== session.user.id) {
-            return apiError('FORBIDDEN', 'You can only delete exercises you created', 403)
+            return apiError('FORBIDDEN', 'You can only delete exercises you created', 403, undefined, 'exercise.deleteDenied')
         }
 
         // Check if exercise is used in any active programs
@@ -283,6 +283,6 @@ export async function DELETE(
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error, exerciseId: params.id }, 'Error deleting exercise')
-        return apiError('INTERNAL_ERROR', 'Failed to delete exercise', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to delete exercise', 500, undefined, 'internal.default')
     }
 }
