@@ -19,12 +19,15 @@ Per stato task e priorità usare:
 - [NEXT_ACTIONS.md](./NEXT_ACTIONS.md)
 - [CHANGELOG.md](./CHANGELOG.md)
 
+Qualsiasi metrica diversa presente in documenti legacy o sezioni storiche non sovrascrive questo snapshot canonico.
+
 ---
 
 ## 📚 Appendice Storica (Non Canonica)
 
 Le sezioni seguenti descrivono snapshot precedenti e note di implementazione utili come contesto tecnico.
 Non devono essere usate come baseline di avanzamento corrente.
+Tutte le percentuali, effort e metriche riportate sotto sono riferite a uno snapshot storico (marzo 2026).
 
 ### 1. Configurazione Progetto Completa (100%)
 - ✅ **Next.js 14** con App Router
@@ -403,7 +406,7 @@ Il progetto **ZeroCento Training Platform** ha raggiunto un livello di implement
 
 ---
 
-## 🎯 Metriche Attuali
+## 🎯 Metriche Snapshot Storico (Marzo 2026)
 
 - **Progresso complessivo (storico)**: ~58% completato
 - **File creati**: 100+ (code + tests + docs)
@@ -416,7 +419,7 @@ Il progetto **ZeroCento Training Platform** ha raggiunto un livello di implement
 
 ---
 
-## 🎯 Priorità Sviluppo Rimanenti
+## 🎯 Priorità Sviluppo Rimanenti (Storiche)
 
 ### 🔴 CRITICO - Fix Sicurezza (Effort: ~4h)
 1. Fix RBAC bypass personal records

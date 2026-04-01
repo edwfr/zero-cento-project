@@ -13,7 +13,7 @@ Ambito review: design + implementation-docs
 - Buona attenzione iniziale a i18n, testing strategy, CI/CD e operativita.
 
 **Rischi principali**
-- Drift documentale: diversi file riportano stati di avanzamento e completion rate in conflitto.
+- Drift documentale mitigato: stato avanzamento canonico definito (CHECKLIST/NEXT_ACTIONS), con residui solo in snapshot storici.
 - Rischio di copy non uniforme: il posizionamento trainer-led e stato definito, ma va mantenuto coerente in tutti i documenti.
 - Rischio release: alcune aree operative (deploy, monitoring, test finale, PWA completa) risultano ancora parziali in checklist.
 
@@ -110,8 +110,8 @@ Ambito review: design + implementation-docs
 ## 6. CONSISTENCY CHECK (DESIGN vs IMPLEMENTATION)
 
 ### Mismatch rilevati
-- Stato avanzamento incoerente tra file (percentuali e claims differenti).
-- Alcuni documenti indicano quasi-completezza, altri backlog ancora sostanziale.
+- Stato avanzamento consolidato su fonte canonica; restano metriche legacy in appendici/changelog storico.
+- Le differenze residue sono tracciate come snapshot storici, non come stato operativo corrente.
 - Contratti endpoint e naming/metodi non sempre uniformi tra documenti.
 - Regole ownership / CRUD condiviso non sempre raccontate in modo identico.
 - Policy data lifecycle (soft-delete vs hard-delete) non sempre perfettamente consistente.
@@ -126,7 +126,7 @@ Ambito review: design + implementation-docs
 ## 7. CRITICAL RISKS (TOP PRIORITY)
 
 1. **Safety governance insufficiente per coaching fitness** (Critical)
-2. **Document drift su stato e contratti** (High)
+2. **Residuo rischio regressione documentale (governance continuativa)** (Medium)
 3. **Incoerenze autorizzative/policy in documentazione** (High)
 4. **Ambiguita su lifecycle e feedback semantics** (High)
 5. **Runbook/operativita non completamente chiusi** (Medium-High)
@@ -141,9 +141,9 @@ Ambito review: design + implementation-docs
   Recommended action: mantenere coerenza copy e scope nei documenti core  
   Area: Product / Documentation
 
-- [ ] Consolidare un solo stato avanzamento ufficiale  
-  Severity: High  
-  Recommended action: allineare README, SUMMARY, CHECKLIST, CHANGELOG con un unico baseline  
+- [x] Consolidare un solo stato avanzamento ufficiale  
+  Severity: Risolto  
+  Recommended action: mantenere CHECKLIST/NEXT_ACTIONS come fonte canonica e marcare i numeri storici come legacy  
   Area: Tech / Process
 
 - [ ] Normalizzare contratti API e metodi endpoint  
@@ -181,7 +181,7 @@ Ambito review: design + implementation-docs
 ## 9. IMPROVEMENT ROADMAP
 
 ### Short-term (quick wins, 1-2 settimane)
-- Unificare lo stato progetto e riallineare tutta la documentazione core.
+- Mantenere allineato lo stato progetto con review documentale periodica (anti-regressione).
 - Chiudere sprint 6/8/11 residui con evidenza verificabile (build, deploy, monitoring, test update).
 - Definire policy safety minima obbligatoria per il go-live.
 - Consolidare checklist di revisione doc per evitare nuovo drift tra README, summary e backlog.

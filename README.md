@@ -182,31 +182,21 @@ npm run dev
 Per task immediati e prioritizzati: [implementation-docs/NEXT_ACTIONS.md](implementation-docs/NEXT_ACTIONS.md)
 
 **Priorità correnti:**
-1. 🔴 **Fix sicurezza critici** (~4h) - RBAC bypass, validazioni
-2. 🟠 **API mancanti** (~11h) - Feedback creation, trainee workout view
-3. 🟠 **Frontend trainer** (~37h) - Workout editor, progress, reports
-4. 🟠 **Frontend trainee** (~8h) - Workout view con feedback form
-5. 🟡 **Testing** (~27h) - Raggiungere 80% coverage
+1. 🔴 **Sprint 6 (CI/CD & Deploy)** - 7 task aperti
+2. 🟠 **Sprint 8 (PWA & Final Polish)** - 7 task aperti
+3. 🟡 **Sprint 11 (I18n error-key rollout)** - 4 task aperti
 
 ---
 
 ## 📊 Stato Complessivo
 
-**Completamento (snapshot storico):** ~58%
+**Stato canonico (1 Aprile 2026):**
+- **Task completati:** 142/160 (~89%)
+- **Task aperti:** 18
+- **Sprint completati:** 1, 2, 3, 4, 5, 7, 9, 10
+- **Sprint aperti:** 6, 8, 11
 
-| Area                    | % Completamento | Note                                          |
-| ----------------------- | --------------- | --------------------------------------------- |
-| Infrastruttura & Config | 100%            | Production-ready                              |
-| Database & Schema       | 100%            | 14 entità con relazioni complete              |
-| Library & Utilities     | 100%            | Auth, validazione, calcoli business logic     |
-| Middleware & Security   | 95%             | Rate limiting, RBAC (fix minori richiesti)    |
-| API Endpoints           | 85%             | 29/34 implementati                            |
-| Frontend                | 52%             | 21/30 pagine funzionali                       |
-| Componenti UI           | 100%            | 27+ componenti implementati                   |
-| Testing                 | 30%             | Target 80% (unit + integration + E2E)         |
-| CI/CD & PWA             | 80%             | Pipeline funzionante, service worker parziale |
-
-**Effort rimanente stimato:** ~129h per raggiungere MVP production-ready 100%
+Fonte di verità: [implementation-docs/CHECKLIST.md](implementation-docs/CHECKLIST.md)
 
 ---
 
@@ -264,7 +254,7 @@ Per guide operative dettagliate, checklist e stato avanzamento vedi:
 **[📁 implementation-docs/](implementation-docs/)** - Documentazione fase di implementazione
 
 Contiene:
-- **[IMPLEMENTATION_SUMMARY.md](implementation-docs/IMPLEMENTATION_SUMMARY.md)** - Riepilogo avanzamento (~58% completato)
+- **[IMPLEMENTATION_SUMMARY.md](implementation-docs/IMPLEMENTATION_SUMMARY.md)** - Snapshot canonico + appendice storica
 - **[QUICK_START.md](implementation-docs/QUICK_START.md)** - Guida rapida setup progetto (15 minuti)
 - **[NEXT_ACTIONS.md](implementation-docs/NEXT_ACTIONS.md)** - Prossimi step immediati
 - **[IMPLEMENTATION_PROMPT.md](implementation-docs/IMPLEMENTATION_PROMPT.md)** - Requisiti e specifiche tecniche

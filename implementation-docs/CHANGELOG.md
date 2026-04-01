@@ -1,6 +1,8 @@
 # 📋 CHANGELOG - ZeroCento Training Platform
 
 Registro cronologico degli sviluppi effettuati.  
+Le metriche percentuali nelle entry sono snapshot storici della data dell'entry.  
+Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).  
 **Checklist task pendenti:** [CHECKLIST.md](./CHECKLIST.md)  
 **Review sistema:** [SYSTEM_REVIEW.md](../SYSTEM_REVIEW.md)
 
@@ -326,7 +328,7 @@ Registro cronologico degli sviluppi effettuati.
 - GitHub Actions CI/CD pipeline
 - Documentazione: 17 file markdown
 
-**Stato raggiunto:** ~58% completamento complessivo
+**Stato raggiunto (snapshot storico 30 Mar 2026):** ~58% completamento complessivo
 
 ---
 
@@ -340,7 +342,7 @@ Registro cronologico degli sviluppi effettuati.
 - Creato [CHECKLIST.md](./CHECKLIST.md) — checklist sviluppo con 49 task in 8 sprint
 - Creato questo file [CHANGELOG.md](./CHANGELOG.md)
 
-**Note:** La documentazione precedente dichiarava ~40% di completamento; l'analisi reale del codice ha rilevato ~58%. Le percentuali sono ora allineate in tutti i file.
+**Note:** La documentazione precedente dichiarava ~40% di completamento; l'analisi reale del codice ha rilevato ~58% in quello snapshot. Lo stato corrente e canonico e mantenuto in [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 

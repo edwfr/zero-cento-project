@@ -2,11 +2,14 @@
 
 **Utilizza questo prompt per chiedere all'agente di implementare le funzionalità mancanti.**
 
+> Documento legacy: le percentuali riportate sotto (20/80) sono uno snapshot storico e non rappresentano lo stato corrente.
+> Per stato canonico usare [CHECKLIST.md](./CHECKLIST.md) e [NEXT_ACTIONS.md](./NEXT_ACTIONS.md).
+
 ---
 
-## 📋 CHECKLIST STATO ATTUALE
+## 📋 CHECKLIST STATO STORICO (LEGACY)
 
-### ✅ Completato (~20%)
+### ✅ Completato (~20%, storico)
 - Setup progetto Next.js + TypeScript + Tailwind
 - Database schema Prisma (14 entità)
 - Librerie utility (auth, API response, calculations, validations)
@@ -17,7 +20,7 @@
 - Dashboard layout base (Admin, Trainer, Trainee)
 - Componenti: UsersTable, ExercisesTable, ProfileForm, modali User CRUD
 
-### ❌ Da Implementare (~80%)
+### ❌ Da Implementare (~80%, storico)
 - **API Backend:** Exercises (detail/edit/delete), Programs (completo), Workout Exercises, Feedback, Personal Records
 - **Frontend Trainer:** Dashboard funzionante, gestione esercizi, gestione trainee, wizard creazione programma (4 step)
 - **Frontend Trainee:** Dashboard funzionante, vista programma attivo, dettaglio workout con feedback form
