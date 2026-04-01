@@ -357,6 +357,8 @@
         "editExerciseTitle": "Edit Exercise",
         "addExerciseTitle": "Add Exercise",
         "exerciseLabel": "Exercise",
+        "variantLabel": "Variant",
+        "variantHelp": "Select a variant from the list or enter custom text (optional)",
         "setsLabel": "Sets",
         "rpeTargetLabel": "RPE Target (optional)",
         "weightLabel": "Weight",

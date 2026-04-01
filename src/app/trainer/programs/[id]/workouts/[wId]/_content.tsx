@@ -19,6 +19,7 @@ interface Exercise {
     id: string
     name: string
     type: 'fundamental' | 'accessory'
+    notes?: string[] // Array of variants/notes
 }
 
 interface WorkoutExercise {
@@ -544,12 +545,20 @@ export default function WorkoutDetailContent() {
                                     value={variant}
                                     onChange={(e) => setVariant(e.target.value)}
                                     disabled={saving}
+                                    list="variant-options"
                                     placeholder="es. bilanciere, manubri, presa stretta..."
                                     maxLength={100}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
                                 />
+                                {selectedExerciseId && exercises.find(ex => ex.id === selectedExerciseId)?.notes && exercises.find(ex => ex.id === selectedExerciseId)!.notes!.length > 0 && (
+                                    <datalist id="variant-options">
+                                        {exercises.find(ex => ex.id === selectedExerciseId)!.notes!.map((note, index) => (
+                                            <option key={index} value={note} />
+                                        ))}
+                                    </datalist>
+                                )}
                                 <p className="text-xs text-gray-500 mt-1">
-                                    {t('workoutDetail.variantHelp') || 'Specifica una variante dell\'esercizio (opzionale)'}
+                                    {t('workoutDetail.variantHelp')}
                                 </p>
                             </div>
 

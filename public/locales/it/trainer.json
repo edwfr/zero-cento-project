@@ -357,6 +357,8 @@
         "editExerciseTitle": "Modifica Esercizio",
         "addExerciseTitle": "Aggiungi Esercizio",
         "exerciseLabel": "Esercizio",
+        "variantLabel": "Variante",
+        "variantHelp": "Seleziona una variante dalla lista o inserisci testo libero (opzionale)",
         "setsLabel": "Serie",
         "rpeTargetLabel": "RPE Target (opzionale)",
         "weightLabel": "Peso (opzionale)",
