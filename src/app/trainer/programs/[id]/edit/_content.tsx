@@ -72,20 +72,16 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
     // Ricarica i dati quando si torna alla pagina (ad esempio dopo aver modificato un workout)
     useEffect(() => {
-        const handleRefresh = () => {
-            if (!loadingRef.current) {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible' && !loadingRef.current) {
                 fetchProgram()
             }
         }
 
-        window.addEventListener('focus', handleRefresh)
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') handleRefresh()
-        })
+        document.addEventListener('visibilitychange', handleVisibilityChange)
 
         return () => {
-            window.removeEventListener('focus', handleRefresh)
-            document.removeEventListener('visibilitychange', handleRefresh)
+            document.removeEventListener('visibilitychange', handleVisibilityChange)
         }
     }, []) // array vuoto: si registra una sola volta
 

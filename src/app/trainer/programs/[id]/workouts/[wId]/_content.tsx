@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
@@ -14,7 +14,22 @@ import MovementPatternTag from '@/components/MovementPatternTag'
 import { WeightType, RestTime } from '@prisma/client'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { FileText, Pencil, Trash2, Dumbbell, Lock, Unlock } from 'lucide-react'
+import { FileText, Pencil, Trash2, Dumbbell, Lock, Unlock, GripVertical } from 'lucide-react'
+import {
+    DndContext,
+    closestCenter,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+} from '@dnd-kit/core'
+import {
+    SortableContext,
+    verticalListSortingStrategy,
+    useSortable,
+    arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 interface Exercise {
     id: string
@@ -73,6 +88,31 @@ interface PersonalRecord {
         name: string
         type: 'fundamental' | 'accessory'
     }
+}
+
+function SortableExerciseItem({ id, children }: { id: string; children: React.ReactNode }) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    }
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            className="bg-white rounded-lg shadow-md p-4"
+        >
+            <div className="flex items-start gap-2">
+                <div {...attributes} {...listeners} className="mt-1 flex items-center text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing touch-none">
+                    <GripVertical className="w-5 h-5" />
+                </div>
+                <div className="flex-1">
+                    {children}
+                </div>
+            </div>
+        </div>
+    )
 }
 
 export default function WorkoutDetailContent() {
@@ -319,44 +359,39 @@ export default function WorkoutDetailContent() {
         })
     }
 
-    const handleMoveExercise = async (workoutExerciseId: string, direction: 'up' | 'down') => {
+    const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
+    const handleDragEnd = async (event: DragEndEvent) => {
         if (!workout) return
+        const { active, over } = event
+        if (!over || active.id === over.id) return
 
         const exercises = [...workout.workoutExercises].sort((a, b) => a.order - b.order)
-        const index = exercises.findIndex((e) => e.id === workoutExerciseId)
+        const oldIndex = exercises.findIndex((e) => e.id === active.id)
+        const newIndex = exercises.findIndex((e) => e.id === over.id)
 
-        if (
-            (direction === 'up' && index === 0) ||
-            (direction === 'down' && index === exercises.length - 1)
-        ) {
-            return
-        }
+        const reordered = arrayMove(exercises, oldIndex, newIndex)
 
-        const newIndex = direction === 'up' ? index - 1 : index + 1
-
-        // Swap orders
-        const temp = exercises[index].order
-        exercises[index].order = exercises[newIndex].order
-        exercises[newIndex].order = temp
+        // Optimistic update
+        setWorkout(prev => prev ? {
+            ...prev,
+            workoutExercises: reordered.map((ex, i) => ({ ...ex, order: i + 1 }))
+        } : prev)
 
         try {
-            // Update both exercises
-            await Promise.all([
-                fetch(`/api/programs/${programId}/workouts/${workoutId}/exercises/${exercises[index].id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ order: exercises[index].order }),
-                }),
-                fetch(`/api/programs/${programId}/workouts/${workoutId}/exercises/${exercises[newIndex].id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ order: exercises[newIndex].order }),
-                }),
-            ])
-
+            await Promise.all(
+                reordered.map((ex, i) =>
+                    fetch(`/api/programs/${programId}/workouts/${workoutId}/exercises/${ex.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ order: i + 1 }),
+                    })
+                )
+            )
             await fetchData()
         } catch (err: unknown) {
             showToast(err instanceof Error ? err.message : String(err), 'error')
+            await fetchData()
         }
     }
 
@@ -521,130 +556,113 @@ export default function WorkoutDetailContent() {
 
                 {/* Exercises List */}
                 {sortedExercises.length > 0 ? (
-                    <div className="space-y-3 mb-6">
-                        {sortedExercises.map((we, index) => (
-                            <div key={we.id} className="bg-white rounded-lg shadow-md p-4">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                        <div className="flex items-center justify-between mb-1">
-                                            <div className="flex items-center space-x-2">
-                                                <span className="text-xl font-bold text-gray-400">
-                                                    {index + 1}
-                                                </span>
-                                                <h3 className="text-lg font-bold text-gray-900">
-                                                    {we.exercise.name}
-                                                    {we.variant && (
-                                                        <span className="text-gray-600 font-normal ml-2">({we.variant})</span>
-                                                    )}
-                                                </h3>
-                                                <span
-                                                    className={`rounded-full border px-2 py-0.5 text-xs font-medium ${we.exercise.type === 'fundamental'
-                                                        ? 'bg-red-100 text-red-700 border-red-300'
-                                                        : 'bg-blue-100 text-blue-700 border-blue-300'
-                                                        }`}
-                                                >
-                                                    {we.exercise.type === 'fundamental'
-                                                        ? t('exercises.fundamental')
-                                                        : t('exercises.accessory')}
-                                                </span>
-                                                <MovementPatternTag
-                                                    name={we.exercise.movementPattern.name}
-                                                    color={we.exercise.movementPattern.color}
-                                                />
-                                                {we.isWarmup && (
-                                                    <span className="px-1.5 py-0.5 text-xs font-semibold rounded bg-yellow-100 text-yellow-800">
-                                                        🔥 {t('workoutDetail.warmupTag')}
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                        <SortableContext items={sortedExercises.map(e => e.id)} strategy={verticalListSortingStrategy}>
+                            <div className="space-y-3 mb-6">
+                                {sortedExercises.map((we, index) => (
+                                    <SortableExerciseItem key={we.id} id={we.id}>
+                                        <div>
+                                            <div className="flex items-center justify-between mb-1">
+                                                <div className="flex items-center space-x-2">
+                                                    <span className="text-xl font-bold text-gray-400">
+                                                        {index + 1}
                                                     </span>
-                                                )}
+                                                    <h3 className="text-lg font-bold text-gray-900">
+                                                        {we.exercise.name}
+                                                        {we.variant && (
+                                                            <span className="text-gray-600 font-normal ml-2">({we.variant})</span>
+                                                        )}
+                                                    </h3>
+                                                    <span
+                                                        className={`rounded-full border px-2 py-0.5 text-xs font-medium ${we.exercise.type === 'fundamental'
+                                                            ? 'bg-red-100 text-red-700 border-red-300'
+                                                            : 'bg-blue-100 text-blue-700 border-blue-300'
+                                                            }`}
+                                                    >
+                                                        {we.exercise.type === 'fundamental'
+                                                            ? t('exercises.fundamental')
+                                                            : t('exercises.accessory')}
+                                                    </span>
+                                                    <MovementPatternTag
+                                                        name={we.exercise.movementPattern.name}
+                                                        color={we.exercise.movementPattern.color}
+                                                    />
+                                                    {we.isWarmup && (
+                                                        <span className="px-1.5 py-0.5 text-xs font-semibold rounded bg-yellow-100 text-yellow-800">
+                                                            🔥 {t('workoutDetail.warmupTag')}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <button
+                                                        onClick={() => loadExerciseForEdit(we)}
+                                                        className="p-1.5 text-[#FFA700] hover:text-[#FF9500] hover:bg-orange-50 rounded transition-colors"
+                                                        title={t('workoutDetail.editBtn')}
+                                                    >
+                                                        <Pencil className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteExercise(we.id)}
+                                                        className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                                                        title={t('workoutDetail.deleteBtn')}
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div className="flex items-center space-x-2">
-                                                <button
-                                                    onClick={() => loadExerciseForEdit(we)}
-                                                    className="p-1.5 text-[#FFA700] hover:text-[#FF9500] hover:bg-orange-50 rounded transition-colors"
-                                                    title={t('workoutDetail.editBtn')}
-                                                >
-                                                    <Pencil className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteExercise(we.id)}
-                                                    className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
-                                                    title={t('workoutDetail.deleteBtn')}
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
+
+                                            <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mt-3">
+                                                <div>
+                                                    <p className="text-xs text-gray-500 mb-0.5">{t('workoutDetail.setsCol')}</p>
+                                                    <p className="text-base font-semibold text-gray-900">
+                                                        {we.sets}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-gray-500 mb-0.5">
+                                                        {t('workoutDetail.repsCol')}
+                                                    </p>
+                                                    <p className="text-base font-semibold text-gray-900">
+                                                        {we.reps}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-gray-500 mb-0.5">{t('workoutDetail.restCol')}</p>
+                                                    <p className="text-base font-semibold text-gray-900">
+                                                        {getRestTimeLabel(we.restTime)}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-gray-500 mb-0.5">{t('workoutDetail.rpeCol')}</p>
+                                                    <p className="text-base font-semibold text-gray-900">
+                                                        {we.targetRpe ?? '-'}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-gray-500 mb-0.5">{t('workoutDetail.weightTypeCol')}</p>
+                                                    <p className="text-base font-semibold text-gray-900">
+                                                        {getWeightTypeLabel(we.weightType)}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-gray-500 mb-0.5">{t('workoutDetail.weightCol')}</p>
+                                                    <p className="text-base font-semibold text-gray-900">
+                                                        {we.weight ? `${we.weight}` : '-'}
+                                                    </p>
+                                                </div>
                                             </div>
+
+                                            {we.notes && (
+                                                <p className="text-sm text-gray-600 mt-2 italic">
+                                                    📝 {we.notes}
+                                                </p>
+                                            )}
                                         </div>
-
-                                        <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mt-3">
-                                            <div>
-                                                <p className="text-xs text-gray-500 mb-0.5">{t('workoutDetail.setsCol')}</p>
-                                                <p className="text-base font-semibold text-gray-900">
-                                                    {we.sets}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-gray-500 mb-0.5">
-                                                    {t('workoutDetail.repsCol')}
-                                                </p>
-                                                <p className="text-base font-semibold text-gray-900">
-                                                    {we.reps}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-gray-500 mb-0.5">{t('workoutDetail.restCol')}</p>
-                                                <p className="text-base font-semibold text-gray-900">
-                                                    {getRestTimeLabel(we.restTime)}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-gray-500 mb-0.5">{t('workoutDetail.rpeCol')}</p>
-                                                <p className="text-base font-semibold text-gray-900">
-                                                    {we.targetRpe ?? '-'}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-gray-500 mb-0.5">{t('workoutDetail.weightTypeCol')}</p>
-                                                <p className="text-base font-semibold text-gray-900">
-                                                    {getWeightTypeLabel(we.weightType)}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-gray-500 mb-0.5">{t('workoutDetail.weightCol')}</p>
-                                                <p className="text-base font-semibold text-gray-900">
-                                                    {we.weight ? `${we.weight}` : '-'}
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        {we.notes && (
-                                            <p className="text-sm text-gray-600 mt-2 italic">
-                                                📝 {we.notes}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="flex flex-col space-y-1 ml-3">
-                                        <button
-                                            onClick={() => handleMoveExercise(we.id, 'up')}
-                                            disabled={index === 0}
-                                            className="p-1 text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed"
-                                            title={t('workoutDetail.moveUp')}
-                                        >
-                                            ▲
-                                        </button>
-                                        <button
-                                            onClick={() => handleMoveExercise(we.id, 'down')}
-                                            disabled={index === sortedExercises.length - 1}
-                                            className="p-1 text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed"
-                                            title={t('workoutDetail.moveDown')}
-                                        >
-                                            ▼
-                                        </button>
-                                    </div>
-                                </div>
+                                    </SortableExerciseItem>
+                                ))}
                             </div>
-                        ))}
-                    </div>
+                        </SortableContext>
+                    </DndContext>
                 ) : (
                     <div className="bg-white rounded-lg shadow-md p-12 text-center mb-6">
                         <div className="text-5xl mb-4">💪</div>
