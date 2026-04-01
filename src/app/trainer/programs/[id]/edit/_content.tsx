@@ -8,7 +8,7 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/components/ToastNotification'
 import EditProgramMetadata from './EditProgramMetadata'
-import { ClipboardList, Flame, Wind, ArrowLeft } from 'lucide-react'
+import { ClipboardList, Flame, Wind, ArrowLeft, FileEdit } from 'lucide-react'
 
 interface Workout {
     id: string
@@ -38,7 +38,11 @@ interface Program {
     weeks: Week[]
 }
 
-export default function EditProgramContent() {
+interface EditProgramContentProps {
+    readOnly?: boolean
+}
+
+export default function EditProgramContent({ readOnly = false }: EditProgramContentProps) {
     const router = useRouter()
     const params = useParams()
     const programId = params.id as string
@@ -150,31 +154,33 @@ export default function EditProgramContent() {
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Progress Indicator */}
-                <div className="mb-8">
-                    <div className="flex items-center justify-center space-x-4 mb-4">
-                        <div className="flex items-center">
-                            <div className="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center font-bold">
-                                ✓
+                {/* Progress Indicator - Only in Edit Mode */}
+                {!readOnly && (
+                    <div className="mb-8">
+                        <div className="flex items-center justify-center space-x-4 mb-4">
+                            <div className="flex items-center">
+                                <div className="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center font-bold">
+                                    ✓
+                                </div>
+                                <span className="ml-2 font-semibold text-gray-900">{t('editProgram.stepSetup')}</span>
                             </div>
-                            <span className="ml-2 font-semibold text-gray-900">{t('editProgram.stepSetup')}</span>
-                        </div>
-                        <div className="w-16 h-1 bg-[#FFA700]"></div>
-                        <div className="flex items-center">
-                            <div className="w-10 h-10 bg-[#FFA700] text-white rounded-full flex items-center justify-center font-bold">
-                                2
+                            <div className="w-16 h-1 bg-[#FFA700]"></div>
+                            <div className="flex items-center">
+                                <div className="w-10 h-10 bg-[#FFA700] text-white rounded-full flex items-center justify-center font-bold">
+                                    2
+                                </div>
+                                <span className="ml-2 font-semibold text-gray-900">{t('editProgram.stepExercises')}</span>
                             </div>
-                            <span className="ml-2 font-semibold text-gray-900">{t('editProgram.stepExercises')}</span>
-                        </div>
-                        <div className="w-16 h-1 bg-gray-300"></div>
-                        <div className="flex items-center">
-                            <div className="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">
-                                3
+                            <div className="w-16 h-1 bg-gray-300"></div>
+                            <div className="flex items-center">
+                                <div className="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">
+                                    3
+                                </div>
+                                <span className="ml-2 text-gray-500">{t('editProgram.stepPublish')}</span>
                             </div>
-                            <span className="ml-2 text-gray-500">{t('editProgram.stepPublish')}</span>
                         </div>
                     </div>
-                </div>
+                )}
 
                 {/* Header */}
                 <div className="mb-8">
@@ -193,15 +199,28 @@ export default function EditProgramContent() {
                                 {t('editProgram.programMeta', { duration: program.durationWeeks, perWeek: program.workoutsPerWeek })}
                             </p>
                         </div>
-                        <EditProgramMetadata
-                            programId={programId}
-                            initialTitle={program.title}
-                            initialTraineeId={program.trainee.id}
-                            initialDurationWeeks={program.durationWeeks}
-                            initialWorkoutsPerWeek={program.workoutsPerWeek}
-                            status={program.status}
-                            onUpdate={fetchProgram}
-                        />
+                        <div>
+                            {readOnly && program.status === 'draft' && (
+                                <Link
+                                    href={`/trainer/programs/${programId}/edit`}
+                                    className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold py-2 px-4 rounded-lg transition-colors inline-flex items-center gap-2"
+                                >
+                                    <FileEdit className="w-4 h-4" />
+                                    {t('editProgram.editProgram', 'Modifica Programma')}
+                                </Link>
+                            )}
+                            {!readOnly && (
+                                <EditProgramMetadata
+                                    programId={programId}
+                                    initialTitle={program.title}
+                                    initialTraineeId={program.trainee.id}
+                                    initialDurationWeeks={program.durationWeeks}
+                                    initialWorkoutsPerWeek={program.workoutsPerWeek}
+                                    status={program.status}
+                                    onUpdate={fetchProgram}
+                                />
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -241,41 +260,64 @@ export default function EditProgramContent() {
                                     <h3 className="text-xl font-bold text-gray-900">
                                         {t('editProgram.week')} {week.weekNumber}
                                     </h3>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={() => handleWeekTypeChange(week.id, 'normal')}
-                                            disabled={saving}
-                                            className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all flex items-center gap-1.5 ${week.weekType === 'normal'
-                                                ? 'bg-gray-500 text-white border-gray-500'
-                                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                                                }`}
-                                        >
-                                            <ClipboardList className="w-3.5 h-3.5" />
-                                            Standard
-                                        </button>
-                                        <button
-                                            onClick={() => handleWeekTypeChange(week.id, 'test')}
-                                            disabled={saving}
-                                            className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all flex items-center gap-1.5 ${week.weekType === 'test'
-                                                ? 'bg-week-test text-white border-week-test'
-                                                : 'bg-white text-week-test-dark border-week-test hover:bg-week-test-light'
-                                                }`}
-                                        >
-                                            <Flame className="w-3.5 h-3.5" />
-                                            Test
-                                        </button>
-                                        <button
-                                            onClick={() => handleWeekTypeChange(week.id, 'deload')}
-                                            disabled={saving}
-                                            className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all flex items-center gap-1.5 ${week.weekType === 'deload'
-                                                ? 'bg-week-deload text-white border-week-deload'
-                                                : 'bg-white text-week-deload-dark border-week-deload hover:bg-week-deload-light'
-                                                }`}
-                                        >
-                                            <Wind className="w-3.5 h-3.5" />
-                                            Scarico
-                                        </button>
-                                    </div>
+                                    {readOnly ? (
+                                        <div className="flex items-center gap-2">
+                                            {week.weekType === 'test' && (
+                                                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-week-test text-white border-2 border-week-test flex items-center gap-1.5">
+                                                    <Flame className="w-3.5 h-3.5" />
+                                                    Test
+                                                </span>
+                                            )}
+                                            {week.weekType === 'deload' && (
+                                                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-week-deload text-white border-2 border-week-deload flex items-center gap-1.5">
+                                                    <Wind className="w-3.5 h-3.5" />
+                                                    Scarico
+                                                </span>
+                                            )}
+                                            {week.weekType === 'normal' && (
+                                                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-gray-500 text-white border-2 border-gray-500 flex items-center gap-1.5">
+                                                    <ClipboardList className="w-3.5 h-3.5" />
+                                                    Standard
+                                                </span>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => handleWeekTypeChange(week.id, 'normal')}
+                                                disabled={saving}
+                                                className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all flex items-center gap-1.5 ${week.weekType === 'normal'
+                                                    ? 'bg-gray-500 text-white border-gray-500'
+                                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                                    }`}
+                                            >
+                                                <ClipboardList className="w-3.5 h-3.5" />
+                                                Standard
+                                            </button>
+                                            <button
+                                                onClick={() => handleWeekTypeChange(week.id, 'test')}
+                                                disabled={saving}
+                                                className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all flex items-center gap-1.5 ${week.weekType === 'test'
+                                                    ? 'bg-week-test text-white border-week-test'
+                                                    : 'bg-white text-week-test-dark border-week-test hover:bg-week-test-light'
+                                                    }`}
+                                            >
+                                                <Flame className="w-3.5 h-3.5" />
+                                                Test
+                                            </button>
+                                            <button
+                                                onClick={() => handleWeekTypeChange(week.id, 'deload')}
+                                                disabled={saving}
+                                                className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all flex items-center gap-1.5 ${week.weekType === 'deload'
+                                                    ? 'bg-week-deload text-white border-week-deload'
+                                                    : 'bg-white text-week-deload-dark border-week-deload hover:bg-week-deload-light'
+                                                    }`}
+                                            >
+                                                <Wind className="w-3.5 h-3.5" />
+                                                Scarico
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                                 <p className="text-sm text-gray-600">
                                     {t('editProgram.workoutsConfiguredShort', { done: week.workouts.filter((w) => w.exerciseCount > 0).length, total: week.workouts.length })}
@@ -283,68 +325,85 @@ export default function EditProgramContent() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                                {week.workouts.map((workout) => (
-                                    <Link
-                                        key={workout.id}
-                                        href={`/trainer/programs/${programId}/workouts/${workout.id}`}
-                                        className={`border-2 rounded-lg p-4 transition-all hover:shadow-md ${workout.exerciseCount > 0
-                                            ? 'border-green-300 bg-green-50 hover:border-green-400'
-                                            : 'border-gray-300 bg-white hover:border-[#FFA700]'
-                                            }`}
-                                    >
-                                        <div className="flex items-center justify-between mb-2">
-                                            <p className="font-semibold text-gray-900">
-                                                {(t('editProgram.dayNames', { returnObjects: true }) as string[])[workout.dayOfWeek]}
+                                {week.workouts.map((workout) => {
+                                    const workoutCard = (
+                                        <div
+                                            className={`border-2 rounded-lg p-4 transition-all ${workout.exerciseCount > 0
+                                                    ? 'border-green-300 bg-green-50'
+                                                    : 'border-gray-300 bg-white'
+                                                } ${!readOnly ? 'hover:shadow-md hover:border-green-400' : ''}`}
+                                        >
+                                            <div className="flex items-center justify-between mb-2">
+                                                <p className="font-semibold text-gray-900">
+                                                    {(t('editProgram.dayNames', { returnObjects: true }) as string[])[workout.dayOfWeek]}
+                                                </p>
+                                                {workout.exerciseCount > 0 ? (
+                                                    <span className="text-green-600 text-sm font-semibold">
+                                                        ✓
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-gray-400 text-sm">⚠️</span>
+                                                )}
+                                            </div>
+                                            <p className="text-sm text-gray-600">
+                                                {workout.exerciseCount > 0
+                                                    ? t('editProgram.exercisesCount', { count: workout.exerciseCount })
+                                                    : t('editProgram.noExercises')}
                                             </p>
-                                            {workout.exerciseCount > 0 ? (
-                                                <span className="text-green-600 text-sm font-semibold">
-                                                    ✓
-                                                </span>
-                                            ) : (
-                                                <span className="text-gray-400 text-sm">⚠️</span>
+                                            {!readOnly && (
+                                                <p className="text-xs text-[#FFA700] font-semibold mt-2">
+                                                    {workout.exerciseCount > 0
+                                                        ? t('editProgram.edit')
+                                                        : t('editProgram.configure')}
+                                                </p>
                                             )}
                                         </div>
-                                        <p className="text-sm text-gray-600">
-                                            {workout.exerciseCount > 0
-                                                ? t('editProgram.exercisesCount', { count: workout.exerciseCount })
-                                                : t('editProgram.noExercises')}
-                                        </p>
-                                        <p className="text-xs text-[#FFA700] font-semibold mt-2">
-                                            {workout.exerciseCount > 0
-                                                ? t('editProgram.edit')
-                                                : t('editProgram.configure')}
-                                        </p>
-                                    </Link>
-                                ))}
+                                    )
+
+                                    return readOnly ? (
+                                        <div key={workout.id}>
+                                            {workoutCard}
+                                        </div>
+                                    ) : (
+                                        <Link
+                                            key={workout.id}
+                                            href={`/trainer/programs/${programId}/workouts/${workout.id}`}
+                                        >
+                                            {workoutCard}
+                                        </Link>
+                                    )
+                                })}
                             </div>
                         </div>
                     ))}
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex space-x-4 mt-8">
-                    <Link
-                        href={`/trainer/programs/${programId}/publish`}
-                        className={`flex-1 py-3 px-6 rounded-lg font-semibold text-center transition-colors ${completedWorkouts === totalWorkouts
-                            ? 'bg-[#FFA700] hover:bg-[#FF9500] text-white'
-                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                            }`}
-                        onClick={(e) => {
-                            if (completedWorkouts < totalWorkouts) {
-                                e.preventDefault()
-                                showToast(t('editProgram.configureAllFirst'), 'warning')
-                            }
-                        }}
-                    >
-                        {t('editProgram.nextPublish')}
-                    </Link>
-                    <Link
-                        href="/trainer/programs"
-                        className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
-                    >
-                        {t('editProgram.saveDraft')}
-                    </Link>
-                </div>
+                {/* Action Buttons - Only in Edit Mode */}
+                {!readOnly && (
+                    <div className="flex space-x-4 mt-8">
+                        <Link
+                            href={`/trainer/programs/${programId}/publish`}
+                            className={`flex-1 py-3 px-6 rounded-lg font-semibold text-center transition-colors ${completedWorkouts === totalWorkouts
+                                ? 'bg-[#FFA700] hover:bg-[#FF9500] text-white'
+                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                }`}
+                            onClick={(e) => {
+                                if (completedWorkouts < totalWorkouts) {
+                                    e.preventDefault()
+                                    showToast(t('editProgram.configureAllFirst'), 'warning')
+                                }
+                            }}
+                        >
+                            {t('editProgram.nextPublish')}
+                        </Link>
+                        <Link
+                            href="/trainer/programs"
+                            className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
+                        >
+                            {t('editProgram.saveDraft')}
+                        </Link>
+                    </div>
+                )}
             </div>
         </div>
     )
