@@ -62,7 +62,7 @@ interface ExerciseRPE {
 
 interface Workout {
     id: string
-    dayLabel: string
+    dayIndex: number
     notes: string | null
     weekNumber: number
     weekType: 'normal' | 'test' | 'deload'
@@ -406,7 +406,7 @@ export default function WorkoutDetailContent() {
                         {t('workouts.backToProgram')}
                     </Link>
                     <h1 className="text-3xl font-bold text-gray-900">
-                        {workout.dayLabel} - {t('workouts.weekLabel', { number: workout.weekNumber })}
+                        {`Giorno ${workout.dayIndex}`} - {t('workouts.weekLabel', { number: workout.weekNumber })}
                     </h1>
                     <p className="text-gray-600 mt-2">
                         {workout.program.title}

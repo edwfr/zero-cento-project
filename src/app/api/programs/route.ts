@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
             const workoutsData = []
             for (let j = 1; j <= workoutsPerWeek; j++) {
                 workoutsData.push({
-                    dayLabel: `Giorno ${j}`,
+                    dayIndex: j,
                 })
             }
 

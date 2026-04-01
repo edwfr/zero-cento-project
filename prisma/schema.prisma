@@ -238,7 +238,7 @@ model Week {
 model Workout {
   id       String  @id @default(uuid())
   weekId   String
-  dayLabel String  // es. "Giorno 1", "Giorno 2"
+  dayIndex Int
   notes    String?
 
   // Relations

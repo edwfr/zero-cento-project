@@ -10,7 +10,7 @@ import ConfirmationModal from '@/components/ConfirmationModal'
 
 interface WorkoutSummary {
     id: string
-    dayOfWeek: number
+    dayIndex: number
     exerciseCount: number
 }
 
@@ -86,7 +86,7 @@ export default function PublishProgramPage() {
                     weekType: week.weekType,
                     workouts: week.workouts.map((workout: any) => ({
                         id: workout.id,
-                        dayOfWeek: workout.dayOfWeek,
+                        dayIndex: workout.dayIndex,
                         exerciseCount: workout.workoutExercises?.length || 0,
                     })),
                 })),
@@ -344,9 +344,9 @@ export default function PublishProgramPage() {
                                                         ? 'bg-green-500 text-white'
                                                         : 'bg-gray-300 text-gray-600'
                                                         }`}
-                                                    title={`${(t('publish.dayNamesShort', { returnObjects: true }) as string[])[w.dayOfWeek]}: ${w.exerciseCount}`}
+                                                    title={`Giorno ${w.dayIndex}: ${w.exerciseCount}`}
                                                 >
-                                                    {(t('publish.dayNamesShort', { returnObjects: true }) as string[])[w.dayOfWeek][0]}
+                                                    {w.dayIndex}
                                                 </div>
                                             ))}
                                         </div>

@@ -36,7 +36,7 @@ interface WorkoutExercise {
 
 interface Workout {
     id: string
-    dayLabel: string
+    dayIndex: number
     notes: string | null
     workoutExercises: WorkoutExercise[]
 }
@@ -350,7 +350,7 @@ export default function WorkoutDetailContent() {
                         ← {t('workouts.backToWeeks')}
                     </Link>
                     <h1 className="text-3xl font-bold text-gray-900">
-                        {workout.dayLabel} - {program.title}
+                        {`Giorno ${workout.dayIndex}`} - {program.title}
                     </h1>
                     <p className="text-gray-600 mt-2">
                         {t('workoutDetail.forTrainee')} {program.trainee.firstName} {program.trainee.lastName}

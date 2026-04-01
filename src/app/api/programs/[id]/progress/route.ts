@@ -113,9 +113,9 @@ export async function GET(
 
                 return {
                     id: workout.id,
-                    name: workout.dayLabel,
+                    name: `Giorno ${workout.dayIndex}`,
                     weekNumber: week.weekNumber,
-                    dayOfWeek: workout.dayLabel,
+                    dayOfWeek: workout.dayIndex,
                     completed: hasAllFeedback,
                     feedbackCount: workout.workoutExercises.flatMap((ex) => ex.exerciseFeedbacks)
                         .length,

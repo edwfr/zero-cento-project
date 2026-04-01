@@ -359,7 +359,7 @@ async function main() {
                 await prisma.workout.create({
                     data: {
                         weekId: week.id,
-                        dayLabel: `Giorno ${dayNum}`,
+                        dayIndex: dayNum,
                         notes: null,
                     },
                 })
@@ -405,7 +405,7 @@ async function main() {
                 const workout = await prisma.workout.create({
                     data: {
                         weekId: week.id,
-                        dayLabel: `Giorno ${dayNum}`,
+                        dayIndex: dayNum,
                         notes: null,
                     },
                 })

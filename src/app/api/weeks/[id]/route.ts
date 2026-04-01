@@ -81,10 +81,10 @@ export async function PATCH(
                 workouts: {
                     select: {
                         id: true,
-                        dayLabel: true,
+                        dayIndex: true,
                     },
                     orderBy: {
-                        dayLabel: 'asc',
+                        dayIndex: 'asc',
                     },
                 },
             },

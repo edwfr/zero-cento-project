@@ -144,7 +144,7 @@ export async function GET(
         return apiSuccess({
             workout: {
                 id: workout.id,
-                dayLabel: workout.dayLabel,
+                dayIndex: workout.dayIndex,
                 notes: workout.notes,
                 weekNumber: workout.week.weekNumber,
                 weekType: workout.week.weekType,
