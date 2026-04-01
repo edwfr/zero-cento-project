@@ -357,7 +357,7 @@
         "editExerciseTitle": "Modifica Esercizio",
         "addExerciseTitle": "Aggiungi Esercizio",
         "exerciseLabel": "Esercizio",
-        "setsLabel": "Serie *",
+        "setsLabel": "Serie",
         "rpeTargetLabel": "RPE Target (opzionale)",
         "weightLabel": "Peso (opzionale)",
         "weightRequired": "Peso *",
