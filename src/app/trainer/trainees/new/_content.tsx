@@ -7,22 +7,18 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import Link from 'next/link'
 import { CheckCircle2, ArrowLeft } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
-import { useToast } from '@/components/ToastNotification'
 
 export default function NewTraineePageContent() {
     const router = useRouter()
     const { t } = useTranslation(['trainer', 'common'])
-    const { showToast } = useToast()
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const [generatedPassword, setGeneratedPassword] = useState<string | null>(null)
+    const [success, setSuccess] = useState(false)
 
     // Form state
     const [firstName, setFirstName] = useState('')
     const [lastName, setLastName] = useState('')
     const [email, setEmail] = useState('')
-    const [autoPassword, setAutoPassword] = useState(true)
-    const [manualPassword, setManualPassword] = useState('')
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -31,11 +27,6 @@ export default function NewTraineePageContent() {
         // Validation
         if (!firstName.trim() || !lastName.trim() || !email.trim()) {
             setError(t('athletes.fillAllFields'))
-            return
-        }
-
-        if (!autoPassword && !manualPassword.trim()) {
-            setError(t('athletes.manualPasswordRequired'))
             return
         }
 
@@ -50,7 +41,6 @@ export default function NewTraineePageContent() {
                     lastName,
                     email,
                     role: 'trainee',
-                    password: autoPassword ? undefined : manualPassword,
                 }),
             })
 
@@ -60,26 +50,22 @@ export default function NewTraineePageContent() {
                 throw new Error(getApiErrorMessage(data, t('athletes.creationError'), t))
             }
 
-            // Show generated password if auto-generated
-            if (data.data.tempPassword) {
-                setGeneratedPassword(data.data.tempPassword)
-            } else {
-                // Redirect immediately if manual password
-                router.push('/trainer/trainees')
-            }
+            // Show success message
+            setSuccess(true)
+            setLoading(false)
         } catch (err: any) {
             setError(err.message)
             setLoading(false)
         }
     }
 
-    // If password was generated, show it
-    if (generatedPassword) {
+    // If invitation was sent successfully, show success message
+    if (success) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
                 <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
                     <div className="text-center mb-6">
-                        <CheckCircle2 className="w-16 h-16 text-green-500 mb-4" />
+                        <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
                         <h2 className="text-2xl font-bold text-gray-900 mb-2">
                             {t('athletes.athleteCreatedSuccess')}
                         </h2>
@@ -88,34 +74,36 @@ export default function NewTraineePageContent() {
                         </p>
                     </div>
 
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                        <p className="text-sm font-semibold text-yellow-800 mb-2">
-                            {t('athletes.tempPasswordTitle')}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                        <p className="text-sm font-semibold text-blue-800 mb-2">
+                            📧 Email di invito inviata
                         </p>
-                        <p className="text-sm text-yellow-700 mb-3">
-                            {t('athletes.tempPasswordWarning')}
+                        <p className="text-sm text-blue-700 mb-2">
+                            Un'email è stata inviata a <strong>{email}</strong> con le istruzioni per completare la registrazione.
                         </p>
-                        <div className="bg-white rounded px-4 py-3 font-mono text-lg text-center border-2 border-yellow-300">
-                            {generatedPassword}
-                        </div>
+                        <p className="text-xs text-blue-600">
+                            L'atleta riceverà un link per impostare la propria password e accedere alla piattaforma.
+                        </p>
                     </div>
 
                     <div className="space-y-3">
-                        <button
-                            onClick={() => {
-                                navigator.clipboard.writeText(generatedPassword)
-                                showToast(t('athletes.passwordCopied'), 'success')
-                            }}
-                            className="w-full bg-brand-primary hover:bg-brand-primary/90 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
-                        >
-                            {t('athletes.copyPassword')}
-                        </button>
                         <Link
                             href="/trainer/trainees"
                             className="block w-full bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold py-3 px-6 rounded-lg text-center transition-colors"
                         >
                             {t('athletes.goToAthleteList')}
                         </Link>
+                        <button
+                            onClick={() => {
+                                setSuccess(false)
+                                setFirstName('')
+                                setLastName('')
+                                setEmail('')
+                            }}
+                            className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
+                        >
+                            Crea un altro atleta
+                        </button>
                     </div>
                 </div>
             </div>
@@ -193,44 +181,9 @@ export default function NewTraineePageContent() {
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                             required
                         />
-                    </div>
-
-                    {/* Password Options */}
-                    <div className="border-t pt-6">
-                        <div className="mb-4">
-                            <label className="flex items-center">
-                                <input
-                                    type="checkbox"
-                                    checked={autoPassword}
-                                    onChange={(e) => setAutoPassword(e.target.checked)}
-                                    disabled={loading}
-                                    className="mr-2 h-5 w-5 disabled:cursor-not-allowed"
-                                />
-                                <span className="font-semibold text-gray-700">
-                                    {t('athletes.autoPasswordLabel')}
-                                </span>
-                            </label>
-                            <p className="text-sm text-gray-500 mt-1 ml-7">
-                                {t('athletes.autoPasswordHint')}
-                            </p>
-                        </div>
-
-                        {!autoPassword && (
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    {t('athletes.manualPasswordLabel')}
-                                </label>
-                                <input
-                                    type="password"
-                                    value={manualPassword}
-                                    onChange={(e) => setManualPassword(e.target.value)}
-                                    disabled={loading}
-                                    placeholder={t('athletes.manualPasswordPlaceholder')}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                    minLength={8}
-                                />
-                            </div>
-                        )}
+                        <p className="text-sm text-gray-500 mt-2">
+                            L'atleta riceverà un'email con le istruzioni per impostare la propria password.
+                        </p>
                     </div>
 
                     {/* Actions */}

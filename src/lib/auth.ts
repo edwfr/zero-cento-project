@@ -19,23 +19,25 @@ export interface AuthSession {
 /**
  * Get current session from Supabase and enrich with Prisma user data
  * Returns null if not authenticated
+ * Uses getUser() instead of getSession() for security (authenticates against Supabase Auth server)
  */
 export async function getSession(): Promise<AuthSession | null> {
     const supabase = createClient()
 
+    // Use getUser() instead of getSession() for security
+    // getUser() authenticates the token against Supabase Auth server
     const {
-        data: { session },
+        data: { user: supabaseUser },
         error,
-    } = await supabase.auth.getSession()
+    } = await supabase.auth.getUser()
 
-    if (error || !session) {
+    if (error || !supabaseUser) {
         return null
     }
 
-    // Fetch user data from Prisma using email (not ID)
-    // Supabase auth.users and our public.users may have different IDs
+    // Fetch user data from Prisma using email
     const user = await prisma.user.findUnique({
-        where: { email: session.user.email },
+        where: { email: supabaseUser.email },
         select: {
             id: true,
             email: true,
@@ -57,7 +59,7 @@ export async function getSession(): Promise<AuthSession | null> {
 
     return {
         user,
-        supabaseUser: session.user,
+        supabaseUser,
     }
 }
 
