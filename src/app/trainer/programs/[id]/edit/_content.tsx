@@ -8,7 +8,7 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/components/ToastNotification'
 import EditProgramMetadata from './EditProgramMetadata'
-import { Activity, ClipboardCheck, TrendingDown, ArrowLeft } from 'lucide-react'
+import { ClipboardList, Flame, Wind, ArrowLeft } from 'lucide-react'
 
 interface Workout {
     id: string
@@ -246,33 +246,33 @@ export default function EditProgramContent() {
                                             onClick={() => handleWeekTypeChange(week.id, 'normal')}
                                             disabled={saving}
                                             className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all flex items-center gap-1.5 ${week.weekType === 'normal'
-                                                ? 'bg-blue-500 text-white border-blue-500'
-                                                : 'bg-white text-blue-800 border-blue-300 hover:bg-blue-50'
+                                                ? 'bg-gray-500 text-white border-gray-500'
+                                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                                                 }`}
                                         >
-                                            <Activity className="w-3.5 h-3.5" />
-                                            Normale
+                                            <ClipboardList className="w-3.5 h-3.5" />
+                                            Standard
                                         </button>
                                         <button
                                             onClick={() => handleWeekTypeChange(week.id, 'test')}
                                             disabled={saving}
                                             className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all flex items-center gap-1.5 ${week.weekType === 'test'
-                                                ? 'bg-orange-500 text-white border-orange-500'
-                                                : 'bg-white text-orange-800 border-orange-300 hover:bg-orange-50'
+                                                ? 'bg-week-test text-white border-week-test'
+                                                : 'bg-white text-week-test-dark border-week-test hover:bg-week-test-light'
                                                 }`}
                                         >
-                                            <ClipboardCheck className="w-3.5 h-3.5" />
+                                            <Flame className="w-3.5 h-3.5" />
                                             Test
                                         </button>
                                         <button
                                             onClick={() => handleWeekTypeChange(week.id, 'deload')}
                                             disabled={saving}
                                             className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all flex items-center gap-1.5 ${week.weekType === 'deload'
-                                                ? 'bg-green-500 text-white border-green-500'
-                                                : 'bg-white text-green-800 border-green-300 hover:bg-green-50'
+                                                ? 'bg-week-deload text-white border-week-deload'
+                                                : 'bg-white text-week-deload-dark border-week-deload hover:bg-week-deload-light'
                                                 }`}
                                         >
-                                            <TrendingDown className="w-3.5 h-3.5" />
+                                            <Wind className="w-3.5 h-3.5" />
                                             Scarico
                                         </button>
                                     </div>
