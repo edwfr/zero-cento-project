@@ -399,9 +399,9 @@ export default function WorkoutDetailContent() {
                                                     )}
                                                 </h3>
                                                 <span
-                                                    className={`px-1.5 py-0.5 text-xs font-semibold rounded ${we.exercise.type === 'fundamental'
-                                                        ? 'bg-purple-100 text-purple-800'
-                                                        : 'bg-gray-100 text-gray-800'
+                                                    className={`rounded-full border px-2 py-0.5 text-xs font-medium ${we.exercise.type === 'fundamental'
+                                                        ? 'bg-red-100 text-red-700 border-red-300'
+                                                        : 'bg-blue-100 text-blue-700 border-blue-300'
                                                         }`}
                                                 >
                                                     {we.exercise.type === 'fundamental'
