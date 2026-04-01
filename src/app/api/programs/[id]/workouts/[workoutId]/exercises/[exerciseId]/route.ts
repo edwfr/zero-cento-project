@@ -25,6 +25,7 @@ export async function PUT(
 
         const {
             exerciseId: newExerciseId,
+            variant,
             order,
             sets,
             reps,
@@ -84,6 +85,7 @@ export async function PUT(
             where: { id: exerciseId },
             data: {
                 ...(newExerciseId && { exerciseId: newExerciseId }),
+                ...(variant !== undefined && { variant }),
                 ...(order !== undefined && { order }),
                 ...(sets !== undefined && { sets }),
                 ...(reps !== undefined && { reps: typeof reps === 'number' ? reps.toString() : reps }),

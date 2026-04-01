@@ -26,6 +26,7 @@ export async function POST(
 
         const {
             exerciseId,
+            variant,
             order,
             sets,
             reps,
@@ -100,6 +101,7 @@ export async function POST(
             data: {
                 workoutId,
                 exerciseId,
+                variant: variant || null,
                 order: finalOrder,
                 sets: sets || 1,
                 reps: typeof reps === 'number' ? reps.toString() : reps || '8',

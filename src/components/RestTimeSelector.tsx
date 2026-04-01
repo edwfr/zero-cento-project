@@ -3,10 +3,11 @@
 import { RestTime } from '@prisma/client'
 
 interface RestTimeSelectorProps {
-    value: RestTime
+    value: RestTime | undefined
     onChange: (value: RestTime) => void
     disabled?: boolean
     className?: string
+    required?: boolean
 }
 
 const REST_TIME_OPTIONS = [
@@ -22,10 +23,13 @@ export default function RestTimeSelector({
     onChange,
     disabled = false,
     className = '',
+    required = false,
 }: RestTimeSelectorProps) {
     return (
         <div className={`flex flex-col gap-2 ${className}`}>
-            <label className="text-sm font-medium text-gray-700">Tempo Recupero</label>
+            <label className="text-sm font-medium text-gray-700">
+                Tempo Recupero {required && <span className="text-red-500">*</span>}
+            </label>
             <div className="flex gap-2">
                 {REST_TIME_OPTIONS.map((option) => {
                     const isSelected = value === option.value

@@ -3,10 +3,11 @@
 import { WeightType } from '@prisma/client'
 
 interface WeightTypeSelectorProps {
-    value: WeightType
+    value: WeightType | undefined
     onChange: (value: WeightType) => void
     disabled?: boolean
     className?: string
+    required?: boolean
 }
 
 const WEIGHT_TYPE_OPTIONS = [
@@ -25,10 +26,13 @@ export default function WeightTypeSelector({
     onChange,
     disabled = false,
     className = '',
+    required = false,
 }: WeightTypeSelectorProps) {
     return (
         <div className={`flex flex-col gap-2 ${className}`}>
-            <label className="text-sm font-medium text-gray-700">Tipo Peso</label>
+            <label className="text-sm font-medium text-gray-700">
+                Tipo Peso {required && <span className="text-red-500">*</span>}
+            </label>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {WEIGHT_TYPE_OPTIONS.map((option) => {
                     const isSelected = value === option.value

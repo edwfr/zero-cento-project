@@ -24,6 +24,7 @@ interface Exercise {
 interface WorkoutExercise {
     id: string
     order: number
+    variant: string | null
     sets: number
     reps: string
     restTime: RestTime
@@ -70,11 +71,12 @@ export default function WorkoutDetailContent() {
     const [showAddForm, setShowAddForm] = useState(false)
     const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null)
     const [selectedExerciseId, setSelectedExerciseId] = useState('')
-    const [sets, setSets] = useState(3)
-    const [reps, setReps] = useState('8')
-    const [restTime, setRestTime] = useState<RestTime>('m2')
-    const [targetRpe, setTargetRpe] = useState<number | undefined>(7)
-    const [weightType, setWeightType] = useState<WeightType>('absolute')
+    const [variant, setVariant] = useState('')
+    const [sets, setSets] = useState<number | undefined>(undefined)
+    const [reps, setReps] = useState('')
+    const [restTime, setRestTime] = useState<RestTime | undefined>(undefined)
+    const [targetRpe, setTargetRpe] = useState<number | undefined>(undefined)
+    const [weightType, setWeightType] = useState<WeightType | undefined>(undefined)
     const [weight, setWeight] = useState<number | undefined>(undefined)
     const [isWarmup, setIsWarmup] = useState(false)
     const [notes, setNotes] = useState('')
@@ -122,10 +124,6 @@ export default function WorkoutDetailContent() {
 
             setWorkout(foundWorkout)
             setExercises(exercisesData.data.items)
-
-            if (exercisesData.data.items.length > 0) {
-                setSelectedExerciseId(exercisesData.data.items[0].id)
-            }
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : String(err))
         } finally {
@@ -134,12 +132,13 @@ export default function WorkoutDetailContent() {
     }
 
     const resetForm = () => {
-        setSelectedExerciseId(exercises.length > 0 ? exercises[0].id : '')
-        setSets(3)
-        setReps('8')
-        setRestTime('m2')
-        setTargetRpe(7)
-        setWeightType('absolute')
+        setSelectedExerciseId('')
+        setVariant('')
+        setSets(undefined)
+        setReps('')
+        setRestTime(undefined)
+        setTargetRpe(undefined)
+        setWeightType(undefined)
         setWeight(undefined)
         setIsWarmup(false)
         setNotes('')
@@ -149,6 +148,7 @@ export default function WorkoutDetailContent() {
     const loadExerciseForEdit = (we: WorkoutExercise) => {
         setEditingExerciseId(we.id)
         setSelectedExerciseId(we.exercise.id)
+        setVariant(we.variant ?? '')
         setSets(we.sets)
         setReps(we.reps)
         setRestTime(we.restTime)
@@ -163,11 +163,18 @@ export default function WorkoutDetailContent() {
     const handleSaveExercise = async () => {
         if (!workout || !selectedExerciseId) return
 
+        // Validate required fields
+        if (!sets || !reps || !restTime || !weightType) {
+            showToast(t('workoutDetail.errorMissingFields') || 'Compila tutti i campi obbligatori', 'error')
+            return
+        }
+
         try {
             setSaving(true)
 
             const payload = {
                 exerciseId: selectedExerciseId,
+                variant: variant.trim() || null,
                 order: editingExerciseId
                     ? workout.workoutExercises.find(e => e.id === editingExerciseId)?.order
                     : workout.workoutExercises.length + 1,
@@ -375,6 +382,9 @@ export default function WorkoutDetailContent() {
                                                 </span>
                                                 <h3 className="text-lg font-bold text-gray-900">
                                                     {we.exercise.name}
+                                                    {we.variant && (
+                                                        <span className="text-gray-600 font-normal ml-2">({we.variant})</span>
+                                                    )}
                                                 </h3>
                                                 <span
                                                     className={`px-1.5 py-0.5 text-xs font-semibold rounded ${we.exercise.type === 'fundamental'
@@ -524,18 +534,38 @@ export default function WorkoutDetailContent() {
                                 disabled={!!editingExerciseId} // Cannot change exercise when editing
                             />
 
+                            {/* Variant */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    {t('workoutDetail.variantLabel') || 'Variante'}
+                                </label>
+                                <input
+                                    type="text"
+                                    value={variant}
+                                    onChange={(e) => setVariant(e.target.value)}
+                                    disabled={saving}
+                                    placeholder="es. bilanciere, manubri, presa stretta..."
+                                    maxLength={100}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                    {t('workoutDetail.variantHelp') || 'Specifica una variante dell\'esercizio (opzionale)'}
+                                </p>
+                            </div>
+
                             {/* Sets */}
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    {t('workoutDetail.setsLabel')}
+                                    {t('workoutDetail.setsLabel')} <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="number"
                                     min="1"
                                     max="20"
-                                    value={sets}
-                                    onChange={(e) => setSets(parseInt(e.target.value) || 1)}
+                                    value={sets ?? ''}
+                                    onChange={(e) => setSets(e.target.value ? parseInt(e.target.value) : undefined)}
                                     disabled={saving}
+                                    placeholder="es. 3"
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
                                 />
                             </div>
@@ -545,6 +575,7 @@ export default function WorkoutDetailContent() {
                                 value={reps}
                                 onChange={setReps}
                                 disabled={saving}
+                                required={true}
                             />
 
                             {/* Rest Time - using RestTimeSelector component */}
@@ -552,6 +583,7 @@ export default function WorkoutDetailContent() {
                                 value={restTime}
                                 onChange={setRestTime}
                                 disabled={saving}
+                                required={true}
                             />
 
                             {/* RPE Target */}
@@ -593,12 +625,13 @@ export default function WorkoutDetailContent() {
                                 value={weightType}
                                 onChange={setWeightType}
                                 disabled={saving}
+                                required={true}
                             />
 
                             {/* Weight Amount */}
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    {weightType.startsWith('percentage') ? t('workoutDetail.weightRequired') : t('workoutDetail.weightLabel')}
+                                    {weightType?.startsWith('percentage') ? t('workoutDetail.weightRequired') : t('workoutDetail.weightLabel')}
                                 </label>
                                 <input
                                     type="number"
@@ -616,6 +649,7 @@ export default function WorkoutDetailContent() {
                                     {weightType === 'percentage_1rm' && t('workoutDetail.weightPct1rm')}
                                     {weightType === 'percentage_rm' && t('workoutDetail.weightPctRm')}
                                     {weightType === 'percentage_previous' && t('workoutDetail.weightPctPrev')}
+                                    {!weightType && (t('workoutDetail.selectWeightTypeFirst') || 'Seleziona prima il tipo di peso')}
                                 </p>
                             </div>
 

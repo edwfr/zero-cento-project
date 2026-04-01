@@ -7,6 +7,7 @@ import { z } from 'zod'
 // Base schema without refinements (for use with .partial())
 const workoutExerciseBaseSchema = z.object({
     exerciseId: z.string().uuid('ID esercizio non valido'),
+    variant: z.string().max(100, 'Variante massimo 100 caratteri').nullable().optional(),
     sets: z
         .number()
         .int('Numero di serie deve essere intero')

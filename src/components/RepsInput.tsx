@@ -9,6 +9,7 @@ interface RepsInputProps {
     className?: string
     placeholder?: string
     showLabel?: boolean
+    required?: boolean
 }
 
 /**
@@ -26,6 +27,7 @@ export default function RepsInput({
     className = '',
     placeholder = 'es. 8, 8-10, 6/8',
     showLabel = true,
+    required = false,
 }: RepsInputProps) {
     const [error, setError] = useState<string | null>(null)
 
@@ -54,7 +56,11 @@ export default function RepsInput({
 
     return (
         <div className={`flex flex-col gap-1 ${className}`}>
-            {showLabel && <label className="text-sm font-medium text-gray-700">Ripetizioni</label>}
+            {showLabel && (
+                <label className="text-sm font-medium text-gray-700">
+                    Ripetizioni {required && <span className="text-red-500">*</span>}
+                </label>
+            )}
             <input
                 type="text"
                 inputMode="numeric"

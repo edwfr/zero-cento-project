@@ -253,6 +253,7 @@ model WorkoutExercise {
   id         String     @id @default(uuid())
   workoutId  String
   exerciseId String
+  variant    String?    // Variante specifica dell'esercizio (es. "bilanciere", "manubri", ecc.)
   sets       Int
   reps       String     // es. "8", "8-10", "6/8"
   targetRpe  Float?     // 5.0-10.0 con incrementi 0.5
