@@ -15,6 +15,7 @@ export interface ApiErrorResponse {
         code: string
         message: string
         details?: unknown
+        key?: string
     }
 }
 
@@ -47,13 +48,15 @@ export function apiError(
     code: ApiErrorCode,
     message: string,
     status: number,
-    details?: unknown
+    details?: unknown,
+    key?: string
 ): Response {
     const response: ApiErrorResponse = {
         error: {
             code,
             message,
             details,
+            ...(key !== undefined && { key }),
         },
     }
     return Response.json(response, { status })

@@ -529,9 +529,9 @@
 
 ### Phase 1 — Foundation
 
-- [ ] **11.1** Aggiornare `src/lib/api-response.ts` — aggiungere `key?: string` all'interfaccia `ApiErrorResponse` e come 5° parametro opzionale alla funzione `apiError()`
-- [ ] **11.2** Creare `public/locales/it/errors.json` e `public/locales/en/errors.json` con tutte le 57 chiavi della tabella sopra
-- [ ] **11.3** Registrare namespace `errors` in `src/i18n/config.ts` + creare `src/lib/api-error.ts` con helper `getApiErrorMessage(data, fallback, t)`  
+- [x] **11.1** Aggiornare `src/lib/api-response.ts` — aggiungere `key?: string` all'interfaccia `ApiErrorResponse` e come 5° parametro opzionale alla funzione `apiError()`
+- [x] **11.2** Creare `public/locales/it/errors.json` e `public/locales/en/errors.json` con tutte le 57 chiavi della tabella sopra
+- [x] **11.3** Registrare namespace `errors` in `src/i18n/config.ts` + creare `src/lib/api-error.ts` con helper `getApiErrorMessage(data, fallback, t)`  
       Signature: `getApiErrorMessage(data: unknown, fallback: string, t: TFunction): string`  
       Logica: se `data?.error?.key` è presente → `t(data.error.key, { ns: 'errors', defaultValue: fallback })`; altrimenti → `fallback`
 

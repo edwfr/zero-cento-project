@@ -1,13 +1,103 @@
 {
-"errors": {
-"generic":"Si è verificato un errore",
-"networkError":"Errore di connessione. Riprova più tardi.",
-"unauthorized":"Accesso non autorizzato",
-"forbidden":"Accesso negato",
-"notFound":"Risorsa non trovata",
-"validationError":"Errore di validazione",
-"conflict":"Conflitto nei dati",
-"rateLimitExceeded":"Troppe richieste. Riprova più tardi.",
-"internalError":"Errore interno del server"
- }
+    "errors": {
+        "generic": "Si è verificato un errore",
+        "networkError": "Errore di connessione. Riprova più tardi.",
+        "unauthorized": "Accesso non autorizzato",
+        "forbidden": "Accesso negato",
+        "notFound": "Risorsa non trovata",
+        "validationError": "Errore di validazione",
+        "conflict": "Conflitto nei dati",
+        "rateLimitExceeded": "Troppe richieste. Riprova più tardi.",
+        "internalError": "Errore interno del server"
+    },
+    "auth": {
+        "required": "Autenticazione richiesta",
+        "accessDenied": "Accesso negato"
+    },
+    "exercise": {
+        "notFound": "Esercizio non trovato",
+        "nameExists": "Un esercizio con questo nome esiste già",
+        "modifyDenied": "Puoi modificare solo gli esercizi che hai creato",
+        "deleteDenied": "Puoi eliminare solo gli esercizi che hai creato"
+    },
+    "feedback": {
+        "notFound": "Feedback non trovato",
+        "createDenied": "Puoi creare feedback solo per i tuoi workout",
+        "modifyDenied": "Puoi modificare solo il tuo feedback",
+        "viewDenied": "Puoi visualizzare solo il feedback dei tuoi atleti",
+        "viewOwnDenied": "Puoi visualizzare solo il tuo feedback"
+    },
+    "movementPattern": {
+        "notFound": "Schema motorio non trovato",
+        "nameExists": "Uno schema motorio con questo nome esiste già"
+    },
+    "muscleGroup": {
+        "notFound": "Gruppo muscolare non trovato",
+        "someNotFound": "Uno o più gruppi muscolari non trovati",
+        "nameExists": "Un gruppo muscolare con questo nome esiste già"
+    },
+    "personalRecord": {
+        "notFound": "Massimale non trovato",
+        "createDenied": "Puoi creare massimali solo per i tuoi atleti",
+        "updateDenied": "Puoi aggiornare i massimali solo dei tuoi atleti",
+        "deleteDenied": "Puoi eliminare i massimali solo dei tuoi atleti"
+    },
+    "program": {
+        "notFound": "Programma non trovato",
+        "createDenied": "Puoi creare programmi solo per i tuoi atleti",
+        "assignDenied": "Puoi assegnare programmi solo ai tuoi atleti",
+        "modifyDenied": "Puoi modificare solo i tuoi programmi",
+        "deleteDenied": "Puoi eliminare solo i tuoi programmi",
+        "publishDenied": "Puoi pubblicare solo i tuoi programmi",
+        "completeDenied": "Puoi completare solo i tuoi programmi",
+        "viewDenied": "Puoi visualizzare solo i tuoi programmi",
+        "viewAssignedDenied": "Puoi visualizzare solo i programmi assegnati a te",
+        "alreadyCompleted": "Il programma è già completato",
+        "alreadyPublished": "Il programma è già pubblicato o completato",
+        "cannotCompleteDraft": "Non puoi completare un programma in bozza. Pubblicalo prima."
+    },
+    "trainee": {
+        "notFound": "Atleta non trovato"
+    },
+    "trainer": {
+        "notFound": "Trainer non trovato"
+    },
+    "user": {
+        "notFound": "Utente non trovato",
+        "emailExists": "Email già in uso",
+        "cannotCreateAdmin": "Non è possibile creare utenti admin",
+        "cannotDeleteAdmin": "Non è possibile eliminare utenti admin",
+        "cannotModifyStatus": "Non è possibile modificare lo stato di questo utente",
+        "canOnlyActivateTrainee": "È possibile attivare solo account atleta",
+        "canOnlyDeactivateTrainee": "È possibile disattivare solo account atleta",
+        "onlyAdminCreateTrainer": "Solo gli admin possono creare trainer",
+        "onlyAdminTrainerCreateTrainee": "Solo admin e trainer possono creare atleti"
+    },
+    "week": {
+        "notFound": "Settimana non trovata",
+        "modifyDenied": "Puoi modificare solo le settimane dei tuoi programmi"
+    },
+    "workout": {
+        "notFound": "Workout non trovato",
+        "notFoundInProgram": "Workout non trovato in questo programma",
+        "accessDenied": "Puoi accedere solo ai tuoi workout",
+        "exercisesNotFound": "Uno o più esercizi non trovati in questo workout"
+    },
+    "workoutExercise": {
+        "notFound": "Esercizio workout non trovato"
+    },
+    "validation": {
+        "invalidInput": "Dati non validi",
+        "invalidFilterParams": "Parametri filtro non validi",
+        "searchLength": "Il parametro di ricerca deve avere tra 2 e 100 caratteri",
+        "atLeastOneField": "È richiesto almeno un campo da aggiornare",
+        "newTrainerIdRequired": "Il campo newTrainerId è obbligatorio",
+        "traineeIdRequired": "Il traineeId è obbligatorio per le richieste trainer/admin",
+        "targetMustBeTrainee": "L'utente destinatario deve avere il ruolo atleta",
+        "targetMustBeTrainer": "L'utente destinatario deve avere il ruolo trainer",
+        "userMustBeTrainee": "L'utente deve avere il ruolo atleta"
+    },
+    "internal": {
+        "default": "Si è verificato un errore. Riprova."
+    }
 }

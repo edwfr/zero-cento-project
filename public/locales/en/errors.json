@@ -1,13 +1,103 @@
 {
-"errors": {
-"generic":"An error occurred",
-"networkError":"Connection error. Please try again later.",
-"unauthorized":"Unauthorized access",
-"forbidden":"Access denied",
-"notFound":"Resource not found",
-"validationError":"Validation error",
-"conflict":"Data conflict",
-"rateLimitExceeded":"Too many requests. Please try again later.",
-"internalError":"Internal server error"
- }
+    "errors": {
+        "generic": "An error occurred",
+        "networkError": "Connection error. Please try again later.",
+        "unauthorized": "Unauthorized access",
+        "forbidden": "Access denied",
+        "notFound": "Resource not found",
+        "validationError": "Validation error",
+        "conflict": "Data conflict",
+        "rateLimitExceeded": "Too many requests. Please try again later.",
+        "internalError": "Internal server error"
+    },
+    "auth": {
+        "required": "Authentication required",
+        "accessDenied": "Access denied"
+    },
+    "exercise": {
+        "notFound": "Exercise not found",
+        "nameExists": "An exercise with this name already exists",
+        "modifyDenied": "You can only modify exercises you created",
+        "deleteDenied": "You can only delete exercises you created"
+    },
+    "feedback": {
+        "notFound": "Feedback not found",
+        "createDenied": "You can only create feedback for your own workouts",
+        "modifyDenied": "You can only modify your own feedback",
+        "viewDenied": "You can only view feedback from your trainees",
+        "viewOwnDenied": "You can only view your own feedback"
+    },
+    "movementPattern": {
+        "notFound": "Movement pattern not found",
+        "nameExists": "A movement pattern with this name already exists"
+    },
+    "muscleGroup": {
+        "notFound": "Muscle group not found",
+        "someNotFound": "One or more muscle groups not found",
+        "nameExists": "A muscle group with this name already exists"
+    },
+    "personalRecord": {
+        "notFound": "Personal record not found",
+        "createDenied": "You can only create records for your own trainees",
+        "updateDenied": "You can only update records for your own trainees",
+        "deleteDenied": "You can only delete records for your own trainees"
+    },
+    "program": {
+        "notFound": "Program not found",
+        "createDenied": "You can only create programs for your own trainees",
+        "assignDenied": "You can only assign programs to your own trainees",
+        "modifyDenied": "You can only modify your own programs",
+        "deleteDenied": "You can only delete your own programs",
+        "publishDenied": "You can only publish your own programs",
+        "completeDenied": "You can only complete your own programs",
+        "viewDenied": "You can only view your own programs",
+        "viewAssignedDenied": "You can only view programs assigned to you",
+        "alreadyCompleted": "Program is already completed",
+        "alreadyPublished": "Program is already published or completed",
+        "cannotCompleteDraft": "Cannot complete a draft program. Publish it first."
+    },
+    "trainee": {
+        "notFound": "Trainee not found"
+    },
+    "trainer": {
+        "notFound": "Trainer not found"
+    },
+    "user": {
+        "notFound": "User not found",
+        "emailExists": "Email already exists",
+        "cannotCreateAdmin": "Cannot create admin users",
+        "cannotDeleteAdmin": "Cannot delete admin users",
+        "cannotModifyStatus": "Cannot modify user status",
+        "canOnlyActivateTrainee": "Can only activate trainee accounts",
+        "canOnlyDeactivateTrainee": "Can only deactivate trainee accounts",
+        "onlyAdminCreateTrainer": "Only admins can create trainers",
+        "onlyAdminTrainerCreateTrainee": "Only admins and trainers can create trainees"
+    },
+    "week": {
+        "notFound": "Week not found",
+        "modifyDenied": "You can only modify weeks from your own programs"
+    },
+    "workout": {
+        "notFound": "Workout not found",
+        "notFoundInProgram": "Workout not found in this program",
+        "accessDenied": "You can only access your own workouts",
+        "exercisesNotFound": "One or more exercises not found in this workout"
+    },
+    "workoutExercise": {
+        "notFound": "Workout exercise not found"
+    },
+    "validation": {
+        "invalidInput": "Invalid input",
+        "invalidFilterParams": "Invalid filter parameters",
+        "searchLength": "Search parameter must be between 2 and 100 characters",
+        "atLeastOneField": "At least one field to update is required",
+        "newTrainerIdRequired": "newTrainerId is required",
+        "traineeIdRequired": "traineeId is required for trainer/admin requests",
+        "targetMustBeTrainee": "Target user must have trainee role",
+        "targetMustBeTrainer": "Target user must have trainer role",
+        "userMustBeTrainee": "User must have trainee role"
+    },
+    "internal": {
+        "default": "An error occurred. Please try again."
+    }
 }
