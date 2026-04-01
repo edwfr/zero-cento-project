@@ -1,4 +1,5 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
 /**
@@ -34,6 +35,24 @@ export function createClient() {
                         // user sessions.
                     }
                 },
+            },
+        }
+    )
+}
+
+/**
+ * Supabase Admin Client
+ * Used for admin operations like creating users, deleting users, etc.
+ * Uses the service role key with elevated privileges
+ */
+export function createAdminClient() {
+    return createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        {
+            auth: {
+                autoRefreshToken: false,
+                persistSession: false,
             },
         }
     )

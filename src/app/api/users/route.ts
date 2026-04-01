@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { createClient } from '@/lib/supabase-server'
+import { createClient, createAdminClient } from '@/lib/supabase-server'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole, requireAuth } from '@/lib/auth'
 import { createUserSchema } from '@/schemas/user'
@@ -116,8 +116,8 @@ export async function POST(request: NextRequest) {
         // Generate secure temporary password
         const tempPassword = generateSecurePassword(12)
 
-        // Create user in Supabase Auth
-        const supabase = createClient()
+        // Create user in Supabase Auth using admin client
+        const supabase = createAdminClient()
         const { data: authData, error: authError } = await supabase.auth.admin.createUser({
             email,
             password: tempPassword,
