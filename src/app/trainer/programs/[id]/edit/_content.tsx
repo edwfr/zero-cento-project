@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
@@ -8,13 +8,24 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/components/ToastNotification'
 import EditProgramMetadata from './EditProgramMetadata'
+import MovementPatternTag from '@/components/MovementPatternTag'
 import { ClipboardList, Flame, Wind, ArrowLeft, FileEdit } from 'lucide-react'
+
+// Brand primary color - default per movement pattern senza colore personalizzato
+const PRIMARY_COLOR = '#FFA700'
+
+interface MovementPattern {
+    id: string
+    name: string
+    color: string
+}
 
 interface Workout {
     id: string
     dayOfWeek: number
     order: number
     exerciseCount: number
+    movementPatterns: MovementPattern[]
 }
 
 interface Week {
@@ -53,12 +64,34 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const [saving, setSaving] = useState(false)
     const [program, setProgram] = useState<Program | null>(null)
     const [error, setError] = useState<string | null>(null)
+    const loadingRef = useRef(false)
 
     useEffect(() => {
         fetchProgram()
     }, [programId])
 
+    // Ricarica i dati quando si torna alla pagina (ad esempio dopo aver modificato un workout)
+    useEffect(() => {
+        const handleRefresh = () => {
+            if (!loadingRef.current) {
+                fetchProgram()
+            }
+        }
+
+        window.addEventListener('focus', handleRefresh)
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') handleRefresh()
+        })
+
+        return () => {
+            window.removeEventListener('focus', handleRefresh)
+            document.removeEventListener('visibilitychange', handleRefresh)
+        }
+    }, []) // array vuoto: si registra una sola volta
+
     const fetchProgram = async () => {
+        if (loadingRef.current) return
+        loadingRef.current = true
         try {
             setLoading(true)
             const res = await fetch(`/api/programs/${programId}`)
@@ -68,11 +101,55 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 throw new Error(getApiErrorMessage(data, t('editProgram.errorLoading'), t))
             }
 
-            setProgram(data.data.program)
+            // Trasforma i dati per calcolare exerciseCount e estrarre movement patterns da workoutExercises
+            const transformedProgram = {
+                ...data.data.program,
+                weeks: data.data.program.weeks.map((week: any) => ({
+                    ...week,
+                    workouts: week.workouts.map((workout: any) => {
+                        const workoutExercises = workout.workoutExercises || []
+                        const trainerId = data.data.program.trainerId
+
+                        // Estrai movement pattern (uno per esercizio, con duplicati)
+                        console.log(
+                            `[workout ${workout.id}] exercises:`,
+                            workoutExercises.map((we: any) => ({
+                                exercise: we.exercise?.name,
+                                movementPattern: we.exercise?.movementPattern?.name ?? '⚠️ missing',
+                            }))
+                        )
+                        const movementPatterns: MovementPattern[] = []
+                        workoutExercises.forEach((we: any) => {
+                            if (we.exercise?.movementPattern) {
+                                const mp = we.exercise.movementPattern
+                                const customColor = mp.movementPatternColors?.find(
+                                    (c: any) => c.trainerId === trainerId
+                                )?.color
+                                movementPatterns.push({
+                                    id: mp.id,
+                                    name: mp.name,
+                                    color: customColor || PRIMARY_COLOR,
+                                })
+                            }
+                        })
+
+                        return {
+                            id: workout.id,
+                            dayOfWeek: workout.dayOfWeek,
+                            order: workout.order,
+                            exerciseCount: workoutExercises.length,
+                            movementPatterns,
+                        }
+                    }),
+                })),
+            }
+
+            setProgram(transformedProgram)
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : t('editProgram.errorLoading'))
         } finally {
             setLoading(false)
+            loadingRef.current = false
         }
     }
 
@@ -324,13 +401,13 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                 </p>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {week.workouts.map((workout) => {
                                     const workoutCard = (
                                         <div
                                             className={`border-2 rounded-lg p-4 transition-all ${workout.exerciseCount > 0
-                                                    ? 'border-green-300 bg-green-50'
-                                                    : 'border-gray-300 bg-white'
+                                                ? 'border-green-300 bg-green-50'
+                                                : 'border-gray-300 bg-white'
                                                 } ${!readOnly ? 'hover:shadow-md hover:border-green-400' : ''}`}
                                         >
                                             <div className="flex items-center justify-between mb-2">
@@ -345,11 +422,22 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                     <span className="text-gray-400 text-sm">⚠️</span>
                                                 )}
                                             </div>
-                                            <p className="text-sm text-gray-600">
+                                            <p className="text-sm text-gray-600 mb-2">
                                                 {workout.exerciseCount > 0
                                                     ? t('editProgram.exercisesCount', { count: workout.exerciseCount })
                                                     : t('editProgram.noExercises')}
                                             </p>
+                                            {workout.movementPatterns.length > 0 && (
+                                                <div className="flex flex-wrap gap-1 mb-2">
+                                                    {workout.movementPatterns.map((mp, idx) => (
+                                                        <MovementPatternTag
+                                                            key={`${mp.id}-${idx}`}
+                                                            name={mp.name}
+                                                            color={mp.color}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            )}
                                             {!readOnly && (
                                                 <p className="text-xs text-[#FFA700] font-semibold mt-2">
                                                     {workout.exerciseCount > 0

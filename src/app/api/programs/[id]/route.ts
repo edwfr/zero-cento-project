@@ -47,6 +47,12 @@ export async function GET(
                                                     select: {
                                                         id: true,
                                                         name: true,
+                                                        movementPatternColors: {
+                                                            select: {
+                                                                color: true,
+                                                                trainerId: true,
+                                                            },
+                                                        },
                                                     },
                                                 },
                                                 exerciseMuscleGroups: {
