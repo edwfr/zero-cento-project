@@ -143,12 +143,6 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
         setLoading(true)
 
         // Validation
-        if (selectedMuscleGroups.length === 0) {
-            setError('Seleziona almeno un gruppo muscolare')
-            setLoading(false)
-            return
-        }
-
         if (selectedMuscleGroups.some((mg) => !mg.muscleGroupId)) {
             setError('Completa tutti i gruppi muscolari selezionati')
             setLoading(false)

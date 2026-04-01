@@ -151,12 +151,7 @@ export default function EditExerciseContent() {
             return
         }
 
-        if (selectedMuscleGroups.length === 0) {
-            setError(t('exercises.addMuscleGroup'))
-            return
-        }
-
-        if (totalCoefficient < 0.1 || totalCoefficient > 3.0) {
+        if (selectedMuscleGroups.length > 0 && (totalCoefficient < 0.1 || totalCoefficient > 3.0)) {
             setError(t('exercises.coefficientRangeError'))
             return
         }
