@@ -10,6 +10,7 @@ import AutocompleteSearch, { AutocompleteOption } from '@/components/Autocomplet
 import WeightTypeSelector from '@/components/WeightTypeSelector'
 import RestTimeSelector from '@/components/RestTimeSelector'
 import RepsInput from '@/components/RepsInput'
+import MovementPatternTag from '@/components/MovementPatternTag'
 import { WeightType, RestTime } from '@prisma/client'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
@@ -20,6 +21,11 @@ interface Exercise {
     name: string
     type: 'fundamental' | 'accessory'
     notes?: string[] // Array of variants/notes
+    movementPattern: {
+        id: string
+        name: string
+        color?: string
+    }
 }
 
 interface WorkoutExercise {
@@ -115,14 +121,16 @@ export default function WorkoutDetailContent() {
         try {
             setLoading(true)
 
-            const [programRes, exercisesRes] = await Promise.all([
+            const [programRes, exercisesRes, movementPatternsRes] = await Promise.all([
                 fetch(`/api/programs/${programId}`),
                 fetch('/api/exercises'),
+                fetch('/api/movement-patterns'),
             ])
 
-            const [programData, exercisesData] = await Promise.all([
+            const [programData, exercisesData, movementPatternsData] = await Promise.all([
                 programRes.json(),
                 exercisesRes.json(),
+                movementPatternsRes.json(),
             ])
 
             if (!programRes.ok || !exercisesRes.ok) {
@@ -141,7 +149,31 @@ export default function WorkoutDetailContent() {
             }
 
             setWorkout(foundWorkout)
-            setExercises(exercisesData.data.items)
+
+            // Get movement pattern colors from API response (if included) or fetch separately
+            const patternColorsMap = new Map<string, string>()
+
+            // If movement patterns include color info in movementPatternColors relation
+            if (movementPatternsRes.ok && movementPatternsData.data?.items) {
+                movementPatternsData.data.items.forEach((pattern: any) => {
+                    // Check if pattern has color customization for this trainer
+                    if (pattern.movementPatternColors && pattern.movementPatternColors.length > 0) {
+                        // Use the first color (should be unique per trainer)
+                        patternColorsMap.set(pattern.id, pattern.movementPatternColors[0].color)
+                    }
+                })
+            }
+
+            // Apply colors to exercises' movement patterns
+            const exercisesWithColors = exercisesData.data.items.map((ex: any) => ({
+                ...ex,
+                movementPattern: {
+                    ...ex.movementPattern,
+                    color: patternColorsMap.get(ex.movementPattern.id),
+                }
+            }))
+
+            setExercises(exercisesWithColors)
 
             // Fetch personal records for the trainee
             const traineeId = programData.data.program.trainee.id
@@ -515,6 +547,10 @@ export default function WorkoutDetailContent() {
                                                         ? t('exercises.fundamental')
                                                         : t('exercises.accessory')}
                                                 </span>
+                                                <MovementPatternTag
+                                                    name={we.exercise.movementPattern.name}
+                                                    color={we.exercise.movementPattern.color}
+                                                />
                                                 {we.isWarmup && (
                                                     <span className="px-1.5 py-0.5 text-xs font-semibold rounded bg-yellow-100 text-yellow-800">
                                                         🔥 {t('workoutDetail.warmupTag')}

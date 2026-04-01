@@ -7,25 +7,40 @@ import { logger } from '@/lib/logger'
 
 /**
  * GET /api/movement-patterns
- * List active movement patterns
+ * List active movement patterns with trainer-specific colors
  */
 export async function GET(request: NextRequest) {
     try {
-        await requireRole(['admin', 'trainer', 'trainee'])
+        const session = await requireRole(['admin', 'trainer', 'trainee'])
 
         const { searchParams } = new URL(request.url)
         const includeInactive = searchParams.get('includeInactive') === 'true'
 
-        const movementPatterns = await prisma.movementPattern.findMany({
-            where: includeInactive ? undefined : { isActive: true },
-            include: {
-                creator: {
-                    select: {
-                        firstName: true,
-                        lastName: true,
-                    },
+        // Build include clause - for trainers, include their custom colors
+        const includeClause: any = {
+            creator: {
+                select: {
+                    firstName: true,
+                    lastName: true,
                 },
             },
+        }
+
+        // Include trainer's custom colors if they are a trainer
+        if (session.user.role === 'trainer') {
+            includeClause.movementPatternColors = {
+                where: {
+                    trainerId: session.user.id,
+                },
+                select: {
+                    color: true,
+                },
+            }
+        }
+
+        const movementPatterns = await prisma.movementPattern.findMany({
+            where: includeInactive ? undefined : { isActive: true },
+            include: includeClause,
             orderBy: {
                 name: 'asc',
             },
