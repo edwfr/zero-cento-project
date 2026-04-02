@@ -153,8 +153,9 @@ export async function PUT(
                 completed,
                 actualRpe,
                 setsPerformed: {
-                    create: sets.map((set: { setNumber: number; reps: number; weight: number }) => ({
+                    create: sets.map((set: { setNumber: number; completed: boolean; reps: number; weight: number }) => ({
                         setNumber: set.setNumber,
+                        completed: set.completed,
                         reps: set.reps,
                         weight: set.weight,
                     })),

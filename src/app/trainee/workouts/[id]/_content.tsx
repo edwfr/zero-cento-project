@@ -7,7 +7,7 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { SkeletonDetail } from '@/components'
 import LoadingSpinner from '@/components/LoadingSpinner'
-import { FileText } from 'lucide-react'
+import { ArrowLeft, Check, ChevronDown, ChevronUp, FileText, PlayCircle } from 'lucide-react'
 import YoutubeEmbed from '@/components/YoutubeEmbed'
 import { useSwipe } from '@/lib/useSwipe'
 import { useToast } from '@/components/ToastNotification'
@@ -37,6 +37,7 @@ interface ExerciseFeedback {
 interface WorkoutExerciseWithWeight {
     id: string
     exercise: Exercise
+    variant: string | null
     sets: number
     reps: string
     targetRpe: number
@@ -54,6 +55,7 @@ interface SetPerformed {
     setNumber: number
     weight: number
     reps: number
+    completed?: boolean | null
 }
 
 interface ExerciseRPE {
@@ -90,6 +92,7 @@ export default function WorkoutDetailContent() {
     const [exerciseRPE, setExerciseRPE] = useState<Record<string, number | null>>({})
     const [globalNotes, setGlobalNotes] = useState('')
     const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>({})
+    const [expandedVideos, setExpandedVideos] = useState<Record<string, boolean>>({})
     const [activeExerciseIndex, setActiveExerciseIndex] = useState(0)
     const exerciseRefs = useRef<Record<string, HTMLDivElement | null>>({})
     const { showToast } = useToast()
@@ -139,6 +142,7 @@ export default function WorkoutDetailContent() {
                         setNumber: sp.setNumber,
                         weight: sp.weight,
                         reps: sp.reps,
+                        completed: sp.completed ?? true,
                     }))
                     initialRPE[we.id] = we.feedback.avgRPE
                     if (we.feedback.notes) {
@@ -150,6 +154,7 @@ export default function WorkoutDetailContent() {
                         setNumber: i + 1,
                         weight: we.effectiveWeight || 0,
                         reps: 0,
+                        completed: false,
                     }))
                     initialRPE[we.id] = we.targetRpe
                 }
@@ -171,7 +176,17 @@ export default function WorkoutDetailContent() {
             const saved = localStorage.getItem(STORAGE_KEY)
             if (saved) {
                 const parsed = JSON.parse(saved)
-                setFeedbackData(parsed.feedbackData || {})
+                const normalizedFeedback = Object.fromEntries(
+                    Object.entries(parsed.feedbackData || {}).map(([workoutExerciseId, sets]) => [
+                        workoutExerciseId,
+                        (sets as SetPerformed[]).map((set) => ({
+                            ...set,
+                            completed: set.completed ?? (set as SetPerformed & { status?: 'done' | 'not-done' | null }).status === 'done' ?? ((set.weight > 0 || set.reps > 0) ? true : false),
+                        })),
+                    ])
+                )
+
+                setFeedbackData(normalizedFeedback)
                 setExerciseRPE(parsed.exerciseRPE || {})
                 setGlobalNotes(parsed.globalNotes || '')
             }
@@ -216,7 +231,26 @@ export default function WorkoutDetailContent() {
             updated[workoutExerciseId][setIndex] = {
                 ...updated[workoutExerciseId][setIndex],
                 [field]: value,
+                completed: true,
             }
+            return updated
+        })
+    }
+
+    const toggleSetCompleted = (
+        workoutExerciseId: string,
+        setIndex: number
+    ) => {
+        setFeedbackData((prev) => {
+            const updated = { ...prev }
+            updated[workoutExerciseId] = [...(prev[workoutExerciseId] || [])]
+
+            const currentSet = updated[workoutExerciseId][setIndex]
+            updated[workoutExerciseId][setIndex] = {
+                ...currentSet,
+                completed: !currentSet.completed,
+            }
+
             return updated
         })
     }
@@ -228,23 +262,16 @@ export default function WorkoutDetailContent() {
         }))
     }
 
+    const toggleVideo = (workoutExerciseId: string) => {
+        setExpandedVideos((prev) => ({
+            ...prev,
+            [workoutExerciseId]: !prev[workoutExerciseId],
+        }))
+    }
+
     const calculateExerciseVolume = (workoutExerciseId: string): number => {
         const sets = feedbackData[workoutExerciseId] || []
         return sets.reduce((total, set) => total + set.weight * set.reps, 0)
-    }
-
-    const calculateTotalVolume = (): number => {
-        return Object.keys(feedbackData).reduce(
-            (total, weId) => total + calculateExerciseVolume(weId),
-            0
-        )
-    }
-
-    const calculateAverageRPE = (): number => {
-        const rpeValues = Object.values(exerciseRPE).filter((rpe): rpe is number => rpe !== null && rpe > 0)
-        if (rpeValues.length === 0) return 0
-        const sum = rpeValues.reduce((total, rpe) => total + rpe, 0)
-        return Math.round((sum / rpeValues.length) * 10) / 10
     }
 
     const doSubmit = async () => {
@@ -257,7 +284,7 @@ export default function WorkoutDetailContent() {
                 const sets = feedbackData[we.id] || []
 
                 // Skip exercises with no data
-                if (sets.every(s => s.weight === 0 && s.reps === 0)) {
+                if (sets.every(s => !s.completed || (s.weight === 0 && s.reps === 0))) {
                     return null
                 }
 
@@ -266,6 +293,7 @@ export default function WorkoutDetailContent() {
                     notes: globalNotes.trim() || null,
                     sets: sets.map(s => ({
                         setNumber: s.setNumber,
+                        completed: !!s.completed,
                         reps: s.reps,
                         weight: s.weight,
                     })),
@@ -307,7 +335,7 @@ export default function WorkoutDetailContent() {
         const emptyExercises: string[] = []
         workout.exercises.forEach((we) => {
             const sets = feedbackData[we.id] || []
-            const hasData = sets.some((s) => s.weight > 0 && s.reps > 0)
+            const hasData = sets.some((s) => s.completed && s.weight > 0 && s.reps > 0)
             if (!hasData) {
                 emptyExercises.push(we.exercise.name)
             }
@@ -381,8 +409,6 @@ export default function WorkoutDetailContent() {
     }
 
     const sortedExercises = [...workout.exercises].sort((a, b) => a.order - b.order)
-    const totalVolume = calculateTotalVolume()
-    const avgRPE = calculateAverageRPE()
 
     return (
         <div className="min-h-screen bg-gray-50" {...pageSwipeHandlers}>
@@ -402,8 +428,9 @@ export default function WorkoutDetailContent() {
                 <div className="mb-8">
                     <Link
                         href="/trainee/programs/current"
-                        className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
+                        className="inline-flex items-center gap-2 text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4"
                     >
+                        <ArrowLeft className="w-4 h-4" />
                         {t('workouts.backToProgram')}
                     </Link>
                     <h1 className="text-3xl font-bold text-gray-900">
@@ -422,31 +449,6 @@ export default function WorkoutDetailContent() {
                             {t('workouts.weekTest')}
                         </div>
                     )}
-                </div>
-
-                {/* Summary Stats */}
-                <div className="grid grid-cols-3 gap-4 mb-8">
-                    <div className="bg-white rounded-lg shadow-md p-4 text-center">
-                        <p className="text-sm text-gray-600 mb-1">{t('workouts.totalVolume')}</p>
-                        <p className="text-2xl font-bold text-[#FFA700]">{totalVolume} kg</p>
-                    </div>
-                    <div className="bg-white rounded-lg shadow-md p-4 text-center">
-                        <p className="text-sm text-gray-600 mb-1">{t('workouts.avgRpe')}</p>
-                        <p className="text-2xl font-bold text-[#FFA700]">{avgRPE || '-'}</p>
-                    </div>
-                    <div className="bg-white rounded-lg shadow-md p-4 text-center">
-                        <p className="text-sm text-gray-600 mb-1">{t('workouts.exercisesCount')}</p>
-                        <p className="text-2xl font-bold text-gray-900">
-                            {sortedExercises.length}
-                        </p>
-                    </div>
-                </div>
-
-                {/* Auto-save indicator */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
-                    <p className="text-sm text-blue-900">
-                        💾 <span className="font-semibold">{t('workouts.autosaveTitle')}</span> {t('workouts.autosaveDesc')}
-                    </p>
                 </div>
 
                 {/* Mobile swipe hint — shown only on touch devices */}
@@ -478,7 +480,7 @@ export default function WorkoutDetailContent() {
                 <div className="space-y-4 mb-8">
                     {sortedExercises.map((we, idx) => {
                         const isExpanded = expandedExercises[we.id]
-                        const volume = calculateExerciseVolume(we.id)
+                        const isVideoExpanded = expandedVideos[we.id] ?? false
 
                         return (
                             <div
@@ -500,11 +502,14 @@ export default function WorkoutDetailContent() {
                                                 </span>
                                                 <h3 className="text-xl font-bold text-gray-900">
                                                     {we.exercise.name}
+                                                    {we.variant && (
+                                                        <span className="text-gray-600 font-normal ml-2">({we.variant})</span>
+                                                    )}
                                                 </h3>
                                                 <span
-                                                    className={`px-2 py-1 text-xs font-semibold rounded ${we.exercise.type === 'fundamental'
-                                                        ? 'bg-purple-100 text-purple-800'
-                                                        : 'bg-gray-100 text-gray-800'
+                                                    className={`rounded-full border px-2 py-0.5 text-xs font-medium ${we.exercise.type === 'fundamental'
+                                                        ? 'bg-red-100 text-red-700 border-red-300'
+                                                        : 'bg-blue-100 text-blue-700 border-blue-300'
                                                         }`}
                                                 >
                                                     {we.exercise.type === 'fundamental'
@@ -551,12 +556,6 @@ export default function WorkoutDetailContent() {
                                                         {we.targetRpe}
                                                     </p>
                                                 </div>
-                                                <div>
-                                                    <p className="text-xs text-gray-600">{t('workouts.volume')}</p>
-                                                    <p className="font-semibold text-[#FFA700]">
-                                                        {volume} kg
-                                                    </p>
-                                                </div>
                                             </div>
 
                                             {we.notes && (
@@ -578,7 +577,25 @@ export default function WorkoutDetailContent() {
                                         {/* YouTube Video */}
                                         {we.exercise.youtubeUrl && (
                                             <div className="mb-6">
-                                                <YoutubeEmbed videoUrl={we.exercise.youtubeUrl} />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleVideo(we.id)}
+                                                    className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:border-[#FFA700] hover:text-[#FFA700]"
+                                                >
+                                                    <PlayCircle className="h-4 w-4" />
+                                                    {isVideoExpanded
+                                                        ? t('workouts.hideVideo')
+                                                        : t('workouts.showVideo')}
+                                                    {isVideoExpanded
+                                                        ? <ChevronUp className="h-4 w-4" />
+                                                        : <ChevronDown className="h-4 w-4" />}
+                                                </button>
+
+                                                {isVideoExpanded && (
+                                                    <div className="mt-4">
+                                                        <YoutubeEmbed videoUrl={we.exercise.youtubeUrl} />
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
 
@@ -591,10 +608,13 @@ export default function WorkoutDetailContent() {
                                                             {t('workouts.sets')}
                                                         </th>
                                                         <th className="text-center py-2 px-3 text-sm font-semibold text-gray-700">
+                                                            {t('workouts.reps')}
+                                                        </th>
+                                                        <th className="text-center py-2 px-3 text-sm font-semibold text-gray-700">
                                                             {t('workouts.weightKg')}
                                                         </th>
                                                         <th className="text-center py-2 px-3 text-sm font-semibold text-gray-700">
-                                                            {t('workouts.reps')}
+                                                            <Check className="mx-auto h-4 w-4 text-gray-500" />
                                                         </th>
                                                     </tr>
                                                 </thead>
@@ -606,6 +626,25 @@ export default function WorkoutDetailContent() {
                                                         >
                                                             <td className="py-3 px-3 font-semibold text-gray-900">
                                                                 #{set.setNumber}
+                                                            </td>
+                                                            <td className="py-3 px-3">
+                                                                <input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    value={set.reps || ''}
+                                                                    onChange={(e) =>
+                                                                        updateSet(
+                                                                            we.id,
+                                                                            setIdx,
+                                                                            'reps',
+                                                                            parseInt(
+                                                                                e.target.value
+                                                                            ) || 0
+                                                                        )
+                                                                    }
+                                                                    disabled={!set.completed}
+                                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-center focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                                                                />
                                                             </td>
                                                             <td className="py-3 px-3">
                                                                 <input
@@ -623,26 +662,23 @@ export default function WorkoutDetailContent() {
                                                                             ) || 0
                                                                         )
                                                                     }
+                                                                    disabled={!set.completed}
                                                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-center focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
                                                                 />
                                                             </td>
                                                             <td className="py-3 px-3">
-                                                                <input
-                                                                    type="number"
-                                                                    min="0"
-                                                                    value={set.reps || ''}
-                                                                    onChange={(e) =>
-                                                                        updateSet(
-                                                                            we.id,
-                                                                            setIdx,
-                                                                            'reps',
-                                                                            parseInt(
-                                                                                e.target.value
-                                                                            ) || 0
-                                                                        )
-                                                                    }
-                                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-center focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
-                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => toggleSetCompleted(we.id, setIdx)}
+                                                                    className={`mx-auto flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${set.completed
+                                                                        ? 'border-green-300 bg-green-100 text-green-700'
+                                                                        : 'border-gray-300 bg-white text-gray-400 hover:border-green-300 hover:text-green-600'
+                                                                        }`}
+                                                                    aria-label={set.completed ? t('workouts.markSetUndone') : t('workouts.markSetDone')}
+                                                                    title={set.completed ? t('workouts.markSetUndone') : t('workouts.markSetDone')}
+                                                                >
+                                                                    <Check className="h-4 w-4" />
+                                                                </button>
                                                             </td>
                                                         </tr>
                                                     ))}

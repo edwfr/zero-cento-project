@@ -10,6 +10,7 @@ export const setPerformedSchema = z.object({
         .int('Numero serie deve essere intero')
         .min(1, 'Minimo serie 1')
         .max(50, 'Massimo 50 serie'),
+    completed: z.boolean().default(true),
     reps: z
         .number()
         .int('Ripetizioni deve essere intero')

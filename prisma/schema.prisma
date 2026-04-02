@@ -304,6 +304,7 @@ model SetPerformed {
   setNumber  Int      // Numero progressivo serie: 1, 2, 3, ...
   reps       Int
   weight     Float    // kg
+  completed  Boolean  @default(true)
   createdAt  DateTime @default(now())
 
   // Relations

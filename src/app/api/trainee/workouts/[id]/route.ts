@@ -121,6 +121,7 @@ export async function GET(
                 return {
                     id: we.id,
                     exercise: we.exercise,
+                    variant: we.variant,
                     sets: we.sets,
                     reps: we.reps,
                     targetRpe: we.targetRpe,

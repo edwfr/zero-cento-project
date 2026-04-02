@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { SkeletonDashboard } from '@/components'
-import { TrendingUp, Wind } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
+import WeekTypeBadge from '@/components/WeekTypeBadge'
 import { formatDate } from '@/lib/date-format'
 
 interface Workout {
@@ -72,7 +73,6 @@ interface ProgramProgress {
 
 export default function CurrentProgramContent() {
     const { t } = useTranslation('trainee')
-    const DAY_NAMES = t('currentProgram.dayNames', { returnObjects: true }) as string[]
     const [loading, setLoading] = useState(true)
     const [program, setProgram] = useState<Program | null>(null)
     const [programProgress, setProgramProgress] = useState<ProgramProgress | null>(null)
@@ -188,8 +188,9 @@ export default function CurrentProgramContent() {
             <div className="mb-8">
                 <Link
                     href="/trainee/dashboard"
-                    className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
+                    className="inline-flex items-center gap-2 text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4"
                 >
+                    <ArrowLeft className="w-4 h-4" />
                     {t('currentProgram.backToDashboard')}
                 </Link>
                 <h1 className="text-3xl font-bold text-gray-900">{program.title}</h1>
@@ -238,20 +239,7 @@ export default function CurrentProgramContent() {
                                     <h3 className="text-xl font-bold text-gray-900">
                                         {t('currentProgram.week', { number: week.weekNumber })}
                                     </h3>
-                                    <span
-                                        className={`px-3 py-1 text-xs font-semibold rounded-full ${week.weekType === 'normal'
-                                            ? 'bg-blue-100 text-blue-800'
-                                            : week.weekType === 'test'
-                                                ? 'bg-orange-100 text-orange-800'
-                                                : 'bg-green-100 text-green-800'
-                                            }`}
-                                    >
-                                        {week.weekType === 'normal'
-                                            ? <><TrendingUp className="w-3 h-3 inline mr-1" />Normale</>
-                                            : week.weekType === 'test'
-                                                ? <>🎯 Test</>
-                                                : <><Wind className="w-3 h-3 inline mr-1" />Scarico</>}
-                                    </span>
+                                    <WeekTypeBadge weekType={week.weekType} />
                                     {weekCompleted && (
                                         <span className="text-green-600 text-sm font-semibold">
                                             {t('currentProgram.completed')}
@@ -280,7 +268,7 @@ export default function CurrentProgramContent() {
                                     >
                                         <div className="flex items-center justify-between mb-2">
                                             <p className="font-semibold text-gray-900">
-                                                {DAY_NAMES[workout.dayOfWeek]}
+                                                Giorno {workout.dayOfWeek}
                                             </p>
                                             {workout.completed ? (
                                                 <span className="text-green-600 text-lg">✓</span>

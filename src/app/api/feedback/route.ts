@@ -227,8 +227,9 @@ export async function POST(request: NextRequest) {
                     completed,
                     actualRpe,
                     setsPerformed: {
-                        create: sets.map((set: { setNumber: number; reps: number; weight: number }) => ({
+                        create: sets.map((set: { setNumber: number; completed: boolean; reps: number; weight: number }) => ({
                             setNumber: set.setNumber,
+                            completed: set.completed,
                             reps: set.reps,
                             weight: set.weight,
                         })),
@@ -262,8 +263,9 @@ export async function POST(request: NextRequest) {
                     completed,
                     actualRpe,
                     setsPerformed: {
-                        create: sets.map((set: { setNumber: number; reps: number; weight: number }) => ({
+                        create: sets.map((set: { setNumber: number; completed: boolean; reps: number; weight: number }) => ({
                             setNumber: set.setNumber,
+                            completed: set.completed,
                             reps: set.reps,
                             weight: set.weight,
                         })),
@@ -291,7 +293,7 @@ export async function POST(request: NextRequest) {
 
         // Calculate derived metrics
         const totalVolume = feedback.setsPerformed.reduce(
-            (sum, set) => sum + set.reps * set.weight,
+            (sum, set) => sum + (set.completed ? set.reps * set.weight : 0),
             0
         )
         const avgRPE = feedback.actualRpe || null
