@@ -1,7 +1,7 @@
 import { getSession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
-import EditProgramContent from './edit/_content'
+import ReviewProgramContent from './review/_content'
 
 export default async function ViewProgramPage() {
     const session = await getSession()
@@ -10,7 +10,7 @@ export default async function ViewProgramPage() {
 
     return (
         <DashboardLayout user={session.user}>
-            <EditProgramContent readOnly={true} />
+            <ReviewProgramContent viewOnly={true} />
         </DashboardLayout>
     )
 }

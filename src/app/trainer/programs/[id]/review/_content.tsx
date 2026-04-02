@@ -4,7 +4,7 @@ import { Fragment, MouseEvent, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, ClipboardList, Flame, Wind } from 'lucide-react'
+import { ArrowLeft, ClipboardList, FileEdit, Flame, Wind } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { getApiErrorMessage } from '@/lib/api-error'
 
@@ -56,7 +56,11 @@ interface WorkoutSlotRow {
     isEmpty: boolean
 }
 
-export default function ReviewProgramContent() {
+interface ReviewProgramContentProps {
+    viewOnly?: boolean
+}
+
+export default function ReviewProgramContent({ viewOnly = false }: ReviewProgramContentProps) {
     const params = useParams()
     const programId = params.id as string
     const { t } = useTranslation('trainer')
@@ -154,6 +158,7 @@ export default function ReviewProgramContent() {
         )
     }
 
+    const isDraft = program.status === 'draft'
     const totalWorkouts = program.durationWeeks * program.workoutsPerWeek
     const configuredWorkouts = program.weeks.reduce(
         (sum, week) => sum + week.workouts.filter((workout) => workout.workoutExercises.length > 0).length,
@@ -161,7 +166,7 @@ export default function ReviewProgramContent() {
     )
     const workoutSlots = Array.from({ length: program.workoutsPerWeek }, (_, slotIndex) => ({
         slotNumber: slotIndex + 1,
-        rows: program.weeks.flatMap((week) => {
+        rows: program.weeks.flatMap<WorkoutSlotRow>((week) => {
             const sortedWorkouts = [...week.workouts].sort((left, right) => left.dayIndex - right.dayIndex)
             const workout = sortedWorkouts[slotIndex]
 
@@ -221,20 +226,42 @@ export default function ReviewProgramContent() {
                     </div>
                 </div>
 
-                <div className="mb-8">
-                    <Link
-                        href={`/trainer/programs/${programId}/edit`}
-                        className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-brand-primary hover:text-brand-primary/80"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        {t('reviewProgram.backToEdit')}
-                    </Link>
-                    <h1 className="text-3xl font-bold text-gray-900">{t('reviewProgram.title')}</h1>
-                    <p className="mt-2 text-gray-600">
-                        {t('reviewProgram.description', {
-                            name: `${program.trainee.firstName} ${program.trainee.lastName}`,
-                        })}
-                    </p>
+                <div className="mb-8 flex items-start justify-between gap-4">
+                    <div>
+                        <Link
+                            href={viewOnly ? '/trainer/programs' : `/trainer/programs/${programId}/edit`}
+                            className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-brand-primary hover:text-brand-primary/80"
+                        >
+                            <ArrowLeft className="h-4 w-4" />
+                            {viewOnly ? t('editProgram.backToPrograms') : t('reviewProgram.backToEdit')}
+                        </Link>
+                        <h1 className="text-3xl font-bold text-gray-900">{t('reviewProgram.title')}</h1>
+                        <p className="mt-2 text-gray-600">
+                            {t('reviewProgram.description', {
+                                name: `${program.trainee.firstName} ${program.trainee.lastName}`,
+                            })}
+                        </p>
+                    </div>
+                    {viewOnly && (
+                        isDraft ? (
+                            <Link
+                                href={`/trainer/programs/${programId}/edit`}
+                                className="inline-flex items-center gap-2 rounded-lg bg-[#FFA700] px-4 py-2 font-semibold text-white transition-colors hover:bg-[#FF9500]"
+                            >
+                                <FileEdit className="h-4 w-4" />
+                                {t('editProgram.edit')}
+                            </Link>
+                        ) : (
+                            <button
+                                type="button"
+                                disabled
+                                className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg bg-gray-300 px-4 py-2 font-semibold text-gray-500"
+                            >
+                                <FileEdit className="h-4 w-4" />
+                                {t('editProgram.edit')}
+                            </button>
+                        )
+                    )}
                 </div>
 
                 <div className="mb-8 rounded-lg bg-white p-6 shadow-md">
@@ -353,28 +380,40 @@ export default function ReviewProgramContent() {
                     ))}
                 </div>
 
-                <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-                    <Link
-                        href={`/trainer/programs/${programId}/edit`}
-                        className="flex-1 rounded-lg bg-gray-300 px-6 py-3 text-center font-semibold text-gray-800 transition-colors hover:bg-gray-400"
-                    >
-                        {t('reviewProgram.backToEdit')}
-                    </Link>
-                    <Link
-                        href={`/trainer/programs/${programId}/publish`}
-                        className={`flex-1 rounded-lg px-6 py-3 text-center font-semibold transition-colors ${configuredWorkouts === totalWorkouts
-                            ? 'bg-[#FFA700] text-white hover:bg-[#FF9500]'
-                            : 'cursor-not-allowed bg-gray-300 text-gray-500'
-                            }`}
-                        onClick={(event: MouseEvent<HTMLAnchorElement>) => {
-                            if (configuredWorkouts < totalWorkouts) {
-                                event.preventDefault()
-                            }
-                        }}
-                    >
-                        {t('reviewProgram.continueToPublish')}
-                    </Link>
-                </div>
+                {!viewOnly && (
+                    <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+                        {isDraft ? (
+                            <Link
+                                href={`/trainer/programs/${programId}/edit`}
+                                className="flex-1 rounded-lg bg-gray-300 px-6 py-3 text-center font-semibold text-gray-800 transition-colors hover:bg-gray-400"
+                            >
+                                {t('reviewProgram.backToEdit')}
+                            </Link>
+                        ) : (
+                            <button
+                                type="button"
+                                disabled
+                                className="flex-1 cursor-not-allowed rounded-lg bg-gray-300 px-6 py-3 text-center font-semibold text-gray-500"
+                            >
+                                {t('reviewProgram.backToEdit')}
+                            </button>
+                        )}
+                        <Link
+                            href={`/trainer/programs/${programId}/publish`}
+                            className={`flex-1 rounded-lg px-6 py-3 text-center font-semibold transition-colors ${isDraft && configuredWorkouts === totalWorkouts
+                                ? 'bg-[#FFA700] text-white hover:bg-[#FF9500]'
+                                : 'cursor-not-allowed bg-gray-300 text-gray-500'
+                                }`}
+                            onClick={(event: MouseEvent<HTMLAnchorElement>) => {
+                                if (!isDraft || configuredWorkouts < totalWorkouts) {
+                                    event.preventDefault()
+                                }
+                            }}
+                        >
+                            {t('reviewProgram.continueToPublish')}
+                        </Link>
+                    </div>
+                )}
             </div>
         </div>
     )
