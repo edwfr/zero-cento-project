@@ -81,6 +81,10 @@ export default function TraineeRecordsContent() {
         setGroupedRecords(grouped)
     }, [records])
 
+    const sortExercisesByName = (items: Exercise[]) => {
+        return [...items].sort((a, b) => a.name.localeCompare(b.name, 'it', { sensitivity: 'base' }))
+    }
+
     const fetchData = async () => {
         try {
             setLoading(true)
@@ -101,12 +105,14 @@ export default function TraineeRecordsContent() {
                 throw new Error(getApiErrorMessage(traineeData, 'Atleta non trovato', t))
             }
 
+            const sortedExercises = sortExercisesByName(exercisesData.data?.items || [])
+
             setTrainee(traineeData.data.user)
             setRecords(recordsData.data?.items || [])
-            setExercises(exercisesData.data?.items || [])
+            setExercises(sortedExercises)
 
-            if (exercisesData.data?.items?.length > 0) {
-                setSelectedExerciseId(exercisesData.data.items[0].id)
+            if (sortedExercises.length > 0) {
+                setSelectedExerciseId(sortedExercises[0].id)
             }
         } catch (err: any) {
             setError(err.message)
