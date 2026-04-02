@@ -1,11 +1,12 @@
 ﻿'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import type { RestTime } from '@prisma/client'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { SkeletonDetail } from '@/components'
+import { SkeletonDetail, WeekTypeBanner } from '@/components'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { ArrowLeft, Check, ChevronDown, ChevronUp, FileText, PlayCircle } from 'lucide-react'
 import YoutubeEmbed from '@/components/YoutubeEmbed'
@@ -44,7 +45,7 @@ interface WorkoutExerciseWithWeight {
     weightType: 'absolute' | 'percentage_1rm' | 'percentage_rm' | 'percentage_previous'
     weight: number | null
     effectiveWeight: number | null
-    restTime: number
+    restTime: RestTime
     isWarmup: boolean
     notes: string | null
     order: number
@@ -76,6 +77,23 @@ interface Workout {
     exercises: WorkoutExerciseWithWeight[]
 }
 
+const parsePlannedReps = (plannedReps: string): number => {
+    const match = plannedReps.match(/\d+/)
+    return match ? parseInt(match[0], 10) : 0
+}
+
+const formatRestTime = (restTime: RestTime): string => {
+    const labels: Record<RestTime, string> = {
+        s30: '0:30',
+        m1: '1:00',
+        m2: '2:00',
+        m3: '3:00',
+        m5: '5:00',
+    }
+
+    return labels[restTime] ?? '-'
+}
+
 export default function WorkoutDetailContent() {
     const { t } = useTranslation('trainee')
     const router = useRouter()
@@ -103,6 +121,8 @@ export default function WorkoutDetailContent() {
         confirmText?: string
         variant?: 'danger' | 'warning' | 'info' | 'success'
     } | null>(null)
+    const draftSyncEnabledRef = useRef(false)
+    const persistedExerciseIdsRef = useRef<Set<string>>(new Set())
 
     const STORAGE_KEY = `workout_${workoutId}_feedback`
 
@@ -117,6 +137,25 @@ export default function WorkoutDetailContent() {
             saveLocalData()
         }
     }, [feedbackData, exerciseRPE, globalNotes])
+
+    useEffect(() => {
+        if (!workout || loading) {
+            return
+        }
+
+        if (!draftSyncEnabledRef.current) {
+            draftSyncEnabledRef.current = true
+            return
+        }
+
+        const timeoutId = window.setTimeout(() => {
+            void syncDraftFeedback()
+        }, 800)
+
+        return () => {
+            window.clearTimeout(timeoutId)
+        }
+    }, [feedbackData, workout, loading])
 
     const fetchWorkout = async () => {
         try {
@@ -138,6 +177,7 @@ export default function WorkoutDetailContent() {
             data.data.workout.exercises.forEach((we: WorkoutExerciseWithWeight) => {
                 // If feedback exists, load it
                 if (we.feedback) {
+                    persistedExerciseIdsRef.current.add(we.id)
                     initialFeedback[we.id] = we.feedback.setsPerformed.map(sp => ({
                         setNumber: sp.setNumber,
                         weight: sp.weight,
@@ -149,11 +189,13 @@ export default function WorkoutDetailContent() {
                         setGlobalNotes(we.feedback.notes)
                     }
                 } else {
-                    // Initialize empty sets with effectiveWeight as default
+                    const plannedReps = parsePlannedReps(we.reps)
+
+                    // Initialize empty sets with planned reps and effective weight as defaults
                     initialFeedback[we.id] = Array.from({ length: we.sets }, (_, i) => ({
                         setNumber: i + 1,
                         weight: we.effectiveWeight || 0,
-                        reps: 0,
+                        reps: plannedReps,
                         completed: false,
                     }))
                     initialRPE[we.id] = we.targetRpe
@@ -164,6 +206,7 @@ export default function WorkoutDetailContent() {
 
             setFeedbackData(initialFeedback)
             setExerciseRPE(initialRPE)
+            draftSyncEnabledRef.current = false
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : t('workouts.errorLoading'))
         } finally {
@@ -179,10 +222,14 @@ export default function WorkoutDetailContent() {
                 const normalizedFeedback = Object.fromEntries(
                     Object.entries(parsed.feedbackData || {}).map(([workoutExerciseId, sets]) => [
                         workoutExerciseId,
-                        (sets as SetPerformed[]).map((set) => ({
-                            ...set,
-                            completed: set.completed ?? (set as SetPerformed & { status?: 'done' | 'not-done' | null }).status === 'done' ?? ((set.weight > 0 || set.reps > 0) ? true : false),
-                        })),
+                        (sets as SetPerformed[]).map((set) => {
+                            const legacyStatus = (set as SetPerformed & { status?: 'done' | 'not-done' | null }).status
+
+                            return {
+                                ...set,
+                                completed: set.completed ?? (legacyStatus === 'done' ? true : (set.weight > 0 || set.reps > 0)),
+                            }
+                        }),
                     ])
                 )
 
@@ -216,6 +263,56 @@ export default function WorkoutDetailContent() {
             localStorage.removeItem(STORAGE_KEY)
         } catch (err) {
             console.error('Error clearing local data:', err)
+        }
+    }
+
+    const syncDraftFeedback = async () => {
+        if (!workout) {
+            return
+        }
+
+        const exercisesToSync = workout.exercises.filter((exercise) => {
+            const sets = feedbackData[exercise.id] || []
+            const hasCompletedSets = sets.some((set) => !!set.completed)
+
+            return hasCompletedSets || persistedExerciseIdsRef.current.has(exercise.id)
+        })
+
+        if (exercisesToSync.length === 0) {
+            return
+        }
+
+        try {
+            await Promise.all(
+                exercisesToSync.map(async (exercise) => {
+                    const sets = feedbackData[exercise.id] || []
+
+                    const payload = {
+                        workoutExerciseId: exercise.id,
+                        sets: sets.map((set) => ({
+                            setNumber: set.setNumber,
+                            completed: !!set.completed,
+                            reps: set.reps,
+                            weight: set.weight,
+                        })),
+                        completed: false,
+                    }
+
+                    const res = await fetch('/api/feedback', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                    })
+
+                    if (!res.ok) {
+                        throw new Error('Failed to persist workout draft')
+                    }
+
+                    persistedExerciseIdsRef.current.add(exercise.id)
+                })
+            )
+        } catch (err) {
+            console.error('Error syncing workout draft:', err)
         }
     }
 
@@ -439,16 +536,11 @@ export default function WorkoutDetailContent() {
                     <p className="text-gray-600 mt-2">
                         {workout.program.title}
                     </p>
-                    {workout.weekType === 'deload' && (
-                        <div className="mt-3 inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
-                            {t('workouts.weekDeload')}
-                        </div>
-                    )}
-                    {workout.weekType === 'test' && (
-                        <div className="mt-3 inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
-                            {t('workouts.weekTest')}
-                        </div>
-                    )}
+                    <WeekTypeBanner
+                        weekType={workout.weekType}
+                        weekNumber={workout.weekNumber}
+                        className="mt-4"
+                    />
                 </div>
 
                 {/* Mobile swipe hint — shown only on touch devices */}
@@ -544,10 +636,7 @@ export default function WorkoutDetailContent() {
                                                 <div>
                                                     <p className="text-xs text-gray-600">{t('workouts.rest')}</p>
                                                     <p className="font-semibold text-gray-900">
-                                                        {Math.floor(we.restTime / 60)}:
-                                                        {(we.restTime % 60)
-                                                            .toString()
-                                                            .padStart(2, '0')}
+                                                        {formatRestTime(we.restTime)}
                                                     </p>
                                                 </div>
                                                 <div>

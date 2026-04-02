@@ -200,6 +200,8 @@ export async function POST(request: NextRequest) {
         // Check if feedback already exists (idempotency by date)
         const today = new Date()
         today.setHours(0, 0, 0, 0)
+        const tomorrow = new Date(today)
+        tomorrow.setDate(tomorrow.getDate() + 1)
 
         const existingFeedback = await prisma.exerciseFeedback.findFirst({
             where: {
@@ -207,7 +209,11 @@ export async function POST(request: NextRequest) {
                 traineeId: session.user.id,
                 date: {
                     gte: today,
+                    lt: tomorrow,
                 },
+            },
+            orderBy: {
+                updatedAt: 'desc',
             },
         })
 

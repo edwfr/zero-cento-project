@@ -4,6 +4,16 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 
+const hasStartedFeedback = (feedbacks: Array<{ setsPerformed: Array<{ completed: boolean }> }>): boolean => {
+    return feedbacks.some((feedback) =>
+        feedback.setsPerformed.some((set) => set.completed)
+    )
+}
+
+const hasCompletedFeedback = (feedbacks: Array<{ completed: boolean }>): boolean => {
+    return feedbacks.some((feedback) => feedback.completed)
+}
+
 /**
  * GET /api/programs/[id]/progress
  * Get program progress and statistics
@@ -74,7 +84,7 @@ export async function GET(
         const completedWorkouts = allWorkouts.filter((workout) => {
             const exercises = workout.workoutExercises
             if (exercises.length === 0) return false
-            return exercises.every((ex) => ex.exerciseFeedbacks.length > 0)
+            return exercises.every((ex) => hasCompletedFeedback(ex.exerciseFeedbacks))
         })
 
         const completedWorkoutsCount = completedWorkouts.length
@@ -83,13 +93,14 @@ export async function GET(
         const feedbackCount = program.weeks
             .flatMap((week) => week.workouts)
             .flatMap((workout) => workout.workoutExercises)
-            .flatMap((ex) => ex.exerciseFeedbacks).length
+            .flatMap((ex) => ex.exerciseFeedbacks.filter((feedback) => hasStartedFeedback([feedback]))).length
 
         // Calculate average RPE across all feedback
         const allFeedbacks = program.weeks
             .flatMap((week) => week.workouts)
             .flatMap((workout) => workout.workoutExercises)
             .flatMap((ex) => ex.exerciseFeedbacks)
+            .filter((feedback) => feedback.completed)
 
         const rpeValues = allFeedbacks.filter((f) => f.actualRpe !== null).map((f) => f.actualRpe!)
         const avgRPE =
@@ -109,7 +120,11 @@ export async function GET(
             week.workouts.map((workout) => {
                 const hasAllFeedback =
                     workout.workoutExercises.length > 0 &&
-                    workout.workoutExercises.every((ex) => ex.exerciseFeedbacks.length > 0)
+                    workout.workoutExercises.every((ex) => hasCompletedFeedback(ex.exerciseFeedbacks))
+
+                const hasStartedWorkout = workout.workoutExercises.some((ex) =>
+                    hasStartedFeedback(ex.exerciseFeedbacks)
+                )
 
                 return {
                     id: workout.id,
@@ -118,8 +133,10 @@ export async function GET(
                     dayOfWeek: workout.dayIndex,
                     exerciseCount: workout.workoutExercises.length,
                     completed: hasAllFeedback,
-                    feedbackCount: workout.workoutExercises.flatMap((ex) => ex.exerciseFeedbacks)
-                        .length,
+                    started: hasStartedWorkout,
+                    feedbackCount: workout.workoutExercises.flatMap((ex) =>
+                        ex.exerciseFeedbacks.filter((feedback) => hasStartedFeedback([feedback]))
+                    ).length,
                 }
             })
         )
@@ -155,7 +172,7 @@ export async function GET(
             const weekCompletedWorkouts = weekWorkouts.filter((w) => {
                 return (
                     w.workoutExercises.length > 0 &&
-                    w.workoutExercises.every((ex) => ex.exerciseFeedbacks.length > 0)
+                    w.workoutExercises.every((ex) => hasCompletedFeedback(ex.exerciseFeedbacks))
                 )
             }).length
 

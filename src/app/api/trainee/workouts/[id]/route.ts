@@ -67,6 +67,8 @@ export async function GET(
         // The feedback is scoped to today's date for idempotency
         const today = new Date()
         today.setHours(0, 0, 0, 0)
+        const tomorrow = new Date(today)
+        tomorrow.setDate(tomorrow.getDate() + 1)
 
         const feedbackMap = new Map<string, any>()
 
@@ -76,7 +78,10 @@ export async function GET(
                     in: workout.workoutExercises.map((we) => we.id),
                 },
                 traineeId: session.user.id,
-                date: today,
+                date: {
+                    gte: today,
+                    lt: tomorrow,
+                },
             },
             include: {
                 setsPerformed: {
@@ -85,11 +90,16 @@ export async function GET(
                     },
                 },
             },
+            orderBy: {
+                updatedAt: 'desc',
+            },
         })
 
         // Create a map for quick lookup
         existingFeedback.forEach((fb) => {
-            feedbackMap.set(fb.workoutExerciseId, fb)
+            if (!feedbackMap.has(fb.workoutExerciseId)) {
+                feedbackMap.set(fb.workoutExerciseId, fb)
+            }
         })
 
         // Calculate effective weight for each exercise

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { SkeletonDashboard } from '@/components'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Circle, PlayCircle } from 'lucide-react'
 import WeekTypeBadge from '@/components/WeekTypeBadge'
 import { formatDate } from '@/lib/date-format'
 
@@ -15,6 +15,7 @@ interface Workout {
     completed: boolean
     exerciseCount: number
     feedbackSubmitted: boolean
+    feedbackCount: number
 }
 
 interface Week {
@@ -71,16 +72,77 @@ interface ProgramProgress {
     workouts: WorkoutProgress[]
 }
 
+interface SavedSetPerformed {
+    completed?: boolean | null
+    status?: 'done' | 'not-done' | null
+}
+
+interface SavedWorkoutDraft {
+    feedbackData?: Record<string, SavedSetPerformed[]>
+}
+
+const hasLocalWorkoutProgress = (workoutId: string): boolean => {
+    if (typeof window === 'undefined') {
+        return false
+    }
+
+    try {
+        const saved = localStorage.getItem(`workout_${workoutId}_feedback`)
+        if (!saved) {
+            return false
+        }
+
+        const parsed = JSON.parse(saved) as SavedWorkoutDraft
+        const allSets = Object.values(parsed.feedbackData || {}).flat()
+
+        return allSets.some((set) => {
+            if (set.completed !== undefined && set.completed !== null) {
+                return set.completed
+            }
+
+            return set.status === 'done'
+        })
+    } catch {
+        return false
+    }
+}
+
 export default function CurrentProgramContent() {
     const { t } = useTranslation('trainee')
     const [loading, setLoading] = useState(true)
     const [program, setProgram] = useState<Program | null>(null)
     const [programProgress, setProgramProgress] = useState<ProgramProgress | null>(null)
+    const [localWorkoutProgress, setLocalWorkoutProgress] = useState<Record<string, boolean>>({})
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
         fetchProgram()
     }, [])
+
+    useEffect(() => {
+        if (!program) {
+            return
+        }
+
+        const refreshLocalWorkoutProgress = () => {
+            const progressByWorkoutId = Object.fromEntries(
+                program.weeks
+                    .flatMap((week) => week.workouts)
+                    .map((workout) => [workout.id, hasLocalWorkoutProgress(workout.id)])
+            )
+
+            setLocalWorkoutProgress(progressByWorkoutId)
+        }
+
+        refreshLocalWorkoutProgress()
+        window.addEventListener('focus', refreshLocalWorkoutProgress)
+        document.addEventListener('visibilitychange', refreshLocalWorkoutProgress)
+
+        return () => {
+            window.removeEventListener('focus', refreshLocalWorkoutProgress)
+            document.removeEventListener('visibilitychange', refreshLocalWorkoutProgress)
+        }
+    }, [program])
 
     const fetchProgram = async () => {
         try {
@@ -140,6 +202,7 @@ export default function CurrentProgramContent() {
                             completed: workoutProgress?.completed ?? false,
                             exerciseCount: workout.workoutExercises.length,
                             feedbackSubmitted: (workoutProgress?.feedbackCount ?? 0) > 0,
+                            feedbackCount: workoutProgress?.feedbackCount ?? 0,
                         }
                     }),
                 })),
@@ -257,45 +320,72 @@ export default function CurrentProgramContent() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                                {week.workouts.map((workout) => (
-                                    <Link
-                                        key={workout.id}
-                                        href={`/trainee/workouts/${workout.id}`}
-                                        className={`border-2 rounded-lg p-4 transition-all hover:shadow-md ${workout.completed
-                                            ? 'border-green-300 bg-green-50 hover:border-green-400'
-                                            : 'border-gray-300 bg-white hover:border-[#FFA700]'
-                                            }`}
-                                    >
-                                        <div className="flex items-center justify-between mb-2">
-                                            <p className="font-semibold text-gray-900">
-                                                Giorno {workout.dayOfWeek}
+                                {week.workouts.map((workout) => {
+                                    const workoutInProgress = !workout.completed
+                                        && (workout.feedbackCount > 0 || localWorkoutProgress[workout.id])
+
+                                    const workoutStatus = workout.completed
+                                        ? {
+                                            icon: CheckCircle2,
+                                            iconClassName: 'text-green-600',
+                                            badgeClassName: 'bg-green-100 text-green-700',
+                                            label: t('currentProgram.completed'),
+                                            cardClassName: 'border-green-300 bg-green-50 hover:border-green-400',
+                                            helperText: workout.feedbackSubmitted
+                                                ? t('currentProgram.feedbackSent')
+                                                : t('currentProgram.reviewFeedback'),
+                                            helperClassName: workout.feedbackSubmitted
+                                                ? 'text-green-600'
+                                                : 'text-[#FFA700]',
+                                        }
+                                        : workoutInProgress
+                                            ? {
+                                                icon: PlayCircle,
+                                                iconClassName: 'text-[#FFA700]',
+                                                badgeClassName: 'bg-amber-100 text-amber-700',
+                                                label: t('currentProgram.inProgress'),
+                                                cardClassName: 'border-amber-300 bg-amber-50 hover:border-amber-400',
+                                                helperText: t('currentProgram.resumeWorkout'),
+                                                helperClassName: 'text-[#FFA700]',
+                                            }
+                                            : {
+                                                icon: Circle,
+                                                iconClassName: 'text-gray-400',
+                                                badgeClassName: 'bg-gray-100 text-gray-600',
+                                                label: t('currentProgram.toDo'),
+                                                cardClassName: 'border-gray-300 bg-white hover:border-[#FFA700]',
+                                                helperText: t('currentProgram.startWorkout'),
+                                                helperClassName: 'text-[#FFA700]',
+                                            }
+
+                                    const StatusIcon = workoutStatus.icon
+
+                                    return (
+                                        <Link
+                                            key={workout.id}
+                                            href={`/trainee/workouts/${workout.id}`}
+                                            className={`border-2 rounded-lg p-4 transition-all hover:shadow-md ${workoutStatus.cardClassName}`}
+                                        >
+                                            <div className="flex items-start justify-between gap-3 mb-2">
+                                                <div>
+                                                    <p className="font-semibold text-gray-900">
+                                                        Giorno {workout.dayOfWeek}
+                                                    </p>
+                                                    <p className="text-sm text-gray-600 mt-1">
+                                                        {t('currentProgram.exercises', { count: workout.exerciseCount })}
+                                                    </p>
+                                                </div>
+                                                <div className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${workoutStatus.badgeClassName}`}>
+                                                    <StatusIcon className={`h-4 w-4 ${workoutStatus.iconClassName}`} />
+                                                    <span>{workoutStatus.label}</span>
+                                                </div>
+                                            </div>
+                                            <p className={`text-xs font-semibold ${workoutStatus.helperClassName}`}>
+                                                {workoutStatus.helperText}
                                             </p>
-                                            {workout.completed ? (
-                                                <span className="text-green-600 text-lg">✓</span>
-                                            ) : (
-                                                <span className="text-gray-400">○</span>
-                                            )}
-                                        </div>
-                                        <p className="text-sm text-gray-600 mb-3">
-                                            {workout.exerciseCount} esercizi
-                                        </p>
-                                        {workout.completed ? (
-                                            workout.feedbackSubmitted ? (
-                                                <p className="text-xs text-green-600 font-semibold">
-                                                    {t('currentProgram.feedbackSent')}
-                                                </p>
-                                            ) : (
-                                                <p className="text-xs text-[#FFA700] font-semibold">
-                                                    {t('currentProgram.reviewFeedback')}
-                                                </p>
-                                            )
-                                        ) : (
-                                            <p className="text-xs text-[#FFA700] font-semibold">
-                                                {t('currentProgram.startWorkout')}
-                                            </p>
-                                        )}
-                                    </Link>
-                                ))}
+                                        </Link>
+                                    )
+                                })}
                             </div>
                         </div>
                     )

@@ -67,10 +67,12 @@
         "week": "Week {{number}}",
         "completed": "Completed",
         "inProgress": "In Progress",
+        "toDo": "To do",
         "weekCompleted": "{{completed}} / {{total}} completed",
         "exercises": "{{count}} exercises",
         "feedbackSent": "Feedback sent",
         "reviewFeedback": "Review Feedback",
+        "resumeWorkout": "Resume Workout",
         "startWorkout": "Start Workout",
         "errorNotFound": "Program not found",
         "dayNames": [

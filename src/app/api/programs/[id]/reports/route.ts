@@ -96,7 +96,7 @@ export async function GET(
         const calculateExecutedTrainingSets = (workoutExercises: any[]) => {
             return workoutExercises
                 .filter((we) => !we.isWarmup)
-                .flatMap((we) => we.exerciseFeedbacks)
+                .flatMap((we) => we.exerciseFeedbacks.filter((fb: any) => fb.completed))
                 .flatMap((fb: any) => fb.setsPerformed).length
         }
 
@@ -154,7 +154,7 @@ export async function GET(
             const sbdType = matchSBD(we.exercise.name)
             if (!sbdType || we.isWarmup) return
 
-            const feedbacks = we.exerciseFeedbacks
+            const feedbacks = we.exerciseFeedbacks.filter((fb: any) => fb.completed)
             feedbacks.forEach((fb: any) => {
                 // Volume
                 const feedbackVolume = fb.setsPerformed.reduce(
@@ -209,8 +209,9 @@ export async function GET(
         allWorkoutExercises.forEach((we) => {
             if (we.isWarmup) return
 
-            const exerciseSets = we.exerciseFeedbacks.length > 0
-                ? we.exerciseFeedbacks.flatMap((fb: any) => fb.setsPerformed).length
+            const completedFeedbacks = we.exerciseFeedbacks.filter((fb: any) => fb.completed)
+            const exerciseSets = completedFeedbacks.length > 0
+                ? completedFeedbacks.flatMap((fb: any) => fb.setsPerformed).length
                 : we.sets || 0
 
             we.exercise.exerciseMuscleGroups.forEach((emg: any) => {
