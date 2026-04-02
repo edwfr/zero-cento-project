@@ -30,12 +30,12 @@ export const feedbackSchema = z.object({
         .min(5.0, 'RPE minimo 5.0')
         .max(10.0, 'RPE massimo 10.0')
         .multipleOf(0.5, 'RPE deve essere multiplo di 0.5')
-        .optional(),
+        .nullish(),
     sets: z
         .array(setPerformedSchema)
         .min(1, 'Almeno una serie richiesta')
         .max(50, 'Massimo 50 serie'),
-    notes: z.string().max(1000, 'Note troppo lunghe (max 1000 caratteri)').optional(),
+    notes: z.string().max(1000, 'Note troppo lunghe (max 1000 caratteri)').nullish(),
 })
 
 export const updateFeedbackSchema = feedbackSchema.partial().extend({

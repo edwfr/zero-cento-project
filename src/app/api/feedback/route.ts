@@ -220,12 +220,6 @@ export async function POST(request: NextRequest) {
         let feedback
 
         if (existingFeedback) {
-            // UPDATE existing feedback
-            // Delete old sets and create new ones
-            await prisma.setPerformed.deleteMany({
-                where: { feedbackId: existingFeedback.id },
-            })
-
             feedback = await prisma.exerciseFeedback.update({
                 where: { id: existingFeedback.id },
                 data: {
@@ -233,6 +227,7 @@ export async function POST(request: NextRequest) {
                     completed,
                     actualRpe,
                     setsPerformed: {
+                        deleteMany: {},
                         create: sets.map((set: { setNumber: number; completed: boolean; reps: number; weight: number }) => ({
                             setNumber: set.setNumber,
                             completed: set.completed,
@@ -265,6 +260,7 @@ export async function POST(request: NextRequest) {
                 data: {
                     workoutExerciseId,
                     traineeId: session.user.id,
+                    date: today,
                     notes,
                     completed,
                     actualRpe,

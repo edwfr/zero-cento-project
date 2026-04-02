@@ -123,6 +123,10 @@ export default function WorkoutDetailContent() {
     } | null>(null)
     const draftSyncEnabledRef = useRef(false)
     const persistedExerciseIdsRef = useRef<Set<string>>(new Set())
+    const touchedExerciseIdsRef = useRef<Set<string>>(new Set())
+    const draftSyncTimeoutRef = useRef<number | null>(null)
+    const draftSyncPromiseRef = useRef<Promise<void> | null>(null)
+    const draftSyncPausedRef = useRef(false)
 
     const STORAGE_KEY = `workout_${workoutId}_feedback`
 
@@ -143,19 +147,26 @@ export default function WorkoutDetailContent() {
             return
         }
 
+        if (submitting || draftSyncPausedRef.current) {
+            return
+        }
+
         if (!draftSyncEnabledRef.current) {
             draftSyncEnabledRef.current = true
             return
         }
 
-        const timeoutId = window.setTimeout(() => {
+        draftSyncTimeoutRef.current = window.setTimeout(() => {
             void syncDraftFeedback()
         }, 800)
 
         return () => {
-            window.clearTimeout(timeoutId)
+            if (draftSyncTimeoutRef.current !== null) {
+                window.clearTimeout(draftSyncTimeoutRef.current)
+                draftSyncTimeoutRef.current = null
+            }
         }
-    }, [feedbackData, workout, loading])
+    }, [feedbackData, workout, loading, submitting])
 
     const fetchWorkout = async () => {
         try {
@@ -227,7 +238,7 @@ export default function WorkoutDetailContent() {
 
                             return {
                                 ...set,
-                                completed: set.completed ?? (legacyStatus === 'done' ? true : (set.weight > 0 || set.reps > 0)),
+                                completed: set.completed ?? (legacyStatus === 'done'),
                             }
                         }),
                     ])
@@ -267,53 +278,68 @@ export default function WorkoutDetailContent() {
     }
 
     const syncDraftFeedback = async () => {
-        if (!workout) {
+        if (!workout || draftSyncPausedRef.current) {
             return
         }
 
-        const exercisesToSync = workout.exercises.filter((exercise) => {
-            const sets = feedbackData[exercise.id] || []
-            const hasCompletedSets = sets.some((set) => !!set.completed)
+        const runSync = async () => {
+            const exercisesToSync = workout.exercises.filter((exercise) => {
+                const sets = feedbackData[exercise.id] || []
+                const hasCompletedSets = sets.some((set) => !!set.completed)
+                const hasTouchedDraft = touchedExerciseIdsRef.current.has(exercise.id)
 
-            return hasCompletedSets || persistedExerciseIdsRef.current.has(exercise.id)
-        })
+                return hasCompletedSets || hasTouchedDraft || persistedExerciseIdsRef.current.has(exercise.id)
+            })
 
-        if (exercisesToSync.length === 0) {
-            return
-        }
+            if (exercisesToSync.length === 0) {
+                return
+            }
 
-        try {
-            await Promise.all(
-                exercisesToSync.map(async (exercise) => {
-                    const sets = feedbackData[exercise.id] || []
+            try {
+                await Promise.all(
+                    exercisesToSync.map(async (exercise) => {
+                        const sets = feedbackData[exercise.id] || []
 
-                    const payload = {
-                        workoutExerciseId: exercise.id,
-                        sets: sets.map((set) => ({
-                            setNumber: set.setNumber,
-                            completed: !!set.completed,
-                            reps: set.reps,
-                            weight: set.weight,
-                        })),
-                        completed: false,
-                    }
+                        const payload = {
+                            workoutExerciseId: exercise.id,
+                            sets: sets.map((set) => ({
+                                setNumber: set.setNumber,
+                                completed: !!set.completed,
+                                reps: set.reps,
+                                weight: set.weight,
+                            })),
+                            completed: false,
+                        }
 
-                    const res = await fetch('/api/feedback', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload),
+                        const res = await fetch('/api/feedback', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload),
+                        })
+
+                        if (!res.ok) {
+                            throw new Error('Failed to persist workout draft')
+                        }
+
+                        persistedExerciseIdsRef.current.add(exercise.id)
+                        touchedExerciseIdsRef.current.delete(exercise.id)
                     })
-
-                    if (!res.ok) {
-                        throw new Error('Failed to persist workout draft')
-                    }
-
-                    persistedExerciseIdsRef.current.add(exercise.id)
-                })
-            )
-        } catch (err) {
-            console.error('Error syncing workout draft:', err)
+                )
+            } catch (err) {
+                console.error('Error syncing workout draft:', err)
+            }
         }
+
+        const pendingSync = (draftSyncPromiseRef.current ?? Promise.resolve())
+            .then(runSync)
+            .finally(() => {
+                if (draftSyncPromiseRef.current === pendingSync) {
+                    draftSyncPromiseRef.current = null
+                }
+            })
+
+        draftSyncPromiseRef.current = pendingSync
+        await pendingSync
     }
 
     const updateSet = (
@@ -322,13 +348,14 @@ export default function WorkoutDetailContent() {
         field: 'weight' | 'reps',
         value: number
     ) => {
+        touchedExerciseIdsRef.current.add(workoutExerciseId)
+
         setFeedbackData((prev) => {
             const updated = { ...prev }
             updated[workoutExerciseId] = [...(prev[workoutExerciseId] || [])]
             updated[workoutExerciseId][setIndex] = {
                 ...updated[workoutExerciseId][setIndex],
                 [field]: value,
-                completed: true,
             }
             return updated
         })
@@ -338,6 +365,8 @@ export default function WorkoutDetailContent() {
         workoutExerciseId: string,
         setIndex: number
     ) => {
+        touchedExerciseIdsRef.current.add(workoutExerciseId)
+
         setFeedbackData((prev) => {
             const updated = { ...prev }
             updated[workoutExerciseId] = [...(prev[workoutExerciseId] || [])]
@@ -375,6 +404,14 @@ export default function WorkoutDetailContent() {
         setConfirmModal(null)
         try {
             setSubmitting(true)
+            draftSyncPausedRef.current = true
+
+            if (draftSyncTimeoutRef.current !== null) {
+                window.clearTimeout(draftSyncTimeoutRef.current)
+                draftSyncTimeoutRef.current = null
+            }
+
+            await draftSyncPromiseRef.current
 
             // Submit feedback for each exercise
             const feedbackPromises = workout!.exercises.map(async (we) => {
@@ -421,6 +458,7 @@ export default function WorkoutDetailContent() {
             router.push('/trainee/dashboard')
         } catch (err: unknown) {
             showToast(err instanceof Error ? err.message : t('workouts.errorFeedback'), 'error')
+            draftSyncPausedRef.current = false
             setSubmitting(false)
         }
     }
@@ -731,7 +769,7 @@ export default function WorkoutDetailContent() {
                                                                             ) || 0
                                                                         )
                                                                     }
-                                                                    disabled={!set.completed}
+                                                                    disabled={!!set.completed}
                                                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-center focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
                                                                 />
                                                             </td>
@@ -751,7 +789,7 @@ export default function WorkoutDetailContent() {
                                                                             ) || 0
                                                                         )
                                                                     }
-                                                                    disabled={!set.completed}
+                                                                    disabled={!!set.completed}
                                                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-center focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
                                                                 />
                                                             </td>
