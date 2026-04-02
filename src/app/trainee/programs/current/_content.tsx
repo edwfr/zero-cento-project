@@ -22,6 +22,18 @@ interface Week {
     workouts: Workout[]
 }
 
+interface ProgramDetailWorkout {
+    id: string
+    dayIndex: number
+    workoutExercises: Array<unknown>
+}
+
+interface ProgramDetailWeek {
+    weekNumber: number
+    weekType: 'normal' | 'test' | 'deload'
+    workouts: ProgramDetailWorkout[]
+}
+
 interface Program {
     id: string
     title: string
@@ -34,11 +46,36 @@ interface Program {
     weeks: Week[]
 }
 
+interface ProgramDetail {
+    id: string
+    title: string
+    startDate: string
+    durationWeeks: number
+    trainer: {
+        firstName: string
+        lastName: string
+    }
+    weeks: ProgramDetailWeek[]
+}
+
+interface WorkoutProgress {
+    id: string
+    completed: boolean
+    feedbackCount: number
+}
+
+interface ProgramProgress {
+    completedWorkouts: number
+    totalWorkouts: number
+    workouts: WorkoutProgress[]
+}
+
 export default function CurrentProgramContent() {
     const { t } = useTranslation('trainee')
     const DAY_NAMES = t('currentProgram.dayNames', { returnObjects: true }) as string[]
     const [loading, setLoading] = useState(true)
     const [program, setProgram] = useState<Program | null>(null)
+    const [programProgress, setProgramProgress] = useState<ProgramProgress | null>(null)
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
@@ -60,7 +97,60 @@ export default function CurrentProgramContent() {
                 throw new Error(t('currentProgram.errorNotFound'))
             }
 
-            setProgram(data.data.items[0])
+            const activeProgramId = data.data.items[0].id
+
+            const [programRes, progressRes] = await Promise.all([
+                fetch(`/api/programs/${activeProgramId}`),
+                fetch(`/api/programs/${activeProgramId}/progress`),
+            ])
+
+            const [programData, progressData] = await Promise.all([
+                programRes.json(),
+                progressRes.json(),
+            ])
+
+            if (!programRes.ok) {
+                throw new Error(getApiErrorMessage(programData, t('currentProgram.errorNotFound'), t))
+            }
+
+            if (!progressRes.ok) {
+                throw new Error(getApiErrorMessage(progressData, t('currentProgram.errorNotFound'), t))
+            }
+
+            const workoutProgressById = new Map<string, WorkoutProgress>(
+                (progressData.data.workouts || []).map((workout: WorkoutProgress) => [workout.id, workout])
+            )
+
+            const programDetail = programData.data.program as ProgramDetail
+            const mappedProgram: Program = {
+                id: programDetail.id,
+                title: programDetail.title,
+                startDate: programDetail.startDate,
+                durationWeeks: programDetail.durationWeeks,
+                trainer: programDetail.trainer,
+                weeks: programDetail.weeks.map((week) => ({
+                    weekNumber: week.weekNumber,
+                    weekType: week.weekType,
+                    workouts: week.workouts.map((workout) => {
+                        const workoutProgress = workoutProgressById.get(workout.id)
+
+                        return {
+                            id: workout.id,
+                            dayOfWeek: workout.dayIndex,
+                            completed: workoutProgress?.completed ?? false,
+                            exerciseCount: workout.workoutExercises.length,
+                            feedbackSubmitted: (workoutProgress?.feedbackCount ?? 0) > 0,
+                        }
+                    }),
+                })),
+            }
+
+            setProgram(mappedProgram)
+            setProgramProgress({
+                completedWorkouts: progressData.data.completedWorkouts ?? 0,
+                totalWorkouts: progressData.data.totalWorkouts ?? 0,
+                workouts: progressData.data.workouts ?? [],
+            })
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : t('currentProgram.errorNotFound'))
         } finally {
@@ -86,12 +176,11 @@ export default function CurrentProgramContent() {
         )
     }
 
-    const completedWorkouts = program.weeks.reduce(
-        (total, week) => total + week.workouts.filter((w) => w.completed).length,
-        0
-    )
-    const totalWorkouts = program.weeks.reduce((total, week) => total + week.workouts.length, 0)
-    const progressPercent = Math.round((completedWorkouts / totalWorkouts) * 100)
+    const completedWorkouts = programProgress?.completedWorkouts ?? 0
+    const totalWorkouts = programProgress?.totalWorkouts ?? 0
+    const progressPercent = totalWorkouts > 0
+        ? Math.round((completedWorkouts / totalWorkouts) * 100)
+        : 0
 
     return (
         <div>
@@ -151,10 +240,10 @@ export default function CurrentProgramContent() {
                                     </h3>
                                     <span
                                         className={`px-3 py-1 text-xs font-semibold rounded-full ${week.weekType === 'normal'
-                                                ? 'bg-blue-100 text-blue-800'
-                                                : week.weekType === 'test'
-                                                    ? 'bg-orange-100 text-orange-800'
-                                                    : 'bg-green-100 text-green-800'
+                                            ? 'bg-blue-100 text-blue-800'
+                                            : week.weekType === 'test'
+                                                ? 'bg-orange-100 text-orange-800'
+                                                : 'bg-green-100 text-green-800'
                                             }`}
                                     >
                                         {week.weekType === 'normal'

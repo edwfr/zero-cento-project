@@ -116,12 +116,15 @@ export async function GET(
                     name: `Giorno ${workout.dayIndex}`,
                     weekNumber: week.weekNumber,
                     dayOfWeek: workout.dayIndex,
+                    exerciseCount: workout.workoutExercises.length,
                     completed: hasAllFeedback,
                     feedbackCount: workout.workoutExercises.flatMap((ex) => ex.exerciseFeedbacks)
                         .length,
                 }
             })
         )
+
+        const nextWorkout = workoutsList.find((workout) => !workout.completed) ?? null
 
         // Calculate weekly statistics for charts
         const weeklyStats = program.weeks.map((week) => {
@@ -178,6 +181,7 @@ export async function GET(
             feedbackCount,
             avgRPE: avgRPE !== null ? Math.round(avgRPE * 10) / 10 : null,
             totalVolume: Math.round(totalVolume),
+            nextWorkout,
             workouts: workoutsList,
             weeklyStats,
         })

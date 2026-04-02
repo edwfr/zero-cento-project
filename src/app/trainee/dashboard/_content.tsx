@@ -12,12 +12,15 @@ interface ActiveProgram {
     title: string
     startDate: string
     durationWeeks: number
-    completedWorkouts: number
-    totalWorkouts: number
     trainer: {
         firstName: string
         lastName: string
     }
+}
+
+interface ProgramProgress {
+    completedWorkouts: number
+    totalWorkouts: number
 }
 
 interface NextWorkout {
@@ -44,6 +47,7 @@ export default function TraineeDashboardContent() {
     const dayNames = t('trainee:dashboard.dayNames', { returnObjects: true }) as string[]
     const [loading, setLoading] = useState(true)
     const [activeProgram, setActiveProgram] = useState<ActiveProgram | null>(null)
+    const [programProgress, setProgramProgress] = useState<ProgramProgress | null>(null)
     const [nextWorkout, setNextWorkout] = useState<NextWorkout | null>(null)
     const [recentPRs, setRecentPRs] = useState<PersonalRecord[]>([])
     const [error, setError] = useState<string | null>(null)
@@ -64,12 +68,16 @@ export default function TraineeDashboardContent() {
                 const program = programsData.data.items[0]
                 setActiveProgram(program)
 
-                // Fetch next workout
+                // Fetch progress summary for counts and next workout
                 const progressRes = await fetch(`/api/programs/${program.id}/progress`)
                 const progressData = await progressRes.json()
 
-                if (progressRes.ok && progressData.data.nextWorkout) {
-                    setNextWorkout(progressData.data.nextWorkout)
+                if (progressRes.ok) {
+                    setProgramProgress({
+                        completedWorkouts: progressData.data.completedWorkouts ?? 0,
+                        totalWorkouts: progressData.data.totalWorkouts ?? 0,
+                    })
+                    setNextWorkout(progressData.data.nextWorkout ?? null)
                 }
             }
 
@@ -157,9 +165,11 @@ export default function TraineeDashboardContent() {
         )
     }
 
-    const progressPercent = Math.round(
-        (activeProgram.completedWorkouts / activeProgram.totalWorkouts) * 100
-    )
+    const completedWorkouts = programProgress?.completedWorkouts ?? 0
+    const totalWorkouts = programProgress?.totalWorkouts ?? 0
+    const progressPercent = totalWorkouts > 0
+        ? Math.round((completedWorkouts / totalWorkouts) * 100)
+        : 0
 
     return (
         <div className="max-w-6xl mx-auto">
@@ -200,8 +210,8 @@ export default function TraineeDashboardContent() {
                         <p className="text-white/80 text-sm mb-1">{t('trainee:dashboard.progression')}</p>
                         <p className="text-2xl font-bold">
                             {t('trainee:dashboard.workoutsProgress', {
-                                completed: activeProgram.completedWorkouts,
-                                total: activeProgram.totalWorkouts,
+                                completed: completedWorkouts,
+                                total: totalWorkouts,
                             })}
                         </p>
                     </div>
