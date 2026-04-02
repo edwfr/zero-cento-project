@@ -7,7 +7,7 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import Link from 'next/link'
 import { SkeletonDetail } from '@/components'
 import { formatDate } from '@/lib/date-format'
-import { Plus, Eye, ArrowLeft, Trophy } from 'lucide-react'
+import { Plus, Eye, Pencil, ArrowLeft, Trophy } from 'lucide-react'
 
 interface Trainee {
     id: string
@@ -77,7 +77,7 @@ export default function TraineeDetailContent() {
             }
 
             setTrainee(traineeData.data.user)
-            setPrograms(programsData.data?.programs || [])
+            setPrograms(programsData.data?.items || programsData.data?.programs || [])
             setRecords(recordsData.data?.records || [])
         } catch (err: any) {
             setError(err.message)
@@ -106,7 +106,7 @@ export default function TraineeDetailContent() {
     }
 
     const getStatusLabel = (status: string) => {
-        return t(`common.${status}`, status)
+        return t(`common:common.${status}`, status)
     }
 
     if (loading) {
@@ -241,16 +241,16 @@ export default function TraineeDetailContent() {
                                                 {t('programs.program')}
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                                                {t('common.status')}
+                                                {t('common:common.status')}
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                                                {t('common.duration')}
+                                                {t('common:common.duration')}
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
                                                 {t('programs.startDate')}
                                             </th>
                                             <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">
-                                                {t('common.actions')}
+                                                {t('common:common.actions')}
                                             </th>
                                         </tr>
                                     </thead>
@@ -278,13 +278,26 @@ export default function TraineeDetailContent() {
                                                     {formatDate(program.startDate)}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                    <Link
-                                                        href={`/trainer/programs/${program.id}`}
-                                                        className="text-brand-primary hover:text-brand-primary/80"
-                                                        title={t('athletes.viewProgram')}
-                                                    >
-                                                        <Eye size={18} />
-                                                    </Link>
+                                                    <div className="flex items-center justify-end gap-3">
+                                                        <Link
+                                                            href={`/trainer/programs/${program.id}`}
+                                                            className="text-brand-primary hover:text-brand-primary/80"
+                                                            title={t('athletes.viewProgram')}
+                                                            aria-label={t('athletes.viewProgram')}
+                                                        >
+                                                            <Eye size={18} />
+                                                        </Link>
+                                                        {program.status === 'draft' && (
+                                                            <Link
+                                                                href={`/trainer/programs/${program.id}/edit`}
+                                                                className="text-green-600 hover:text-green-800"
+                                                                title={t('common:common.edit')}
+                                                                aria-label={t('common:common.edit')}
+                                                            >
+                                                                <Pencil size={18} />
+                                                            </Link>
+                                                        )}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}

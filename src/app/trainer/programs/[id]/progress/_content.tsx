@@ -437,10 +437,10 @@ export default function ProgramProgressContent() {
                                         }`}
                                 >
                                     {progress.status === 'active'
-                                        ? 'Attivo'
+                                        ? t('programProgress.statusActive')
                                         : progress.status === 'completed'
-                                            ? 'Completato'
-                                            : 'Bozza'}
+                                            ? t('programProgress.statusCompletedLabel')
+                                            : t('programProgress.statusDraft')}
                                 </span>
                             </div>
                             <div className="flex justify-between text-sm">

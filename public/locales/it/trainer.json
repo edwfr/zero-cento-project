@@ -175,7 +175,7 @@
         "durationWeeks": "{{count}} settimane",
         "description": "Gestisci i programmi dei tuoi atleti",
         "newProgram": "Nuovo Programma",
-        "tabDraft": "Bozze",
+        "tabDraft": "Boze",
         "tabActive": "Attivi",
         "tabCompleted": "Completati",
         "statusCompleted": "Completato",
