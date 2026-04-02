@@ -6,6 +6,7 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import WeekTypeBadge from '@/components/WeekTypeBadge'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
 
@@ -336,16 +337,7 @@ export default function PublishProgramPage() {
                                         <span className="font-semibold text-gray-900">
                                             {t('publish.weekLabel', { week: week.weekNumber })}
                                         </span>
-                                        <span
-                                            className={`px-2 py-1 text-xs font-semibold rounded-full ${week.weekType === 'normal'
-                                                ? 'bg-blue-100 text-blue-800'
-                                                : week.weekType === 'test'
-                                                    ? 'bg-orange-100 text-orange-800'
-                                                    : 'bg-green-100 text-green-800'
-                                                }`}
-                                        >
-                                            {week.weekType === 'normal' ? 'Normale' : week.weekType === 'test' ? 'Test' : 'Scarico'}
-                                        </span>
+                                        <WeekTypeBadge weekType={week.weekType} />
                                     </div>
                                     <div className="flex items-center space-x-4">
                                         <div className="flex space-x-1">

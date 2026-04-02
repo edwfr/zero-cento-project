@@ -8,6 +8,7 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import { useToast } from '@/components/ToastNotification'
+import WeekTypeBadge from '@/components/WeekTypeBadge'
 import EditProgramMetadata from './EditProgramMetadata'
 import MovementPatternTag from '@/components/MovementPatternTag'
 import { ClipboardList, Flame, Wind, ArrowLeft, FileEdit, Copy } from 'lucide-react'
@@ -378,24 +379,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                     )}
                                     {readOnly ? (
                                         <div className="flex items-center gap-2">
-                                            {week.weekType === 'test' && (
-                                                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-week-test text-white border-2 border-week-test flex items-center gap-1.5">
-                                                    <Flame className="w-3.5 h-3.5" />
-                                                    Test
-                                                </span>
-                                            )}
-                                            {week.weekType === 'deload' && (
-                                                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-week-deload text-white border-2 border-week-deload flex items-center gap-1.5">
-                                                    <Wind className="w-3.5 h-3.5" />
-                                                    Scarico
-                                                </span>
-                                            )}
-                                            {week.weekType === 'normal' && (
-                                                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-gray-500 text-white border-2 border-gray-500 flex items-center gap-1.5">
-                                                    <ClipboardList className="w-3.5 h-3.5" />
-                                                    Standard
-                                                </span>
-                                            )}
+                                            <WeekTypeBadge weekType={week.weekType} />
                                         </div>
                                     ) : (
                                         <div className="flex items-center gap-2">

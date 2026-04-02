@@ -4,8 +4,9 @@ import { Fragment, MouseEvent, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, ClipboardList, FileEdit, Flame, Wind } from 'lucide-react'
+import { ArrowLeft, FileEdit } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import WeekTypeBadge from '@/components/WeekTypeBadge'
 import { getApiErrorMessage } from '@/lib/api-error'
 
 interface WorkoutExerciseSummary {
@@ -111,33 +112,6 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
         }
 
         return `${exercise.weight}% prev.`
-    }
-
-    const getWeekTypeBadge = (weekType: WeekSummary['weekType']) => {
-        if (weekType === 'test') {
-            return (
-                <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-week-test bg-week-test px-3 py-1 text-xs font-semibold text-white">
-                    <Flame className="h-3.5 w-3.5" />
-                    Test
-                </span>
-            )
-        }
-
-        if (weekType === 'deload') {
-            return (
-                <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-week-deload bg-week-deload px-3 py-1 text-xs font-semibold text-white">
-                    <Wind className="h-3.5 w-3.5" />
-                    Scarico
-                </span>
-            )
-        }
-
-        return (
-            <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-gray-500 bg-gray-500 px-3 py-1 text-xs font-semibold text-white">
-                <ClipboardList className="h-3.5 w-3.5" />
-                Standard
-            </span>
-        )
     }
 
     if (loading) {
@@ -332,7 +306,7 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                                         {t('reviewProgram.weekShort', { week: row.weekNumber })}
                                                     </td>
                                                     <td className="px-4 py-3 align-top">
-                                                        {getWeekTypeBadge(row.weekType)}
+                                                        <WeekTypeBadge weekType={row.weekType} />
                                                     </td>
                                                     <td className="px-4 py-3 align-top">
                                                         {row.isEmpty ? (
