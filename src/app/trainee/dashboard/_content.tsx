@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { NavigationCard, ProgressBar, SkeletonDashboard } from '@/components'
-import { Dumbbell, Trophy, BarChart2, User, CalendarDays } from 'lucide-react'
+import { Dumbbell, Trophy, BarChart2, User, CalendarDays, ClipboardList, Play } from 'lucide-react'
 import { formatDate } from '@/lib/date-format'
 
 interface ActiveProgram {
@@ -25,6 +25,7 @@ interface ProgramProgress {
 
 interface NextWorkout {
     id: string
+    name: string
     dayOfWeek: number
     weekNumber: number
     exerciseCount: number
@@ -44,7 +45,6 @@ interface PersonalRecord {
 
 export default function TraineeDashboardContent() {
     const { t } = useTranslation(['trainee', 'navigation'])
-    const dayNames = t('trainee:dashboard.dayNames', { returnObjects: true }) as string[]
     const [loading, setLoading] = useState(true)
     const [activeProgram, setActiveProgram] = useState<ActiveProgram | null>(null)
     const [programProgress, setProgramProgress] = useState<ProgramProgress | null>(null)
@@ -179,12 +179,15 @@ export default function TraineeDashboardContent() {
                 <p className="text-gray-600 mt-2">{t('trainee:dashboard.welcome')}</p>
             </div>
 
-            {/* Active Program Hero */}
-            <div className="bg-gradient-to-r from-[#FFA700] to-[#FF9500] rounded-lg shadow-lg p-8 mb-8 text-white">
-                <div className="flex items-start justify-between mb-6">
+            {/* Active Program Card */}
+            <div className="bg-white border border-gray-200 border-l-4 border-l-[#FFA700] rounded-lg shadow-md p-8 mb-8">
+                <div className="flex items-start justify-between mb-6 gap-4">
                     <div>
-                        <h2 className="text-3xl font-bold mb-2">{activeProgram.title}</h2>
-                        <p className="text-white/90">
+                        <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#FFA700] mb-2">
+                            {t('navigation:navigation.activeProgram')}
+                        </p>
+                        <h2 className="text-3xl font-bold text-gray-900 mb-2">{activeProgram.title}</h2>
+                        <p className="text-gray-600">
                             {t('trainee:dashboard.trainerWith', {
                                 firstName: activeProgram.trainer.firstName,
                                 lastName: activeProgram.trainer.lastName,
@@ -193,37 +196,38 @@ export default function TraineeDashboardContent() {
                     </div>
                     <Link
                         href="/trainee/programs/current"
-                        className="bg-white/20 hover:bg-white/30 text-white font-semibold px-6 py-3 rounded-lg transition-colors backdrop-blur-sm"
+                        className="inline-flex items-center gap-2 border border-[#FFA700] text-[#FFA700] hover:bg-[#FFF7E5] font-semibold px-6 py-3 rounded-lg transition-colors"
                     >
+                        <ClipboardList className="w-4 h-4" />
                         {t('trainee:dashboard.viewFullProgram')}
                     </Link>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                    <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
-                        <p className="text-white/80 text-sm mb-1">{t('trainee:dashboard.duration')}</p>
-                        <p className="text-2xl font-bold">
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                        <p className="text-gray-600 text-sm mb-1">{t('trainee:dashboard.duration')}</p>
+                        <p className="text-2xl font-bold text-[#FFA700]">
                             {t('trainee:dashboard.weeks', { count: activeProgram.durationWeeks })}
                         </p>
                     </div>
-                    <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
-                        <p className="text-white/80 text-sm mb-1">{t('trainee:dashboard.progression')}</p>
-                        <p className="text-2xl font-bold">
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                        <p className="text-gray-600 text-sm mb-1">{t('trainee:dashboard.progression')}</p>
+                        <p className="text-2xl font-bold text-[#FFA700]">
                             {t('trainee:dashboard.workoutsProgress', {
                                 completed: completedWorkouts,
                                 total: totalWorkouts,
                             })}
                         </p>
                     </div>
-                    <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
-                        <p className="text-white/80 text-sm mb-1">{t('trainee:dashboard.completion')}</p>
-                        <p className="text-2xl font-bold">{progressPercent}%</p>
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                        <p className="text-gray-600 text-sm mb-1">{t('trainee:dashboard.completion')}</p>
+                        <p className="text-2xl font-bold text-[#FFA700]">{progressPercent}%</p>
                     </div>
                 </div>
 
-                <div className="w-full bg-white/20 rounded-full h-3">
+                <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                     <div
-                        className="bg-white h-3 rounded-full transition-all duration-500"
+                        className="bg-[#FFA700] h-3 rounded-full transition-all duration-500"
                         style={{ width: `${progressPercent}%` }}
                     />
                 </div>
@@ -231,24 +235,27 @@ export default function TraineeDashboardContent() {
 
             {/* Next Workout */}
             {nextWorkout && (
-                <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-                    <div className="flex items-center justify-between">
+                <div className="bg-white border border-gray-200 border-l-4 border-l-[#FFA700] rounded-lg shadow-md p-8 mb-8">
+                    <div className="flex items-start justify-between gap-4">
                         <div>
-                            <p className="text-sm text-gray-600 mb-1">{t('trainee:dashboard.nextWorkout')}</p>
+                            <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#FFA700] mb-2">
+                                {t('trainee:dashboard.nextWorkout')}
+                            </p>
                             <h3 className="text-2xl font-bold text-gray-900 mb-2">
                                 {t('trainee:dashboard.workoutDay', {
-                                    day: dayNames[nextWorkout.dayOfWeek],
+                                    day: nextWorkout.name,
                                     week: nextWorkout.weekNumber,
                                 })}
                             </h3>
-                            <p className="text-gray-700">
+                            <p className="text-gray-600">
                                 {t('trainee:dashboard.exercisesToComplete', { count: nextWorkout.exerciseCount })}
                             </p>
                         </div>
                         <Link
                             href={`/trainee/workouts/${nextWorkout.id}`}
-                            className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-8 py-4 rounded-lg transition-colors text-lg"
+                            className="inline-flex items-center gap-2 border border-[#FFA700] text-[#FFA700] hover:bg-[#FFF7E5] font-semibold px-6 py-3 rounded-lg transition-colors"
                         >
+                            <Play className="w-4 h-4" />
                             {t('trainee:dashboard.startWorkout')}
                         </Link>
                     </div>
