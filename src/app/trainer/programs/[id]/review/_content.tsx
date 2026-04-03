@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, FileEdit } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import ProgramMuscleGroupCharts from '@/components/ProgramMuscleGroupCharts'
 import WeekTypeBadge from '@/components/WeekTypeBadge'
 import { getApiErrorMessage } from '@/lib/api-error'
 
@@ -20,6 +21,13 @@ interface WorkoutExerciseSummary {
     isWarmup: boolean
     exercise: {
         name: string
+        exerciseMuscleGroups: {
+            coefficient: number
+            muscleGroup: {
+                id: string
+                name: string
+            }
+        }[]
     }
 }
 
@@ -259,6 +267,8 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                     </div>
                 </div>
 
+                <ProgramMuscleGroupCharts weeks={program.weeks} />
+
                 <div className="space-y-6">
                     {workoutSlots.map((workoutSlot) => (
                         <section key={workoutSlot.slotNumber} className="overflow-hidden rounded-lg bg-white shadow-md">
@@ -284,7 +294,7 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                     <thead className="bg-gray-100 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
                                         <tr>
                                             <th className="px-4 py-3">{t('reviewProgram.tableWeek')}</th>
-                                            <th className="px-4 py-3">{t('reviewProgram.tableWeekType')}</th>
+                                            <th className="w-36 px-3 py-3 text-center">{t('reviewProgram.tableWeekType')}</th>
                                             <th className="px-4 py-3">{t('reviewProgram.tableExercise')}</th>
                                             <th className="px-4 py-3">{t('reviewProgram.tableNotes')}</th>
                                             <th className="px-4 py-3">{t('reviewProgram.tableScheme')}</th>
@@ -305,7 +315,7 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                                     <td className="px-4 py-3 align-top font-medium text-gray-900">
                                                         {t('reviewProgram.weekShort', { week: row.weekNumber })}
                                                     </td>
-                                                    <td className="px-4 py-3 align-top">
+                                                    <td className="w-36 px-3 py-3 align-top">
                                                         <WeekTypeBadge weekType={row.weekType} />
                                                     </td>
                                                     <td className="px-4 py-3 align-top">

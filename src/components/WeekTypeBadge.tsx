@@ -5,28 +5,33 @@ interface WeekTypeBadgeProps {
 }
 
 export default function WeekTypeBadge({ weekType }: WeekTypeBadgeProps) {
+    const baseClassName = 'inline-grid h-7 w-[7.5rem] grid-cols-[0.875rem_minmax(0,1fr)_0.875rem] items-center gap-1.5 rounded-full border-2 px-3 py-1 text-xs font-semibold'
+
     if (weekType === 'test') {
         return (
-            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-week-test text-white border-2 border-week-test flex items-center gap-1.5">
-                <Flame className="w-3.5 h-3.5" />
-                Test
+            <span className={`${baseClassName} border-week-test bg-week-test text-white`}>
+                <Flame className="h-3.5 w-3.5" />
+                <span className="text-center">Test</span>
+                <span aria-hidden="true" className="h-3.5 w-3.5" />
             </span>
         )
     }
 
     if (weekType === 'deload') {
         return (
-            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-week-deload text-white border-2 border-week-deload flex items-center gap-1.5">
-                <Wind className="w-3.5 h-3.5" />
-                Scarico
+            <span className={`${baseClassName} border-week-deload bg-week-deload text-white`}>
+                <Wind className="h-3.5 w-3.5" />
+                <span className="text-center">Scarico</span>
+                <span aria-hidden="true" className="h-3.5 w-3.5" />
             </span>
         )
     }
 
     return (
-        <span className="px-3 py-1 text-xs font-semibold rounded-full bg-gray-500 text-white border-2 border-gray-500 flex items-center gap-1.5">
-            <ClipboardList className="w-3.5 h-3.5" />
-            Standard
+        <span className={`${baseClassName} border-gray-500 bg-gray-500 text-white`}>
+            <ClipboardList className="h-3.5 w-3.5" />
+            <span className="text-center">Standard</span>
+            <span aria-hidden="true" className="h-3.5 w-3.5" />
         </span>
     )
 }
