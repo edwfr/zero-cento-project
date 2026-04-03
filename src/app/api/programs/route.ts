@@ -4,6 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { createProgramSchema } from '@/schemas/program'
 import { logger } from '@/lib/logger'
+import { getEffectiveProgramStatus, getProgramCompletionSnapshot } from '@/lib/program-status'
 
 /**
  * GET /api/programs
@@ -50,8 +51,12 @@ export async function GET(request: NextRequest) {
             where.traineeId = traineeId
         }
 
-        if (status) {
+        if (status === 'draft' || status === 'active') {
             where.status = status
+        } else if (status === 'completed') {
+            where.status = {
+                in: ['active', 'completed'],
+            }
         }
 
         if (search) {
@@ -106,6 +111,72 @@ export async function GET(request: NextRequest) {
         const items = hasMore ? programs.slice(0, -1) : programs
         const nextCursor = hasMore ? items[items.length - 1].id : null
 
+        const activeProgramIds = items
+            .filter((program) => program.status === 'active')
+            .map((program) => program.id)
+
+        const activeProgramsWithProgress = activeProgramIds.length > 0
+            ? await prisma.trainingProgram.findMany({
+                where: {
+                    id: {
+                        in: activeProgramIds,
+                    },
+                },
+                select: {
+                    id: true,
+                    status: true,
+                    weeks: {
+                        select: {
+                            workouts: {
+                                select: {
+                                    workoutExercises: {
+                                        select: {
+                                            exerciseFeedbacks: {
+                                                where: {
+                                                    completed: true,
+                                                },
+                                                select: {
+                                                    completed: true,
+                                                    date: true,
+                                                },
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            })
+            : []
+
+        const completionByProgramId = new Map(
+            activeProgramsWithProgress.map((program) => [
+                program.id,
+                getProgramCompletionSnapshot(program),
+            ])
+        )
+
+        const programsToComplete = activeProgramsWithProgress.filter((program) => {
+            const completionSnapshot = completionByProgramId.get(program.id)
+            return getEffectiveProgramStatus(program, completionSnapshot) === 'completed'
+        })
+
+        await Promise.all(
+            programsToComplete.map((program) => {
+                const completionSnapshot = completionByProgramId.get(program.id)
+
+                return prisma.trainingProgram.update({
+                    where: { id: program.id },
+                    data: {
+                        status: 'completed',
+                        completedAt: completionSnapshot?.lastCompletedWorkoutAt ?? new Date(),
+                        completionReason: null,
+                    },
+                })
+            })
+        )
+
         const programIds = items.map((program) => program.id)
         const lastCompletedWorkoutDateByProgramId: Record<string, string> = {}
 
@@ -153,16 +224,32 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        const enrichedItems = items.map((program) => ({
-            ...program,
-            lastWorkoutCompletedAt: lastCompletedWorkoutDateByProgramId[program.id] ?? null,
-        }))
+        const enrichedItems = items
+            .map((program) => {
+                const completionSnapshot = completionByProgramId.get(program.id)
+                const effectiveStatus = getEffectiveProgramStatus(program, completionSnapshot)
+
+                return {
+                    ...program,
+                    status: effectiveStatus,
+                    completedAt:
+                        program.completedAt ??
+                        (effectiveStatus === 'completed'
+                            ? completionSnapshot?.lastCompletedWorkoutAt ?? null
+                            : null),
+                    lastWorkoutCompletedAt:
+                        lastCompletedWorkoutDateByProgramId[program.id] ??
+                        completionSnapshot?.lastCompletedWorkoutAt?.toISOString() ??
+                        null,
+                }
+            })
+            .filter((program) => !status || program.status === status)
 
         return apiSuccess({
             items: enrichedItems,
             pagination: {
                 nextCursor,
-                hasMore,
+                hasMore: hasMore || programs.length !== enrichedItems.length,
             },
         })
     } catch (error: any) {

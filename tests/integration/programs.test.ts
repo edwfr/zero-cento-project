@@ -42,6 +42,9 @@ vi.mock('@/lib/prisma', () => ({
             delete: vi.fn(),
             count: vi.fn(),
         },
+        exerciseFeedback: {
+            findMany: vi.fn(),
+        },
         trainingWeek: {
             createMany: vi.fn(),
         },
@@ -98,6 +101,7 @@ function makeRequest(url = 'http://localhost:3000/api/programs', options?: Reque
 describe('GET /api/programs', () => {
     beforeEach(() => {
         vi.clearAllMocks()
+        vi.mocked(prisma.exerciseFeedback.findMany).mockResolvedValue([] as any)
     })
 
     it('returns programs for trainer with RBAC filter', async () => {
@@ -121,7 +125,9 @@ describe('GET /api/programs', () => {
 
     it('filters by status when query param provided', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.trainingProgram.findMany).mockResolvedValue(mockPrograms as any)
+        vi.mocked(prisma.trainingProgram.findMany)
+            .mockResolvedValueOnce(mockPrograms as any)
+            .mockResolvedValueOnce([] as any)
         vi.mocked(prisma.trainingProgram.count).mockResolvedValue(1)
 
         const req = makeRequest('http://localhost:3000/api/programs?status=active')
@@ -132,6 +138,134 @@ describe('GET /api/programs', () => {
                 where: expect.objectContaining({ status: 'active' }),
             })
         )
+    })
+
+    it('marks fully completed active programs as completed in response and persistence layer', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainingProgram.findMany)
+            .mockResolvedValueOnce([
+                {
+                    id: 'prog-complete',
+                    title: 'Completed Block',
+                    status: 'active',
+                    startDate: new Date('2026-03-01'),
+                    durationWeeks: 1,
+                    workoutsPerWeek: 1,
+                    trainerId: 'trainer-uuid-1',
+                    traineeId: 'trainee-uuid-1',
+                    createdAt: new Date('2026-02-25'),
+                    completedAt: null,
+                    trainer: { id: 'trainer-uuid-1', firstName: 'Marco', lastName: 'Trainer' },
+                    trainee: { id: 'trainee-uuid-1', firstName: 'Mario', lastName: 'Atleta' },
+                    weeks: [{ id: 'week-1', weekNumber: 1, weekType: 'normal' }],
+                },
+            ] as any)
+            .mockResolvedValueOnce([
+                {
+                    id: 'prog-complete',
+                    status: 'active',
+                    weeks: [
+                        {
+                            workouts: [
+                                {
+                                    workoutExercises: [
+                                        {
+                                            exerciseFeedbacks: [
+                                                {
+                                                    completed: true,
+                                                    date: new Date('2026-03-20T10:00:00.000Z'),
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ] as any)
+        vi.mocked(prisma.trainingProgram.update).mockResolvedValue({} as any)
+        vi.mocked(prisma.exerciseFeedback.findMany).mockResolvedValue([
+            {
+                date: new Date('2026-03-20T10:00:00.000Z'),
+                workoutExercise: {
+                    workout: {
+                        week: {
+                            programId: 'prog-complete',
+                        },
+                    },
+                },
+            },
+        ] as any)
+
+        const res = await GET(makeRequest())
+        const body = await res.json()
+
+        expect(res.status).toBe(200)
+        expect(body.data.items).toHaveLength(1)
+        expect(body.data.items[0].status).toBe('completed')
+        expect(prisma.trainingProgram.update).toHaveBeenCalledWith(
+            expect.objectContaining({
+                where: { id: 'prog-complete' },
+                data: expect.objectContaining({
+                    status: 'completed',
+                    completionReason: null,
+                }),
+            })
+        )
+    })
+
+    it('excludes fully completed programs from the active filter', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainingProgram.findMany)
+            .mockResolvedValueOnce([
+                {
+                    id: 'prog-complete',
+                    title: 'Completed Block',
+                    status: 'active',
+                    startDate: new Date('2026-03-01'),
+                    durationWeeks: 1,
+                    workoutsPerWeek: 1,
+                    trainerId: 'trainer-uuid-1',
+                    traineeId: 'trainee-uuid-1',
+                    createdAt: new Date('2026-02-25'),
+                    completedAt: null,
+                    trainer: { id: 'trainer-uuid-1', firstName: 'Marco', lastName: 'Trainer' },
+                    trainee: { id: 'trainee-uuid-1', firstName: 'Mario', lastName: 'Atleta' },
+                    weeks: [{ id: 'week-1', weekNumber: 1, weekType: 'normal' }],
+                },
+            ] as any)
+            .mockResolvedValueOnce([
+                {
+                    id: 'prog-complete',
+                    status: 'active',
+                    weeks: [
+                        {
+                            workouts: [
+                                {
+                                    workoutExercises: [
+                                        {
+                                            exerciseFeedbacks: [
+                                                {
+                                                    completed: true,
+                                                    date: new Date('2026-03-20T10:00:00.000Z'),
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ] as any)
+        vi.mocked(prisma.trainingProgram.update).mockResolvedValue({} as any)
+
+        const res = await GET(makeRequest('http://localhost:3000/api/programs?status=active'))
+        const body = await res.json()
+
+        expect(res.status).toBe(200)
+        expect(body.data.items).toHaveLength(0)
     })
 
     it('admin sees all programs without trainer filter', async () => {

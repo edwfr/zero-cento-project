@@ -309,7 +309,7 @@ export default function TrainerProgramsContent() {
                                             </button>
                                         </>
                                     )}
-                                    {program.status === 'active' && (
+                                    {(program.status === 'active' || program.status === 'completed') && (
                                         <Link
                                             href={`/trainer/programs/${program.id}/progress`}
                                             className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold py-2 px-4 rounded-lg text-center transition-colors"

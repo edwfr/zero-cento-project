@@ -297,8 +297,8 @@ export default function CurrentProgramContent() {
 
                     return (
                         <div key={week.weekNumber} className="bg-white rounded-lg shadow-md p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center space-x-4">
+                            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-4">
                                     <h3 className="text-xl font-bold text-gray-900">
                                         {t('currentProgram.week', { number: week.weekNumber })}
                                     </h3>
@@ -314,7 +314,7 @@ export default function CurrentProgramContent() {
                                         </span>
                                     )}
                                 </div>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-gray-600 sm:text-right">
                                     {t('currentProgram.weekCompleted', { completed: week.workouts.filter((w) => w.completed).length, total: week.workouts.length })}
                                 </p>
                             </div>

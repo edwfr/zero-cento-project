@@ -5,7 +5,7 @@ interface WeekTypeBadgeProps {
 }
 
 export default function WeekTypeBadge({ weekType }: WeekTypeBadgeProps) {
-    const baseClassName = 'inline-grid h-7 w-[7.5rem] grid-cols-[0.875rem_minmax(0,1fr)_0.875rem] items-center gap-1.5 rounded-full border-2 px-3 py-1 text-xs font-semibold'
+    const baseClassName = 'inline-grid min-h-7 max-w-full grid-cols-[0.875rem_minmax(0,1fr)_0.875rem] items-center gap-1.5 rounded-full border-2 px-3 py-1 text-xs font-semibold sm:w-[7.5rem]'
 
     if (weekType === 'test') {
         return (
