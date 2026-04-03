@@ -677,11 +677,11 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                     const workoutCard = (
                                         <div
                                             className={`group relative overflow-hidden rounded-2xl border p-4 transition-all ${workout.exerciseCount > 0
-                                                ? 'border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-white shadow-sm'
-                                                : 'border-slate-200 bg-gradient-to-br from-white to-slate-50'
+                                                ? 'border-orange-200 bg-gradient-to-br from-orange-50 via-amber-50 to-white shadow-sm'
+                                                : 'border-orange-100 bg-gradient-to-br from-white via-orange-50/60 to-amber-50/80'
                                                 } ${!readOnly ? 'hover:-translate-y-0.5 hover:shadow-lg' : ''}`}
                                         >
-                                            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#FFA700] via-emerald-400 to-slate-300 opacity-80" />
+                                            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#FFA700] via-[#FF9500] to-amber-300 opacity-90" />
                                             <div className="mb-3 flex items-start justify-between gap-3">
                                                 <div>
                                                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
@@ -693,13 +693,13 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${workout.exerciseCount > 0
-                                                        ? 'bg-emerald-100 text-emerald-700'
-                                                        : 'bg-slate-100 text-slate-500'
+                                                        ? 'bg-orange-100 text-orange-700'
+                                                        : 'bg-white/80 text-slate-500 border border-orange-100'
                                                         }`}>
                                                         {workout.exerciseCount > 0 ? `${workout.exerciseCount} ex` : 'Vuoto'}
                                                     </span>
                                                     {!readOnly && (
-                                                        <span className="rounded-full bg-slate-900 p-1.5 text-white transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+                                                        <span className="rounded-full bg-gradient-to-br from-[#FFA700] to-[#FF9500] p-1.5 text-white shadow-sm transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
                                                             <ArrowUpRight className="h-3.5 w-3.5" />
                                                         </span>
                                                     )}
@@ -728,18 +728,10 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <div className="rounded-xl border border-dashed border-slate-200 bg-white/70 px-3 py-3 text-xs text-slate-500">
+                                                <div className="rounded-xl border border-dashed border-orange-200 bg-white/80 px-3 py-3 text-xs text-slate-500">
                                                     Nessuno schema motorio ancora associato
                                                 </div>
                                             )}
-
-                                            <div className="mt-4 flex items-center justify-between border-t border-slate-200/80 pt-3 text-xs text-slate-500">
-                                                <span>{readOnly ? 'Anteprima workout' : 'Apri workout'}</span>
-                                                <span className="font-semibold text-[#FFA700]">
-                                                    {(t('editProgram.dayNames', { returnObjects: true }) as string[])[workout.dayOfWeek]}
-                                                    {readOnly ? '' : 'Entra'}
-                                                </span>
-                                            </div>
                                         </div>
                                     )
 
