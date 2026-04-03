@@ -22,6 +22,7 @@ export default function NewProgramContent() {
     // Form state
     const [title, setTitle] = useState('')
     const [traineeId, setTraineeId] = useState('')
+    const [isSbdProgram, setIsSbdProgram] = useState(false)
     const [durationWeeks, setDurationWeeks] = useState(4)
     const [workoutsPerWeek, setWorkoutsPerWeek] = useState(3)
 
@@ -87,6 +88,7 @@ export default function NewProgramContent() {
                 body: JSON.stringify({
                     title,
                     traineeId,
+                    isSbdProgram,
                     durationWeeks,
                     workoutsPerWeek,
                 }),
@@ -220,6 +222,24 @@ export default function NewProgramContent() {
                             </option>
                         ))}
                     </select>
+                </div>
+
+                <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-4">
+                    <label className="flex items-start gap-3">
+                        <input
+                            type="checkbox"
+                            checked={isSbdProgram}
+                            onChange={(e) => setIsSbdProgram(e.target.checked)}
+                            disabled={loading}
+                            className="mt-1 h-4 w-4 rounded border-gray-300 text-[#FFA700] focus:ring-[#FFA700]"
+                        />
+                        <span>
+                            <span className="block text-sm font-semibold text-gray-900">Programma SBD</span>
+                            <span className="block text-sm text-gray-600">
+                                Abilita la reportistica SBD nelle schermate del programma e dei workout.
+                            </span>
+                        </span>
+                    </label>
                 </div>
 
                 {/* Duration Weeks */}

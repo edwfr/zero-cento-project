@@ -67,6 +67,7 @@ interface Program {
     id: string
     title: string
     status: 'draft' | 'active' | 'completed'
+    isSbdProgram: boolean
     trainee: {
         id: string
         firstName: string
@@ -322,6 +323,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const totalWorkouts = program ? program.durationWeeks * program.workoutsPerWeek : 0
     const completedWorkouts = getCompletedWorkouts()
     const progressPercent = totalWorkouts > 0 ? Math.round((completedWorkouts / totalWorkouts) * 100) : 0
+    const shouldShowSbdReporting = program?.isSbdProgram ?? false
 
     const recordsByExercise = personalRecords.reduce((acc, record) => {
         const key = record.exerciseId
@@ -417,6 +419,20 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         }>>)
         : {}
 
+    const sbdSummaryRows = shouldShowSbdReporting && program
+        ? program.weeks.flatMap((week) =>
+            (weekSbdMetrics[week.id] || []).map((metric) => ({
+                weekId: week.id,
+                weekNumber: week.weekNumber,
+                exerciseId: metric.exerciseId,
+                exerciseName: metric.exerciseName,
+                frequency: metric.frequency,
+                totalLifts: metric.totalLifts,
+                averageIntensity: metric.averageIntensity,
+            }))
+        )
+        : []
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -505,6 +521,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                     programId={programId}
                                     initialTitle={program.title}
                                     initialTraineeId={program.trainee.id}
+                                    initialIsSbdProgram={program.isSbdProgram}
                                     initialDurationWeeks={program.durationWeeks}
                                     initialWorkoutsPerWeek={program.workoutsPerWeek}
                                     status={program.status}
@@ -631,7 +648,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                 </p>
                             </div>
 
-                            {weekSbdMetrics[week.id] && weekSbdMetrics[week.id].length > 0 && (
+                            {shouldShowSbdReporting && weekSbdMetrics[week.id] && weekSbdMetrics[week.id].length > 0 && (
                                 <div className="mb-5 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4">
                                     <div className="mb-3 flex items-center justify-between gap-3">
                                         <div className="flex items-center gap-2">
@@ -752,6 +769,54 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                         </div>
                     ))}
                 </div>
+
+                {shouldShowSbdReporting && sbdSummaryRows.length > 0 && (
+                    <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-md">
+                        <div className="mb-4 flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <div className="rounded-xl bg-slate-900 p-2 text-white">
+                                    <BarChart3 className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-bold text-slate-900">Recap Reportistica SBD</h2>
+                                    <p className="text-sm text-slate-500">
+                                        Vista tabellare di FRQ, NBL e IM su tutte le settimane del programma.
+                                    </p>
+                                </div>
+                            </div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                                Solo programmi con flag SBD attivo
+                            </p>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-slate-200 text-sm">
+                                <thead>
+                                    <tr className="text-left text-slate-500">
+                                        <th className="px-3 py-3 font-semibold">Settimana</th>
+                                        <th className="px-3 py-3 font-semibold">Esercizio</th>
+                                        <th className="px-3 py-3 font-semibold">FRQ</th>
+                                        <th className="px-3 py-3 font-semibold">NBL</th>
+                                        <th className="px-3 py-3 font-semibold">IM</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {sbdSummaryRows.map((row) => (
+                                        <tr key={`${row.weekId}-${row.exerciseId}`} className="hover:bg-slate-50/70">
+                                            <td className="px-3 py-3 font-semibold text-slate-900">Sett. {row.weekNumber}</td>
+                                            <td className="px-3 py-3 text-slate-700">{row.exerciseName}</td>
+                                            <td className="px-3 py-3 text-slate-700">{row.frequency}</td>
+                                            <td className="px-3 py-3 text-slate-700">{row.totalLifts}</td>
+                                            <td className="px-3 py-3 text-slate-700">
+                                                {row.averageIntensity !== null ? `${row.averageIntensity.toFixed(1)}%` : '-'}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
 
                 <ProgramMuscleGroupCharts weeks={program.weeks} />
 

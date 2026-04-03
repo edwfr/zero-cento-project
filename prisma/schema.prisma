@@ -195,6 +195,7 @@ model TrainingProgram {
   title             String
   trainerId         String
   traineeId         String
+  isSbdProgram      Boolean       @default(false)
   startDate         DateTime?     // Null se draft, popolato a pubblicazione
   durationWeeks     Int
   workoutsPerWeek   Int

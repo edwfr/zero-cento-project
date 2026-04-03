@@ -15,6 +15,7 @@ interface EditProgramMetadataProps {
     programId: string
     initialTitle: string
     initialTraineeId: string
+    initialIsSbdProgram: boolean
     initialDurationWeeks: number
     initialWorkoutsPerWeek: number
     status: 'draft' | 'active' | 'completed'
@@ -25,6 +26,7 @@ export default function EditProgramMetadata({
     programId,
     initialTitle,
     initialTraineeId,
+    initialIsSbdProgram,
     initialDurationWeeks,
     initialWorkoutsPerWeek,
     status,
@@ -37,6 +39,7 @@ export default function EditProgramMetadata({
 
     const [title, setTitle] = useState(initialTitle)
     const [traineeId, setTraineeId] = useState(initialTraineeId)
+    const [isSbdProgram, setIsSbdProgram] = useState(initialIsSbdProgram)
     const [durationWeeks, setDurationWeeks] = useState(initialDurationWeeks)
     const [workoutsPerWeek, setWorkoutsPerWeek] = useState(initialWorkoutsPerWeek)
 
@@ -79,6 +82,7 @@ export default function EditProgramMetadata({
                 body: JSON.stringify({
                     title,
                     traineeId,
+                    isSbdProgram,
                     durationWeeks,
                     workoutsPerWeek,
                 }),
@@ -149,6 +153,24 @@ export default function EditProgramMetadata({
                             ⚠️ Attenzione: Solo i programmi in bozza possono essere modificati
                         </div>
                     )}
+
+                    <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-4">
+                        <label className="flex items-start gap-3">
+                            <input
+                                type="checkbox"
+                                checked={isSbdProgram}
+                                onChange={(e) => setIsSbdProgram(e.target.checked)}
+                                disabled={saving || status !== 'draft'}
+                                className="mt-1 h-4 w-4 rounded border-gray-300 text-[#FFA700] focus:ring-[#FFA700]"
+                            />
+                            <span>
+                                <span className="block text-sm font-semibold text-gray-900">Programma SBD</span>
+                                <span className="block text-sm text-gray-600">
+                                    Mostra o nasconde la reportistica SBD nelle schermate del programma.
+                                </span>
+                            </span>
+                        </label>
+                    </div>
 
                     {/* Program Title */}
                     <div>

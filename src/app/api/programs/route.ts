@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
             return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors, 'validation.invalidInput')
         }
 
-        const { title, traineeId, durationWeeks, workoutsPerWeek } = validation.data
+        const { title, traineeId, isSbdProgram, durationWeeks, workoutsPerWeek } = validation.data
 
         // Verify trainee exists and is a trainee role
         const trainee = await prisma.user.findUnique({
@@ -251,6 +251,7 @@ export async function POST(request: NextRequest) {
                 title,
                 trainerId: actualTrainerId,
                 traineeId,
+                isSbdProgram,
                 durationWeeks,
                 workoutsPerWeek,
                 status: 'draft',

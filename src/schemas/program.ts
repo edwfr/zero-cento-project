@@ -10,6 +10,7 @@ export const createProgramSchema = z.object({
         .min(3, 'Titolo troppo corto')
         .max(100, 'Titolo troppo lungo'),
     traineeId: z.string().uuid('ID trainee non valido'),
+    isSbdProgram: z.boolean().default(false),
     durationWeeks: z
         .number()
         .int('Durata deve essere intero')

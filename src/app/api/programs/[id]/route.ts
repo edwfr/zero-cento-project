@@ -122,7 +122,7 @@ export async function PUT(
             return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors, 'validation.invalidInput')
         }
 
-        const { title, traineeId, durationWeeks, workoutsPerWeek } = validation.data
+        const { title, traineeId, isSbdProgram, durationWeeks, workoutsPerWeek } = validation.data
 
         // Check if program exists
         const existing = await prisma.trainingProgram.findUnique({
@@ -184,6 +184,7 @@ export async function PUT(
             data: {
                 ...(title && { title }),
                 ...(traineeId && { traineeId }),
+                ...(isSbdProgram !== undefined && { isSbdProgram }),
                 ...(durationWeeks !== undefined && { durationWeeks }),
                 ...(workoutsPerWeek !== undefined && { workoutsPerWeek }),
             },

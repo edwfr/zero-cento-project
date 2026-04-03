@@ -75,6 +75,7 @@ interface Program {
     id: string
     title: string
     status: string
+    isSbdProgram: boolean
     weeks: ProgramWeek[]
     trainee: {
         id: string
@@ -549,6 +550,8 @@ export default function WorkoutDetailContent() {
             .sort((left, right) => left.exerciseName.localeCompare(right.exerciseName, 'it', { sensitivity: 'base' }))
         : []
 
+    const shouldShowSbdReporting = program.isSbdProgram
+
     return (
         <div className="min-h-screen bg-gray-50 relative">
             {confirmModal && (
@@ -563,86 +566,88 @@ export default function WorkoutDetailContent() {
                 />
             )}
 
-            <div className="hidden xl:block fixed left-8 top-24">
-                <div
-                    className={`max-h-[calc(100vh-10rem)] overflow-y-auto bg-white rounded-lg shadow-lg border border-gray-200 transition-all duration-200 ${isSbdPanelCollapsed ? 'w-16' : 'w-80'}`}
-                >
-                    <div className="sticky top-0 bg-gradient-to-r from-slate-800 to-slate-700 text-white px-3 py-3 rounded-t-lg">
-                        <div className={`flex items-center ${isSbdPanelCollapsed ? 'justify-center' : 'justify-between gap-2'}`}>
-                            <div className="flex items-center space-x-2 overflow-hidden">
-                                <BarChart3 className="w-5 h-5 shrink-0" />
-                                {!isSbdPanelCollapsed && (
-                                    <div>
-                                        <h3 className="font-bold text-sm whitespace-nowrap">
-                                            Reportistica SBD
-                                        </h3>
-                                        <p className="text-[11px] text-white/75">
-                                            Settimana del workout corrente
+            {shouldShowSbdReporting && (
+                <div className="hidden xl:block fixed left-8 top-24">
+                    <div
+                        className={`max-h-[calc(100vh-10rem)] overflow-y-auto bg-white rounded-lg shadow-lg border border-gray-200 transition-all duration-200 ${isSbdPanelCollapsed ? 'w-16' : 'w-80'}`}
+                    >
+                        <div className="sticky top-0 bg-gradient-to-r from-slate-800 to-slate-700 text-white px-3 py-3 rounded-t-lg">
+                            <div className={`flex items-center ${isSbdPanelCollapsed ? 'justify-center' : 'justify-between gap-2'}`}>
+                                <div className="flex items-center space-x-2 overflow-hidden">
+                                    <BarChart3 className="w-5 h-5 shrink-0" />
+                                    {!isSbdPanelCollapsed && (
+                                        <div>
+                                            <h3 className="font-bold text-sm whitespace-nowrap">
+                                                Reportistica SBD
+                                            </h3>
+                                            <p className="text-[11px] text-white/75">
+                                                Settimana del workout corrente
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsSbdPanelCollapsed((current) => !current)}
+                                    className={`rounded-md bg-white/15 p-1 hover:bg-white/25 transition-colors ${isSbdPanelCollapsed ? 'absolute inset-x-0 top-3 mx-auto w-fit' : ''}`}
+                                    aria-label={isSbdPanelCollapsed ? 'Espandi pannello reportistica SBD' : 'Comprimi pannello reportistica SBD'}
+                                    title={isSbdPanelCollapsed ? 'Espandi' : 'Comprimi'}
+                                >
+                                    {isSbdPanelCollapsed ? (
+                                        <ChevronRight className="w-4 h-4" />
+                                    ) : (
+                                        <ChevronLeft className="w-4 h-4" />
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                        {!isSbdPanelCollapsed && (
+                            <div className="p-4">
+                                {sbdExerciseMetrics.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {sbdExerciseMetrics.map((metric) => (
+                                            <div key={metric.exerciseId} className="rounded-lg border border-slate-200 p-3">
+                                                <p className="text-sm font-semibold text-slate-900">
+                                                    {metric.exerciseName}
+                                                </p>
+                                                <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                                                    <div className="rounded-md bg-slate-50 px-2 py-2">
+                                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">FRQ</p>
+                                                        <p className="mt-1 text-lg font-bold text-slate-900">{metric.frequency}</p>
+                                                    </div>
+                                                    <div className="rounded-md bg-slate-50 px-2 py-2">
+                                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">NBL</p>
+                                                        <p className="mt-1 text-lg font-bold text-slate-900">{metric.totalLifts}</p>
+                                                    </div>
+                                                    <div className="rounded-md bg-slate-50 px-2 py-2">
+                                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">IM</p>
+                                                        <p className="mt-1 text-lg font-bold text-slate-900">
+                                                            {metric.averageIntensity !== null ? `${metric.averageIntensity.toFixed(1)}%` : '-'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-8">
+                                        <div className="text-4xl mb-2">🏋️</div>
+                                        <p className="text-sm text-gray-600">
+                                            Nessun esercizio fondamentale nella settimana corrente
                                         </p>
                                     </div>
                                 )}
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setIsSbdPanelCollapsed((current) => !current)}
-                                className={`rounded-md bg-white/15 p-1 hover:bg-white/25 transition-colors ${isSbdPanelCollapsed ? 'absolute inset-x-0 top-3 mx-auto w-fit' : ''}`}
-                                aria-label={isSbdPanelCollapsed ? 'Espandi pannello reportistica SBD' : 'Comprimi pannello reportistica SBD'}
-                                title={isSbdPanelCollapsed ? 'Espandi' : 'Comprimi'}
-                            >
-                                {isSbdPanelCollapsed ? (
-                                    <ChevronRight className="w-4 h-4" />
-                                ) : (
-                                    <ChevronLeft className="w-4 h-4" />
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                    {!isSbdPanelCollapsed && (
-                        <div className="p-4">
-                            {sbdExerciseMetrics.length > 0 ? (
-                                <div className="space-y-3">
-                                    {sbdExerciseMetrics.map((metric) => (
-                                        <div key={metric.exerciseId} className="rounded-lg border border-slate-200 p-3">
-                                            <p className="text-sm font-semibold text-slate-900">
-                                                {metric.exerciseName}
-                                            </p>
-                                            <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-                                                <div className="rounded-md bg-slate-50 px-2 py-2">
-                                                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">FRQ</p>
-                                                    <p className="mt-1 text-lg font-bold text-slate-900">{metric.frequency}</p>
-                                                </div>
-                                                <div className="rounded-md bg-slate-50 px-2 py-2">
-                                                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">NBL</p>
-                                                    <p className="mt-1 text-lg font-bold text-slate-900">{metric.totalLifts}</p>
-                                                </div>
-                                                <div className="rounded-md bg-slate-50 px-2 py-2">
-                                                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">IM</p>
-                                                    <p className="mt-1 text-lg font-bold text-slate-900">
-                                                        {metric.averageIntensity !== null ? `${metric.averageIntensity.toFixed(1)}%` : '-'}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="text-center py-8">
-                                    <div className="text-4xl mb-2">🏋️</div>
-                                    <p className="text-sm text-gray-600">
-                                        Nessun esercizio fondamentale nella settimana corrente
-                                    </p>
-                                </div>
-                            )}
 
-                            {sbdExerciseMetrics.length > 0 && (
-                                <p className="mt-3 text-[11px] leading-4 text-slate-500">
-                                    IM calcolata solo quando il carico e espresso in kg o in % 1RM.
-                                </p>
-                            )}
-                        </div>
-                    )}
+                                {sbdExerciseMetrics.length > 0 && (
+                                    <p className="mt-3 text-[11px] leading-4 text-slate-500">
+                                        IM calcolata solo quando il carico e espresso in kg o in % 1RM.
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
 
             <div className="hidden xl:block fixed right-8 top-24">
                 {/* Floating PR Panel */}
