@@ -4,6 +4,15 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
+import {
+    Activity,
+    ArrowLeft,
+    ArrowRight,
+    BarChart3,
+    CheckCircle2,
+    ClipboardList,
+    FileText,
+} from 'lucide-react'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { SkeletonDashboard } from '@/components'
 import ProgressBar from '@/components/ProgressBar'
@@ -124,23 +133,26 @@ export default function ProgramProgressContent() {
                 {/* Header */}
                 <div className="mb-8">
                     <Link
-                        href={`/trainer/programs/${programId}`}
-                        className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
+                        href="/trainer/dashboard"
+                        className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-flex items-center gap-1"
                     >
-                        ← Torna al programma
+                        <ArrowLeft className="w-4 h-4" />
+                        Torna alla dashboard
                     </Link>
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900">
-                                📊 Monitoraggio Avanzamento
+                            <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
+                                <BarChart3 className="w-8 h-8 text-brand-primary" />
+                                <span>Monitoraggio Avanzamento</span>
                             </h1>
                             <p className="text-gray-600 mt-2">{progress.programName}</p>
                         </div>
                         <Link
                             href={`/trainer/programs/${programId}/reports`}
-                            className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-2 rounded-lg transition-colors"
+                            className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-2 rounded-lg transition-colors inline-flex items-center gap-2"
                         >
-                            📈 Vedi Report
+                            <FileText className="w-4 h-4" />
+                            Vedi Report
                         </Link>
                     </div>
                 </div>
@@ -195,8 +207,9 @@ export default function ProgramProgressContent() {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                         {/* Volume per Settimana */}
                         <div className="bg-white rounded-lg shadow-md p-6">
-                            <h2 className="text-lg font-bold text-gray-900 mb-4">
-                                📊 Volume per Settimana
+                            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                <BarChart3 className="w-5 h-5 text-brand-primary" />
+                                <span>Volume per Settimana</span>
                             </h2>
                             <div className="h-64">
                                 <ResponsiveContainer width="100%" height="100%">
@@ -240,8 +253,9 @@ export default function ProgramProgressContent() {
 
                         {/* RPE Medio per Settimana */}
                         <div className="bg-white rounded-lg shadow-md p-6">
-                            <h2 className="text-lg font-bold text-gray-900 mb-4">
-                                🎯 RPE Medio per Settimana
+                            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                <Activity className="w-5 h-5 text-[#FFA700]" />
+                                <span>RPE Medio per Settimana</span>
                             </h2>
                             <div className="h-64">
                                 <ResponsiveContainer width="100%" height="100%">
@@ -288,8 +302,9 @@ export default function ProgramProgressContent() {
 
                         {/* Completamento Workout per Settimana */}
                         <div className="bg-white rounded-lg shadow-md p-6 lg:col-span-2">
-                            <h2 className="text-lg font-bold text-gray-900 mb-4">
-                                ✅ Completamento Allenamenti per Settimana
+                            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                <ClipboardList className="w-5 h-5 text-green-600" />
+                                <span>Completamento Allenamenti per Settimana</span>
                             </h2>
                             <div className="h-64">
                                 <ResponsiveContainer width="100%" height="100%">
@@ -391,8 +406,9 @@ export default function ProgramProgressContent() {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 {workout.completed ? (
-                                                    <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                                        ✓ Completato
+                                                    <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 inline-flex items-center gap-1">
+                                                        <CheckCircle2 className="w-3.5 h-3.5" />
+                                                        Completato
                                                     </span>
                                                 ) : (
                                                     <span className="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
@@ -406,9 +422,10 @@ export default function ProgramProgressContent() {
                                             <td className="px-6 py-4 whitespace-nowrap text-right">
                                                 <Link
                                                     href={`/trainer/programs/${programId}`}
-                                                    className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold"
+                                                    className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold inline-flex items-center gap-1"
                                                 >
-                                                    Dettagli →
+                                                    Dettagli
+                                                    <ArrowRight className="w-4 h-4" />
                                                 </Link>
                                             </td>
                                         </tr>
