@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { Fragment, useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
@@ -13,10 +13,10 @@ import EditProgramMetadata from './EditProgramMetadata'
 import MovementPatternTag from '@/components/MovementPatternTag'
 import { calculateTrainingSets } from '@/lib/calculations'
 import {
-    Bar,
-    BarChart,
     CartesianGrid,
     Legend,
+    Line,
+    LineChart,
     ResponsiveContainer,
     Tooltip,
     XAxis,
@@ -110,6 +110,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const [error, setError] = useState<string | null>(null)
     const loadingRef = useRef(false)
     const [confirmCopyOpen, setConfirmCopyOpen] = useState(false)
+    const [visibleMuscleGroupIds, setVisibleMuscleGroupIds] = useState<string[]>([])
 
     useEffect(() => {
         fetchProgram()
@@ -117,6 +118,28 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
     const formatTrainingSetsValue = (value: number) => {
         return Number.isInteger(value) ? value.toString() : value.toFixed(1)
+    }
+
+    const getHeatmapCellColor = (value: number, maxValue: number, baseColor: string) => {
+        if (value <= 0 || maxValue <= 0) {
+            return '#F3F4F6'
+        }
+
+        const normalized = Math.max(0.18, value / maxValue)
+        const hex = baseColor.replace('#', '')
+        const normalizedHex =
+            hex.length === 3
+                ? hex
+                    .split('')
+                    .map((char) => `${char}${char}`)
+                    .join('')
+                : hex
+
+        const red = Number.parseInt(normalizedHex.slice(0, 2), 16)
+        const green = Number.parseInt(normalizedHex.slice(2, 4), 16)
+        const blue = Number.parseInt(normalizedHex.slice(4, 6), 16)
+
+        return `rgba(${red}, ${green}, ${blue}, ${normalized})`
     }
 
     // Ricarica i dati quando si torna alla pagina (ad esempio dopo aver modificato un workout)
@@ -279,30 +302,12 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         )
     }
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <LoadingSpinner size="lg" color="primary" />
-            </div>
-        )
-    }
-
-    if (error || !program) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="bg-red-50 border border-red-200 text-red-800 px-6 py-4 rounded-lg">
-                    {error || t('editProgram.notFound')}
-                </div>
-            </div>
-        )
-    }
-
-    const totalWorkouts = program.durationWeeks * program.workoutsPerWeek
+    const totalWorkouts = program ? program.durationWeeks * program.workoutsPerWeek : 0
     const completedWorkouts = getCompletedWorkouts()
-    const progressPercent = Math.round((completedWorkouts / totalWorkouts) * 100)
+    const progressPercent = totalWorkouts > 0 ? Math.round((completedWorkouts / totalWorkouts) * 100) : 0
     const muscleGroupCatalog = new Map<string, { id: string; name: string }>()
 
-    const weeklyMuscleGroupTotals = program.weeks.map((week) => {
+    const weeklyMuscleGroupTotals = (program?.weeks || []).map((week) => {
         const totals = new Map<string, number>()
 
         week.workouts.forEach((workout) => {
@@ -341,6 +346,49 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             color: MUSCLE_GROUP_CHART_COLORS[index % MUSCLE_GROUP_CHART_COLORS.length],
         }))
 
+    useEffect(() => {
+        setVisibleMuscleGroupIds((currentIds) => {
+            const availableIds = muscleGroupSeries.map((muscleGroup) => muscleGroup.id)
+
+            if (availableIds.length === 0) {
+                return currentIds.length === 0 ? currentIds : []
+            }
+
+            if (currentIds.length === 0) {
+                return availableIds
+            }
+
+            const nextIds = currentIds.filter((id) => availableIds.includes(id))
+
+            if (nextIds.length === 0) {
+                return availableIds
+            }
+
+            const hasSameIds =
+                nextIds.length === currentIds.length && nextIds.every((id, index) => id === currentIds[index])
+
+            return hasSameIds ? currentIds : nextIds
+        })
+    }, [muscleGroupSeries])
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <LoadingSpinner size="lg" color="primary" />
+            </div>
+        )
+    }
+
+    if (error || !program) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="bg-red-50 border border-red-200 text-red-800 px-6 py-4 rounded-lg">
+                    {error || t('editProgram.notFound')}
+                </div>
+            </div>
+        )
+    }
+
     const weeklyMuscleGroupChartData = weeklyMuscleGroupTotals.map(({ weekNumber, totals }) => {
         const chartRow: Record<string, number | string> = {
             weekNumber,
@@ -354,9 +402,67 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         return chartRow
     })
 
+    const visibleMuscleGroups = muscleGroupSeries.filter((muscleGroup) =>
+        visibleMuscleGroupIds.includes(muscleGroup.id)
+    )
+
     const hasWeeklyMuscleGroupData = weeklyMuscleGroupChartData.some((row) =>
         muscleGroupSeries.some((muscleGroup) => Number(row[muscleGroup.id] || 0) > 0)
     )
+
+    const hasVisibleWeeklyMuscleGroupData = weeklyMuscleGroupChartData.some((row) =>
+        visibleMuscleGroups.some((muscleGroup) => Number(row[muscleGroup.id] || 0) > 0)
+    )
+
+    const heatmapMaxValue = weeklyMuscleGroupChartData.reduce((maxValue, row) => {
+        return Math.max(
+            maxValue,
+            ...visibleMuscleGroups.map((muscleGroup) => Number(row[muscleGroup.id] || 0))
+        )
+    }, 0)
+
+    const toggleMuscleGroupVisibility = (muscleGroupId: string) => {
+        setVisibleMuscleGroupIds((currentIds) => {
+            if (currentIds.includes(muscleGroupId)) {
+                if (currentIds.length === 1) {
+                    return currentIds
+                }
+
+                return currentIds.filter((id) => id !== muscleGroupId)
+            }
+
+            return [...currentIds, muscleGroupId]
+        })
+    }
+
+    const showAllMuscleGroups = () => {
+        setVisibleMuscleGroupIds(muscleGroupSeries.map((muscleGroup) => muscleGroup.id))
+    }
+
+    const heatmapLegendStops = [0, 0.33, 0.66, 1].map((stop) => ({
+        stop,
+        color: getHeatmapCellColor(heatmapMaxValue * stop, heatmapMaxValue, PRIMARY_COLOR),
+    }))
+
+    const totalMuscleGroupTrainingSets = weeklyMuscleGroupTotals.reduce((totalsByMuscleGroup, { totals }) => {
+        totals.forEach((value, muscleGroupId) => {
+            totalsByMuscleGroup.set(muscleGroupId, (totalsByMuscleGroup.get(muscleGroupId) || 0) + value)
+        })
+
+        return totalsByMuscleGroup
+    }, new Map<string, number>())
+
+    const muscleGroupChartData = muscleGroupSeries
+        .map((muscleGroup) => ({
+            id: muscleGroup.id,
+            name: muscleGroup.name,
+            total: Number((totalMuscleGroupTrainingSets.get(muscleGroup.id) || 0).toFixed(1)),
+            color: muscleGroup.color,
+        }))
+        .filter((muscleGroup) => muscleGroup.total > 0)
+        .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, 'it', { sensitivity: 'base' }))
+
+    const hasMuscleGroupChartData = muscleGroupChartData.length > 0
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -604,18 +710,169 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 <div className="bg-white rounded-lg shadow-md p-6 mt-8">
                     <div className="mb-6">
                         <h2 className="text-xl font-bold text-gray-900">
-                            {t('editProgram.trainingSetsByMuscleGroupTitle')}
+                            {t('editProgram.trainingSetsHeatmapTitle')}
                         </h2>
                         <p className="text-sm text-gray-600 mt-2">
-                            {t('editProgram.trainingSetsByMuscleGroupDescription')}
+                            {t('editProgram.trainingSetsHeatmapDescription')}
                         </p>
                     </div>
 
-                    {hasWeeklyMuscleGroupData ? (
+                    {hasWeeklyMuscleGroupData && (
+                        <div className="mb-6 space-y-4">
+                            <div>
+                                <div className="flex items-center justify-between gap-3 flex-wrap">
+                                    <p className="text-sm font-medium text-gray-700">
+                                        {t('editProgram.trainingSetsFilterTitle')}
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={showAllMuscleGroups}
+                                        className="text-sm font-semibold text-[#0F766E] hover:text-[#115E59]"
+                                    >
+                                        {t('editProgram.trainingSetsFilterReset')}
+                                    </button>
+                                </div>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {muscleGroupSeries.map((muscleGroup) => {
+                                        const isActive = visibleMuscleGroupIds.includes(muscleGroup.id)
+
+                                        return (
+                                            <button
+                                                key={muscleGroup.id}
+                                                type="button"
+                                                onClick={() => toggleMuscleGroupVisibility(muscleGroup.id)}
+                                                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors ${isActive
+                                                    ? 'border-gray-300 bg-gray-900 text-white'
+                                                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:text-gray-900'
+                                                    }`}
+                                            >
+                                                <span
+                                                    className="h-2.5 w-2.5 rounded-full"
+                                                    style={{ backgroundColor: muscleGroup.color }}
+                                                />
+                                                {muscleGroup.name}
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+
+                            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                                <div className="flex items-center justify-between gap-4 flex-wrap">
+                                    <p className="text-sm font-medium text-gray-700">
+                                        {t('editProgram.trainingSetsHeatmapLegendTitle')}
+                                    </p>
+                                    <div className="flex items-center gap-3 text-xs text-gray-600">
+                                        <span>{t('editProgram.trainingSetsHeatmapLegendLow')}</span>
+                                        <div className="flex items-center gap-1">
+                                            {heatmapLegendStops.map((item, index) => (
+                                                <span
+                                                    key={`${item.stop}-${index}`}
+                                                    className="h-4 w-8 rounded-sm border border-white/70"
+                                                    style={{ backgroundColor: item.color }}
+                                                />
+                                            ))}
+                                        </div>
+                                        <span>{t('editProgram.trainingSetsHeatmapLegendHigh')}</span>
+                                        <span className="rounded-full bg-white px-2 py-1 font-semibold text-gray-700">
+                                            {t('editProgram.trainingSetsHeatmapLegendMax', {
+                                                value: formatTrainingSetsValue(heatmapMaxValue),
+                                                unit: t('editProgram.trainingSetsUnit'),
+                                            })}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {hasVisibleWeeklyMuscleGroupData ? (
+                        <>
+                            <div className="overflow-x-auto">
+                                <div
+                                    className="grid gap-2 min-w-max"
+                                    style={{
+                                        gridTemplateColumns: `minmax(180px, 220px) repeat(${weeklyMuscleGroupChartData.length}, minmax(64px, 1fr))`,
+                                    }}
+                                >
+                                    <div className="sticky left-0 z-10 bg-white" />
+                                    {weeklyMuscleGroupChartData.map((row) => (
+                                        <div
+                                            key={String(row.weekNumber)}
+                                            className="rounded-md bg-gray-50 px-2 py-3 text-center text-xs font-semibold text-gray-600"
+                                        >
+                                            {row.weekLabel}
+                                        </div>
+                                    ))}
+
+                                    {visibleMuscleGroups.map((muscleGroup) => (
+                                        <Fragment key={muscleGroup.id}>
+                                            <div
+                                                className="sticky left-0 z-10 flex items-center rounded-md bg-white pr-3 text-sm font-medium text-gray-700"
+                                            >
+                                                <span
+                                                    className="mr-3 inline-block h-3 w-3 rounded-full"
+                                                    style={{ backgroundColor: muscleGroup.color }}
+                                                />
+                                                {muscleGroup.name}
+                                            </div>
+                                            {weeklyMuscleGroupChartData.map((row) => {
+                                                const value = Number(row[muscleGroup.id] || 0)
+
+                                                return (
+                                                    <div
+                                                        key={`${muscleGroup.id}-${String(row.weekNumber)}`}
+                                                        className="flex h-14 items-center justify-center rounded-md border border-white/60 text-xs font-semibold"
+                                                        style={{
+                                                            backgroundColor: getHeatmapCellColor(
+                                                                value,
+                                                                heatmapMaxValue,
+                                                                muscleGroup.color
+                                                            ),
+                                                            color: value > 0 ? '#111827' : '#9CA3AF',
+                                                        }}
+                                                        title={`${muscleGroup.name} - ${String(row.weekLabel)}: ${formatTrainingSetsValue(value)} ${t('editProgram.trainingSetsUnit')}`}
+                                                    >
+                                                        {value > 0
+                                                            ? formatTrainingSetsValue(value)
+                                                            : '-'}
+                                                    </div>
+                                                )
+                                            })}
+                                        </Fragment>
+                                    ))}
+                                </div>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-4">
+                                {t('editProgram.trainingSetsHeatmapFootnote')}
+                            </p>
+                        </>
+                    ) : hasWeeklyMuscleGroupData ? (
+                        <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center text-sm text-gray-600">
+                            {t('editProgram.trainingSetsFilterEmpty')}
+                        </div>
+                    ) : (
+                        <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center text-sm text-gray-600">
+                            {t('editProgram.trainingSetsByMuscleGroupEmpty')}
+                        </div>
+                    )}
+                </div>
+
+                <div className="bg-white rounded-lg shadow-md p-6 mt-8">
+                    <div className="mb-6">
+                        <h2 className="text-xl font-bold text-gray-900">
+                            {t('editProgram.trainingSetsTrendTitle')}
+                        </h2>
+                        <p className="text-sm text-gray-600 mt-2">
+                            {t('editProgram.trainingSetsTrendDescription')}
+                        </p>
+                    </div>
+
+                    {hasVisibleWeeklyMuscleGroupData ? (
                         <>
                             <div className="h-96">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={weeklyMuscleGroupChartData}>
+                                    <LineChart data={weeklyMuscleGroupChartData} margin={{ left: 12, right: 12 }}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                         <XAxis dataKey="weekLabel" />
                                         <YAxis />
@@ -628,26 +885,32 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                         />
                                         <Legend
                                             formatter={(value) =>
-                                                muscleGroupSeries.find((muscleGroup) => muscleGroup.id === value)
+                                                visibleMuscleGroups.find((muscleGroup) => muscleGroup.id === value)
                                                     ?.name || value
                                             }
                                         />
-                                        {muscleGroupSeries.map((muscleGroup) => (
-                                            <Bar
+                                        {visibleMuscleGroups.map((muscleGroup) => (
+                                            <Line
                                                 key={muscleGroup.id}
+                                                type="monotone"
                                                 dataKey={muscleGroup.id}
-                                                stackId="trainingSets"
-                                                fill={muscleGroup.color}
-                                                radius={[4, 4, 0, 0]}
+                                                stroke={muscleGroup.color}
+                                                strokeWidth={2.5}
+                                                dot={{ r: 3 }}
+                                                activeDot={{ r: 5 }}
                                             />
                                         ))}
-                                    </BarChart>
+                                    </LineChart>
                                 </ResponsiveContainer>
                             </div>
                             <p className="text-xs text-gray-500 mt-4">
-                                {t('editProgram.trainingSetsByMuscleGroupFootnote')}
+                                {t('editProgram.trainingSetsTrendFootnote')}
                             </p>
                         </>
+                    ) : hasWeeklyMuscleGroupData ? (
+                        <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center text-sm text-gray-600">
+                            {t('editProgram.trainingSetsFilterEmpty')}
+                        </div>
                     ) : (
                         <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center text-sm text-gray-600">
                             {t('editProgram.trainingSetsByMuscleGroupEmpty')}

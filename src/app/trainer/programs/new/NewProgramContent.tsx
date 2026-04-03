@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import { BarChart3 } from 'lucide-react'
 
 interface Trainee {
     id: string
@@ -293,7 +294,10 @@ export default function NewProgramContent() {
 
                 {/* Summary */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="text-sm font-semibold text-blue-900 mb-2">📊 Riepilogo</p>
+                    <div className="mb-2 flex items-center gap-2 text-blue-900">
+                        <BarChart3 className="h-4 w-4" />
+                        <p className="text-sm font-semibold">Riepilogo</p>
+                    </div>
                     <p className="text-sm text-blue-700">
                         Verranno create{' '}
                         <span className="font-semibold">{durationWeeks} settimane</span> con{' '}
