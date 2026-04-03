@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
+import { WeightType } from '@prisma/client'
 import { getApiErrorMessage } from '@/lib/api-error'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ConfirmationModal from '@/components/ConfirmationModal'
@@ -12,7 +13,7 @@ import { useToast } from '@/components/ToastNotification'
 import WeekTypeBadge from '@/components/WeekTypeBadge'
 import EditProgramMetadata from './EditProgramMetadata'
 import MovementPatternTag from '@/components/MovementPatternTag'
-import { ClipboardList, Flame, Wind, ArrowLeft, FileEdit, Copy } from 'lucide-react'
+import { ClipboardList, Flame, Wind, ArrowLeft, FileEdit, Copy, ArrowUpRight, BarChart3 } from 'lucide-react'
 
 // Brand primary color - default per movement pattern senza colore personalizzato
 const PRIMARY_COLOR = '#FFA700'
@@ -34,10 +35,14 @@ interface WorkoutExerciseMuscleGroup {
 interface WorkoutExercise {
     id: string
     sets: number
+    reps: string
     isWarmup: boolean
+    weightType: WeightType
+    weight: number | null
     exercise: {
         id: string
         name: string
+        type: 'fundamental' | 'accessory'
         exerciseMuscleGroups: WorkoutExerciseMuscleGroup[]
     }
 }
@@ -72,6 +77,22 @@ interface Program {
     weeks: Week[]
 }
 
+interface PersonalRecord {
+    exerciseId: string
+    reps: number
+    weight: number
+}
+
+function parseRepsValue(repsValue: string): number {
+    const match = repsValue.match(/^\d+/)
+    return match ? parseInt(match[0], 10) : 0
+}
+
+function estimateOneRMValue(weight: number, reps: number): number {
+    if (reps <= 1) return weight
+    return weight * (1 + reps / 30)
+}
+
 interface EditProgramContentProps {
     readOnly?: boolean
 }
@@ -85,10 +106,13 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [copyingFirstWeek, setCopyingFirstWeek] = useState(false)
+    const [copyingWeekId, setCopyingWeekId] = useState<string | null>(null)
     const [program, setProgram] = useState<Program | null>(null)
+    const [personalRecords, setPersonalRecords] = useState<PersonalRecord[]>([])
     const [error, setError] = useState<string | null>(null)
     const loadingRef = useRef(false)
     const [confirmCopyOpen, setConfirmCopyOpen] = useState(false)
+    const [confirmCopyNextWeek, setConfirmCopyNextWeek] = useState<Week | null>(null)
 
     useEffect(() => {
         fetchProgram()
@@ -123,6 +147,15 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 throw new Error(getApiErrorMessage(data, t('editProgram.errorLoading'), t))
             }
 
+            const traineeId = data.data.program.trainee.id
+            const recordsRes = await fetch(`/api/personal-records?traineeId=${traineeId}`)
+            if (recordsRes.ok) {
+                const recordsData = await recordsRes.json()
+                setPersonalRecords(recordsData.data.items || [])
+            } else {
+                setPersonalRecords([])
+            }
+
             // Trasforma i dati per calcolare exerciseCount e estrarre movement patterns da workoutExercises
             const transformedProgram = {
                 ...data.data.program,
@@ -132,14 +165,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                         const workoutExercises = workout.workoutExercises || []
                         const trainerId = data.data.program.trainerId
 
-                        // Estrai movement pattern (uno per esercizio, con duplicati)
-                        console.log(
-                            `[workout ${workout.id}] exercises:`,
-                            workoutExercises.map((we: any) => ({
-                                exercise: we.exercise?.name,
-                                movementPattern: we.exercise?.movementPattern?.name ?? '⚠️ missing',
-                            }))
-                        )
                         const movementPatterns: MovementPattern[] = []
                         workoutExercises.forEach((we: any) => {
                             if (we.exercise?.movementPattern) {
@@ -164,10 +189,14 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             workoutExercises: workoutExercises.map((we: any) => ({
                                 id: we.id,
                                 sets: we.sets,
+                                reps: String(we.reps),
                                 isWarmup: we.isWarmup,
+                                weightType: we.weightType,
+                                weight: we.weight,
                                 exercise: {
                                     id: we.exercise.id,
                                     name: we.exercise.name,
+                                    type: we.exercise.type,
                                     exerciseMuscleGroups: we.exercise.exerciseMuscleGroups || [],
                                 },
                             })),
@@ -237,6 +266,42 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         }
     }
 
+    const handleCopyWeekToNext = async () => {
+        if (!confirmCopyNextWeek) return
+
+        try {
+            setCopyingWeekId(confirmCopyNextWeek.id)
+
+            const res = await fetch(`/api/programs/${programId}/copy-week`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sourceWeekId: confirmCopyNextWeek.id }),
+            })
+            const data = await res.json()
+
+            if (!res.ok) {
+                throw new Error(getApiErrorMessage(data, t('editProgram.copyWeekError'), t))
+            }
+
+            await fetchProgram()
+            showToast(
+                t('editProgram.copyWeekSuccess', {
+                    sourceWeek: confirmCopyNextWeek.weekNumber,
+                    targetWeek: confirmCopyNextWeek.weekNumber + 1,
+                }),
+                'success'
+            )
+            setConfirmCopyNextWeek(null)
+        } catch (err: unknown) {
+            showToast(
+                err instanceof Error ? err.message : t('editProgram.copyWeekError'),
+                'error'
+            )
+        } finally {
+            setCopyingWeekId(null)
+        }
+    }
+
     const getTotalExercises = () => {
         if (!program) return 0
         return program.weeks.reduce(
@@ -257,6 +322,100 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const totalWorkouts = program ? program.durationWeeks * program.workoutsPerWeek : 0
     const completedWorkouts = getCompletedWorkouts()
     const progressPercent = totalWorkouts > 0 ? Math.round((completedWorkouts / totalWorkouts) * 100) : 0
+
+    const recordsByExercise = personalRecords.reduce((acc, record) => {
+        const key = record.exerciseId
+        if (!acc[key]) {
+            acc[key] = []
+        }
+        acc[key].push(record)
+        return acc
+    }, {} as Record<string, PersonalRecord[]>)
+
+    const bestPRs = Object.values(recordsByExercise).map((records) =>
+        records.reduce((best, current) => {
+            const currentEstimatedOneRM = estimateOneRMValue(current.weight, current.reps)
+            const bestEstimatedOneRM = estimateOneRMValue(best.weight, best.reps)
+            return currentEstimatedOneRM > bestEstimatedOneRM ? current : best
+        })
+    )
+
+    const estimatedOneRMByExercise = bestPRs.reduce((acc, record) => {
+        acc[record.exerciseId] = estimateOneRMValue(record.weight, record.reps)
+        return acc
+    }, {} as Record<string, number>)
+
+    const weekSbdMetrics = program
+        ? program.weeks.reduce((acc, week) => {
+            acc[week.id] = Object.values(
+                week.workouts.reduce((weekAcc, workout) => {
+                    workout.workoutExercises
+                        .filter((weekExercise) => weekExercise.exercise.type === 'fundamental' && !weekExercise.isWarmup)
+                        .forEach((weekExercise) => {
+                            const key = weekExercise.exercise.id
+                            const plannedReps = parseRepsValue(weekExercise.reps)
+                            const liftCount = weekExercise.sets * plannedReps
+
+                            let intensity: number | null = null
+                            if (weekExercise.weightType === 'percentage_1rm' && typeof weekExercise.weight === 'number') {
+                                intensity = weekExercise.weight
+                            } else if (weekExercise.weightType === 'absolute' && typeof weekExercise.weight === 'number') {
+                                const estimatedOneRM = estimatedOneRMByExercise[weekExercise.exercise.id]
+                                if (estimatedOneRM) {
+                                    intensity = (weekExercise.weight / estimatedOneRM) * 100
+                                }
+                            }
+
+                            if (!weekAcc[key]) {
+                                weekAcc[key] = {
+                                    exerciseId: weekExercise.exercise.id,
+                                    exerciseName: weekExercise.exercise.name,
+                                    workoutIds: new Set<string>(),
+                                    totalLifts: 0,
+                                    weightedIntensitySum: 0,
+                                    intensityLiftCount: 0,
+                                }
+                            }
+
+                            weekAcc[key].workoutIds.add(workout.id)
+                            weekAcc[key].totalLifts += liftCount
+
+                            if (intensity !== null && liftCount > 0) {
+                                weekAcc[key].weightedIntensitySum += intensity * liftCount
+                                weekAcc[key].intensityLiftCount += liftCount
+                            }
+                        })
+
+                    return weekAcc
+                }, {} as Record<string, {
+                    exerciseId: string
+                    exerciseName: string
+                    workoutIds: Set<string>
+                    totalLifts: number
+                    weightedIntensitySum: number
+                    intensityLiftCount: number
+                }>)
+            )
+                .map((metric) => ({
+                    exerciseId: metric.exerciseId,
+                    exerciseName: metric.exerciseName,
+                    frequency: metric.workoutIds.size,
+                    totalLifts: metric.totalLifts,
+                    averageIntensity: metric.intensityLiftCount > 0
+                        ? metric.weightedIntensitySum / metric.intensityLiftCount
+                        : null,
+                }))
+                .sort((left, right) => left.exerciseName.localeCompare(right.exerciseName, 'it', { sensitivity: 'base' }))
+
+            return acc
+        }, {} as Record<string, Array<{
+            exerciseId: string
+            exerciseName: string
+            frequency: number
+            totalLifts: number
+            averageIntensity: number | null
+        }>>)
+        : {}
 
     if (loading) {
         return (
@@ -407,6 +566,24 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                             {t('editProgram.copyFirstWeekButton')}
                                         </button>
                                     )}
+                                    {!readOnly && week.weekNumber >= 2 && week.weekNumber < program.weeks.length && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setConfirmCopyNextWeek(week)}
+                                            disabled={copyingWeekId !== null || copyingFirstWeek || saving}
+                                            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                            {copyingWeekId === week.id ? (
+                                                <LoadingSpinner size="sm" color="primary" />
+                                            ) : (
+                                                <Copy className="h-4 w-4" />
+                                            )}
+                                            {t('editProgram.copyWeekButton', {
+                                                sourceWeek: week.weekNumber,
+                                                targetWeek: week.weekNumber + 1,
+                                            })}
+                                        </button>
+                                    )}
                                     {readOnly ? (
                                         <div className="flex items-center gap-2">
                                             <WeekTypeBadge weekType={week.weekType} />
@@ -454,34 +631,94 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                 </p>
                             </div>
 
+                            {weekSbdMetrics[week.id] && weekSbdMetrics[week.id].length > 0 && (
+                                <div className="mb-5 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4">
+                                    <div className="mb-3 flex items-center justify-between gap-3">
+                                        <div className="flex items-center gap-2">
+                                            <div className="rounded-xl bg-slate-900 p-2 text-white">
+                                                <BarChart3 className="h-4 w-4" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-semibold text-slate-900">Reportistica SBD</p>
+                                                <p className="text-xs text-slate-500">Solo esercizi fondamentali della settimana</p>
+                                            </div>
+                                        </div>
+                                        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400">FRQ / NBL / IM</p>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+                                        {weekSbdMetrics[week.id].map((metric) => (
+                                            <div key={metric.exerciseId} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                                                <p className="text-sm font-semibold text-slate-900">{metric.exerciseName}</p>
+                                                <div className="mt-3 grid grid-cols-3 gap-2">
+                                                    <div className="rounded-lg bg-slate-50 px-2 py-2 text-center">
+                                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">FRQ</p>
+                                                        <p className="mt-1 text-base font-bold text-slate-900">{metric.frequency}</p>
+                                                    </div>
+                                                    <div className="rounded-lg bg-slate-50 px-2 py-2 text-center">
+                                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">NBL</p>
+                                                        <p className="mt-1 text-base font-bold text-slate-900">{metric.totalLifts}</p>
+                                                    </div>
+                                                    <div className="rounded-lg bg-slate-50 px-2 py-2 text-center">
+                                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">IM</p>
+                                                        <p className="mt-1 text-base font-bold text-slate-900">
+                                                            {metric.averageIntensity !== null ? `${metric.averageIntensity.toFixed(1)}%` : '-'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {week.workouts.map((workout) => {
                                     const workoutCard = (
                                         <div
-                                            className={`border-2 rounded-lg p-4 transition-all ${workout.exerciseCount > 0
-                                                ? 'border-green-300 bg-green-50'
-                                                : 'border-gray-300 bg-white'
-                                                } ${!readOnly ? 'hover:shadow-md hover:border-green-400' : ''}`}
+                                            className={`group relative overflow-hidden rounded-2xl border p-4 transition-all ${workout.exerciseCount > 0
+                                                ? 'border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-white shadow-sm'
+                                                : 'border-slate-200 bg-gradient-to-br from-white to-slate-50'
+                                                } ${!readOnly ? 'hover:-translate-y-0.5 hover:shadow-lg' : ''}`}
                                         >
-                                            <div className="flex items-center justify-between mb-2">
-                                                <p className="font-semibold text-gray-900">
-                                                    {(t('editProgram.dayNames', { returnObjects: true }) as string[])[workout.dayOfWeek]}
-                                                </p>
-                                                {workout.exerciseCount > 0 ? (
-                                                    <span className="text-green-600 text-sm font-semibold">
-                                                        ✓
+                                            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#FFA700] via-emerald-400 to-slate-300 opacity-80" />
+                                            <div className="mb-3 flex items-start justify-between gap-3">
+                                                <div>
+                                                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                                                        Workout
+                                                    </p>
+                                                    <p className="mt-1 text-lg font-bold text-slate-900">
+                                                        {(t('editProgram.dayNames', { returnObjects: true }) as string[])[workout.dayOfWeek]}
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${workout.exerciseCount > 0
+                                                        ? 'bg-emerald-100 text-emerald-700'
+                                                        : 'bg-slate-100 text-slate-500'
+                                                        }`}>
+                                                        {workout.exerciseCount > 0 ? `${workout.exerciseCount} ex` : 'Vuoto'}
                                                     </span>
-                                                ) : (
-                                                    <span className="text-gray-400 text-sm">⚠️</span>
-                                                )}
+                                                    {!readOnly && (
+                                                        <span className="rounded-full bg-slate-900 p-1.5 text-white transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+                                                            <ArrowUpRight className="h-3.5 w-3.5" />
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <p className="text-sm text-gray-600 mb-2">
-                                                {workout.exerciseCount > 0
-                                                    ? t('editProgram.exercisesCount', { count: workout.exerciseCount })
-                                                    : t('editProgram.noExercises')}
-                                            </p>
-                                            {workout.movementPatterns.length > 0 && (
-                                                <div className="flex flex-wrap gap-1 mb-2">
+
+                                            <div className="mb-3 flex items-center justify-between">
+                                                <p className="text-sm text-slate-600">
+                                                    {workout.exerciseCount > 0
+                                                        ? t('editProgram.exercisesCount', { count: workout.exerciseCount })
+                                                        : t('editProgram.noExercises')}
+                                                </p>
+                                                <span className={`text-sm font-semibold ${workout.exerciseCount > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                                    {workout.exerciseCount > 0 ? '✓' : '⚠️'}
+                                                </span>
+                                            </div>
+
+                                            {workout.movementPatterns.length > 0 ? (
+                                                <div className="flex flex-wrap gap-1.5">
                                                     {workout.movementPatterns.map((mp, idx) => (
                                                         <MovementPatternTag
                                                             key={`${mp.id}-${idx}`}
@@ -490,14 +727,19 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                         />
                                                     ))}
                                                 </div>
+                                            ) : (
+                                                <div className="rounded-xl border border-dashed border-slate-200 bg-white/70 px-3 py-3 text-xs text-slate-500">
+                                                    Nessuno schema motorio ancora associato
+                                                </div>
                                             )}
-                                            {!readOnly && (
-                                                <p className="text-xs text-[#FFA700] font-semibold mt-2">
-                                                    {workout.exerciseCount > 0
-                                                        ? t('editProgram.edit')
-                                                        : t('editProgram.configure')}
-                                                </p>
-                                            )}
+
+                                            <div className="mt-4 flex items-center justify-between border-t border-slate-200/80 pt-3 text-xs text-slate-500">
+                                                <span>{readOnly ? 'Anteprima workout' : 'Apri workout'}</span>
+                                                <span className="font-semibold text-[#FFA700]">
+                                                    {(t('editProgram.dayNames', { returnObjects: true }) as string[])[workout.dayOfWeek]}
+                                                    {readOnly ? '' : 'Entra'}
+                                                </span>
+                                            </div>
                                         </div>
                                     )
 
@@ -561,6 +803,27 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     confirmText={t('editProgram.copyFirstWeekConfirm')}
                     variant="warning"
                     isLoading={copyingFirstWeek}
+                />
+
+                <ConfirmationModal
+                    isOpen={confirmCopyNextWeek !== null}
+                    onClose={() => {
+                        if (!copyingWeekId) {
+                            setConfirmCopyNextWeek(null)
+                        }
+                    }}
+                    onConfirm={handleCopyWeekToNext}
+                    title={t('editProgram.copyWeekTitle', {
+                        sourceWeek: confirmCopyNextWeek?.weekNumber,
+                        targetWeek: confirmCopyNextWeek ? confirmCopyNextWeek.weekNumber + 1 : undefined,
+                    })}
+                    message={t('editProgram.copyWeekMessage', {
+                        sourceWeek: confirmCopyNextWeek?.weekNumber,
+                        targetWeek: confirmCopyNextWeek ? confirmCopyNextWeek.weekNumber + 1 : undefined,
+                    })}
+                    confirmText={t('editProgram.copyWeekConfirm')}
+                    variant="warning"
+                    isLoading={copyingWeekId !== null}
                 />
             </div>
         </div>
