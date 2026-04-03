@@ -106,8 +106,60 @@ export async function GET(request: NextRequest) {
         const items = hasMore ? programs.slice(0, -1) : programs
         const nextCursor = hasMore ? items[items.length - 1].id : null
 
+        const programIds = items.map((program) => program.id)
+        const lastCompletedWorkoutDateByProgramId: Record<string, string> = {}
+
+        if (programIds.length > 0) {
+            const completedFeedbacks = await prisma.exerciseFeedback.findMany({
+                where: {
+                    completed: true,
+                    workoutExercise: {
+                        workout: {
+                            week: {
+                                programId: {
+                                    in: programIds,
+                                },
+                            },
+                        },
+                    },
+                },
+                select: {
+                    date: true,
+                    workoutExercise: {
+                        select: {
+                            workout: {
+                                select: {
+                                    week: {
+                                        select: {
+                                            programId: true,
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                orderBy: {
+                    date: 'desc',
+                },
+            })
+
+            for (const feedback of completedFeedbacks) {
+                const programId = feedback.workoutExercise.workout.week.programId
+
+                if (!lastCompletedWorkoutDateByProgramId[programId]) {
+                    lastCompletedWorkoutDateByProgramId[programId] = feedback.date.toISOString()
+                }
+            }
+        }
+
+        const enrichedItems = items.map((program) => ({
+            ...program,
+            lastWorkoutCompletedAt: lastCompletedWorkoutDateByProgramId[program.id] ?? null,
+        }))
+
         return apiSuccess({
-            items,
+            items: enrichedItems,
             pagination: {
                 nextCursor,
                 hasMore,

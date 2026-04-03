@@ -7,11 +7,18 @@ import { NavigationCard, ProgressBar, SkeletonDashboard } from '@/components'
 import { Dumbbell, Trophy, BarChart2, User, CalendarDays, ClipboardList, Play } from 'lucide-react'
 import { formatDate } from '@/lib/date-format'
 
-interface ActiveProgram {
+type ProgramStatus = 'draft' | 'active' | 'completed'
+
+interface ProgramSummary {
     id: string
     title: string
-    startDate: string
+    status: ProgramStatus
+    startDate: string | null
+    completedAt: string | null
+    lastWorkoutCompletedAt: string | null
+    createdAt: string
     durationWeeks: number
+    workoutsPerWeek: number
     trainer: {
         firstName: string
         lastName: string
@@ -43,10 +50,24 @@ interface PersonalRecord {
     recordDate: string
 }
 
+interface ProgramProgressSummary {
+    completedWorkouts: number
+    totalWorkouts: number
+}
+
+const getProgramSortTime = (program: ProgramSummary): number => {
+    const relevantDate = program.lastWorkoutCompletedAt || program.completedAt || program.startDate || program.createdAt
+    return new Date(relevantDate).getTime()
+}
+
+const isPublishedProgram = (program: ProgramSummary): boolean => program.status !== 'draft'
+
 export default function TraineeDashboardContent() {
     const { t } = useTranslation(['trainee', 'navigation'])
     const [loading, setLoading] = useState(true)
-    const [activeProgram, setActiveProgram] = useState<ActiveProgram | null>(null)
+    const [activeProgram, setActiveProgram] = useState<ProgramSummary | null>(null)
+    const [programHistory, setProgramHistory] = useState<ProgramSummary[]>([])
+    const [programHistoryProgress, setProgramHistoryProgress] = useState<Record<string, ProgramProgressSummary>>({})
     const [programProgress, setProgramProgress] = useState<ProgramProgress | null>(null)
     const [nextWorkout, setNextWorkout] = useState<NextWorkout | null>(null)
     const [recentPRs, setRecentPRs] = useState<PersonalRecord[]>([])
@@ -60,33 +81,48 @@ export default function TraineeDashboardContent() {
         try {
             setLoading(true)
 
-            // Fetch active program
-            const programsRes = await fetch('/api/programs?status=active')
-            const programsData = await programsRes.json()
+            const [programsRes, prsRes] = await Promise.all([
+                fetch('/api/programs?limit=10'),
+                fetch('/api/personal-records?limit=5'),
+            ])
 
-            if (programsRes.ok && programsData.data.items.length > 0) {
-                const program = programsData.data.items[0]
+            const [programsData, prsData] = await Promise.all([
+                programsRes.json(),
+                prsRes.json(),
+            ])
+
+            if (programsRes.ok) {
+                const programs = (programsData.data.items ?? []) as ProgramSummary[]
+                const publishedPrograms = programs.filter(isPublishedProgram)
+                const sortedPrograms = [...publishedPrograms].sort((a, b) => getProgramSortTime(b) - getProgramSortTime(a))
+                const program = programs.find((item) => item.status === 'active') ?? null
+
+                setProgramHistory(sortedPrograms)
                 setActiveProgram(program)
 
-                // Fetch progress summary for counts and next workout
-                const progressRes = await fetch(`/api/programs/${program.id}/progress`)
-                const progressData = await progressRes.json()
+                if (program) {
+                    const progressRes = await fetch(`/api/programs/${program.id}/progress`)
+                    const progressData = await progressRes.json()
 
-                if (progressRes.ok) {
-                    setProgramProgress({
-                        completedWorkouts: progressData.data.completedWorkouts ?? 0,
-                        totalWorkouts: progressData.data.totalWorkouts ?? 0,
-                    })
-                    setNextWorkout(progressData.data.nextWorkout ?? null)
+                    if (progressRes.ok) {
+                        setProgramProgress({
+                            completedWorkouts: progressData.data.completedWorkouts ?? 0,
+                            totalWorkouts: progressData.data.totalWorkouts ?? 0,
+                        })
+                        setNextWorkout(progressData.data.nextWorkout ?? null)
+                        setProgramHistoryProgress((current) => ({
+                            ...current,
+                            [program.id]: {
+                                completedWorkouts: progressData.data.completedWorkouts ?? 0,
+                                totalWorkouts: progressData.data.totalWorkouts ?? 0,
+                            },
+                        }))
+                    }
                 }
             }
 
-            // Fetch recent PRs
-            const prsRes = await fetch('/api/personal-records?limit=5')
-            const prsData = await prsRes.json()
-
             if (prsRes.ok) {
-                setRecentPRs(prsData.data.items)
+                setRecentPRs(prsData.data.items ?? [])
             }
         } catch (err: any) {
             setError(err.message)
@@ -94,6 +130,113 @@ export default function TraineeDashboardContent() {
             setLoading(false)
         }
     }
+
+    const getStatusBadgeClasses = (status: ProgramStatus): string => {
+        switch (status) {
+            case 'active':
+                return 'bg-green-100 text-green-800'
+            case 'completed':
+                return 'bg-emerald-100 text-emerald-800'
+            default:
+                return 'bg-gray-100 text-gray-700'
+        }
+    }
+
+    const getDisplayStatus = (program: ProgramSummary): ProgramStatus => {
+        if (program.status !== 'active') {
+            return program.status
+        }
+
+        const progress = programHistoryProgress[program.id]
+
+        if (progress && progress.totalWorkouts > 0 && progress.completedWorkouts === progress.totalWorkouts) {
+            return 'completed'
+        }
+
+        return 'active'
+    }
+
+    const getProgramEndDate = (program: ProgramSummary, displayStatus: ProgramStatus): string | null => {
+        if (displayStatus !== 'completed') {
+            return null
+        }
+
+        return program.lastWorkoutCompletedAt || program.completedAt || null
+    }
+
+    const getStatusLabel = (status: ProgramStatus): string => {
+        switch (status) {
+            case 'active':
+                return t('trainee:history.active')
+            case 'completed':
+                return t('trainee:history.completed')
+            default:
+                return t('trainee:history.draft')
+        }
+    }
+
+    const renderProgramHistorySection = () => (
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div className="flex items-center justify-between gap-4 mb-4">
+                <div>
+                    <h3 className="text-xl font-bold text-gray-900">{t('trainee:dashboard.programHistory')}</h3>
+                    <p className="text-sm text-gray-600 mt-1">{t('trainee:dashboard.programHistoryDescription')}</p>
+                </div>
+                <Link
+                    href="/trainee/history"
+                    className="text-[#FFA700] hover:text-[#FF9500] font-semibold text-sm"
+                >
+                    {t('trainee:dashboard.viewFullHistory')}
+                </Link>
+            </div>
+
+            {programHistory.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-600">
+                    {t('trainee:dashboard.noProgramHistory')}
+                </div>
+            ) : (
+                <div className="space-y-3">
+                    {programHistory.slice(0, 4).map((program) => {
+                        const displayStatus = getDisplayStatus(program)
+                        const endDate = getProgramEndDate(program, displayStatus)
+
+                        return (
+                            <div
+                                key={program.id}
+                                className="flex flex-col gap-4 rounded-lg border border-gray-200 px-4 py-4 md:flex-row md:items-center md:justify-between"
+                            >
+                                <div>
+                                    <div className="flex items-center gap-3 mb-1">
+                                        <p className="font-semibold text-gray-900">{program.title}</p>
+                                        <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClasses(displayStatus)}`}>
+                                            {getStatusLabel(displayStatus)}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-gray-600">
+                                        {t('trainee:dashboard.trainerWith', {
+                                            firstName: program.trainer.firstName,
+                                            lastName: program.trainer.lastName,
+                                        })}
+                                    </p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 text-sm md:min-w-[280px]">
+                                    <div>
+                                        <p className="text-gray-500">{t('trainee:history.startDate')}</p>
+                                        <p className="font-semibold text-gray-900">{formatDate(program.startDate)}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500">{t('trainee:history.endDate')}</p>
+                                        <p className="font-semibold text-gray-900">{formatDate(endDate)}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
+            )}
+        </div>
+    )
 
     if (loading) {
         return (
@@ -136,6 +279,8 @@ export default function TraineeDashboardContent() {
                         {t('trainee:dashboard.viewRecords')}
                     </Link>
                 </div>
+
+                {renderProgramHistorySection()}
 
                 {/* Navigation cards anche senza programma */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -261,6 +406,8 @@ export default function TraineeDashboardContent() {
                     </div>
                 </div>
             )}
+
+            {renderProgramHistorySection()}
 
             {/* Quick Actions */}
             <div className="mb-8">

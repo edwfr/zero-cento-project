@@ -5,46 +5,95 @@ import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { SkeletonList } from '@/components'
-import { ClipboardList } from 'lucide-react'
+import { ArrowLeft, ClipboardList } from 'lucide-react'
 import { formatDate } from '@/lib/date-format'
+
+type ProgramStatus = 'draft' | 'active' | 'completed'
 
 interface Program {
     id: string
     title: string
-    status: 'draft' | 'active' | 'completed'
-    startDate: string
-    endDate: string | null
+    status: ProgramStatus
+    startDate: string | null
+    completedAt: string | null
+    lastWorkoutCompletedAt: string | null
     durationWeeks: number
-    completedWorkouts: number
-    totalWorkouts: number
+    workoutsPerWeek: number
+    createdAt: string
     trainer: {
         firstName: string
         lastName: string
     }
 }
 
+interface ProgramProgressSummary {
+    completedWorkouts: number
+    totalWorkouts: number
+}
+
+const getProgramSortTime = (program: Program): number => {
+    const relevantDate = program.lastWorkoutCompletedAt || program.completedAt || program.startDate || program.createdAt
+    return new Date(relevantDate).getTime()
+}
+
 export default function HistoryContent() {
     const { t } = useTranslation('trainee')
     const [loading, setLoading] = useState(true)
     const [programs, setPrograms] = useState<Program[]>([])
+    const [progressByProgramId, setProgressByProgramId] = useState<Record<string, ProgramProgressSummary>>({})
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
         fetchHistory()
     }, [])
 
+    const isPublishedProgram = (program: Program): boolean => program.status !== 'draft'
+
     const fetchHistory = async () => {
         try {
             setLoading(true)
 
-            const res = await fetch('/api/programs?status=completed')
+            const res = await fetch('/api/programs?limit=100')
             const data = await res.json()
 
             if (!res.ok) {
                 throw new Error(getApiErrorMessage(data, 'Errore caricamento storico', t))
             }
 
-            setPrograms(data.data.items)
+            const publishedPrograms = (data.data.items ?? []).filter(isPublishedProgram) as Program[]
+            setPrograms(publishedPrograms)
+
+            const activePrograms = publishedPrograms.filter((program) => program.status === 'active')
+
+            if (activePrograms.length > 0) {
+                const progressEntries = await Promise.all(
+                    activePrograms.map(async (program) => {
+                        try {
+                            const progressRes = await fetch(`/api/programs/${program.id}/progress`)
+
+                            if (!progressRes.ok) {
+                                return null
+                            }
+
+                            const progressData = await progressRes.json()
+
+                            return [
+                                program.id,
+                                {
+                                    completedWorkouts: progressData.data.completedWorkouts ?? 0,
+                                    totalWorkouts: progressData.data.totalWorkouts ?? 0,
+                                },
+                            ] as const
+                        } catch {
+                            return null
+                        }
+                    })
+                )
+
+                setProgressByProgramId(Object.fromEntries(progressEntries.filter((entry): entry is readonly [string, ProgramProgressSummary] => entry !== null)))
+            } else {
+                setProgressByProgramId({})
+            }
         } catch (err: unknown) {
             setError((err as Error).message)
         } finally {
@@ -52,10 +101,52 @@ export default function HistoryContent() {
         }
     }
 
-    const calculateCompletionPercent = (program: Program): number => {
-        if (program.totalWorkouts === 0) return 0
-        return Math.round((program.completedWorkouts / program.totalWorkouts) * 100)
+    const getDisplayStatus = (program: Program): ProgramStatus => {
+        if (program.status !== 'active') {
+            return program.status
+        }
+
+        const progress = progressByProgramId[program.id]
+
+        if (progress && progress.totalWorkouts > 0 && progress.completedWorkouts === progress.totalWorkouts) {
+            return 'completed'
+        }
+
+        return 'active'
     }
+
+    const getProgramEndDate = (program: Program, displayStatus: ProgramStatus): string | null => {
+        if (displayStatus !== 'completed') {
+            return null
+        }
+
+        return program.lastWorkoutCompletedAt || program.completedAt || null
+    }
+
+    const getStatusBadgeClasses = (status: ProgramStatus): string => {
+        switch (status) {
+            case 'active':
+                return 'bg-green-100 text-green-800'
+            case 'completed':
+                return 'bg-emerald-100 text-emerald-800'
+            default:
+                return 'bg-gray-100 text-gray-700'
+        }
+    }
+
+    const getStatusLabel = (status: ProgramStatus): string => {
+        switch (status) {
+            case 'active':
+                return t('history.active')
+            case 'completed':
+                return t('history.completed')
+            default:
+                return t('history.draft')
+        }
+    }
+
+    const activePrograms = programs.filter((program) => getDisplayStatus(program) === 'active').length
+    const completedPrograms = programs.filter((program) => getDisplayStatus(program) === 'completed').length
 
     if (loading) {
         return (
@@ -81,8 +172,9 @@ export default function HistoryContent() {
             <div className="mb-8">
                 <Link
                     href="/trainee/dashboard"
-                    className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
+                    className="inline-flex items-center gap-2 text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4"
                 >
+                    <ArrowLeft className="w-4 h-4" />
                     {t('history.backToDashboard')}
                 </Link>
                 <h1 className="text-3xl font-bold text-gray-900">{t('history.title')}</h1>
@@ -110,13 +202,10 @@ export default function HistoryContent() {
             ) : (
                 <div className="space-y-6">
                     {programs
-                        .sort(
-                            (a, b) =>
-                                new Date(b.endDate || b.startDate).getTime() -
-                                new Date(a.endDate || a.startDate).getTime()
-                        )
+                        .sort((a, b) => getProgramSortTime(b) - getProgramSortTime(a))
                         .map((program) => {
-                            const completionPercent = calculateCompletionPercent(program)
+                            const displayStatus = getDisplayStatus(program)
+                            const endDate = getProgramEndDate(program, displayStatus)
 
                             return (
                                 <div
@@ -129,24 +218,23 @@ export default function HistoryContent() {
                                                 <h3 className="text-2xl font-bold text-gray-900">
                                                     {program.title}
                                                 </h3>
-                                                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                                    {t('history.completed')}
+                                                <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClasses(displayStatus)}`}>
+                                                    {getStatusLabel(displayStatus)}
                                                 </span>
                                             </div>
                                             <p className="text-gray-600">
                                                 {t('history.trainerWith', { firstName: program.trainer.firstName, lastName: program.trainer.lastName })}
                                             </p>
                                         </div>
-
-                                        <div className="text-right">
-                                            <p className="text-3xl font-bold text-green-600">
-                                                {completionPercent}%
-                                            </p>
-                                            <p className="text-sm text-gray-600">{t('history.completion')}</p>
-                                        </div>
                                     </div>
 
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-4">
+                                        <div>
+                                            <p className="text-sm text-gray-600 mb-1">{t('history.status')}</p>
+                                            <p className="font-semibold text-gray-900">
+                                                {getStatusLabel(displayStatus)}
+                                            </p>
+                                        </div>
                                         <div>
                                             <p className="text-sm text-gray-600 mb-1">{t('history.startDate')}</p>
                                             <p className="font-semibold text-gray-900">
@@ -156,7 +244,7 @@ export default function HistoryContent() {
                                         <div>
                                             <p className="text-sm text-gray-600 mb-1">{t('history.endDate')}</p>
                                             <p className="font-semibold text-gray-900">
-                                                {formatDate(program.endDate)}
+                                                {formatDate(endDate)}
                                             </p>
                                         </div>
                                         <div>
@@ -166,28 +254,40 @@ export default function HistoryContent() {
                                             </p>
                                         </div>
                                         <div>
-                                            <p className="text-sm text-gray-600 mb-1">{t('history.workouts')}</p>
+                                            <p className="text-sm text-gray-600 mb-1">{t('history.workoutsPerWeek')}</p>
                                             <p className="font-semibold text-gray-900">
-                                                {program.completedWorkouts} /{' '}
-                                                {program.totalWorkouts}
+                                                {program.workoutsPerWeek}
                                             </p>
                                         </div>
                                     </div>
 
-                                    <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
-                                        <div
-                                            className="bg-green-500 h-3 rounded-full transition-all duration-500"
-                                            style={{ width: `${completionPercent}%` }}
-                                        />
-                                    </div>
-
-                                    <div className="flex space-x-4">
-                                        <button
-                                            disabled
-                                            className="flex-1 bg-gray-300 text-gray-600 font-semibold py-2 px-4 rounded-lg cursor-not-allowed"
+                                    {displayStatus === 'completed' && endDate && (
+                                        <p className="text-sm text-gray-600">
+                                            {t('history.completedOn', { date: formatDate(endDate) })}
+                                        </p>
+                                    )}
+                                    {displayStatus === 'completed' && !endDate && (
+                                        <p className="text-sm text-gray-600">
+                                            {t('history.completedProgramHint')}
+                                        </p>
+                                    )}
+                                    {displayStatus === 'active' && (
+                                        <p className="text-sm text-gray-600">
+                                            {t('history.activeProgramHint')}
+                                        </p>
+                                    )}
+                                    {displayStatus === 'draft' && (
+                                        <p className="text-sm text-gray-600">
+                                            {t('history.draftProgramHint')}
+                                        </p>
+                                    )}
+                                    <div className="mt-4">
+                                        <Link
+                                            href={displayStatus === 'active' ? '/trainee/programs/current' : '/trainee/dashboard'}
+                                            className="inline-flex items-center rounded-lg border border-[#FFA700] px-4 py-2 font-semibold text-[#FFA700] transition-colors hover:bg-[#FFF7E5]"
                                         >
-                                            {t('history.viewDetails')}
-                                        </button>
+                                            {displayStatus === 'active' ? t('history.viewActiveProgram') : t('history.backToDashboard')}
+                                        </Link>
                                     </div>
                                 </div>
                             )
@@ -199,19 +299,19 @@ export default function HistoryContent() {
             {programs.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
                     <div className="bg-white rounded-lg shadow-md p-6 text-center">
-                        <p className="text-sm text-gray-600 mb-1">{t('history.statsCompleted')}</p>
+                        <p className="text-sm text-gray-600 mb-1">{t('history.statsTotalPrograms')}</p>
                         <p className="text-3xl font-bold text-[#FFA700]">{programs.length}</p>
                     </div>
                     <div className="bg-white rounded-lg shadow-md p-6 text-center">
-                        <p className="text-sm text-gray-600 mb-1">{t('history.statsTotalWeeks')}</p>
+                        <p className="text-sm text-gray-600 mb-1">{t('history.statsCompleted')}</p>
                         <p className="text-3xl font-bold text-[#FFA700]">
-                            {programs.reduce((sum, p) => sum + p.durationWeeks, 0)}
+                            {completedPrograms}
                         </p>
                     </div>
                     <div className="bg-white rounded-lg shadow-md p-6 text-center">
-                        <p className="text-sm text-gray-600 mb-1">{t('history.statsTotalWorkouts')}</p>
+                        <p className="text-sm text-gray-600 mb-1">{t('history.statsActive')}</p>
                         <p className="text-3xl font-bold text-[#FFA700]">
-                            {programs.reduce((sum, p) => sum + p.completedWorkouts, 0)}
+                            {activePrograms}
                         </p>
                     </div>
                 </div>
