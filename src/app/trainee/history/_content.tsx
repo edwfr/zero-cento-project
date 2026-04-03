@@ -126,7 +126,7 @@ export default function HistoryContent() {
     const getStatusBadgeClasses = (status: ProgramStatus): string => {
         switch (status) {
             case 'active':
-                return 'bg-green-100 text-green-800'
+                return 'bg-brand-primary text-white'
             case 'completed':
                 return 'bg-emerald-100 text-emerald-800'
             default:

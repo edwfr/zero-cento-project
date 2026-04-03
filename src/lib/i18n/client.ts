@@ -72,6 +72,9 @@ if (!i18n.isInitialized) {
             lng: defaultLocale,
             fallbackLng: defaultLocale,
             supportedLngs: locales,
+            interpolation: {
+                escapeValue: false,
+            },
             defaultNS: 'common',
             ns: ['common', 'auth', 'errors', 'navigation', 'trainer', 'trainee', 'admin', 'profile', 'components', 'validation'],
             detection: {

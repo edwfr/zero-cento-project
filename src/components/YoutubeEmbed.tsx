@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 interface YoutubeEmbedProps {
     videoUrl: string
@@ -48,16 +48,40 @@ export default function YoutubeEmbed({
         )
     }
 
-    const embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0${autoplay ? '&autoplay=1' : ''}`
+    const shouldAutoplay = autoplay || isLoaded
+    const embedUrl = useMemo(() => {
+        const params = new URLSearchParams({
+            rel: '0',
+            playsinline: '1',
+            modestbranding: '1',
+            controls: '1',
+            enablejsapi: '1',
+            origin: typeof window !== 'undefined' ? window.location.origin : '',
+        })
+
+        if (shouldAutoplay) {
+            params.set('autoplay', '1')
+        }
+
+        return `https://www.youtube.com/embed/${videoId}?${params.toString()}`
+    }, [shouldAutoplay, videoId])
     const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
 
     return (
-        <div className={`relative overflow-hidden rounded-lg bg-black ${className}`}>
+        <div
+            className={`relative overflow-hidden rounded-lg bg-black ${className}`}
+            onClick={(e) => e.stopPropagation()}
+        >
             <div className="relative pb-[56.25%]">
                 {/* Thumbnail with Play Button (shown before video loads) */}
                 {!isLoaded && (
                     <button
-                        onClick={() => setIsLoaded(true)}
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            setIsLoaded(true)
+                        }}
+                        aria-label={`Riproduci ${title}`}
                         className="absolute inset-0 flex items-center justify-center bg-black transition-opacity hover:opacity-90"
                     >
                         <img
@@ -84,7 +108,9 @@ export default function YoutubeEmbed({
                         src={embedUrl}
                         title={title}
                         frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerPolicy="strict-origin-when-cross-origin"
+                        sandbox="allow-scripts allow-same-origin allow-presentation"
                         allowFullScreen
                     ></iframe>
                 )}

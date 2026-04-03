@@ -6,6 +6,8 @@ interface SwipeHandlers {
     threshold?: number // min px to trigger (default 60)
 }
 
+const INTERACTIVE_SELECTOR = 'a, button, input, select, textarea, iframe, video, [role="button"], [data-swipe-ignore="true"]'
+
 /**
  * useSwipe — lightweight touch swipe detection hook.
  * Returns ref to attach to the element and touch event handlers.
@@ -17,14 +19,28 @@ interface SwipeHandlers {
 export function useSwipe({ onSwipeLeft, onSwipeRight, threshold = 60 }: SwipeHandlers) {
     const touchStartX = useRef<number | null>(null)
     const touchStartY = useRef<number | null>(null)
+    const shouldIgnoreSwipe = useRef(false)
 
     const onTouchStart = useCallback((e: React.TouchEvent) => {
+        shouldIgnoreSwipe.current = !!e.target.closest?.(INTERACTIVE_SELECTOR)
+
+        if (shouldIgnoreSwipe.current) {
+            touchStartX.current = null
+            touchStartY.current = null
+            return
+        }
+
         touchStartX.current = e.touches[0].clientX
         touchStartY.current = e.touches[0].clientY
     }, [])
 
     const onTouchEnd = useCallback(
         (e: React.TouchEvent) => {
+            if (shouldIgnoreSwipe.current) {
+                shouldIgnoreSwipe.current = false
+                return
+            }
+
             if (touchStartX.current === null || touchStartY.current === null) return
 
             const dx = e.changedTouches[0].clientX - touchStartX.current
@@ -45,6 +61,7 @@ export function useSwipe({ onSwipeLeft, onSwipeRight, threshold = 60 }: SwipeHan
 
             touchStartX.current = null
             touchStartY.current = null
+            shouldIgnoreSwipe.current = false
         },
         [onSwipeLeft, onSwipeRight, threshold]
     )

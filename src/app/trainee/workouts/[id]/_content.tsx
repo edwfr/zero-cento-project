@@ -6,9 +6,9 @@ import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { SkeletonDetail, WeekTypeBanner } from '@/components'
+import { RPESelector, SkeletonDetail, WeekTypeBanner } from '@/components'
 import LoadingSpinner from '@/components/LoadingSpinner'
-import { ArrowLeft, Check, ChevronDown, ChevronUp, FileText, PlayCircle } from 'lucide-react'
+import { ArrowLeft, Check, ChevronDown, ChevronUp, Clock3, FileText, Gauge, PlayCircle } from 'lucide-react'
 import YoutubeEmbed from '@/components/YoutubeEmbed'
 import { useSwipe } from '@/lib/useSwipe'
 import { useToast } from '@/components/ToastNotification'
@@ -93,6 +93,20 @@ const formatRestTime = (restTime: RestTime): string => {
 
     return labels[restTime] ?? '-'
 }
+
+const RPE_OPTIONS = [
+    { value: 5, labelKey: 'rpe5' },
+    { value: 5.5, labelKey: 'rpe5_5' },
+    { value: 6, labelKey: 'rpe6' },
+    { value: 6.5, labelKey: 'rpe6_5' },
+    { value: 7, labelKey: 'rpe7' },
+    { value: 7.5, labelKey: 'rpe7_5' },
+    { value: 8, labelKey: 'rpe8' },
+    { value: 8.5, labelKey: 'rpe8_5' },
+    { value: 9, labelKey: 'rpe9' },
+    { value: 9.5, labelKey: 'rpe9_5' },
+    { value: 10, labelKey: 'rpe10' },
+] as const
 
 export default function WorkoutDetailContent() {
     const { t } = useTranslation('trainee')
@@ -211,8 +225,8 @@ export default function WorkoutDetailContent() {
                     }))
                     initialRPE[we.id] = we.targetRpe
                 }
-                // Expand all exercises by default
-                setExpandedExercises((prev) => ({ ...prev, [we.id]: true }))
+                // Keep all exercises collapsed by default
+                setExpandedExercises((prev) => ({ ...prev, [we.id]: false }))
             })
 
             setFeedbackData(initialFeedback)
@@ -381,7 +395,7 @@ export default function WorkoutDetailContent() {
         })
     }
 
-    const updateExerciseRPE = (workoutExerciseId: string, rpe: number) => {
+    const updateExerciseRPE = (workoutExerciseId: string, rpe: number | null) => {
         setExerciseRPE((prev) => ({
             ...prev,
             [workoutExerciseId]: rpe,
@@ -539,6 +553,10 @@ export default function WorkoutDetailContent() {
     }
 
     const sortedExercises = [...workout.exercises].sort((a, b) => a.order - b.order)
+    const rpeDescriptions = RPE_OPTIONS.reduce<Record<number, string>>((accumulator, option) => {
+        accumulator[option.value] = t(`workouts.rpeOptions.${option.labelKey}`)
+        return accumulator
+    }, {})
 
     return (
         <div className="min-h-screen bg-gray-50" {...pageSwipeHandlers}>
@@ -553,7 +571,7 @@ export default function WorkoutDetailContent() {
                     variant={confirmModal.variant ?? 'danger'}
                 />
             )}
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-5xl mx-auto px-4 pb-28 pt-8 sm:px-6 sm:pb-8 lg:px-8">
                 {/* Header */}
                 <div className="mb-8">
                     <Link
@@ -616,66 +634,64 @@ export default function WorkoutDetailContent() {
                             >
                                 {/* Exercise Header */}
                                 <div
-                                    className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                                    className="relative p-6 pr-14 cursor-pointer hover:bg-gray-50 transition-colors"
                                     onClick={() => toggleExercise(we.id)}
                                 >
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex-1">
-                                            <div className="flex items-center space-x-3 mb-2">
+                                    <div>
+                                        <div>
+                                            <div className="mb-3 flex items-start gap-3">
                                                 <span className="text-2xl font-bold text-gray-400">
                                                     {idx + 1}
                                                 </span>
-                                                <h3 className="text-xl font-bold text-gray-900">
-                                                    {we.exercise.name}
+                                                <div className="min-w-0 flex-1">
+                                                    <h3 className="text-xl font-bold text-gray-900">
+                                                        {we.exercise.name}
+                                                    </h3>
                                                     {we.variant && (
-                                                        <span className="text-gray-600 font-normal ml-2">({we.variant})</span>
+                                                        <p className="mt-1 text-sm font-medium text-gray-600">
+                                                            {we.variant}
+                                                        </p>
                                                     )}
-                                                </h3>
-                                                <span
-                                                    className={`rounded-full border px-2 py-0.5 text-xs font-medium ${we.exercise.type === 'fundamental'
-                                                        ? 'bg-red-100 text-red-700 border-red-300'
-                                                        : 'bg-blue-100 text-blue-700 border-blue-300'
-                                                        }`}
-                                                >
-                                                    {we.exercise.type === 'fundamental'
-                                                        ? t('workouts.tagFundamental')
-                                                        : t('workouts.tagAccessory')}
-                                                </span>
+                                                    <div className="mt-2 flex flex-wrap gap-2">
+                                                        <span
+                                                            className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${we.exercise.type === 'fundamental'
+                                                                ? 'border-red-300 bg-red-100 text-red-700'
+                                                                : 'border-blue-300 bg-blue-100 text-blue-700'
+                                                                }`}
+                                                        >
+                                                            {we.exercise.type === 'fundamental'
+                                                                ? t('workouts.tagFundamental')
+                                                                : t('workouts.tagAccessory')}
+                                                        </span>
+                                                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                                                            <Clock3 className="h-3.5 w-3.5" />
+                                                            {formatRestTime(we.restTime)}
+                                                        </span>
+                                                        {we.targetRpe !== null && we.targetRpe !== undefined && (
+                                                            <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700">
+                                                                <Gauge className="h-3.5 w-3.5" />
+                                                                {we.targetRpe}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
 
-                                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                                                <div>
-                                                    <p className="text-xs text-gray-600">{t('workouts.sets')}</p>
-                                                    <p className="font-semibold text-gray-900">
-                                                        {we.sets}
+                                            <div className="flex items-stretch justify-center gap-2">
+                                                <div className="min-w-0 flex-1 rounded-lg bg-gray-100 px-3 py-2 text-center sm:max-w-[160px]">
+                                                    <p className="text-[11px] uppercase tracking-wide text-gray-500">
+                                                        {t('workouts.sets')} x {t('workouts.reps')}
                                                     </p>
+                                                    <p className="text-sm font-semibold text-gray-900">{we.sets} x {we.reps}</p>
                                                 </div>
-                                                <div>
-                                                    <p className="text-xs text-gray-600">{t('workouts.reps')}</p>
-                                                    <p className="font-semibold text-gray-900">
-                                                        {we.reps}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-gray-600">{t('workouts.weightLabel')}</p>
-                                                    <p className="font-semibold text-gray-900">
+                                                <div className="min-w-0 flex-1 rounded-lg bg-gray-100 px-3 py-2 text-center sm:max-w-[160px]">
+                                                    <p className="text-[11px] uppercase tracking-wide text-gray-500">{t('workouts.weightLabel')}</p>
+                                                    <p className="text-sm font-semibold text-gray-900">
                                                         {we.effectiveWeight
                                                             ? `${we.effectiveWeight.toFixed(1)} kg`
                                                             : we.weight
                                                                 ? `${we.weight} ${we.weightType === 'absolute' ? 'kg' : '%'}`
                                                                 : '-'}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-gray-600">{t('workouts.rest')}</p>
-                                                    <p className="font-semibold text-gray-900">
-                                                        {formatRestTime(we.restTime)}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-gray-600">{t('workouts.rpeTarget')}</p>
-                                                    <p className="font-semibold text-gray-900">
-                                                        {we.targetRpe}
                                                     </p>
                                                 </div>
                                             </div>
@@ -687,7 +703,7 @@ export default function WorkoutDetailContent() {
                                             )}
                                         </div>
 
-                                        <button className="ml-4 text-gray-400 hover:text-gray-600">
+                                        <button className="absolute right-6 top-6 text-gray-400 hover:text-gray-600">
                                             {isExpanded ? '▲' : '▼'}
                                         </button>
                                     </div>
@@ -698,7 +714,7 @@ export default function WorkoutDetailContent() {
                                     <div className="border-t border-gray-200 p-6 bg-gray-50">
                                         {/* YouTube Video */}
                                         {we.exercise.youtubeUrl && (
-                                            <div className="mb-6">
+                                            <div className="mb-6" data-swipe-ignore="true">
                                                 <button
                                                     type="button"
                                                     onClick={() => toggleVideo(we.id)}
@@ -809,24 +825,22 @@ export default function WorkoutDetailContent() {
                                         </div>
 
                                         {/* Overall Exercise RPE */}
-                                        <div className="flex items-center justify-between bg-gray-100 p-4 rounded-lg">
-                                            <label className="text-sm font-semibold text-gray-700">
-                                                {t('workouts.overallRpe')}
-                                            </label>
-                                            <select
-                                                value={exerciseRPE[we.id] || ''}
-                                                onChange={(e) =>
-                                                    updateExerciseRPE(we.id, parseFloat(e.target.value))
-                                                }
-                                                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
-                                            >
-                                                <option value="">{t('workouts.selectRpe')}</option>
-                                                {[5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10].map((rpe) => (
-                                                    <option key={rpe} value={rpe}>
-                                                        {rpe}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                        <div className="rounded-lg bg-gray-100 p-4">
+                                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                                <label className="text-sm font-semibold text-gray-700">
+                                                    {t('workouts.overallRpe')}
+                                                </label>
+                                                <RPESelector
+                                                    value={exerciseRPE[we.id] ?? null}
+                                                    onChange={(value) => updateExerciseRPE(we.id, value)}
+                                                    showLabel={false}
+                                                    centeredMenu={true}
+                                                    title={t('workouts.overallRpe')}
+                                                    placeholder={t('workouts.selectRpe')}
+                                                    descriptions={rpeDescriptions}
+                                                    className="min-w-0 w-full sm:w-auto sm:min-w-[240px]"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 )}
@@ -847,13 +861,27 @@ export default function WorkoutDetailContent() {
                         rows={4}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
                     />
+
+                    <div className="mt-6 md:hidden">
+                        <button
+                            onClick={handleSubmit}
+                            disabled={submitting}
+                            className="flex w-full items-center justify-center rounded-lg bg-green-500 px-6 py-4 text-base font-bold text-white transition-colors hover:bg-green-600 disabled:bg-gray-400"
+                        >
+                            {submitting ? (
+                                <LoadingSpinner size="sm" color="white" />
+                            ) : (
+                                t('workouts.completeWorkout')
+                            )}
+                        </button>
+                    </div>
                 </div>
 
                 {/* Submit Button */}
                 <button
                     onClick={handleSubmit}
                     disabled={submitting}
-                    className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white font-bold py-4 px-6 rounded-lg transition-colors text-lg flex items-center justify-center"
+                    className="hidden w-full items-center justify-center rounded-lg bg-green-500 px-6 py-4 text-lg font-bold text-white transition-colors hover:bg-green-600 disabled:bg-gray-400 md:flex"
                 >
                     {submitting ? (
                         <LoadingSpinner size="sm" color="white" />
@@ -861,6 +889,22 @@ export default function WorkoutDetailContent() {
                         t('workouts.completeWorkout')
                     )}
                 </button>
+            </div>
+
+            <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 p-4 md:hidden" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)' }}>
+                <div className="mx-auto max-w-5xl">
+                    <button
+                        onClick={handleSubmit}
+                        disabled={submitting}
+                        className="pointer-events-auto ml-auto flex w-full max-w-md items-center justify-center rounded-lg border border-green-600 bg-green-500 px-6 py-4 text-base font-bold text-white shadow-lg transition-colors hover:bg-green-600 disabled:bg-gray-400"
+                    >
+                        {submitting ? (
+                            <LoadingSpinner size="sm" color="white" />
+                        ) : (
+                            t('workouts.completeWorkout')
+                        )}
+                    </button>
+                </div>
             </div>
         </div>
     )

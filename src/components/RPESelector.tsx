@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface RPESelectorProps {
     value: number | null
@@ -8,6 +9,11 @@ interface RPESelectorProps {
     disabled?: boolean
     className?: string
     showLabel?: boolean
+    centeredMenu?: boolean
+    label?: string
+    title?: string
+    placeholder?: string
+    descriptions?: Partial<Record<number, string>>
 }
 
 // RPE 5.0 - 10.0 con incrementi di 0.5
@@ -44,18 +50,109 @@ export default function RPESelector({
     disabled = false,
     className = '',
     showLabel = true,
+    centeredMenu = false,
+    label = 'RPE (Fatica Percepita)',
+    title,
+    placeholder = 'Seleziona RPE',
+    descriptions,
 }: RPESelectorProps) {
+    const { t } = useTranslation('common')
     const [isOpen, setIsOpen] = useState(false)
+    const dialogRef = useRef<HTMLDivElement>(null)
 
     const getRPEDescription = (rpe: number | null): string => {
-        if (!rpe) return 'Non selezionato'
+        if (!rpe) return placeholder
+        const translatedDescription = descriptions?.[rpe]
+
+        if (translatedDescription) {
+            return translatedDescription
+        }
+
         const baseRPE = Math.floor(rpe)
         return RPE_DESCRIPTIONS[baseRPE] || 'N/A'
     }
 
+    useEffect(() => {
+        if (!isOpen || !centeredMenu) {
+            return
+        }
+
+        const previousOverflow = document.body.style.overflow
+        document.body.style.overflow = 'hidden'
+
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setIsOpen(false)
+            }
+        }
+
+        document.addEventListener('keydown', handleEscape)
+
+        return () => {
+            document.body.style.overflow = previousOverflow
+            document.removeEventListener('keydown', handleEscape)
+        }
+    }, [centeredMenu, isOpen])
+
+    const selectedLabel = value ? `RPE ${value.toFixed(1)}` : placeholder
+    const modalTitle = title || label
+    const optionsGrid = (
+        <>
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                {RPE_VALUES.map((rpe) => {
+                    const isSelected = value === rpe
+                    const baseRPE = Math.floor(rpe)
+                    const colorClass = RPE_COLORS[baseRPE] || 'bg-gray-400'
+
+                    return (
+                        <button
+                            key={rpe}
+                            type="button"
+                            onClick={() => {
+                                onChange(rpe)
+                                setIsOpen(false)
+                            }}
+                            className={`
+                                flex flex-col items-center justify-center rounded-md border-2 px-2 py-2
+                                transition-all duration-200 bg-white
+                                ${isSelected
+                                    ? 'border-brand-primary scale-105 shadow-md'
+                                    : 'border-gray-200 hover:border-brand-primary/70 hover:scale-105'
+                                }
+                                focus:outline-none focus:ring-2 focus:ring-brand-primary/50
+                            `}
+                        >
+                            <div className={`${colorClass} mb-1.5 h-2 w-full rounded`}></div>
+                            <span className="text-sm font-bold text-gray-900">{rpe.toFixed(1)}</span>
+                        </button>
+                    )
+                })}
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-3">
+                <button
+                    type="button"
+                    onClick={() => {
+                        onChange(null)
+                        setIsOpen(false)
+                    }}
+                    className="text-sm text-gray-500 hover:text-gray-700 underline"
+                >
+                    {t('common.deselect')}
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setIsOpen(false)}
+                    className="text-sm font-medium text-brand-primary hover:text-brand-primary/80"
+                >
+                    {t('common.close')}
+                </button>
+            </div>
+        </>
+    )
+
     return (
         <div className={`flex flex-col gap-2 ${className}`}>
-            {showLabel && <label className="text-sm font-medium text-gray-700">RPE (Fatica Percepita)</label>}
+            {showLabel && <label className="text-sm font-medium text-gray-700">{label}</label>}
 
             {/* Compact Selector Button */}
             <button
@@ -74,66 +171,43 @@ export default function RPESelector({
                 `}
             >
                 <span className="text-sm font-semibold">
-                    {value ? `RPE ${value.toFixed(1)}` : 'Seleziona RPE'}
+                    {selectedLabel}
                 </span>
                 <span className="text-xs text-gray-600 ml-2">{getRPEDescription(value)}</span>
             </button>
 
             {/* Dropdown Grid */}
             {isOpen && !disabled && (
-                <div className="relative z-10">
-                    <div className="absolute left-0 right-0 mt-1 rounded-lg border border-gray-300 bg-white p-2 shadow-lg">
-                        <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-6 lg:grid-cols-6">
-                            {RPE_VALUES.map((rpe) => {
-                                const isSelected = value === rpe
-                                const baseRPE = Math.floor(rpe)
-                                const colorClass = RPE_COLORS[baseRPE] || 'bg-gray-400'
-
-                                return (
-                                    <button
-                                        key={rpe}
-                                        type="button"
-                                        onClick={() => {
-                                            onChange(rpe)
-                                            setIsOpen(false)
-                                        }}
-                                        className={`
-                                            flex flex-col items-center justify-center rounded-md border-2 px-1.5 py-1.5
-                                            transition-all duration-200 bg-white
-                                            ${isSelected
-                                                ? 'border-brand-primary scale-105 shadow-md'
-                                                : 'border-gray-200 hover:border-brand-primary/70 hover:scale-105'
-                                            }
-                                            focus:outline-none focus:ring-2 focus:ring-brand-primary/50
-                                        `}
-                                    >
-                                        <div className={`${colorClass} mb-1 h-2 w-full rounded`}></div>
-                                        <span className="text-sm font-bold text-gray-900">{rpe.toFixed(1)}</span>
-                                    </button>
-                                )
-                            })}
-                        </div>
-                        <div className="mt-2 flex items-center justify-between">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    onChange(null)
-                                    setIsOpen(false)
-                                }}
-                                className="text-xs text-gray-500 hover:text-gray-700 underline"
-                            >
-                                Rimuovi
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setIsOpen(false)}
-                                className="text-xs font-medium text-brand-primary hover:text-brand-primary/80"
-                            >
-                                Chiudi
-                            </button>
+                centeredMenu ? (
+                    <div
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+                        onClick={() => setIsOpen(false)}
+                        role="presentation"
+                    >
+                        <div
+                            ref={dialogRef}
+                            role="dialog"
+                            aria-modal="true"
+                            aria-label={modalTitle}
+                            className="w-full max-w-sm rounded-xl bg-white p-4 shadow-2xl"
+                            onClick={(event) => event.stopPropagation()}
+                        >
+                            <div className="mb-4">
+                                <h3 className="text-lg font-bold text-gray-900">{modalTitle}</h3>
+                                <p className="mt-1 text-sm text-gray-600">
+                                    {value ? getRPEDescription(value) : placeholder}
+                                </p>
+                            </div>
+                            {optionsGrid}
                         </div>
                     </div>
-                </div>
+                ) : (
+                    <div className="relative z-10">
+                        <div className="absolute left-0 right-0 mt-1 rounded-lg border border-gray-300 bg-white p-2 shadow-lg">
+                            {optionsGrid}
+                        </div>
+                    </div>
+                )
             )}
         </div>
     )
