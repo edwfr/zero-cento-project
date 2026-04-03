@@ -80,7 +80,7 @@ export default function TraineeDetailContent() {
 
             setTrainee(traineeData.data.user)
             setPrograms(programsData.data?.items || programsData.data?.programs || [])
-            setRecords(recordsData.data?.records || [])
+            setRecords(recordsData.data?.items || recordsData.data?.records || [])
         } catch (err: any) {
             setError(err.message)
         } finally {

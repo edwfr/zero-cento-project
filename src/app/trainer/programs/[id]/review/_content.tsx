@@ -15,6 +15,7 @@ interface WorkoutExerciseSummary {
     variant: string | null
     sets: number
     reps: string
+    targetRpe: number | null
     notes: string | null
     weightType: 'absolute' | 'percentage_1rm' | 'percentage_rm' | 'percentage_previous'
     weight: number | null
@@ -489,6 +490,7 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                             <th className="px-4 py-3">{t('reviewProgram.tableExercise')}</th>
                                             <th className="px-4 py-3">{t('reviewProgram.tableNotes')}</th>
                                             <th className="px-4 py-3">{t('reviewProgram.tableScheme')}</th>
+                                            <th className="px-4 py-3">{t('workoutDetail.rpeCol')}</th>
                                             <th className="px-4 py-3">{t('reviewProgram.tableWeight')}</th>
                                         </tr>
                                     </thead>
@@ -497,7 +499,7 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                             <Fragment key={`${row.weekId}-${row.exercise?.id || `empty-${index}`}`}>
                                                 {index > 0 && workoutSlot.rows[index - 1].weekId !== row.weekId && (
                                                     <tr className="bg-gray-50">
-                                                        <td colSpan={6} className="border-t-4 border-gray-200 px-0 py-0">
+                                                        <td colSpan={7} className="border-t-4 border-gray-200 px-0 py-0">
                                                             <div className="h-3 bg-gray-50" />
                                                         </td>
                                                     </tr>
@@ -541,6 +543,9 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                                     </td>
                                                     <td className="px-4 py-3 align-top font-medium text-gray-900">
                                                         {row.isEmpty ? '-' : `${row.exercise?.sets} x ${row.exercise?.reps}`}
+                                                    </td>
+                                                    <td className="px-4 py-3 align-top font-medium text-gray-900">
+                                                        {row.isEmpty ? '-' : (row.exercise?.targetRpe ?? '-')}
                                                     </td>
                                                     <td className="px-4 py-3 align-top font-medium text-gray-900">
                                                         {row.isEmpty || !row.exercise ? '-' : formatWeight(row.exercise)}
