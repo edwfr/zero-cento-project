@@ -14,7 +14,7 @@ import MovementPatternTag from '@/components/MovementPatternTag'
 import { WeightType, RestTime } from '@prisma/client'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { FileText, Pencil, Trash2, Dumbbell, Lock, Unlock, GripVertical, ChevronLeft, ChevronRight } from 'lucide-react'
+import { FileText, Pencil, Trash2, Dumbbell, Lock, Unlock, GripVertical, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react'
 import {
     DndContext,
     closestCenter,
@@ -65,10 +65,17 @@ interface Workout {
     workoutExercises: WorkoutExercise[]
 }
 
+interface ProgramWeek {
+    id: string
+    weekNumber?: number
+    workouts: Workout[]
+}
+
 interface Program {
     id: string
     title: string
     status: string
+    weeks: ProgramWeek[]
     trainee: {
         id: string
         firstName: string
@@ -88,6 +95,16 @@ interface PersonalRecord {
         name: string
         type: 'fundamental' | 'accessory'
     }
+}
+
+function parseRepsValue(repsValue: string): number {
+    const match = repsValue.match(/^\d+/)
+    return match ? parseInt(match[0], 10) : 0
+}
+
+function estimateOneRMValue(weight: number, reps: number): number {
+    if (reps <= 1) return weight
+    return weight * (1 + reps / 30)
 }
 
 function SortableExerciseItem({ id, children }: { id: string; children: React.ReactNode }) {
@@ -133,6 +150,7 @@ export default function WorkoutDetailContent() {
     // Add/Edit exercise form
     const [showAddForm, setShowAddForm] = useState(false)
     const [isPRPanelCollapsed, setIsPRPanelCollapsed] = useState(false)
+    const [isSbdPanelCollapsed, setIsSbdPanelCollapsed] = useState(false)
     const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null)
     const [selectedExerciseId, setSelectedExerciseId] = useState('')
     const [variant, setVariant] = useState('')
@@ -453,12 +471,83 @@ export default function WorkoutDetailContent() {
     const bestPRs = Object.entries(recordsByExercise).map(([exerciseId, records]) => {
         const bestRecord = records.reduce((best, current) => {
             // Simple 1RM estimation: weight * (1 + reps/30)
-            const currentEstimated1RM = current.weight * (1 + current.reps / 30)
-            const bestEstimated1RM = best.weight * (1 + best.reps / 30)
+            const currentEstimated1RM = estimateOneRMValue(current.weight, current.reps)
+            const bestEstimated1RM = estimateOneRMValue(best.weight, best.reps)
             return currentEstimated1RM > bestEstimated1RM ? current : best
         })
         return bestRecord
     })
+
+    const estimatedOneRMByExercise = bestPRs.reduce((acc, record) => {
+        acc[record.exerciseId] = estimateOneRMValue(record.weight, record.reps)
+        return acc
+    }, {} as Record<string, number>)
+
+    const currentWeek = program.weeks.find((week) =>
+        week.workouts.some((weekWorkout) => weekWorkout.id === workoutId)
+    )
+
+    const sbdExerciseMetrics = currentWeek
+        ? Object.values(
+            currentWeek.workouts.reduce((acc, weekWorkout) => {
+                weekWorkout.workoutExercises
+                    .filter((weekExercise) => weekExercise.exercise.type === 'fundamental' && !weekExercise.isWarmup)
+                    .forEach((weekExercise) => {
+                        const key = weekExercise.exercise.id
+                        const plannedReps = parseRepsValue(weekExercise.reps)
+                        const liftCount = weekExercise.sets * plannedReps
+
+                        let intensity: number | null = null
+                        if (weekExercise.weightType === 'percentage_1rm' && typeof weekExercise.weight === 'number') {
+                            intensity = weekExercise.weight
+                        } else if (weekExercise.weightType === 'absolute' && typeof weekExercise.weight === 'number') {
+                            const estimatedOneRM = estimatedOneRMByExercise[weekExercise.exercise.id]
+                            if (estimatedOneRM) {
+                                intensity = (weekExercise.weight / estimatedOneRM) * 100
+                            }
+                        }
+
+                        if (!acc[key]) {
+                            acc[key] = {
+                                exerciseId: weekExercise.exercise.id,
+                                exerciseName: weekExercise.exercise.name,
+                                workoutIds: new Set<string>(),
+                                totalLifts: 0,
+                                weightedIntensitySum: 0,
+                                intensityLiftCount: 0,
+                            }
+                        }
+
+                        acc[key].workoutIds.add(weekWorkout.id)
+                        acc[key].totalLifts += liftCount
+
+                        if (intensity !== null && liftCount > 0) {
+                            acc[key].weightedIntensitySum += intensity * liftCount
+                            acc[key].intensityLiftCount += liftCount
+                        }
+                    })
+
+                return acc
+            }, {} as Record<string, {
+                exerciseId: string
+                exerciseName: string
+                workoutIds: Set<string>
+                totalLifts: number
+                weightedIntensitySum: number
+                intensityLiftCount: number
+            }>)
+        )
+            .map((metric) => ({
+                exerciseId: metric.exerciseId,
+                exerciseName: metric.exerciseName,
+                frequency: metric.workoutIds.size,
+                totalLifts: metric.totalLifts,
+                averageIntensity: metric.intensityLiftCount > 0
+                    ? metric.weightedIntensitySum / metric.intensityLiftCount
+                    : null,
+            }))
+            .sort((left, right) => left.exerciseName.localeCompare(right.exerciseName, 'it', { sensitivity: 'base' }))
+        : []
 
     return (
         <div className="min-h-screen bg-gray-50 relative">
@@ -474,86 +563,169 @@ export default function WorkoutDetailContent() {
                 />
             )}
 
-            {/* Floating PR Panel */}
-            <div
-                className={`hidden xl:block fixed right-8 top-24 max-h-[calc(100vh-8rem)] overflow-y-auto bg-white rounded-lg shadow-lg border border-gray-200 transition-all duration-200 ${isPRPanelCollapsed ? 'w-16' : 'w-80'}`}
-            >
-                <div className="sticky top-0 bg-gradient-to-r from-[#FFA700] to-[#FF9500] text-white px-3 py-3 rounded-t-lg">
-                    <div className={`flex items-center ${isPRPanelCollapsed ? 'justify-center' : 'justify-between gap-2'}`}>
-                        <div className="flex items-center space-x-2 overflow-hidden">
-                            <Dumbbell className="w-5 h-5 shrink-0" />
-                            {!isPRPanelCollapsed && (
-                                <h3 className="font-bold text-sm whitespace-nowrap">
-                                    Massimali di {program?.trainee.firstName}
-                                </h3>
+            <div className="hidden xl:block fixed left-8 top-24">
+                <div
+                    className={`max-h-[calc(100vh-10rem)] overflow-y-auto bg-white rounded-lg shadow-lg border border-gray-200 transition-all duration-200 ${isSbdPanelCollapsed ? 'w-16' : 'w-80'}`}
+                >
+                    <div className="sticky top-0 bg-gradient-to-r from-slate-800 to-slate-700 text-white px-3 py-3 rounded-t-lg">
+                        <div className={`flex items-center ${isSbdPanelCollapsed ? 'justify-center' : 'justify-between gap-2'}`}>
+                            <div className="flex items-center space-x-2 overflow-hidden">
+                                <BarChart3 className="w-5 h-5 shrink-0" />
+                                {!isSbdPanelCollapsed && (
+                                    <div>
+                                        <h3 className="font-bold text-sm whitespace-nowrap">
+                                            Reportistica SBD
+                                        </h3>
+                                        <p className="text-[11px] text-white/75">
+                                            Settimana del workout corrente
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setIsSbdPanelCollapsed((current) => !current)}
+                                className={`rounded-md bg-white/15 p-1 hover:bg-white/25 transition-colors ${isSbdPanelCollapsed ? 'absolute inset-x-0 top-3 mx-auto w-fit' : ''}`}
+                                aria-label={isSbdPanelCollapsed ? 'Espandi pannello reportistica SBD' : 'Comprimi pannello reportistica SBD'}
+                                title={isSbdPanelCollapsed ? 'Espandi' : 'Comprimi'}
+                            >
+                                {isSbdPanelCollapsed ? (
+                                    <ChevronRight className="w-4 h-4" />
+                                ) : (
+                                    <ChevronLeft className="w-4 h-4" />
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                    {!isSbdPanelCollapsed && (
+                        <div className="p-4">
+                            {sbdExerciseMetrics.length > 0 ? (
+                                <div className="space-y-3">
+                                    {sbdExerciseMetrics.map((metric) => (
+                                        <div key={metric.exerciseId} className="rounded-lg border border-slate-200 p-3">
+                                            <p className="text-sm font-semibold text-slate-900">
+                                                {metric.exerciseName}
+                                            </p>
+                                            <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                                                <div className="rounded-md bg-slate-50 px-2 py-2">
+                                                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">FRQ</p>
+                                                    <p className="mt-1 text-lg font-bold text-slate-900">{metric.frequency}</p>
+                                                </div>
+                                                <div className="rounded-md bg-slate-50 px-2 py-2">
+                                                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">NBL</p>
+                                                    <p className="mt-1 text-lg font-bold text-slate-900">{metric.totalLifts}</p>
+                                                </div>
+                                                <div className="rounded-md bg-slate-50 px-2 py-2">
+                                                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">IM</p>
+                                                    <p className="mt-1 text-lg font-bold text-slate-900">
+                                                        {metric.averageIntensity !== null ? `${metric.averageIntensity.toFixed(1)}%` : '-'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-8">
+                                    <div className="text-4xl mb-2">🏋️</div>
+                                    <p className="text-sm text-gray-600">
+                                        Nessun esercizio fondamentale nella settimana corrente
+                                    </p>
+                                </div>
+                            )}
+
+                            {sbdExerciseMetrics.length > 0 && (
+                                <p className="mt-3 text-[11px] leading-4 text-slate-500">
+                                    IM calcolata solo quando il carico e espresso in kg o in % 1RM.
+                                </p>
                             )}
                         </div>
-                        <button
-                            type="button"
-                            onClick={() => setIsPRPanelCollapsed((current) => !current)}
-                            className={`rounded-md bg-white/15 p-1 hover:bg-white/25 transition-colors ${isPRPanelCollapsed ? 'absolute inset-x-0 top-3 mx-auto w-fit' : ''}`}
-                            aria-label={isPRPanelCollapsed ? 'Espandi pannello massimali' : 'Comprimi pannello massimali'}
-                            title={isPRPanelCollapsed ? 'Espandi' : 'Comprimi'}
-                        >
-                            {isPRPanelCollapsed ? (
-                                <ChevronLeft className="w-4 h-4" />
-                            ) : (
-                                <ChevronRight className="w-4 h-4" />
-                            )}
-                        </button>
-                    </div>
+                    )}
                 </div>
-                {!isPRPanelCollapsed && (
-                    <div className="p-4">
-                        {bestPRs.length > 0 ? (
-                            <div className="space-y-3">
-                                {bestPRs.map((pr) => (
-                                    <div key={pr.id} className="border-b border-gray-200 pb-3 last:border-b-0">
-                                        <div className="flex items-start justify-between">
-                                            <div className="flex-1">
-                                                <p className="text-sm font-semibold text-gray-900">
-                                                    {pr.exercise.name}
-                                                </p>
-                                                <div className="mt-1 flex items-baseline space-x-2">
-                                                    <span className="text-2xl font-bold text-[#FFA700]">
-                                                        {pr.weight}
-                                                    </span>
-                                                    <span className="text-xs text-gray-500">kg</span>
-                                                    <span className="text-xs text-gray-500">×</span>
-                                                    <span className="text-sm font-semibold text-gray-700">
-                                                        {pr.reps} {pr.reps === 1 ? 'rep' : 'reps'}
-                                                    </span>
-                                                </div>
-                                                <p className="text-xs text-gray-500 mt-1">
-                                                    {new Date(pr.recordDate).toLocaleDateString('it-IT', {
-                                                        day: 'numeric',
-                                                        month: 'short',
-                                                        year: 'numeric'
-                                                    })}
-                                                </p>
-                                            </div>
-                                            <span
-                                                className={`px-2 py-0.5 text-xs font-medium rounded-full ${pr.exercise.type === 'fundamental'
-                                                    ? 'bg-red-50 text-red-700'
-                                                    : 'bg-blue-50 text-blue-700'
-                                                    }`}
-                                            >
-                                                {pr.exercise.type === 'fundamental' ? 'F' : 'A'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
+            </div>
+
+            <div className="hidden xl:block fixed right-8 top-24">
+                {/* Floating PR Panel */}
+                <div
+                    className={`max-h-[calc(50vh-6rem)] overflow-y-auto bg-white rounded-lg shadow-lg border border-gray-200 transition-all duration-200 ${isPRPanelCollapsed ? 'w-16' : 'w-80'}`}
+                >
+                    <div className="sticky top-0 bg-gradient-to-r from-[#FFA700] to-[#FF9500] text-white px-3 py-3 rounded-t-lg">
+                        <div className={`flex items-center ${isPRPanelCollapsed ? 'justify-center' : 'justify-between gap-2'}`}>
+                            <div className="flex items-center space-x-2 overflow-hidden">
+                                <Dumbbell className="w-5 h-5 shrink-0" />
+                                {!isPRPanelCollapsed && (
+                                    <h3 className="font-bold text-sm whitespace-nowrap">
+                                        Massimali di {program?.trainee.firstName}
+                                    </h3>
+                                )}
                             </div>
-                        ) : (
-                            <div className="text-center py-8">
-                                <div className="text-4xl mb-2">📊</div>
-                                <p className="text-sm text-gray-600">
-                                    Nessun massimale registrato
-                                </p>
-                            </div>
-                        )}
+                            <button
+                                type="button"
+                                onClick={() => setIsPRPanelCollapsed((current) => !current)}
+                                className={`rounded-md bg-white/15 p-1 hover:bg-white/25 transition-colors ${isPRPanelCollapsed ? 'absolute inset-x-0 top-3 mx-auto w-fit' : ''}`}
+                                aria-label={isPRPanelCollapsed ? 'Espandi pannello massimali' : 'Comprimi pannello massimali'}
+                                title={isPRPanelCollapsed ? 'Espandi' : 'Comprimi'}
+                            >
+                                {isPRPanelCollapsed ? (
+                                    <ChevronLeft className="w-4 h-4" />
+                                ) : (
+                                    <ChevronRight className="w-4 h-4" />
+                                )}
+                            </button>
+                        </div>
                     </div>
-                )}
+                    {!isPRPanelCollapsed && (
+                        <div className="p-4">
+                            {bestPRs.length > 0 ? (
+                                <div className="space-y-3">
+                                    {bestPRs.map((pr) => (
+                                        <div key={pr.id} className="border-b border-gray-200 pb-3 last:border-b-0">
+                                            <div className="flex items-start justify-between">
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-semibold text-gray-900">
+                                                        {pr.exercise.name}
+                                                    </p>
+                                                    <div className="mt-1 flex items-baseline space-x-2">
+                                                        <span className="text-2xl font-bold text-[#FFA700]">
+                                                            {pr.weight}
+                                                        </span>
+                                                        <span className="text-xs text-gray-500">kg</span>
+                                                        <span className="text-xs text-gray-500">×</span>
+                                                        <span className="text-sm font-semibold text-gray-700">
+                                                            {pr.reps} {pr.reps === 1 ? 'rep' : 'reps'}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 mt-1">
+                                                        {new Date(pr.recordDate).toLocaleDateString('it-IT', {
+                                                            day: 'numeric',
+                                                            month: 'short',
+                                                            year: 'numeric'
+                                                        })}
+                                                    </p>
+                                                </div>
+                                                <span
+                                                    className={`px-2 py-0.5 text-xs font-medium rounded-full ${pr.exercise.type === 'fundamental'
+                                                        ? 'bg-red-50 text-red-700'
+                                                        : 'bg-blue-50 text-blue-700'
+                                                        }`}
+                                                >
+                                                    {pr.exercise.type === 'fundamental' ? 'F' : 'A'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-8">
+                                    <div className="text-4xl mb-2">📊</div>
+                                    <p className="text-sm text-gray-600">
+                                        Nessun massimale registrato
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
 
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
