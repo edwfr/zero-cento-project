@@ -330,7 +330,6 @@ describe('POST /api/feedback', () => {
         vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
         vi.mocked(prisma.workoutExercise.findUnique).mockResolvedValue(mockWorkoutExercise as any)
         vi.mocked(prisma.exerciseFeedback.findFirst).mockResolvedValue(mockFeedback as any) // existing!
-        vi.mocked(prisma.setPerformed.deleteMany).mockResolvedValue({ count: 3 } as any)
         vi.mocked(prisma.exerciseFeedback.update).mockResolvedValue({
             ...mockFeedback,
             notes: 'Updated notes',
@@ -346,10 +345,24 @@ describe('POST /api/feedback', () => {
         const body = await res.json()
 
         expect(res.status).toBe(200)
-        expect(prisma.setPerformed.deleteMany).toHaveBeenCalledWith({
-            where: { feedbackId: mockFeedback.id },
+        expect(prisma.exerciseFeedback.update).toHaveBeenCalledWith(expect.objectContaining({
+            where: { id: mockFeedback.id },
+            data: expect.objectContaining({
+                notes: 'Updated notes',
+                completed: true,
+                actualRpe: 8,
+                setsPerformed: expect.objectContaining({
+                    deleteMany: {},
+                    create: expect.arrayContaining([
+                        expect.objectContaining({
+                            setNumber: 1,
+                            reps: 5,
+                            weight: 100,
+                        }),
+                    ]),
+                }),
+            }),
         })
-        expect(prisma.exerciseFeedback.update).toHaveBeenCalled()
         expect(body.data.feedback).toBeDefined()
     })
 

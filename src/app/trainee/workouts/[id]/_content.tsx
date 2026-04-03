@@ -417,11 +417,6 @@ export default function WorkoutDetailContent() {
             const feedbackPromises = workout!.exercises.map(async (we) => {
                 const sets = feedbackData[we.id] || []
 
-                // Skip exercises with no data
-                if (sets.every(s => !s.completed || (s.weight === 0 && s.reps === 0))) {
-                    return null
-                }
-
                 const payload = {
                     workoutExerciseId: we.id,
                     notes: globalNotes.trim() || null,
