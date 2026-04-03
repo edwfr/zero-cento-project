@@ -150,6 +150,13 @@ export default function NewProgramContent() {
                         <div className="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">
                             3
                         </div>
+                        <span className="ml-2 text-gray-500">Revisione</span>
+                    </div>
+                    <div className="w-16 h-1 bg-gray-300"></div>
+                    <div className="flex items-center">
+                        <div className="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">
+                            4
+                        </div>
                         <span className="ml-2 text-gray-500">Pubblica</span>
                     </div>
                 </div>
@@ -231,7 +238,7 @@ export default function NewProgramContent() {
                             required
                         />
                         <div className="flex space-x-2">
-                            {[4, 6, 8, 12].map((weeks) => (
+                            {[3, 4, 5, 6].map((weeks) => (
                                 <button
                                     key={weeks}
                                     type="button"
@@ -266,7 +273,7 @@ export default function NewProgramContent() {
                             required
                         />
                         <div className="flex space-x-2">
-                            {[3, 4, 5, 6].map((workouts) => (
+                            {[2, 3, 4].map((workouts) => (
                                 <button
                                     key={workouts}
                                     type="button"

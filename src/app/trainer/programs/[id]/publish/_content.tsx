@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ArrowLeft } from 'lucide-react'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
@@ -264,8 +265,9 @@ export default function PublishProgramPage() {
                 <div className="mb-8">
                     <Link
                         href={`/trainer/programs/${programId}/review`}
-                        className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
+                        className="text-brand-primary hover:text-brand-primary/80 mb-4 inline-flex items-center gap-1 text-sm font-semibold"
                     >
+                        <ArrowLeft className="h-4 w-4" />
                         {t('publish.backToReview')}
                     </Link>
                     <h1 className="text-3xl font-bold text-gray-900">{t('publish.title')}</h1>
@@ -383,9 +385,6 @@ export default function PublishProgramPage() {
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
                                 required
                             />
-                            <p className="text-sm text-gray-600 mt-2">
-                                {t('tips.startMonday')}
-                            </p>
                         </div>
                     </div>
                 )}
