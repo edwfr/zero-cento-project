@@ -145,6 +145,8 @@
         "calculatedOrm": "1RM Calcolato (Brzycki)",
         "achievedOn": "Raggiunto il",
         "totalPRs": "{{count}} PR totali per questo esercizio",
+        "viewProgress": "Vedi Progressione",
+        "progressHistory": "Storico Progressione",
         "infoNote": "I massimali sono gestiti dal trainer. I workout completati non modificano questi valori; il calcolo 1RM usa la formula di Brzycki per stimare il massimale teorico da serie con piu ripetizioni.",
         "errorLoading": "Errore caricamento massimali"
     }

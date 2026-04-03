@@ -5,8 +5,9 @@ import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { SkeletonTable } from '@/components'
-import { BarChart2 } from 'lucide-react'
+import { BarChart2, ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react'
 import { formatDate } from '@/lib/date-format'
+import MovementPatternTag from '@/components/MovementPatternTag'
 
 interface PersonalRecord {
     id: string
@@ -17,6 +18,11 @@ interface PersonalRecord {
         id: string
         name: string
         type: 'fundamental' | 'accessory'
+        movementPattern?: {
+            id: string
+            name: string
+            color?: string
+        }
     }
 }
 
@@ -27,6 +33,7 @@ export default function PersonalRecordsContent() {
     const [error, setError] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState('')
     const [typeFilter, setTypeFilter] = useState<'all' | 'fundamental' | 'accessory'>('all')
+    const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set())
 
     useEffect(() => {
         fetchRecords()
@@ -56,6 +63,16 @@ export default function PersonalRecordsContent() {
         if (reps === 1) return weight
         // Brzycki formula
         return Math.round(weight * (36 / (37 - reps)) * 10) / 10
+    }
+
+    const toggleCardExpansion = (exerciseId: string) => {
+        const newExpanded = new Set(expandedCards)
+        if (newExpanded.has(exerciseId)) {
+            newExpanded.delete(exerciseId)
+        } else {
+            newExpanded.add(exerciseId)
+        }
+        setExpandedCards(newExpanded)
     }
 
     const filteredRecords = records.filter((pr) => {
@@ -106,8 +123,9 @@ export default function PersonalRecordsContent() {
             <div className="mb-8">
                 <Link
                     href="/trainee/dashboard"
-                    className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
+                    className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-flex items-center gap-2"
                 >
+                    <ArrowLeft className="w-4 h-4" />
                     {t('records.backToDashboard')}
                 </Link>
                 <h1 className="text-3xl font-bold text-gray-900">{t('records.title')}</h1>
@@ -196,16 +214,24 @@ export default function PersonalRecordsContent() {
                                                 <h3 className="text-lg font-bold text-gray-900">
                                                     {pr.exercise.name}
                                                 </h3>
-                                                <span
-                                                    className={`px-2 py-1 text-xs font-semibold rounded ${pr.exercise.type === 'fundamental'
-                                                        ? 'bg-purple-100 text-purple-800'
-                                                        : 'bg-gray-100 text-gray-800'
-                                                        }`}
-                                                >
-                                                    {pr.exercise.type === 'fundamental'
-                                                        ? t('records.tagFundamental')
-                                                        : t('records.tagAccessory')}
-                                                </span>
+                                                <div className="flex gap-2">
+                                                    <span
+                                                        className={`px-2 py-1 text-xs font-semibold rounded ${pr.exercise.type === 'fundamental'
+                                                            ? 'bg-purple-100 text-purple-800'
+                                                            : 'bg-gray-100 text-gray-800'
+                                                            }`}
+                                                    >
+                                                        {pr.exercise.type === 'fundamental'
+                                                            ? t('records.tagFundamental')
+                                                            : t('records.tagAccessory')}
+                                                    </span>
+                                                    {pr.exercise.movementPattern && (
+                                                        <MovementPatternTag
+                                                            name={pr.exercise.movementPattern.name}
+                                                            color={pr.exercise.movementPattern.color}
+                                                        />
+                                                    )}
+                                                </div>
                                             </div>
 
                                             <div className="space-y-3 mb-4">
@@ -232,15 +258,53 @@ export default function PersonalRecordsContent() {
                                             </div>
 
                                             <div className="border-t border-gray-200 pt-3">
-                                                <p className="text-xs text-gray-600">
-                                                    {t('records.achievedOn')} {formatDate(pr.recordDate)}
-                                                </p>
+                                                <div className="flex items-center justify-between">
+                                                    <p className="text-xs text-gray-600">
+                                                        {t('records.achievedOn')} {formatDate(pr.recordDate)}
+                                                    </p>
+                                                    {allPRs.length > 1 && (
+                                                        <button
+                                                            onClick={() => toggleCardExpansion(pr.exercise.id)}
+                                                            className="flex items-center gap-1 text-xs text-brand-primary hover:text-brand-primary/80 font-medium"
+                                                        >
+                                                            {t('records.viewProgress')}
+                                                            {expandedCards.has(pr.exercise.id) ? (
+                                                                <ChevronUp className="w-3 h-3" />
+                                                            ) : (
+                                                                <ChevronDown className="w-3 h-3" />
+                                                            )}
+                                                        </button>
+                                                    )}
+                                                </div>
                                                 {allPRs.length > 1 && (
                                                     <p className="text-xs text-gray-600 mt-1">
                                                         {t('records.totalPRs', { count: allPRs.length })}
                                                     </p>
                                                 )}
                                             </div>
+
+                                            {/* Progress Section */}
+                                            {expandedCards.has(pr.exercise.id) && allPRs.length > 1 && (
+                                                <div className="border-t border-gray-200 pt-3 mt-3">
+                                                    <h4 className="text-sm font-semibold text-gray-900 mb-2">
+                                                        {t('records.progressHistory')}
+                                                    </h4>
+                                                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                                                        {allPRs
+                                                            .sort((a, b) => new Date(b.recordDate).getTime() - new Date(a.recordDate).getTime())
+                                                            .map((record) => {
+                                                                const orm = calculateOneRepMax(record.weight, record.reps)
+                                                                return (
+                                                                    <div key={record.id} className="flex items-center justify-between text-xs text-gray-600 bg-gray-50 rounded p-2">
+                                                                        <span>{formatDate(record.recordDate)}</span>
+                                                                        <span>{record.weight} kg x {record.reps} reps</span>
+                                                                        <span className="font-medium">{orm} kg 1RM</span>
+                                                                    </div>
+                                                                )
+                                                            })}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     )
                                 })}
@@ -249,12 +313,6 @@ export default function PersonalRecordsContent() {
                 </>
             )}
 
-            {/* Info Box */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-8">
-                <p className="text-sm text-blue-900">
-                    <span className="font-semibold">ℹ️</span> {t('records.infoNote')}
-                </p>
-            </div>
         </div>
     )
 }

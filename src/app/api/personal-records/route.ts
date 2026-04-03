@@ -68,6 +68,12 @@ export async function GET(request: NextRequest) {
                         id: true,
                         name: true,
                         type: true,
+                        movementPattern: {
+                            select: {
+                                id: true,
+                                name: true,
+                            },
+                        },
                     },
                 },
                 trainee: {
@@ -166,6 +172,12 @@ export async function POST(request: NextRequest) {
                         id: true,
                         name: true,
                         type: true,
+                        movementPattern: {
+                            select: {
+                                id: true,
+                                name: true,
+                            },
+                        },
                     },
                 },
                 trainee: {
