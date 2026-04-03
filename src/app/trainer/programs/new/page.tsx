@@ -1,9 +1,87 @@
 ﻿import { getSession } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import NewProgramContent from './NewProgramContent'
 
-export default async function NewProgramPage() {
+interface NewProgramPageProps {
+    searchParams?: {
+        traineeId?: string
+    }
+}
+
+interface TraineeOption {
+    id: string
+    firstName: string
+    lastName: string
+}
+
+function sortTraineesByLastName(trainees: TraineeOption[]): TraineeOption[] {
+    return trainees.sort((left, right) => {
+        const lastNameComparison = left.lastName.localeCompare(right.lastName, 'it', {
+            sensitivity: 'base',
+        })
+
+        if (lastNameComparison !== 0) {
+            return lastNameComparison
+        }
+
+        return left.firstName.localeCompare(right.firstName, 'it', {
+            sensitivity: 'base',
+        })
+    })
+}
+
+async function getAvailableTrainees(userId: string, role: string): Promise<TraineeOption[]> {
+    if (role === 'admin') {
+        const trainees = await prisma.user.findMany({
+            where: {
+                role: 'trainee',
+                isActive: true,
+            },
+            select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+            },
+            orderBy: [
+                { lastName: 'asc' },
+                { firstName: 'asc' },
+            ],
+        })
+
+        return sortTraineesByLastName(trainees)
+    }
+
+    const traineeAssociations = await prisma.trainerTrainee.findMany({
+        where: {
+            trainerId: userId,
+        },
+        select: {
+            trainee: {
+                select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    isActive: true,
+                },
+            },
+        },
+    })
+
+    return sortTraineesByLastName(
+        traineeAssociations
+            .map((association) => association.trainee)
+            .filter((trainee) => trainee.isActive)
+            .map(({ id, firstName, lastName }) => ({
+                id,
+                firstName,
+                lastName,
+            }))
+    )
+}
+
+export default async function NewProgramPage({ searchParams }: NewProgramPageProps) {
     const session = await getSession()
 
     if (!session) {
@@ -14,10 +92,16 @@ export default async function NewProgramPage() {
         redirect(`/${session.user.role}/dashboard`)
     }
 
+    const trainees = await getAvailableTrainees(session.user.id, session.user.role)
+    const requestedTraineeId = searchParams?.traineeId
+    const initialTraineeId = trainees.some((trainee) => trainee.id === requestedTraineeId)
+        ? requestedTraineeId!
+        : trainees[0]?.id || ''
+
     return (
         <DashboardLayout user={session.user}>
             <div className="py-6">
-                <NewProgramContent />
+                <NewProgramContent trainees={trainees} initialTraineeId={initialTraineeId} />
             </div>
         </DashboardLayout>
     )

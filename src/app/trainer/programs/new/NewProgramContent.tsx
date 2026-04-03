@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { BarChart3 } from 'lucide-react'
@@ -12,47 +12,25 @@ interface Trainee {
     lastName: string
 }
 
-export default function NewProgramContent() {
+interface NewProgramContentProps {
+    trainees: Trainee[]
+    initialTraineeId: string
+}
+
+export default function NewProgramContent({
+    trainees,
+    initialTraineeId,
+}: NewProgramContentProps) {
     const router = useRouter()
-    const searchParams = useSearchParams()
     const [loading, setLoading] = useState(false)
-    const [trainees, setTrainees] = useState<Trainee[]>([])
     const [error, setError] = useState<string | null>(null)
 
     // Form state
     const [title, setTitle] = useState('')
-    const [traineeId, setTraineeId] = useState('')
+    const [traineeId, setTraineeId] = useState(initialTraineeId)
     const [isSbdProgram, setIsSbdProgram] = useState(false)
     const [durationWeeks, setDurationWeeks] = useState(4)
     const [workoutsPerWeek, setWorkoutsPerWeek] = useState(3)
-
-    useEffect(() => {
-        fetchTrainees()
-    }, [])
-
-    const fetchTrainees = async () => {
-        try {
-            const res = await fetch('/api/users?role=trainee')
-            const data = await res.json()
-
-            if (!res.ok) {
-                throw new Error(data.error?.message || 'Errore caricamento atleti')
-            }
-
-            const activeTrainees = data.data.items.filter((t: any) => t.isActive)
-            setTrainees(activeTrainees)
-
-            // Check if traineeId is provided in URL params
-            const urlTraineeId = searchParams.get('traineeId')
-            if (urlTraineeId && activeTrainees.some((t: Trainee) => t.id === urlTraineeId)) {
-                setTraineeId(urlTraineeId)
-            } else if (activeTrainees.length > 0) {
-                setTraineeId(activeTrainees[0].id)
-            }
-        } catch (err: any) {
-            setError(err.message)
-        }
-    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -121,7 +99,7 @@ export default function NewProgramContent() {
                     </p>
                     <Link
                         href="/trainer/trainees/new"
-                        className="inline-block bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+                        className="inline-block bg-brand-primary hover:bg-brand-primary/90 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
                     >
                         Aggiungi Atleta
                     </Link>
@@ -136,7 +114,7 @@ export default function NewProgramContent() {
             <div className="mb-8">
                 <div className="flex items-center justify-center space-x-4 mb-4">
                     <div className="flex items-center">
-                        <div className="w-10 h-10 bg-[#FFA700] text-white rounded-full flex items-center justify-center font-bold">
+                        <div className="w-10 h-10 bg-brand-primary text-white rounded-full flex items-center justify-center font-bold">
                             1
                         </div>
                         <span className="ml-2 font-semibold text-gray-900">Setup</span>
@@ -199,7 +177,7 @@ export default function NewProgramContent() {
                         onChange={(e) => setTitle(e.target.value)}
                         disabled={loading}
                         placeholder="es. Programma Forza Base 8 Settimane"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                         required
                     />
                 </div>
@@ -213,9 +191,12 @@ export default function NewProgramContent() {
                         value={traineeId}
                         onChange={(e) => setTraineeId(e.target.value)}
                         disabled={loading}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                         required
                     >
+                        <option value="" disabled>
+                            Seleziona un atleta
+                        </option>
                         {trainees.map((trainee) => (
                             <option key={trainee.id} value={trainee.id}>
                                 {trainee.firstName} {trainee.lastName}
@@ -224,14 +205,14 @@ export default function NewProgramContent() {
                     </select>
                 </div>
 
-                <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-4">
+                <div className="rounded-xl border border-brand-primary/20 bg-brand-primary/5 p-4">
                     <label className="flex items-start gap-3">
                         <input
                             type="checkbox"
                             checked={isSbdProgram}
                             onChange={(e) => setIsSbdProgram(e.target.checked)}
                             disabled={loading}
-                            className="mt-1 h-4 w-4 rounded border-gray-300 text-[#FFA700] focus:ring-[#FFA700]"
+                            className="mt-1 h-4 w-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
                         />
                         <span>
                             <span className="block text-sm font-semibold text-gray-900">Programma SBD</span>
@@ -255,7 +236,7 @@ export default function NewProgramContent() {
                             value={durationWeeks}
                             onChange={(e) => setDurationWeeks(parseInt(e.target.value))}
                             disabled={loading}
-                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                             required
                         />
                         <div className="flex space-x-2">
@@ -266,7 +247,7 @@ export default function NewProgramContent() {
                                     onClick={() => setDurationWeeks(weeks)}
                                     disabled={loading}
                                     className={`px-3 py-1 text-sm font-semibold rounded ${durationWeeks === weeks
-                                        ? 'bg-[#FFA700] text-white'
+                                        ? 'bg-brand-primary text-white'
                                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                         } disabled:opacity-50 disabled:cursor-not-allowed`}
                                 >
@@ -290,7 +271,7 @@ export default function NewProgramContent() {
                             value={workoutsPerWeek}
                             onChange={(e) => setWorkoutsPerWeek(parseInt(e.target.value))}
                             disabled={loading}
-                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                             required
                         />
                         <div className="flex space-x-2">
@@ -301,7 +282,7 @@ export default function NewProgramContent() {
                                     onClick={() => setWorkoutsPerWeek(workouts)}
                                     disabled={loading}
                                     className={`px-3 py-1 text-sm font-semibold rounded ${workoutsPerWeek === workouts
-                                        ? 'bg-[#FFA700] text-white'
+                                        ? 'bg-brand-primary text-white'
                                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                         } disabled:opacity-50 disabled:cursor-not-allowed`}
                                 >
@@ -337,7 +318,7 @@ export default function NewProgramContent() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="flex-1 bg-[#FFA700] hover:bg-[#FF9500] disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
+                        className="flex-1 bg-brand-primary hover:bg-brand-primary/90 disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
                     >
                         {loading ? (
                             <LoadingSpinner size="sm" color="white" />
