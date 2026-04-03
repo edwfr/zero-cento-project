@@ -12,7 +12,7 @@ interface PersonalRecord {
     id: string
     weight: number
     reps: number
-    achievedAt: string
+    recordDate: string
     exercise: {
         id: string
         name: string
@@ -233,7 +233,7 @@ export default function PersonalRecordsContent() {
 
                                             <div className="border-t border-gray-200 pt-3">
                                                 <p className="text-xs text-gray-600">
-                                                    {t('records.achievedOn')} {formatDate(pr.achievedAt)}
+                                                    {t('records.achievedOn')} {formatDate(pr.recordDate)}
                                                 </p>
                                                 {allPRs.length > 1 && (
                                                     <p className="text-xs text-gray-600 mt-1">

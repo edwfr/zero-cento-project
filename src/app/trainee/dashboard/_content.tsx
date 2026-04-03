@@ -40,7 +40,7 @@ interface PersonalRecord {
     }
     weight: number
     reps: number
-    achievedAt: string
+    recordDate: string
 }
 
 export default function TraineeDashboardContent() {
@@ -323,7 +323,7 @@ export default function TraineeDashboardContent() {
                                         {pr.exercise.name}
                                     </p>
                                     <p className="text-sm text-gray-600">
-                                        {formatDate(pr.achievedAt)}
+                                        {formatDate(pr.recordDate)}
                                     </p>
                                 </div>
                                 <div className="text-right">

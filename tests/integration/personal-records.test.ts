@@ -309,11 +309,10 @@ describe('POST /api/personal-records', () => {
         notes: 'PB squat',
     }
 
-    it('trainee creates own personal record', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
-        vi.mocked(prisma.user.findUnique).mockResolvedValue(mockTraineeUser as any)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(mockExercise as any)
-        vi.mocked(prisma.personalRecord.create).mockResolvedValue(mockRecord as any)
+    it('returns 403 when trainee tries to create own personal record', async () => {
+        vi.mocked(requireRole).mockRejectedValue(
+            Response.json({ error: { code: 'FORBIDDEN' } }, { status: 403 })
+        )
 
         const req = makeRequest('http://localhost:3000/api/personal-records', {
             method: 'POST',
@@ -322,17 +321,8 @@ describe('POST /api/personal-records', () => {
         })
 
         const res = await POST(req)
-        const body = await res.json()
-
-        expect(res.status).toBe(201)
-        expect(body.data.record.id).toBe(RECORD_ID_1)
-
-        // traineeId must be the authenticated trainee's id
-        expect(prisma.personalRecord.create).toHaveBeenCalledWith(
-            expect.objectContaining({
-                data: expect.objectContaining({ traineeId: 'trainee-uuid-1' }),
-            })
-        )
+        expect(res.status).toBe(403)
+        expect(prisma.personalRecord.create).not.toHaveBeenCalled()
     })
 
     it('trainer creates record for own trainee', async () => {
@@ -409,14 +399,18 @@ describe('POST /api/personal-records', () => {
     })
 
     it('returns 404 when exercise does not exist', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainerTrainee.findUnique).mockResolvedValue({
+            trainerId: 'trainer-uuid-1',
+            traineeId: 'trainee-uuid-1',
+        } as any)
         vi.mocked(prisma.user.findUnique).mockResolvedValue(mockTraineeUser as any)
         vi.mocked(prisma.exercise.findUnique).mockResolvedValue(null)
 
         const req = makeRequest('http://localhost:3000/api/personal-records', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...validPayload, exerciseId: 'cccccccc-cccc-cccc-cccc-cccccccccccc' }),
+            body: JSON.stringify({ ...validPayload, traineeId: 'trainee-uuid-1', exerciseId: 'cccccccc-cccc-cccc-cccc-cccccccccccc' }),
         })
 
         const res = await POST(req)
@@ -427,12 +421,12 @@ describe('POST /api/personal-records', () => {
     })
 
     it('returns 400 for weight exceeding 1000 kg', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
+        vi.mocked(requireRole).mockResolvedValue(mockAdminSession)
 
         const req = makeRequest('http://localhost:3000/api/personal-records', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...validPayload, weight: 1001 }),
+            body: JSON.stringify({ ...validPayload, traineeId: 'trainee-uuid-1', weight: 1001 }),
         })
 
         const res = await POST(req)
@@ -443,12 +437,12 @@ describe('POST /api/personal-records', () => {
     })
 
     it('returns 400 for reps exceeding 100', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
+        vi.mocked(requireRole).mockResolvedValue(mockAdminSession)
 
         const req = makeRequest('http://localhost:3000/api/personal-records', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...validPayload, reps: 101 }),
+            body: JSON.stringify({ ...validPayload, traineeId: 'trainee-uuid-1', reps: 101 }),
         })
 
         const res = await POST(req)
@@ -459,7 +453,7 @@ describe('POST /api/personal-records', () => {
     })
 
     it('returns 400 for future recordDate', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
+        vi.mocked(requireRole).mockResolvedValue(mockAdminSession)
 
         const futureDate = new Date()
         futureDate.setFullYear(futureDate.getFullYear() + 1)
@@ -467,7 +461,7 @@ describe('POST /api/personal-records', () => {
         const req = makeRequest('http://localhost:3000/api/personal-records', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...validPayload, recordDate: futureDate.toISOString() }),
+            body: JSON.stringify({ ...validPayload, traineeId: 'trainee-uuid-1', recordDate: futureDate.toISOString() }),
         })
 
         const res = await POST(req)

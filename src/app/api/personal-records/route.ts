@@ -8,7 +8,7 @@ import { logger } from '@/lib/logger'
 /**
  * GET /api/personal-records
  * List personal records (trainee's max lifts)
- * Query params: traineeId, exerciseId
+ * Query params: traineeId, exerciseId, limit
  * RBAC: trainer sees only own trainees, trainee sees only own
  */
 export async function GET(request: NextRequest) {
@@ -19,6 +19,8 @@ export async function GET(request: NextRequest) {
 
         const traineeId = searchParams.get('traineeId') || undefined
         const exerciseId = searchParams.get('exerciseId') || undefined
+        const limitParam = searchParams.get('limit')
+        const limit = limitParam ? parseInt(limitParam, 10) : undefined
 
         // Build where clause based on RBAC
         const where: any = {}
@@ -76,10 +78,13 @@ export async function GET(request: NextRequest) {
                     },
                 },
             },
-            orderBy: [
-                { exercise: { name: 'asc' } },
-                { recordDate: 'desc' },
-            ],
+            orderBy: limit
+                ? [{ recordDate: 'desc' }]
+                : [
+                    { exercise: { name: 'asc' } },
+                    { recordDate: 'desc' },
+                ],
+            ...(limit ? { take: limit } : {}),
         })
 
         return apiSuccess({ items: records })
@@ -93,12 +98,12 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/personal-records
  * Create personal record for trainee
- * Body: { exerciseId, reps, weight, recordDate, notes?, traineeId? }
- * RBAC: Trainees create own records, trainers create for their trainees, admins create for anyone
+ * Body: { exerciseId, reps, weight, recordDate, notes?, traineeId }
+ * RBAC: only trainers can create for their trainees; admins can create for anyone
  */
 export async function POST(request: NextRequest) {
     try {
-        const session = await requireRole(['admin', 'trainer', 'trainee'])
+        const session = await requireRole(['admin', 'trainer'])
         const body = await request.json()
 
         const validation = personalRecordSchema.safeParse(body)
@@ -108,26 +113,18 @@ export async function POST(request: NextRequest) {
 
         const { exerciseId, reps, weight, recordDate, notes } = validation.data
 
-        // Determine traineeId based on role
-        let traineeId: string
-        if (session.user.role === 'trainee') {
-            // Trainees create records for themselves
-            traineeId = session.user.id
-        } else {
-            // Trainers and admins need to specify traineeId
-            traineeId = body.traineeId
-            if (!traineeId) {
-                return apiError('VALIDATION_ERROR', 'traineeId is required for trainer/admin requests', 400, undefined, 'validation.traineeIdRequired')
-            }
+        const traineeId = body.traineeId
+        if (!traineeId) {
+            return apiError('VALIDATION_ERROR', 'traineeId is required for trainer/admin requests', 400, undefined, 'validation.traineeIdRequired')
+        }
 
-            // For trainers, verify they manage this trainee
-            if (session.user.role === 'trainer') {
-                const isManaged = await prisma.trainerTrainee.findUnique({
-                    where: { traineeId: traineeId },
-                })
-                if (!isManaged || isManaged.trainerId !== session.user.id) {
-                    return apiError('FORBIDDEN', 'You can only create records for your own trainees', 403, undefined, 'personalRecord.createDenied')
-                }
+        // For trainers, verify they manage this trainee
+        if (session.user.role === 'trainer') {
+            const isManaged = await prisma.trainerTrainee.findUnique({
+                where: { traineeId: traineeId },
+            })
+            if (!isManaged || isManaged.trainerId !== session.user.id) {
+                return apiError('FORBIDDEN', 'You can only create records for your own trainees', 403, undefined, 'personalRecord.createDenied')
             }
         }
 

@@ -128,9 +128,9 @@
     "records": {
         "backToDashboard": "Back to Dashboard",
         "title": "Your Personal Records",
-        "description": "View your personal records and 1RM calculations",
+        "description": "View the max records entered by your trainer and the related 1RM calculations",
         "noRecords": "No Personal Records Yet",
-        "noRecordsDesc": "Your records will be saved automatically when you complete workouts",
+        "noRecordsDesc": "Your trainer has not entered any records for this profile yet",
         "searchLabel": "Search Exercise",
         "searchPlaceholder": "e.g. Squat, Bench Press...",
         "typeLabel": "Type",
@@ -145,7 +145,7 @@
         "calculatedOrm": "Calculated 1RM (Brzycki)",
         "achievedOn": "Achieved on",
         "totalPRs": "{{count}} total PRs for this exercise",
-        "infoNote": "Records are saved automatically when you complete workouts. The 1RM calculation uses the Brzycki formula to estimate your theoretical max from multi-rep sets.",
+        "infoNote": "Records are managed by the trainer. Completed workouts do not update these values; the 1RM calculation uses the Brzycki formula to estimate your theoretical max from multi-rep sets.",
         "errorLoading": "Error loading records"
     }
 }
