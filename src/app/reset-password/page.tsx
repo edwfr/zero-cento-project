@@ -24,9 +24,9 @@ export default function ResetPasswordPage() {
             }
         })
 
-        // Also check if session is already available (page reload case)
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session) setSessionReady(true)
+        // Also check if the authenticated user is already available (page reload case)
+        supabase.auth.getUser().then(({ data: { user } }) => {
+            if (user) setSessionReady(true)
         })
 
         return () => subscription.unsubscribe()

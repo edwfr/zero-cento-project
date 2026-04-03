@@ -53,12 +53,15 @@ export default function ForceChangePasswordPage() {
 
             // Re-authenticate with new password to get updated session with mustChangePassword=false
             const supabase = createClient()
-            const { data: sessionData } = await supabase.auth.getSession()
+            const {
+                data: { user },
+                error: getUserError,
+            } = await supabase.auth.getUser()
 
-            if (sessionData.session?.user?.email) {
+            if (!getUserError && user?.email) {
                 // Sign in again with new password to refresh session metadata
                 const { error: signInError } = await supabase.auth.signInWithPassword({
-                    email: sessionData.session.user.email,
+                    email: user.email,
                     password: newPassword,
                 })
 

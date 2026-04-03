@@ -15,11 +15,12 @@ export async function GET() {
         await prisma.$queryRaw`SELECT 1`
         logger.info('Database health check passed')
 
-        // Test Supabase auth
+        // Test Supabase auth client reachability.
         const supabase = createClient()
-        const { error: authError } = await supabase.auth.getSession()
+        const { error: authError } = await supabase.auth.getUser()
+        const isMissingSession = authError?.name === 'AuthSessionMissingError'
 
-        if (authError) {
+        if (authError && !isMissingSession) {
             logger.warn({ error: authError }, 'Supabase auth health check failed')
         } else {
             logger.info('Supabase auth health check passed')
@@ -30,7 +31,7 @@ export async function GET() {
             timestamp: new Date().toISOString(),
             services: {
                 database: 'up',
-                auth: authError ? 'degraded' : 'up',
+                auth: authError && !isMissingSession ? 'degraded' : 'up',
             },
         })
     } catch (error) {

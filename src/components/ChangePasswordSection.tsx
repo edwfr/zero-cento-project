@@ -36,12 +36,16 @@ export default function ChangePasswordSection() {
             const supabase = createClient()
 
             // Re-authenticate to verify current password before changing
-            const { data: sessionData } = await supabase.auth.getSession()
-            if (!sessionData.session?.user?.email) {
+            const {
+                data: { user },
+                error: getUserError,
+            } = await supabase.auth.getUser()
+
+            if (getUserError || !user?.email) {
                 throw new Error('Sessione non valida. Effettua nuovamente il login.')
             }
 
-            const email = sessionData.session.user.email
+            const email = user.email
             const { error: signInError } = await supabase.auth.signInWithPassword({
                 email,
                 password: currentPassword,

@@ -165,20 +165,20 @@ export async function middleware(request: NextRequest) {
         }
     )
 
-    // Refresh session if needed
+    // Validate the current user with Supabase Auth and refresh tokens if needed.
     const {
-        data: { session },
-    } = await supabase.auth.getSession()
+        data: { user },
+    } = await supabase.auth.getUser()
 
     // Redirect to login if not authenticated (except for API routes)
-    if (!session && !pathname.startsWith('/api')) {
+    if (!user && !pathname.startsWith('/api')) {
         const url = request.nextUrl.clone()
         url.pathname = '/login'
         return NextResponse.redirect(url)
     }
 
     // For API routes, return 401 if not authenticated
-    if (!session && pathname.startsWith('/api') && !API_PUBLIC_ROUTES.includes(pathname)) {
+    if (!user && pathname.startsWith('/api') && !API_PUBLIC_ROUTES.includes(pathname)) {
         return NextResponse.json(
             {
                 error: {
@@ -191,8 +191,8 @@ export async function middleware(request: NextRequest) {
     }
 
     // Check if user must change password (except for force-change-password page and API)
-    if (session && !pathname.startsWith('/force-change-password') && !pathname.startsWith('/api')) {
-        const mustChangePassword = session.user.user_metadata?.mustChangePassword
+    if (user && !pathname.startsWith('/force-change-password') && !pathname.startsWith('/api')) {
+        const mustChangePassword = user.user_metadata?.mustChangePassword
         if (mustChangePassword) {
             const url = request.nextUrl.clone()
             url.pathname = '/force-change-password'

@@ -19,9 +19,11 @@ export default function LoginPage() {
         const checkSession = async () => {
             try {
                 const supabase = createClient()
-                const { data: { session } } = await supabase.auth.getSession()
+                const {
+                    data: { user },
+                } = await supabase.auth.getUser()
 
-                if (session) {
+                if (user) {
                     // User is already logged in, get their role and redirect
                     const response = await fetch('/api/auth/me', {
                         credentials: 'include'
