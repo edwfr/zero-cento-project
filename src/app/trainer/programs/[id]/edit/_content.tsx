@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
@@ -112,33 +112,49 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const [personalRecords, setPersonalRecords] = useState<PersonalRecord[]>([])
     const [error, setError] = useState<string | null>(null)
     const loadingRef = useRef(false)
+    const requestIdRef = useRef(0)
+    const lastVisibilityRefreshRef = useRef(0)
     const [confirmCopyOpen, setConfirmCopyOpen] = useState(false)
     const [confirmCopyNextWeek, setConfirmCopyNextWeek] = useState<Week | null>(null)
 
-    useEffect(() => {
-        fetchProgram()
-    }, [programId])
+    const fetchPersonalRecords = useCallback(async (traineeId: string, requestId: number) => {
+        try {
+            const recordsRes = await fetch(`/api/personal-records?traineeId=${traineeId}`)
 
-    // Ricarica i dati quando si torna alla pagina (ad esempio dopo aver modificato un workout)
-    useEffect(() => {
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible' && !loadingRef.current) {
-                fetchProgram()
+            if (requestId !== requestIdRef.current) {
+                return
+            }
+
+            if (!recordsRes.ok) {
+                setPersonalRecords([])
+                return
+            }
+
+            const recordsData = await recordsRes.json()
+
+            if (requestId !== requestIdRef.current) {
+                return
+            }
+
+            setPersonalRecords(recordsData.data.items || [])
+        } catch {
+            if (requestId === requestIdRef.current) {
+                setPersonalRecords([])
             }
         }
+    }, [])
 
-        document.addEventListener('visibilitychange', handleVisibilityChange)
-
-        return () => {
-            document.removeEventListener('visibilitychange', handleVisibilityChange)
-        }
-    }, []) // array vuoto: si registra una sola volta
-
-    const fetchProgram = async () => {
+    const fetchProgram = useCallback(async ({ showLoading = true }: { showLoading?: boolean } = {}) => {
         if (loadingRef.current) return
+
         loadingRef.current = true
+        const requestId = ++requestIdRef.current
+
         try {
-            setLoading(true)
+            if (showLoading) {
+                setLoading(true)
+            }
+
             const res = await fetch(`/api/programs/${programId}`, {
                 cache: 'no-store',
             })
@@ -149,13 +165,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             }
 
             const traineeId = data.data.program.trainee.id
-            const recordsRes = await fetch(`/api/personal-records?traineeId=${traineeId}`)
-            if (recordsRes.ok) {
-                const recordsData = await recordsRes.json()
-                setPersonalRecords(recordsData.data.items || [])
-            } else {
-                setPersonalRecords([])
-            }
 
             // Trasforma i dati per calcolare exerciseCount e estrarre movement patterns da workoutExercises
             const transformedProgram = {
@@ -206,14 +215,52 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 })),
             }
 
+            if (requestId !== requestIdRef.current) {
+                return
+            }
+
             setProgram(transformedProgram)
+            setError(null)
+            void fetchPersonalRecords(traineeId, requestId)
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : t('editProgram.errorLoading'))
+            if (requestId === requestIdRef.current) {
+                setError(err instanceof Error ? err.message : t('editProgram.errorLoading'))
+            }
         } finally {
-            setLoading(false)
-            loadingRef.current = false
+            if (requestId === requestIdRef.current) {
+                if (showLoading) {
+                    setLoading(false)
+                }
+                loadingRef.current = false
+            }
         }
-    }
+    }, [fetchPersonalRecords, programId, t])
+
+    useEffect(() => {
+        fetchProgram()
+    }, [fetchProgram])
+
+    // Ricarica i dati quando si torna alla pagina (ad esempio dopo aver modificato un workout)
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            const now = Date.now()
+
+            if (
+                document.visibilityState === 'visible' &&
+                !loadingRef.current &&
+                now - lastVisibilityRefreshRef.current > 30000
+            ) {
+                lastVisibilityRefreshRef.current = now
+                void fetchProgram({ showLoading: false })
+            }
+        }
+
+        document.addEventListener('visibilitychange', handleVisibilityChange)
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange)
+        }
+    }, [fetchProgram])
 
     const handleWeekTypeChange = async (weekId: string, newType: 'normal' | 'test' | 'deload') => {
         if (!program) return
@@ -233,7 +280,20 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 throw new Error(getApiErrorMessage(data, t('editProgram.errorEditWeek'), t))
             }
 
-            await fetchProgram()
+            setProgram((current) => {
+                if (!current) {
+                    return current
+                }
+
+                return {
+                    ...current,
+                    weeks: current.weeks.map((week) =>
+                        week.id === weekId
+                            ? { ...week, weekType: newType }
+                            : week
+                    ),
+                }
+            })
         } catch (err: unknown) {
             showToast(err instanceof Error ? err.message : t('editProgram.errorEditWeek'), 'error')
         } finally {
@@ -254,7 +314,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 throw new Error(getApiErrorMessage(data, t('editProgram.copyFirstWeekError'), t))
             }
 
-            await fetchProgram()
+            await fetchProgram({ showLoading: false })
             showToast(t('editProgram.copyFirstWeekSuccess'), 'success')
             setConfirmCopyOpen(false)
         } catch (err: unknown) {
@@ -284,7 +344,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 throw new Error(getApiErrorMessage(data, t('editProgram.copyWeekError'), t))
             }
 
-            await fetchProgram()
+            await fetchProgram({ showLoading: false })
             showToast(
                 t('editProgram.copyWeekSuccess', {
                     sourceWeek: confirmCopyNextWeek.weekNumber,
@@ -303,51 +363,50 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         }
     }
 
-    const getTotalExercises = () => {
+    const totalExercises = useMemo(() => {
         if (!program) return 0
         return program.weeks.reduce(
             (total, week) =>
                 total + week.workouts.reduce((sum, w) => sum + w.exerciseCount, 0),
             0
         )
-    }
+    }, [program])
 
-    const getCompletedWorkouts = () => {
+    const completedWorkouts = useMemo(() => {
         if (!program) return 0
         return program.weeks.reduce(
             (total, week) => total + week.workouts.filter((w) => w.exerciseCount > 0).length,
             0
         )
-    }
+    }, [program])
 
     const totalWorkouts = program ? program.durationWeeks * program.workoutsPerWeek : 0
-    const completedWorkouts = getCompletedWorkouts()
     const progressPercent = totalWorkouts > 0 ? Math.round((completedWorkouts / totalWorkouts) * 100) : 0
     const shouldShowSbdReporting = program?.isSbdProgram ?? false
 
-    const recordsByExercise = personalRecords.reduce((acc, record) => {
+    const recordsByExercise = useMemo(() => personalRecords.reduce((acc, record) => {
         const key = record.exerciseId
         if (!acc[key]) {
             acc[key] = []
         }
         acc[key].push(record)
         return acc
-    }, {} as Record<string, PersonalRecord[]>)
+    }, {} as Record<string, PersonalRecord[]>), [personalRecords])
 
-    const bestPRs = Object.values(recordsByExercise).map((records) =>
+    const bestPRs = useMemo(() => Object.values(recordsByExercise).map((records) =>
         records.reduce((best, current) => {
             const currentEstimatedOneRM = estimateOneRMValue(current.weight, current.reps)
             const bestEstimatedOneRM = estimateOneRMValue(best.weight, best.reps)
             return currentEstimatedOneRM > bestEstimatedOneRM ? current : best
         })
-    )
+    ), [recordsByExercise])
 
-    const estimatedOneRMByExercise = bestPRs.reduce((acc, record) => {
+    const estimatedOneRMByExercise = useMemo(() => bestPRs.reduce((acc, record) => {
         acc[record.exerciseId] = estimateOneRMValue(record.weight, record.reps)
         return acc
-    }, {} as Record<string, number>)
+    }, {} as Record<string, number>), [bestPRs])
 
-    const weekSbdMetrics = program
+    const weekSbdMetrics = useMemo(() => program
         ? program.weeks.reduce((acc, week) => {
             acc[week.id] = Object.values(
                 week.workouts.reduce((weekAcc, workout) => {
@@ -417,7 +476,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             totalLifts: number
             averageIntensity: number | null
         }>>)
-        : {}
+        : {}, [program, estimatedOneRMByExercise])
 
     const sbdSummaryRows = shouldShowSbdReporting && program
         ? program.weeks.flatMap((week) =>
@@ -525,7 +584,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                     initialDurationWeeks={program.durationWeeks}
                                     initialWorkoutsPerWeek={program.workoutsPerWeek}
                                     status={program.status}
-                                    onUpdate={fetchProgram}
+                                    onUpdate={() => void fetchProgram({ showLoading: false })}
                                 />
                             )}
                         </div>
@@ -555,7 +614,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                         />
                     </div>
                     <p className="text-sm text-gray-600 mt-4">
-                        {t('editProgram.totalExercises')} <span className="font-semibold">{getTotalExercises()}</span>
+                        {t('editProgram.totalExercises')} <span className="font-semibold">{totalExercises}</span>
                     </p>
                 </div>
 
@@ -588,7 +647,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                             type="button"
                                             onClick={() => setConfirmCopyNextWeek(week)}
                                             disabled={copyingWeekId !== null || copyingFirstWeek || saving}
-                                            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                            className="inline-flex items-center gap-2 rounded-lg border border-brand-primary/20 bg-brand-primary/10 px-3 py-2 text-sm font-semibold text-brand-primary transition-colors hover:bg-brand-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
                                             {copyingWeekId === week.id ? (
                                                 <LoadingSpinner size="sm" color="primary" />
@@ -690,45 +749,45 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             )}
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {week.workouts.map((workout) => {
+                                {week.workouts.map((workout, workoutIndex) => {
                                     const workoutCard = (
                                         <div
                                             className={`group relative overflow-hidden rounded-2xl border p-4 transition-all ${workout.exerciseCount > 0
-                                                ? 'border-orange-200 bg-gradient-to-br from-orange-50 via-amber-50 to-white shadow-sm'
-                                                : 'border-orange-100 bg-gradient-to-br from-white via-orange-50/60 to-amber-50/80'
+                                                ? 'border-brand-primary bg-white shadow-sm'
+                                                : 'border-brand-primary bg-white'
                                                 } ${!readOnly ? 'hover:-translate-y-0.5 hover:shadow-lg' : ''}`}
                                         >
-                                            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#FFA700] via-[#FF9500] to-amber-300 opacity-90" />
+                                            <div className="absolute inset-y-0 left-0 w-1 bg-brand-primary opacity-90" />
                                             <div className="mb-3 flex items-start justify-between gap-3">
                                                 <div>
-                                                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-                                                        Workout
-                                                    </p>
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                                                            Workout
+                                                        </p>
+                                                        <span className="text-xs font-semibold text-brand-primary">
+                                                            {workoutIndex + 1}/{program.workoutsPerWeek}
+                                                        </span>
+                                                    </div>
                                                     <p className="mt-1 text-lg font-bold text-slate-900">
                                                         {(t('editProgram.dayNames', { returnObjects: true }) as string[])[workout.dayOfWeek]}
                                                     </p>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${workout.exerciseCount > 0
-                                                        ? 'bg-orange-100 text-orange-700'
-                                                        : 'bg-white/80 text-slate-500 border border-orange-100'
+                                                        ? 'bg-brand-primary/10 text-brand-primary'
+                                                        : 'border border-brand-primary/30 bg-white text-slate-500'
                                                         }`}>
                                                         {workout.exerciseCount > 0 ? `${workout.exerciseCount} ex` : 'Vuoto'}
                                                     </span>
                                                     {!readOnly && (
-                                                        <span className="rounded-full bg-gradient-to-br from-[#FFA700] to-[#FF9500] p-1.5 text-white shadow-sm transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+                                                        <span className="rounded-full bg-brand-primary p-1.5 text-white shadow-sm transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
                                                             <ArrowUpRight className="h-3.5 w-3.5" />
                                                         </span>
                                                     )}
                                                 </div>
                                             </div>
 
-                                            <div className="mb-3 flex items-center justify-between">
-                                                <p className="text-sm text-slate-600">
-                                                    {workout.exerciseCount > 0
-                                                        ? t('editProgram.exercisesCount', { count: workout.exerciseCount })
-                                                        : t('editProgram.noExercises')}
-                                                </p>
+                                            <div className="mb-3 flex items-center justify-end">
                                                 <span className={`text-sm font-semibold ${workout.exerciseCount > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
                                                     {workout.exerciseCount > 0 ? '✓' : '⚠️'}
                                                 </span>
@@ -745,7 +804,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <div className="rounded-xl border border-dashed border-orange-200 bg-white/80 px-3 py-3 text-xs text-slate-500">
+                                                <div className="rounded-xl border border-dashed border-brand-primary/30 bg-white px-3 py-3 text-xs text-slate-500">
                                                     Nessuno schema motorio ancora associato
                                                 </div>
                                             )}
@@ -771,7 +830,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 </div>
 
                 {shouldShowSbdReporting && sbdSummaryRows.length > 0 && (
-                    <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-md">
+                    <div className="mt-10 mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-md">
                         <div className="mb-4 flex items-center justify-between gap-4">
                             <div className="flex items-center gap-3">
                                 <div className="rounded-xl bg-slate-900 p-2 text-white">

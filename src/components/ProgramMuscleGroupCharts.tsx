@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import { calculateTrainingSets } from '@/lib/calculations'
 import {
     CartesianGrid,
@@ -61,6 +62,8 @@ interface ProgramMuscleGroupChartsProps {
 export default function ProgramMuscleGroupCharts({ weeks }: ProgramMuscleGroupChartsProps) {
     const { t } = useTranslation('trainer')
     const [visibleMuscleGroupIds, setVisibleMuscleGroupIds] = useState<string[]>([])
+    const [isHeatmapCollapsed, setIsHeatmapCollapsed] = useState(false)
+    const [isTrendCollapsed, setIsTrendCollapsed] = useState(false)
 
     const formatTrainingSetsValue = (value: number) => {
         return Number.isInteger(value) ? value.toString() : value.toFixed(1)
@@ -212,208 +215,236 @@ export default function ProgramMuscleGroupCharts({ weeks }: ProgramMuscleGroupCh
     return (
         <div className="mt-8 mb-8 space-y-8">
             <div className="bg-white rounded-lg shadow-md p-6">
-                <div className="mb-6">
-                    <h2 className="text-xl font-bold text-gray-900">
-                        {t('editProgram.trainingSetsHeatmapTitle')}
-                    </h2>
-                    <p className="text-sm text-gray-600 mt-2">
-                        {t('editProgram.trainingSetsHeatmapDescription')}
-                    </p>
-                </div>
-
-                {hasWeeklyMuscleGroupData && (
-                    <div className="mb-6 space-y-4">
-                        <div>
-                            <div className="flex items-center justify-between gap-3 flex-wrap">
-                                <p className="text-sm font-medium text-gray-700">
-                                    {t('editProgram.trainingSetsFilterTitle')}
-                                </p>
-                                <button
-                                    type="button"
-                                    onClick={showAllMuscleGroups}
-                                    className="text-sm font-semibold text-[#0F766E] hover:text-[#115E59]"
-                                >
-                                    {t('editProgram.trainingSetsFilterReset')}
-                                </button>
-                            </div>
-                            <div className="mt-3 flex flex-wrap gap-2">
-                                {muscleGroupSeries.map((muscleGroup) => {
-                                    const isActive = visibleMuscleGroupIds.includes(muscleGroup.id)
-
-                                    return (
-                                        <button
-                                            key={muscleGroup.id}
-                                            type="button"
-                                            onClick={() => toggleMuscleGroupVisibility(muscleGroup.id)}
-                                            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors ${isActive
-                                                ? 'border-slate-300 bg-slate-100 text-slate-900 hover:bg-slate-200'
-                                                : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900'
-                                                }`}
-                                        >
-                                            <span
-                                                className="h-2.5 w-2.5 rounded-full"
-                                                style={{ backgroundColor: muscleGroup.color }}
-                                            />
-                                            {muscleGroup.name}
-                                        </button>
-                                    )
-                                })}
-                            </div>
-                        </div>
-
-                        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-                            <div className="flex items-center justify-between gap-4 flex-wrap">
-                                <p className="text-sm font-medium text-gray-700">
-                                    {t('editProgram.trainingSetsHeatmapLegendTitle')}
-                                </p>
-                                <div className="flex items-center gap-3 text-xs text-gray-600">
-                                    <span>{t('editProgram.trainingSetsHeatmapLegendLow')}</span>
-                                    <div className="flex items-center gap-1">
-                                        {heatmapLegendStops.map((item, index) => (
-                                            <span
-                                                key={`${item.stop}-${index}`}
-                                                className="h-4 w-8 rounded-sm border border-white/70"
-                                                style={{ backgroundColor: item.color }}
-                                            />
-                                        ))}
-                                    </div>
-                                    <span>{t('editProgram.trainingSetsHeatmapLegendHigh')}</span>
-                                    <span className="rounded-full bg-white px-2 py-1 font-semibold text-gray-700">
-                                        {t('editProgram.trainingSetsHeatmapLegendMax', {
-                                            value: formatTrainingSetsValue(heatmapMaxValue),
-                                            unit: t('editProgram.trainingSetsUnit'),
-                                        })}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+                <button
+                    type="button"
+                    onClick={() => setIsHeatmapCollapsed((current) => !current)}
+                    className="group flex w-full items-start justify-between gap-4 text-left"
+                    aria-expanded={!isHeatmapCollapsed}
+                >
+                    <div>
+                        <h2 className="text-xl font-bold text-gray-900">
+                            {t('editProgram.trainingSetsHeatmapTitle')}
+                        </h2>
+                        <p className="mt-2 text-sm text-gray-600">
+                            {t('editProgram.trainingSetsHeatmapDescription')}
+                        </p>
                     </div>
-                )}
+                    <span className="rounded-full border border-gray-200 bg-gray-50 p-2 text-gray-500 transition-colors group-hover:bg-gray-100">
+                        {isHeatmapCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+                    </span>
+                </button>
 
-                {hasVisibleWeeklyMuscleGroupData ? (
+                {!isHeatmapCollapsed && (
                     <>
-                        <div className="overflow-x-auto">
-                            <div
-                                className="grid gap-2 min-w-max"
-                                style={{
-                                    gridTemplateColumns: `minmax(180px, 220px) repeat(${weeklyMuscleGroupChartData.length}, minmax(64px, 1fr))`,
-                                }}
-                            >
-                                <div className="sticky left-0 z-10 bg-white" />
-                                {weeklyMuscleGroupChartData.map((row) => (
-                                    <div
-                                        key={String(row.weekNumber)}
-                                        className="rounded-md bg-gray-50 px-2 py-3 text-center text-xs font-semibold text-gray-600"
-                                    >
-                                        {row.weekLabel}
+                        {hasWeeklyMuscleGroupData && (
+                            <div className="mb-6 mt-6 space-y-4">
+                                <div>
+                                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                                        <p className="text-sm font-medium text-gray-700">
+                                            {t('editProgram.trainingSetsFilterTitle')}
+                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={showAllMuscleGroups}
+                                            className="text-sm font-semibold text-[#0F766E] hover:text-[#115E59]"
+                                        >
+                                            {t('editProgram.trainingSetsFilterReset')}
+                                        </button>
                                     </div>
-                                ))}
-
-                                {visibleMuscleGroups.map((muscleGroup) => (
-                                    <Fragment key={muscleGroup.id}>
-                                        <div className="sticky left-0 z-10 flex items-center rounded-md bg-white pr-3 text-sm font-medium text-gray-700">
-                                            <span
-                                                className="mr-3 inline-block h-3 w-3 rounded-full"
-                                                style={{ backgroundColor: muscleGroup.color }}
-                                            />
-                                            {muscleGroup.name}
-                                        </div>
-                                        {weeklyMuscleGroupChartData.map((row) => {
-                                            const value = Number(row[muscleGroup.id] || 0)
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        {muscleGroupSeries.map((muscleGroup) => {
+                                            const isActive = visibleMuscleGroupIds.includes(muscleGroup.id)
 
                                             return (
-                                                <div
-                                                    key={`${muscleGroup.id}-${String(row.weekNumber)}`}
-                                                    className="flex h-14 items-center justify-center rounded-md border border-white/60 text-xs font-semibold"
-                                                    style={{
-                                                        backgroundColor: getHeatmapCellColor(
-                                                            value,
-                                                            heatmapMaxValue,
-                                                            muscleGroup.color
-                                                        ),
-                                                        color: value > 0 ? '#111827' : '#9CA3AF',
-                                                    }}
-                                                    title={`${muscleGroup.name} - ${String(row.weekLabel)}: ${formatTrainingSetsValue(value)} ${t('editProgram.trainingSetsUnit')}`}
+                                                <button
+                                                    key={muscleGroup.id}
+                                                    type="button"
+                                                    onClick={() => toggleMuscleGroupVisibility(muscleGroup.id)}
+                                                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors ${isActive
+                                                        ? 'border-slate-300 bg-slate-100 text-slate-900 hover:bg-slate-200'
+                                                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900'
+                                                        }`}
                                                 >
-                                                    {value > 0 ? formatTrainingSetsValue(value) : '-'}
-                                                </div>
+                                                    <span
+                                                        className="h-2.5 w-2.5 rounded-full"
+                                                        style={{ backgroundColor: muscleGroup.color }}
+                                                    />
+                                                    {muscleGroup.name}
+                                                </button>
                                             )
                                         })}
-                                    </Fragment>
-                                ))}
+                                    </div>
+                                </div>
+
+                                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                                    <div className="flex items-center justify-between gap-4 flex-wrap">
+                                        <p className="text-sm font-medium text-gray-700">
+                                            {t('editProgram.trainingSetsHeatmapLegendTitle')}
+                                        </p>
+                                        <div className="flex items-center gap-3 text-xs text-gray-600">
+                                            <span>{t('editProgram.trainingSetsHeatmapLegendLow')}</span>
+                                            <div className="flex items-center gap-1">
+                                                {heatmapLegendStops.map((item, index) => (
+                                                    <span
+                                                        key={`${item.stop}-${index}`}
+                                                        className="h-4 w-8 rounded-sm border border-white/70"
+                                                        style={{ backgroundColor: item.color }}
+                                                    />
+                                                ))}
+                                            </div>
+                                            <span>{t('editProgram.trainingSetsHeatmapLegendHigh')}</span>
+                                            <span className="rounded-full bg-white px-2 py-1 font-semibold text-gray-700">
+                                                {t('editProgram.trainingSetsHeatmapLegendMax', {
+                                                    value: formatTrainingSetsValue(heatmapMaxValue),
+                                                    unit: t('editProgram.trainingSetsUnit'),
+                                                })}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-4">
-                            {t('editProgram.trainingSetsHeatmapFootnote')}
-                        </p>
+                        )}
+
+                        {hasVisibleWeeklyMuscleGroupData ? (
+                            <>
+                                <div className="overflow-x-auto">
+                                    <div
+                                        className="grid gap-2 min-w-max"
+                                        style={{
+                                            gridTemplateColumns: `minmax(180px, 220px) repeat(${weeklyMuscleGroupChartData.length}, minmax(64px, 1fr))`,
+                                        }}
+                                    >
+                                        <div className="sticky left-0 z-10 bg-white" />
+                                        {weeklyMuscleGroupChartData.map((row) => (
+                                            <div
+                                                key={String(row.weekNumber)}
+                                                className="rounded-md bg-gray-50 px-2 py-3 text-center text-xs font-semibold text-gray-600"
+                                            >
+                                                {row.weekLabel}
+                                            </div>
+                                        ))}
+
+                                        {visibleMuscleGroups.map((muscleGroup) => (
+                                            <Fragment key={muscleGroup.id}>
+                                                <div className="sticky left-0 z-10 flex items-center rounded-md bg-white pr-3 text-sm font-medium text-gray-700">
+                                                    <span
+                                                        className="mr-3 inline-block h-3 w-3 rounded-full"
+                                                        style={{ backgroundColor: muscleGroup.color }}
+                                                    />
+                                                    {muscleGroup.name}
+                                                </div>
+                                                {weeklyMuscleGroupChartData.map((row) => {
+                                                    const value = Number(row[muscleGroup.id] || 0)
+
+                                                    return (
+                                                        <div
+                                                            key={`${muscleGroup.id}-${String(row.weekNumber)}`}
+                                                            className="flex h-14 items-center justify-center rounded-md border border-white/60 text-xs font-semibold"
+                                                            style={{
+                                                                backgroundColor: getHeatmapCellColor(
+                                                                    value,
+                                                                    heatmapMaxValue,
+                                                                    muscleGroup.color
+                                                                ),
+                                                                color: value > 0 ? '#111827' : '#9CA3AF',
+                                                            }}
+                                                            title={`${muscleGroup.name} - ${String(row.weekLabel)}: ${formatTrainingSetsValue(value)} ${t('editProgram.trainingSetsUnit')}`}
+                                                        >
+                                                            {value > 0 ? formatTrainingSetsValue(value) : '-'}
+                                                        </div>
+                                                    )
+                                                })}
+                                            </Fragment>
+                                        ))}
+                                    </div>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-4">
+                                    {t('editProgram.trainingSetsHeatmapFootnote')}
+                                </p>
+                            </>
+                        ) : hasWeeklyMuscleGroupData ? (
+                            <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center text-sm text-gray-600">
+                                {t('editProgram.trainingSetsFilterEmpty')}
+                            </div>
+                        ) : (
+                            <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center text-sm text-gray-600">
+                                {t('editProgram.trainingSetsByMuscleGroupEmpty')}
+                            </div>
+                        )}
                     </>
-                ) : hasWeeklyMuscleGroupData ? (
-                    <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center text-sm text-gray-600">
-                        {t('editProgram.trainingSetsFilterEmpty')}
-                    </div>
-                ) : (
-                    <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center text-sm text-gray-600">
-                        {t('editProgram.trainingSetsByMuscleGroupEmpty')}
-                    </div>
                 )}
             </div>
 
             <div className="overflow-hidden bg-white rounded-lg shadow-md p-6">
-                <div className="mb-6">
-                    <h2 className="text-xl font-bold text-gray-900">
-                        {t('editProgram.trainingSetsTrendTitle')}
-                    </h2>
-                    <p className="text-sm text-gray-600 mt-2">
-                        {t('editProgram.trainingSetsTrendDescription')}
-                    </p>
-                </div>
-
-                {hasVisibleWeeklyMuscleGroupData ? (
-                    <>
-                        <div className="h-[28rem]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={weeklyMuscleGroupChartData} margin={{ left: 12, right: 12 }}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                    <XAxis dataKey="weekLabel" />
-                                    <YAxis />
-                                    <Tooltip
-                                        formatter={(value: number, name: string) => [
-                                            `${formatTrainingSetsValue(Number(value))} ${t('editProgram.trainingSetsUnit')}`,
-                                            muscleGroupSeries.find((muscleGroup) => muscleGroup.id === name)
-                                                ?.name || name,
-                                        ]}
-                                    />
-                                    <Legend
-                                        formatter={(value) =>
-                                            visibleMuscleGroups.find((muscleGroup) => muscleGroup.id === value)
-                                                ?.name || value
-                                        }
-                                    />
-                                    {visibleMuscleGroups.map((muscleGroup) => (
-                                        <Line
-                                            key={muscleGroup.id}
-                                            type="monotone"
-                                            dataKey={muscleGroup.id}
-                                            stroke={muscleGroup.color}
-                                            strokeWidth={2.5}
-                                            dot={{ r: 3 }}
-                                            activeDot={{ r: 5 }}
-                                        />
-                                    ))}
-                                </LineChart>
-                            </ResponsiveContainer>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-4">
-                            {t('editProgram.trainingSetsTrendFootnote')}
+                <button
+                    type="button"
+                    onClick={() => setIsTrendCollapsed((current) => !current)}
+                    className="group flex w-full items-start justify-between gap-4 text-left"
+                    aria-expanded={!isTrendCollapsed}
+                >
+                    <div>
+                        <h2 className="text-xl font-bold text-gray-900">
+                            {t('editProgram.trainingSetsTrendTitle')}
+                        </h2>
+                        <p className="mt-2 text-sm text-gray-600">
+                            {t('editProgram.trainingSetsTrendDescription')}
                         </p>
-                    </>
-                ) : hasWeeklyMuscleGroupData ? (
-                    <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center text-sm text-gray-600">
-                        {t('editProgram.trainingSetsFilterEmpty')}
                     </div>
-                ) : (
-                    <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center text-sm text-gray-600">
-                        {t('editProgram.trainingSetsByMuscleGroupEmpty')}
+                    <span className="rounded-full border border-gray-200 bg-gray-50 p-2 text-gray-500 transition-colors group-hover:bg-gray-100">
+                        {isTrendCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+                    </span>
+                </button>
+
+                {!isTrendCollapsed && (
+                    <div className="mt-6">
+                        {hasVisibleWeeklyMuscleGroupData ? (
+                            <>
+                                <div className="h-[28rem]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <LineChart data={weeklyMuscleGroupChartData} margin={{ left: 12, right: 12 }}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                            <XAxis dataKey="weekLabel" />
+                                            <YAxis />
+                                            <Tooltip
+                                                formatter={(value: number, name: string) => [
+                                                    `${formatTrainingSetsValue(Number(value))} ${t('editProgram.trainingSetsUnit')}`,
+                                                    muscleGroupSeries.find((muscleGroup) => muscleGroup.id === name)
+                                                        ?.name || name,
+                                                ]}
+                                            />
+                                            <Legend
+                                                formatter={(value) =>
+                                                    visibleMuscleGroups.find((muscleGroup) => muscleGroup.id === value)
+                                                        ?.name || value
+                                                }
+                                            />
+                                            {visibleMuscleGroups.map((muscleGroup) => (
+                                                <Line
+                                                    key={muscleGroup.id}
+                                                    type="monotone"
+                                                    dataKey={muscleGroup.id}
+                                                    stroke={muscleGroup.color}
+                                                    strokeWidth={2.5}
+                                                    dot={{ r: 3 }}
+                                                    activeDot={{ r: 5 }}
+                                                />
+                                            ))}
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-4">
+                                    {t('editProgram.trainingSetsTrendFootnote')}
+                                </p>
+                            </>
+                        ) : hasWeeklyMuscleGroupData ? (
+                            <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center text-sm text-gray-600">
+                                {t('editProgram.trainingSetsFilterEmpty')}
+                            </div>
+                        ) : (
+                            <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center text-sm text-gray-600">
+                                {t('editProgram.trainingSetsByMuscleGroupEmpty')}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

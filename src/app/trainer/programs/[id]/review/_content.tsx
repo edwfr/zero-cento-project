@@ -1,10 +1,10 @@
 'use client'
 
-import { Fragment, MouseEvent, useEffect, useState } from 'react'
+import { Fragment, MouseEvent, useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, FileEdit } from 'lucide-react'
+import { ArrowLeft, ChevronDown, ChevronUp, FileEdit } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ProgramMuscleGroupCharts from '@/components/ProgramMuscleGroupCharts'
 import WeekTypeBadge from '@/components/WeekTypeBadge'
@@ -20,7 +20,9 @@ interface WorkoutExerciseSummary {
     weight: number | null
     isWarmup: boolean
     exercise: {
+        id: string
         name: string
+        type: 'fundamental' | 'accessory'
         exerciseMuscleGroups: {
             coefficient: number
             muscleGroup: {
@@ -48,7 +50,9 @@ interface ProgramSummary {
     id: string
     title: string
     status: 'draft' | 'active' | 'completed'
+    isSbdProgram: boolean
     trainee: {
+        id: string
         firstName: string
         lastName: string
     }
@@ -65,6 +69,22 @@ interface WorkoutSlotRow {
     isEmpty: boolean
 }
 
+interface PersonalRecord {
+    exerciseId: string
+    reps: number
+    weight: number
+}
+
+function parseRepsValue(repsValue: string): number {
+    const match = repsValue.match(/^\d+/)
+    return match ? parseInt(match[0], 10) : 0
+}
+
+function estimateOneRMValue(weight: number, reps: number): number {
+    if (reps <= 1) return weight
+    return weight * (1 + reps / 30)
+}
+
 interface ReviewProgramContentProps {
     viewOnly?: boolean
 }
@@ -76,7 +96,9 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
 
     const [loading, setLoading] = useState(true)
     const [program, setProgram] = useState<ProgramSummary | null>(null)
+    const [personalRecords, setPersonalRecords] = useState<PersonalRecord[]>([])
     const [error, setError] = useState<string | null>(null)
+    const [isSbdSummaryCollapsed, setIsSbdSummaryCollapsed] = useState(false)
 
     useEffect(() => {
         const fetchProgram = async () => {
@@ -92,6 +114,16 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                 }
 
                 setProgram(data.data.program)
+
+                const traineeId = data.data.program.trainee.id
+                const recordsRes = await fetch(`/api/personal-records?traineeId=${traineeId}`)
+
+                if (recordsRes.ok) {
+                    const recordsData = await recordsRes.json()
+                    setPersonalRecords(recordsData.data.items || [])
+                } else {
+                    setPersonalRecords([])
+                }
             } catch (err: unknown) {
                 setError(err instanceof Error ? err.message : t('reviewProgram.errorLoading'))
             } finally {
@@ -122,33 +154,15 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
         return `${exercise.weight}% prev.`
     }
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <LoadingSpinner size="lg" color="primary" />
-            </div>
-        )
-    }
-
-    if (error || !program) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="rounded-lg border border-red-200 bg-red-50 px-6 py-4 text-red-800">
-                    {error || t('reviewProgram.notFound')}
-                </div>
-            </div>
-        )
-    }
-
-    const isDraft = program.status === 'draft'
-    const totalWorkouts = program.durationWeeks * program.workoutsPerWeek
-    const configuredWorkouts = program.weeks.reduce(
+    const isDraft = program?.status === 'draft'
+    const totalWorkouts = program ? program.durationWeeks * program.workoutsPerWeek : 0
+    const configuredWorkouts = program?.weeks.reduce(
         (sum, week) => sum + week.workouts.filter((workout) => workout.workoutExercises.length > 0).length,
         0
-    )
-    const workoutSlots = Array.from({ length: program.workoutsPerWeek }, (_, slotIndex) => ({
+    ) ?? 0
+    const workoutSlots = Array.from({ length: program?.workoutsPerWeek ?? 0 }, (_, slotIndex) => ({
         slotNumber: slotIndex + 1,
-        rows: program.weeks.flatMap<WorkoutSlotRow>((week) => {
+        rows: (program?.weeks ?? []).flatMap<WorkoutSlotRow>((week) => {
             const sortedWorkouts = [...week.workouts].sort((left, right) => left.dayIndex - right.dayIndex)
             const workout = sortedWorkouts[slotIndex]
 
@@ -172,6 +186,131 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
             }))
         }),
     }))
+    const shouldShowSbdReporting = program?.isSbdProgram ?? false
+
+    const recordsByExercise = useMemo(() => personalRecords.reduce((acc, record) => {
+        const key = record.exerciseId
+        if (!acc[key]) {
+            acc[key] = []
+        }
+        acc[key].push(record)
+        return acc
+    }, {} as Record<string, PersonalRecord[]>), [personalRecords])
+
+    const bestPRs = useMemo(() => Object.values(recordsByExercise).map((records) =>
+        records.reduce((best, current) => {
+            const currentEstimatedOneRM = estimateOneRMValue(current.weight, current.reps)
+            const bestEstimatedOneRM = estimateOneRMValue(best.weight, best.reps)
+            return currentEstimatedOneRM > bestEstimatedOneRM ? current : best
+        })
+    ), [recordsByExercise])
+
+    const estimatedOneRMByExercise = useMemo(() => bestPRs.reduce((acc, record) => {
+        acc[record.exerciseId] = estimateOneRMValue(record.weight, record.reps)
+        return acc
+    }, {} as Record<string, number>), [bestPRs])
+
+    const weekSbdMetrics = useMemo(() => (program?.weeks ?? []).reduce((acc, week) => {
+        acc[week.id] = Object.values(
+            week.workouts.reduce((weekAcc, workout) => {
+                workout.workoutExercises
+                    .filter((weekExercise) => weekExercise.exercise.type === 'fundamental' && !weekExercise.isWarmup)
+                    .forEach((weekExercise) => {
+                        const key = weekExercise.exercise.id
+                        const plannedReps = parseRepsValue(weekExercise.reps)
+                        const liftCount = weekExercise.sets * plannedReps
+
+                        let intensity: number | null = null
+                        if (weekExercise.weightType === 'percentage_1rm' && typeof weekExercise.weight === 'number') {
+                            intensity = weekExercise.weight
+                        } else if (weekExercise.weightType === 'absolute' && typeof weekExercise.weight === 'number') {
+                            const estimatedOneRM = estimatedOneRMByExercise[weekExercise.exercise.id]
+                            if (estimatedOneRM) {
+                                intensity = (weekExercise.weight / estimatedOneRM) * 100
+                            }
+                        }
+
+                        if (!weekAcc[key]) {
+                            weekAcc[key] = {
+                                exerciseId: weekExercise.exercise.id,
+                                exerciseName: weekExercise.exercise.name,
+                                workoutIds: new Set<string>(),
+                                totalLifts: 0,
+                                weightedIntensitySum: 0,
+                                intensityLiftCount: 0,
+                            }
+                        }
+
+                        weekAcc[key].workoutIds.add(workout.id)
+                        weekAcc[key].totalLifts += liftCount
+
+                        if (intensity !== null && liftCount > 0) {
+                            weekAcc[key].weightedIntensitySum += intensity * liftCount
+                            weekAcc[key].intensityLiftCount += liftCount
+                        }
+                    })
+
+                return weekAcc
+            }, {} as Record<string, {
+                exerciseId: string
+                exerciseName: string
+                workoutIds: Set<string>
+                totalLifts: number
+                weightedIntensitySum: number
+                intensityLiftCount: number
+            }>)
+        )
+            .map((metric) => ({
+                exerciseId: metric.exerciseId,
+                exerciseName: metric.exerciseName,
+                frequency: metric.workoutIds.size,
+                totalLifts: metric.totalLifts,
+                averageIntensity: metric.intensityLiftCount > 0
+                    ? metric.weightedIntensitySum / metric.intensityLiftCount
+                    : null,
+            }))
+            .sort((left, right) => left.exerciseName.localeCompare(right.exerciseName, 'it', { sensitivity: 'base' }))
+
+        return acc
+    }, {} as Record<string, Array<{
+        exerciseId: string
+        exerciseName: string
+        frequency: number
+        totalLifts: number
+        averageIntensity: number | null
+    }>>), [estimatedOneRMByExercise, program?.weeks])
+
+    const sbdSummaryRows = useMemo(() => shouldShowSbdReporting
+        ? (program?.weeks ?? []).flatMap((week) =>
+            (weekSbdMetrics[week.id] || []).map((metric) => ({
+                weekId: week.id,
+                weekNumber: week.weekNumber,
+                exerciseId: metric.exerciseId,
+                exerciseName: metric.exerciseName,
+                frequency: metric.frequency,
+                totalLifts: metric.totalLifts,
+                averageIntensity: metric.averageIntensity,
+            }))
+        )
+        : [], [program?.weeks, shouldShowSbdReporting, weekSbdMetrics])
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <LoadingSpinner size="lg" color="primary" />
+            </div>
+        )
+    }
+
+    if (error || !program) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="rounded-lg border border-red-200 bg-red-50 px-6 py-4 text-red-800">
+                    {error || t('reviewProgram.notFound')}
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -266,6 +405,58 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                         </div>
                     </div>
                 </div>
+
+                {shouldShowSbdReporting && sbdSummaryRows.length > 0 && (
+                    <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-md">
+                        <button
+                            type="button"
+                            onClick={() => setIsSbdSummaryCollapsed((current) => !current)}
+                            className="group flex w-full items-start justify-between gap-4 text-left"
+                            aria-expanded={!isSbdSummaryCollapsed}
+                        >
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-900">Recap Reportistica SBD</h2>
+                                <p className="mt-2 text-sm text-gray-600">
+                                    Vista tabellare di FRQ, NBL e IM su tutte le settimane del programma.
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <span className="rounded-full border border-gray-200 bg-gray-50 p-2 text-gray-500 transition-colors group-hover:bg-gray-100">
+                                    {isSbdSummaryCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+                                </span>
+                            </div>
+                        </button>
+
+                        {!isSbdSummaryCollapsed && (
+                            <div className="mt-4 overflow-x-auto">
+                                <table className="min-w-full divide-y divide-slate-200 text-sm">
+                                    <thead>
+                                        <tr className="text-left text-slate-500">
+                                            <th className="px-3 py-3 font-semibold">Settimana</th>
+                                            <th className="px-3 py-3 font-semibold">Esercizio</th>
+                                            <th className="px-3 py-3 font-semibold">FRQ</th>
+                                            <th className="px-3 py-3 font-semibold">NBL</th>
+                                            <th className="px-3 py-3 font-semibold">IM</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {sbdSummaryRows.map((row) => (
+                                            <tr key={`${row.weekId}-${row.exerciseId}`} className="hover:bg-slate-50/70">
+                                                <td className="px-3 py-3 font-semibold text-slate-900">Sett. {row.weekNumber}</td>
+                                                <td className="px-3 py-3 text-slate-700">{row.exerciseName}</td>
+                                                <td className="px-3 py-3 text-slate-700">{row.frequency}</td>
+                                                <td className="px-3 py-3 text-slate-700">{row.totalLifts}</td>
+                                                <td className="px-3 py-3 text-slate-700">
+                                                    {row.averageIntensity !== null ? `${row.averageIntensity.toFixed(1)}%` : '-'}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 <ProgramMuscleGroupCharts weeks={program.weeks} />
 
