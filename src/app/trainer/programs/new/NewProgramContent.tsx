@@ -2,9 +2,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Trans, useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
-import { BarChart3 } from 'lucide-react'
+import { ArrowLeft, BarChart3 } from 'lucide-react'
 
 interface Trainee {
     id: string
@@ -15,13 +17,16 @@ interface Trainee {
 interface NewProgramContentProps {
     trainees: Trainee[]
     initialTraineeId: string
+    backContext: 'programs' | 'trainee'
 }
 
 export default function NewProgramContent({
     trainees,
     initialTraineeId,
+    backContext,
 }: NewProgramContentProps) {
     const router = useRouter()
+    const { t } = useTranslation(['trainer', 'common', 'navigation'])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
@@ -31,29 +36,34 @@ export default function NewProgramContent({
     const [isSbdProgram, setIsSbdProgram] = useState(false)
     const [durationWeeks, setDurationWeeks] = useState(4)
     const [workoutsPerWeek, setWorkoutsPerWeek] = useState(3)
+    const backHref = backContext === 'trainee' && traineeId
+        ? `/trainer/trainees/${traineeId}`
+        : '/trainer/programs'
+    const backLabel = backContext === 'trainee'
+        ? t('navigation:breadcrumbs.backToAthleteProfile')
+        : t('navigation:breadcrumbs.backToPrograms')
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError(null)
 
-        // Validation
         if (!title.trim()) {
-            setError('Il nome del programma è obbligatorio')
+            setError(t('programs.programNameRequired'))
             return
         }
 
         if (!traineeId) {
-            setError('Seleziona un atleta')
+            setError(t('programs.selectTraineeRequired'))
             return
         }
 
         if (durationWeeks < 1 || durationWeeks > 52) {
-            setError('La durata deve essere tra 1 e 52 settimane')
+            setError(t('programs.durationWeeksRangeError'))
             return
         }
 
         if (workoutsPerWeek < 1 || workoutsPerWeek > 7) {
-            setError('Gli allenamenti settimanali devono essere tra 1 e 7')
+            setError(t('programs.workoutsPerWeekRangeError'))
             return
         }
 
@@ -75,13 +85,12 @@ export default function NewProgramContent({
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || 'Errore creazione programma')
+                throw new Error(getApiErrorMessage(data, t('programs.createError'), t))
             }
 
-            // Redirect to program detail/edit
             router.push(`/trainer/programs/${data.data.program.id}/edit`)
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : t('programs.createError'))
             setLoading(false)
         }
     }
@@ -92,16 +101,16 @@ export default function NewProgramContent({
                 <div className="bg-white rounded-lg shadow-md p-8 max-w-md text-center">
                     <div className="text-5xl mb-4">👥</div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                        Nessun Atleta Disponibile
+                        {t('programs.noAvailableTraineesTitle')}
                     </h2>
                     <p className="text-gray-600 mb-6">
-                        Devi avere almeno un atleta attivo per creare un programma
+                        {t('programs.noAvailableTraineesDescription')}
                     </p>
                     <Link
                         href="/trainer/trainees/new"
                         className="inline-block bg-brand-primary hover:bg-brand-primary/90 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
                     >
-                        Aggiungi Atleta
+                        {t('athletes.newAthlete')}
                     </Link>
                 </div>
             </div>
@@ -110,82 +119,77 @@ export default function NewProgramContent({
 
     return (
         <div className="max-w-3xl mx-auto">
-            {/* Progress Indicator */}
             <div className="mb-8">
                 <div className="flex items-center justify-center space-x-4 mb-4">
                     <div className="flex items-center">
                         <div className="w-10 h-10 bg-brand-primary text-white rounded-full flex items-center justify-center font-bold">
                             1
                         </div>
-                        <span className="ml-2 font-semibold text-gray-900">Setup</span>
+                        <span className="ml-2 font-semibold text-gray-900">{t('editProgram.stepSetup')}</span>
                     </div>
                     <div className="w-16 h-1 bg-gray-300"></div>
                     <div className="flex items-center">
                         <div className="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">
                             2
                         </div>
-                        <span className="ml-2 text-gray-500">Esercizi</span>
+                        <span className="ml-2 text-gray-500">{t('editProgram.stepExercises')}</span>
                     </div>
                     <div className="w-16 h-1 bg-gray-300"></div>
                     <div className="flex items-center">
                         <div className="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">
                             3
                         </div>
-                        <span className="ml-2 text-gray-500">Revisione</span>
+                        <span className="ml-2 text-gray-500">{t('editProgram.stepReview')}</span>
                     </div>
                     <div className="w-16 h-1 bg-gray-300"></div>
                     <div className="flex items-center">
                         <div className="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">
                             4
                         </div>
-                        <span className="ml-2 text-gray-500">Pubblica</span>
+                        <span className="ml-2 text-gray-500">{t('editProgram.stepPublish')}</span>
                     </div>
                 </div>
             </div>
 
-            {/* Header */}
             <div className="mb-8">
                 <Link
-                    href="/trainer/programs"
-                    className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
+                    href={backHref}
+                    className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-flex items-center gap-1"
                 >
-                    ← Torna ai programmi
+                    <ArrowLeft className="w-4 h-4" />
+                    {backLabel}
                 </Link>
-                <h1 className="text-3xl font-bold text-gray-900">Nuovo Programma - Setup</h1>
+                <h1 className="text-3xl font-bold text-gray-900">{t('programs.newProgramSetupTitle')}</h1>
                 <p className="text-gray-600 mt-2">
-                    Configura le informazioni base del programma di allenamento
+                    {t('programs.newProgramSetupDescription')}
                 </p>
             </div>
 
-            {/* Error */}
             {error && (
                 <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6">
                     {error}
                 </div>
             )}
 
-            {/* Form */}
             <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6 space-y-6">
-                {/* Program Title */}
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Nome Programma *
+                        {t('programs.programNameLabel')}
                     </label>
                     <input
                         type="text"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         disabled={loading}
-                        placeholder="es. Programma Forza Base 8 Settimane"
+                        placeholder={t('programs.programNamePlaceholder')}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                         required
                     />
                 </div>
 
-                {/* Trainee Selection */}
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Atleta *
+                        {t('programs.athleteLabel')}
                     </label>
                     <select
                         value={traineeId}
@@ -195,7 +199,7 @@ export default function NewProgramContent({
                         required
                     >
                         <option value="" disabled>
-                            Seleziona un atleta
+                            {t('programs.selectTraineePlaceholder')}
                         </option>
                         {trainees.map((trainee) => (
                             <option key={trainee.id} value={trainee.id}>
@@ -215,18 +219,17 @@ export default function NewProgramContent({
                             className="mt-1 h-4 w-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
                         />
                         <span>
-                            <span className="block text-sm font-semibold text-gray-900">Programma SBD</span>
+                            <span className="block text-sm font-semibold text-gray-900">{t('programs.sbdProgramLabel')}</span>
                             <span className="block text-sm text-gray-600">
-                                Abilita la reportistica SBD nelle schermate del programma e dei workout.
+                                {t('programs.sbdProgramDescription')}
                             </span>
                         </span>
                     </label>
                 </div>
 
-                {/* Duration Weeks */}
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Durata (settimane) *
+                        {t('programs.durationWeeksLabel')}
                     </label>
                     <div className="flex items-center space-x-4">
                         <input
@@ -258,10 +261,9 @@ export default function NewProgramContent({
                     </div>
                 </div>
 
-                {/* Workouts Per Week */}
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Allenamenti per settimana *
+                        {t('programs.workoutsPerWeekLabel')}
                     </label>
                     <div className="flex items-center space-x-4">
                         <input
@@ -293,27 +295,28 @@ export default function NewProgramContent({
                     </div>
                 </div>
 
-                {/* Summary */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <div className="mb-2 flex items-center gap-2 text-blue-900">
                         <BarChart3 className="h-4 w-4" />
-                        <p className="text-sm font-semibold">Riepilogo</p>
+                        <p className="text-sm font-semibold">{t('editProgram.stepReview')}</p>
                     </div>
                     <p className="text-sm text-blue-700">
-                        Verranno create{' '}
-                        <span className="font-semibold">{durationWeeks} settimane</span> con{' '}
-                        <span className="font-semibold">
-                            {workoutsPerWeek} allenamenti per settimana
-                        </span>
-                        , per un totale di{' '}
-                        <span className="font-semibold">
-                            {durationWeeks * workoutsPerWeek} workout
-                        </span>{' '}
-                        da configurare.
+                        <Trans
+                            i18nKey="trainer:programs.setupSummaryDescription"
+                            values={{
+                                durationWeeks,
+                                workoutsPerWeek,
+                                totalWorkouts: durationWeeks * workoutsPerWeek,
+                            }}
+                            components={{
+                                weeks: <span className="font-semibold" />,
+                                workouts: <span className="font-semibold" />,
+                                total: <span className="font-semibold" />,
+                            }}
+                        />
                     </p>
                 </div>
 
-                {/* Actions */}
                 <div className="flex space-x-4 pt-4">
                     <button
                         type="submit"
@@ -323,14 +326,14 @@ export default function NewProgramContent({
                         {loading ? (
                             <LoadingSpinner size="sm" color="white" />
                         ) : (
-                            'Avanti: Configura Esercizi →'
+                            t('programs.nextConfigureExercises')
                         )}
                     </button>
                     <Link
-                        href="/trainer/programs"
+                        href={backHref}
                         className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-lg text-center transition-colors"
                     >
-                        Annulla
+                        {t('common:common.cancel')}
                     </Link>
                 </div>
             </form>

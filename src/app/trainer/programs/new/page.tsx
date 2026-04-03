@@ -94,14 +94,19 @@ export default async function NewProgramPage({ searchParams }: NewProgramPagePro
 
     const trainees = await getAvailableTrainees(session.user.id, session.user.role)
     const requestedTraineeId = searchParams?.traineeId
-    const initialTraineeId = trainees.some((trainee) => trainee.id === requestedTraineeId)
+    const hasRequestedTrainee = trainees.some((trainee) => trainee.id === requestedTraineeId)
+    const initialTraineeId = hasRequestedTrainee
         ? requestedTraineeId!
         : trainees[0]?.id || ''
 
     return (
         <DashboardLayout user={session.user}>
             <div className="py-6">
-                <NewProgramContent trainees={trainees} initialTraineeId={initialTraineeId} />
+                <NewProgramContent
+                    trainees={trainees}
+                    initialTraineeId={initialTraineeId}
+                    backContext={hasRequestedTrainee ? 'trainee' : 'programs'}
+                />
             </div>
         </DashboardLayout>
     )
