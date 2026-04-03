@@ -28,7 +28,7 @@ export default function TrainerTraineesContent() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [searchTerm, setSearchTerm] = useState('')
-    const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
+    const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('active')
 
     useEffect(() => {
         fetchTrainees()

@@ -7,6 +7,7 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import Link from 'next/link'
 import { SkeletonDetail } from '@/components'
 import { formatDate } from '@/lib/date-format'
+import TraineePlannedMuscleGroupReport from '@/components/TraineePlannedMuscleGroupReport'
 import { Plus, Eye, Pencil, ArrowLeft, Trophy } from 'lucide-react'
 
 interface Trainee {
@@ -50,7 +51,7 @@ export default function TraineeDetailContent() {
     const [programs, setPrograms] = useState<Program[]>([])
     const [records, setRecords] = useState<PersonalRecord[]>([])
     const [error, setError] = useState<string | null>(null)
-    const [activeTab, setActiveTab] = useState<'programs' | 'records' | 'stats'>('programs')
+    const [activeTab, setActiveTab] = useState<'programs' | 'records' | 'reports'>('programs')
 
     useEffect(() => {
         fetchTraineeData()
@@ -172,25 +173,6 @@ export default function TraineeDetailContent() {
                         </div>
                     </div>
                 </div>
-
-                {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-white rounded-lg shadow-md p-6">
-                        <div className="text-sm text-gray-500 mb-1">{t('athletes.totalPrograms')}</div>
-                        <div className="text-3xl font-bold text-gray-900">{programs.length}</div>
-                    </div>
-                    <div className="bg-white rounded-lg shadow-md p-6">
-                        <div className="text-sm text-gray-500 mb-1">{t('athletes.activePrograms')}</div>
-                        <div className="text-3xl font-bold text-green-600">
-                            {programs.filter((p) => p.status === 'active').length}
-                        </div>
-                    </div>
-                    <div className="bg-white rounded-lg shadow-md p-6">
-                        <div className="text-sm text-gray-500 mb-1">{t('athletes.recordsRegistered')}</div>
-                        <div className="text-3xl font-bold text-[#FFA700]">{records.length}</div>
-                    </div>
-                </div>
-
                 {/* Tabs */}
                 <div className="mb-6">
                     <div className="border-b border-gray-200">
@@ -212,6 +194,15 @@ export default function TraineeDetailContent() {
                                     }`}
                             >
                                 {t('athletes.recordsTab')} ({records.length})
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('reports')}
+                                className={`pb-4 px-1 border-b-2 font-semibold text-sm ${activeTab === 'reports'
+                                    ? 'border-[#FFA700] text-[#FFA700]'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    }`}
+                            >
+                                {t('athletes.reportsTab')}
                             </button>
                         </nav>
                     </div>
@@ -375,6 +366,10 @@ export default function TraineeDetailContent() {
                             </div>
                         )}
                     </div>
+                )}
+
+                {activeTab === 'reports' && (
+                    <TraineePlannedMuscleGroupReport traineeId={traineeId} />
                 )}
             </div>
         </div>
