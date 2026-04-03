@@ -26,6 +26,7 @@ interface Program {
     durationWeeks: number
     startDate: string | null
     endDate: string | null
+    createdAt: string
 }
 
 interface PersonalRecord {
@@ -238,6 +239,9 @@ export default function TraineeDetailContent() {
                                                 {t('common:common.duration')}
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                                                {t('athletes.creationDate')}
+                                            </th>
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
                                                 {t('programs.startDate')}
                                             </th>
                                             <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">
@@ -264,6 +268,9 @@ export default function TraineeDetailContent() {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                                     {t('programs.durationWeeks', { count: program.durationWeeks })}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                                    {formatDate(program.createdAt)}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                                     {formatDate(program.startDate)}

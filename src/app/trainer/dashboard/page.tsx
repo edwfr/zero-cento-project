@@ -2,10 +2,23 @@ import { getSession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import DashboardLayout from '@/components/DashboardLayout'
-import { NavigationCard } from '@/components'
+import { NavigationCard, ProgressBar } from '@/components'
+import WeekTypeBadge from '@/components/WeekTypeBadge'
 import { prisma } from '@/lib/prisma'
 import { formatDate } from '@/lib/date-format'
-import { Users, ClipboardList, Dumbbell, MessageSquare, Plus, User } from 'lucide-react'
+import { Users, ClipboardList, Dumbbell, Flame, Plus, User } from 'lucide-react'
+
+const MILLISECONDS_IN_DAY = 24 * 60 * 60 * 1000
+
+function addDays(date: Date, days: number) {
+    const nextDate = new Date(date)
+    nextDate.setDate(nextDate.getDate() + days)
+    return nextDate
+}
+
+function hasCompletedFeedback(feedbacks: Array<{ completed: boolean }>) {
+    return feedbacks.some((feedback) => feedback.completed)
+}
 
 export default async function TrainerDashboard() {
     const session = await getSession()
@@ -56,55 +69,106 @@ export default async function TrainerDashboard() {
         where: { createdBy: trainerId },
     })
 
-    // Get recent feedback (last 5)
-    const recentFeedback = await prisma.exerciseFeedback.findMany({
+    // Get active test weeks currently in progress for the trainer's athletes.
+    const currentMoment = new Date()
+    const sevenDaysAgo = new Date(currentMoment.getTime() - (7 * MILLISECONDS_IN_DAY))
+
+    const currentTestWeeks = await prisma.week.findMany({
         where: {
-            workoutExercise: {
-                workout: {
-                    week: {
-                        program: {
-                            trainerId,
-                        },
-                    },
-                },
+            weekType: 'test',
+            startDate: {
+                lte: currentMoment,
+                gt: sevenDaysAgo,
+            },
+            program: {
+                trainerId,
+                status: 'active',
             },
         },
-        include: {
-            trainee: {
+        select: {
+            id: true,
+            weekNumber: true,
+            startDate: true,
+            workouts: {
                 select: {
-                    firstName: true,
-                    lastName: true,
-                },
-            },
-            workoutExercise: {
-                include: {
-                    exercise: {
+                    id: true,
+                    workoutExercises: {
                         select: {
-                            name: true,
-                        },
-                    },
-                    workout: {
-                        include: {
-                            week: {
-                                include: {
-                                    program: {
-                                        select: {
-                                            title: true,
-                                        },
-                                    },
+                            id: true,
+                            exerciseFeedbacks: {
+                                select: {
+                                    completed: true,
                                 },
                             },
                         },
                     },
                 },
+                orderBy: {
+                    dayIndex: 'asc',
+                },
             },
-            setsPerformed: true,
+            program: {
+                select: {
+                    id: true,
+                    title: true,
+                    trainee: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
+                        },
+                    },
+                },
+            },
         },
-        orderBy: {
-            createdAt: 'desc',
-        },
-        take: 5,
     })
+
+    const currentTestWeekAssignments = currentTestWeeks.map((week) => {
+        const plannedTestsCount = week.workouts.filter(
+            (workout) => workout.workoutExercises.length > 0
+        ).length
+
+        const completedTestsCount = week.workouts.filter((workout) => {
+            if (workout.workoutExercises.length === 0) {
+                return false
+            }
+
+            return workout.workoutExercises.every((exercise) =>
+                hasCompletedFeedback(exercise.exerciseFeedbacks)
+            )
+        }).length
+
+        return {
+            ...week,
+            plannedTestsCount,
+            completedTestsCount,
+        }
+    }).sort((leftWeek, rightWeek) => {
+        const traineeLastNameComparison = leftWeek.program.trainee.lastName.localeCompare(
+            rightWeek.program.trainee.lastName,
+            'it'
+        )
+
+        if (traineeLastNameComparison !== 0) {
+            return traineeLastNameComparison
+        }
+
+        const traineeFirstNameComparison = leftWeek.program.trainee.firstName.localeCompare(
+            rightWeek.program.trainee.firstName,
+            'it'
+        )
+
+        if (traineeFirstNameComparison !== 0) {
+            return traineeFirstNameComparison
+        }
+
+        return leftWeek.weekNumber - rightWeek.weekNumber
+    })
+
+    const currentTestWeeksCount = new Set(currentTestWeekAssignments.map((week) => week.program.trainee.id)).size
+    const completedCurrentTestWeeksCount = currentTestWeekAssignments.filter(
+        (week) => week.plannedTestsCount > 0 && week.completedTestsCount === week.plannedTestsCount
+    ).length
 
     return (
         <DashboardLayout user={session.user}>
@@ -171,18 +235,23 @@ export default async function TrainerDashboard() {
                         <p className="text-purple-700 text-sm">Libreria esercizi</p>
                     </Link>
 
-                    {/* Feedback Card */}
-                    <div className="bg-orange-50 p-6 rounded-lg border border-orange-200">
+                    {/* Current Test Weeks KPI */}
+                    <Link
+                        href="#current-test-weeks"
+                        className="bg-orange-50 hover:bg-orange-100 p-6 rounded-lg transition-colors border border-orange-200"
+                    >
                         <div className="flex items-center justify-between mb-2">
                             <h3 className="text-lg font-semibold text-orange-900">
-                                <MessageSquare className="w-5 h-5 inline mr-2" />Feedback
+                                <Flame className="w-5 h-5 inline mr-2" />Settimane Test
                             </h3>
-                            <span className="text-3xl font-bold text-orange-600">
-                                {recentFeedback.length}
-                            </span>
+                            <div className="text-right">
+                                <span className="text-3xl font-bold text-orange-600">
+                                    {completedCurrentTestWeeksCount} / {currentTestWeeksCount}
+                                </span>
+                            </div>
                         </div>
-                        <p className="text-orange-700 text-sm">Ultimi ricevuti</p>
-                    </div>
+                        <p className="text-orange-700 text-sm">Utenti con test week completata / utenti con test week corrente</p>
+                    </Link>
                 </div>
 
                 {/* Quick Actions */}
@@ -250,65 +319,80 @@ export default async function TrainerDashboard() {
                     </div>
                 </div>
 
-                {/* Recent Feedback */}
-                {recentFeedback.length > 0 && (
-                    <div className="bg-white rounded-lg shadow-md p-6">
-                        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                            Feedback Recenti
-                        </h2>
+                <div id="current-test-weeks" className="bg-white rounded-lg shadow-md p-6 scroll-mt-24">
+                    <div className="flex items-start justify-between gap-4 mb-4">
+                        <div>
+                            <h2 className="text-xl font-semibold text-gray-900">
+                                KPI Settimane Test Correnti
+                            </h2>
+                            <p className="mt-1 text-sm text-gray-600">
+                                Elenco degli atleti in settimana test, con scheda associata e link alla progressione.
+                            </p>
+                        </div>
+                        <div className="rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-800">
+                            {completedCurrentTestWeeksCount} / {currentTestWeeksCount} utenti
+                        </div>
+                    </div>
+
+                    {currentTestWeekAssignments.length > 0 ? (
                         <div className="space-y-3">
-                            {recentFeedback.map((feedback) => {
-                                const totalVolume = feedback.setsPerformed.reduce(
-                                    (sum, set) => sum + set.reps * set.weight,
-                                    0
-                                )
-                                const avgRPE = feedback.actualRpe || null
+                            {currentTestWeekAssignments.map((testWeek) => {
+                                const testWeekEndDate = testWeek.startDate
+                                    ? addDays(testWeek.startDate, 6)
+                                    : null
 
                                 return (
                                     <div
-                                        key={feedback.id}
-                                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                                        key={testWeek.id}
+                                        className="flex flex-col gap-4 rounded-lg border border-orange-100 bg-orange-50/40 p-4 md:flex-row md:items-center md:justify-between"
                                     >
-                                        <div className="flex-1">
-                                            <div className="flex items-center space-x-2">
+                                        <div className="space-y-3 md:flex-1">
+                                            <div className="flex flex-wrap items-center gap-2">
                                                 <span className="font-semibold text-gray-900">
-                                                    {feedback.trainee.firstName}{' '}
-                                                    {feedback.trainee.lastName}
+                                                    {testWeek.program.trainee.firstName} {testWeek.program.trainee.lastName}
                                                 </span>
-                                                <span className="text-gray-400">·</span>
-                                                <span className="text-sm text-gray-600">
-                                                    {feedback.workoutExercise.exercise.name}
-                                                </span>
+                                                <WeekTypeBadge weekType="test" />
                                             </div>
-                                            <div className="text-sm text-gray-500 mt-1">
-                                                {feedback.workoutExercise.workout.week.program.title}
+                                            <div className="text-sm text-gray-700">
+                                                <span className="font-medium text-gray-900">Scheda:</span>{' '}
+                                                {testWeek.program.title}
                                             </div>
+                                            <ProgressBar
+                                                current={testWeek.completedTestsCount}
+                                                total={testWeek.plannedTestsCount}
+                                                label="Test completati"
+                                                size="sm"
+                                                color={testWeek.completedTestsCount === testWeek.plannedTestsCount ? 'success' : 'warning'}
+                                                className="max-w-md"
+                                            />
                                         </div>
-                                        <div className="flex items-center space-x-4 text-sm">
-                                            <div className="text-right">
-                                                <div className="text-gray-900 font-semibold">
-                                                    {Math.round(totalVolume)} kg
-                                                </div>
-                                                <div className="text-gray-500">Volume</div>
+
+                                        <div className="flex flex-col gap-3 text-sm text-gray-600 md:items-end md:text-right">
+                                            <div className="font-semibold text-gray-900">
+                                                Settimana {testWeek.weekNumber}
                                             </div>
-                                            {avgRPE && (
-                                                <div className="text-right">
-                                                    <div className="text-gray-900 font-semibold">
-                                                        RPE {avgRPE.toFixed(1)}
-                                                    </div>
-                                                    <div className="text-gray-500">Percepito</div>
-                                                </div>
-                                            )}
-                                            <div className="text-gray-400">
-                                                {formatDate(feedback.createdAt, 'medium')}
+                                            <div>
+                                                {testWeek.startDate
+                                                    ? `Dal ${formatDate(testWeek.startDate, 'medium')} al ${formatDate(testWeekEndDate, 'medium')}`
+                                                    : 'Date non disponibili'}
                                             </div>
+                                            <Link
+                                                href={`/trainer/programs/${testWeek.program.id}/progress`}
+                                                className="inline-flex items-center justify-center rounded-lg bg-white px-3 py-2 font-semibold text-brand-primary shadow-sm ring-1 ring-inset ring-brand-primary/20 transition-colors hover:bg-brand-primary/5"
+                                            >
+                                                Vai al progresso scheda
+                                            </Link>
                                         </div>
                                     </div>
                                 )
                             })}
                         </div>
-                    </div>
-                )}
+                    ) : (
+                        <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-10 text-center text-sm text-gray-600">
+                            Nessun atleta si trova attualmente in una settimana test.
+                        </div>
+                    )}
+                </div>
             </div>
         </DashboardLayout>
     )
