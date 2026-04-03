@@ -245,6 +245,7 @@
         "workoutsConfiguredShort": "{{done}} / {{total}} workout configurati",
         "exercisesCount": "{{count}} esercizi",
         "noExercises": "Nessun esercizio",
+        "noMovementPatternAssigned": "Nessuno schema motorio ancora associato",
         "trainingSetsByMuscleGroupEmpty": "Aggiungi esercizi con gruppi muscolari associati per visualizzare il grafico.",
         "trainingSetsFilterTitle": "Gruppi muscolari visibili",
         "trainingSetsFilterReset": "Mostra tutti",

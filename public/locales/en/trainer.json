@@ -245,6 +245,7 @@
         "workoutsConfiguredShort": "{{done}} / {{total}} workouts configured",
         "exercisesCount": "{{count}} exercises",
         "noExercises": "No exercises",
+        "noMovementPatternAssigned": "No movement pattern assigned yet",
         "trainingSetsByMuscleGroupEmpty": "Add exercises with linked muscle groups to display the chart.",
         "trainingSetsFilterTitle": "Visible muscle groups",
         "trainingSetsFilterReset": "Show all",

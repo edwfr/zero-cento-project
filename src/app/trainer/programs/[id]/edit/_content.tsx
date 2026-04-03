@@ -13,10 +13,10 @@ import { useToast } from '@/components/ToastNotification'
 import WeekTypeBadge from '@/components/WeekTypeBadge'
 import EditProgramMetadata from './EditProgramMetadata'
 import MovementPatternTag from '@/components/MovementPatternTag'
-import { ClipboardList, Flame, Wind, ArrowLeft, FileEdit, Copy, ArrowUpRight, BarChart3 } from 'lucide-react'
+import { ClipboardList, Flame, Wind, ArrowLeft, FileEdit, Copy, ArrowUpRight, BarChart3, ChevronDown, ChevronUp } from 'lucide-react'
 
-// Brand primary color - default per movement pattern senza colore personalizzato
-const PRIMARY_COLOR = '#FFA700'
+// Brand token fallback per movement pattern senza colore personalizzato
+const PRIMARY_COLOR = 'rgb(var(--brand-primary))'
 
 interface MovementPattern {
     id: string
@@ -116,6 +116,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const lastVisibilityRefreshRef = useRef(0)
     const [confirmCopyOpen, setConfirmCopyOpen] = useState(false)
     const [confirmCopyNextWeek, setConfirmCopyNextWeek] = useState<Week | null>(null)
+    const [isSbdSummaryCollapsed, setIsSbdSummaryCollapsed] = useState(false)
 
     const fetchPersonalRecords = useCallback(async (traineeId: string, requestId: number) => {
         try {
@@ -523,9 +524,9 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                 </div>
                                 <span className="ml-2 font-semibold text-gray-900">{t('editProgram.stepSetup')}</span>
                             </div>
-                            <div className="w-16 h-1 bg-[#FFA700]"></div>
+                            <div className="w-16 h-1 bg-brand-primary"></div>
                             <div className="flex items-center">
-                                <div className="w-10 h-10 bg-[#FFA700] text-white rounded-full flex items-center justify-center font-bold">
+                                <div className="w-10 h-10 bg-brand-primary text-white rounded-full flex items-center justify-center font-bold">
                                     2
                                 </div>
                                 <span className="ml-2 font-semibold text-gray-900">{t('editProgram.stepExercises')}</span>
@@ -569,7 +570,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             {readOnly && program.status === 'draft' && (
                                 <Link
                                     href={`/trainer/programs/${programId}/edit`}
-                                    className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold py-2 px-4 rounded-lg transition-colors inline-flex items-center gap-2"
+                                    className="bg-brand-primary hover:bg-brand-primary/90 text-white font-semibold py-2 px-4 rounded-lg transition-colors inline-flex items-center gap-2"
                                 >
                                     <FileEdit className="w-4 h-4" />
                                     {t('editProgram.editProgram', 'Modifica Programma')}
@@ -603,13 +604,13 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             </p>
                         </div>
                         <div className="text-right">
-                            <p className="text-3xl font-bold text-[#FFA700]">{progressPercent}%</p>
+                            <p className="text-3xl font-bold text-brand-primary">{progressPercent}%</p>
                             <p className="text-sm text-gray-600">{t('editProgram.completion')}</p>
                         </div>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
                         <div
-                            className="bg-[#FFA700] h-3 rounded-full transition-all duration-500"
+                            className="bg-brand-primary h-3 rounded-full transition-all duration-500"
                             style={{ width: `${progressPercent}%` }}
                         />
                     </div>
@@ -805,7 +806,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                 </div>
                                             ) : (
                                                 <div className="rounded-xl border border-dashed border-brand-primary/30 bg-white px-3 py-3 text-xs text-slate-500">
-                                                    Nessuno schema motorio ancora associato
+                                                    {t('editProgram.noMovementPatternAssigned')}
                                                 </div>
                                             )}
                                         </div>
@@ -831,7 +832,12 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
                 {shouldShowSbdReporting && sbdSummaryRows.length > 0 && (
                     <div className="mt-10 mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-md">
-                        <div className="mb-4 flex items-center justify-between gap-4">
+                        <button
+                            type="button"
+                            onClick={() => setIsSbdSummaryCollapsed((current) => !current)}
+                            className="group flex w-full items-start justify-between gap-4 text-left"
+                            aria-expanded={!isSbdSummaryCollapsed}
+                        >
                             <div className="flex items-center gap-3">
                                 <div className="rounded-xl bg-slate-900 p-2 text-white">
                                     <BarChart3 className="h-5 w-5" />
@@ -843,37 +849,39 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                     </p>
                                 </div>
                             </div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                                Solo programmi con flag SBD attivo
-                            </p>
-                        </div>
+                            <span className="rounded-full border border-gray-200 bg-gray-50 p-2 text-gray-500 transition-colors group-hover:bg-gray-100">
+                                {isSbdSummaryCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+                            </span>
+                        </button>
 
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-slate-200 text-sm">
-                                <thead>
-                                    <tr className="text-left text-slate-500">
-                                        <th className="px-3 py-3 font-semibold">Settimana</th>
-                                        <th className="px-3 py-3 font-semibold">Esercizio</th>
-                                        <th className="px-3 py-3 font-semibold">FRQ</th>
-                                        <th className="px-3 py-3 font-semibold">NBL</th>
-                                        <th className="px-3 py-3 font-semibold">IM</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {sbdSummaryRows.map((row) => (
-                                        <tr key={`${row.weekId}-${row.exerciseId}`} className="hover:bg-slate-50/70">
-                                            <td className="px-3 py-3 font-semibold text-slate-900">Sett. {row.weekNumber}</td>
-                                            <td className="px-3 py-3 text-slate-700">{row.exerciseName}</td>
-                                            <td className="px-3 py-3 text-slate-700">{row.frequency}</td>
-                                            <td className="px-3 py-3 text-slate-700">{row.totalLifts}</td>
-                                            <td className="px-3 py-3 text-slate-700">
-                                                {row.averageIntensity !== null ? `${row.averageIntensity.toFixed(1)}%` : '-'}
-                                            </td>
+                        {!isSbdSummaryCollapsed && (
+                            <div className="mt-4 overflow-x-auto">
+                                <table className="min-w-full divide-y divide-slate-200 text-sm">
+                                    <thead>
+                                        <tr className="text-left text-slate-500">
+                                            <th className="px-3 py-3 font-semibold">Settimana</th>
+                                            <th className="px-3 py-3 font-semibold">Esercizio</th>
+                                            <th className="px-3 py-3 font-semibold">FRQ</th>
+                                            <th className="px-3 py-3 font-semibold">NBL</th>
+                                            <th className="px-3 py-3 font-semibold">IM</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {sbdSummaryRows.map((row) => (
+                                            <tr key={`${row.weekId}-${row.exerciseId}`} className="hover:bg-slate-50/70">
+                                                <td className="px-3 py-3 font-semibold text-slate-900">Sett. {row.weekNumber}</td>
+                                                <td className="px-3 py-3 text-slate-700">{row.exerciseName}</td>
+                                                <td className="px-3 py-3 text-slate-700">{row.frequency}</td>
+                                                <td className="px-3 py-3 text-slate-700">{row.totalLifts}</td>
+                                                <td className="px-3 py-3 text-slate-700">
+                                                    {row.averageIntensity !== null ? `${row.averageIntensity.toFixed(1)}%` : '-'}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -885,7 +893,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                         <Link
                             href={`/trainer/programs/${programId}/review`}
                             className={`flex-1 py-3 px-6 rounded-lg font-semibold text-center transition-colors ${completedWorkouts === totalWorkouts
-                                ? 'bg-[#FFA700] hover:bg-[#FF9500] text-white'
+                                ? 'bg-brand-primary hover:bg-brand-primary/90 text-white'
                                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                 }`}
                             onClick={(e) => {

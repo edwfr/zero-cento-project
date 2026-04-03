@@ -14,7 +14,7 @@ interface MovementPatternTagProps {
  */
 export default function MovementPatternTag({
     name,
-    color = '#FFA700', // Default brand primary
+    color = 'rgb(var(--brand-primary))',
     onClick,
     className = '',
 }: MovementPatternTagProps) {
@@ -30,9 +30,14 @@ export default function MovementPatternTag({
             : { r: 255, g: 167, b: 0 }
     }
 
-    const rgb = hexToRgb(color)
-    const backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.15)`
-    const borderColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`
+    const usesBrandToken = color.includes('var(--brand-primary)')
+    const rgb = usesBrandToken ? null : hexToRgb(color)
+    const backgroundColor = usesBrandToken
+        ? 'rgba(var(--brand-primary), 0.15)'
+        : `rgba(${rgb!.r}, ${rgb!.g}, ${rgb!.b}, 0.15)`
+    const borderColor = usesBrandToken
+        ? 'rgba(var(--brand-primary), 0.5)'
+        : `rgba(${rgb!.r}, ${rgb!.g}, ${rgb!.b}, 0.5)`
 
     return (
         <span
