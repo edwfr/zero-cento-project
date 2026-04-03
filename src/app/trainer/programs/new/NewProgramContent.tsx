@@ -21,7 +21,7 @@ export default function NewProgramContent() {
     // Form state
     const [title, setTitle] = useState('')
     const [traineeId, setTraineeId] = useState('')
-    const [durationWeeks, setDurationWeeks] = useState(8)
+    const [durationWeeks, setDurationWeeks] = useState(4)
     const [workoutsPerWeek, setWorkoutsPerWeek] = useState(3)
 
     useEffect(() => {

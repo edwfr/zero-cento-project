@@ -14,7 +14,7 @@ import MovementPatternTag from '@/components/MovementPatternTag'
 import { WeightType, RestTime } from '@prisma/client'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { FileText, Pencil, Trash2, Dumbbell, Lock, Unlock, GripVertical } from 'lucide-react'
+import { FileText, Pencil, Trash2, Dumbbell, Lock, Unlock, GripVertical, ChevronLeft, ChevronRight } from 'lucide-react'
 import {
     DndContext,
     closestCenter,
@@ -132,6 +132,7 @@ export default function WorkoutDetailContent() {
 
     // Add/Edit exercise form
     const [showAddForm, setShowAddForm] = useState(false)
+    const [isPRPanelCollapsed, setIsPRPanelCollapsed] = useState(false)
     const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null)
     const [selectedExerciseId, setSelectedExerciseId] = useState('')
     const [variant, setVariant] = useState('')
@@ -474,64 +475,85 @@ export default function WorkoutDetailContent() {
             )}
 
             {/* Floating PR Panel */}
-            <div className="hidden xl:block fixed right-8 top-24 w-80 max-h-[calc(100vh-8rem)] overflow-y-auto bg-white rounded-lg shadow-lg border border-gray-200">
-                <div className="sticky top-0 bg-gradient-to-r from-[#FFA700] to-[#FF9500] text-white px-4 py-3 rounded-t-lg">
-                    <div className="flex items-center space-x-2">
-                        <Dumbbell className="w-5 h-5" />
-                        <h3 className="font-bold text-sm">
-                            Massimali di {program?.trainee.firstName}
-                        </h3>
+            <div
+                className={`hidden xl:block fixed right-8 top-24 max-h-[calc(100vh-8rem)] overflow-y-auto bg-white rounded-lg shadow-lg border border-gray-200 transition-all duration-200 ${isPRPanelCollapsed ? 'w-16' : 'w-80'}`}
+            >
+                <div className="sticky top-0 bg-gradient-to-r from-[#FFA700] to-[#FF9500] text-white px-3 py-3 rounded-t-lg">
+                    <div className={`flex items-center ${isPRPanelCollapsed ? 'justify-center' : 'justify-between gap-2'}`}>
+                        <div className="flex items-center space-x-2 overflow-hidden">
+                            <Dumbbell className="w-5 h-5 shrink-0" />
+                            {!isPRPanelCollapsed && (
+                                <h3 className="font-bold text-sm whitespace-nowrap">
+                                    Massimali di {program?.trainee.firstName}
+                                </h3>
+                            )}
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setIsPRPanelCollapsed((current) => !current)}
+                            className={`rounded-md bg-white/15 p-1 hover:bg-white/25 transition-colors ${isPRPanelCollapsed ? 'absolute inset-x-0 top-3 mx-auto w-fit' : ''}`}
+                            aria-label={isPRPanelCollapsed ? 'Espandi pannello massimali' : 'Comprimi pannello massimali'}
+                            title={isPRPanelCollapsed ? 'Espandi' : 'Comprimi'}
+                        >
+                            {isPRPanelCollapsed ? (
+                                <ChevronLeft className="w-4 h-4" />
+                            ) : (
+                                <ChevronRight className="w-4 h-4" />
+                            )}
+                        </button>
                     </div>
                 </div>
-                <div className="p-4">
-                    {bestPRs.length > 0 ? (
-                        <div className="space-y-3">
-                            {bestPRs.map((pr) => (
-                                <div key={pr.id} className="border-b border-gray-200 pb-3 last:border-b-0">
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex-1">
-                                            <p className="text-sm font-semibold text-gray-900">
-                                                {pr.exercise.name}
-                                            </p>
-                                            <div className="mt-1 flex items-baseline space-x-2">
-                                                <span className="text-2xl font-bold text-[#FFA700]">
-                                                    {pr.weight}
-                                                </span>
-                                                <span className="text-xs text-gray-500">kg</span>
-                                                <span className="text-xs text-gray-500">×</span>
-                                                <span className="text-sm font-semibold text-gray-700">
-                                                    {pr.reps} {pr.reps === 1 ? 'rep' : 'reps'}
-                                                </span>
+                {!isPRPanelCollapsed && (
+                    <div className="p-4">
+                        {bestPRs.length > 0 ? (
+                            <div className="space-y-3">
+                                {bestPRs.map((pr) => (
+                                    <div key={pr.id} className="border-b border-gray-200 pb-3 last:border-b-0">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <p className="text-sm font-semibold text-gray-900">
+                                                    {pr.exercise.name}
+                                                </p>
+                                                <div className="mt-1 flex items-baseline space-x-2">
+                                                    <span className="text-2xl font-bold text-[#FFA700]">
+                                                        {pr.weight}
+                                                    </span>
+                                                    <span className="text-xs text-gray-500">kg</span>
+                                                    <span className="text-xs text-gray-500">×</span>
+                                                    <span className="text-sm font-semibold text-gray-700">
+                                                        {pr.reps} {pr.reps === 1 ? 'rep' : 'reps'}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    {new Date(pr.recordDate).toLocaleDateString('it-IT', {
+                                                        day: 'numeric',
+                                                        month: 'short',
+                                                        year: 'numeric'
+                                                    })}
+                                                </p>
                                             </div>
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                {new Date(pr.recordDate).toLocaleDateString('it-IT', {
-                                                    day: 'numeric',
-                                                    month: 'short',
-                                                    year: 'numeric'
-                                                })}
-                                            </p>
+                                            <span
+                                                className={`px-2 py-0.5 text-xs font-medium rounded-full ${pr.exercise.type === 'fundamental'
+                                                    ? 'bg-red-50 text-red-700'
+                                                    : 'bg-blue-50 text-blue-700'
+                                                    }`}
+                                            >
+                                                {pr.exercise.type === 'fundamental' ? 'F' : 'A'}
+                                            </span>
                                         </div>
-                                        <span
-                                            className={`px-2 py-0.5 text-xs font-medium rounded-full ${pr.exercise.type === 'fundamental'
-                                                ? 'bg-red-50 text-red-700'
-                                                : 'bg-blue-50 text-blue-700'
-                                                }`}
-                                        >
-                                            {pr.exercise.type === 'fundamental' ? 'F' : 'A'}
-                                        </span>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-center py-8">
-                            <div className="text-4xl mb-2">📊</div>
-                            <p className="text-sm text-gray-600">
-                                Nessun massimale registrato
-                            </p>
-                        </div>
-                    )}
-                </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-8">
+                                <div className="text-4xl mb-2">📊</div>
+                                <p className="text-sm text-gray-600">
+                                    Nessun massimale registrato
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

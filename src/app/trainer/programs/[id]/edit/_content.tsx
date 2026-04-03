@@ -11,15 +11,55 @@ import { useToast } from '@/components/ToastNotification'
 import WeekTypeBadge from '@/components/WeekTypeBadge'
 import EditProgramMetadata from './EditProgramMetadata'
 import MovementPatternTag from '@/components/MovementPatternTag'
+import { calculateTrainingSets } from '@/lib/calculations'
+import {
+    Bar,
+    BarChart,
+    CartesianGrid,
+    Legend,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
+} from 'recharts'
 import { ClipboardList, Flame, Wind, ArrowLeft, FileEdit, Copy } from 'lucide-react'
 
 // Brand primary color - default per movement pattern senza colore personalizzato
 const PRIMARY_COLOR = '#FFA700'
+const MUSCLE_GROUP_CHART_COLORS = [
+    '#FFA700',
+    '#0F766E',
+    '#2563EB',
+    '#DC2626',
+    '#7C3AED',
+    '#0891B2',
+    '#65A30D',
+    '#EA580C',
+]
 
 interface MovementPattern {
     id: string
     name: string
     color: string
+}
+
+interface WorkoutExerciseMuscleGroup {
+    coefficient: number
+    muscleGroup: {
+        id: string
+        name: string
+    }
+}
+
+interface WorkoutExercise {
+    id: string
+    sets: number
+    isWarmup: boolean
+    exercise: {
+        id: string
+        name: string
+        exerciseMuscleGroups: WorkoutExerciseMuscleGroup[]
+    }
 }
 
 interface Workout {
@@ -28,6 +68,7 @@ interface Workout {
     order: number
     exerciseCount: number
     movementPatterns: MovementPattern[]
+    workoutExercises: WorkoutExercise[]
 }
 
 interface Week {
@@ -73,6 +114,10 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     useEffect(() => {
         fetchProgram()
     }, [programId])
+
+    const formatTrainingSetsValue = (value: number) => {
+        return Number.isInteger(value) ? value.toString() : value.toFixed(1)
+    }
 
     // Ricarica i dati quando si torna alla pagina (ad esempio dopo aver modificato un workout)
     useEffect(() => {
@@ -141,6 +186,16 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             order: workout.order,
                             exerciseCount: workoutExercises.length,
                             movementPatterns,
+                            workoutExercises: workoutExercises.map((we: any) => ({
+                                id: we.id,
+                                sets: we.sets,
+                                isWarmup: we.isWarmup,
+                                exercise: {
+                                    id: we.exercise.id,
+                                    name: we.exercise.name,
+                                    exerciseMuscleGroups: we.exercise.exerciseMuscleGroups || [],
+                                },
+                            })),
                         }
                     }),
                 })),
@@ -245,6 +300,63 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const totalWorkouts = program.durationWeeks * program.workoutsPerWeek
     const completedWorkouts = getCompletedWorkouts()
     const progressPercent = Math.round((completedWorkouts / totalWorkouts) * 100)
+    const muscleGroupCatalog = new Map<string, { id: string; name: string }>()
+
+    const weeklyMuscleGroupTotals = program.weeks.map((week) => {
+        const totals = new Map<string, number>()
+
+        week.workouts.forEach((workout) => {
+            workout.workoutExercises.forEach((workoutExercise) => {
+                workoutExercise.exercise.exerciseMuscleGroups.forEach((entry) => {
+                    muscleGroupCatalog.set(entry.muscleGroup.id, entry.muscleGroup)
+
+                    const trainingSets = calculateTrainingSets(
+                        workoutExercise.sets,
+                        entry.coefficient,
+                        workoutExercise.isWarmup
+                    )
+
+                    if (trainingSets <= 0) {
+                        return
+                    }
+
+                    totals.set(
+                        entry.muscleGroup.id,
+                        (totals.get(entry.muscleGroup.id) || 0) + trainingSets
+                    )
+                })
+            })
+        })
+
+        return {
+            weekNumber: week.weekNumber,
+            totals,
+        }
+    })
+
+    const muscleGroupSeries = Array.from(muscleGroupCatalog.values())
+        .sort((a, b) => a.name.localeCompare(b.name, 'it', { sensitivity: 'base' }))
+        .map((muscleGroup, index) => ({
+            ...muscleGroup,
+            color: MUSCLE_GROUP_CHART_COLORS[index % MUSCLE_GROUP_CHART_COLORS.length],
+        }))
+
+    const weeklyMuscleGroupChartData = weeklyMuscleGroupTotals.map(({ weekNumber, totals }) => {
+        const chartRow: Record<string, number | string> = {
+            weekNumber,
+            weekLabel: `${t('editProgram.week')} ${weekNumber}`,
+        }
+
+        muscleGroupSeries.forEach((muscleGroup) => {
+            chartRow[muscleGroup.id] = Number((totals.get(muscleGroup.id) || 0).toFixed(1))
+        })
+
+        return chartRow
+    })
+
+    const hasWeeklyMuscleGroupData = weeklyMuscleGroupChartData.some((row) =>
+        muscleGroupSeries.some((muscleGroup) => Number(row[muscleGroup.id] || 0) > 0)
+    )
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -487,6 +599,60 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             </div>
                         </div>
                     ))}
+                </div>
+
+                <div className="bg-white rounded-lg shadow-md p-6 mt-8">
+                    <div className="mb-6">
+                        <h2 className="text-xl font-bold text-gray-900">
+                            {t('editProgram.trainingSetsByMuscleGroupTitle')}
+                        </h2>
+                        <p className="text-sm text-gray-600 mt-2">
+                            {t('editProgram.trainingSetsByMuscleGroupDescription')}
+                        </p>
+                    </div>
+
+                    {hasWeeklyMuscleGroupData ? (
+                        <>
+                            <div className="h-96">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={weeklyMuscleGroupChartData}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                        <XAxis dataKey="weekLabel" />
+                                        <YAxis />
+                                        <Tooltip
+                                            formatter={(value: number, name: string) => [
+                                                `${formatTrainingSetsValue(Number(value))} ${t('editProgram.trainingSetsUnit')}`,
+                                                muscleGroupSeries.find((muscleGroup) => muscleGroup.id === name)
+                                                    ?.name || name,
+                                            ]}
+                                        />
+                                        <Legend
+                                            formatter={(value) =>
+                                                muscleGroupSeries.find((muscleGroup) => muscleGroup.id === value)
+                                                    ?.name || value
+                                            }
+                                        />
+                                        {muscleGroupSeries.map((muscleGroup) => (
+                                            <Bar
+                                                key={muscleGroup.id}
+                                                dataKey={muscleGroup.id}
+                                                stackId="trainingSets"
+                                                fill={muscleGroup.color}
+                                                radius={[4, 4, 0, 0]}
+                                            />
+                                        ))}
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-4">
+                                {t('editProgram.trainingSetsByMuscleGroupFootnote')}
+                            </p>
+                        </>
+                    ) : (
+                        <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center text-sm text-gray-600">
+                            {t('editProgram.trainingSetsByMuscleGroupEmpty')}
+                        </div>
+                    )}
                 </div>
 
                 {/* Action Buttons - Only in Edit Mode */}
