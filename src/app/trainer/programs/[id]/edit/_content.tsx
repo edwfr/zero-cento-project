@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo, type CSSProperties } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
@@ -133,6 +133,11 @@ interface EditableWorkoutExerciseRow {
     isDraft: boolean
 }
 
+interface WorkoutStructureTemplateRow {
+    id: string
+    exerciseId: string
+}
+
 interface EditProgramContentProps {
     readOnly?: boolean
 }
@@ -145,6 +150,53 @@ function parseRepsValue(repsValue: string): number {
 function estimateOneRMValue(weight: number, reps: number): number {
     if (reps <= 1) return weight
     return weight * (1 + reps / 30)
+}
+
+function parseRgbColor(color: string): { r: number; g: number; b: number } | null {
+    const hexMatch = color.trim().match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i)
+    if (hexMatch) {
+        return {
+            r: parseInt(hexMatch[1], 16),
+            g: parseInt(hexMatch[2], 16),
+            b: parseInt(hexMatch[3], 16),
+        }
+    }
+
+    const rgbMatch = color
+        .trim()
+        .match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([0-9.]+))?\s*\)$/i)
+    if (rgbMatch) {
+        return {
+            r: Number(rgbMatch[1]),
+            g: Number(rgbMatch[2]),
+            b: Number(rgbMatch[3]),
+        }
+    }
+
+    return null
+}
+
+function getMovementPatternRowStyle(color?: string | null): CSSProperties | undefined {
+    if (!color) {
+        return undefined
+    }
+
+    if (color.includes('var(--brand-primary)')) {
+        return {
+            backgroundColor: 'rgba(var(--brand-primary), 0.12)',
+            borderLeftColor: 'rgba(var(--brand-primary), 0.8)',
+        }
+    }
+
+    const rgb = parseRgbColor(color)
+    if (!rgb) {
+        return undefined
+    }
+
+    return {
+        backgroundColor: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.14)`,
+        borderLeftColor: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.85)`,
+    }
 }
 
 function buildEditableRow(
@@ -194,6 +246,13 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const [rowStateById, setRowStateById] = useState<Record<string, EditableWorkoutExerciseRow>>({})
     const [draftRowIdsByWorkout, setDraftRowIdsByWorkout] = useState<Record<string, string[]>>({})
     const [customVariantInputByRowId, setCustomVariantInputByRowId] = useState<Record<string, boolean>>({})
+    const [wizardStep, setWizardStep] = useState<'structure' | 'details'>(
+        readOnly ? 'details' : 'structure'
+    )
+    const [structureRowsByWorkoutIndex, setStructureRowsByWorkoutIndex] = useState<
+        Record<number, WorkoutStructureTemplateRow[]>
+    >({})
+    const [applyingStructure, setApplyingStructure] = useState(false)
     const [savingRowId, setSavingRowId] = useState<string | null>(null)
     const [savingWorkoutId, setSavingWorkoutId] = useState<string | null>(null)
     const [deletingRowId, setDeletingRowId] = useState<string | null>(null)
@@ -514,6 +573,41 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             }
 
             return nextExpandedWorkoutIds
+        })
+
+        setStructureRowsByWorkoutIndex((currentStructureRowsByWorkoutIndex) => {
+            const firstWeek = program.weeks[0]
+            const nextStructureRowsByWorkoutIndex: Record<number, WorkoutStructureTemplateRow[]> = {}
+            let hasChanges = false
+
+            for (let workoutIndex = 0; workoutIndex < program.workoutsPerWeek; workoutIndex += 1) {
+                const existingRows = currentStructureRowsByWorkoutIndex[workoutIndex]
+
+                if (existingRows) {
+                    nextStructureRowsByWorkoutIndex[workoutIndex] = existingRows
+                    continue
+                }
+
+                const sourceWorkout = firstWeek?.workouts[workoutIndex]
+                const sourceRows = sourceWorkout?.workoutExercises ?? []
+                hasChanges = true
+
+                nextStructureRowsByWorkoutIndex[workoutIndex] = sourceRows.map(
+                    (workoutExercise, rowIndex) => ({
+                        id: `structure-${workoutIndex}-${workoutExercise.id}-${rowIndex}`,
+                        exerciseId: workoutExercise.exercise.id,
+                    })
+                )
+            }
+
+            const currentKeys = Object.keys(currentStructureRowsByWorkoutIndex)
+            const nextKeys = Object.keys(nextStructureRowsByWorkoutIndex)
+
+            if (!hasChanges && currentKeys.length === nextKeys.length) {
+                return currentStructureRowsByWorkoutIndex
+            }
+
+            return nextStructureRowsByWorkoutIndex
         })
     }, [program, activeWeekId])
 
@@ -893,6 +987,62 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         [customVariantInputByRowId, updateRowFields]
     )
 
+    const updateStructureRowFields = useCallback(
+        (
+            workoutIndex: number,
+            rowId: string,
+            patch: Partial<WorkoutStructureTemplateRow>
+        ) => {
+            setStructureRowsByWorkoutIndex((currentRowsByWorkoutIndex) => {
+                const workoutRows = currentRowsByWorkoutIndex[workoutIndex] || []
+                const rowIndex = workoutRows.findIndex((candidateRow) => candidateRow.id === rowId)
+
+                if (rowIndex < 0) {
+                    return currentRowsByWorkoutIndex
+                }
+
+                const nextWorkoutRows = [...workoutRows]
+                nextWorkoutRows[rowIndex] = {
+                    ...nextWorkoutRows[rowIndex],
+                    ...patch,
+                }
+
+                return {
+                    ...currentRowsByWorkoutIndex,
+                    [workoutIndex]: nextWorkoutRows,
+                }
+            })
+        },
+        []
+    )
+
+    const addStructureRow = useCallback((workoutIndex: number) => {
+        const rowId = `structure-${workoutIndex}-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+
+        setStructureRowsByWorkoutIndex((currentRowsByWorkoutIndex) => ({
+            ...currentRowsByWorkoutIndex,
+            [workoutIndex]: [
+                ...(currentRowsByWorkoutIndex[workoutIndex] || []),
+                {
+                    id: rowId,
+                    exerciseId: '',
+                },
+            ],
+        }))
+    }, [])
+
+    const removeStructureRow = useCallback((workoutIndex: number, rowId: string) => {
+        setStructureRowsByWorkoutIndex((currentRowsByWorkoutIndex) => {
+            const workoutRows = currentRowsByWorkoutIndex[workoutIndex] || []
+            const nextWorkoutRows = workoutRows.filter((candidateRow) => candidateRow.id !== rowId)
+
+            return {
+                ...currentRowsByWorkoutIndex,
+                [workoutIndex]: nextWorkoutRows,
+            }
+        })
+    }, [])
+
     const addDraftRow = (workoutId: string) => {
         if (readOnly || savingRowId || deletingRowId) {
             return
@@ -1147,6 +1297,121 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         [draftRowIdsByWorkout, rowStateById]
     )
 
+    const applyStructureToAllWeeks = useCallback(() => {
+        if (!program || readOnly) {
+            return
+        }
+
+        const cleanedStructureByWorkoutIndex: Record<number, WorkoutStructureTemplateRow[]> =
+            Object.entries(structureRowsByWorkoutIndex).reduce((acc, [workoutIndex, rows]) => {
+                const normalizedRows = rows
+                    .map((row) => ({
+                        ...row,
+                        exerciseId: row.exerciseId.trim(),
+                    }))
+                    .filter((row) => row.exerciseId.length > 0)
+
+                acc[Number(workoutIndex)] = normalizedRows
+                return acc
+            }, {} as Record<number, WorkoutStructureTemplateRow[]>)
+
+        const configuredRows = Object.values(cleanedStructureByWorkoutIndex).reduce(
+            (total, rows) => total + rows.length,
+            0
+        )
+
+        if (configuredRows === 0) {
+            showToast(t('editProgram.structureNoExercisesWarning'), 'warning')
+            return
+        }
+
+        setApplyingStructure(true)
+
+        try {
+            const nextRowsById = { ...rowStateById }
+            const nextDraftRowsByWorkout = { ...draftRowIdsByWorkout }
+
+            program.weeks.forEach((week) => {
+                week.workouts.forEach((workout, workoutIndex) => {
+                    const structureRows = cleanedStructureByWorkoutIndex[workoutIndex] || []
+                    if (structureRows.length === 0) {
+                        return
+                    }
+
+                    const existingRows = getWorkoutRows(workout)
+                    const existingCountByKey = existingRows.reduce((acc, existingRow) => {
+                        const key = existingRow.exerciseId
+                        acc[key] = (acc[key] || 0) + 1
+                        return acc
+                    }, {} as Record<string, number>)
+                    const templateSeenByKey: Record<string, number> = {}
+                    let nextOrder = existingRows.length + 1
+
+                    structureRows.forEach((structureRow) => {
+                        const key = structureRow.exerciseId
+                        templateSeenByKey[key] = (templateSeenByKey[key] || 0) + 1
+
+                        if ((existingCountByKey[key] || 0) >= templateSeenByKey[key]) {
+                            return
+                        }
+
+                        const draftRowId = `draft-${workout.id}-${Date.now()}-${Math.floor(Math.random() * 1000)}-${nextOrder}`
+                        const draftRow: EditableWorkoutExerciseRow = {
+                            id: draftRowId,
+                            workoutId: workout.id,
+                            exerciseId: structureRow.exerciseId,
+                            variant: '',
+                            sets: '',
+                            reps: '',
+                            targetRpe: '',
+                            weight: '',
+                            isWarmup: false,
+                            order: nextOrder,
+                            restTime: 'm2',
+                            notes: null,
+                            isDraft: true,
+                        }
+
+                        nextRowsById[draftRowId] = draftRow
+                        nextDraftRowsByWorkout[workout.id] = [
+                            ...(nextDraftRowsByWorkout[workout.id] || []),
+                            draftRowId,
+                        ]
+                        existingCountByKey[key] = (existingCountByKey[key] || 0) + 1
+                        existingRows.push(draftRow)
+                        nextOrder += 1
+                    })
+                })
+            })
+
+            setRowStateById(nextRowsById)
+            setDraftRowIdsByWorkout(nextDraftRowsByWorkout)
+            setExpandedWeekIds(
+                Object.fromEntries(program.weeks.map((week) => [week.id, true] as const))
+            )
+            setExpandedWorkoutIds(
+                Object.fromEntries(
+                    program.weeks.flatMap((week) =>
+                        week.workouts.map((workout) => [workout.id, true] as const)
+                    )
+                )
+            )
+            setWizardStep('details')
+            showToast(t('editProgram.structureAppliedSuccess'), 'success')
+        } finally {
+            setApplyingStructure(false)
+        }
+    }, [
+        draftRowIdsByWorkout,
+        getWorkoutRows,
+        program,
+        readOnly,
+        rowStateById,
+        showToast,
+        structureRowsByWorkoutIndex,
+        t,
+    ])
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -1170,7 +1435,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {!readOnly && (
                     <div className="mb-8">
-                        <div className="flex items-center justify-center space-x-4 mb-4">
+                        <div className="flex flex-wrap items-center justify-center gap-4 mb-4">
                             <div className="flex items-center">
                                 <div className="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center font-bold">
                                     ✓
@@ -1179,22 +1444,52 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             </div>
                             <div className="w-16 h-1 bg-brand-primary"></div>
                             <div className="flex items-center">
-                                <div className="w-10 h-10 bg-brand-primary text-white rounded-full flex items-center justify-center font-bold">
-                                    2
+                                <div
+                                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${wizardStep === 'structure'
+                                        ? 'bg-brand-primary text-white'
+                                        : 'bg-green-500 text-white'
+                                        }`}
+                                >
+                                    {wizardStep === 'structure' ? '2' : '✓'}
                                 </div>
-                                <span className="ml-2 font-semibold text-gray-900">{t('editProgram.stepExercises')}</span>
+                                <span
+                                    className={`ml-2 ${wizardStep === 'structure' ? 'font-semibold text-gray-900' : 'text-gray-500'
+                                        }`}
+                                >
+                                    {t('editProgram.stepStructure')}
+                                </span>
+                            </div>
+                            <div
+                                className={`w-16 h-1 ${wizardStep === 'details' ? 'bg-brand-primary' : 'bg-gray-300'
+                                    }`}
+                            ></div>
+                            <div className="flex items-center">
+                                <div
+                                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${wizardStep === 'details'
+                                        ? 'bg-brand-primary text-white'
+                                        : 'bg-gray-300 text-gray-600'
+                                        }`}
+                                >
+                                    3
+                                </div>
+                                <span
+                                    className={`ml-2 ${wizardStep === 'details' ? 'font-semibold text-gray-900' : 'text-gray-500'
+                                        }`}
+                                >
+                                    {t('editProgram.stepExercises')}
+                                </span>
                             </div>
                             <div className="w-16 h-1 bg-gray-300"></div>
                             <div className="flex items-center">
                                 <div className="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">
-                                    3
+                                    4
                                 </div>
                                 <span className="ml-2 text-gray-500">{t('editProgram.stepReview')}</span>
                             </div>
                             <div className="w-16 h-1 bg-gray-300"></div>
                             <div className="flex items-center">
                                 <div className="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">
-                                    4
+                                    5
                                 </div>
                                 <span className="ml-2 text-gray-500">{t('editProgram.stepPublish')}</span>
                             </div>
@@ -1250,744 +1545,169 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
-                    <div
-                        className={`bg-white rounded-lg border border-gray-200 shadow-sm p-4 ${shouldShowSbdReporting ? 'xl:col-span-1' : 'xl:col-span-3'
-                            }`}
-                    >
-                        <button
-                            type="button"
-                            onClick={() => setIsPrHelperCollapsed((current) => !current)}
-                            className="w-full flex items-start justify-between gap-3 text-left"
-                            aria-expanded={!isPrHelperCollapsed}
-                        >
-                            <div className="flex items-center gap-2">
-                                <div className="rounded-lg bg-brand-primary text-white p-2">
-                                    <Dumbbell className="w-4 h-4" />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-semibold text-gray-900">
-                                        {t('editProgram.prHelperTitle')}
-                                    </p>
-                                    <p className="text-xs text-gray-500">
-                                        {t('editProgram.prHelperDescription')}
-                                    </p>
-                                </div>
-                            </div>
-                            <span className="rounded-full border border-gray-200 bg-gray-50 p-2 text-gray-500">
-                                {isPrHelperCollapsed ? (
-                                    <ChevronDown className="w-4 h-4" />
-                                ) : (
-                                    <ChevronUp className="w-4 h-4" />
-                                )}
-                            </span>
-                        </button>
-
-                        {!isPrHelperCollapsed && (
-                            <div className="mt-4 max-h-72 overflow-y-auto">
-                                {bestPRs.length > 0 ? (
-                                    <div className="space-y-2">
-                                        {bestPRs.map((record) => {
-                                            const label =
-                                                record.exercise?.name ||
-                                                exerciseNameById[record.exerciseId] ||
-                                                t('editProgram.tableExercise')
-
-                                            const type =
-                                                record.exercise?.type ||
-                                                exerciseLookupById.get(record.exerciseId)?.type ||
-                                                'accessory'
-
-                                            return (
-                                                <div
-                                                    key={`${record.exerciseId}-${record.id || record.reps}`}
-                                                    className="rounded-lg border border-gray-200 px-3 py-2"
-                                                >
-                                                    <div className="flex items-start justify-between gap-2">
-                                                        <div>
-                                                            <p className="text-sm font-semibold text-gray-900">
-                                                                {label}
-                                                            </p>
-                                                            <p className="text-xs text-gray-500">
-                                                                {t('editProgram.prRecordFormat', {
-                                                                    weight: record.weight,
-                                                                    reps: record.reps,
-                                                                })}
-                                                            </p>
-                                                        </div>
-                                                        <span
-                                                            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${type === 'fundamental'
-                                                                ? 'bg-red-100 text-red-700'
-                                                                : 'bg-blue-100 text-blue-700'
-                                                                }`}
-                                                        >
-                                                            {type === 'fundamental' ? 'F' : 'A'}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            )
-                                        })}
-                                    </div>
-                                ) : (
-                                    <p className="text-sm text-gray-500 py-3">
-                                        {t('editProgram.prHelperNoData')}
-                                    </p>
-                                )}
-                            </div>
-                        )}
-                    </div>
-
-                    {shouldShowSbdReporting && (
-                        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 xl:col-span-2">
-                            <button
-                                type="button"
-                                onClick={() => setIsSbdHelperCollapsed((current) => !current)}
-                                className="w-full flex items-start justify-between gap-3 text-left"
-                                aria-expanded={!isSbdHelperCollapsed}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <div className="rounded-lg bg-slate-900 text-white p-2">
-                                        <BarChart3 className="w-4 h-4" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-semibold text-gray-900">
-                                            {t('editProgram.sbdHelperTitle')}
-                                        </p>
-                                        <p className="text-xs text-gray-500">
-                                            {t('editProgram.sbdHelperDescription')}
-                                        </p>
-                                    </div>
-                                </div>
-                                <span className="rounded-full border border-gray-200 bg-gray-50 p-2 text-gray-500">
-                                    {isSbdHelperCollapsed ? (
-                                        <ChevronDown className="w-4 h-4" />
-                                    ) : (
-                                        <ChevronUp className="w-4 h-4" />
-                                    )}
-                                </span>
-                            </button>
-
-                            {!isSbdHelperCollapsed && (
-                                <div className="mt-4 max-h-72 overflow-y-auto">
-                                    {sbdMetricsByExerciseAcrossWeeks.length > 0 ? (
-                                        <div className="overflow-x-auto">
-                                            <table className="min-w-[780px] w-full divide-y divide-slate-200 text-xs">
-                                                <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
-                                                    <tr>
-                                                        <th className="sticky left-0 z-10 bg-slate-50 px-3 py-2 text-left">
-                                                            {t('editProgram.tableExercise')}
-                                                        </th>
-                                                        {program.weeks.map((week) => (
-                                                            <th key={week.id} className="px-3 py-2 text-left whitespace-nowrap">
-                                                                {t('editProgram.week')} {week.weekNumber}
-                                                            </th>
-                                                        ))}
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-slate-100 bg-white">
-                                                    {sbdMetricsByExerciseAcrossWeeks.map((exerciseMetric) => (
-                                                        <tr key={exerciseMetric.exerciseId}>
-                                                            <td className="sticky left-0 z-10 bg-white px-3 py-2 align-top text-sm font-semibold text-slate-900 whitespace-nowrap">
-                                                                {exerciseMetric.exerciseName}
-                                                            </td>
-                                                            {program.weeks.map((week) => {
-                                                                const metric =
-                                                                    exerciseMetric.metricsByWeekId[week.id]
-
-                                                                return (
-                                                                    <td key={week.id} className="px-3 py-2 align-top">
-                                                                        {metric ? (
-                                                                            <div className="space-y-0.5 text-[11px] text-slate-700">
-                                                                                <p>
-                                                                                    <span className="font-semibold text-slate-500">
-                                                                                        {t('editProgram.sbdFrq')}:
-                                                                                    </span>{' '}
-                                                                                    <span className="font-semibold text-slate-900">
-                                                                                        {metric.frequency}
-                                                                                    </span>
-                                                                                </p>
-                                                                                <p>
-                                                                                    <span className="font-semibold text-slate-500">
-                                                                                        {t('editProgram.sbdNbl')}:
-                                                                                    </span>{' '}
-                                                                                    <span className="font-semibold text-slate-900">
-                                                                                        {metric.totalLifts}
-                                                                                    </span>
-                                                                                </p>
-                                                                                <p>
-                                                                                    <span className="font-semibold text-slate-500">
-                                                                                        {t('editProgram.sbdIm')}:
-                                                                                    </span>{' '}
-                                                                                    <span className="font-semibold text-slate-900">
-                                                                                        {metric.averageIntensity !== null
-                                                                                            ? `${metric.averageIntensity.toFixed(1)}%`
-                                                                                            : '-'}
-                                                                                    </span>
-                                                                                </p>
-                                                                            </div>
-                                                                        ) : (
-                                                                            <span className="text-[11px] text-slate-400">-</span>
-                                                                        )}
-                                                                    </td>
-                                                                )
-                                                            })}
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    ) : (
-                                        <p className="text-sm text-gray-500 py-3">
-                                            {t('editProgram.sbdHelperNoData')}
-                                        </p>
-                                    )}
-                                </div>
-                            )}
+                {!readOnly && wizardStep === 'structure' && (
+                    <section className="rounded-xl border border-gray-200 bg-white shadow-sm">
+                        <div className="border-b border-gray-100 px-5 py-4">
+                            <h2 className="text-xl font-bold text-gray-900">
+                                {t('editProgram.structureTitle')}
+                            </h2>
+                            <p className="mt-1 text-sm text-gray-600">
+                                {t('editProgram.structureDescription')}
+                            </p>
                         </div>
-                    )}
-                </div>
 
-                <div className="space-y-5">
-                    {program.weeks.map((week) => {
-                        const isExpanded = expandedWeekIds[week.id] ?? false
-                        const isActive = activeWeek?.id === week.id
+                        <div className="overflow-x-auto p-5">
+                            <div className="flex min-w-max gap-4">
+                                {Array.from({ length: program.workoutsPerWeek }).map((_, workoutIndex) => {
+                                    const structureRows = structureRowsByWorkoutIndex[workoutIndex] || []
 
-                        const configuredWorkoutsForWeek = week.workouts.filter(
-                            (workout) => workout.workoutExercises.length > 0
-                        ).length
+                                    return (
+                                        <div
+                                            key={`structure-workout-${workoutIndex}`}
+                                            className="w-[340px] shrink-0 rounded-lg border border-gray-200 bg-white"
+                                        >
+                                            <div className="flex flex-col gap-2 border-b border-gray-100 px-4 py-3">
+                                                <div>
+                                                    <h3 className="text-base font-bold text-gray-900">
+                                                        {t('editProgram.workoutFallback', {
+                                                            number: workoutIndex + 1,
+                                                        })}
+                                                    </h3>
+                                                    <p className="text-xs text-gray-500">
+                                                        {t('editProgram.exercisesCount', {
+                                                            count: structureRows.length,
+                                                        })}
+                                                    </p>
+                                                </div>
 
-                        return (
-                            <section
-                                key={week.id}
-                                className={`rounded-xl border bg-white shadow-sm ${isActive ? 'border-brand-primary' : 'border-gray-200'
-                                    }`}
-                            >
-                                <div className="px-4 py-4 border-b border-gray-100">
-                                    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setActiveWeekId(week.id)
-                                                    toggleWeekExpansion(week.id)
-                                                }}
-                                                className="flex items-center gap-3 text-left"
-                                            >
-                                                <span className="text-lg font-bold text-gray-900">
-                                                    {t('editProgram.week')} {week.weekNumber}
-                                                </span>
-                                                <span className="text-xs font-semibold text-gray-500">
-                                                    {t('editProgram.workoutsConfiguredShort', {
-                                                        done: configuredWorkoutsForWeek,
-                                                        total: week.workouts.length,
-                                                    })}
-                                                </span>
-                                                <span className="rounded-full border border-gray-200 bg-gray-50 p-1 text-gray-500">
-                                                    {isExpanded ? (
-                                                        <ChevronUp className="w-4 h-4" />
-                                                    ) : (
-                                                        <ChevronDown className="w-4 h-4" />
-                                                    )}
-                                                </span>
-                                            </button>
-
-                                            {!readOnly && week.weekNumber < program.weeks.length && (
                                                 <button
                                                     type="button"
-                                                    onClick={() => setConfirmCopyNextWeek(week)}
-                                                    disabled={copyingWeekId !== null || saving}
-                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-brand-primary/20 bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
-                                                    title={t('editProgram.copyCurrentWeekToNextTooltip')}
-                                                    aria-label={t('editProgram.copyCurrentWeekToNextTooltip')}
+                                                    onClick={() => addStructureRow(workoutIndex)}
+                                                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-brand-primary/20 bg-brand-primary/10 px-3 py-2 text-sm font-semibold text-brand-primary hover:bg-brand-primary/15"
                                                 >
-                                                    {copyingWeekId === week.id ? (
-                                                        <LoadingSpinner size="sm" color="primary" />
-                                                    ) : (
-                                                        <Copy className="w-4 h-4" />
-                                                    )}
+                                                    <Plus className="h-4 w-4" />
+                                                    {t('editProgram.addRow')}
                                                 </button>
-                                            )}
-                                        </div>
+                                            </div>
 
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            {readOnly ? (
-                                                <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700">
-                                                    {week.weekType === 'normal'
-                                                        ? t('editProgram.weekTypeStandard')
-                                                        : week.weekType === 'test'
-                                                            ? t('editProgram.weekTypeTest')
-                                                            : t('editProgram.weekTypeDeload')}
-                                                </span>
-                                            ) : (
-                                                <>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleWeekTypeChange(week.id, 'normal')}
-                                                        disabled={saving}
-                                                        className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all inline-flex items-center gap-1 ${week.weekType === 'normal'
-                                                            ? 'bg-gray-500 text-white border-gray-500'
-                                                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                                                            }`}
-                                                    >
-                                                        <ClipboardList className="w-3.5 h-3.5" />
-                                                        {t('editProgram.weekTypeStandard')}
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleWeekTypeChange(week.id, 'test')}
-                                                        disabled={saving}
-                                                        className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all inline-flex items-center gap-1 ${week.weekType === 'test'
-                                                            ? 'bg-week-test text-white border-week-test'
-                                                            : 'bg-white text-week-test-dark border-week-test hover:bg-week-test-light'
-                                                            }`}
-                                                    >
-                                                        <Flame className="w-3.5 h-3.5" />
-                                                        {t('editProgram.weekTypeTest')}
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleWeekTypeChange(week.id, 'deload')}
-                                                        disabled={saving}
-                                                        className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all inline-flex items-center gap-1 ${week.weekType === 'deload'
-                                                            ? 'bg-week-deload text-white border-week-deload'
-                                                            : 'bg-white text-week-deload-dark border-week-deload hover:bg-week-deload-light'
-                                                            }`}
-                                                    >
-                                                        <Wind className="w-3.5 h-3.5" />
-                                                        {t('editProgram.weekTypeDeload')}
-                                                    </button>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
+                                            <div className="space-y-2 p-3">
+                                                {structureRows.length === 0 && (
+                                                    <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-3 py-4 text-center text-sm text-gray-500">
+                                                        {t('editProgram.structureNoRows')}
+                                                    </div>
+                                                )}
 
-                                {isExpanded && (
-                                    <div className="p-4 space-y-6">
-                                        {week.workouts.map((workout, workoutIndex) => {
-                                            const workoutRows = getWorkoutRows(workout)
-                                            const workoutLabel = t('editProgram.workoutFallback', {
-                                                number: workoutIndex + 1,
-                                            })
-                                            const isWorkoutExpanded =
-                                                expandedWorkoutIds[workout.id] ?? true
+                                                {structureRows.map((structureRow) => {
+                                                    const selectedExercise = structureRow.exerciseId
+                                                        ? exerciseLookupById.get(structureRow.exerciseId)
+                                                        : undefined
+                                                    const rowStyle = getMovementPatternRowStyle(
+                                                        selectedExercise?.movementPattern?.color
+                                                    )
 
-                                            return (
-                                                <div
-                                                    key={workout.id}
-                                                    className="rounded-lg border border-gray-200 bg-white"
-                                                >
-                                                    <div
-                                                        className={`px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 ${isWorkoutExpanded
-                                                            ? 'border-b border-gray-100'
-                                                            : ''
-                                                            }`}
-                                                    >
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => toggleWorkoutExpansion(workout.id)}
-                                                            className="flex items-center gap-2 text-left"
+                                                    return (
+                                                        <div
+                                                            key={structureRow.id}
+                                                            className="rounded-lg border border-gray-200 border-l-4 border-l-transparent p-2"
+                                                            style={rowStyle}
                                                         >
-                                                            <h4 className="text-lg font-bold text-gray-900">
-                                                                {workoutLabel}
-                                                            </h4>
-                                                            <span className="text-xs font-semibold text-gray-500">
-                                                                {t('editProgram.exercisesCount', {
-                                                                    count: workoutRows.length,
-                                                                })}
-                                                            </span>
-                                                            <span className="rounded-full border border-gray-200 bg-gray-50 p-1 text-gray-500">
-                                                                {isWorkoutExpanded ? (
-                                                                    <ChevronUp className="w-4 h-4" />
-                                                                ) : (
-                                                                    <ChevronDown className="w-4 h-4" />
-                                                                )}
-                                                            </span>
-                                                        </button>
-                                                        {!readOnly && (
-                                                            <div className="inline-flex items-center gap-2">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => addDraftRow(workout.id)}
-                                                                    disabled={Boolean(savingRowId || deletingRowId || savingWorkoutId)}
-                                                                    className="inline-flex items-center gap-2 rounded-lg border border-brand-primary/20 bg-brand-primary/10 px-3 py-2 text-sm font-semibold text-brand-primary hover:bg-brand-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
-                                                                >
-                                                                    <Plus className="w-4 h-4" />
-                                                                    {t('editProgram.addRow')}
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        void saveWorkoutRows(workout)
+                                                            <div className="flex items-center gap-2">
+                                                                <select
+                                                                    value={structureRow.exerciseId}
+                                                                    onChange={(event) => {
+                                                                        updateStructureRowFields(
+                                                                            workoutIndex,
+                                                                            structureRow.id,
+                                                                            {
+                                                                                exerciseId: event.target.value,
+                                                                            }
+                                                                        )
                                                                     }}
-                                                                    disabled={Boolean(savingRowId || deletingRowId || savingWorkoutId)}
-                                                                    className="inline-flex items-center gap-2 rounded-lg bg-brand-primary px-3 py-2 text-sm font-semibold text-white hover:bg-brand-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-                                                                    title={t('editProgram.saveRowTitle')}
+                                                                    className="min-w-0 flex-1 rounded-lg border border-gray-300 px-2 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
                                                                 >
-                                                                    {savingWorkoutId === workout.id ? (
-                                                                        <LoadingSpinner size="sm" color="white" />
-                                                                    ) : (
-                                                                        <Save className="w-4 h-4" />
+                                                                    <option value="">{t('editProgram.selectExercise')}</option>
+                                                                    {Array.from(exerciseLookupById.values()).map(
+                                                                        (exercise) => (
+                                                                            <option
+                                                                                key={exercise.id}
+                                                                                value={exercise.id}
+                                                                            >
+                                                                                {exercise.name}
+                                                                            </option>
+                                                                        )
                                                                     )}
-                                                                    {t('editProgram.saveRowTitle')}
+                                                                </select>
+
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        removeStructureRow(
+                                                                            workoutIndex,
+                                                                            structureRow.id
+                                                                        )
+                                                                    }
+                                                                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+                                                                    title={t('editProgram.deleteRowTitle')}
+                                                                >
+                                                                    <Trash2 className="w-3.5 h-3.5" />
                                                                 </button>
                                                             </div>
-                                                        )}
-                                                    </div>
 
-                                                    {isWorkoutExpanded && (
-                                                        <div className="overflow-x-auto">
-                                                            <table className="min-w-[1060px] w-full divide-y divide-gray-200 text-sm">
-                                                                <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
-                                                                    <tr>
-                                                                        <th className="px-1.5 py-3 w-12 text-center">
-                                                                            <span
-                                                                                className="inline-flex items-center justify-center w-full"
-                                                                                title={t('editProgram.tableWarmup')}
-                                                                                aria-label={t('editProgram.tableWarmup')}
-                                                                            >
-                                                                                <Flame className="w-3.5 h-3.5 text-week-test" />
-                                                                                <span className="sr-only">
-                                                                                    {t('editProgram.tableWarmup')}
-                                                                                </span>
-                                                                            </span>
-                                                                        </th>
-                                                                        <th className="px-1.5 py-3 min-w-[210px]">{t('editProgram.tableExercise')}</th>
-                                                                        <th className="px-1.5 py-3 min-w-[175px]">{t('editProgram.tableVariant')}</th>
-                                                                        <th className="px-1.5 py-3 w-16 text-center">{t('editProgram.tableSets')}</th>
-                                                                        <th className="px-1.5 py-3 w-20">{t('editProgram.tableReps')}</th>
-                                                                        <th className="px-1.5 py-3 w-16">{t('editProgram.tableRpe')}</th>
-                                                                        <th className="px-1.5 py-3 w-24">{t('editProgram.tableWeightKg')}</th>
-                                                                        <th className="px-1.5 py-3 min-w-[130px]">{t('editProgram.tableMeta')}</th>
-                                                                        <th className="px-1.5 py-3 w-28 text-right">{t('editProgram.tableActions')}</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody className="divide-y divide-gray-100 bg-white">
-                                                                    {workoutRows.length === 0 && (
-                                                                        <tr>
-                                                                            <td
-                                                                                colSpan={9}
-                                                                                className="px-1.5 py-6 text-center text-sm text-gray-500"
-                                                                            >
-                                                                                {t('editProgram.tableNoWorkoutExercises')}
-                                                                            </td>
-                                                                        </tr>
-                                                                    )}
-
-                                                                    {workoutRows.map((row) => {
-                                                                        const selectedExercise = row.exerciseId
-                                                                            ? exerciseLookupById.get(row.exerciseId)
-                                                                            : undefined
-
-                                                                        const variantOptions = selectedExercise?.notes || []
-                                                                        const isCustomVariantInput =
-                                                                            customVariantInputByRowId[row.id] ??
-                                                                            Boolean(
-                                                                                row.variant.trim() !== '' &&
-                                                                                !variantOptions.includes(row.variant)
-                                                                            )
-                                                                        const variantFieldClassName =
-                                                                            'h-9 w-full rounded-lg border border-gray-300 px-1.5 text-sm leading-5 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-400'
-                                                                        const rowBusy =
-                                                                            savingRowId === row.id ||
-                                                                            deletingRowId === row.id ||
-                                                                            savingWorkoutId === workout.id
-
-                                                                        return (
-                                                                            <tr key={row.id} className="align-top">
-                                                                                <td className="px-1.5 py-3 w-12 align-middle">
-                                                                                    <label className="flex h-full w-full items-center justify-center">
-                                                                                        <input
-                                                                                            type="checkbox"
-                                                                                            checked={row.isWarmup}
-                                                                                            onChange={(event) =>
-                                                                                                updateRowFields(row.id, {
-                                                                                                    isWarmup: event.target.checked,
-                                                                                                })
-                                                                                            }
-                                                                                            disabled={rowBusy || readOnly}
-                                                                                            className="h-4 w-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
-                                                                                        />
-                                                                                    </label>
-                                                                                </td>
-
-                                                                                <td className="px-1.5 py-3">
-                                                                                    <select
-                                                                                        value={row.exerciseId}
-                                                                                        onChange={(event) => {
-                                                                                            updateRowFields(row.id, {
-                                                                                                exerciseId: event.target.value,
-                                                                                                variant: '',
-                                                                                            })
-
-                                                                                            setCustomVariantInputByRowId(
-                                                                                                (currentModes) => ({
-                                                                                                    ...currentModes,
-                                                                                                    [row.id]: false,
-                                                                                                })
-                                                                                            )
-                                                                                        }
-                                                                                        }
-                                                                                        disabled={rowBusy || readOnly}
-                                                                                        className="w-full rounded-lg border border-gray-300 px-1.5 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
-                                                                                    >
-                                                                                        <option value="">{t('editProgram.selectExercise')}</option>
-                                                                                        {Array.from(exerciseLookupById.values()).map((exercise) => (
-                                                                                            <option key={exercise.id} value={exercise.id}>
-                                                                                                {exercise.name}
-                                                                                            </option>
-                                                                                        ))}
-                                                                                    </select>
-                                                                                </td>
-
-                                                                                <td className="px-1.5 py-3">
-                                                                                    <div className="flex items-center gap-1">
-                                                                                        <div className="min-w-0 flex-1">
-                                                                                            {isCustomVariantInput ? (
-                                                                                                <input
-                                                                                                    type="text"
-                                                                                                    value={row.variant}
-                                                                                                    onChange={(event) =>
-                                                                                                        updateRowFields(row.id, {
-                                                                                                            variant: event.target.value,
-                                                                                                        })
-                                                                                                    }
-                                                                                                    disabled={
-                                                                                                        rowBusy ||
-                                                                                                        readOnly ||
-                                                                                                        !selectedExercise
-                                                                                                    }
-                                                                                                    className={variantFieldClassName}
-                                                                                                    placeholder={t('editProgram.variantPlaceholder')}
-                                                                                                />
-                                                                                            ) : (
-                                                                                                <select
-                                                                                                    value={row.variant}
-                                                                                                    onChange={(event) =>
-                                                                                                        updateRowFields(row.id, {
-                                                                                                            variant: event.target.value,
-                                                                                                        })
-                                                                                                    }
-                                                                                                    disabled={
-                                                                                                        rowBusy ||
-                                                                                                        readOnly ||
-                                                                                                        !selectedExercise
-                                                                                                    }
-                                                                                                    className={variantFieldClassName}
-                                                                                                >
-                                                                                                    <option value="">{t('editProgram.noVariantOption')}</option>
-                                                                                                    {variantOptions.map((variantOption) => (
-                                                                                                        <option
-                                                                                                            key={variantOption}
-                                                                                                            value={variantOption}
-                                                                                                        >
-                                                                                                            {variantOption}
-                                                                                                        </option>
-                                                                                                    ))}
-                                                                                                </select>
-                                                                                            )}
-                                                                                        </div>
-
-                                                                                        <button
-                                                                                            type="button"
-                                                                                            onClick={() =>
-                                                                                                toggleCustomVariantInput({
-                                                                                                    rowId: row.id,
-                                                                                                    currentVariant: row.variant,
-                                                                                                    variantOptions,
-                                                                                                    selectedExercise,
-                                                                                                })
-                                                                                            }
-                                                                                            disabled={
-                                                                                                rowBusy || readOnly || !selectedExercise
-                                                                                            }
-                                                                                            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
-                                                                                            title={
-                                                                                                isCustomVariantInput
-                                                                                                    ? t('editProgram.lockVariantInputTitle')
-                                                                                                    : t('editProgram.unlockVariantInputTitle')
-                                                                                            }
-                                                                                            aria-label={
-                                                                                                isCustomVariantInput
-                                                                                                    ? t('editProgram.lockVariantInputTitle')
-                                                                                                    : t('editProgram.unlockVariantInputTitle')
-                                                                                            }
-                                                                                        >
-                                                                                            {isCustomVariantInput ? (
-                                                                                                <LockOpen className="h-4 w-4" />
-                                                                                            ) : (
-                                                                                                <Lock className="h-4 w-4" />
-                                                                                            )}
-                                                                                        </button>
-                                                                                    </div>
-
-                                                                                    {selectedExercise && variantOptions.length === 0 && (
-                                                                                        <p className="mt-1 text-[11px] text-gray-400">
-                                                                                            {t('editProgram.noVariantAvailable')}
-                                                                                        </p>
-                                                                                    )}
-                                                                                </td>
-
-                                                                                <td className="px-1.5 py-3 w-16">
-                                                                                    <input
-                                                                                        type="number"
-                                                                                        min="1"
-                                                                                        max="20"
-                                                                                        step="1"
-                                                                                        value={row.sets}
-                                                                                        onChange={(event) =>
-                                                                                            updateRowFields(row.id, {
-                                                                                                sets: event.target.value,
-                                                                                            })
-                                                                                        }
-                                                                                        disabled={rowBusy || readOnly}
-                                                                                        className="mx-auto w-14 rounded-lg border border-gray-300 px-1.5 py-2 text-center text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
-                                                                                    />
-                                                                                </td>
-
-                                                                                <td className="px-1.5 py-3 w-20">
-                                                                                    <input
-                                                                                        type="text"
-                                                                                        value={row.reps}
-                                                                                        onChange={(event) =>
-                                                                                            updateRowFields(row.id, {
-                                                                                                reps: event.target.value,
-                                                                                            })
-                                                                                        }
-                                                                                        disabled={rowBusy || readOnly}
-                                                                                        placeholder={t('editProgram.repsPlaceholder')}
-                                                                                        className="w-full rounded-lg border border-gray-300 px-1.5 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
-                                                                                    />
-                                                                                </td>
-
-                                                                                <td className="px-1.5 py-3 w-16">
-                                                                                    <select
-                                                                                        value={row.targetRpe}
-                                                                                        onChange={(event) =>
-                                                                                            updateRowFields(row.id, {
-                                                                                                targetRpe: event.target.value,
-                                                                                            })
-                                                                                        }
-                                                                                        disabled={rowBusy || readOnly}
-                                                                                        className="w-full rounded-lg border border-gray-300 px-1.5 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
-                                                                                    >
-                                                                                        <option value="">-</option>
-                                                                                        {RPE_OPTIONS.map((rpeValue) => (
-                                                                                            <option key={rpeValue} value={String(rpeValue)}>
-                                                                                                {rpeValue}
-                                                                                            </option>
-                                                                                        ))}
-                                                                                    </select>
-                                                                                </td>
-
-                                                                                <td className="px-1.5 py-3">
-                                                                                    <input
-                                                                                        type="number"
-                                                                                        min="0"
-                                                                                        step="0.5"
-                                                                                        value={row.weight}
-                                                                                        onChange={(event) =>
-                                                                                            updateRowFields(row.id, {
-                                                                                                weight: event.target.value,
-                                                                                            })
-                                                                                        }
-                                                                                        disabled={rowBusy || readOnly}
-                                                                                        placeholder={t('editProgram.weightPlaceholder')}
-                                                                                        className="w-full rounded-lg border border-gray-300 px-1.5 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
-                                                                                    />
-                                                                                </td>
-
-                                                                                <td className="px-1.5 py-3">
-                                                                                    {selectedExercise ? (
-                                                                                        <div className="flex items-center gap-1.5">
-                                                                                            <span
-                                                                                                className={`inline-flex w-fit rounded-full px-2 py-0.5 text-[10px] font-semibold ${selectedExercise.type ===
-                                                                                                    'fundamental'
-                                                                                                    ? 'bg-red-100 text-red-700'
-                                                                                                    : 'bg-blue-100 text-blue-700'
-                                                                                                    }`}
-                                                                                            >
-                                                                                                {selectedExercise.type === 'fundamental'
-                                                                                                    ? 'F'
-                                                                                                    : 'A'}
-                                                                                            </span>
-                                                                                            {selectedExercise.movementPattern && (
-                                                                                                <MovementPatternTag
-                                                                                                    name={selectedExercise.movementPattern.name}
-                                                                                                    color={selectedExercise.movementPattern.color}
-                                                                                                    className="w-fit"
-                                                                                                />
-                                                                                            )}
-                                                                                        </div>
-                                                                                    ) : (
-                                                                                        <span className="text-xs text-gray-400">
-                                                                                            -
-                                                                                        </span>
-                                                                                    )}
-                                                                                </td>
-
-                                                                                <td className="px-1.5 py-3">
-                                                                                    {!readOnly && (
-                                                                                        <div className="flex items-center justify-end gap-1">
-                                                                                            <button
-                                                                                                type="button"
-                                                                                                onClick={() =>
-                                                                                                    setConfirmDeleteRow({
-                                                                                                        rowId: row.id,
-                                                                                                        workoutId: workout.id,
-                                                                                                        isDraft: row.isDraft,
-                                                                                                    })
-                                                                                                }
-                                                                                                disabled={rowBusy}
-                                                                                                className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
-                                                                                                title={t('editProgram.deleteRowTitle')}
-                                                                                            >
-                                                                                                {deletingRowId === row.id ? (
-                                                                                                    <LoadingSpinner
-                                                                                                        size="sm"
-                                                                                                        color="primary"
-                                                                                                    />
-                                                                                                ) : (
-                                                                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                                                                )}
-                                                                                            </button>
-                                                                                        </div>
-                                                                                    )}
-                                                                                </td>
-                                                                            </tr>
-                                                                        )
-                                                                    })}
-                                                                </tbody>
-                                                            </table>
+                                                            <div className="mt-2 flex items-center gap-1.5">
+                                                                {selectedExercise ? (
+                                                                    <>
+                                                                        <span
+                                                                            className={`inline-flex w-fit rounded-full px-2 py-0.5 text-[10px] font-semibold ${selectedExercise.type ===
+                                                                                'fundamental'
+                                                                                ? 'bg-red-100 text-red-700'
+                                                                                : 'bg-blue-100 text-blue-700'
+                                                                                }`}
+                                                                        >
+                                                                            {selectedExercise.type === 'fundamental'
+                                                                                ? 'F'
+                                                                                : 'A'}
+                                                                        </span>
+                                                                        {selectedExercise.movementPattern && (
+                                                                            <MovementPatternTag
+                                                                                name={selectedExercise.movementPattern.name}
+                                                                                color={selectedExercise.movementPattern.color}
+                                                                                className="w-fit"
+                                                                            />
+                                                                        )}
+                                                                    </>
+                                                                ) : (
+                                                                    <span className="text-xs text-gray-500">
+                                                                        {t('editProgram.tableMeta')}: -
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                    )}
-                                                </div>
-                                            )
-                                        })}
-                                    </div>
-                                )}
-                            </section>
-                        )
-                    })}
-                </div>
+                                                    )
+                                                })}
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    </section>
+                )}
 
-                {!readOnly && (
-                    <div className="flex space-x-4 mt-8">
-                        <Link
-                            href={`/trainer/programs/${programId}/review`}
-                            className={`flex-1 py-3 px-6 rounded-lg font-semibold text-center transition-colors ${completedWorkouts === totalWorkouts
-                                ? 'bg-brand-primary hover:bg-brand-primary/90 text-white'
-                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                }`}
-                            onClick={(event) => {
-                                if (completedWorkouts < totalWorkouts) {
-                                    event.preventDefault()
-                                    showToast(t('editProgram.configureAllFirst'), 'warning')
-                                }
-                            }}
+                {!readOnly && wizardStep === 'structure' && (
+                    <div className="flex space-x-4 mt-8 mb-8">
+                        <button
+                            type="button"
+                            onClick={applyStructureToAllWeeks}
+                            disabled={applyingStructure}
+                            className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-brand-primary px-6 py-3 font-semibold text-white transition-colors hover:bg-brand-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            {t('editProgram.nextReview')}
-                        </Link>
+                            {applyingStructure ? (
+                                <LoadingSpinner size="sm" color="white" />
+                            ) : (
+                                <Dumbbell className="h-4 w-4" />
+                            )}
+                            {t('editProgram.structureApplyAndContinue')}
+                        </button>
                         <Link
                             href="/trainer/programs"
                             className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
@@ -1996,6 +1716,769 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                         </Link>
                     </div>
                 )}
+
+                <div className={!readOnly && wizardStep === 'structure' ? 'hidden' : ''}>
+                    {!readOnly && (
+                        <div className="mb-4 flex justify-end">
+                            <button
+                                type="button"
+                                onClick={() => setWizardStep('structure')}
+                                className="inline-flex items-center gap-2 rounded-lg border border-brand-primary/20 bg-brand-primary/10 px-3 py-2 text-sm font-semibold text-brand-primary hover:bg-brand-primary/15"
+                            >
+                                <FileEdit className="h-4 w-4" />
+                                {t('editProgram.editStructureStepButton')}
+                            </button>
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
+                        <div
+                            className={`bg-white rounded-lg border border-gray-200 shadow-sm p-4 ${shouldShowSbdReporting ? 'xl:col-span-1' : 'xl:col-span-3'
+                                }`}
+                        >
+                            <button
+                                type="button"
+                                onClick={() => setIsPrHelperCollapsed((current) => !current)}
+                                className="w-full flex items-start justify-between gap-3 text-left"
+                                aria-expanded={!isPrHelperCollapsed}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <div className="rounded-lg bg-brand-primary text-white p-2">
+                                        <Dumbbell className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-gray-900">
+                                            {t('editProgram.prHelperTitle')}
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                            {t('editProgram.prHelperDescription')}
+                                        </p>
+                                    </div>
+                                </div>
+                                <span className="rounded-full border border-gray-200 bg-gray-50 p-2 text-gray-500">
+                                    {isPrHelperCollapsed ? (
+                                        <ChevronDown className="w-4 h-4" />
+                                    ) : (
+                                        <ChevronUp className="w-4 h-4" />
+                                    )}
+                                </span>
+                            </button>
+
+                            {!isPrHelperCollapsed && (
+                                <div className="mt-4 max-h-72 overflow-y-auto">
+                                    {bestPRs.length > 0 ? (
+                                        <div className="space-y-2">
+                                            {bestPRs.map((record) => {
+                                                const label =
+                                                    record.exercise?.name ||
+                                                    exerciseNameById[record.exerciseId] ||
+                                                    t('editProgram.tableExercise')
+
+                                                const type =
+                                                    record.exercise?.type ||
+                                                    exerciseLookupById.get(record.exerciseId)?.type ||
+                                                    'accessory'
+
+                                                return (
+                                                    <div
+                                                        key={`${record.exerciseId}-${record.id || record.reps}`}
+                                                        className="rounded-lg border border-gray-200 px-3 py-2"
+                                                    >
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <div>
+                                                                <p className="text-sm font-semibold text-gray-900">
+                                                                    {label}
+                                                                </p>
+                                                                <p className="text-xs text-gray-500">
+                                                                    {t('editProgram.prRecordFormat', {
+                                                                        weight: record.weight,
+                                                                        reps: record.reps,
+                                                                    })}
+                                                                </p>
+                                                            </div>
+                                                            <span
+                                                                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${type === 'fundamental'
+                                                                    ? 'bg-red-100 text-red-700'
+                                                                    : 'bg-blue-100 text-blue-700'
+                                                                    }`}
+                                                            >
+                                                                {type === 'fundamental' ? 'F' : 'A'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-gray-500 py-3">
+                                            {t('editProgram.prHelperNoData')}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {shouldShowSbdReporting && (
+                            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 xl:col-span-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsSbdHelperCollapsed((current) => !current)}
+                                    className="w-full flex items-start justify-between gap-3 text-left"
+                                    aria-expanded={!isSbdHelperCollapsed}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <div className="rounded-lg bg-slate-900 text-white p-2">
+                                            <BarChart3 className="w-4 h-4" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-900">
+                                                {t('editProgram.sbdHelperTitle')}
+                                            </p>
+                                            <p className="text-xs text-gray-500">
+                                                {t('editProgram.sbdHelperDescription')}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span className="rounded-full border border-gray-200 bg-gray-50 p-2 text-gray-500">
+                                        {isSbdHelperCollapsed ? (
+                                            <ChevronDown className="w-4 h-4" />
+                                        ) : (
+                                            <ChevronUp className="w-4 h-4" />
+                                        )}
+                                    </span>
+                                </button>
+
+                                {!isSbdHelperCollapsed && (
+                                    <div className="mt-4 max-h-72 overflow-y-auto">
+                                        {sbdMetricsByExerciseAcrossWeeks.length > 0 ? (
+                                            <div className="overflow-x-auto">
+                                                <table className="min-w-[780px] w-full divide-y divide-slate-200 text-xs">
+                                                    <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+                                                        <tr>
+                                                            <th className="sticky left-0 z-10 bg-slate-50 px-3 py-2 text-left">
+                                                                {t('editProgram.tableExercise')}
+                                                            </th>
+                                                            {program.weeks.map((week) => (
+                                                                <th key={week.id} className="px-3 py-2 text-left whitespace-nowrap">
+                                                                    {t('editProgram.week')} {week.weekNumber}
+                                                                </th>
+                                                            ))}
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-slate-100 bg-white">
+                                                        {sbdMetricsByExerciseAcrossWeeks.map((exerciseMetric) => (
+                                                            <tr key={exerciseMetric.exerciseId}>
+                                                                <td className="sticky left-0 z-10 bg-white px-3 py-2 align-top text-sm font-semibold text-slate-900 whitespace-nowrap">
+                                                                    {exerciseMetric.exerciseName}
+                                                                </td>
+                                                                {program.weeks.map((week) => {
+                                                                    const metric =
+                                                                        exerciseMetric.metricsByWeekId[week.id]
+
+                                                                    return (
+                                                                        <td key={week.id} className="px-3 py-2 align-top">
+                                                                            {metric ? (
+                                                                                <div className="space-y-0.5 text-[11px] text-slate-700">
+                                                                                    <p>
+                                                                                        <span className="font-semibold text-slate-500">
+                                                                                            {t('editProgram.sbdFrq')}:
+                                                                                        </span>{' '}
+                                                                                        <span className="font-semibold text-slate-900">
+                                                                                            {metric.frequency}
+                                                                                        </span>
+                                                                                    </p>
+                                                                                    <p>
+                                                                                        <span className="font-semibold text-slate-500">
+                                                                                            {t('editProgram.sbdNbl')}:
+                                                                                        </span>{' '}
+                                                                                        <span className="font-semibold text-slate-900">
+                                                                                            {metric.totalLifts}
+                                                                                        </span>
+                                                                                    </p>
+                                                                                    <p>
+                                                                                        <span className="font-semibold text-slate-500">
+                                                                                            {t('editProgram.sbdIm')}:
+                                                                                        </span>{' '}
+                                                                                        <span className="font-semibold text-slate-900">
+                                                                                            {metric.averageIntensity !== null
+                                                                                                ? `${metric.averageIntensity.toFixed(1)}%`
+                                                                                                : '-'}
+                                                                                        </span>
+                                                                                    </p>
+                                                                                </div>
+                                                                            ) : (
+                                                                                <span className="text-[11px] text-slate-400">-</span>
+                                                                            )}
+                                                                        </td>
+                                                                    )
+                                                                })}
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        ) : (
+                                            <p className="text-sm text-gray-500 py-3">
+                                                {t('editProgram.sbdHelperNoData')}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="space-y-5">
+                        {program.weeks.map((week) => {
+                            const isExpanded = expandedWeekIds[week.id] ?? false
+                            const isActive = activeWeek?.id === week.id
+
+                            const configuredWorkoutsForWeek = week.workouts.filter(
+                                (workout) => workout.workoutExercises.length > 0
+                            ).length
+
+                            return (
+                                <section
+                                    key={week.id}
+                                    className={`rounded-xl border bg-white shadow-sm ${isActive ? 'border-brand-primary' : 'border-gray-200'
+                                        }`}
+                                >
+                                    <div className="px-4 py-4 border-b border-gray-100">
+                                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setActiveWeekId(week.id)
+                                                        toggleWeekExpansion(week.id)
+                                                    }}
+                                                    className="flex items-center gap-3 text-left"
+                                                >
+                                                    <span className="text-lg font-bold text-gray-900">
+                                                        {t('editProgram.week')} {week.weekNumber}
+                                                    </span>
+                                                    <span className="text-xs font-semibold text-gray-500">
+                                                        {t('editProgram.workoutsConfiguredShort', {
+                                                            done: configuredWorkoutsForWeek,
+                                                            total: week.workouts.length,
+                                                        })}
+                                                    </span>
+                                                    <span className="rounded-full border border-gray-200 bg-gray-50 p-1 text-gray-500">
+                                                        {isExpanded ? (
+                                                            <ChevronUp className="w-4 h-4" />
+                                                        ) : (
+                                                            <ChevronDown className="w-4 h-4" />
+                                                        )}
+                                                    </span>
+                                                </button>
+
+                                                {!readOnly && week.weekNumber < program.weeks.length && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setConfirmCopyNextWeek(week)}
+                                                        disabled={copyingWeekId !== null || saving}
+                                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-brand-primary/20 bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
+                                                        title={t('editProgram.copyCurrentWeekToNextTooltip')}
+                                                        aria-label={t('editProgram.copyCurrentWeekToNextTooltip')}
+                                                    >
+                                                        {copyingWeekId === week.id ? (
+                                                            <LoadingSpinner size="sm" color="primary" />
+                                                        ) : (
+                                                            <Copy className="w-4 h-4" />
+                                                        )}
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                {readOnly ? (
+                                                    <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700">
+                                                        {week.weekType === 'normal'
+                                                            ? t('editProgram.weekTypeStandard')
+                                                            : week.weekType === 'test'
+                                                                ? t('editProgram.weekTypeTest')
+                                                                : t('editProgram.weekTypeDeload')}
+                                                    </span>
+                                                ) : (
+                                                    <>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleWeekTypeChange(week.id, 'normal')}
+                                                            disabled={saving}
+                                                            className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all inline-flex items-center gap-1 ${week.weekType === 'normal'
+                                                                ? 'bg-gray-500 text-white border-gray-500'
+                                                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                                                }`}
+                                                        >
+                                                            <ClipboardList className="w-3.5 h-3.5" />
+                                                            {t('editProgram.weekTypeStandard')}
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleWeekTypeChange(week.id, 'test')}
+                                                            disabled={saving}
+                                                            className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all inline-flex items-center gap-1 ${week.weekType === 'test'
+                                                                ? 'bg-week-test text-white border-week-test'
+                                                                : 'bg-white text-week-test-dark border-week-test hover:bg-week-test-light'
+                                                                }`}
+                                                        >
+                                                            <Flame className="w-3.5 h-3.5" />
+                                                            {t('editProgram.weekTypeTest')}
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleWeekTypeChange(week.id, 'deload')}
+                                                            disabled={saving}
+                                                            className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all inline-flex items-center gap-1 ${week.weekType === 'deload'
+                                                                ? 'bg-week-deload text-white border-week-deload'
+                                                                : 'bg-white text-week-deload-dark border-week-deload hover:bg-week-deload-light'
+                                                                }`}
+                                                        >
+                                                            <Wind className="w-3.5 h-3.5" />
+                                                            {t('editProgram.weekTypeDeload')}
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {isExpanded && (
+                                        <div className="p-4 space-y-6">
+                                            {week.workouts.map((workout, workoutIndex) => {
+                                                const workoutRows = getWorkoutRows(workout)
+                                                const workoutLabel = t('editProgram.workoutFallback', {
+                                                    number: workoutIndex + 1,
+                                                })
+                                                const isWorkoutExpanded =
+                                                    expandedWorkoutIds[workout.id] ?? true
+
+                                                return (
+                                                    <div
+                                                        key={workout.id}
+                                                        className="rounded-lg border border-gray-200 bg-white"
+                                                    >
+                                                        <div
+                                                            className={`px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 ${isWorkoutExpanded
+                                                                ? 'border-b border-gray-100'
+                                                                : ''
+                                                                }`}
+                                                        >
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => toggleWorkoutExpansion(workout.id)}
+                                                                className="flex items-center gap-2 text-left"
+                                                            >
+                                                                <h4 className="text-lg font-bold text-gray-900">
+                                                                    {workoutLabel}
+                                                                </h4>
+                                                                <span className="text-xs font-semibold text-gray-500">
+                                                                    {t('editProgram.exercisesCount', {
+                                                                        count: workoutRows.length,
+                                                                    })}
+                                                                </span>
+                                                                <span className="rounded-full border border-gray-200 bg-gray-50 p-1 text-gray-500">
+                                                                    {isWorkoutExpanded ? (
+                                                                        <ChevronUp className="w-4 h-4" />
+                                                                    ) : (
+                                                                        <ChevronDown className="w-4 h-4" />
+                                                                    )}
+                                                                </span>
+                                                            </button>
+                                                            {!readOnly && (
+                                                                <div className="inline-flex items-center gap-2">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => addDraftRow(workout.id)}
+                                                                        disabled={Boolean(savingRowId || deletingRowId || savingWorkoutId)}
+                                                                        className="inline-flex items-center gap-2 rounded-lg border border-brand-primary/20 bg-brand-primary/10 px-3 py-2 text-sm font-semibold text-brand-primary hover:bg-brand-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
+                                                                    >
+                                                                        <Plus className="w-4 h-4" />
+                                                                        {t('editProgram.addRow')}
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            void saveWorkoutRows(workout)
+                                                                        }}
+                                                                        disabled={Boolean(savingRowId || deletingRowId || savingWorkoutId)}
+                                                                        className="inline-flex items-center gap-2 rounded-lg bg-brand-primary px-3 py-2 text-sm font-semibold text-white hover:bg-brand-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                                                                        title={t('editProgram.saveRowTitle')}
+                                                                    >
+                                                                        {savingWorkoutId === workout.id ? (
+                                                                            <LoadingSpinner size="sm" color="white" />
+                                                                        ) : (
+                                                                            <Save className="w-4 h-4" />
+                                                                        )}
+                                                                        {t('editProgram.saveRowTitle')}
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        {isWorkoutExpanded && (
+                                                            <div className="overflow-x-auto">
+                                                                <table className="min-w-[1060px] w-full divide-y divide-gray-200 text-sm">
+                                                                    <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
+                                                                        <tr>
+                                                                            <th className="px-1.5 py-3 w-12 text-center">
+                                                                                <span
+                                                                                    className="inline-flex items-center justify-center w-full"
+                                                                                    title={t('editProgram.tableWarmup')}
+                                                                                    aria-label={t('editProgram.tableWarmup')}
+                                                                                >
+                                                                                    <Flame className="w-3.5 h-3.5 text-week-test" />
+                                                                                    <span className="sr-only">
+                                                                                        {t('editProgram.tableWarmup')}
+                                                                                    </span>
+                                                                                </span>
+                                                                            </th>
+                                                                            <th className="px-1.5 py-3 min-w-[210px]">{t('editProgram.tableExercise')}</th>
+                                                                            <th className="px-1.5 py-3 min-w-[175px]">{t('editProgram.tableVariant')}</th>
+                                                                            <th className="px-1.5 py-3 w-16 text-center">{t('editProgram.tableSets')}</th>
+                                                                            <th className="px-1.5 py-3 w-20">{t('editProgram.tableReps')}</th>
+                                                                            <th className="px-1.5 py-3 w-16">{t('editProgram.tableRpe')}</th>
+                                                                            <th className="px-1.5 py-3 w-24">{t('editProgram.tableWeightKg')}</th>
+                                                                            <th className="px-1.5 py-3 min-w-[130px]">{t('editProgram.tableMeta')}</th>
+                                                                            <th className="px-1.5 py-3 w-28 text-right">{t('editProgram.tableActions')}</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody className="divide-y divide-gray-100 bg-white">
+                                                                        {workoutRows.length === 0 && (
+                                                                            <tr>
+                                                                                <td
+                                                                                    colSpan={9}
+                                                                                    className="px-1.5 py-6 text-center text-sm text-gray-500"
+                                                                                >
+                                                                                    {t('editProgram.tableNoWorkoutExercises')}
+                                                                                </td>
+                                                                            </tr>
+                                                                        )}
+
+                                                                        {workoutRows.map((row) => {
+                                                                            const selectedExercise = row.exerciseId
+                                                                                ? exerciseLookupById.get(row.exerciseId)
+                                                                                : undefined
+
+                                                                            const variantOptions = selectedExercise?.notes || []
+                                                                            const isCustomVariantInput =
+                                                                                customVariantInputByRowId[row.id] ??
+                                                                                Boolean(
+                                                                                    row.variant.trim() !== '' &&
+                                                                                    !variantOptions.includes(row.variant)
+                                                                                )
+                                                                            const variantFieldClassName =
+                                                                                'h-9 w-full rounded-lg border border-gray-300 px-1.5 text-sm leading-5 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-400'
+                                                                            const rowBusy =
+                                                                                savingRowId === row.id ||
+                                                                                deletingRowId === row.id ||
+                                                                                savingWorkoutId === workout.id
+
+                                                                            return (
+                                                                                <tr key={row.id} className="align-top">
+                                                                                    <td className="px-1.5 py-3 w-12 align-middle">
+                                                                                        <label className="flex h-full w-full items-center justify-center">
+                                                                                            <input
+                                                                                                type="checkbox"
+                                                                                                checked={row.isWarmup}
+                                                                                                onChange={(event) =>
+                                                                                                    updateRowFields(row.id, {
+                                                                                                        isWarmup: event.target.checked,
+                                                                                                    })
+                                                                                                }
+                                                                                                disabled={rowBusy || readOnly}
+                                                                                                className="h-4 w-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+                                                                                            />
+                                                                                        </label>
+                                                                                    </td>
+
+                                                                                    <td className="px-1.5 py-3">
+                                                                                        <select
+                                                                                            value={row.exerciseId}
+                                                                                            onChange={(event) => {
+                                                                                                updateRowFields(row.id, {
+                                                                                                    exerciseId: event.target.value,
+                                                                                                    variant: '',
+                                                                                                })
+
+                                                                                                setCustomVariantInputByRowId(
+                                                                                                    (currentModes) => ({
+                                                                                                        ...currentModes,
+                                                                                                        [row.id]: false,
+                                                                                                    })
+                                                                                                )
+                                                                                            }
+                                                                                            }
+                                                                                            disabled={rowBusy || readOnly}
+                                                                                            className="w-full rounded-lg border border-gray-300 px-1.5 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                                                                                        >
+                                                                                            <option value="">{t('editProgram.selectExercise')}</option>
+                                                                                            {Array.from(exerciseLookupById.values()).map((exercise) => (
+                                                                                                <option key={exercise.id} value={exercise.id}>
+                                                                                                    {exercise.name}
+                                                                                                </option>
+                                                                                            ))}
+                                                                                        </select>
+                                                                                    </td>
+
+                                                                                    <td className="px-1.5 py-3">
+                                                                                        <div className="flex items-center gap-1">
+                                                                                            <div className="min-w-0 flex-1">
+                                                                                                {isCustomVariantInput ? (
+                                                                                                    <input
+                                                                                                        type="text"
+                                                                                                        value={row.variant}
+                                                                                                        onChange={(event) =>
+                                                                                                            updateRowFields(row.id, {
+                                                                                                                variant: event.target.value,
+                                                                                                            })
+                                                                                                        }
+                                                                                                        disabled={
+                                                                                                            rowBusy ||
+                                                                                                            readOnly ||
+                                                                                                            !selectedExercise
+                                                                                                        }
+                                                                                                        className={variantFieldClassName}
+                                                                                                        placeholder={t('editProgram.variantPlaceholder')}
+                                                                                                    />
+                                                                                                ) : (
+                                                                                                    <select
+                                                                                                        value={row.variant}
+                                                                                                        onChange={(event) =>
+                                                                                                            updateRowFields(row.id, {
+                                                                                                                variant: event.target.value,
+                                                                                                            })
+                                                                                                        }
+                                                                                                        disabled={
+                                                                                                            rowBusy ||
+                                                                                                            readOnly ||
+                                                                                                            !selectedExercise
+                                                                                                        }
+                                                                                                        className={variantFieldClassName}
+                                                                                                    >
+                                                                                                        <option value="">{t('editProgram.noVariantOption')}</option>
+                                                                                                        {variantOptions.map((variantOption) => (
+                                                                                                            <option
+                                                                                                                key={variantOption}
+                                                                                                                value={variantOption}
+                                                                                                            >
+                                                                                                                {variantOption}
+                                                                                                            </option>
+                                                                                                        ))}
+                                                                                                    </select>
+                                                                                                )}
+                                                                                            </div>
+
+                                                                                            <button
+                                                                                                type="button"
+                                                                                                onClick={() =>
+                                                                                                    toggleCustomVariantInput({
+                                                                                                        rowId: row.id,
+                                                                                                        currentVariant: row.variant,
+                                                                                                        variantOptions,
+                                                                                                        selectedExercise,
+                                                                                                    })
+                                                                                                }
+                                                                                                disabled={
+                                                                                                    rowBusy || readOnly || !selectedExercise
+                                                                                                }
+                                                                                                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                                                                                title={
+                                                                                                    isCustomVariantInput
+                                                                                                        ? t('editProgram.lockVariantInputTitle')
+                                                                                                        : t('editProgram.unlockVariantInputTitle')
+                                                                                                }
+                                                                                                aria-label={
+                                                                                                    isCustomVariantInput
+                                                                                                        ? t('editProgram.lockVariantInputTitle')
+                                                                                                        : t('editProgram.unlockVariantInputTitle')
+                                                                                                }
+                                                                                            >
+                                                                                                {isCustomVariantInput ? (
+                                                                                                    <LockOpen className="h-4 w-4" />
+                                                                                                ) : (
+                                                                                                    <Lock className="h-4 w-4" />
+                                                                                                )}
+                                                                                            </button>
+                                                                                        </div>
+
+                                                                                        {selectedExercise && variantOptions.length === 0 && (
+                                                                                            <p className="mt-1 text-[11px] text-gray-400">
+                                                                                                {t('editProgram.noVariantAvailable')}
+                                                                                            </p>
+                                                                                        )}
+                                                                                    </td>
+
+                                                                                    <td className="px-1.5 py-3 w-16">
+                                                                                        <input
+                                                                                            type="number"
+                                                                                            min="1"
+                                                                                            max="20"
+                                                                                            step="1"
+                                                                                            value={row.sets}
+                                                                                            onChange={(event) =>
+                                                                                                updateRowFields(row.id, {
+                                                                                                    sets: event.target.value,
+                                                                                                })
+                                                                                            }
+                                                                                            disabled={rowBusy || readOnly}
+                                                                                            className="mx-auto w-14 rounded-lg border border-gray-300 px-1.5 py-2 text-center text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                                                                                        />
+                                                                                    </td>
+
+                                                                                    <td className="px-1.5 py-3 w-20">
+                                                                                        <input
+                                                                                            type="text"
+                                                                                            value={row.reps}
+                                                                                            onChange={(event) =>
+                                                                                                updateRowFields(row.id, {
+                                                                                                    reps: event.target.value,
+                                                                                                })
+                                                                                            }
+                                                                                            disabled={rowBusy || readOnly}
+                                                                                            placeholder={t('editProgram.repsPlaceholder')}
+                                                                                            className="w-full rounded-lg border border-gray-300 px-1.5 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                                                                                        />
+                                                                                    </td>
+
+                                                                                    <td className="px-1.5 py-3 w-16">
+                                                                                        <select
+                                                                                            value={row.targetRpe}
+                                                                                            onChange={(event) =>
+                                                                                                updateRowFields(row.id, {
+                                                                                                    targetRpe: event.target.value,
+                                                                                                })
+                                                                                            }
+                                                                                            disabled={rowBusy || readOnly}
+                                                                                            className="w-full rounded-lg border border-gray-300 px-1.5 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                                                                                        >
+                                                                                            <option value="">-</option>
+                                                                                            {RPE_OPTIONS.map((rpeValue) => (
+                                                                                                <option key={rpeValue} value={String(rpeValue)}>
+                                                                                                    {rpeValue}
+                                                                                                </option>
+                                                                                            ))}
+                                                                                        </select>
+                                                                                    </td>
+
+                                                                                    <td className="px-1.5 py-3">
+                                                                                        <input
+                                                                                            type="number"
+                                                                                            min="0"
+                                                                                            step="0.5"
+                                                                                            value={row.weight}
+                                                                                            onChange={(event) =>
+                                                                                                updateRowFields(row.id, {
+                                                                                                    weight: event.target.value,
+                                                                                                })
+                                                                                            }
+                                                                                            disabled={rowBusy || readOnly}
+                                                                                            placeholder={t('editProgram.weightPlaceholder')}
+                                                                                            className="w-full rounded-lg border border-gray-300 px-1.5 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                                                                                        />
+                                                                                    </td>
+
+                                                                                    <td className="px-1.5 py-3">
+                                                                                        {selectedExercise ? (
+                                                                                            <div className="flex items-center gap-1.5">
+                                                                                                <span
+                                                                                                    className={`inline-flex w-fit rounded-full px-2 py-0.5 text-[10px] font-semibold ${selectedExercise.type ===
+                                                                                                        'fundamental'
+                                                                                                        ? 'bg-red-100 text-red-700'
+                                                                                                        : 'bg-blue-100 text-blue-700'
+                                                                                                        }`}
+                                                                                                >
+                                                                                                    {selectedExercise.type === 'fundamental'
+                                                                                                        ? 'F'
+                                                                                                        : 'A'}
+                                                                                                </span>
+                                                                                                {selectedExercise.movementPattern && (
+                                                                                                    <MovementPatternTag
+                                                                                                        name={selectedExercise.movementPattern.name}
+                                                                                                        color={selectedExercise.movementPattern.color}
+                                                                                                        className="w-fit"
+                                                                                                    />
+                                                                                                )}
+                                                                                            </div>
+                                                                                        ) : (
+                                                                                            <span className="text-xs text-gray-400">
+                                                                                                -
+                                                                                            </span>
+                                                                                        )}
+                                                                                    </td>
+
+                                                                                    <td className="px-1.5 py-3">
+                                                                                        {!readOnly && (
+                                                                                            <div className="flex items-center justify-end gap-1">
+                                                                                                <button
+                                                                                                    type="button"
+                                                                                                    onClick={() =>
+                                                                                                        setConfirmDeleteRow({
+                                                                                                            rowId: row.id,
+                                                                                                            workoutId: workout.id,
+                                                                                                            isDraft: row.isDraft,
+                                                                                                        })
+                                                                                                    }
+                                                                                                    disabled={rowBusy}
+                                                                                                    className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                                                                                    title={t('editProgram.deleteRowTitle')}
+                                                                                                >
+                                                                                                    {deletingRowId === row.id ? (
+                                                                                                        <LoadingSpinner
+                                                                                                            size="sm"
+                                                                                                            color="primary"
+                                                                                                        />
+                                                                                                    ) : (
+                                                                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                                                                    )}
+                                                                                                </button>
+                                                                                            </div>
+                                                                                        )}
+                                                                                    </td>
+                                                                                </tr>
+                                                                            )
+                                                                        })}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    )}
+                                </section>
+                            )
+                        })}
+                    </div>
+
+                    {!readOnly && (
+                        <div className="flex space-x-4 mt-8">
+                            <Link
+                                href={`/trainer/programs/${programId}/review`}
+                                className={`flex-1 py-3 px-6 rounded-lg font-semibold text-center transition-colors ${completedWorkouts === totalWorkouts
+                                    ? 'bg-brand-primary hover:bg-brand-primary/90 text-white'
+                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    }`}
+                                onClick={(event) => {
+                                    if (completedWorkouts < totalWorkouts) {
+                                        event.preventDefault()
+                                        showToast(t('editProgram.configureAllFirst'), 'warning')
+                                    }
+                                }}
+                            >
+                                {t('editProgram.nextReview')}
+                            </Link>
+                            <Link
+                                href="/trainer/programs"
+                                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
+                            >
+                                {t('editProgram.saveDraft')}
+                            </Link>
+                        </div>
+                    )}
+
+                </div>
 
                 <ConfirmationModal
                     isOpen={confirmCopyNextWeek !== null}
