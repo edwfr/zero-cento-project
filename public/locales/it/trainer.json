@@ -278,9 +278,13 @@
     },
     "testResults": {
         "backToPrograms": "Torna ai programmi",
+        "backToTrainee": "Torna all'atleta",
         "title": "Risultati Settimane Test",
         "description": "Riepilogo dati inseriti da {{trainee}} per la scheda {{program}}, organizzati per workout.",
         "loadingError": "Errore caricamento risultati test",
+        "loadExercisesError": "Errore caricamento esercizi",
+        "noExercisesAvailable": "Nessun esercizio disponibile per aggiungere un massimale.",
+        "notesPlaceholder": "Note aggiuntive...",
         "noTestWeeks": "Non sono presenti settimane test per questo programma.",
         "weekTitle": "Settimana test {{week}}",
         "weekStartDate": "Inizio: {{date}}",

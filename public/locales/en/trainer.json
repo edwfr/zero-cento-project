@@ -278,9 +278,13 @@
     },
     "testResults": {
         "backToPrograms": "Back to programs",
+        "backToTrainee": "Back to athlete",
         "title": "Test Week Results",
         "description": "Summary of trainee-entered data by workout for program {{program}} ({{trainee}}).",
         "loadingError": "Error loading test results",
+        "loadExercisesError": "Error loading exercises",
+        "noExercisesAvailable": "No exercises available to add a personal record.",
+        "notesPlaceholder": "Additional notes...",
         "noTestWeeks": "No test weeks found for this program.",
         "weekTitle": "Test week {{week}}",
         "weekStartDate": "Start: {{date}}",

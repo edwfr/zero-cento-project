@@ -4,10 +4,13 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Plus } from 'lucide-react'
 import { SkeletonTable } from '@/components'
+import LoadingSpinner from '@/components/LoadingSpinner'
+import { useToast } from '@/components/ToastNotification'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { formatDate } from '@/lib/date-format'
+import { estimateOneRMFromRpeTable } from '@/lib/calculations'
+import { formatDate, getTodayForInput } from '@/lib/date-format'
 
 interface TestResultRow {
     workoutExerciseId: string
@@ -24,6 +27,12 @@ interface TestResultWorkout {
     workoutId: string
     dayIndex: number
     rows: TestResultRow[]
+}
+
+interface Exercise {
+    id: string
+    name: string
+    type: 'fundamental' | 'accessory'
 }
 
 interface TestResultWeek {
@@ -45,21 +54,40 @@ interface TestResultsData {
 }
 
 export default function ProgramTestResultsContent() {
-    const { t } = useTranslation('trainer')
+    const { t, i18n } = useTranslation('trainer')
     const { t: tNav } = useTranslation('navigation')
     const params = useParams<{ id: string }>()
     const searchParams = useSearchParams()
+    const { showToast } = useToast()
     const programId = params.id
     const backContext = searchParams.get('backContext')
-    const backHref = backContext === 'dashboard' ? '/trainer/dashboard' : '/trainer/programs'
+    const traineeId = searchParams.get('traineeId')
+    const backHref =
+        backContext === 'dashboard'
+            ? '/trainer/dashboard'
+            : backContext === 'trainee' && traineeId
+                ? `/trainer/trainees/${traineeId}`
+                : '/trainer/programs'
     const backLabel =
         backContext === 'dashboard'
             ? tNav('breadcrumbs.backToHome')
-            : t('testResults.backToPrograms')
+            : backContext === 'trainee'
+                ? t('testResults.backToTrainee')
+                : t('testResults.backToPrograms')
 
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [data, setData] = useState<TestResultsData | null>(null)
+    const [showAddRecordModal, setShowAddRecordModal] = useState(false)
+    const [isOpeningModal, setIsOpeningModal] = useState(false)
+    const [isSavingRecord, setIsSavingRecord] = useState(false)
+    const [modalError, setModalError] = useState<string | null>(null)
+    const [exercises, setExercises] = useState<Exercise[]>([])
+    const [selectedExerciseId, setSelectedExerciseId] = useState('')
+    const [weight, setWeight] = useState('')
+    const [reps, setReps] = useState('')
+    const [recordDate, setRecordDate] = useState(getTodayForInput())
+    const [notes, setNotes] = useState('')
 
     const fetchTestResults = useCallback(async () => {
         try {
@@ -82,6 +110,128 @@ export default function ProgramTestResultsContent() {
     useEffect(() => {
         void fetchTestResults()
     }, [fetchTestResults])
+
+    const sortExercisesByName = useCallback(
+        (items: Exercise[]) => {
+            return [...items].sort((a, b) =>
+                a.name.localeCompare(b.name, i18n.language, { sensitivity: 'base' })
+            )
+        },
+        [i18n.language]
+    )
+
+    const ensureExercisesLoaded = useCallback(async (): Promise<Exercise[]> => {
+        if (exercises.length > 0) {
+            return exercises
+        }
+
+        const res = await fetch('/api/exercises?limit=100')
+        const payload = await res.json()
+
+        if (!res.ok) {
+            throw new Error(
+                getApiErrorMessage(payload, t('testResults.loadExercisesError'), t)
+            )
+        }
+
+        const sorted = sortExercisesByName(payload.data?.items || [])
+        setExercises(sorted)
+        return sorted
+    }, [exercises, sortExercisesByName, t])
+
+    const openAddRecordModal = useCallback(async () => {
+        setModalError(null)
+        setIsOpeningModal(true)
+
+        try {
+            const loadedExercises = await ensureExercisesLoaded()
+
+            if (loadedExercises.length === 0) {
+                const message = t('testResults.noExercisesAvailable')
+                showToast(message, 'error')
+                return
+            }
+
+            setSelectedExerciseId(loadedExercises[0].id)
+            setWeight('')
+            setReps('')
+            setRecordDate(getTodayForInput())
+            setNotes('')
+            setShowAddRecordModal(true)
+        } catch (err: unknown) {
+            const message =
+                err instanceof Error ? err.message : t('testResults.loadExercisesError')
+            showToast(message, 'error')
+        } finally {
+            setIsOpeningModal(false)
+        }
+    }, [ensureExercisesLoaded, showToast, t])
+
+    const closeAddRecordModal = () => {
+        setShowAddRecordModal(false)
+        setModalError(null)
+    }
+
+    const calculateOneRepMax = (inputWeight: number, inputReps: number): number => {
+        const normalizedOneRM = estimateOneRMFromRpeTable(inputWeight, inputReps, 10)
+        return Math.round(normalizedOneRM * 10) / 10
+    }
+
+    const handleCreateRecord = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault()
+        setModalError(null)
+
+        if (!data) {
+            return
+        }
+
+        if (!selectedExerciseId || !weight || !reps || !recordDate) {
+            setModalError(t('personalRecords.fillAllFields'))
+            return
+        }
+
+        const parsedWeight = parseFloat(weight)
+        const parsedReps = parseInt(reps, 10)
+
+        if (Number.isNaN(parsedWeight) || Number.isNaN(parsedReps)) {
+            setModalError(t('personalRecords.fillAllFields'))
+            return
+        }
+
+        try {
+            setIsSavingRecord(true)
+
+            const res = await fetch('/api/personal-records', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    traineeId: data.trainee.id,
+                    exerciseId: selectedExerciseId,
+                    weight: parsedWeight,
+                    reps: parsedReps,
+                    recordDate,
+                    notes: notes.trim() || undefined,
+                }),
+            })
+
+            const payload = await res.json()
+
+            if (!res.ok) {
+                throw new Error(
+                    getApiErrorMessage(payload, t('personalRecords.createError'), t)
+                )
+            }
+
+            showToast(t('personalRecords.recordAdded'), 'success')
+            closeAddRecordModal()
+        } catch (err: unknown) {
+            setModalError(
+                err instanceof Error ? err.message : t('personalRecords.createError')
+            )
+        } finally {
+            setIsSavingRecord(false)
+        }
+    }
 
     if (loading) {
         return (
@@ -116,13 +266,34 @@ export default function ProgramTestResultsContent() {
             </Link>
 
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">{t('testResults.title')}</h1>
-                <p className="text-gray-600 mt-2">
-                    {t('testResults.description', {
-                        program: data.programName,
-                        trainee: `${data.trainee.firstName} ${data.trainee.lastName}`,
-                    })}
-                </p>
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900">{t('testResults.title')}</h1>
+                        <p className="text-gray-600 mt-2">
+                            {t('testResults.description', {
+                                program: data.programName,
+                                trainee: `${data.trainee.firstName} ${data.trainee.lastName}`,
+                            })}
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            void openAddRecordModal()
+                        }}
+                        disabled={isOpeningModal}
+                        className="bg-[#FFA700] hover:bg-[#FF9500] disabled:bg-gray-400 text-white font-semibold px-6 py-2 rounded-lg transition-colors inline-flex items-center justify-center gap-2"
+                    >
+                        {isOpeningModal ? (
+                            <LoadingSpinner size="sm" color="white" />
+                        ) : (
+                            <>
+                                <Plus className="w-4 h-4" />
+                                {t('personalRecords.addRecordButton')}
+                            </>
+                        )}
+                    </button>
+                </div>
             </div>
 
             {data.testWeeks.length === 0 ? (
@@ -212,6 +383,139 @@ export default function ProgramTestResultsContent() {
                             </div>
                         </section>
                     ))}
+                </div>
+            )}
+
+            {showAddRecordModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg max-w-2xl w-full p-6">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                            {t('personalRecords.addRecord')}
+                        </h2>
+
+                        {modalError && (
+                            <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-4">
+                                {modalError}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleCreateRecord} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    {t('personalRecords.exercise')} *
+                                </label>
+                                <select
+                                    value={selectedExerciseId}
+                                    onChange={(event) => setSelectedExerciseId(event.target.value)}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                                    required
+                                >
+                                    {exercises.map((exercise) => (
+                                        <option key={exercise.id} value={exercise.id}>
+                                            {exercise.name} ({exercise.type === 'fundamental' ? t('exercises.fundamental') : t('exercises.accessory')})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        {t('personalRecords.weight')} *
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.5"
+                                        min="0"
+                                        max="1000"
+                                        value={weight}
+                                        onChange={(event) => setWeight(event.target.value)}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                                        placeholder="100"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        {t('personalRecords.reps')} *
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="100"
+                                        value={reps}
+                                        onChange={(event) => setReps(event.target.value)}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                                        placeholder="5"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    {t('personalRecords.recordDate')} *
+                                </label>
+                                <input
+                                    type="date"
+                                    value={recordDate}
+                                    max={getTodayForInput()}
+                                    onChange={(event) => setRecordDate(event.target.value)}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    {t('workoutDetail.notesLabel')}
+                                </label>
+                                <textarea
+                                    value={notes}
+                                    onChange={(event) => setNotes(event.target.value)}
+                                    rows={2}
+                                    maxLength={500}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                                    placeholder={t('testResults.notesPlaceholder')}
+                                />
+                            </div>
+
+                            {Number.isFinite(parseFloat(weight)) &&
+                                Number.isFinite(parseInt(reps, 10)) &&
+                                parseFloat(weight) > 0 &&
+                                parseInt(reps, 10) > 0 && (
+                                    <div className="bg-gray-50 rounded-lg p-4">
+                                        <div className="text-sm text-gray-600 mb-1">
+                                            {t('personalRecords.estimated1RM')}
+                                        </div>
+                                        <div className="text-2xl font-bold text-[#FFA700]">
+                                            {calculateOneRepMax(parseFloat(weight), parseInt(reps, 10))} kg
+                                        </div>
+                                    </div>
+                                )}
+
+                            <div className="flex space-x-4 pt-4">
+                                <button
+                                    type="submit"
+                                    disabled={isSavingRecord}
+                                    className="flex-1 bg-[#FFA700] hover:bg-[#FF9500] disabled:bg-gray-400 text-white font-semibold py-3 rounded-lg transition-colors flex items-center justify-center"
+                                >
+                                    {isSavingRecord ? (
+                                        <LoadingSpinner size="sm" color="white" />
+                                    ) : (
+                                        t('personalRecords.saveRecord')
+                                    )}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={closeAddRecordModal}
+                                    className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 rounded-lg transition-colors"
+                                >
+                                    {t('workoutDetail.cancel')}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             )}
         </div>
