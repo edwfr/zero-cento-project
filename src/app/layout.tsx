@@ -11,6 +11,10 @@ export const metadata: Metadata = {
     title: 'ZeroCento Training Platform',
     description: 'Piattaforma di gestione training sportivo per trainer e atleti',
     manifest: '/manifest.json',
+    icons: {
+        icon: '/images/logo/favicon.ico',
+        shortcut: '/images/logo/favicon.ico',
+    },
 }
 
 export const viewport: Viewport = {

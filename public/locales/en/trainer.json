@@ -120,6 +120,7 @@
         "noProgramsAssigned": "No programs assigned",
         "createNewProgram": "Create New Program",
         "manageRecords": "Manage Records",
+        "recordsLatestOnlyHint": "This section shows only the latest record per exercise. For full history and details, use Manage Records.",
         "viewProgram": "View",
         "estimated1RM": "Estimated 1RM",
         "reportingSectionTitle": "Planned sets by muscle group over time",

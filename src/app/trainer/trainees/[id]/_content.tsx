@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
@@ -93,6 +93,34 @@ export default function TraineeDetailContent() {
         // Brzycki formula
         return Math.round(weight * (36 / (37 - reps)) * 10) / 10
     }
+
+    const latestRecords = useMemo(() => {
+        const latestByExercise = new Map<string, PersonalRecord>()
+
+        records.forEach((record) => {
+            const currentLatest = latestByExercise.get(record.exercise.id)
+
+            if (!currentLatest) {
+                latestByExercise.set(record.exercise.id, record)
+                return
+            }
+
+            const currentDate = new Date(currentLatest.recordDate).getTime()
+            const nextDate = new Date(record.recordDate).getTime()
+
+            if (nextDate > currentDate) {
+                latestByExercise.set(record.exercise.id, record)
+            }
+        })
+
+        return Array.from(latestByExercise.values()).sort((left, right) => {
+            if (left.exercise.type !== right.exercise.type) {
+                return left.exercise.type === 'fundamental' ? -1 : 1
+            }
+
+            return left.exercise.name.localeCompare(right.exercise.name, 'it', { sensitivity: 'base' })
+        })
+    }, [records])
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -194,7 +222,7 @@ export default function TraineeDetailContent() {
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
-                                {t('athletes.recordsTab')} ({records.length})
+                                {t('athletes.recordsTab')} ({latestRecords.length})
                             </button>
                             <button
                                 onClick={() => setActiveTab('reports')}
@@ -319,57 +347,61 @@ export default function TraineeDetailContent() {
                                 </Link>
                             </div>
                         ) : (
-                            <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                                                {t('personalRecords.exercise')}
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                                                {t('personalRecords.weight')}
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                                                {t('personalRecords.reps')}
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                                                {t('athletes.estimated1RM')}
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                                                {t('personalRecords.date')}
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {records.map((record) => (
-                                            <tr key={record.id} className="hover:bg-gray-50">
-                                                <td className="px-6 py-4">
-                                                    <div className="font-semibold text-gray-900">
-                                                        {record.exercise.name}
-                                                    </div>
-                                                    <div className="text-xs text-gray-500">
-                                                        {record.exercise.type === 'fundamental'
-                                                            ? t('exercises.fundamental')
-                                                            : t('exercises.accessory')}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                                                    {record.weight} kg
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                                    {record.reps} reps
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-[#FFA700]">
-                                                    {calculateOneRepMax(record.weight, record.reps)}{' '}
-                                                    kg
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                                    {formatDate(record.recordDate)}
-                                                </td>
+                            <div className="space-y-4">
+                                <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+                                    {t('athletes.recordsLatestOnlyHint')}
+                                </div>
+                                <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                                                    {t('personalRecords.exercise')}
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                                                    {t('personalRecords.weight')}
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                                                    {t('personalRecords.reps')}
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                                                    {t('athletes.estimated1RM')}
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                                                    {t('personalRecords.date')}
+                                                </th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {latestRecords.map((record) => (
+                                                <tr key={record.id} className="hover:bg-gray-50">
+                                                    <td className="px-6 py-4">
+                                                        <div className="font-semibold text-gray-900">
+                                                            {record.exercise.name}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500">
+                                                            {record.exercise.type === 'fundamental'
+                                                                ? t('exercises.fundamental')
+                                                                : t('exercises.accessory')}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                                                        {record.weight} kg
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                                        {record.reps} reps
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-[#FFA700]">
+                                                        {calculateOneRepMax(record.weight, record.reps)} kg
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                                        {formatDate(record.recordDate)}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         )}
                     </div>

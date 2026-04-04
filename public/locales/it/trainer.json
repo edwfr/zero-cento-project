@@ -120,6 +120,7 @@
         "noProgramsAssigned": "Nessun programma assegnato",
         "createNewProgram": "Crea Nuovo Programma",
         "manageRecords": "Gestisci Massimali",
+        "recordsLatestOnlyHint": "In questa sezione vedi solo l'ultimo record per esercizio. Per storico completo e dettagli usa Gestisci Massimali.",
         "viewProgram": "Visualizza",
         "estimated1RM": "1RM Stimato",
         "reportingSectionTitle": "Serie pianificate per gruppo muscolare nel tempo",

@@ -21,6 +21,8 @@ export { default as WeekTypeBanner } from './WeekTypeBanner'
 export { default as ProgressBar } from './ProgressBar'
 export { default as StatCard } from './StatCard'
 export { default as NavigationCard } from './NavigationCard'
+export { default as RPEOneRMTable } from './RPEOneRMTable'
+export { default as PersonalRecordsExplorer } from './PersonalRecordsExplorer'
 
 // Loading & Feedback
 export { default as LoadingSpinner, FullPageLoader, InlineLoader } from './LoadingSpinner'

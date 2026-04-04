@@ -5,10 +5,48 @@ import {
     parseReps,
     estimateOneRM,
     estimateOneRMFromRpeTable,
-    calculateEffectiveWeight,
+    calculateEffectiveWeight as calculateEffectiveWeightRaw,
 } from '@/lib/calculations'
 import { prisma } from '@/lib/prisma'
-import type { WorkoutExercise } from '@prisma/client'
+import type { RestTime, WorkoutExercise as PrismaWorkoutExercise } from '@prisma/client'
+
+type WorkoutExercise = Omit<
+    PrismaWorkoutExercise,
+    'variant' | 'targetRpe' | 'restTime' | 'isWarmup'
+> & {
+    variant?: string | null
+    targetRpe?: number | null
+    restTime?: RestTime
+    isWarmup?: boolean
+    rpe?: number | null
+    restSeconds?: number
+    createdAt?: Date
+    updatedAt?: Date
+}
+
+const normalizeWorkoutExercise = (exercise: WorkoutExercise): PrismaWorkoutExercise => ({
+    id: exercise.id,
+    workoutId: exercise.workoutId,
+    exerciseId: exercise.exerciseId,
+    variant: exercise.variant ?? null,
+    sets: exercise.sets,
+    reps: exercise.reps,
+    targetRpe: exercise.targetRpe ?? exercise.rpe ?? null,
+    weightType: exercise.weightType,
+    weight: exercise.weight,
+    restTime: exercise.restTime ?? 'm2',
+    isWarmup: exercise.isWarmup ?? false,
+    notes: exercise.notes,
+    order: exercise.order,
+})
+
+const normalizeWorkoutExerciseNullable = (
+    exercise: WorkoutExercise | null
+): PrismaWorkoutExercise | null =>
+    exercise ? normalizeWorkoutExercise(exercise) : null
+
+const calculateEffectiveWeight = (workoutExercise: WorkoutExercise, traineeId: string) =>
+    calculateEffectiveWeightRaw(normalizeWorkoutExercise(workoutExercise), traineeId)
 
 describe('calculateVolume', () => {
     it('returns sets × reps × weight × coefficient', () => {
@@ -109,6 +147,11 @@ describe('estimateOneRMFromRpeTable', () => {
         expect(estimateOneRMFromRpeTable(100, 5, 9)).toBeCloseTo(119.47, 2)
     })
 
+    it('matches chart values for high-rep rows', () => {
+        // 100 / 0.68 = 147.05...
+        expect(estimateOneRMFromRpeTable(100, 12, 10)).toBeCloseTo(147.06, 2)
+    })
+
     it('falls back to Epley when reps are outside chart range', () => {
         expect(estimateOneRMFromRpeTable(100, 15, 10)).toBeCloseTo(estimateOneRM(100, 15), 5)
     })
@@ -191,6 +234,7 @@ describe('calculateEffectiveWeight', () => {
                 exerciseId: mockExerciseId,
                 weight: 150,
                 reps: 1,
+                notes: null,
                 recordDate: new Date(),
                 createdAt: new Date(),
                 updatedAt: new Date(),
@@ -263,6 +307,7 @@ describe('calculateEffectiveWeight', () => {
                 exerciseId: mockExerciseId,
                 weight: 100,
                 reps: 8,
+                notes: null,
                 recordDate: new Date(),
                 createdAt: new Date(),
                 updatedAt: new Date(),
@@ -309,6 +354,7 @@ describe('calculateEffectiveWeight', () => {
                 exerciseId: mockExerciseId,
                 weight: 120,
                 reps: 8,
+                notes: null,
                 recordDate: new Date(),
                 createdAt: new Date(),
                 updatedAt: new Date(),
@@ -402,7 +448,9 @@ describe('calculateEffectiveWeight', () => {
                 updatedAt: new Date(),
             }
 
-            vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(previousExercise)
+            vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(
+                normalizeWorkoutExerciseNullable(previousExercise)
+            )
 
             const result = await calculateEffectiveWeight(currentExercise, mockTraineeId)
             // 100 * (1 + 10/100) = 100 * 1.1 = 110
@@ -477,8 +525,8 @@ describe('calculateEffectiveWeight', () => {
             // First call: find exercise 2
             // Second call: find exercise 1
             vi.mocked(prisma.workoutExercise.findFirst)
-                .mockResolvedValueOnce(exercise2)
-                .mockResolvedValueOnce(exercise1)
+                .mockResolvedValueOnce(normalizeWorkoutExerciseNullable(exercise2))
+                .mockResolvedValueOnce(normalizeWorkoutExerciseNullable(exercise1))
 
             const result = await calculateEffectiveWeight(exercise3, mockTraineeId)
             // Exercise 1: 100kg
@@ -554,9 +602,9 @@ describe('calculateEffectiveWeight', () => {
             }
 
             vi.mocked(prisma.workoutExercise.findFirst)
-                .mockResolvedValueOnce(exercise3)
-                .mockResolvedValueOnce(exercise2)
-                .mockResolvedValueOnce(exercise1)
+                .mockResolvedValueOnce(normalizeWorkoutExerciseNullable(exercise3))
+                .mockResolvedValueOnce(normalizeWorkoutExerciseNullable(exercise2))
+                .mockResolvedValueOnce(normalizeWorkoutExerciseNullable(exercise1))
 
             const result = await calculateEffectiveWeight(exercise4, mockTraineeId)
             // Exercise 1: 100kg
@@ -599,7 +647,9 @@ describe('calculateEffectiveWeight', () => {
                 updatedAt: new Date(),
             }
 
-            vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(previousExercise)
+            vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(
+                normalizeWorkoutExerciseNullable(previousExercise)
+            )
 
             const result = await calculateEffectiveWeight(currentExercise, mockTraineeId)
             // 100 * (1 + (-10)/100) = 100 * 0.9 = 90
@@ -640,7 +690,9 @@ describe('calculateEffectiveWeight', () => {
                 updatedAt: new Date(),
             }
 
-            vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(previousExercise)
+            vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(
+                normalizeWorkoutExerciseNullable(previousExercise)
+            )
             vi.mocked(prisma.personalRecord.findFirst).mockResolvedValue(null)
 
             const result = await calculateEffectiveWeight(currentExercise, mockTraineeId)
@@ -708,7 +760,7 @@ describe('calculateEffectiveWeight', () => {
             // Mock 11 calls, all returning percentage_previous exercises
             for (let i = 11; i >= 1; i--) {
                 vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValueOnce(
-                    createChainExercise(i)
+                    normalizeWorkoutExerciseNullable(createChainExercise(i))
                 )
             }
 
@@ -770,8 +822,8 @@ describe('calculateEffectiveWeight', () => {
             }
 
             vi.mocked(prisma.workoutExercise.findFirst)
-                .mockResolvedValueOnce(exercise2)
-                .mockResolvedValueOnce(exercise1)
+                .mockResolvedValueOnce(normalizeWorkoutExerciseNullable(exercise2))
+                .mockResolvedValueOnce(normalizeWorkoutExerciseNullable(exercise1))
 
             const result = await calculateEffectiveWeight(exercise3, mockTraineeId)
             expect(result).toBeCloseTo(115.5, 5)
@@ -816,12 +868,15 @@ describe('calculateEffectiveWeight', () => {
                 exerciseId: mockExerciseId,
                 weight: 150,
                 reps: 1,
+                notes: null,
                 recordDate: new Date(),
                 createdAt: new Date(),
                 updatedAt: new Date(),
             }
 
-            vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(exercise1)
+            vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(
+                normalizeWorkoutExerciseNullable(exercise1)
+            )
             vi.mocked(prisma.personalRecord.findFirst).mockResolvedValue(mockRecord)
 
             const result = await calculateEffectiveWeight(exercise2, mockTraineeId)
@@ -869,12 +924,15 @@ describe('calculateEffectiveWeight', () => {
                 exerciseId: mockExerciseId,
                 weight: 100,
                 reps: 8,
+                notes: null,
                 recordDate: new Date(),
                 createdAt: new Date(),
                 updatedAt: new Date(),
             }
 
-            vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(exercise1)
+            vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(
+                normalizeWorkoutExerciseNullable(exercise1)
+            )
             vi.mocked(prisma.personalRecord.findFirst).mockResolvedValue(mockRecord)
 
             const result = await calculateEffectiveWeight(exercise2, mockTraineeId)

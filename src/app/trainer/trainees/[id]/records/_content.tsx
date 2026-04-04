@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { SkeletonTable } from '@/components'
-import { Plus, Pencil, Trash2, Dumbbell } from 'lucide-react'
+import { PersonalRecordsExplorer, RPEOneRMTable, SkeletonTable } from '@/components'
+import { Plus, Dumbbell } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
-import { formatDate, formatDateForInput, getTodayForInput } from '@/lib/date-format'
+import { formatDateForInput, getTodayForInput } from '@/lib/date-format'
 import { estimateOneRMFromRpeTable } from '@/lib/calculations'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
@@ -34,15 +34,6 @@ interface PersonalRecord {
     exercise: Exercise
 }
 
-interface GroupedExerciseRecord {
-    exercise: Exercise
-    oneRM: PersonalRecord | null
-    threeRM: PersonalRecord | null
-    fiveRM: PersonalRecord | null
-    tenRM: PersonalRecord | null
-    allRecords: PersonalRecord[]
-}
-
 export default function TraineeRecordsContent() {
     const params = useParams<{ id: string }>()
     const traineeId = params.id
@@ -50,7 +41,6 @@ export default function TraineeRecordsContent() {
     const [loading, setLoading] = useState(true)
     const [trainee, setTrainee] = useState<Trainee | null>(null)
     const [records, setRecords] = useState<PersonalRecord[]>([])
-    const [groupedRecords, setGroupedRecords] = useState<GroupedExerciseRecord[]>([])
     const [exercises, setExercises] = useState<Exercise[]>([])
     const [error, setError] = useState<string | null>(null)
 
@@ -75,12 +65,6 @@ export default function TraineeRecordsContent() {
     useEffect(() => {
         fetchData()
     }, [traineeId])
-
-    useEffect(() => {
-        // Group records by exercise and find best records for each rep range
-        const grouped = groupRecordsByExercise(records)
-        setGroupedRecords(grouped)
-    }, [records])
 
     const sortExercisesByName = (items: Exercise[]) => {
         return [...items].sort((a, b) => a.name.localeCompare(b.name, 'it', { sensitivity: 'base' }))
@@ -120,66 +104,6 @@ export default function TraineeRecordsContent() {
         } finally {
             setLoading(false)
         }
-    }
-
-    const groupRecordsByExercise = (records: PersonalRecord[]): GroupedExerciseRecord[] => {
-        const exerciseMap = new Map<string, GroupedExerciseRecord>()
-
-        records.forEach((record) => {
-            const exerciseId = record.exercise.id
-            if (!exerciseMap.has(exerciseId)) {
-                exerciseMap.set(exerciseId, {
-                    exercise: record.exercise,
-                    oneRM: null,
-                    threeRM: null,
-                    fiveRM: null,
-                    tenRM: null,
-                    allRecords: [],
-                })
-            }
-
-            const group = exerciseMap.get(exerciseId)!
-            group.allRecords.push(record)
-
-            // Find best record for each rep range based on estimated 1RM
-            const estimated1RM = calculateOneRepMax(record.weight, record.reps)
-
-            // 1RM: reps = 1
-            if (record.reps === 1) {
-                if (!group.oneRM || record.weight > group.oneRM.weight) {
-                    group.oneRM = record
-                }
-            }
-
-            // 3RM: reps between 2-4
-            if (record.reps >= 2 && record.reps <= 4) {
-                if (!group.threeRM || estimated1RM > calculateOneRepMax(group.threeRM.weight, group.threeRM.reps)) {
-                    group.threeRM = record
-                }
-            }
-
-            // 5RM: reps between 5-7
-            if (record.reps >= 5 && record.reps <= 7) {
-                if (!group.fiveRM || estimated1RM > calculateOneRepMax(group.fiveRM.weight, group.fiveRM.reps)) {
-                    group.fiveRM = record
-                }
-            }
-
-            // 10RM: reps between 8-12
-            if (record.reps >= 8 && record.reps <= 12) {
-                if (!group.tenRM || estimated1RM > calculateOneRepMax(group.tenRM.weight, group.tenRM.reps)) {
-                    group.tenRM = record
-                }
-            }
-        })
-
-        return Array.from(exerciseMap.values()).sort((a, b) => {
-            // Sort fundamentals first, then by name
-            if (a.exercise.type !== b.exercise.type) {
-                return a.exercise.type === 'fundamental' ? -1 : 1
-            }
-            return a.exercise.name.localeCompare(b.exercise.name)
-        })
     }
 
     const openAddModal = () => {
@@ -357,6 +281,8 @@ export default function TraineeRecordsContent() {
                     </div>
                 </div>
 
+                <RPEOneRMTable className="mb-6" />
+
                 {/* Error */}
                 {error && (
                     <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6">
@@ -364,8 +290,8 @@ export default function TraineeRecordsContent() {
                     </div>
                 )}
 
-                {/* Grouped Records by Exercise */}
-                {groupedRecords.length === 0 ? (
+                {/* Records Explorer */}
+                {records.length === 0 ? (
                     <div className="bg-white rounded-lg shadow-md p-12 text-center">
                         <div className="mb-4 flex justify-center"><Dumbbell size={48} className="text-gray-300" /></div>
                         <h2 className="text-2xl font-bold text-gray-900 mb-4">
@@ -382,174 +308,12 @@ export default function TraineeRecordsContent() {
                         </button>
                     </div>
                 ) : (
-                    <div className="space-y-6">
-                        {groupedRecords.map((group) => (
-                            <div key={group.exercise.id} className="bg-white rounded-lg shadow-md overflow-hidden">
-                                {/* Exercise Header */}
-                                <div className="bg-gradient-to-r from-brand-primary to-brand-secondary px-6 py-4">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <h2 className="text-xl font-bold text-white">
-                                                {group.exercise.name}
-                                            </h2>
-                                            <p className="text-xs text-white/80 mt-1">
-                                                {group.exercise.type === 'fundamental' ? 'Fondamentale' : 'Accessorio'}
-                                            </p>
-                                        </div>
-                                        <div className="text-xs text-white/90">
-                                            {group.allRecords.length} {group.allRecords.length === 1 ? 'record' : 'records'}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Rep Maxes Grid */}
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-6 bg-gray-50">
-                                    {/* 1RM */}
-                                    <div className="bg-white rounded-lg p-4 border-2 border-gray-200">
-                                        <div className="text-xs font-semibold text-gray-500 uppercase mb-2">1RM</div>
-                                        {group.oneRM ? (
-                                            <>
-                                                <div className="text-2xl font-bold text-[#FFA700] mb-1">
-                                                    {group.oneRM.weight} kg
-                                                </div>
-                                                <div className="text-xs text-gray-600">
-                                                    {formatDate(group.oneRM.recordDate)}
-                                                </div>
-                                                <div className="mt-2 flex space-x-2">
-                                                    <button onClick={() => openEditModal(group.oneRM!)} className="text-blue-600 hover:text-blue-800" title="Modifica"><Pencil size={14} /></button>
-                                                    <button onClick={() => handleDeleteRecord(group.oneRM!.id, group.exercise.name)} className="text-red-600 hover:text-red-800" title="Elimina"><Trash2 size={14} /></button>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <div className="text-sm text-gray-400">—</div>
-                                        )}
-                                    </div>
-
-                                    {/* 3RM */}
-                                    <div className="bg-white rounded-lg p-4 border-2 border-gray-200">
-                                        <div className="text-xs font-semibold text-gray-500 uppercase mb-2">3RM</div>
-                                        {group.threeRM ? (
-                                            <>
-                                                <div className="text-2xl font-bold text-[#FFA700] mb-1">
-                                                    {group.threeRM.weight} kg
-                                                </div>
-                                                <div className="text-xs text-gray-600">
-                                                    {group.threeRM.reps} reps · {formatDate(group.threeRM.recordDate)}
-                                                </div>
-                                                <div className="text-xs text-gray-500 mt-1">
-                                                    Est. 1RM: {calculateOneRepMax(group.threeRM.weight, group.threeRM.reps)} kg
-                                                </div>
-                                                <div className="mt-2 flex space-x-2">
-                                                    <button onClick={() => openEditModal(group.threeRM!)} className="text-blue-600 hover:text-blue-800" title="Modifica"><Pencil size={14} /></button>
-                                                    <button onClick={() => handleDeleteRecord(group.threeRM!.id, group.exercise.name)} className="text-red-600 hover:text-red-800" title="Elimina"><Trash2 size={14} /></button>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <div className="text-sm text-gray-400">—</div>
-                                        )}
-                                    </div>
-
-                                    {/* 5RM */}
-                                    <div className="bg-white rounded-lg p-4 border-2 border-gray-200">
-                                        <div className="text-xs font-semibold text-gray-500 uppercase mb-2">5RM</div>
-                                        {group.fiveRM ? (
-                                            <>
-                                                <div className="text-2xl font-bold text-[#FFA700] mb-1">
-                                                    {group.fiveRM.weight} kg
-                                                </div>
-                                                <div className="text-xs text-gray-600">
-                                                    {group.fiveRM.reps} reps · {formatDate(group.fiveRM.recordDate)}
-                                                </div>
-                                                <div className="text-xs text-gray-500 mt-1">
-                                                    Est. 1RM: {calculateOneRepMax(group.fiveRM.weight, group.fiveRM.reps)} kg
-                                                </div>
-                                                <div className="mt-2 flex space-x-2">
-                                                    <button onClick={() => openEditModal(group.fiveRM!)} className="text-blue-600 hover:text-blue-800" title="Modifica"><Pencil size={14} /></button>
-                                                    <button onClick={() => handleDeleteRecord(group.fiveRM!.id, group.exercise.name)} className="text-red-600 hover:text-red-800" title="Elimina"><Trash2 size={14} /></button>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <div className="text-sm text-gray-400">—</div>
-                                        )}
-                                    </div>
-
-                                    {/* 10RM */}
-                                    <div className="bg-white rounded-lg p-4 border-2 border-gray-200">
-                                        <div className="text-xs font-semibold text-gray-500 uppercase mb-2">10RM</div>
-                                        {group.tenRM ? (
-                                            <>
-                                                <div className="text-2xl font-bold text-[#FFA700] mb-1">
-                                                    {group.tenRM.weight} kg
-                                                </div>
-                                                <div className="text-xs text-gray-600">
-                                                    {group.tenRM.reps} reps · {formatDate(group.tenRM.recordDate)}
-                                                </div>
-                                                <div className="text-xs text-gray-500 mt-1">
-                                                    Est. 1RM: {calculateOneRepMax(group.tenRM.weight, group.tenRM.reps)} kg
-                                                </div>
-                                                <div className="mt-2 flex space-x-2">
-                                                    <button onClick={() => openEditModal(group.tenRM!)} className="text-blue-600 hover:text-blue-800" title="Modifica"><Pencil size={14} /></button>
-                                                    <button onClick={() => handleDeleteRecord(group.tenRM!.id, group.exercise.name)} className="text-red-600 hover:text-red-800" title="Elimina"><Trash2 size={14} /></button>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <div className="text-sm text-gray-400">—</div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* All Records Table */}
-                                {group.allRecords.length > 0 && (
-                                    <details className="border-t border-gray-200">
-                                        <summary className="px-6 py-3 cursor-pointer hover:bg-gray-50 text-sm font-semibold text-gray-700">
-                                            Mostra tutti i {group.allRecords.length} record
-                                        </summary>
-                                        <div className="overflow-x-auto">
-                                            <table className="min-w-full divide-y divide-gray-200">
-                                                <thead className="bg-gray-50">
-                                                    <tr>
-                                                        <th className="px-6 py-2 text-left text-xs font-semibold text-gray-500">Peso</th>
-                                                        <th className="px-6 py-2 text-left text-xs font-semibold text-gray-500">Reps</th>
-                                                        <th className="px-6 py-2 text-left text-xs font-semibold text-gray-500">1RM Est.</th>
-                                                        <th className="px-6 py-2 text-left text-xs font-semibold text-gray-500">Data</th>
-                                                        <th className="px-6 py-2 text-left text-xs font-semibold text-gray-500">Note</th>
-                                                        <th className="px-6 py-2 text-right text-xs font-semibold text-gray-500">Azioni</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="bg-white divide-y divide-gray-200">
-                                                    {group.allRecords
-                                                        .sort((a, b) => new Date(b.recordDate).getTime() - new Date(a.recordDate).getTime())
-                                                        .map((record) => (
-                                                            <tr key={record.id} className="hover:bg-gray-50">
-                                                                <td className="px-6 py-2 text-sm font-semibold text-gray-900">
-                                                                    {record.weight} kg
-                                                                </td>
-                                                                <td className="px-6 py-2 text-sm text-gray-700">
-                                                                    {record.reps}
-                                                                </td>
-                                                                <td className="px-6 py-2 text-sm font-semibold text-[#FFA700]">
-                                                                    {calculateOneRepMax(record.weight, record.reps)} kg
-                                                                </td>
-                                                                <td className="px-6 py-2 text-sm text-gray-700">
-                                                                    {formatDate(record.recordDate)}
-                                                                </td>
-                                                                <td className="px-6 py-2 text-sm text-gray-600 max-w-xs truncate">
-                                                                    {record.notes || '—'}
-                                                                </td>
-                                                                <td className="px-6 py-2 text-sm text-right space-x-2">
-                                                                    <button onClick={() => openEditModal(record)} className="text-blue-600 hover:text-blue-800" title="Modifica"><Pencil size={14} /></button>
-                                                                    <button onClick={() => handleDeleteRecord(record.id, group.exercise.name)} className="text-red-600 hover:text-red-800" title="Elimina"><Trash2 size={14} /></button>
-                                                                </td>
-                                                            </tr>
-                                                        ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </details>
-                                )}
-                            </div>
-                        ))}
-                    </div>
+                    <PersonalRecordsExplorer
+                        records={records}
+                        calculateOneRepMax={calculateOneRepMax}
+                        onEditRecord={openEditModal}
+                        onDeleteRecord={(record) => handleDeleteRecord(record.id, record.exercise.name)}
+                    />
                 )}
 
                 {/* Add/Edit Modal */}
