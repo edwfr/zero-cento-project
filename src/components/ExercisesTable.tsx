@@ -24,10 +24,6 @@ interface Exercise {
         name: string
     }
     exerciseMuscleGroups: MuscleGroupAssignment[]
-    creator: {
-        firstName: string
-        lastName: string
-    }
     createdAt: string
 }
 
@@ -176,9 +172,6 @@ export default function ExercisesTable() {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 {t('trainer:exercises.muscleGroups')}
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                {t('trainer:exercises.createdBy')}
-                            </th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 {t('common:common.actions')}
                             </th>
@@ -187,7 +180,7 @@ export default function ExercisesTable() {
                     <tbody className="bg-white divide-y divide-gray-200">
                         {exercises.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
+                                <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
                                     {t('trainer:exercises.noExercisesFound')}
                                 </td>
                             </tr>
@@ -224,11 +217,6 @@ export default function ExercisesTable() {
                                     <td className="px-6 py-4">
                                         <div className="text-sm text-gray-600 max-w-xs">
                                             {formatMuscleGroups(exercise.exerciseMuscleGroups)}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-600">
-                                            {exercise.creator.firstName} {exercise.creator.lastName}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

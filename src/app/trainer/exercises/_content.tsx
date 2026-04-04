@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { SkeletonTable } from '@/components'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
+import MovementPatternTag from '@/components/MovementPatternTag'
 import Link from 'next/link'
-import { Plus, ArrowLeft } from 'lucide-react'
+import { Plus, ArrowLeft, FileEdit, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import '@/lib/i18n/client'
 import { getApiErrorMessage } from '@/lib/api-error'
@@ -19,6 +19,7 @@ interface Exercise {
     movementPattern: {
         id: string
         name: string
+        color?: string
     }
     exerciseMuscleGroups: Array<{
         coefficient: number
@@ -34,7 +35,6 @@ interface Exercise {
 }
 
 export default function TrainerExercisesContent() {
-    const router = useRouter()
     const { showToast } = useToast()
     const { t } = useTranslation('trainer')
     const { t: tNav } = useTranslation('navigation')
@@ -43,6 +43,7 @@ export default function TrainerExercisesContent() {
     const [error, setError] = useState<string | null>(null)
     const [searchTerm, setSearchTerm] = useState('')
     const [typeFilter, setTypeFilter] = useState<'all' | 'fundamental' | 'accessory'>('all')
+    const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
     const [confirmModal, setConfirmModal] = useState<{
         title: string
         message: string
@@ -105,6 +106,21 @@ export default function TrainerExercisesContent() {
         return matchesSearch && matchesType
     })
 
+    const getTypeShortLabel = (type: Exercise['type']) => (type === 'fundamental' ? 'F' : 'A')
+
+    const getTypeFullLabel = (type: Exercise['type']) => (type === 'fundamental' ? 'Fondamentale' : 'Accessorio')
+
+    const getTypeBadgeClasses = (type: Exercise['type']) =>
+        type === 'fundamental' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
+
+    const sortMuscleGroups = (muscleGroups: Exercise['exerciseMuscleGroups']) =>
+        [...muscleGroups].sort((a, b) => b.coefficient - a.coefficient)
+
+    const formatMuscleGroups = (muscleGroups: Exercise['exerciseMuscleGroups']) =>
+        sortMuscleGroups(muscleGroups)
+            .map((emg) => `${emg.muscleGroup.name} (${Math.round(emg.coefficient * 100)}%)`)
+            .join(', ')
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 py-8">
@@ -159,7 +175,30 @@ export default function TrainerExercisesContent() {
                         </div>
 
                         {/* Filters */}
-                        <div className="flex items-center space-x-4">
+                        <div className="flex items-center gap-3 flex-wrap">
+                            <div className="inline-flex items-center rounded-lg bg-gray-100 p-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setViewMode('grid')}
+                                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${viewMode === 'grid'
+                                        ? 'bg-white text-gray-900 shadow-sm'
+                                        : 'text-gray-600 hover:text-gray-900'
+                                        }`}
+                                >
+                                    Griglia
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setViewMode('table')}
+                                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${viewMode === 'table'
+                                        ? 'bg-white text-gray-900 shadow-sm'
+                                        : 'text-gray-600 hover:text-gray-900'
+                                        }`}
+                                >
+                                    Tabella
+                                </button>
+                            </div>
+
                             <select
                                 value={typeFilter}
                                 onChange={(e) => setTypeFilter(e.target.value as any)}
@@ -187,7 +226,7 @@ export default function TrainerExercisesContent() {
                     </div>
                 )}
 
-                {/* Exercises Grid */}
+                {/* Exercises */}
                 {filteredExercises.length === 0 ? (
                     <div className="bg-white rounded-lg shadow-md p-12 text-center">
                         <p className="text-gray-500 text-lg">
@@ -196,12 +235,85 @@ export default function TrainerExercisesContent() {
                                 : 'Nessun esercizio creato. Inizia creandone uno!'}
                         </p>
                     </div>
+                ) : viewMode === 'table' ? (
+                    <div className="bg-white rounded-lg shadow-md overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Nome
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Tipo
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Pattern
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Muscoli
+                                    </th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Azioni
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {filteredExercises.map((exercise) => (
+                                    <tr key={exercise.id} className="hover:bg-gray-50">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            {exercise.name}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span
+                                                className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${getTypeBadgeClasses(
+                                                    exercise.type
+                                                )}`}
+                                                title={getTypeFullLabel(exercise.type)}
+                                                aria-label={getTypeFullLabel(exercise.type)}
+                                            >
+                                                {getTypeShortLabel(exercise.type)}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <MovementPatternTag
+                                                name={exercise.movementPattern.name}
+                                                color={exercise.movementPattern.color}
+                                            />
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-gray-600 max-w-sm">
+                                            {formatMuscleGroups(exercise.exerciseMuscleGroups)}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <Link
+                                                    href={`/trainer/exercises/${exercise.id}/edit`}
+                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
+                                                    title="Modifica"
+                                                    aria-label="Modifica"
+                                                >
+                                                    <FileEdit className="w-4 h-4" />
+                                                </Link>
+                                                <button
+                                                    onClick={() => handleDelete(exercise.id, exercise.name)}
+                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
+                                                    title="Elimina"
+                                                    aria-label="Elimina"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {filteredExercises.map((exercise) => (
                             <div
                                 key={exercise.id}
-                                className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden"
+                                className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden"
                             >
                                 {/* Video Thumbnail */}
                                 {exercise.youtubeUrl && (
@@ -218,73 +330,63 @@ export default function TrainerExercisesContent() {
                                 )}
 
                                 {/* Content */}
-                                <div className="p-4">
+                                <div className="p-3">
                                     <div className="flex items-start justify-between mb-2">
-                                        <h3 className="text-lg font-semibold text-gray-900">
+                                        <h3 className="text-base font-semibold text-gray-900">
                                             {exercise.name}
                                         </h3>
                                         <span
-                                            className={`text-xs font-semibold px-2 py-1 rounded ${exercise.type === 'fundamental'
-                                                ? 'bg-red-100 text-red-800'
-                                                : 'bg-blue-100 text-blue-800'
-                                                }`}
+                                            className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${getTypeBadgeClasses(
+                                                exercise.type
+                                            )}`}
+                                            title={getTypeFullLabel(exercise.type)}
+                                            aria-label={getTypeFullLabel(exercise.type)}
                                         >
-                                            {exercise.type === 'fundamental'
-                                                ? 'FONDAMENTALE'
-                                                : 'ACCESSORIO'}
+                                            {getTypeShortLabel(exercise.type)}
                                         </span>
                                     </div>
 
                                     {/* Movement Pattern */}
                                     <div className="mb-3">
-                                        <span className="inline-block bg-purple-100 text-purple-800 text-xs font-semibold px-2 py-1 rounded">
-                                            {exercise.movementPattern.name}
-                                        </span>
+                                        <MovementPatternTag
+                                            name={exercise.movementPattern.name}
+                                            color={exercise.movementPattern.color}
+                                        />
                                     </div>
 
                                     {/* Muscle Groups */}
                                     <div className="mb-4">
                                         <p className="text-xs text-gray-500 mb-1">Muscoli:</p>
                                         <div className="flex flex-wrap gap-1">
-                                            {exercise.exerciseMuscleGroups
-                                                .sort((a, b) => b.coefficient - a.coefficient)
-                                                .map((emg) => (
-                                                    <span
-                                                        key={emg.muscleGroup.id}
-                                                        className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded"
-                                                    >
-                                                        {emg.muscleGroup.name} (
-                                                        {Math.round(emg.coefficient * 100)}%)
-                                                    </span>
-                                                ))}
+                                            {sortMuscleGroups(exercise.exerciseMuscleGroups).map((emg) => (
+                                                <span
+                                                    key={emg.muscleGroup.id}
+                                                    className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded"
+                                                >
+                                                    {emg.muscleGroup.name} (
+                                                    {Math.round(emg.coefficient * 100)}%)
+                                                </span>
+                                            ))}
                                         </div>
                                     </div>
 
-                                    {/* Creator */}
-                                    <p className="text-xs text-gray-500 mb-4">
-                                        Creato da: {exercise.creator.firstName}{' '}
-                                        {exercise.creator.lastName}
-                                    </p>
-
                                     {/* Actions */}
-                                    <div className="flex space-x-2">
+                                    <div className="flex items-center justify-end gap-2">
                                         <Link
                                             href={`/trainer/exercises/${exercise.id}/edit`}
-                                            className="flex-1 flex items-center justify-center gap-2 bg-brand-primary hover:bg-brand-primary/90 text-white text-sm font-semibold py-2 px-4 rounded-lg text-center transition-colors"
+                                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
                                             title="Modifica"
+                                            aria-label="Modifica"
                                         >
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                            </svg>
+                                            <FileEdit className="w-4 h-4" />
                                         </Link>
                                         <button
                                             onClick={() => handleDelete(exercise.id, exercise.name)}
-                                            className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2 px-4 rounded-lg transition-colors"
+                                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
                                             title="Elimina"
+                                            aria-label="Elimina"
                                         >
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
+                                            <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
                                 </div>

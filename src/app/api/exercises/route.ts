@@ -11,7 +11,7 @@ import { logger } from '@/lib/logger'
  */
 export async function GET(request: NextRequest) {
     try {
-        await requireRole(['admin', 'trainer', 'trainee'])
+        const session = await requireRole(['admin', 'trainer', 'trainee'])
 
         const { searchParams } = new URL(request.url)
 
@@ -63,15 +63,29 @@ export async function GET(request: NextRequest) {
             ]
         }
 
+        const movementPatternSelect: any = {
+            id: true,
+            name: true,
+        }
+
+        if (session.user.role === 'trainer') {
+            movementPatternSelect.movementPatternColors = {
+                where: {
+                    trainerId: session.user.id,
+                },
+                select: {
+                    color: true,
+                },
+                take: 1,
+            }
+        }
+
         // Cursor pagination
         const exercises = await prisma.exercise.findMany({
             where,
             include: {
                 movementPattern: {
-                    select: {
-                        id: true,
-                        name: true,
-                    },
+                    select: movementPatternSelect,
                 },
                 exerciseMuscleGroups: {
                     include: {
@@ -107,7 +121,20 @@ export async function GET(request: NextRequest) {
         })
 
         const hasMore = exercises.length > limit
-        const items = hasMore ? exercises.slice(0, -1) : exercises
+        const rawItems = hasMore ? exercises.slice(0, -1) : exercises
+        const items = rawItems.map((exercise) => {
+            const movementPattern = exercise.movementPattern as any
+            const trainerColor = movementPattern.movementPatternColors?.[0]?.color
+
+            return {
+                ...exercise,
+                movementPattern: {
+                    id: movementPattern.id,
+                    name: movementPattern.name,
+                    color: trainerColor,
+                },
+            }
+        })
         const nextCursor = hasMore ? items[items.length - 1].id : null
 
         return apiSuccess({
@@ -155,11 +182,11 @@ export async function POST(request: NextRequest) {
         }
 
         // Verify movement pattern exists
-        const movementPattern = await prisma.movementPattern.findUnique({
+        const existingMovementPattern = await prisma.movementPattern.findUnique({
             where: { id: movementPatternId },
         })
 
-        if (!movementPattern) {
+        if (!existingMovementPattern) {
             return apiError('NOT_FOUND', 'Movement pattern not found', 404, undefined, 'movementPattern.notFound')
         }
 
@@ -187,6 +214,23 @@ export async function POST(request: NextRequest) {
             }
         }
 
+        const movementPatternSelect: any = {
+            id: true,
+            name: true,
+        }
+
+        if (session.user.role === 'trainer') {
+            movementPatternSelect.movementPatternColors = {
+                where: {
+                    trainerId: session.user.id,
+                },
+                select: {
+                    color: true,
+                },
+                take: 1,
+            }
+        }
+
         // Create exercise with muscle groups
         const exercise = await prisma.exercise.create({
             data: {
@@ -206,10 +250,7 @@ export async function POST(request: NextRequest) {
             },
             include: {
                 movementPattern: {
-                    select: {
-                        id: true,
-                        name: true,
-                    },
+                    select: movementPatternSelect,
                 },
                 exerciseMuscleGroups: {
                     include: {
@@ -226,7 +267,19 @@ export async function POST(request: NextRequest) {
 
         logger.info({ exerciseId: exercise.id, name: exercise.name }, 'Exercise created')
 
-        return apiSuccess({ exercise }, 201)
+        const createdMovementPattern = exercise.movementPattern as any
+        const trainerColor = createdMovementPattern.movementPatternColors?.[0]?.color
+
+        const responseExercise = {
+            ...exercise,
+            movementPattern: {
+                id: createdMovementPattern.id,
+                name: createdMovementPattern.name,
+                color: trainerColor,
+            },
+        }
+
+        return apiSuccess({ exercise: responseExercise }, 201)
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error creating exercise')
