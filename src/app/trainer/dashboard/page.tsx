@@ -11,7 +11,6 @@ import { Users, ClipboardList, Dumbbell, Flame, Plus, User } from 'lucide-react'
 import trainerIt from '../../../../public/locales/it/trainer.json'
 import trainerEn from '../../../../public/locales/en/trainer.json'
 
-const MILLISECONDS_IN_DAY = 24 * 60 * 60 * 1000
 type SupportedLocale = 'it' | 'en'
 type TranslationValue = string | number
 
@@ -136,7 +135,6 @@ export default async function TrainerDashboard() {
 
     // Get active test weeks currently in progress for the trainer's athletes.
     const currentMoment = new Date()
-    const sevenDaysAgo = new Date(currentMoment.getTime() - (7 * MILLISECONDS_IN_DAY))
     const currentWeekRange = getCurrentWeekRange(currentMoment)
 
     const currentTestWeeks = await prisma.week.findMany({
@@ -144,11 +142,13 @@ export default async function TrainerDashboard() {
             weekType: 'test',
             startDate: {
                 lte: currentMoment,
-                gt: sevenDaysAgo,
+                gte: currentWeekRange.startDate,
             },
             program: {
                 trainerId,
-                status: 'active',
+                status: {
+                    in: ['active', 'completed'],
+                },
             },
         },
         select: {
@@ -292,8 +292,23 @@ export default async function TrainerDashboard() {
         orderBy: {
             date: 'desc',
         },
-        take: 12,
+        take: 50,
     })
+
+    const testFeedbacksByTestWeek = new Map<string, (typeof testFeedbacksThisWeek)[number]>()
+
+    for (const feedback of testFeedbacksThisWeek) {
+        const week = feedback.workoutExercise.workout.week
+        const testWeekKey = `${week.program.id}:${week.weekNumber}`
+
+        if (!testFeedbacksByTestWeek.has(testWeekKey)) {
+            testFeedbacksByTestWeek.set(testWeekKey, feedback)
+        }
+    }
+
+    const testFeedbacksCurrentWeek = Array.from(testFeedbacksByTestWeek.values())
+        .sort((leftFeedback, rightFeedback) => rightFeedback.date.getTime() - leftFeedback.date.getTime())
+        .slice(0, 12)
 
     return (
         <DashboardLayout user={session.user}>
@@ -546,7 +561,7 @@ export default async function TrainerDashboard() {
                             </p>
                         </div>
 
-                        {testFeedbacksThisWeek.length > 0 ? (
+                        {testFeedbacksCurrentWeek.length > 0 ? (
                             <div className="overflow-x-auto rounded-lg border border-gray-200">
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
@@ -572,7 +587,7 @@ export default async function TrainerDashboard() {
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-                                        {testFeedbacksThisWeek.map((feedback) => {
+                                        {testFeedbacksCurrentWeek.map((feedback) => {
                                             const program = feedback.workoutExercise.workout.week.program
                                             const trainee = program.trainee
 
