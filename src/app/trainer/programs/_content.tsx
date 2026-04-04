@@ -425,7 +425,7 @@ export default function TrainerProgramsContent() {
                                                                 </Link>
                                                                 {testsCompleted ? (
                                                                     <Link
-                                                                        href={`/trainer/programs/${program.id}/reports`}
+                                                                        href={`/trainer/programs/${program.id}/tests?backContext=programs`}
                                                                         title={t('programs.viewTests')}
                                                                         aria-label={t('programs.viewTests')}
                                                                         className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#FFA700] text-white hover:bg-[#FF9500] transition-colors"

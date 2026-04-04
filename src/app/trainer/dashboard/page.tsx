@@ -1,5 +1,6 @@
 import { getSession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import Link from 'next/link'
 import DashboardLayout from '@/components/DashboardLayout'
 import { NavigationCard, ProgressBar } from '@/components'
@@ -7,13 +8,73 @@ import WeekTypeBadge from '@/components/WeekTypeBadge'
 import { prisma } from '@/lib/prisma'
 import { formatDate } from '@/lib/date-format'
 import { Users, ClipboardList, Dumbbell, Flame, Plus, User } from 'lucide-react'
+import trainerIt from '../../../../public/locales/it/trainer.json'
+import trainerEn from '../../../../public/locales/en/trainer.json'
 
 const MILLISECONDS_IN_DAY = 24 * 60 * 60 * 1000
+type SupportedLocale = 'it' | 'en'
+type TranslationValue = string | number
+
+const TRAINER_DICTIONARIES = {
+    it: trainerIt,
+    en: trainerEn,
+} as const
+
+const resolveLocale = (cookieLocale?: string): SupportedLocale => {
+    if (!cookieLocale) return 'it'
+    return cookieLocale.toLowerCase().startsWith('en') ? 'en' : 'it'
+}
+
+const resolveTranslation = (dictionary: Record<string, unknown>, key: string): string | null => {
+    const value = key
+        .split('.')
+        .reduce<unknown>((current, part) => {
+            if (current && typeof current === 'object' && part in current) {
+                return (current as Record<string, unknown>)[part]
+            }
+            return null
+        }, dictionary)
+
+    return typeof value === 'string' ? value : null
+}
+
+const translate = (
+    dictionary: Record<string, unknown>,
+    key: string,
+    params?: Record<string, TranslationValue>
+): string => {
+    const template = resolveTranslation(dictionary, key)
+
+    if (!template) {
+        return key
+    }
+
+    if (!params) {
+        return template
+    }
+
+    return Object.entries(params).reduce((result, [paramKey, paramValue]) => {
+        return result.replaceAll(`{{${paramKey}}}`, String(paramValue))
+    }, template)
+}
 
 function addDays(date: Date, days: number) {
     const nextDate = new Date(date)
     nextDate.setDate(nextDate.getDate() + days)
     return nextDate
+}
+
+function getCurrentWeekRange(referenceDate: Date) {
+    const startDate = new Date(referenceDate)
+    const weekDay = (startDate.getDay() + 6) % 7
+    startDate.setDate(startDate.getDate() - weekDay)
+    startDate.setHours(0, 0, 0, 0)
+
+    const endDate = new Date(startDate)
+    endDate.setDate(endDate.getDate() + 6)
+    endDate.setHours(23, 59, 59, 999)
+
+    return { startDate, endDate }
 }
 
 function hasCompletedFeedback(feedbacks: Array<{ completed: boolean }>) {
@@ -22,6 +83,10 @@ function hasCompletedFeedback(feedbacks: Array<{ completed: boolean }>) {
 
 export default async function TrainerDashboard() {
     const session = await getSession()
+    const locale = resolveLocale(cookies().get('i18next')?.value)
+    const dictionary = TRAINER_DICTIONARIES[locale] as Record<string, unknown>
+    const t = (key: string, params?: Record<string, TranslationValue>) =>
+        translate(dictionary, key, params)
 
     if (!session) {
         redirect('/login')
@@ -72,6 +137,7 @@ export default async function TrainerDashboard() {
     // Get active test weeks currently in progress for the trainer's athletes.
     const currentMoment = new Date()
     const sevenDaysAgo = new Date(currentMoment.getTime() - (7 * MILLISECONDS_IN_DAY))
+    const currentWeekRange = getCurrentWeekRange(currentMoment)
 
     const currentTestWeeks = await prisma.week.findMany({
         where: {
@@ -146,7 +212,7 @@ export default async function TrainerDashboard() {
     }).sort((leftWeek, rightWeek) => {
         const traineeLastNameComparison = leftWeek.program.trainee.lastName.localeCompare(
             rightWeek.program.trainee.lastName,
-            'it'
+            locale
         )
 
         if (traineeLastNameComparison !== 0) {
@@ -155,7 +221,7 @@ export default async function TrainerDashboard() {
 
         const traineeFirstNameComparison = leftWeek.program.trainee.firstName.localeCompare(
             rightWeek.program.trainee.firstName,
-            'it'
+            locale
         )
 
         if (traineeFirstNameComparison !== 0) {
@@ -170,16 +236,78 @@ export default async function TrainerDashboard() {
         (week) => week.plannedTestsCount > 0 && week.completedTestsCount === week.plannedTestsCount
     ).length
 
+    const testFeedbacksThisWeek = await prisma.exerciseFeedback.findMany({
+        where: {
+            completed: true,
+            date: {
+                gte: currentWeekRange.startDate,
+                lte: currentWeekRange.endDate,
+            },
+            workoutExercise: {
+                workout: {
+                    week: {
+                        weekType: 'test',
+                        program: {
+                            trainerId,
+                        },
+                    },
+                },
+            },
+        },
+        select: {
+            id: true,
+            date: true,
+            workoutExercise: {
+                select: {
+                    exercise: {
+                        select: {
+                            name: true,
+                        },
+                    },
+                    workout: {
+                        select: {
+                            dayIndex: true,
+                            week: {
+                                select: {
+                                    weekNumber: true,
+                                    program: {
+                                        select: {
+                                            id: true,
+                                            title: true,
+                                            trainee: {
+                                                select: {
+                                                    firstName: true,
+                                                    lastName: true,
+                                                },
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        orderBy: {
+            date: 'desc',
+        },
+        take: 12,
+    })
+
     return (
         <DashboardLayout user={session.user}>
             <div className="space-y-6">
                 {/* Header */}
                 <div className="bg-white rounded-lg shadow-md p-6">
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                        Dashboard Trainer
+                        {t('trainerDashboard.headerTitle')}
                     </h1>
                     <p className="text-gray-600">
-                        Benvenuto, {session.user.firstName} {session.user.lastName}
+                        {t('trainerDashboard.welcome', {
+                            firstName: session.user.firstName,
+                            lastName: session.user.lastName,
+                        })}
                     </p>
                 </div>
 
@@ -191,13 +319,13 @@ export default async function TrainerDashboard() {
                         className="bg-blue-50 hover:bg-blue-100 p-6 rounded-lg transition-colors border border-blue-200"
                     >
                         <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-lg font-semibold text-blue-900"><Users className="w-5 h-5 inline mr-2" />Atleti</h3>
+                            <h3 className="text-lg font-semibold text-blue-900"><Users className="w-5 h-5 inline mr-2" />{t('trainerDashboard.statsCardTraineesTitle')}</h3>
                             <span className="text-3xl font-bold text-blue-600">
                                 {traineesCount}
                             </span>
                         </div>
                         <p className="text-blue-700 text-sm">
-                            {activeTraineesCount} attivi
+                            {t('trainerDashboard.statsCardTraineesSub', { count: activeTraineesCount })}
                         </p>
                     </Link>
 
@@ -208,14 +336,17 @@ export default async function TrainerDashboard() {
                     >
                         <div className="flex items-center justify-between mb-2">
                             <h3 className="text-lg font-semibold text-green-900">
-                                <ClipboardList className="w-5 h-5 inline mr-2" />Programmi
+                                <ClipboardList className="w-5 h-5 inline mr-2" />{t('trainerDashboard.statsCardProgramsTitle')}
                             </h3>
                             <span className="text-3xl font-bold text-green-600">
                                 {draftCount + activeCount + completedCount}
                             </span>
                         </div>
                         <p className="text-green-700 text-sm">
-                            {activeCount} attivi · {draftCount} bozze
+                            {t('trainerDashboard.statsCardProgramsSub', {
+                                active: activeCount,
+                                draft: draftCount,
+                            })}
                         </p>
                     </Link>
 
@@ -226,13 +357,13 @@ export default async function TrainerDashboard() {
                     >
                         <div className="flex items-center justify-between mb-2">
                             <h3 className="text-lg font-semibold text-purple-900">
-                                <Dumbbell className="w-5 h-5 inline mr-2" />Esercizi
+                                <Dumbbell className="w-5 h-5 inline mr-2" />{t('trainerDashboard.statsCardExercisesTitle')}
                             </h3>
                             <span className="text-3xl font-bold text-purple-600">
                                 {exercisesCount}
                             </span>
                         </div>
-                        <p className="text-purple-700 text-sm">Libreria esercizi</p>
+                        <p className="text-purple-700 text-sm">{t('trainerDashboard.statsCardExercisesSub')}</p>
                     </Link>
 
                     {/* Current Test Weeks KPI */}
@@ -242,7 +373,7 @@ export default async function TrainerDashboard() {
                     >
                         <div className="flex items-center justify-between mb-2">
                             <h3 className="text-lg font-semibold text-orange-900">
-                                <Flame className="w-5 h-5 inline mr-2" />Settimane Test
+                                <Flame className="w-5 h-5 inline mr-2" />{t('trainerDashboard.statsCardTestWeeksTitle')}
                             </h3>
                             <div className="text-right">
                                 <span className="text-3xl font-bold text-orange-600">
@@ -250,14 +381,14 @@ export default async function TrainerDashboard() {
                                 </span>
                             </div>
                         </div>
-                        <p className="text-orange-700 text-sm">Utenti con test week completata / utenti con test week corrente</p>
+                        <p className="text-orange-700 text-sm">{t('trainerDashboard.statsCardTestWeeksSub')}</p>
                     </Link>
                 </div>
 
                 {/* Quick Actions */}
                 <div className="bg-white rounded-lg shadow-md p-6">
                     <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                        Azioni Rapide
+                        {t('trainerDashboard.quickActionsTitle')}
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <Link
@@ -265,55 +396,58 @@ export default async function TrainerDashboard() {
                             className="flex items-center justify-center bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold py-3 px-6 rounded-lg transition-colors"
                         >
                             <Plus className="w-5 h-5 mr-2" />
-                            Crea Programma
+                            {t('trainerDashboard.quickActionCreateProgram')}
                         </Link>
                         <Link
                             href="/trainer/trainees/new"
                             className="flex items-center justify-center bg-brand-primary hover:bg-brand-primary/90 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
                         >
                             <User className="w-5 h-5 mr-2" />
-                            Aggiungi Atleta
+                            {t('trainerDashboard.quickActionAddTrainee')}
                         </Link>
                         <Link
                             href="/trainer/exercises/new"
                             className="flex items-center justify-center bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
                         >
                             <Dumbbell className="w-5 h-5 mr-2" />
-                            Crea Esercizio
+                            {t('trainerDashboard.quickActionCreateExercise')}
                         </Link>
                     </div>
                 </div>
 
                 {/* Navigation Cards */}
                 <div>
-                    <h2 className="text-xl font-semibold text-gray-900 mb-4">Sezioni</h2>
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('trainerDashboard.sectionsTitle')}</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <NavigationCard
                             href="/trainer/trainees"
                             icon={<Users className="w-6 h-6" />}
-                            title="I Miei Atleti"
-                            description={`Gestisci i tuoi ${traineesCount} atleti. Visualizza progressi e assegna programmi.`}
+                            title={t('trainerDashboard.navTraineesTitle')}
+                            description={t('trainerDashboard.navTraineesDescription', { count: traineesCount })}
                             color="blue"
                         />
                         <NavigationCard
                             href="/trainer/programs"
                             icon={<ClipboardList className="w-6 h-6" />}
-                            title="Programmi"
-                            description={`${activeCount} programmi attivi, ${draftCount} bozze. Crea e modifica schede di allenamento.`}
+                            title={t('trainerDashboard.navProgramsTitle')}
+                            description={t('trainerDashboard.navProgramsDescription', {
+                                active: activeCount,
+                                draft: draftCount,
+                            })}
                             color="green"
                         />
                         <NavigationCard
                             href="/trainer/exercises"
                             icon={<Dumbbell className="w-6 h-6" />}
-                            title="Libreria Esercizi"
-                            description={`${exercisesCount} esercizi creati. Gestisci la tua libreria personalizzata.`}
+                            title={t('trainerDashboard.navExercisesTitle')}
+                            description={t('trainerDashboard.navExercisesDescription', { count: exercisesCount })}
                             color="purple"
                         />
                         <NavigationCard
                             href="/trainer/profile"
                             icon={<User className="w-6 h-6" />}
-                            title="Il Mio Profilo"
-                            description="Aggiorna le tue informazioni personali e preferenze."
+                            title={t('trainerDashboard.navProfileTitle')}
+                            description={t('trainerDashboard.navProfileDescription')}
                             color="secondary"
                         />
                     </div>
@@ -323,14 +457,17 @@ export default async function TrainerDashboard() {
                     <div className="flex items-start justify-between gap-4 mb-4">
                         <div>
                             <h2 className="text-xl font-semibold text-gray-900">
-                                KPI Settimane Test Correnti
+                                {t('trainerDashboard.testKpiTitle')}
                             </h2>
                             <p className="mt-1 text-sm text-gray-600">
-                                Elenco degli atleti in settimana test, con scheda associata e accesso diretto al programma.
+                                {t('trainerDashboard.testKpiDescription')}
                             </p>
                         </div>
                         <div className="rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-800">
-                            {completedCurrentTestWeeksCount} / {currentTestWeeksCount} utenti
+                            {t('trainerDashboard.testKpiUsers', {
+                                completed: completedCurrentTestWeeksCount,
+                                total: currentTestWeeksCount,
+                            })}
                         </div>
                     </div>
 
@@ -354,13 +491,13 @@ export default async function TrainerDashboard() {
                                                 <WeekTypeBadge weekType="test" />
                                             </div>
                                             <div className="text-sm text-gray-700">
-                                                <span className="font-medium text-gray-900">Scheda:</span>{' '}
+                                                <span className="font-medium text-gray-900">{t('trainerDashboard.programLabel')}:</span>{' '}
                                                 {testWeek.program.title}
                                             </div>
                                             <ProgressBar
                                                 current={testWeek.completedTestsCount}
                                                 total={testWeek.plannedTestsCount}
-                                                label="Test completati"
+                                                label={t('trainerDashboard.testCompletedLabel')}
                                                 size="sm"
                                                 color={testWeek.completedTestsCount === testWeek.plannedTestsCount ? 'success' : 'warning'}
                                                 className="max-w-md"
@@ -369,18 +506,21 @@ export default async function TrainerDashboard() {
 
                                         <div className="flex flex-col gap-3 text-sm text-gray-600 md:items-end md:text-right">
                                             <div className="font-semibold text-gray-900">
-                                                Settimana {testWeek.weekNumber}
+                                                {t('trainerDashboard.weekLabel', { week: testWeek.weekNumber })}
                                             </div>
                                             <div>
                                                 {testWeek.startDate
-                                                    ? `Dal ${formatDate(testWeek.startDate, 'medium')} al ${formatDate(testWeekEndDate, 'medium')}`
-                                                    : 'Date non disponibili'}
+                                                    ? t('trainerDashboard.weekRangeLabel', {
+                                                        start: formatDate(testWeek.startDate, 'medium'),
+                                                        end: formatDate(testWeekEndDate, 'medium'),
+                                                    })
+                                                    : t('trainerDashboard.datesUnavailable')}
                                             </div>
                                             <Link
                                                 href={`/trainer/programs/${testWeek.program.id}`}
                                                 className="inline-flex items-center justify-center rounded-lg bg-white px-3 py-2 font-semibold text-brand-primary shadow-sm ring-1 ring-inset ring-brand-primary/20 transition-colors hover:bg-brand-primary/5"
                                             >
-                                                Vai alla scheda
+                                                {t('trainerDashboard.goToProgram')}
                                             </Link>
                                         </div>
                                     </div>
@@ -389,9 +529,93 @@ export default async function TrainerDashboard() {
                         </div>
                     ) : (
                         <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-10 text-center text-sm text-gray-600">
-                            Nessun atleta si trova attualmente in una settimana test.
+                            {t('trainerDashboard.noCurrentTestWeeks')}
                         </div>
                     )}
+
+                    <div className="mt-8 border-t border-gray-200 pt-6">
+                        <div className="flex flex-col gap-1 mb-4">
+                            <h3 className="text-lg font-semibold text-gray-900">
+                                {t('trainerDashboard.weeklyFeedbackTitle')}
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                                {t('trainerDashboard.weeklyFeedbackRange', {
+                                    start: formatDate(currentWeekRange.startDate, 'medium'),
+                                    end: formatDate(currentWeekRange.endDate, 'medium'),
+                                })}
+                            </p>
+                        </div>
+
+                        {testFeedbacksThisWeek.length > 0 ? (
+                            <div className="overflow-x-auto rounded-lg border border-gray-200">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                {t('trainerDashboard.feedbackTableDate')}
+                                            </th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                {t('trainerDashboard.feedbackTableAthlete')}
+                                            </th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                {t('trainerDashboard.feedbackTableProgram')}
+                                            </th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                {t('trainerDashboard.feedbackTableWorkout')}
+                                            </th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                {t('trainerDashboard.feedbackTableExercise')}
+                                            </th>
+                                            <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                {t('trainerDashboard.feedbackTableDetail')}
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                        {testFeedbacksThisWeek.map((feedback) => {
+                                            const program = feedback.workoutExercise.workout.week.program
+                                            const trainee = program.trainee
+
+                                            return (
+                                                <tr key={feedback.id} className="hover:bg-gray-50 transition-colors">
+                                                    <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                                        {formatDate(feedback.date, 'medium')}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                                        {trainee.firstName} {trainee.lastName}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-sm text-gray-700">
+                                                        <span className="line-clamp-1">{program.title}</span>
+                                                    </td>
+                                                    <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                                                        {t('trainerDashboard.feedbackWorkoutCell', {
+                                                            week: feedback.workoutExercise.workout.week.weekNumber,
+                                                            workout: feedback.workoutExercise.workout.dayIndex,
+                                                        })}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-sm text-gray-700">
+                                                        {feedback.workoutExercise.exercise.name}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-sm text-right">
+                                                        <Link
+                                                            href={`/trainer/programs/${program.id}/tests?backContext=dashboard`}
+                                                            className="inline-flex items-center rounded-lg bg-orange-50 px-3 py-1.5 text-xs font-semibold text-orange-700 hover:bg-orange-100 transition-colors"
+                                                        >
+                                                            {t('trainerDashboard.openResults')}
+                                                        </Link>
+                                                    </td>
+                                                </tr>
+                                            )
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-600">
+                                {t('trainerDashboard.noWeeklyFeedback')}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </DashboardLayout>
