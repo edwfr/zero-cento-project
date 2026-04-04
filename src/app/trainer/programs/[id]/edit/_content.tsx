@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback, useMemo, type CSSProperties } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { RestTime, WeightType } from '@prisma/client'
@@ -224,9 +224,10 @@ function buildEditableRow(
 
 export default function EditProgramContent({ readOnly = false }: EditProgramContentProps) {
     const params = useParams()
+    const searchParams = useSearchParams()
     const programId = params.id as string
     const { showToast } = useToast()
-    const { t } = useTranslation('trainer')
+    const { t } = useTranslation(['trainer', 'navigation'])
 
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
@@ -235,6 +236,23 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const [exerciseCatalog, setExerciseCatalog] = useState<ExerciseCatalogItem[]>([])
     const [personalRecords, setPersonalRecords] = useState<PersonalRecord[]>([])
     const [error, setError] = useState<string | null>(null)
+
+    const backContext = searchParams.get('backContext')
+    const queryTraineeId = searchParams.get('traineeId') ?? ''
+    const resolvedTraineeId = program?.trainee.id || queryTraineeId || ''
+    const hasTraineeBackContext = backContext === 'trainee' && Boolean(resolvedTraineeId)
+    const navigationContextQuery = hasTraineeBackContext
+        ? `?backContext=trainee&traineeId=${encodeURIComponent(resolvedTraineeId)}`
+        : ''
+    const editProgramHref = `/trainer/programs/${programId}/edit${navigationContextQuery}`
+    const reviewProgramHref = `/trainer/programs/${programId}/review${navigationContextQuery}`
+    const backHref = hasTraineeBackContext
+        ? `/trainer/trainees/${resolvedTraineeId}`
+        : '/trainer/programs'
+    const backLabel = hasTraineeBackContext
+        ? t('navigation:breadcrumbs.backToAthleteProfile')
+        : t('editProgram.backToPrograms')
+
     const loadingRef = useRef(false)
     const requestIdRef = useRef(0)
     const lastVisibilityRefreshRef = useRef(0)
@@ -1499,11 +1517,11 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
                 <div className="mb-8">
                     <Link
-                        href="/trainer/programs"
+                        href={backHref}
                         className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-flex items-center gap-1"
                     >
                         <ArrowLeft className="w-4 h-4" />
-                        {t('editProgram.backToPrograms')}
+                        {backLabel}
                     </Link>
                     <div className="flex items-start justify-between gap-4">
                         <div>
@@ -1522,7 +1540,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                         <div>
                             {readOnly && program.status === 'draft' && (
                                 <Link
-                                    href={`/trainer/programs/${programId}/edit`}
+                                    href={editProgramHref}
                                     className="bg-brand-primary hover:bg-brand-primary/90 text-white font-semibold py-2 px-4 rounded-lg transition-colors inline-flex items-center gap-2"
                                 >
                                     <FileEdit className="w-4 h-4" />
@@ -2455,7 +2473,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     {!readOnly && (
                         <div className="flex space-x-4 mt-8">
                             <Link
-                                href={`/trainer/programs/${programId}/review`}
+                                href={reviewProgramHref}
                                 className={`flex-1 py-3 px-6 rounded-lg font-semibold text-center transition-colors ${completedWorkouts === totalWorkouts
                                     ? 'bg-brand-primary hover:bg-brand-primary/90 text-white'
                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'

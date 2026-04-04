@@ -740,7 +740,7 @@ export default function TraineeDetailContent() {
                                                 <td className="px-6 py-4 whitespace-nowrap text-right">
                                                     <div className="flex items-center justify-end gap-3">
                                                         <Link
-                                                            href={`/trainer/programs/${program.id}`}
+                                                            href={`/trainer/programs/${program.id}?backContext=trainee&traineeId=${traineeId}`}
                                                             className="text-brand-primary hover:text-brand-primary/80"
                                                             title={t('athletes.viewProgram')}
                                                             aria-label={t('athletes.viewProgram')}
@@ -749,7 +749,7 @@ export default function TraineeDetailContent() {
                                                         </Link>
                                                         {program.status === 'draft' && (
                                                             <Link
-                                                                href={`/trainer/programs/${program.id}/edit`}
+                                                                href={`/trainer/programs/${program.id}/edit?backContext=trainee&traineeId=${traineeId}`}
                                                                 className="text-green-600 hover:text-green-800"
                                                                 title={t('common:common.edit')}
                                                                 aria-label={t('common:common.edit')}
