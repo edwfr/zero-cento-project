@@ -270,9 +270,9 @@ export default function TraineePlannedMuscleGroupReport({
                                 <XAxis dataKey="dateLabel" />
                                 <YAxis />
                                 <Tooltip
-                                    formatter={(value: number, name: string) => [
-                                        `${Number.isInteger(Number(value)) ? Number(value) : Number(value).toFixed(1)} ${t('athletes.reportingSetsUnit')}`,
-                                        visibleMuscleGroups.find((muscleGroup) => muscleGroup.id === name)?.name || name,
+                                    formatter={(value, name) => [
+                                        `${Number.isInteger(Number(value ?? 0)) ? Number(value ?? 0) : Number(value ?? 0).toFixed(1)} ${t('athletes.reportingSetsUnit')}`,
+                                        visibleMuscleGroups.find((muscleGroup) => muscleGroup.id === String(name))?.name || String(name),
                                     ]}
                                     labelFormatter={(_, payload) => {
                                         const point = payload?.[0]?.payload as { date?: string } | undefined

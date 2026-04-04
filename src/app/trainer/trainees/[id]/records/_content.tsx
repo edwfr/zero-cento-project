@@ -372,7 +372,7 @@ export default function TraineeRecordsContent() {
                             Nessun Massimale Registrato
                         </h2>
                         <p className="text-gray-600 mb-6">
-                            Inizia aggiungendo i massimali dell'atleta per monitorare i progressi
+                            Inizia aggiungendo i massimali dell&apos;atleta per monitorare i progressi
                         </p>
                         <button
                             onClick={openAddModal}

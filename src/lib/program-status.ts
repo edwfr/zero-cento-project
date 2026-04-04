@@ -56,9 +56,13 @@ export const getProgramCompletionSnapshot = (
             return false
         }
 
-        const workoutCompletedAt = completedFeedbackDates.reduce((latestDate, date) => {
-            return date! > latestDate ? date! : latestDate
-        }, completedFeedbackDates[0]!)
+        const workoutCompletionDates = completedFeedbackDates.filter(
+            (date): date is Date => date !== null
+        )
+
+        const workoutCompletedAt = workoutCompletionDates.reduce((latestDate, date) => {
+            return date > latestDate ? date : latestDate
+        }, workoutCompletionDates[0])
 
         if (lastCompletedWorkoutAt === null || workoutCompletedAt > lastCompletedWorkoutAt) {
             lastCompletedWorkoutAt = workoutCompletedAt

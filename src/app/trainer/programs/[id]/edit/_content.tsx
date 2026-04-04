@@ -4,19 +4,33 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
-import { WeightType } from '@prisma/client'
+import { RestTime, WeightType } from '@prisma/client'
 import { getApiErrorMessage } from '@/lib/api-error'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ConfirmationModal from '@/components/ConfirmationModal'
-import ProgramMuscleGroupCharts from '@/components/ProgramMuscleGroupCharts'
 import { useToast } from '@/components/ToastNotification'
-import WeekTypeBadge from '@/components/WeekTypeBadge'
 import EditProgramMetadata from './EditProgramMetadata'
 import MovementPatternTag from '@/components/MovementPatternTag'
-import { ClipboardList, Flame, Wind, ArrowLeft, FileEdit, Copy, ArrowUpRight, BarChart3, ChevronDown, ChevronUp } from 'lucide-react'
+import {
+    ArrowLeft,
+    BarChart3,
+    ChevronDown,
+    ChevronUp,
+    ClipboardList,
+    Copy,
+    Dumbbell,
+    FileEdit,
+    Flame,
+    Lock,
+    LockOpen,
+    Plus,
+    Save,
+    Trash2,
+    Wind,
+} from 'lucide-react'
 
-// Brand token fallback per movement pattern senza colore personalizzato
 const PRIMARY_COLOR = 'rgb(var(--brand-primary))'
+const RPE_OPTIONS = [5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10]
 
 interface MovementPattern {
     id: string
@@ -24,35 +38,39 @@ interface MovementPattern {
     color: string
 }
 
-interface WorkoutExerciseMuscleGroup {
-    coefficient: number
-    muscleGroup: {
-        id: string
-        name: string
-    }
+interface ExerciseReference {
+    id: string
+    name: string
+    type: 'fundamental' | 'accessory'
+    notes: string[]
+    movementPattern: MovementPattern | null
+    exerciseMuscleGroups: Array<{
+        coefficient: number
+        muscleGroup: {
+            id: string
+            name: string
+        }
+    }>
 }
 
 interface WorkoutExercise {
     id: string
+    order: number
+    variant: string | null
     sets: number
     reps: string
-    isWarmup: boolean
+    targetRpe: number | null
     weightType: WeightType
     weight: number | null
-    exercise: {
-        id: string
-        name: string
-        type: 'fundamental' | 'accessory'
-        exerciseMuscleGroups: WorkoutExerciseMuscleGroup[]
-    }
+    restTime: RestTime
+    isWarmup: boolean
+    notes: string | null
+    exercise: ExerciseReference
 }
 
 interface Workout {
     id: string
-    dayOfWeek: number
-    order: number
-    exerciseCount: number
-    movementPatterns: MovementPattern[]
+    dayIndex: number
     workoutExercises: WorkoutExercise[]
 }
 
@@ -79,9 +97,44 @@ interface Program {
 }
 
 interface PersonalRecord {
+    id?: string
     exerciseId: string
     reps: number
     weight: number
+    recordDate?: string
+    exercise?: {
+        id: string
+        name: string
+        type: 'fundamental' | 'accessory'
+    }
+}
+
+interface ExerciseCatalogItem {
+    id: string
+    name: string
+    type: 'fundamental' | 'accessory'
+    notes: string[]
+    movementPattern: MovementPattern | null
+}
+
+interface EditableWorkoutExerciseRow {
+    id: string
+    workoutId: string
+    exerciseId: string
+    variant: string
+    sets: string
+    reps: string
+    targetRpe: string
+    weight: string
+    isWarmup: boolean
+    order: number
+    restTime: RestTime
+    notes: string | null
+    isDraft: boolean
+}
+
+interface EditProgramContentProps {
+    readOnly?: boolean
 }
 
 function parseRepsValue(repsValue: string): number {
@@ -94,8 +147,27 @@ function estimateOneRMValue(weight: number, reps: number): number {
     return weight * (1 + reps / 30)
 }
 
-interface EditProgramContentProps {
-    readOnly?: boolean
+function buildEditableRow(
+    workoutId: string,
+    workoutExercise: WorkoutExercise,
+    isDraft = false
+): EditableWorkoutExerciseRow {
+    return {
+        id: workoutExercise.id,
+        workoutId,
+        exerciseId: workoutExercise.exercise.id,
+        variant: workoutExercise.variant ?? '',
+        sets: String(workoutExercise.sets),
+        reps: workoutExercise.reps,
+        targetRpe:
+            typeof workoutExercise.targetRpe === 'number' ? String(workoutExercise.targetRpe) : '',
+        weight: typeof workoutExercise.weight === 'number' ? String(workoutExercise.weight) : '',
+        isWarmup: workoutExercise.isWarmup,
+        order: workoutExercise.order,
+        restTime: workoutExercise.restTime,
+        notes: workoutExercise.notes,
+        isDraft,
+    }
 }
 
 export default function EditProgramContent({ readOnly = false }: EditProgramContentProps) {
@@ -106,17 +178,114 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
-    const [copyingFirstWeek, setCopyingFirstWeek] = useState(false)
     const [copyingWeekId, setCopyingWeekId] = useState<string | null>(null)
     const [program, setProgram] = useState<Program | null>(null)
+    const [exerciseCatalog, setExerciseCatalog] = useState<ExerciseCatalogItem[]>([])
     const [personalRecords, setPersonalRecords] = useState<PersonalRecord[]>([])
     const [error, setError] = useState<string | null>(null)
     const loadingRef = useRef(false)
     const requestIdRef = useRef(0)
     const lastVisibilityRefreshRef = useRef(0)
-    const [confirmCopyOpen, setConfirmCopyOpen] = useState(false)
+
+    const [activeWeekId, setActiveWeekId] = useState<string | null>(null)
+    const [expandedWeekIds, setExpandedWeekIds] = useState<Record<string, boolean>>({})
+    const [expandedWorkoutIds, setExpandedWorkoutIds] = useState<Record<string, boolean>>({})
+
+    const [rowStateById, setRowStateById] = useState<Record<string, EditableWorkoutExerciseRow>>({})
+    const [draftRowIdsByWorkout, setDraftRowIdsByWorkout] = useState<Record<string, string[]>>({})
+    const [customVariantInputByRowId, setCustomVariantInputByRowId] = useState<Record<string, boolean>>({})
+    const [savingRowId, setSavingRowId] = useState<string | null>(null)
+    const [savingWorkoutId, setSavingWorkoutId] = useState<string | null>(null)
+    const [deletingRowId, setDeletingRowId] = useState<string | null>(null)
+
     const [confirmCopyNextWeek, setConfirmCopyNextWeek] = useState<Week | null>(null)
-    const [isSbdSummaryCollapsed, setIsSbdSummaryCollapsed] = useState(false)
+    const [confirmDeleteRow, setConfirmDeleteRow] = useState<{
+        rowId: string
+        workoutId: string
+        isDraft: boolean
+    } | null>(null)
+
+    const [isPrHelperCollapsed, setIsPrHelperCollapsed] = useState(false)
+    const [isSbdHelperCollapsed, setIsSbdHelperCollapsed] = useState(false)
+
+    const fetchExerciseCatalog = useCallback(async () => {
+        try {
+            const movementPatternsRes = await fetch('/api/movement-patterns')
+            const movementPatternsData = await movementPatternsRes.json()
+
+            const allExercises: any[] = []
+            let cursor: string | null = null
+
+            while (true) {
+                const searchParams = new URLSearchParams({
+                    limit: '100',
+                })
+
+                if (cursor) {
+                    searchParams.set('cursor', cursor)
+                }
+
+                const exercisesRes = await fetch(`/api/exercises?${searchParams.toString()}`)
+                const exercisesData = await exercisesRes.json()
+
+                if (!exercisesRes.ok) {
+                    setExerciseCatalog([])
+                    return
+                }
+
+                const pageItems = Array.isArray(exercisesData.data?.items)
+                    ? exercisesData.data.items
+                    : []
+                allExercises.push(...pageItems)
+
+                const hasMore = Boolean(exercisesData.data?.pagination?.hasMore)
+                const nextCursor = exercisesData.data?.pagination?.nextCursor
+
+                if (!hasMore || typeof nextCursor !== 'string' || nextCursor.length === 0) {
+                    break
+                }
+
+                cursor = nextCursor
+            }
+
+            const patternColorsMap = new Map<string, string>()
+            if (movementPatternsRes.ok && movementPatternsData.data?.items) {
+                movementPatternsData.data.items.forEach((pattern: any) => {
+                    if (pattern.movementPatternColors && pattern.movementPatternColors.length > 0) {
+                        patternColorsMap.set(pattern.id, pattern.movementPatternColors[0].color)
+                    }
+                })
+            }
+
+            const nextCatalog: ExerciseCatalogItem[] = allExercises.map((exercise: any) => {
+                const movementPattern = exercise.movementPattern
+                    ? {
+                        id: exercise.movementPattern.id,
+                        name: exercise.movementPattern.name,
+                        color: patternColorsMap.get(exercise.movementPattern.id) || PRIMARY_COLOR,
+                    }
+                    : null
+
+                return {
+                    id: exercise.id,
+                    name: exercise.name,
+                    type: exercise.type,
+                    notes: Array.isArray(exercise.notes)
+                        ? exercise.notes.filter((note: unknown) => typeof note === 'string')
+                        : [],
+                    movementPattern,
+                }
+            })
+
+            setExerciseCatalog(
+                nextCatalog.sort((left, right) =>
+                    left.name.localeCompare(right.name, 'it', { sensitivity: 'base' })
+                )
+            )
+        } catch {
+            setExerciseCatalog([])
+        }
+    }, [])
 
     const fetchPersonalRecords = useCallback(async (traineeId: string, requestId: number) => {
         try {
@@ -166,53 +335,65 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             }
 
             const traineeId = data.data.program.trainee.id
+            const trainerId = data.data.program.trainerId
 
-            // Trasforma i dati per calcolare exerciseCount e estrarre movement patterns da workoutExercises
-            const transformedProgram = {
-                ...data.data.program,
-                weeks: data.data.program.weeks.map((week: any) => ({
-                    ...week,
-                    workouts: week.workouts.map((workout: any) => {
-                        const workoutExercises = workout.workoutExercises || []
-                        const trainerId = data.data.program.trainerId
-
-                        const movementPatterns: MovementPattern[] = []
-                        workoutExercises.forEach((we: any) => {
-                            if (we.exercise?.movementPattern) {
-                                const mp = we.exercise.movementPattern
-                                const customColor = mp.movementPatternColors?.find(
-                                    (c: any) => c.trainerId === trainerId
-                                )?.color
-                                movementPatterns.push({
-                                    id: mp.id,
-                                    name: mp.name,
-                                    color: customColor || PRIMARY_COLOR,
-                                })
-                            }
-                        })
-
-                        return {
+            const transformedProgram: Program = {
+                id: data.data.program.id,
+                title: data.data.program.title,
+                status: data.data.program.status,
+                isSbdProgram: data.data.program.isSbdProgram,
+                trainee: data.data.program.trainee,
+                durationWeeks: data.data.program.durationWeeks,
+                workoutsPerWeek: data.data.program.workoutsPerWeek,
+                weeks: (data.data.program.weeks || []).map((week: any) => ({
+                    id: week.id,
+                    weekNumber: week.weekNumber,
+                    weekType: week.weekType,
+                    workouts: (week.workouts || [])
+                        .map((workout: any) => ({
                             id: workout.id,
-                            dayOfWeek: workout.dayOfWeek,
-                            order: workout.order,
-                            exerciseCount: workoutExercises.length,
-                            movementPatterns,
-                            workoutExercises: workoutExercises.map((we: any) => ({
-                                id: we.id,
-                                sets: we.sets,
-                                reps: String(we.reps),
-                                isWarmup: we.isWarmup,
-                                weightType: we.weightType,
-                                weight: we.weight,
-                                exercise: {
-                                    id: we.exercise.id,
-                                    name: we.exercise.name,
-                                    type: we.exercise.type,
-                                    exerciseMuscleGroups: we.exercise.exerciseMuscleGroups || [],
-                                },
-                            })),
-                        }
-                    }),
+                            dayIndex:
+                                typeof workout.dayIndex === 'number'
+                                    ? workout.dayIndex
+                                    : Number(workout.dayOfWeek ?? 0),
+                            workoutExercises: (workout.workoutExercises || []).map((we: any) => {
+                                const movementPattern = we.exercise?.movementPattern
+                                    ? {
+                                        id: we.exercise.movementPattern.id,
+                                        name: we.exercise.movementPattern.name,
+                                        color:
+                                            we.exercise.movementPattern.movementPatternColors?.find(
+                                                (color: any) => color.trainerId === trainerId
+                                            )?.color || PRIMARY_COLOR,
+                                    }
+                                    : null
+
+                                return {
+                                    id: we.id,
+                                    order: we.order,
+                                    variant: we.variant,
+                                    sets: we.sets,
+                                    reps: String(we.reps),
+                                    targetRpe: we.targetRpe,
+                                    weightType: we.weightType,
+                                    weight: we.weight,
+                                    restTime: we.restTime,
+                                    isWarmup: we.isWarmup,
+                                    notes: we.notes,
+                                    exercise: {
+                                        id: we.exercise.id,
+                                        name: we.exercise.name,
+                                        type: we.exercise.type,
+                                        notes: Array.isArray(we.exercise.notes)
+                                            ? we.exercise.notes.filter((note: unknown) => typeof note === 'string')
+                                            : [],
+                                        movementPattern,
+                                        exerciseMuscleGroups: we.exercise.exerciseMuscleGroups || [],
+                                    },
+                                }
+                            }),
+                        }))
+                        .sort((left: Workout, right: Workout) => left.dayIndex - right.dayIndex),
                 })),
             }
 
@@ -238,10 +419,10 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     }, [fetchPersonalRecords, programId, t])
 
     useEffect(() => {
-        fetchProgram()
-    }, [fetchProgram])
+        void fetchProgram()
+        void fetchExerciseCatalog()
+    }, [fetchExerciseCatalog, fetchProgram])
 
-    // Ricarica i dati quando si torna alla pagina (ad esempio dopo aver modificato un workout)
     useEffect(() => {
         const handleVisibilityChange = () => {
             const now = Date.now()
@@ -263,8 +444,285 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         }
     }, [fetchProgram])
 
-    const handleWeekTypeChange = async (weekId: string, newType: 'normal' | 'test' | 'deload') => {
-        if (!program) return
+    useEffect(() => {
+        if (!program) {
+            return
+        }
+
+        const nextRows: Record<string, EditableWorkoutExerciseRow> = {}
+
+        program.weeks.forEach((week) => {
+            week.workouts.forEach((workout) => {
+                workout.workoutExercises.forEach((workoutExercise) => {
+                    nextRows[workoutExercise.id] = buildEditableRow(workout.id, workoutExercise)
+                })
+            })
+        })
+
+        setRowStateById((currentRows) => {
+            const persistedDraftRows = Object.fromEntries(
+                Object.entries(currentRows).filter(([, row]) => row.isDraft)
+            )
+
+            return {
+                ...nextRows,
+                ...persistedDraftRows,
+            }
+        })
+
+        if (!activeWeekId || !program.weeks.some((week) => week.id === activeWeekId)) {
+            setActiveWeekId(program.weeks[0]?.id ?? null)
+        }
+
+        setExpandedWeekIds((currentExpandedWeekIds) => {
+            if (Object.keys(currentExpandedWeekIds).length > 0) {
+                return currentExpandedWeekIds
+            }
+
+            const firstWeekId = program.weeks[0]?.id
+            if (!firstWeekId) {
+                return currentExpandedWeekIds
+            }
+
+            return {
+                [firstWeekId]: true,
+            }
+        })
+
+        setExpandedWorkoutIds((currentExpandedWorkoutIds) => {
+            const workoutIds = program.weeks.flatMap((week) => week.workouts.map((workout) => workout.id))
+
+            if (workoutIds.length === 0) {
+                return currentExpandedWorkoutIds
+            }
+
+            const nextExpandedWorkoutIds: Record<string, boolean> = {}
+            let hasChanges = workoutIds.length !== Object.keys(currentExpandedWorkoutIds).length
+
+            workoutIds.forEach((workoutId) => {
+                if (Object.prototype.hasOwnProperty.call(currentExpandedWorkoutIds, workoutId)) {
+                    nextExpandedWorkoutIds[workoutId] = currentExpandedWorkoutIds[workoutId]
+                    return
+                }
+
+                nextExpandedWorkoutIds[workoutId] = true
+                hasChanges = true
+            })
+
+            if (!hasChanges) {
+                return currentExpandedWorkoutIds
+            }
+
+            return nextExpandedWorkoutIds
+        })
+    }, [program, activeWeekId])
+
+    const exerciseLookupById = useMemo(() => {
+        const nextLookup = new Map<string, ExerciseCatalogItem>()
+
+        exerciseCatalog.forEach((exercise) => {
+            nextLookup.set(exercise.id, exercise)
+        })
+
+        program?.weeks.forEach((week) => {
+            week.workouts.forEach((workout) => {
+                workout.workoutExercises.forEach((workoutExercise) => {
+                    if (!nextLookup.has(workoutExercise.exercise.id)) {
+                        nextLookup.set(workoutExercise.exercise.id, {
+                            id: workoutExercise.exercise.id,
+                            name: workoutExercise.exercise.name,
+                            type: workoutExercise.exercise.type,
+                            notes: workoutExercise.exercise.notes,
+                            movementPattern: workoutExercise.exercise.movementPattern,
+                        })
+                    }
+                })
+            })
+        })
+
+        return nextLookup
+    }, [exerciseCatalog, program])
+
+    const exerciseNameById = useMemo(() => {
+        return Array.from(exerciseLookupById.values()).reduce((acc, exercise) => {
+            acc[exercise.id] = exercise.name
+            return acc
+        }, {} as Record<string, string>)
+    }, [exerciseLookupById])
+
+    const activeWeek = useMemo(() => {
+        if (!program) {
+            return null
+        }
+
+        return program.weeks.find((week) => week.id === activeWeekId) || program.weeks[0] || null
+    }, [program, activeWeekId])
+
+    const totalExercises = useMemo(() => {
+        if (!program) return 0
+
+        return program.weeks.reduce(
+            (total, week) =>
+                total + week.workouts.reduce((weekTotal, workout) => weekTotal + workout.workoutExercises.length, 0),
+            0
+        )
+    }, [program])
+
+    const completedWorkouts = useMemo(() => {
+        if (!program) return 0
+
+        return program.weeks.reduce(
+            (total, week) =>
+                total + week.workouts.filter((workout) => workout.workoutExercises.length > 0).length,
+            0
+        )
+    }, [program])
+
+    const totalWorkouts = program ? program.durationWeeks * program.workoutsPerWeek : 0
+    const progressPercent =
+        totalWorkouts > 0 ? Math.round((completedWorkouts / totalWorkouts) * 100) : 0
+
+    const recordsByExercise = useMemo(
+        () =>
+            personalRecords.reduce((acc, record) => {
+                if (!acc[record.exerciseId]) {
+                    acc[record.exerciseId] = []
+                }
+
+                acc[record.exerciseId].push(record)
+                return acc
+            }, {} as Record<string, PersonalRecord[]>),
+        [personalRecords]
+    )
+
+    const bestPRs = useMemo(
+        () =>
+            Object.values(recordsByExercise)
+                .map((records) =>
+                    records.reduce((best, current) => {
+                        const currentEstimatedOneRM = estimateOneRMValue(current.weight, current.reps)
+                        const bestEstimatedOneRM = estimateOneRMValue(best.weight, best.reps)
+                        return currentEstimatedOneRM > bestEstimatedOneRM ? current : best
+                    })
+                )
+                .sort((left, right) => {
+                    const leftValue = estimateOneRMValue(left.weight, left.reps)
+                    const rightValue = estimateOneRMValue(right.weight, right.reps)
+                    return rightValue - leftValue
+                }),
+        [recordsByExercise]
+    )
+
+    const estimatedOneRMByExercise = useMemo(
+        () =>
+            bestPRs.reduce((acc, record) => {
+                acc[record.exerciseId] = estimateOneRMValue(record.weight, record.reps)
+                return acc
+            }, {} as Record<string, number>),
+        [bestPRs]
+    )
+
+    const shouldShowSbdReporting = program?.isSbdProgram ?? false
+
+    const weekSbdMetrics = useMemo(
+        () =>
+            program
+                ? program.weeks.reduce((acc, week) => {
+                    acc[week.id] = Object.values(
+                        week.workouts.reduce(
+                            (weekAcc, workout) => {
+                                workout.workoutExercises
+                                    .filter(
+                                        (workoutExercise) =>
+                                            workoutExercise.exercise.type === 'fundamental' &&
+                                            !workoutExercise.isWarmup
+                                    )
+                                    .forEach((workoutExercise) => {
+                                        const key = workoutExercise.exercise.id
+                                        const plannedReps = parseRepsValue(workoutExercise.reps)
+                                        const liftCount = workoutExercise.sets * plannedReps
+
+                                        let intensity: number | null = null
+                                        if (
+                                            workoutExercise.weightType === 'percentage_1rm' &&
+                                            typeof workoutExercise.weight === 'number'
+                                        ) {
+                                            intensity = workoutExercise.weight
+                                        } else if (
+                                            workoutExercise.weightType === 'absolute' &&
+                                            typeof workoutExercise.weight === 'number'
+                                        ) {
+                                            const estimatedOneRM =
+                                                estimatedOneRMByExercise[workoutExercise.exercise.id]
+                                            if (estimatedOneRM) {
+                                                intensity = (workoutExercise.weight / estimatedOneRM) * 100
+                                            }
+                                        }
+
+                                        if (!weekAcc[key]) {
+                                            weekAcc[key] = {
+                                                exerciseId: workoutExercise.exercise.id,
+                                                exerciseName: workoutExercise.exercise.name,
+                                                workoutIds: new Set<string>(),
+                                                totalLifts: 0,
+                                                weightedIntensitySum: 0,
+                                                intensityLiftCount: 0,
+                                            }
+                                        }
+
+                                        weekAcc[key].workoutIds.add(workout.id)
+                                        weekAcc[key].totalLifts += liftCount
+
+                                        if (intensity !== null && liftCount > 0) {
+                                            weekAcc[key].weightedIntensitySum += intensity * liftCount
+                                            weekAcc[key].intensityLiftCount += liftCount
+                                        }
+                                    })
+
+                                return weekAcc
+                            },
+                            {} as Record<
+                                string,
+                                {
+                                    exerciseId: string
+                                    exerciseName: string
+                                    workoutIds: Set<string>
+                                    totalLifts: number
+                                    weightedIntensitySum: number
+                                    intensityLiftCount: number
+                                }
+                            >
+                        )
+                    )
+                        .map((metric) => ({
+                            exerciseId: metric.exerciseId,
+                            exerciseName: metric.exerciseName,
+                            frequency: metric.workoutIds.size,
+                            totalLifts: metric.totalLifts,
+                            averageIntensity:
+                                metric.intensityLiftCount > 0
+                                    ? metric.weightedIntensitySum / metric.intensityLiftCount
+                                    : null,
+                        }))
+                        .sort((left, right) =>
+                            left.exerciseName.localeCompare(right.exerciseName, 'it', {
+                                sensitivity: 'base',
+                            })
+                        )
+
+                    return acc
+                }, {} as Record<string, Array<{ exerciseId: string; exerciseName: string; frequency: number; totalLifts: number; averageIntensity: number | null }>>)
+                : {},
+        [estimatedOneRMByExercise, program]
+    )
+
+    const activeWeekSbdMetrics = activeWeek ? weekSbdMetrics[activeWeek.id] || [] : []
+
+    const handleWeekTypeChange = async (
+        weekId: string,
+        newType: 'normal' | 'test' | 'deload'
+    ) => {
+        if (!program || readOnly) return
 
         try {
             setSaving(true)
@@ -281,17 +739,15 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 throw new Error(getApiErrorMessage(data, t('editProgram.errorEditWeek'), t))
             }
 
-            setProgram((current) => {
-                if (!current) {
-                    return current
+            setProgram((currentProgram) => {
+                if (!currentProgram) {
+                    return currentProgram
                 }
 
                 return {
-                    ...current,
-                    weeks: current.weeks.map((week) =>
-                        week.id === weekId
-                            ? { ...week, weekType: newType }
-                            : week
+                    ...currentProgram,
+                    weeks: currentProgram.weeks.map((week) =>
+                        week.id === weekId ? { ...week, weekType: newType } : week
                     ),
                 }
             })
@@ -299,32 +755,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             showToast(err instanceof Error ? err.message : t('editProgram.errorEditWeek'), 'error')
         } finally {
             setSaving(false)
-        }
-    }
-
-    const handleCopyFirstWeekWorkouts = async () => {
-        try {
-            setCopyingFirstWeek(true)
-
-            const res = await fetch(`/api/programs/${programId}/copy-first-week`, {
-                method: 'POST',
-            })
-            const data = await res.json()
-
-            if (!res.ok) {
-                throw new Error(getApiErrorMessage(data, t('editProgram.copyFirstWeekError'), t))
-            }
-
-            await fetchProgram({ showLoading: false })
-            showToast(t('editProgram.copyFirstWeekSuccess'), 'success')
-            setConfirmCopyOpen(false)
-        } catch (err: unknown) {
-            showToast(
-                err instanceof Error ? err.message : t('editProgram.copyFirstWeekError'),
-                'error'
-            )
-        } finally {
-            setCopyingFirstWeek(false)
         }
     }
 
@@ -355,143 +785,332 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             )
             setConfirmCopyNextWeek(null)
         } catch (err: unknown) {
-            showToast(
-                err instanceof Error ? err.message : t('editProgram.copyWeekError'),
-                'error'
-            )
+            showToast(err instanceof Error ? err.message : t('editProgram.copyWeekError'), 'error')
         } finally {
             setCopyingWeekId(null)
         }
     }
 
-    const totalExercises = useMemo(() => {
-        if (!program) return 0
-        return program.weeks.reduce(
-            (total, week) =>
-                total + week.workouts.reduce((sum, w) => sum + w.exerciseCount, 0),
-            0
-        )
-    }, [program])
+    const toggleWeekExpansion = (weekId: string) => {
+        setExpandedWeekIds((currentExpandedWeekIds) => ({
+            ...currentExpandedWeekIds,
+            [weekId]: !currentExpandedWeekIds[weekId],
+        }))
+    }
 
-    const completedWorkouts = useMemo(() => {
-        if (!program) return 0
-        return program.weeks.reduce(
-            (total, week) => total + week.workouts.filter((w) => w.exerciseCount > 0).length,
-            0
-        )
-    }, [program])
+    const toggleWorkoutExpansion = (workoutId: string) => {
+        setExpandedWorkoutIds((currentExpandedWorkoutIds) => ({
+            ...currentExpandedWorkoutIds,
+            [workoutId]: !(currentExpandedWorkoutIds[workoutId] ?? true),
+        }))
+    }
 
-    const totalWorkouts = program ? program.durationWeeks * program.workoutsPerWeek : 0
-    const progressPercent = totalWorkouts > 0 ? Math.round((completedWorkouts / totalWorkouts) * 100) : 0
-    const shouldShowSbdReporting = program?.isSbdProgram ?? false
+    const updateRowFields = useCallback(
+        (rowId: string, patch: Partial<EditableWorkoutExerciseRow>) => {
+            setRowStateById((currentRows) => {
+                if (!currentRows[rowId]) {
+                    return currentRows
+                }
 
-    const recordsByExercise = useMemo(() => personalRecords.reduce((acc, record) => {
-        const key = record.exerciseId
-        if (!acc[key]) {
-            acc[key] = []
-        }
-        acc[key].push(record)
-        return acc
-    }, {} as Record<string, PersonalRecord[]>), [personalRecords])
+                return {
+                    ...currentRows,
+                    [rowId]: {
+                        ...currentRows[rowId],
+                        ...patch,
+                    },
+                }
+            })
+        },
+        []
+    )
 
-    const bestPRs = useMemo(() => Object.values(recordsByExercise).map((records) =>
-        records.reduce((best, current) => {
-            const currentEstimatedOneRM = estimateOneRMValue(current.weight, current.reps)
-            const bestEstimatedOneRM = estimateOneRMValue(best.weight, best.reps)
-            return currentEstimatedOneRM > bestEstimatedOneRM ? current : best
-        })
-    ), [recordsByExercise])
+    const toggleCustomVariantInput = useCallback(
+        ({
+            rowId,
+            currentVariant,
+            variantOptions,
+            selectedExercise,
+        }: {
+            rowId: string
+            currentVariant: string
+            variantOptions: string[]
+            selectedExercise?: ExerciseCatalogItem
+        }) => {
+            if (!selectedExercise) {
+                return
+            }
 
-    const estimatedOneRMByExercise = useMemo(() => bestPRs.reduce((acc, record) => {
-        acc[record.exerciseId] = estimateOneRMValue(record.weight, record.reps)
-        return acc
-    }, {} as Record<string, number>), [bestPRs])
+            const currentMode =
+                customVariantInputByRowId[rowId] ??
+                Boolean(currentVariant.trim() !== '' && !variantOptions.includes(currentVariant))
 
-    const weekSbdMetrics = useMemo(() => program
-        ? program.weeks.reduce((acc, week) => {
-            acc[week.id] = Object.values(
-                week.workouts.reduce((weekAcc, workout) => {
-                    workout.workoutExercises
-                        .filter((weekExercise) => weekExercise.exercise.type === 'fundamental' && !weekExercise.isWarmup)
-                        .forEach((weekExercise) => {
-                            const key = weekExercise.exercise.id
-                            const plannedReps = parseRepsValue(weekExercise.reps)
-                            const liftCount = weekExercise.sets * plannedReps
+            const nextMode = !currentMode
 
-                            let intensity: number | null = null
-                            if (weekExercise.weightType === 'percentage_1rm' && typeof weekExercise.weight === 'number') {
-                                intensity = weekExercise.weight
-                            } else if (weekExercise.weightType === 'absolute' && typeof weekExercise.weight === 'number') {
-                                const estimatedOneRM = estimatedOneRMByExercise[weekExercise.exercise.id]
-                                if (estimatedOneRM) {
-                                    intensity = (weekExercise.weight / estimatedOneRM) * 100
-                                }
-                            }
+            if (!nextMode && currentVariant.trim() !== '' && !variantOptions.includes(currentVariant)) {
+                updateRowFields(rowId, { variant: '' })
+            }
 
-                            if (!weekAcc[key]) {
-                                weekAcc[key] = {
-                                    exerciseId: weekExercise.exercise.id,
-                                    exerciseName: weekExercise.exercise.name,
-                                    workoutIds: new Set<string>(),
-                                    totalLifts: 0,
-                                    weightedIntensitySum: 0,
-                                    intensityLiftCount: 0,
-                                }
-                            }
-
-                            weekAcc[key].workoutIds.add(workout.id)
-                            weekAcc[key].totalLifts += liftCount
-
-                            if (intensity !== null && liftCount > 0) {
-                                weekAcc[key].weightedIntensitySum += intensity * liftCount
-                                weekAcc[key].intensityLiftCount += liftCount
-                            }
-                        })
-
-                    return weekAcc
-                }, {} as Record<string, {
-                    exerciseId: string
-                    exerciseName: string
-                    workoutIds: Set<string>
-                    totalLifts: number
-                    weightedIntensitySum: number
-                    intensityLiftCount: number
-                }>)
-            )
-                .map((metric) => ({
-                    exerciseId: metric.exerciseId,
-                    exerciseName: metric.exerciseName,
-                    frequency: metric.workoutIds.size,
-                    totalLifts: metric.totalLifts,
-                    averageIntensity: metric.intensityLiftCount > 0
-                        ? metric.weightedIntensitySum / metric.intensityLiftCount
-                        : null,
-                }))
-                .sort((left, right) => left.exerciseName.localeCompare(right.exerciseName, 'it', { sensitivity: 'base' }))
-
-            return acc
-        }, {} as Record<string, Array<{
-            exerciseId: string
-            exerciseName: string
-            frequency: number
-            totalLifts: number
-            averageIntensity: number | null
-        }>>)
-        : {}, [program, estimatedOneRMByExercise])
-
-    const sbdSummaryRows = shouldShowSbdReporting && program
-        ? program.weeks.flatMap((week) =>
-            (weekSbdMetrics[week.id] || []).map((metric) => ({
-                weekId: week.id,
-                weekNumber: week.weekNumber,
-                exerciseId: metric.exerciseId,
-                exerciseName: metric.exerciseName,
-                frequency: metric.frequency,
-                totalLifts: metric.totalLifts,
-                averageIntensity: metric.averageIntensity,
+            setCustomVariantInputByRowId((currentModes) => ({
+                ...currentModes,
+                [rowId]: nextMode,
             }))
-        )
-        : []
+        },
+        [customVariantInputByRowId, updateRowFields]
+    )
+
+    const addDraftRow = (workoutId: string) => {
+        if (readOnly || savingRowId || deletingRowId) {
+            return
+        }
+
+        const workout = program?.weeks
+            .flatMap((week) => week.workouts)
+            .find((candidateWorkout) => candidateWorkout.id === workoutId)
+
+        if (!workout) {
+            return
+        }
+
+        const draftIds = draftRowIdsByWorkout[workoutId] || []
+        const nextOrder = workout.workoutExercises.length + draftIds.length + 1
+        const draftRowId = `draft-${workoutId}-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+
+        setRowStateById((currentRows) => ({
+            ...currentRows,
+            [draftRowId]: {
+                id: draftRowId,
+                workoutId,
+                exerciseId: '',
+                variant: '',
+                sets: '',
+                reps: '',
+                targetRpe: '',
+                weight: '',
+                isWarmup: false,
+                order: nextOrder,
+                restTime: 'm2',
+                notes: null,
+                isDraft: true,
+            },
+        }))
+
+        setDraftRowIdsByWorkout((currentDraftRows) => ({
+            ...currentDraftRows,
+            [workoutId]: [...(currentDraftRows[workoutId] || []), draftRowId],
+        }))
+    }
+
+    const removeDraftRow = (rowId: string, workoutId: string) => {
+        setDraftRowIdsByWorkout((currentDraftRows) => {
+            const currentWorkoutDraftRows = currentDraftRows[workoutId] || []
+            const nextWorkoutDraftRows = currentWorkoutDraftRows.filter((candidateRowId) => candidateRowId !== rowId)
+
+            if (nextWorkoutDraftRows.length === 0) {
+                const { [workoutId]: _removed, ...remainingDraftRows } = currentDraftRows
+                return remainingDraftRows
+            }
+
+            return {
+                ...currentDraftRows,
+                [workoutId]: nextWorkoutDraftRows,
+            }
+        })
+
+        setRowStateById((currentRows) => {
+            const { [rowId]: _removed, ...nextRows } = currentRows
+            return nextRows
+        })
+    }
+
+    const getValidationError = (row: EditableWorkoutExerciseRow): string | null => {
+        const repsPattern = /^(\d+|\d+-\d+|\d+\/\d+)$/
+        const parsedSets = Number.parseInt(row.sets, 10)
+        const parsedWeight = row.weight.trim() === '' ? null : Number(row.weight)
+        const parsedRpe = row.targetRpe.trim() === '' ? null : Number(row.targetRpe)
+
+        if (!row.exerciseId) {
+            return t('editProgram.rowValidationExercise')
+        }
+
+        if (!Number.isInteger(parsedSets) || parsedSets < 1 || parsedSets > 20) {
+            return t('editProgram.rowValidationSets')
+        }
+
+        if (!repsPattern.test(row.reps.trim())) {
+            return t('editProgram.rowValidationReps')
+        }
+
+        if (
+            parsedRpe !== null &&
+            (!Number.isFinite(parsedRpe) ||
+                parsedRpe < 5 ||
+                parsedRpe > 10 ||
+                Math.abs(parsedRpe * 2 - Math.round(parsedRpe * 2)) > Number.EPSILON)
+        ) {
+            return t('editProgram.rowValidationRpe')
+        }
+
+        if (parsedWeight !== null && (!Number.isFinite(parsedWeight) || parsedWeight < 0)) {
+            return t('editProgram.rowValidationWeight')
+        }
+
+        return null
+    }
+
+    const buildWorkoutExercisePayload = (row: EditableWorkoutExerciseRow) => {
+        const parsedSets = Number.parseInt(row.sets, 10)
+        const parsedWeight = row.weight.trim() === '' ? null : Number(row.weight)
+        const parsedRpe = row.targetRpe.trim() === '' ? null : Number(row.targetRpe)
+
+        return {
+            exerciseId: row.exerciseId,
+            variant: row.variant.trim() || null,
+            order: row.order,
+            sets: parsedSets,
+            reps: row.reps.trim(),
+            targetRpe: parsedRpe,
+            weightType: 'absolute' as WeightType,
+            weight: parsedWeight,
+            restTime: row.restTime,
+            isWarmup: row.isWarmup,
+            notes: row.notes,
+        }
+    }
+
+    const saveWorkoutRows = async (workout: Workout) => {
+        if (readOnly) {
+            return
+        }
+
+        const workoutRows = getWorkoutRows(workout)
+
+        if (workoutRows.length === 0) {
+            showToast(t('editProgram.tableNoWorkoutExercises'), 'warning')
+            return
+        }
+
+        for (let index = 0; index < workoutRows.length; index += 1) {
+            const validationError = getValidationError(workoutRows[index])
+
+            if (validationError) {
+                showToast(
+                    t('editProgram.rowValidationWithIndex', {
+                        index: index + 1,
+                        error: validationError,
+                    }),
+                    'warning'
+                )
+                return
+            }
+        }
+
+        try {
+            setSavingWorkoutId(workout.id)
+
+            for (const row of workoutRows) {
+                setSavingRowId(row.id)
+
+                const payload = buildWorkoutExercisePayload(row)
+                const endpoint = row.isDraft
+                    ? `/api/programs/${programId}/workouts/${workout.id}/exercises`
+                    : `/api/programs/${programId}/workouts/${workout.id}/exercises/${row.id}`
+
+                const method = row.isDraft ? 'POST' : 'PUT'
+
+                const res = await fetch(endpoint, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                })
+
+                const data = await res.json()
+
+                if (!res.ok) {
+                    throw new Error(
+                        getApiErrorMessage(
+                            data,
+                            row.isDraft ? t('editProgram.rowSaveError') : t('editProgram.rowUpdateError'),
+                            t
+                        )
+                    )
+                }
+
+                if (row.isDraft) {
+                    removeDraftRow(row.id, workout.id)
+                }
+            }
+
+            await fetchProgram({ showLoading: false })
+            showToast(t('editProgram.workoutRowsSavedSuccess'), 'success')
+        } catch (err: unknown) {
+            showToast(
+                err instanceof Error ? err.message : t('editProgram.rowSaveGenericError'),
+                'error'
+            )
+        } finally {
+            setSavingRowId(null)
+            setSavingWorkoutId(null)
+        }
+    }
+
+    const deleteRow = async () => {
+        if (!confirmDeleteRow) {
+            return
+        }
+
+        const { rowId, workoutId, isDraft } = confirmDeleteRow
+
+        if (isDraft) {
+            removeDraftRow(rowId, workoutId)
+            setConfirmDeleteRow(null)
+            return
+        }
+
+        try {
+            setDeletingRowId(rowId)
+
+            const res = await fetch(
+                `/api/programs/${programId}/workouts/${workoutId}/exercises/${rowId}`,
+                {
+                    method: 'DELETE',
+                }
+            )
+
+            if (!res.ok) {
+                const data = await res.json()
+                throw new Error(getApiErrorMessage(data, t('editProgram.rowDeleteError'), t))
+            }
+
+            await fetchProgram({ showLoading: false })
+            showToast(t('editProgram.rowDeletedSuccess'), 'success')
+            setConfirmDeleteRow(null)
+        } catch (err: unknown) {
+            showToast(
+                err instanceof Error ? err.message : t('editProgram.rowDeleteGenericError'),
+                'error'
+            )
+        } finally {
+            setDeletingRowId(null)
+        }
+    }
+
+    const getWorkoutRows = useCallback(
+        (workout: Workout) => {
+            const persistedRows = workout.workoutExercises
+                .map((workoutExercise) =>
+                    rowStateById[workoutExercise.id] || buildEditableRow(workout.id, workoutExercise)
+                )
+                .sort((left, right) => left.order - right.order)
+
+            const draftRows = (draftRowIdsByWorkout[workout.id] || [])
+                .map((draftRowId) => rowStateById[draftRowId])
+                .filter((row): row is EditableWorkoutExerciseRow => Boolean(row))
+                .sort((left, right) => left.order - right.order)
+
+            return [...persistedRows, ...draftRows]
+        },
+        [draftRowIdsByWorkout, rowStateById]
+    )
 
     if (loading) {
         return (
@@ -513,8 +1132,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Progress Indicator - Only in Edit Mode */}
+            <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {!readOnly && (
                     <div className="mb-8">
                         <div className="flex items-center justify-center space-x-4 mb-4">
@@ -549,7 +1167,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     </div>
                 )}
 
-                {/* Header */}
                 <div className="mb-8">
                     <Link
                         href="/trainer/programs"
@@ -558,12 +1175,18 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                         <ArrowLeft className="w-4 h-4" />
                         {t('editProgram.backToPrograms')}
                     </Link>
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-4">
                         <div>
                             <h1 className="text-3xl font-bold text-gray-900">{program.title}</h1>
                             <p className="text-gray-600 mt-2">
-                                {t('editProgram.forTrainee', { name: `${program.trainee.firstName} ${program.trainee.lastName}` })} •{' '}
-                                {t('editProgram.programMeta', { duration: program.durationWeeks, perWeek: program.workoutsPerWeek })}
+                                {t('editProgram.forTrainee', {
+                                    name: `${program.trainee.firstName} ${program.trainee.lastName}`,
+                                })}{' '}
+                                •{' '}
+                                {t('editProgram.programMeta', {
+                                    duration: program.durationWeeks,
+                                    perWeek: program.workoutsPerWeek,
+                                })}
                             </p>
                         </div>
                         <div>
@@ -592,15 +1215,15 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     </div>
                 </div>
 
-                {/* Progress Card */}
-                <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
                     <div className="flex items-center justify-between mb-4">
                         <div>
-                            <p className="text-sm font-semibold text-gray-700">
-                                {t('editProgram.progressTitle')}
-                            </p>
+                            <p className="text-sm font-semibold text-gray-700">{t('editProgram.progressTitle')}</p>
                             <p className="text-2xl font-bold text-gray-900 mt-1">
-                                {t('editProgram.workoutsConfigured', { completed: completedWorkouts, total: totalWorkouts })}
+                                {t('editProgram.workoutsConfigured', {
+                                    completed: completedWorkouts,
+                                    total: totalWorkouts,
+                                })}
                             </p>
                         </div>
                         <div className="text-right">
@@ -615,279 +1238,693 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                         />
                     </div>
                     <p className="text-sm text-gray-600 mt-4">
-                        {t('editProgram.totalExercises')} <span className="font-semibold">{totalExercises}</span>
+                        {t('editProgram.totalExercises')}{' '}
+                        <span className="font-semibold">{totalExercises}</span>
                     </p>
                 </div>
 
-                {/* Weeks Overview */}
-                <div className="space-y-6">
-                    {program.weeks.map((week) => (
-                        <div key={week.id} className="bg-white rounded-lg shadow-md p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center space-x-4">
-                                    <h3 className="text-xl font-bold text-gray-900">
-                                        {t('editProgram.week')} {week.weekNumber}
-                                    </h3>
-                                    {!readOnly && week.weekNumber === 1 && program.weeks.length > 1 && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setConfirmCopyOpen(true)}
-                                            disabled={copyingFirstWeek || saving}
-                                            className="inline-flex items-center gap-2 rounded-lg border border-brand-primary/20 bg-brand-primary/10 px-3 py-2 text-sm font-semibold text-brand-primary transition-colors hover:bg-brand-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
-                                        >
-                                            {copyingFirstWeek ? (
-                                                <LoadingSpinner size="sm" color="primary" />
-                                            ) : (
-                                                <Copy className="h-4 w-4" />
-                                            )}
-                                            {t('editProgram.copyFirstWeekButton')}
-                                        </button>
-                                    )}
-                                    {!readOnly && week.weekNumber >= 2 && week.weekNumber < program.weeks.length && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setConfirmCopyNextWeek(week)}
-                                            disabled={copyingWeekId !== null || copyingFirstWeek || saving}
-                                            className="inline-flex items-center gap-2 rounded-lg border border-brand-primary/20 bg-brand-primary/10 px-3 py-2 text-sm font-semibold text-brand-primary transition-colors hover:bg-brand-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
-                                        >
-                                            {copyingWeekId === week.id ? (
-                                                <LoadingSpinner size="sm" color="primary" />
-                                            ) : (
-                                                <Copy className="h-4 w-4" />
-                                            )}
-                                            {t('editProgram.copyWeekButton', {
-                                                sourceWeek: week.weekNumber,
-                                                targetWeek: week.weekNumber + 1,
-                                            })}
-                                        </button>
-                                    )}
-                                    {readOnly ? (
-                                        <div className="flex items-center gap-2">
-                                            <WeekTypeBadge weekType={week.weekType} />
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                onClick={() => handleWeekTypeChange(week.id, 'normal')}
-                                                disabled={saving}
-                                                className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all flex items-center gap-1.5 ${week.weekType === 'normal'
-                                                    ? 'bg-gray-500 text-white border-gray-500'
-                                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                                                    }`}
-                                            >
-                                                <ClipboardList className="w-3.5 h-3.5" />
-                                                Standard
-                                            </button>
-                                            <button
-                                                onClick={() => handleWeekTypeChange(week.id, 'test')}
-                                                disabled={saving}
-                                                className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all flex items-center gap-1.5 ${week.weekType === 'test'
-                                                    ? 'bg-week-test text-white border-week-test'
-                                                    : 'bg-white text-week-test-dark border-week-test hover:bg-week-test-light'
-                                                    }`}
-                                            >
-                                                <Flame className="w-3.5 h-3.5" />
-                                                Test
-                                            </button>
-                                            <button
-                                                onClick={() => handleWeekTypeChange(week.id, 'deload')}
-                                                disabled={saving}
-                                                className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all flex items-center gap-1.5 ${week.weekType === 'deload'
-                                                    ? 'bg-week-deload text-white border-week-deload'
-                                                    : 'bg-white text-week-deload-dark border-week-deload hover:bg-week-deload-light'
-                                                    }`}
-                                            >
-                                                <Wind className="w-3.5 h-3.5" />
-                                                Scarico
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                                <p className="text-sm text-gray-600">
-                                    {t('editProgram.workoutsConfiguredShort', { done: week.workouts.filter((w) => w.exerciseCount > 0).length, total: week.workouts.length })}
-                                </p>
-                            </div>
-
-                            {shouldShowSbdReporting && weekSbdMetrics[week.id] && weekSbdMetrics[week.id].length > 0 && (
-                                <div className="mb-5 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4">
-                                    <div className="mb-3 flex items-center justify-between gap-3">
-                                        <div className="flex items-center gap-2">
-                                            <div className="rounded-xl bg-slate-900 p-2 text-white">
-                                                <BarChart3 className="h-4 w-4" />
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-semibold text-slate-900">Reportistica SBD</p>
-                                                <p className="text-xs text-slate-500">Solo esercizi fondamentali della settimana</p>
-                                            </div>
-                                        </div>
-                                        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400">FRQ / NBL / IM</p>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-                                        {weekSbdMetrics[week.id].map((metric) => (
-                                            <div key={metric.exerciseId} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-                                                <p className="text-sm font-semibold text-slate-900">{metric.exerciseName}</p>
-                                                <div className="mt-3 grid grid-cols-3 gap-2">
-                                                    <div className="rounded-lg bg-slate-50 px-2 py-2 text-center">
-                                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">FRQ</p>
-                                                        <p className="mt-1 text-base font-bold text-slate-900">{metric.frequency}</p>
-                                                    </div>
-                                                    <div className="rounded-lg bg-slate-50 px-2 py-2 text-center">
-                                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">NBL</p>
-                                                        <p className="mt-1 text-base font-bold text-slate-900">{metric.totalLifts}</p>
-                                                    </div>
-                                                    <div className="rounded-lg bg-slate-50 px-2 py-2 text-center">
-                                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">IM</p>
-                                                        <p className="mt-1 text-base font-bold text-slate-900">
-                                                            {metric.averageIntensity !== null ? `${metric.averageIntensity.toFixed(1)}%` : '-'}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {week.workouts.map((workout, workoutIndex) => {
-                                    const workoutCard = (
-                                        <div
-                                            className={`group relative overflow-hidden rounded-2xl border p-4 transition-all ${workout.exerciseCount > 0
-                                                ? 'border-brand-primary bg-white shadow-sm'
-                                                : 'border-brand-primary bg-white'
-                                                } ${!readOnly ? 'hover:-translate-y-0.5 hover:shadow-lg' : ''}`}
-                                        >
-                                            <div className="absolute inset-y-0 left-0 w-1 bg-brand-primary opacity-90" />
-                                            <div className="mb-3 flex items-start justify-between gap-3">
-                                                <div>
-                                                    <div className="flex items-center gap-2">
-                                                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-                                                            Workout
-                                                        </p>
-                                                        <span className="text-xs font-semibold text-brand-primary">
-                                                            {workoutIndex + 1}/{program.workoutsPerWeek}
-                                                        </span>
-                                                    </div>
-                                                    <p className="mt-1 text-lg font-bold text-slate-900">
-                                                        {(t('editProgram.dayNames', { returnObjects: true }) as string[])[workout.dayOfWeek]}
-                                                    </p>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${workout.exerciseCount > 0
-                                                        ? 'bg-brand-primary/10 text-brand-primary'
-                                                        : 'border border-brand-primary/30 bg-white text-slate-500'
-                                                        }`}>
-                                                        {workout.exerciseCount > 0 ? `${workout.exerciseCount} ex` : 'Vuoto'}
-                                                    </span>
-                                                    {!readOnly && (
-                                                        <span className="rounded-full bg-brand-primary p-1.5 text-white shadow-sm transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
-                                                            <ArrowUpRight className="h-3.5 w-3.5" />
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <div className="mb-3 flex items-center justify-end">
-                                                <span className={`text-sm font-semibold ${workout.exerciseCount > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
-                                                    {workout.exerciseCount > 0 ? '✓' : '⚠️'}
-                                                </span>
-                                            </div>
-
-                                            {workout.movementPatterns.length > 0 ? (
-                                                <div className="flex flex-wrap gap-1.5">
-                                                    {workout.movementPatterns.map((mp, idx) => (
-                                                        <MovementPatternTag
-                                                            key={`${mp.id}-${idx}`}
-                                                            name={mp.name}
-                                                            color={mp.color}
-                                                        />
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <div className="rounded-xl border border-dashed border-brand-primary/30 bg-white px-3 py-3 text-xs text-slate-500">
-                                                    {t('editProgram.noMovementPatternAssigned')}
-                                                </div>
-                                            )}
-                                        </div>
-                                    )
-
-                                    return readOnly ? (
-                                        <div key={workout.id}>
-                                            {workoutCard}
-                                        </div>
-                                    ) : (
-                                        <Link
-                                            key={workout.id}
-                                            href={`/trainer/programs/${programId}/workouts/${workout.id}`}
-                                        >
-                                            {workoutCard}
-                                        </Link>
-                                    )
-                                })}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                {shouldShowSbdReporting && sbdSummaryRows.length > 0 && (
-                    <div className="mt-10 mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-md">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-6">
+                    <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
                         <button
                             type="button"
-                            onClick={() => setIsSbdSummaryCollapsed((current) => !current)}
-                            className="group flex w-full items-start justify-between gap-4 text-left"
-                            aria-expanded={!isSbdSummaryCollapsed}
+                            onClick={() => setIsPrHelperCollapsed((current) => !current)}
+                            className="w-full flex items-start justify-between gap-3 text-left"
+                            aria-expanded={!isPrHelperCollapsed}
                         >
-                            <div className="flex items-center gap-3">
-                                <div className="rounded-xl bg-slate-900 p-2 text-white">
-                                    <BarChart3 className="h-5 w-5" />
+                            <div className="flex items-center gap-2">
+                                <div className="rounded-lg bg-brand-primary text-white p-2">
+                                    <Dumbbell className="w-4 h-4" />
                                 </div>
                                 <div>
-                                    <h2 className="text-xl font-bold text-slate-900">Recap Reportistica SBD</h2>
-                                    <p className="text-sm text-slate-500">
-                                        Vista tabellare di FRQ, NBL e IM su tutte le settimane del programma.
+                                    <p className="text-sm font-semibold text-gray-900">
+                                        {t('editProgram.prHelperTitle')}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                        {t('editProgram.prHelperDescription')}
                                     </p>
                                 </div>
                             </div>
-                            <span className="rounded-full border border-gray-200 bg-gray-50 p-2 text-gray-500 transition-colors group-hover:bg-gray-100">
-                                {isSbdSummaryCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+                            <span className="rounded-full border border-gray-200 bg-gray-50 p-2 text-gray-500">
+                                {isPrHelperCollapsed ? (
+                                    <ChevronDown className="w-4 h-4" />
+                                ) : (
+                                    <ChevronUp className="w-4 h-4" />
+                                )}
                             </span>
                         </button>
 
-                        {!isSbdSummaryCollapsed && (
-                            <div className="mt-4 overflow-x-auto">
-                                <table className="min-w-full divide-y divide-slate-200 text-sm">
-                                    <thead>
-                                        <tr className="text-left text-slate-500">
-                                            <th className="px-3 py-3 font-semibold">Settimana</th>
-                                            <th className="px-3 py-3 font-semibold">Esercizio</th>
-                                            <th className="px-3 py-3 font-semibold">FRQ</th>
-                                            <th className="px-3 py-3 font-semibold">NBL</th>
-                                            <th className="px-3 py-3 font-semibold">IM</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100">
-                                        {sbdSummaryRows.map((row) => (
-                                            <tr key={`${row.weekId}-${row.exerciseId}`} className="hover:bg-slate-50/70">
-                                                <td className="px-3 py-3 font-semibold text-slate-900">Sett. {row.weekNumber}</td>
-                                                <td className="px-3 py-3 text-slate-700">{row.exerciseName}</td>
-                                                <td className="px-3 py-3 text-slate-700">{row.frequency}</td>
-                                                <td className="px-3 py-3 text-slate-700">{row.totalLifts}</td>
-                                                <td className="px-3 py-3 text-slate-700">
-                                                    {row.averageIntensity !== null ? `${row.averageIntensity.toFixed(1)}%` : '-'}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                        {!isPrHelperCollapsed && (
+                            <div className="mt-4 max-h-72 overflow-y-auto">
+                                {bestPRs.length > 0 ? (
+                                    <div className="space-y-2">
+                                        {bestPRs.map((record) => {
+                                            const label =
+                                                record.exercise?.name ||
+                                                exerciseNameById[record.exerciseId] ||
+                                                t('editProgram.tableExercise')
+
+                                            const type =
+                                                record.exercise?.type ||
+                                                exerciseLookupById.get(record.exerciseId)?.type ||
+                                                'accessory'
+
+                                            return (
+                                                <div
+                                                    key={`${record.exerciseId}-${record.id || record.reps}`}
+                                                    className="rounded-lg border border-gray-200 px-3 py-2"
+                                                >
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <div>
+                                                            <p className="text-sm font-semibold text-gray-900">
+                                                                {label}
+                                                            </p>
+                                                            <p className="text-xs text-gray-500">
+                                                                {t('editProgram.prRecordFormat', {
+                                                                    weight: record.weight,
+                                                                    reps: record.reps,
+                                                                })}
+                                                            </p>
+                                                        </div>
+                                                        <span
+                                                            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${type === 'fundamental'
+                                                                ? 'bg-red-100 text-red-700'
+                                                                : 'bg-blue-100 text-blue-700'
+                                                                }`}
+                                                        >
+                                                            {type === 'fundamental' ? 'F' : 'A'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-500 py-3">
+                                        {t('editProgram.prHelperNoData')}
+                                    </p>
+                                )}
                             </div>
                         )}
                     </div>
-                )}
 
-                <ProgramMuscleGroupCharts weeks={program.weeks} />
+                    {shouldShowSbdReporting && (
+                        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+                            <button
+                                type="button"
+                                onClick={() => setIsSbdHelperCollapsed((current) => !current)}
+                                className="w-full flex items-start justify-between gap-3 text-left"
+                                aria-expanded={!isSbdHelperCollapsed}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <div className="rounded-lg bg-slate-900 text-white p-2">
+                                        <BarChart3 className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-gray-900">
+                                            {t('editProgram.sbdHelperTitle')}
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                            {t('editProgram.sbdHelperDescription')}
+                                        </p>
+                                    </div>
+                                </div>
+                                <span className="rounded-full border border-gray-200 bg-gray-50 p-2 text-gray-500">
+                                    {isSbdHelperCollapsed ? (
+                                        <ChevronDown className="w-4 h-4" />
+                                    ) : (
+                                        <ChevronUp className="w-4 h-4" />
+                                    )}
+                                </span>
+                            </button>
 
-                {/* Action Buttons - Only in Edit Mode */}
+                            {!isSbdHelperCollapsed && (
+                                <div className="mt-4 max-h-72 overflow-y-auto">
+                                    {activeWeekSbdMetrics.length > 0 ? (
+                                        <div className="space-y-2">
+                                            {activeWeekSbdMetrics.map((metric) => (
+                                                <div
+                                                    key={metric.exerciseId}
+                                                    className="rounded-lg border border-slate-200 px-3 py-2"
+                                                >
+                                                    <p className="text-sm font-semibold text-slate-900">
+                                                        {metric.exerciseName}
+                                                    </p>
+                                                    <div className="grid grid-cols-3 gap-2 mt-2 text-center">
+                                                        <div className="rounded-md bg-slate-50 px-2 py-2">
+                                                            <p className="text-[10px] font-semibold uppercase text-slate-500">{t('editProgram.sbdFrq')}</p>
+                                                            <p className="text-sm font-bold text-slate-900">{metric.frequency}</p>
+                                                        </div>
+                                                        <div className="rounded-md bg-slate-50 px-2 py-2">
+                                                            <p className="text-[10px] font-semibold uppercase text-slate-500">{t('editProgram.sbdNbl')}</p>
+                                                            <p className="text-sm font-bold text-slate-900">{metric.totalLifts}</p>
+                                                        </div>
+                                                        <div className="rounded-md bg-slate-50 px-2 py-2">
+                                                            <p className="text-[10px] font-semibold uppercase text-slate-500">{t('editProgram.sbdIm')}</p>
+                                                            <p className="text-sm font-bold text-slate-900">
+                                                                {metric.averageIntensity !== null
+                                                                    ? `${metric.averageIntensity.toFixed(1)}%`
+                                                                    : '-'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-gray-500 py-3">
+                                            {t('editProgram.sbdHelperNoData')}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                <div className="space-y-5">
+                    {program.weeks.map((week) => {
+                        const isExpanded = expandedWeekIds[week.id] ?? false
+                        const isActive = activeWeek?.id === week.id
+
+                        const configuredWorkoutsForWeek = week.workouts.filter(
+                            (workout) => workout.workoutExercises.length > 0
+                        ).length
+
+                        return (
+                            <section
+                                key={week.id}
+                                className={`rounded-xl border bg-white shadow-sm ${isActive ? 'border-brand-primary' : 'border-gray-200'
+                                    }`}
+                            >
+                                <div className="px-4 py-4 border-b border-gray-100">
+                                    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setActiveWeekId(week.id)
+                                                    toggleWeekExpansion(week.id)
+                                                }}
+                                                className="flex items-center gap-3 text-left"
+                                            >
+                                                <span className="text-lg font-bold text-gray-900">
+                                                    {t('editProgram.week')} {week.weekNumber}
+                                                </span>
+                                                <span className="text-xs font-semibold text-gray-500">
+                                                    {t('editProgram.workoutsConfiguredShort', {
+                                                        done: configuredWorkoutsForWeek,
+                                                        total: week.workouts.length,
+                                                    })}
+                                                </span>
+                                                <span className="rounded-full border border-gray-200 bg-gray-50 p-1 text-gray-500">
+                                                    {isExpanded ? (
+                                                        <ChevronUp className="w-4 h-4" />
+                                                    ) : (
+                                                        <ChevronDown className="w-4 h-4" />
+                                                    )}
+                                                </span>
+                                            </button>
+
+                                            {!readOnly && week.weekNumber < program.weeks.length && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setConfirmCopyNextWeek(week)}
+                                                    disabled={copyingWeekId !== null || saving}
+                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-brand-primary/20 bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
+                                                    title={t('editProgram.copyCurrentWeekToNextTooltip')}
+                                                    aria-label={t('editProgram.copyCurrentWeekToNextTooltip')}
+                                                >
+                                                    {copyingWeekId === week.id ? (
+                                                        <LoadingSpinner size="sm" color="primary" />
+                                                    ) : (
+                                                        <Copy className="w-4 h-4" />
+                                                    )}
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            {readOnly ? (
+                                                <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700">
+                                                    {week.weekType === 'normal'
+                                                        ? t('editProgram.weekTypeStandard')
+                                                        : week.weekType === 'test'
+                                                            ? t('editProgram.weekTypeTest')
+                                                            : t('editProgram.weekTypeDeload')}
+                                                </span>
+                                            ) : (
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleWeekTypeChange(week.id, 'normal')}
+                                                        disabled={saving}
+                                                        className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all inline-flex items-center gap-1 ${week.weekType === 'normal'
+                                                            ? 'bg-gray-500 text-white border-gray-500'
+                                                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                                            }`}
+                                                    >
+                                                        <ClipboardList className="w-3.5 h-3.5" />
+                                                        {t('editProgram.weekTypeStandard')}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleWeekTypeChange(week.id, 'test')}
+                                                        disabled={saving}
+                                                        className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all inline-flex items-center gap-1 ${week.weekType === 'test'
+                                                            ? 'bg-week-test text-white border-week-test'
+                                                            : 'bg-white text-week-test-dark border-week-test hover:bg-week-test-light'
+                                                            }`}
+                                                    >
+                                                        <Flame className="w-3.5 h-3.5" />
+                                                        {t('editProgram.weekTypeTest')}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleWeekTypeChange(week.id, 'deload')}
+                                                        disabled={saving}
+                                                        className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all inline-flex items-center gap-1 ${week.weekType === 'deload'
+                                                            ? 'bg-week-deload text-white border-week-deload'
+                                                            : 'bg-white text-week-deload-dark border-week-deload hover:bg-week-deload-light'
+                                                            }`}
+                                                    >
+                                                        <Wind className="w-3.5 h-3.5" />
+                                                        {t('editProgram.weekTypeDeload')}
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {isExpanded && (
+                                    <div className="p-4 space-y-6">
+                                        {week.workouts.map((workout, workoutIndex) => {
+                                            const workoutRows = getWorkoutRows(workout)
+                                            const workoutLabel = t('editProgram.workoutFallback', {
+                                                number: workoutIndex + 1,
+                                            })
+                                            const isWorkoutExpanded =
+                                                expandedWorkoutIds[workout.id] ?? true
+
+                                            return (
+                                                <div
+                                                    key={workout.id}
+                                                    className="rounded-lg border border-gray-200 bg-white"
+                                                >
+                                                    <div
+                                                        className={`px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 ${isWorkoutExpanded
+                                                            ? 'border-b border-gray-100'
+                                                            : ''
+                                                            }`}
+                                                    >
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => toggleWorkoutExpansion(workout.id)}
+                                                            className="flex items-center gap-2 text-left"
+                                                        >
+                                                            <h4 className="text-lg font-bold text-gray-900">
+                                                                {workoutLabel}
+                                                            </h4>
+                                                            <span className="text-xs font-semibold text-gray-500">
+                                                                {t('editProgram.exercisesCount', {
+                                                                    count: workoutRows.length,
+                                                                })}
+                                                            </span>
+                                                            <span className="rounded-full border border-gray-200 bg-gray-50 p-1 text-gray-500">
+                                                                {isWorkoutExpanded ? (
+                                                                    <ChevronUp className="w-4 h-4" />
+                                                                ) : (
+                                                                    <ChevronDown className="w-4 h-4" />
+                                                                )}
+                                                            </span>
+                                                        </button>
+                                                        {!readOnly && (
+                                                            <div className="inline-flex items-center gap-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => addDraftRow(workout.id)}
+                                                                    disabled={Boolean(savingRowId || deletingRowId || savingWorkoutId)}
+                                                                    className="inline-flex items-center gap-2 rounded-lg border border-brand-primary/20 bg-brand-primary/10 px-3 py-2 text-sm font-semibold text-brand-primary hover:bg-brand-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
+                                                                >
+                                                                    <Plus className="w-4 h-4" />
+                                                                    {t('editProgram.addRow')}
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        void saveWorkoutRows(workout)
+                                                                    }}
+                                                                    disabled={Boolean(savingRowId || deletingRowId || savingWorkoutId)}
+                                                                    className="inline-flex items-center gap-2 rounded-lg bg-brand-primary px-3 py-2 text-sm font-semibold text-white hover:bg-brand-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                                                                    title={t('editProgram.saveRowTitle')}
+                                                                >
+                                                                    {savingWorkoutId === workout.id ? (
+                                                                        <LoadingSpinner size="sm" color="white" />
+                                                                    ) : (
+                                                                        <Save className="w-4 h-4" />
+                                                                    )}
+                                                                    {t('editProgram.saveRowTitle')}
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {isWorkoutExpanded && (
+                                                        <div className="overflow-x-auto">
+                                                            <table className="min-w-[1060px] w-full divide-y divide-gray-200 text-sm">
+                                                                <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
+                                                                    <tr>
+                                                                        <th className="px-1.5 py-3 w-12 text-center">
+                                                                            <span
+                                                                                className="inline-flex items-center justify-center w-full"
+                                                                                title={t('editProgram.tableWarmup')}
+                                                                                aria-label={t('editProgram.tableWarmup')}
+                                                                            >
+                                                                                <Flame className="w-3.5 h-3.5 text-week-test" />
+                                                                                <span className="sr-only">
+                                                                                    {t('editProgram.tableWarmup')}
+                                                                                </span>
+                                                                            </span>
+                                                                        </th>
+                                                                        <th className="px-1.5 py-3 min-w-[210px]">{t('editProgram.tableExercise')}</th>
+                                                                        <th className="px-1.5 py-3 min-w-[175px]">{t('editProgram.tableVariant')}</th>
+                                                                        <th className="px-1.5 py-3 w-16 text-center">{t('editProgram.tableSets')}</th>
+                                                                        <th className="px-1.5 py-3 w-20">{t('editProgram.tableReps')}</th>
+                                                                        <th className="px-1.5 py-3 w-16">{t('editProgram.tableRpe')}</th>
+                                                                        <th className="px-1.5 py-3 w-24">{t('editProgram.tableWeightKg')}</th>
+                                                                        <th className="px-1.5 py-3 min-w-[130px]">{t('editProgram.tableMeta')}</th>
+                                                                        <th className="px-1.5 py-3 w-28 text-right">{t('editProgram.tableActions')}</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody className="divide-y divide-gray-100 bg-white">
+                                                                    {workoutRows.length === 0 && (
+                                                                        <tr>
+                                                                            <td
+                                                                                colSpan={9}
+                                                                                className="px-1.5 py-6 text-center text-sm text-gray-500"
+                                                                            >
+                                                                                {t('editProgram.tableNoWorkoutExercises')}
+                                                                            </td>
+                                                                        </tr>
+                                                                    )}
+
+                                                                    {workoutRows.map((row) => {
+                                                                        const selectedExercise = row.exerciseId
+                                                                            ? exerciseLookupById.get(row.exerciseId)
+                                                                            : undefined
+
+                                                                        const variantOptions = selectedExercise?.notes || []
+                                                                        const isCustomVariantInput =
+                                                                            customVariantInputByRowId[row.id] ??
+                                                                            Boolean(
+                                                                                row.variant.trim() !== '' &&
+                                                                                !variantOptions.includes(row.variant)
+                                                                            )
+                                                                        const variantFieldClassName =
+                                                                            'h-9 w-full rounded-lg border border-gray-300 px-1.5 text-sm leading-5 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-400'
+                                                                        const rowBusy =
+                                                                            savingRowId === row.id ||
+                                                                            deletingRowId === row.id ||
+                                                                            savingWorkoutId === workout.id
+
+                                                                        return (
+                                                                            <tr key={row.id} className="align-top">
+                                                                                <td className="px-1.5 py-3 w-12 align-middle">
+                                                                                    <label className="flex h-full w-full items-center justify-center">
+                                                                                        <input
+                                                                                            type="checkbox"
+                                                                                            checked={row.isWarmup}
+                                                                                            onChange={(event) =>
+                                                                                                updateRowFields(row.id, {
+                                                                                                    isWarmup: event.target.checked,
+                                                                                                })
+                                                                                            }
+                                                                                            disabled={rowBusy || readOnly}
+                                                                                            className="h-4 w-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+                                                                                        />
+                                                                                    </label>
+                                                                                </td>
+
+                                                                                <td className="px-1.5 py-3">
+                                                                                    <select
+                                                                                        value={row.exerciseId}
+                                                                                        onChange={(event) => {
+                                                                                            updateRowFields(row.id, {
+                                                                                                exerciseId: event.target.value,
+                                                                                                variant: '',
+                                                                                            })
+
+                                                                                            setCustomVariantInputByRowId(
+                                                                                                (currentModes) => ({
+                                                                                                    ...currentModes,
+                                                                                                    [row.id]: false,
+                                                                                                })
+                                                                                            )
+                                                                                        }
+                                                                                        }
+                                                                                        disabled={rowBusy || readOnly}
+                                                                                        className="w-full rounded-lg border border-gray-300 px-1.5 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                                                                                    >
+                                                                                        <option value="">{t('editProgram.selectExercise')}</option>
+                                                                                        {Array.from(exerciseLookupById.values()).map((exercise) => (
+                                                                                            <option key={exercise.id} value={exercise.id}>
+                                                                                                {exercise.name}
+                                                                                            </option>
+                                                                                        ))}
+                                                                                    </select>
+                                                                                </td>
+
+                                                                                <td className="px-1.5 py-3">
+                                                                                    <div className="flex items-center gap-1">
+                                                                                        <div className="min-w-0 flex-1">
+                                                                                            {isCustomVariantInput ? (
+                                                                                                <input
+                                                                                                    type="text"
+                                                                                                    value={row.variant}
+                                                                                                    onChange={(event) =>
+                                                                                                        updateRowFields(row.id, {
+                                                                                                            variant: event.target.value,
+                                                                                                        })
+                                                                                                    }
+                                                                                                    disabled={
+                                                                                                        rowBusy ||
+                                                                                                        readOnly ||
+                                                                                                        !selectedExercise
+                                                                                                    }
+                                                                                                    className={variantFieldClassName}
+                                                                                                    placeholder={t('editProgram.variantPlaceholder')}
+                                                                                                />
+                                                                                            ) : (
+                                                                                                <select
+                                                                                                    value={row.variant}
+                                                                                                    onChange={(event) =>
+                                                                                                        updateRowFields(row.id, {
+                                                                                                            variant: event.target.value,
+                                                                                                        })
+                                                                                                    }
+                                                                                                    disabled={
+                                                                                                        rowBusy ||
+                                                                                                        readOnly ||
+                                                                                                        !selectedExercise
+                                                                                                    }
+                                                                                                    className={variantFieldClassName}
+                                                                                                >
+                                                                                                    <option value="">{t('editProgram.noVariantOption')}</option>
+                                                                                                    {variantOptions.map((variantOption) => (
+                                                                                                        <option
+                                                                                                            key={variantOption}
+                                                                                                            value={variantOption}
+                                                                                                        >
+                                                                                                            {variantOption}
+                                                                                                        </option>
+                                                                                                    ))}
+                                                                                                </select>
+                                                                                            )}
+                                                                                        </div>
+
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={() =>
+                                                                                                toggleCustomVariantInput({
+                                                                                                    rowId: row.id,
+                                                                                                    currentVariant: row.variant,
+                                                                                                    variantOptions,
+                                                                                                    selectedExercise,
+                                                                                                })
+                                                                                            }
+                                                                                            disabled={
+                                                                                                rowBusy || readOnly || !selectedExercise
+                                                                                            }
+                                                                                            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                                                                            title={
+                                                                                                isCustomVariantInput
+                                                                                                    ? t('editProgram.lockVariantInputTitle')
+                                                                                                    : t('editProgram.unlockVariantInputTitle')
+                                                                                            }
+                                                                                            aria-label={
+                                                                                                isCustomVariantInput
+                                                                                                    ? t('editProgram.lockVariantInputTitle')
+                                                                                                    : t('editProgram.unlockVariantInputTitle')
+                                                                                            }
+                                                                                        >
+                                                                                            {isCustomVariantInput ? (
+                                                                                                <LockOpen className="h-4 w-4" />
+                                                                                            ) : (
+                                                                                                <Lock className="h-4 w-4" />
+                                                                                            )}
+                                                                                        </button>
+                                                                                    </div>
+
+                                                                                    {selectedExercise && variantOptions.length === 0 && (
+                                                                                        <p className="mt-1 text-[11px] text-gray-400">
+                                                                                            {t('editProgram.noVariantAvailable')}
+                                                                                        </p>
+                                                                                    )}
+                                                                                </td>
+
+                                                                                <td className="px-1.5 py-3 w-16">
+                                                                                    <input
+                                                                                        type="number"
+                                                                                        min="1"
+                                                                                        max="20"
+                                                                                        step="1"
+                                                                                        value={row.sets}
+                                                                                        onChange={(event) =>
+                                                                                            updateRowFields(row.id, {
+                                                                                                sets: event.target.value,
+                                                                                            })
+                                                                                        }
+                                                                                        disabled={rowBusy || readOnly}
+                                                                                        className="mx-auto w-14 rounded-lg border border-gray-300 px-1.5 py-2 text-center text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                                                                                    />
+                                                                                </td>
+
+                                                                                <td className="px-1.5 py-3 w-20">
+                                                                                    <input
+                                                                                        type="text"
+                                                                                        value={row.reps}
+                                                                                        onChange={(event) =>
+                                                                                            updateRowFields(row.id, {
+                                                                                                reps: event.target.value,
+                                                                                            })
+                                                                                        }
+                                                                                        disabled={rowBusy || readOnly}
+                                                                                        placeholder={t('editProgram.repsPlaceholder')}
+                                                                                        className="w-full rounded-lg border border-gray-300 px-1.5 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                                                                                    />
+                                                                                </td>
+
+                                                                                <td className="px-1.5 py-3 w-16">
+                                                                                    <select
+                                                                                        value={row.targetRpe}
+                                                                                        onChange={(event) =>
+                                                                                            updateRowFields(row.id, {
+                                                                                                targetRpe: event.target.value,
+                                                                                            })
+                                                                                        }
+                                                                                        disabled={rowBusy || readOnly}
+                                                                                        className="w-full rounded-lg border border-gray-300 px-1.5 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                                                                                    >
+                                                                                        <option value="">-</option>
+                                                                                        {RPE_OPTIONS.map((rpeValue) => (
+                                                                                            <option key={rpeValue} value={String(rpeValue)}>
+                                                                                                {rpeValue}
+                                                                                            </option>
+                                                                                        ))}
+                                                                                    </select>
+                                                                                </td>
+
+                                                                                <td className="px-1.5 py-3">
+                                                                                    <input
+                                                                                        type="number"
+                                                                                        min="0"
+                                                                                        step="0.5"
+                                                                                        value={row.weight}
+                                                                                        onChange={(event) =>
+                                                                                            updateRowFields(row.id, {
+                                                                                                weight: event.target.value,
+                                                                                            })
+                                                                                        }
+                                                                                        disabled={rowBusy || readOnly}
+                                                                                        placeholder={t('editProgram.weightPlaceholder')}
+                                                                                        className="w-full rounded-lg border border-gray-300 px-1.5 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                                                                                    />
+                                                                                </td>
+
+                                                                                <td className="px-1.5 py-3">
+                                                                                    {selectedExercise ? (
+                                                                                        <div className="flex items-center gap-1.5">
+                                                                                            <span
+                                                                                                className={`inline-flex w-fit rounded-full px-2 py-0.5 text-[10px] font-semibold ${selectedExercise.type ===
+                                                                                                    'fundamental'
+                                                                                                    ? 'bg-red-100 text-red-700'
+                                                                                                    : 'bg-blue-100 text-blue-700'
+                                                                                                    }`}
+                                                                                            >
+                                                                                                {selectedExercise.type === 'fundamental'
+                                                                                                    ? 'F'
+                                                                                                    : 'A'}
+                                                                                            </span>
+                                                                                            {selectedExercise.movementPattern && (
+                                                                                                <MovementPatternTag
+                                                                                                    name={selectedExercise.movementPattern.name}
+                                                                                                    color={selectedExercise.movementPattern.color}
+                                                                                                    className="w-fit"
+                                                                                                />
+                                                                                            )}
+                                                                                        </div>
+                                                                                    ) : (
+                                                                                        <span className="text-xs text-gray-400">
+                                                                                            -
+                                                                                        </span>
+                                                                                    )}
+                                                                                </td>
+
+                                                                                <td className="px-1.5 py-3">
+                                                                                    {!readOnly && (
+                                                                                        <div className="flex items-center justify-end gap-1">
+                                                                                            <button
+                                                                                                type="button"
+                                                                                                onClick={() =>
+                                                                                                    setConfirmDeleteRow({
+                                                                                                        rowId: row.id,
+                                                                                                        workoutId: workout.id,
+                                                                                                        isDraft: row.isDraft,
+                                                                                                    })
+                                                                                                }
+                                                                                                disabled={rowBusy}
+                                                                                                className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                                                                                title={t('editProgram.deleteRowTitle')}
+                                                                                            >
+                                                                                                {deletingRowId === row.id ? (
+                                                                                                    <LoadingSpinner
+                                                                                                        size="sm"
+                                                                                                        color="primary"
+                                                                                                    />
+                                                                                                ) : (
+                                                                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                                                                )}
+                                                                                            </button>
+                                                                                        </div>
+                                                                                    )}
+                                                                                </td>
+                                                                            </tr>
+                                                                        )
+                                                                    })}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                )}
+                            </section>
+                        )
+                    })}
+                </div>
+
                 {!readOnly && (
                     <div className="flex space-x-4 mt-8">
                         <Link
@@ -896,9 +1933,9 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                 ? 'bg-brand-primary hover:bg-brand-primary/90 text-white'
                                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                 }`}
-                            onClick={(e) => {
+                            onClick={(event) => {
                                 if (completedWorkouts < totalWorkouts) {
-                                    e.preventDefault()
+                                    event.preventDefault()
                                     showToast(t('editProgram.configureAllFirst'), 'warning')
                                 }
                             }}
@@ -915,21 +1952,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 )}
 
                 <ConfirmationModal
-                    isOpen={confirmCopyOpen}
-                    onClose={() => {
-                        if (!copyingFirstWeek) {
-                            setConfirmCopyOpen(false)
-                        }
-                    }}
-                    onConfirm={handleCopyFirstWeekWorkouts}
-                    title={t('editProgram.copyFirstWeekTitle')}
-                    message={t('editProgram.copyFirstWeekMessage')}
-                    confirmText={t('editProgram.copyFirstWeekConfirm')}
-                    variant="warning"
-                    isLoading={copyingFirstWeek}
-                />
-
-                <ConfirmationModal
                     isOpen={confirmCopyNextWeek !== null}
                     onClose={() => {
                         if (!copyingWeekId) {
@@ -939,15 +1961,36 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     onConfirm={handleCopyWeekToNext}
                     title={t('editProgram.copyWeekTitle', {
                         sourceWeek: confirmCopyNextWeek?.weekNumber,
-                        targetWeek: confirmCopyNextWeek ? confirmCopyNextWeek.weekNumber + 1 : undefined,
+                        targetWeek: confirmCopyNextWeek
+                            ? confirmCopyNextWeek.weekNumber + 1
+                            : undefined,
                     })}
                     message={t('editProgram.copyWeekMessage', {
                         sourceWeek: confirmCopyNextWeek?.weekNumber,
-                        targetWeek: confirmCopyNextWeek ? confirmCopyNextWeek.weekNumber + 1 : undefined,
+                        targetWeek: confirmCopyNextWeek
+                            ? confirmCopyNextWeek.weekNumber + 1
+                            : undefined,
                     })}
                     confirmText={t('editProgram.copyWeekConfirm')}
                     variant="warning"
                     isLoading={copyingWeekId !== null}
+                />
+
+                <ConfirmationModal
+                    isOpen={confirmDeleteRow !== null}
+                    onClose={() => {
+                        if (!deletingRowId) {
+                            setConfirmDeleteRow(null)
+                        }
+                    }}
+                    onConfirm={() => {
+                        void deleteRow()
+                    }}
+                    title={t('editProgram.confirmDeleteRowTitle')}
+                    message={t('editProgram.confirmDeleteRowMessage')}
+                    confirmText={t('editProgram.confirmDeleteRowConfirm')}
+                    variant="danger"
+                    isLoading={deletingRowId !== null}
                 />
             </div>
         </div>

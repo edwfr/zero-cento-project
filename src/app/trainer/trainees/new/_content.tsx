@@ -79,10 +79,10 @@ export default function NewTraineePageContent() {
                             📧 Email di invito inviata
                         </p>
                         <p className="text-sm text-blue-700 mb-2">
-                            Un'email è stata inviata a <strong>{email}</strong> con le istruzioni per completare la registrazione.
+                            Un&apos;email è stata inviata a <strong>{email}</strong> con le istruzioni per completare la registrazione.
                         </p>
                         <p className="text-xs text-blue-600">
-                            L'atleta riceverà un link per impostare la propria password e accedere alla piattaforma.
+                            L&apos;atleta riceverà un link per impostare la propria password e accedere alla piattaforma.
                         </p>
                     </div>
 
@@ -182,7 +182,7 @@ export default function NewTraineePageContent() {
                             required
                         />
                         <p className="text-sm text-gray-500 mt-2">
-                            L'atleta riceverà un'email con le istruzioni per impostare la propria password.
+                            L&apos;atleta riceverà un&apos;email con le istruzioni per impostare la propria password.
                         </p>
                     </div>
 

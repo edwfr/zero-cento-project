@@ -367,7 +367,7 @@ function ComponentShowcase() {
                 <section className="rounded-lg bg-white p-6 shadow">
                     <h2 className="mb-4 text-2xl font-bold text-gray-900">Error Boundary</h2>
                     <p className="text-sm text-gray-600 mb-4">
-                        L'ErrorBoundary cattura errori JavaScript nei componenti figli. Demo:
+                        L&apos;ErrorBoundary cattura errori JavaScript nei componenti figli. Demo:
                     </p>
                     <ErrorBoundary>
                         <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -383,7 +383,7 @@ function ComponentShowcase() {
                 <section className="rounded-lg bg-white p-6 shadow">
                     <h2 className="mb-4 text-2xl font-bold text-gray-900">Navigation Cards</h2>
                     <p className="text-sm text-gray-600 mb-6">
-                        Card di navigazione utilizzate nelle dashboard per indirizzare l'utente alle sezioni principali.
+                        Card di navigazione utilizzate nelle dashboard per indirizzare l&apos;utente alle sezioni principali.
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <NavigationCard

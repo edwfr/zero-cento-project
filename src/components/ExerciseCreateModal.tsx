@@ -341,13 +341,13 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
 
                             {selectedMuscleGroups.length === 0 && (
                                 <p className="text-sm text-gray-500 italic">
-                                    Nessun gruppo muscolare selezionato. Clicca "+ Aggiungi" per iniziare.
+                                    Nessun gruppo muscolare selezionato. Clicca &quot;+ Aggiungi&quot; per iniziare.
                                 </p>
                             )}
                         </div>
 
                         <p className="text-xs text-gray-500 mt-2">
-                            Il coefficiente indica l'intensità di coinvolgimento (0.0 = minimo, 1.0 = massimo)
+                            Il coefficiente indica l&apos;intensità di coinvolgimento (0.0 = minimo, 1.0 = massimo)
                         </p>
                     </div>
 

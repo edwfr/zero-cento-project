@@ -406,10 +406,10 @@ export default function ProgramMuscleGroupCharts({ weeks }: ProgramMuscleGroupCh
                                             <XAxis dataKey="weekLabel" />
                                             <YAxis />
                                             <Tooltip
-                                                formatter={(value: number, name: string) => [
-                                                    `${formatTrainingSetsValue(Number(value))} ${t('editProgram.trainingSetsUnit')}`,
-                                                    muscleGroupSeries.find((muscleGroup) => muscleGroup.id === name)
-                                                        ?.name || name,
+                                                formatter={(value, name) => [
+                                                    `${formatTrainingSetsValue(Number(value ?? 0))} ${t('editProgram.trainingSetsUnit')}`,
+                                                    muscleGroupSeries.find((muscleGroup) => muscleGroup.id === String(name))
+                                                        ?.name || String(name),
                                                 ]}
                                             />
                                             <Legend

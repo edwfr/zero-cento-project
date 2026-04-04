@@ -39,17 +39,12 @@ export default function YoutubeEmbed({
     }
 
     const videoId = getYouTubeVideoId(videoUrl)
-
-    if (!videoId) {
-        return (
-            <div className="flex items-center justify-center rounded-lg bg-gray-100 p-6 text-gray-500">
-                URL video non valido
-            </div>
-        )
-    }
-
     const shouldAutoplay = autoplay || isLoaded
     const embedUrl = useMemo(() => {
+        if (!videoId) {
+            return ''
+        }
+
         const params = new URLSearchParams({
             rel: '0',
             playsinline: '1',
@@ -65,7 +60,15 @@ export default function YoutubeEmbed({
 
         return `https://www.youtube.com/embed/${videoId}?${params.toString()}`
     }, [shouldAutoplay, videoId])
-    const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+    const thumbnailUrl = videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : ''
+
+    if (!videoId) {
+        return (
+            <div className="flex items-center justify-center rounded-lg bg-gray-100 p-6 text-gray-500">
+                URL video non valido
+            </div>
+        )
+    }
 
     return (
         <div
