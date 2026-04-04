@@ -52,10 +52,14 @@ interface PlannedTrainingSetsReportData {
 
 interface TraineePlannedMuscleGroupReportProps {
     traineeId: string
+    hideHeader?: boolean
+    embedded?: boolean
 }
 
 export default function TraineePlannedMuscleGroupReport({
     traineeId,
+    hideHeader = false,
+    embedded = false,
 }: TraineePlannedMuscleGroupReportProps) {
     const { t } = useTranslation('trainer')
     const [loading, setLoading] = useState(true)
@@ -160,13 +164,21 @@ export default function TraineePlannedMuscleGroupReport({
     }
 
     if (loading) {
+        const loadingContent = (
+            <div className="animate-pulse space-y-4">
+                {!hideHeader && !embedded && <div className="h-7 w-64 rounded bg-gray-200" />}
+                <div className="h-4 w-full rounded bg-gray-100" />
+                <div className="h-96 rounded bg-gray-100" />
+            </div>
+        )
+
+        if (embedded) {
+            return loadingContent
+        }
+
         return (
             <div className="bg-white rounded-lg shadow-md p-6">
-                <div className="animate-pulse space-y-4">
-                    <div className="h-7 w-64 rounded bg-gray-200" />
-                    <div className="h-4 w-full rounded bg-gray-100" />
-                    <div className="h-96 rounded bg-gray-100" />
-                </div>
+                {loadingContent}
             </div>
         )
     }
@@ -180,21 +192,37 @@ export default function TraineePlannedMuscleGroupReport({
     }
 
     if (!report || report.points.length === 0 || report.muscleGroups.length === 0) {
-        return (
-            <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-bold text-gray-900">
-                    {t('athletes.reportingSectionTitle')}
-                </h2>
-                <p className="mt-3 text-sm text-gray-600">
+        const emptyContent = (
+            <>
+                {!hideHeader && (
+                    <h2 className="text-xl font-bold text-gray-900">
+                        {t('athletes.reportingSectionTitle')}
+                    </h2>
+                )}
+                <p className={`${hideHeader ? '' : 'mt-3 '}text-sm text-gray-600`}>
                     {t('athletes.reportingSectionEmpty')}
                 </p>
+            </>
+        )
+
+        if (embedded) {
+            return (
+                <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-8">
+                    {emptyContent}
+                </div>
+            )
+        }
+
+        return (
+            <div className="bg-white rounded-lg shadow-md p-6">
+                {emptyContent}
             </div>
         )
     }
 
-    return (
-        <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex flex-col gap-6">
+    const content = (
+        <div className="flex flex-col gap-6">
+            {!hideHeader && (
                 <div>
                     <h2 className="text-xl font-bold text-gray-900">
                         {t('athletes.reportingSectionTitle')}
@@ -203,107 +231,117 @@ export default function TraineePlannedMuscleGroupReport({
                         {t('athletes.reportingSectionDescription')}
                     </p>
                 </div>
+            )}
 
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div>
-                        <div className="flex items-center justify-between gap-3 flex-wrap">
-                            <p className="text-sm font-medium text-gray-700">
-                                {t('athletes.reportingMuscleGroupsFilterLabel')}
-                            </p>
-                            <button
-                                type="button"
-                                onClick={showAllMuscleGroups}
-                                className="text-sm font-semibold text-[#0F766E] hover:text-[#115E59]"
-                            >
-                                {t('athletes.reportingResetFilters')}
-                            </button>
-                        </div>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                            {muscleGroupSeries.map((muscleGroup) => {
-                                const isActive = visibleMuscleGroupIds.includes(muscleGroup.id)
-
-                                return (
-                                    <button
-                                        key={muscleGroup.id}
-                                        type="button"
-                                        onClick={() => toggleMuscleGroupVisibility(muscleGroup.id)}
-                                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors ${isActive
-                                            ? 'border-slate-300 bg-slate-100 text-slate-900 hover:bg-slate-200'
-                                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900'
-                                            }`}
-                                    >
-                                        <span
-                                            className="h-2.5 w-2.5 rounded-full"
-                                            style={{ backgroundColor: muscleGroup.color }}
-                                        />
-                                        {muscleGroup.name}
-                                    </button>
-                                )
-                            })}
-                        </div>
-                    </div>
-
-                    <div className="w-full lg:max-w-xs">
-                        <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="time-window">
-                            {t('athletes.reportingTimeWindowLabel')}
-                        </label>
-                        <select
-                            id="time-window"
-                            value={timeWindow}
-                            onChange={(event) => setTimeWindow(event.target.value as TimeWindow)}
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#FFA700] focus:outline-none focus:ring-2 focus:ring-[#FFA700]/20"
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                        <p className="text-sm font-medium text-gray-700">
+                            {t('athletes.reportingMuscleGroupsFilterLabel')}
+                        </p>
+                        <button
+                            type="button"
+                            onClick={showAllMuscleGroups}
+                            className="text-sm font-semibold text-[#0F766E] hover:text-[#115E59]"
                         >
-                            <option value="4">{t('athletes.reportingWindow4Weeks')}</option>
-                            <option value="8">{t('athletes.reportingWindow8Weeks')}</option>
-                            <option value="12">{t('athletes.reportingWindow12Weeks')}</option>
-                            <option value="24">{t('athletes.reportingWindow24Weeks')}</option>
-                            <option value="all">{t('athletes.reportingWindowAll')}</option>
-                        </select>
+                            {t('athletes.reportingResetFilters')}
+                        </button>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                        {muscleGroupSeries.map((muscleGroup) => {
+                            const isActive = visibleMuscleGroupIds.includes(muscleGroup.id)
+
+                            return (
+                                <button
+                                    key={muscleGroup.id}
+                                    type="button"
+                                    onClick={() => toggleMuscleGroupVisibility(muscleGroup.id)}
+                                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors ${isActive
+                                        ? 'border-slate-300 bg-slate-100 text-slate-900 hover:bg-slate-200'
+                                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900'
+                                        }`}
+                                >
+                                    <span
+                                        className="h-2.5 w-2.5 rounded-full"
+                                        style={{ backgroundColor: muscleGroup.color }}
+                                    />
+                                    {muscleGroup.name}
+                                </button>
+                            )
+                        })}
                     </div>
                 </div>
 
-                {hasData ? (
-                    <div className="h-[28rem]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={chartData} margin={{ top: 12, right: 12, left: 12, bottom: 12 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="dateLabel" />
-                                <YAxis />
-                                <Tooltip
-                                    formatter={(value, name) => [
-                                        `${Number.isInteger(Number(value ?? 0)) ? Number(value ?? 0) : Number(value ?? 0).toFixed(1)} ${t('athletes.reportingSetsUnit')}`,
-                                        visibleMuscleGroups.find((muscleGroup) => muscleGroup.id === String(name))?.name || String(name),
-                                    ]}
-                                    labelFormatter={(_, payload) => {
-                                        const point = payload?.[0]?.payload as { date?: string } | undefined
-                                        return point?.date ? formatDate(point.date, 'medium') : ''
-                                    }}
-                                />
-                                <Legend
-                                    formatter={(value) =>
-                                        visibleMuscleGroups.find((muscleGroup) => muscleGroup.id === value)?.name || value
-                                    }
-                                />
-                                {visibleMuscleGroups.map((muscleGroup) => (
-                                    <Line
-                                        key={muscleGroup.id}
-                                        type="monotone"
-                                        dataKey={muscleGroup.id}
-                                        stroke={muscleGroup.color}
-                                        strokeWidth={2.5}
-                                        dot={{ r: 3 }}
-                                        activeDot={{ r: 5 }}
-                                    />
-                                ))}
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </div>
-                ) : (
-                    <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-10 text-center text-sm text-gray-600">
-                        {t('athletes.reportingNoVisibleData')}
-                    </div>
-                )}
+                <div className="w-full lg:max-w-xs">
+                    <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="time-window">
+                        {t('athletes.reportingTimeWindowLabel')}
+                    </label>
+                    <select
+                        id="time-window"
+                        value={timeWindow}
+                        onChange={(event) => setTimeWindow(event.target.value as TimeWindow)}
+                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#FFA700] focus:outline-none focus:ring-2 focus:ring-[#FFA700]/20"
+                    >
+                        <option value="4">{t('athletes.reportingWindow4Weeks')}</option>
+                        <option value="8">{t('athletes.reportingWindow8Weeks')}</option>
+                        <option value="12">{t('athletes.reportingWindow12Weeks')}</option>
+                        <option value="24">{t('athletes.reportingWindow24Weeks')}</option>
+                        <option value="all">{t('athletes.reportingWindowAll')}</option>
+                    </select>
+                </div>
             </div>
+
+            {hasData ? (
+                <div className="h-[28rem]">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={chartData} margin={{ top: 12, right: 12, left: 12, bottom: 12 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <XAxis dataKey="dateLabel" />
+                            <YAxis />
+                            <Tooltip
+                                formatter={(value, name) => [
+                                    `${Number.isInteger(Number(value ?? 0)) ? Number(value ?? 0) : Number(value ?? 0).toFixed(1)} ${t('athletes.reportingSetsUnit')}`,
+                                    visibleMuscleGroups.find((muscleGroup) => muscleGroup.id === String(name))?.name || String(name),
+                                ]}
+                                labelFormatter={(_, payload) => {
+                                    const point = payload?.[0]?.payload as { date?: string } | undefined
+                                    return point?.date ? formatDate(point.date, 'medium') : ''
+                                }}
+                            />
+                            <Legend
+                                formatter={(value) =>
+                                    visibleMuscleGroups.find((muscleGroup) => muscleGroup.id === value)?.name || value
+                                }
+                            />
+                            {visibleMuscleGroups.map((muscleGroup) => (
+                                <Line
+                                    key={muscleGroup.id}
+                                    type="monotone"
+                                    dataKey={muscleGroup.id}
+                                    stroke={muscleGroup.color}
+                                    strokeWidth={2.5}
+                                    dot={{ r: 3 }}
+                                    activeDot={{ r: 5 }}
+                                />
+                            ))}
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+            ) : (
+                <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-10 text-center text-sm text-gray-600">
+                    {t('athletes.reportingNoVisibleData')}
+                </div>
+            )}
+        </div>
+    )
+
+    if (embedded) {
+        return content
+    }
+
+    return (
+        <div className="bg-white rounded-lg shadow-md p-6">
+            {content}
         </div>
     )
 }
