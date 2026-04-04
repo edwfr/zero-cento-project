@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { formatDate } from '@/lib/date-format'
@@ -181,14 +180,7 @@ export default function AdminProgramsPageContent() {
                                             {formatDate(program.endDate)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                            <div className="flex space-x-3">
-                                                <Link
-                                                    href={`/trainer/programs/${program.id}/reports`}
-                                                    className="text-brand-primary hover:text-brand-primary/80 font-semibold"
-                                                >
-                                                    {t('programsPage.actionReport')}
-                                                </Link>
-                                            </div>
+                                            <span className="text-gray-400">—</span>
                                         </td>
                                     </tr>
                                 ))
