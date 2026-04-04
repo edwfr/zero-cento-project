@@ -326,7 +326,7 @@ export default async function TrainerDashboard() {
                                 KPI Settimane Test Correnti
                             </h2>
                             <p className="mt-1 text-sm text-gray-600">
-                                Elenco degli atleti in settimana test, con scheda associata e link alla progressione.
+                                Elenco degli atleti in settimana test, con scheda associata e accesso diretto al programma.
                             </p>
                         </div>
                         <div className="rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-800">
@@ -377,10 +377,10 @@ export default async function TrainerDashboard() {
                                                     : 'Date non disponibili'}
                                             </div>
                                             <Link
-                                                href={`/trainer/programs/${testWeek.program.id}/progress`}
+                                                href={`/trainer/programs/${testWeek.program.id}`}
                                                 className="inline-flex items-center justify-center rounded-lg bg-white px-3 py-2 font-semibold text-brand-primary shadow-sm ring-1 ring-inset ring-brand-primary/20 transition-colors hover:bg-brand-primary/5"
                                             >
-                                                Vai al progresso scheda
+                                                Vai alla scheda
                                             </Link>
                                         </div>
                                     </div>

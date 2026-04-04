@@ -215,7 +215,20 @@
         "createError": "Error creating program",
         "delete": "Delete",
         "confirm": "Confirm",
-        "viewProgram": "View"
+        "viewProgram": "View",
+        "editProgramAction": "Edit",
+        "viewTests": "View tests",
+        "testWeeksColumn": "Test weeks",
+        "testStatusColumn": "Test status",
+        "plannedCompletionDateColumn": "Expected completion date",
+        "actualCompletionDateColumn": "Actual completion date",
+        "lastModifiedColumn": "Last modified",
+        "actionsColumn": "Actions",
+        "testWeekNumber": "Wk {{week}}",
+        "noTestWeeks": "No test weeks",
+        "testsCompleted": "Completed",
+        "testsPending": "Pending",
+        "testsButtonDisabledTooltip": "This button is enabled only when all scheduled tests are completed"
     },
     "weekTypes": {
         "standard": "Standard Week",

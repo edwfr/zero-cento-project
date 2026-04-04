@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { useParams } from 'next/navigation'
@@ -70,11 +70,7 @@ export default function ProgramReportsContent() {
     const [report, setReport] = useState<ReportData | null>(null)
     const [error, setError] = useState<string | null>(null)
 
-    useEffect(() => {
-        fetchReport()
-    }, [programId])
-
-    const fetchReport = async () => {
+    const fetchReport = useCallback(async () => {
         try {
             setLoading(true)
             const res = await fetch(`/api/programs/${programId}/reports`)
@@ -90,7 +86,11 @@ export default function ProgramReportsContent() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [programId, t])
+
+    useEffect(() => {
+        void fetchReport()
+    }, [fetchReport])
 
     if (loading) {
         return (
@@ -124,10 +124,10 @@ export default function ProgramReportsContent() {
                 <div className="mb-8">
                     <div className="mb-4 flex items-center">
                         <Link
-                            href={`/trainer/programs/${programId}/progress`}
+                            href={`/trainer/programs/${programId}`}
                             className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold"
                         >
-                            {t('reports.backToProgress')}
+                            {t('reports.backToProgram')}
                         </Link>
                     </div>
                     <h1 className="text-3xl font-bold text-gray-900">{t('reports.sbdReport')}</h1>

@@ -324,18 +324,6 @@ export default function ProgramsTable({
                                                         <>
                                                             <span className="text-gray-300">|</span>
                                                             <Link
-                                                                href={`${basePath}/${program.id}/progress`}
-                                                                className="text-purple-600 hover:text-purple-800 text-sm font-semibold"
-                                                            >
-                                                                Progress
-                                                            </Link>
-                                                        </>
-                                                    )}
-                                                {(program.status === 'active' ||
-                                                    program.status === 'completed') && (
-                                                        <>
-                                                            <span className="text-gray-300">|</span>
-                                                            <Link
                                                                 href={`${basePath}/${program.id}/reports`}
                                                                 className="text-orange-600 hover:text-orange-800 text-sm font-semibold"
                                                             >

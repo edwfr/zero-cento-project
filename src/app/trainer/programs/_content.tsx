@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { SkeletonTable } from '@/components'
 import { useToast } from '@/components/ToastNotification'
@@ -9,7 +8,7 @@ import ConfirmationModal from '@/components/ConfirmationModal'
 import { formatDate } from '@/lib/date-format'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { Plus, FileEdit, CheckCircle2, Trash2, FlagTriangleRight, ArrowLeft, Eye } from 'lucide-react'
+import { Plus, FileEdit, CheckCircle2, Trash2, FlagTriangleRight, ArrowLeft, Eye, FlaskConical } from 'lucide-react'
 
 interface Program {
     id: string
@@ -18,16 +17,25 @@ interface Program {
     durationWeeks: number
     workoutsPerWeek: number
     startDate: string | null
+    completedAt?: string | null
+    lastWorkoutCompletedAt?: string | null
     trainee: {
         firstName: string
         lastName: string
     }
-    weeks: Array<{ id: string }>
+    weeks: Array<{
+        id: string
+        weekNumber: number
+        weekType: 'normal' | 'test' | 'deload'
+    }>
+    testWeeks?: number[]
+    hasTestWeeks?: boolean
+    testsCompleted?: boolean
+    updatedAt?: string | null
     createdAt: string
 }
 
 export default function TrainerProgramsContent() {
-    const router = useRouter()
     const { t } = useTranslation('trainer')
     const { t: tNav } = useTranslation('navigation')
     const { showToast } = useToast()
@@ -44,11 +52,7 @@ export default function TrainerProgramsContent() {
         variant?: 'danger' | 'warning' | 'info' | 'success'
     } | null>(null)
 
-    useEffect(() => {
-        fetchPrograms()
-    }, [])
-
-    const fetchPrograms = async () => {
+    const fetchPrograms = useCallback(async () => {
         try {
             setLoading(true)
             const res = await fetch('/api/programs')
@@ -64,7 +68,11 @@ export default function TrainerProgramsContent() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [t])
+
+    useEffect(() => {
+        void fetchPrograms()
+    }, [fetchPrograms])
 
     const handleDelete = (id: string, title: string) => {
         setConfirmModal({
@@ -84,7 +92,7 @@ export default function TrainerProgramsContent() {
                         throw new Error(getApiErrorMessage(data, t('programs.deleteError'), t))
                     }
 
-                    fetchPrograms()
+                    void fetchPrograms()
                 } catch (err: unknown) {
                     showToast(err instanceof Error ? err.message : t('programs.deleteError'), 'error')
                 }
@@ -109,10 +117,59 @@ export default function TrainerProgramsContent() {
         completed: programs.filter((p) => p.status === 'completed').length,
     }
 
+    const getTestWeeks = (program: Program) => {
+        if (program.testWeeks && program.testWeeks.length > 0) {
+            return program.testWeeks
+        }
+
+        return program.weeks
+            .filter((week) => week.weekType === 'test')
+            .map((week) => week.weekNumber)
+    }
+
+    const getHasTestWeeks = (program: Program) => {
+        if (typeof program.hasTestWeeks === 'boolean') {
+            return program.hasTestWeeks
+        }
+
+        return getTestWeeks(program).length > 0
+    }
+
+    const getTestsCompleted = (program: Program) => {
+        return Boolean(program.testsCompleted)
+    }
+
+    const getPlannedCompletionDate = (program: Program) => {
+        if (!program.startDate) {
+            return null
+        }
+
+        const plannedEndDate = new Date(program.startDate)
+        plannedEndDate.setDate(plannedEndDate.getDate() + program.durationWeeks * 7 - 1)
+        return plannedEndDate
+    }
+
+    const getEffectiveCompletionDate = (program: Program) => {
+        return program.lastWorkoutCompletedAt || program.completedAt || null
+    }
+
+    const getLastModifiedDate = (program: Program) => {
+        return program.updatedAt ?? null
+    }
+
+    const showStartDateColumn = activeTab !== 'draft'
+    const showCompletionDateColumn = activeTab === 'active' || activeTab === 'completed'
+    const showTestStatusColumn = activeTab !== 'draft'
+    const showLastModifiedColumn = activeTab === 'draft'
+    const completionDateColumnLabel =
+        activeTab === 'active'
+            ? t('programs.plannedCompletionDateColumn')
+            : t('programs.actualCompletionDateColumn')
+
     if (loading) {
         return (
             <div className="px-4 sm:px-6 lg:px-8 py-8">
-                <SkeletonTable rows={6} columns={5} />
+                <SkeletonTable rows={6} columns={7} />
             </div>
         )
     }
@@ -214,7 +271,7 @@ export default function TrainerProgramsContent() {
                     </div>
                 </div>
 
-                {/* Programs List */}
+                {/* Programs Table */}
                 {filteredPrograms.length === 0 ? (
                     <div className="bg-white rounded-lg shadow-md p-12 text-center">
                         <p className="text-gray-500 text-lg">
@@ -224,102 +281,178 @@ export default function TrainerProgramsContent() {
                         </p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {filteredPrograms.map((program) => (
-                            <div
-                                key={program.id}
-                                className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6"
-                            >
-                                {/* Header */}
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="flex-1">
-                                        <h3 className="text-xl font-bold text-gray-900 mb-1">
-                                            {program.title}
-                                        </h3>
-                                        <p className="text-gray-600">
-                                            {program.trainee.firstName} {program.trainee.lastName}
-                                        </p>
-                                    </div>
-                                    <span
-                                        className={`px-3 py-1 text-xs font-semibold rounded-full ${program.status === 'draft'
-                                            ? 'bg-yellow-100 text-yellow-800'
-                                            : program.status === 'active'
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-gray-100 text-gray-800'
-                                            }`}
-                                    >
-                                        {program.status === 'draft'
-                                            ? t('programs.draft')
-                                            : program.status === 'active'
-                                                ? t('programs.tabActive')
-                                                : t('programs.statusCompleted')}
-                                    </span>
-                                </div>
+                    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                            {t('programs.program')}
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                            {t('programs.athlete')}
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                            {t('programs.durationLabel')}
+                                        </th>
+                                        {showStartDateColumn && (
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                {t('programs.startDate')}
+                                            </th>
+                                        )}
+                                        {showCompletionDateColumn && (
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                {completionDateColumnLabel}
+                                            </th>
+                                        )}
+                                        {showTestStatusColumn && (
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                {t('programs.testStatusColumn')}
+                                            </th>
+                                        )}
+                                        {showLastModifiedColumn && (
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                {t('programs.lastModifiedColumn')}
+                                            </th>
+                                        )}
+                                        <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                            {t('programs.actionsColumn')}
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {filteredPrograms.map((program) => {
+                                        const hasTestWeeks = getHasTestWeeks(program)
+                                        const testsCompleted = getTestsCompleted(program)
 
-                                {/* Info */}
-                                <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-                                    <div>
-                                        <span className="text-gray-500">{t('programs.durationLabel')}:</span>
-                                        <span className="ml-2 font-semibold text-gray-900">
-                                            {t('programs.durationWeeks', { count: program.durationWeeks })}
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <span className="text-gray-500">{t('programs.workoutsPerWeek')}:</span>
-                                        <span className="ml-2 font-semibold text-gray-900">
-                                            {program.workoutsPerWeek}
-                                        </span>
-                                    </div>
-                                    {program.startDate && (
-                                        <div className="col-span-2">
-                                            <span className="text-gray-500">{t('programs.startDate')}:</span>
-                                            <span className="ml-2 font-semibold text-gray-900">
-                                                {formatDate(program.startDate)}
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Actions */}
-                                <div className="flex space-x-2 pt-4 border-t">
-                                    <Link
-                                        href={`/trainer/programs/${program.id}`}
-                                        className="flex-1 flex items-center justify-center bg-brand-primary hover:bg-brand-primary/90 text-white text-sm font-semibold py-2 px-4 rounded-lg text-center transition-colors"
-                                        title={t('programs.viewProgram')}
-                                    >
-                                        <Eye className="w-4 h-4" />
-                                    </Link>
-                                    {program.status === 'draft' && (
-                                        <>
-                                            <Link
-                                                href={`/trainer/programs/${program.id}/edit`}
-                                                className="flex-1 flex items-center justify-center bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2 px-4 rounded-lg text-center transition-colors"
-                                                title="Modifica"
-                                            >
-                                                <FileEdit className="w-4 h-4" />
-                                            </Link>
-                                            <button
-                                                onClick={() =>
-                                                    handleDelete(program.id, program.title)
-                                                }
-                                                className="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2 px-4 rounded-lg transition-colors"
-                                                title={t('programs.delete')}
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </>
-                                    )}
-                                    {(program.status === 'active' || program.status === 'completed') && (
-                                        <Link
-                                            href={`/trainer/programs/${program.id}/progress`}
-                                            className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold py-2 px-4 rounded-lg text-center transition-colors"
-                                        >
-                                            Progress
-                                        </Link>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
+                                        return (
+                                            <tr key={program.id} className="hover:bg-gray-50 transition-colors">
+                                                <td className="px-6 py-4 align-top">
+                                                    <div className="font-semibold text-gray-900 max-w-[260px] truncate">
+                                                        {program.title}
+                                                    </div>
+                                                    <div className="mt-1 text-xs text-gray-500">
+                                                        {program.status === 'draft'
+                                                            ? t('programs.draft')
+                                                            : program.status === 'active'
+                                                                ? t('programs.tabActive')
+                                                                : t('programs.statusCompleted')}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 align-top whitespace-nowrap text-sm text-gray-700">
+                                                    {program.trainee.firstName} {program.trainee.lastName}
+                                                </td>
+                                                <td className="px-6 py-4 align-top text-sm text-gray-700 whitespace-nowrap">
+                                                    <div>{t('programs.durationWeeks', { count: program.durationWeeks })}</div>
+                                                    <div className="text-xs text-gray-500 mt-1">
+                                                        {program.workoutsPerWeek} {t('programs.workoutsPerWeek')}
+                                                    </div>
+                                                </td>
+                                                {showStartDateColumn && (
+                                                    <td className="px-6 py-4 align-top text-sm text-gray-700 whitespace-nowrap">
+                                                        {program.startDate ? formatDate(program.startDate) : '—'}
+                                                    </td>
+                                                )}
+                                                {showCompletionDateColumn && (
+                                                    <td className="px-6 py-4 align-top text-sm text-gray-700 whitespace-nowrap">
+                                                        {activeTab === 'active'
+                                                            ? formatDate(getPlannedCompletionDate(program))
+                                                            : formatDate(getEffectiveCompletionDate(program))}
+                                                    </td>
+                                                )}
+                                                {showTestStatusColumn && (
+                                                    <td className="px-6 py-4 align-top">
+                                                        {!hasTestWeeks ? (
+                                                            <span className="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
+                                                                {t('programs.noTestWeeks')}
+                                                            </span>
+                                                        ) : testsCompleted ? (
+                                                            <span className="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
+                                                                {t('programs.testsCompleted')}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">
+                                                                {t('programs.testsPending')}
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                )}
+                                                {showLastModifiedColumn && (
+                                                    <td className="px-6 py-4 align-top text-sm text-gray-700 whitespace-nowrap">
+                                                        {formatDate(getLastModifiedDate(program))}
+                                                    </td>
+                                                )}
+                                                <td className="px-6 py-4 align-top">
+                                                    <div className="flex flex-wrap items-center justify-end gap-2">
+                                                        {program.status === 'draft' ? (
+                                                            <>
+                                                                <Link
+                                                                    href={`/trainer/programs/${program.id}/edit`}
+                                                                    title={t('programs.editProgramAction')}
+                                                                    aria-label={t('programs.editProgramAction')}
+                                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
+                                                                >
+                                                                    <FileEdit className="w-4 h-4" />
+                                                                </Link>
+                                                                <Link
+                                                                    href={`/trainer/programs/${program.id}`}
+                                                                    title={t('programs.viewProgram')}
+                                                                    aria-label={t('programs.viewProgram')}
+                                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-primary text-white hover:bg-brand-primary/90 transition-colors"
+                                                                >
+                                                                    <Eye className="w-4 h-4" />
+                                                                </Link>
+                                                                <button
+                                                                    onClick={() =>
+                                                                        handleDelete(program.id, program.title)
+                                                                    }
+                                                                    title={t('programs.delete')}
+                                                                    aria-label={t('programs.delete')}
+                                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Link
+                                                                    href={`/trainer/programs/${program.id}`}
+                                                                    title={t('programs.viewProgram')}
+                                                                    aria-label={t('programs.viewProgram')}
+                                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-primary text-white hover:bg-brand-primary/90 transition-colors"
+                                                                >
+                                                                    <Eye className="w-4 h-4" />
+                                                                </Link>
+                                                                {testsCompleted ? (
+                                                                    <Link
+                                                                        href={`/trainer/programs/${program.id}/reports`}
+                                                                        title={t('programs.viewTests')}
+                                                                        aria-label={t('programs.viewTests')}
+                                                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#FFA700] text-white hover:bg-[#FF9500] transition-colors"
+                                                                    >
+                                                                        <FlaskConical className="w-4 h-4" />
+                                                                    </Link>
+                                                                ) : (
+                                                                    <button
+                                                                        type="button"
+                                                                        disabled
+                                                                        title={t('programs.testsButtonDisabledTooltip')}
+                                                                        aria-label={t('programs.viewTests')}
+                                                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-gray-200 text-gray-500 cursor-not-allowed"
+                                                                    >
+                                                                        <FlaskConical className="w-4 h-4" />
+                                                                    </button>
+                                                                )}
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 )}
             </div>

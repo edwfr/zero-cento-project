@@ -215,7 +215,20 @@
         "createError": "Errore creazione programma",
         "delete": "Elimina",
         "confirm": "Conferma",
-        "viewProgram": "Visualizza"
+        "viewProgram": "Visualizza",
+        "editProgramAction": "Modifica",
+        "viewTests": "Visualizza test",
+        "testWeeksColumn": "Settimane test",
+        "testStatusColumn": "Stato test",
+        "plannedCompletionDateColumn": "Fine prev.",
+        "actualCompletionDateColumn": "Fine eff.",
+        "lastModifiedColumn": "Ultima modifica",
+        "actionsColumn": "Azioni",
+        "testWeekNumber": "Sett. {{week}}",
+        "noTestWeeks": "Non previsti",
+        "testsCompleted": "Completati",
+        "testsPending": "Da fare",
+        "testsButtonDisabledTooltip": "Il pulsante si abilita quando tutti i test previsti sono completati"
     },
     "weekTypes": {
         "standard": "Settimana Standard",

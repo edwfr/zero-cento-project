@@ -183,12 +183,6 @@ export default function AdminProgramsPageContent() {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                                             <div className="flex space-x-3">
                                                 <Link
-                                                    href={`/trainer/programs/${program.id}/progress`}
-                                                    className="text-[#FFA700] hover:text-[#FF9500] font-semibold"
-                                                >
-                                                    {t('programsPage.actionProgress')}
-                                                </Link>
-                                                <Link
                                                     href={`/trainer/programs/${program.id}/reports`}
                                                     className="text-brand-primary hover:text-brand-primary/80 font-semibold"
                                                 >

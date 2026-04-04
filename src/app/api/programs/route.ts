@@ -6,6 +6,20 @@ import { createProgramSchema } from '@/schemas/program'
 import { logger } from '@/lib/logger'
 import { getEffectiveProgramStatus, getProgramCompletionSnapshot } from '@/lib/program-status'
 
+interface ProgramTestsSummary {
+    testWeeks: number[]
+    testWeekSummaries: Array<{
+        weekNumber: number
+        plannedTestsCount: number
+        completedTestsCount: number
+        completed: boolean
+    }>
+    hasTestWeeks: boolean
+    testsCompleted: boolean
+    plannedTestsCount: number
+    completedTestsCount: number
+}
+
 /**
  * GET /api/programs
  * List programs with cursor-based pagination
@@ -179,6 +193,94 @@ export async function GET(request: NextRequest) {
 
         const programIds = items.map((program) => program.id)
         const lastCompletedWorkoutDateByProgramId: Record<string, string> = {}
+        const testsSummaryByProgramId = new Map<string, ProgramTestsSummary>()
+
+        if (programIds.length > 0) {
+            const programsWithTestWeeks = await prisma.trainingProgram.findMany({
+                where: {
+                    id: {
+                        in: programIds,
+                    },
+                },
+                select: {
+                    id: true,
+                    weeks: {
+                        where: {
+                            weekType: 'test',
+                        },
+                        select: {
+                            weekNumber: true,
+                            workouts: {
+                                select: {
+                                    workoutExercises: {
+                                        select: {
+                                            exerciseFeedbacks: {
+                                                where: {
+                                                    completed: true,
+                                                },
+                                                select: {
+                                                    id: true,
+                                                },
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        orderBy: {
+                            weekNumber: 'asc',
+                        },
+                    },
+                },
+            })
+
+            for (const program of programsWithTestWeeks) {
+                const testWeekSummaries = program.weeks.map((week) => {
+                    const plannedTestsCount = week.workouts.filter(
+                        (workout) => workout.workoutExercises.length > 0
+                    ).length
+
+                    const completedTestsCount = week.workouts.filter((workout) => {
+                        if (workout.workoutExercises.length === 0) {
+                            return false
+                        }
+
+                        return workout.workoutExercises.every(
+                            (exercise) => exercise.exerciseFeedbacks.length > 0
+                        )
+                    }).length
+
+                    return {
+                        weekNumber: week.weekNumber,
+                        plannedTestsCount,
+                        completedTestsCount,
+                        completed:
+                            plannedTestsCount > 0 &&
+                            completedTestsCount === plannedTestsCount,
+                    }
+                })
+
+                const plannedTestsCount = testWeekSummaries.reduce(
+                    (sum, week) => sum + week.plannedTestsCount,
+                    0
+                )
+                const completedTestsCount = testWeekSummaries.reduce(
+                    (sum, week) => sum + week.completedTestsCount,
+                    0
+                )
+
+                testsSummaryByProgramId.set(program.id, {
+                    testWeeks: program.weeks.map((week) => week.weekNumber),
+                    testWeekSummaries,
+                    hasTestWeeks: program.weeks.length > 0,
+                    testsCompleted:
+                        testWeekSummaries.length > 0 &&
+                        testWeekSummaries.every((week) => week.completed),
+                    plannedTestsCount,
+                    completedTestsCount,
+                })
+            }
+        }
 
         if (programIds.length > 0) {
             const completedFeedbacks = await prisma.exerciseFeedback.findMany({
@@ -228,6 +330,7 @@ export async function GET(request: NextRequest) {
             .map((program) => {
                 const completionSnapshot = completionByProgramId.get(program.id)
                 const effectiveStatus = getEffectiveProgramStatus(program, completionSnapshot)
+                const testsSummary = testsSummaryByProgramId.get(program.id)
 
                 return {
                     ...program,
@@ -241,6 +344,12 @@ export async function GET(request: NextRequest) {
                         lastCompletedWorkoutDateByProgramId[program.id] ??
                         completionSnapshot?.lastCompletedWorkoutAt?.toISOString() ??
                         null,
+                    testWeeks: testsSummary?.testWeeks ?? [],
+                    testWeekSummaries: testsSummary?.testWeekSummaries ?? [],
+                    hasTestWeeks: testsSummary?.hasTestWeeks ?? false,
+                    testsCompleted: testsSummary?.testsCompleted ?? false,
+                    plannedTestsCount: testsSummary?.plannedTestsCount ?? 0,
+                    completedTestsCount: testsSummary?.completedTestsCount ?? 0,
                 }
             })
             .filter((program) => !status || program.status === status)
