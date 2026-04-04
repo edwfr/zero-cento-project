@@ -9,6 +9,7 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import { formatDate, formatDateForInput, getTodayForInput } from '@/lib/date-format'
+import { estimateOneRMFromRpeTable } from '@/lib/calculations'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 
@@ -290,9 +291,8 @@ export default function TraineeRecordsContent() {
     }
 
     const calculateOneRepMax = (weight: number, reps: number): number => {
-        if (reps === 1) return weight
-        // Brzycki formula
-        return Math.round(weight * (36 / (37 - reps)) * 10) / 10
+        const normalizedOneRM = estimateOneRMFromRpeTable(weight, reps, 10)
+        return Math.round(normalizedOneRM * 10) / 10
     }
 
     if (loading) {
@@ -651,7 +651,7 @@ export default function TraineeRecordsContent() {
                                 {weight && reps && (
                                     <div className="bg-gray-50 rounded-lg p-4">
                                         <div className="text-sm text-gray-600 mb-1">
-                                            1RM Stimato (formula Brzycki):
+                                            1RM Normalizzato (tabella RPE Mike Tuchscherer - RPE 10):
                                         </div>
                                         <div className="text-2xl font-bold text-[#FFA700]">
                                             {calculateOneRepMax(parseFloat(weight), parseInt(reps))} kg

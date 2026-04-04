@@ -4,6 +4,7 @@ import {
     calculateTrainingSets,
     parseReps,
     estimateOneRM,
+    estimateOneRMFromRpeTable,
     calculateEffectiveWeight,
 } from '@/lib/calculations'
 import { prisma } from '@/lib/prisma'
@@ -90,6 +91,26 @@ describe('estimateOneRM', () => {
         const light = estimateOneRM(100, 3)
         const heavy = estimateOneRM(100, 12)
         expect(heavy).toBeGreaterThan(light)
+    })
+})
+
+describe('estimateOneRMFromRpeTable', () => {
+    it('returns input weight for 1 rep at RPE 10', () => {
+        expect(estimateOneRMFromRpeTable(100, 1, 10)).toBe(100)
+    })
+
+    it('normalizes 5 reps @ RPE 10 using Mike T chart', () => {
+        // 100 / 0.863 = 115.87...
+        expect(estimateOneRMFromRpeTable(100, 5, 10)).toBeCloseTo(115.87, 2)
+    })
+
+    it('supports lower RPE values from the same chart', () => {
+        // 100 / 0.837 = 119.47...
+        expect(estimateOneRMFromRpeTable(100, 5, 9)).toBeCloseTo(119.47, 2)
+    })
+
+    it('falls back to Epley when reps are outside chart range', () => {
+        expect(estimateOneRMFromRpeTable(100, 15, 10)).toBeCloseTo(estimateOneRM(100, 15), 5)
     })
 })
 
