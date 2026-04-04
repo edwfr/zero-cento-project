@@ -558,16 +558,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         return program.weeks.find((week) => week.id === activeWeekId) || program.weeks[0] || null
     }, [program, activeWeekId])
 
-    const totalExercises = useMemo(() => {
-        if (!program) return 0
-
-        return program.weeks.reduce(
-            (total, week) =>
-                total + week.workouts.reduce((weekTotal, workout) => weekTotal + workout.workoutExercises.length, 0),
-            0
-        )
-    }, [program])
-
     const completedWorkouts = useMemo(() => {
         if (!program) return 0
 
@@ -579,8 +569,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     }, [program])
 
     const totalWorkouts = program ? program.durationWeeks * program.workoutsPerWeek : 0
-    const progressPercent =
-        totalWorkouts > 0 ? Math.round((completedWorkouts / totalWorkouts) * 100) : 0
 
     const recordsByExercise = useMemo(
         () =>
@@ -716,7 +704,54 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         [estimatedOneRMByExercise, program]
     )
 
-    const activeWeekSbdMetrics = activeWeek ? weekSbdMetrics[activeWeek.id] || [] : []
+    const sbdMetricsByExerciseAcrossWeeks = useMemo(
+        () =>
+            program
+                ? Array.from(
+                    program.weeks.reduce((acc, week) => {
+                        ; (weekSbdMetrics[week.id] || []).forEach((metric) => {
+                            if (!acc.has(metric.exerciseId)) {
+                                acc.set(metric.exerciseId, {
+                                    exerciseId: metric.exerciseId,
+                                    exerciseName: metric.exerciseName,
+                                    metricsByWeekId: {},
+                                })
+                            }
+
+                            const currentMetric = acc.get(metric.exerciseId)
+
+                            if (currentMetric) {
+                                currentMetric.metricsByWeekId[week.id] = metric
+                            }
+                        })
+
+                        return acc
+                    }, new Map<
+                        string,
+                        {
+                            exerciseId: string
+                            exerciseName: string
+                            metricsByWeekId: Record<
+                                string,
+                                {
+                                    exerciseId: string
+                                    exerciseName: string
+                                    frequency: number
+                                    totalLifts: number
+                                    averageIntensity: number | null
+                                }
+                            >
+                        }
+                    >())
+                        .values()
+                ).sort((left, right) =>
+                    left.exerciseName.localeCompare(right.exerciseName, 'it', {
+                        sensitivity: 'base',
+                    })
+                )
+                : [],
+        [program, weekSbdMetrics]
+    )
 
     const handleWeekTypeChange = async (
         weekId: string,
@@ -1215,36 +1250,11 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <div>
-                            <p className="text-sm font-semibold text-gray-700">{t('editProgram.progressTitle')}</p>
-                            <p className="text-2xl font-bold text-gray-900 mt-1">
-                                {t('editProgram.workoutsConfigured', {
-                                    completed: completedWorkouts,
-                                    total: totalWorkouts,
-                                })}
-                            </p>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-3xl font-bold text-brand-primary">{progressPercent}%</p>
-                            <p className="text-sm text-gray-600">{t('editProgram.completion')}</p>
-                        </div>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3">
-                        <div
-                            className="bg-brand-primary h-3 rounded-full transition-all duration-500"
-                            style={{ width: `${progressPercent}%` }}
-                        />
-                    </div>
-                    <p className="text-sm text-gray-600 mt-4">
-                        {t('editProgram.totalExercises')}{' '}
-                        <span className="font-semibold">{totalExercises}</span>
-                    </p>
-                </div>
-
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-6">
-                    <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
+                    <div
+                        className={`bg-white rounded-lg border border-gray-200 shadow-sm p-4 ${shouldShowSbdReporting ? 'xl:col-span-1' : 'xl:col-span-3'
+                            }`}
+                    >
                         <button
                             type="button"
                             onClick={() => setIsPrHelperCollapsed((current) => !current)}
@@ -1328,7 +1338,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     </div>
 
                     {shouldShowSbdReporting && (
-                        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+                        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 xl:col-span-2">
                             <button
                                 type="button"
                                 onClick={() => setIsSbdHelperCollapsed((current) => !current)}
@@ -1359,36 +1369,72 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
                             {!isSbdHelperCollapsed && (
                                 <div className="mt-4 max-h-72 overflow-y-auto">
-                                    {activeWeekSbdMetrics.length > 0 ? (
-                                        <div className="space-y-2">
-                                            {activeWeekSbdMetrics.map((metric) => (
-                                                <div
-                                                    key={metric.exerciseId}
-                                                    className="rounded-lg border border-slate-200 px-3 py-2"
-                                                >
-                                                    <p className="text-sm font-semibold text-slate-900">
-                                                        {metric.exerciseName}
-                                                    </p>
-                                                    <div className="grid grid-cols-3 gap-2 mt-2 text-center">
-                                                        <div className="rounded-md bg-slate-50 px-2 py-2">
-                                                            <p className="text-[10px] font-semibold uppercase text-slate-500">{t('editProgram.sbdFrq')}</p>
-                                                            <p className="text-sm font-bold text-slate-900">{metric.frequency}</p>
-                                                        </div>
-                                                        <div className="rounded-md bg-slate-50 px-2 py-2">
-                                                            <p className="text-[10px] font-semibold uppercase text-slate-500">{t('editProgram.sbdNbl')}</p>
-                                                            <p className="text-sm font-bold text-slate-900">{metric.totalLifts}</p>
-                                                        </div>
-                                                        <div className="rounded-md bg-slate-50 px-2 py-2">
-                                                            <p className="text-[10px] font-semibold uppercase text-slate-500">{t('editProgram.sbdIm')}</p>
-                                                            <p className="text-sm font-bold text-slate-900">
-                                                                {metric.averageIntensity !== null
-                                                                    ? `${metric.averageIntensity.toFixed(1)}%`
-                                                                    : '-'}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                    {sbdMetricsByExerciseAcrossWeeks.length > 0 ? (
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-[780px] w-full divide-y divide-slate-200 text-xs">
+                                                <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+                                                    <tr>
+                                                        <th className="sticky left-0 z-10 bg-slate-50 px-3 py-2 text-left">
+                                                            {t('editProgram.tableExercise')}
+                                                        </th>
+                                                        {program.weeks.map((week) => (
+                                                            <th key={week.id} className="px-3 py-2 text-left whitespace-nowrap">
+                                                                {t('editProgram.week')} {week.weekNumber}
+                                                            </th>
+                                                        ))}
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-100 bg-white">
+                                                    {sbdMetricsByExerciseAcrossWeeks.map((exerciseMetric) => (
+                                                        <tr key={exerciseMetric.exerciseId}>
+                                                            <td className="sticky left-0 z-10 bg-white px-3 py-2 align-top text-sm font-semibold text-slate-900 whitespace-nowrap">
+                                                                {exerciseMetric.exerciseName}
+                                                            </td>
+                                                            {program.weeks.map((week) => {
+                                                                const metric =
+                                                                    exerciseMetric.metricsByWeekId[week.id]
+
+                                                                return (
+                                                                    <td key={week.id} className="px-3 py-2 align-top">
+                                                                        {metric ? (
+                                                                            <div className="space-y-0.5 text-[11px] text-slate-700">
+                                                                                <p>
+                                                                                    <span className="font-semibold text-slate-500">
+                                                                                        {t('editProgram.sbdFrq')}:
+                                                                                    </span>{' '}
+                                                                                    <span className="font-semibold text-slate-900">
+                                                                                        {metric.frequency}
+                                                                                    </span>
+                                                                                </p>
+                                                                                <p>
+                                                                                    <span className="font-semibold text-slate-500">
+                                                                                        {t('editProgram.sbdNbl')}:
+                                                                                    </span>{' '}
+                                                                                    <span className="font-semibold text-slate-900">
+                                                                                        {metric.totalLifts}
+                                                                                    </span>
+                                                                                </p>
+                                                                                <p>
+                                                                                    <span className="font-semibold text-slate-500">
+                                                                                        {t('editProgram.sbdIm')}:
+                                                                                    </span>{' '}
+                                                                                    <span className="font-semibold text-slate-900">
+                                                                                        {metric.averageIntensity !== null
+                                                                                            ? `${metric.averageIntensity.toFixed(1)}%`
+                                                                                            : '-'}
+                                                                                    </span>
+                                                                                </p>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <span className="text-[11px] text-slate-400">-</span>
+                                                                        )}
+                                                                    </td>
+                                                                )
+                                                            })}
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
                                         </div>
                                     ) : (
                                         <p className="text-sm text-gray-500 py-3">
