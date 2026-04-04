@@ -27,6 +27,7 @@
 - 01.04.2026 > 4h
 - 02.04.2026 > 4h
 - 03.04.2026 > 6h
+- 05.04.2026 > 4h
 
 Sei un senior software developer.
 Hai come obbiettivo quello di cambiare l'implementazione del wizard per la creazione di un nuovo programma /trainer/programs/[id]/edit
