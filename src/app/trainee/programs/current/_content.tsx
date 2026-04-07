@@ -1,13 +1,48 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { SkeletonDashboard } from '@/components'
-import { ArrowLeft, CheckCircle2, Circle, PlayCircle } from 'lucide-react'
+import {
+    ArrowLeft,
+    CheckCircle2,
+    ChevronDown,
+    ChevronUp,
+    Circle,
+    PlayCircle,
+} from 'lucide-react'
 import WeekTypeBadge from '@/components/WeekTypeBadge'
 import { formatDate } from '@/lib/date-format'
+import ProgramPdfExportButton from '@/components/ProgramPdfExportButton'
+import {
+    ProgramPdfData,
+    ProgramPdfLabels,
+} from '@/lib/program-pdf-export'
+
+type WeekType = 'normal' | 'test' | 'deload'
+type WeightType = 'absolute' | 'percentage_1rm' | 'percentage_rm' | 'percentage_previous'
+type RestTime = 's30' | 'm1' | 'm2' | 'm3' | 'm5'
+
+interface WorkoutExercise {
+    id: string
+    variant: string | null
+    sets: number
+    reps: string
+    targetRpe: number | null
+    weightType: WeightType
+    weight: number | null
+    effectiveWeight: number | null
+    restTime: RestTime
+    isWarmup: boolean
+    notes: string | null
+    exercise: {
+        id: string
+        name: string
+        type: 'fundamental' | 'accessory'
+    }
+}
 
 interface Workout {
     id: string
@@ -16,23 +51,24 @@ interface Workout {
     exerciseCount: number
     feedbackSubmitted: boolean
     feedbackCount: number
+    exercises: WorkoutExercise[]
 }
 
 interface Week {
     weekNumber: number
-    weekType: 'normal' | 'test' | 'deload'
+    weekType: WeekType
     workouts: Workout[]
 }
 
 interface ProgramDetailWorkout {
     id: string
     dayIndex: number
-    workoutExercises: Array<unknown>
+    workoutExercises: WorkoutExercise[]
 }
 
 interface ProgramDetailWeek {
     weekNumber: number
-    weekType: 'normal' | 'test' | 'deload'
+    weekType: WeekType
     workouts: ProgramDetailWorkout[]
 }
 
@@ -41,6 +77,10 @@ interface Program {
     title: string
     startDate: string
     durationWeeks: number
+    trainee?: {
+        firstName: string
+        lastName: string
+    }
     trainer: {
         firstName: string
         lastName: string
@@ -53,6 +93,10 @@ interface ProgramDetail {
     title: string
     startDate: string
     durationWeeks: number
+    trainee?: {
+        firstName: string
+        lastName: string
+    }
     trainer: {
         firstName: string
         lastName: string
@@ -79,6 +123,67 @@ interface SavedSetPerformed {
 
 interface SavedWorkoutDraft {
     feedbackData?: Record<string, SavedSetPerformed[]>
+}
+
+interface WorkoutStatus {
+    icon: typeof CheckCircle2
+    iconClassName: string
+    badgeClassName: string
+    label: string
+    helperText: string
+    buttonClassName: string
+}
+
+const REST_TIME_LABELS: Record<RestTime, string> = {
+    s30: '0:30',
+    m1: '1:00',
+    m2: '2:00',
+    m3: '3:00',
+    m5: '5:00',
+}
+
+const formatWeightValue = (value: number): string => {
+    if (!Number.isFinite(value)) {
+        return '-'
+    }
+
+    return Number.isInteger(value) ? String(value) : value.toFixed(1)
+}
+
+const formatWeightKg = (value: number | null | undefined, fallback: string): string => {
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+        return fallback
+    }
+
+    return `${formatWeightValue(value)} kg`
+}
+
+const formatAssignedWeight = (
+    weightType: WeightType,
+    weight: number | null,
+    previousExerciseLabel: string,
+    fallback: string
+): string => {
+    if (typeof weight !== 'number' || !Number.isFinite(weight)) {
+        return fallback
+    }
+
+    const formattedWeight = formatWeightValue(weight)
+
+    if (weightType === 'absolute') {
+        return `${formattedWeight} kg`
+    }
+
+    if (weightType === 'percentage_1rm') {
+        return `${formattedWeight}% 1RM`
+    }
+
+    if (weightType === 'percentage_rm') {
+        return `${formattedWeight}% RM`
+    }
+
+    const sign = weight > 0 ? '+' : ''
+    return `${sign}${formattedWeight}% ${previousExerciseLabel}`
 }
 
 const hasLocalWorkoutProgress = (workoutId: string): boolean => {
@@ -108,12 +213,14 @@ const hasLocalWorkoutProgress = (workoutId: string): boolean => {
 }
 
 export default function CurrentProgramContent() {
-    const { t } = useTranslation('trainee')
+    const { t, i18n } = useTranslation('trainee')
     const [loading, setLoading] = useState(true)
     const [program, setProgram] = useState<Program | null>(null)
     const [programProgress, setProgramProgress] = useState<ProgramProgress | null>(null)
     const [localWorkoutProgress, setLocalWorkoutProgress] = useState<Record<string, boolean>>({})
     const [error, setError] = useState<string | null>(null)
+    const [expandedWeeks, setExpandedWeeks] = useState<Record<number, boolean>>({})
+    const [expandedWorkouts, setExpandedWorkouts] = useState<Record<string, boolean>>({})
 
     useEffect(() => {
         fetchProgram()
@@ -143,6 +250,212 @@ export default function CurrentProgramContent() {
             document.removeEventListener('visibilitychange', refreshLocalWorkoutProgress)
         }
     }, [program])
+
+    useEffect(() => {
+        if (!program || program.weeks.length === 0) {
+            return
+        }
+
+        const firstIncompleteWeek = program.weeks.find(
+            (week) => !week.workouts.every((workout) => workout.completed)
+        )
+
+        const defaultWeekNumber =
+            firstIncompleteWeek?.weekNumber ?? program.weeks[0].weekNumber
+
+        setExpandedWeeks(
+            Object.fromEntries(
+                program.weeks.map((week) => [
+                    week.weekNumber,
+                    week.weekNumber === defaultWeekNumber,
+                ])
+            ) as Record<number, boolean>
+        )
+
+        setExpandedWorkouts(
+            Object.fromEntries(
+                program.weeks.flatMap((week) =>
+                    week.workouts.map((workout) => [
+                        workout.id,
+                        week.weekNumber === defaultWeekNumber,
+                    ])
+                )
+            ) as Record<string, boolean>
+        )
+    }, [program])
+
+    const dayNames = useMemo(() => {
+        const value = t('currentProgram.dayNames', { returnObjects: true })
+        return Array.isArray(value) ? value : []
+    }, [i18n.language, t])
+
+    const pdfLabels = useMemo<ProgramPdfLabels>(
+        () => ({
+            trainerLabel: t('currentProgram.pdfTrainerLabel'),
+            startDateLabel: t('currentProgram.pdfStartDateLabel'),
+            generatedAtLabel: t('currentProgram.pdfGeneratedAtLabel'),
+            weekLabel: (week: number) => t('currentProgram.week', { number: week }),
+            weekTypeLabel: (weekType: WeekType) => {
+                if (weekType === 'test') {
+                    return t('currentProgram.weekTypeTest')
+                }
+
+                if (weekType === 'deload') {
+                    return t('currentProgram.weekTypeDeload')
+                }
+
+                return t('currentProgram.weekTypeStandard')
+            },
+            workoutLabel: (dayIndex: number) =>
+                t('currentProgram.day', {
+                    number: dayIndex,
+                }),
+            tableExercise: t('currentProgram.tableExercise'),
+            tableVariant: t('currentProgram.tableVariant'),
+            tableScheme: t('currentProgram.tableScheme'),
+            tableWeight: t('currentProgram.tableWeight'),
+            tableRest: t('currentProgram.tableRest'),
+            tableRpe: t('currentProgram.tableRpe'),
+            tableNoExercises: t('currentProgram.tableNoExercises'),
+            tableWeightAssigned: (weight: string) =>
+                t('currentProgram.tableWeightAssigned', { weight }),
+            tableWeightEffective: (weight: string) =>
+                t('currentProgram.tableWeightEffective', { weight }),
+            warmupYesShort: t('currentProgram.warmupYesShort'),
+            warmupNoShort: t('currentProgram.warmupNoShort'),
+            fundamentalShort: t('currentProgram.fundamentalShort'),
+            accessoryShort: t('currentProgram.accessoryShort'),
+            previousExerciseShort: t('workouts.previousExerciseShort'),
+            missingValue: t('currentProgram.tableMissingValue'),
+        }),
+        [t]
+    )
+
+    const pdfProgramData = useMemo<ProgramPdfData | null>(() => {
+        if (!program) {
+            return null
+        }
+
+        return {
+            title: program.title,
+            trainerName: `${program.trainer.firstName} ${program.trainer.lastName}`,
+            startDate: program.startDate,
+            weeks: program.weeks.map((week) => ({
+                weekNumber: week.weekNumber,
+                weekType: week.weekType,
+                workouts: week.workouts.map((workout) => ({
+                    id: workout.id,
+                    dayIndex: workout.dayOfWeek,
+                    exercises: workout.exercises.map((exercise) => ({
+                        id: exercise.id,
+                        name: exercise.exercise.name,
+                        variant: exercise.variant,
+                        type: exercise.exercise.type,
+                        isWarmup: exercise.isWarmup,
+                        sets: exercise.sets,
+                        reps: exercise.reps,
+                        targetRpe: exercise.targetRpe,
+                        weightType: exercise.weightType,
+                        weight: exercise.weight,
+                        effectiveWeight: exercise.effectiveWeight,
+                        restTime: exercise.restTime,
+                    })),
+                })),
+            })),
+        }
+    }, [program])
+
+    const toggleWeek = (weekNumber: number) => {
+        setExpandedWeeks((previous) => ({
+            ...previous,
+            [weekNumber]: !previous[weekNumber],
+        }))
+    }
+
+    const toggleWorkout = (workoutId: string) => {
+        setExpandedWorkouts((previous) => ({
+            ...previous,
+            [workoutId]: !previous[workoutId],
+        }))
+    }
+
+    const getWorkoutDayLabel = (dayIndex: number): string => {
+        const dayName = dayNames[dayIndex - 1]
+
+        if (typeof dayName === 'string' && dayName.length > 0) {
+            return dayName
+        }
+
+        return t('currentProgram.day', { number: dayIndex })
+    }
+
+    const getWorkoutStatus = (workout: Workout): WorkoutStatus => {
+        const workoutInProgress =
+            !workout.completed &&
+            (workout.feedbackCount > 0 || localWorkoutProgress[workout.id])
+
+        if (workout.completed) {
+            return {
+                icon: CheckCircle2,
+                iconClassName: 'text-green-600',
+                badgeClassName: 'bg-green-100 text-green-700',
+                label: t('currentProgram.completed'),
+                helperText: workout.feedbackSubmitted
+                    ? t('currentProgram.feedbackSent')
+                    : t('currentProgram.reviewFeedback'),
+                buttonClassName:
+                    'border-green-300 bg-green-50 text-green-700 hover:border-green-400',
+            }
+        }
+
+        if (workoutInProgress) {
+            return {
+                icon: PlayCircle,
+                iconClassName: 'text-[#FFA700]',
+                badgeClassName: 'bg-amber-100 text-amber-700',
+                label: t('currentProgram.inProgress'),
+                helperText: t('currentProgram.resumeWorkout'),
+                buttonClassName:
+                    'border-amber-300 bg-amber-50 text-amber-700 hover:border-amber-400',
+            }
+        }
+
+        return {
+            icon: Circle,
+            iconClassName: 'text-gray-400',
+            badgeClassName: 'bg-gray-100 text-gray-600',
+            label: t('currentProgram.toDo'),
+            helperText: t('currentProgram.startWorkout'),
+            buttonClassName:
+                'border-gray-300 bg-white text-gray-700 hover:border-[#FFA700] hover:text-[#FFA700]',
+        }
+    }
+
+    const resolveWeightLabels = (exercise: WorkoutExercise) => {
+        const fallback = t('currentProgram.tableMissingValue')
+        const assigned = formatAssignedWeight(
+            exercise.weightType,
+            exercise.weight,
+            t('workouts.previousExerciseShort'),
+            fallback
+        )
+
+        const resolvedEffectiveWeight =
+            exercise.weightType === 'absolute'
+                ? exercise.effectiveWeight ?? exercise.weight
+                : exercise.effectiveWeight
+
+        const effective = formatWeightKg(resolvedEffectiveWeight, fallback)
+
+        return {
+            assigned,
+            effective,
+        }
+    }
+
+    const formatRestTime = (restTime: RestTime): string => {
+        return REST_TIME_LABELS[restTime] ?? t('currentProgram.tableMissingValue')
+    }
 
     const fetchProgram = async () => {
         try {
@@ -189,6 +502,7 @@ export default function CurrentProgramContent() {
                 title: programDetail.title,
                 startDate: programDetail.startDate,
                 durationWeeks: programDetail.durationWeeks,
+                trainee: programDetail.trainee,
                 trainer: programDetail.trainer,
                 weeks: programDetail.weeks.map((week) => ({
                     weekNumber: week.weekNumber,
@@ -203,6 +517,7 @@ export default function CurrentProgramContent() {
                             exerciseCount: workout.workoutExercises.length,
                             feedbackSubmitted: (workoutProgress?.feedbackCount ?? 0) > 0,
                             feedbackCount: workoutProgress?.feedbackCount ?? 0,
+                            exercises: workout.workoutExercises,
                         }
                     }),
                 })),
@@ -224,6 +539,9 @@ export default function CurrentProgramContent() {
     if (loading) {
         return (
             <div className="py-8">
+                traineeName: program.trainee
+                ? `${program.trainee.firstName} ${program.trainee.lastName}`
+                : t('currentProgram.pdfUnknownTrainee'),
                 <SkeletonDashboard cards={0} showTable={false} />
             </div>
         )
@@ -245,6 +563,8 @@ export default function CurrentProgramContent() {
         ? Math.round((completedWorkouts / totalWorkouts) * 100)
         : 0
 
+    const locale = i18n.language === 'en' ? 'en-US' : 'it-IT'
+
     return (
         <div>
             {/* Header */}
@@ -256,11 +576,30 @@ export default function CurrentProgramContent() {
                     <ArrowLeft className="w-4 h-4" />
                     {t('currentProgram.backToDashboard')}
                 </Link>
-                <h1 className="text-3xl font-bold text-gray-900">{program.title}</h1>
-                <p className="text-gray-600 mt-2">
-                    {t('currentProgram.trainerWith', { firstName: program.trainer.firstName, lastName: program.trainer.lastName })} • {t('currentProgram.startedOn')}{' '}
-                    {formatDate(program.startDate)}
-                </p>
+
+                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900">{program.title}</h1>
+                        <p className="text-gray-600 mt-2">
+                            {t('currentProgram.trainerWith', {
+                                firstName: program.trainer.firstName,
+                                lastName: program.trainer.lastName,
+                            })}{' '}
+                            • {t('currentProgram.startedOn')} {formatDate(program.startDate)}
+                        </p>
+                    </div>
+
+                    <ProgramPdfExportButton
+                        program={pdfProgramData}
+                        labels={pdfLabels}
+                        buttonLabel={t('currentProgram.exportPdf')}
+                        loadingLabel={t('currentProgram.exportingPdf')}
+                        errorLabel={t('currentProgram.exportPdfError')}
+                        fileNamePrefix={t('currentProgram.pdfFileNamePrefix')}
+                        locale={locale}
+                        className="md:self-start"
+                    />
+                </div>
             </div>
 
             {/* Progress Card */}
@@ -299,10 +638,17 @@ export default function CurrentProgramContent() {
                         <div key={week.weekNumber} className="bg-white rounded-lg shadow-md p-6">
                             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-4">
-                                    <h3 className="text-xl font-bold text-gray-900">
+                                    <h3 className="text-xl font-bold text-gray-900 min-w-0">
                                         {t('currentProgram.week', { number: week.weekNumber })}
                                     </h3>
-                                    <WeekTypeBadge weekType={week.weekType} />
+                                    <WeekTypeBadge
+                                        weekType={week.weekType}
+                                        labels={{
+                                            normal: t('currentProgram.weekTypeStandard'),
+                                            test: t('currentProgram.weekTypeTest'),
+                                            deload: t('currentProgram.weekTypeDeload'),
+                                        }}
+                                    />
                                     {weekCompleted && (
                                         <span className="text-green-600 text-sm font-semibold">
                                             {t('currentProgram.completed')}
@@ -317,76 +663,262 @@ export default function CurrentProgramContent() {
                                 <p className="text-sm text-gray-600 sm:text-right">
                                     {t('currentProgram.weekCompleted', { completed: week.workouts.filter((w) => w.completed).length, total: week.workouts.length })}
                                 </p>
+
+                                <button
+                                    type="button"
+                                    onClick={() => toggleWeek(week.weekNumber)}
+                                    aria-expanded={expandedWeeks[week.weekNumber] ?? false}
+                                    className="inline-flex items-center gap-1 self-start rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 hover:border-gray-400 hover:text-gray-800"
+                                >
+                                    {expandedWeeks[week.weekNumber]
+                                        ? t('currentProgram.closeWeek')
+                                        : t('currentProgram.openWeek')}
+                                    {expandedWeeks[week.weekNumber]
+                                        ? <ChevronUp className="h-4 w-4" />
+                                        : <ChevronDown className="h-4 w-4" />}
+                                </button>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                                {week.workouts.map((workout) => {
-                                    const workoutInProgress = !workout.completed
-                                        && (workout.feedbackCount > 0 || localWorkoutProgress[workout.id])
+                            {(expandedWeeks[week.weekNumber] ?? false) && (
+                                <div className="space-y-4">
+                                    {week.workouts
+                                        .slice()
+                                        .sort((left, right) => left.dayOfWeek - right.dayOfWeek)
+                                        .map((workout) => {
+                                            const workoutStatus = getWorkoutStatus(workout)
+                                            const StatusIcon = workoutStatus.icon
 
-                                    const workoutStatus = workout.completed
-                                        ? {
-                                            icon: CheckCircle2,
-                                            iconClassName: 'text-green-600',
-                                            badgeClassName: 'bg-green-100 text-green-700',
-                                            label: t('currentProgram.completed'),
-                                            cardClassName: 'border-green-300 bg-green-50 hover:border-green-400',
-                                            helperText: workout.feedbackSubmitted
-                                                ? t('currentProgram.feedbackSent')
-                                                : t('currentProgram.reviewFeedback'),
-                                            helperClassName: workout.feedbackSubmitted
-                                                ? 'text-green-600'
-                                                : 'text-[#FFA700]',
-                                        }
-                                        : workoutInProgress
-                                            ? {
-                                                icon: PlayCircle,
-                                                iconClassName: 'text-[#FFA700]',
-                                                badgeClassName: 'bg-amber-100 text-amber-700',
-                                                label: t('currentProgram.inProgress'),
-                                                cardClassName: 'border-amber-300 bg-amber-50 hover:border-amber-400',
-                                                helperText: t('currentProgram.resumeWorkout'),
-                                                helperClassName: 'text-[#FFA700]',
-                                            }
-                                            : {
-                                                icon: Circle,
-                                                iconClassName: 'text-gray-400',
-                                                badgeClassName: 'bg-gray-100 text-gray-600',
-                                                label: t('currentProgram.toDo'),
-                                                cardClassName: 'border-gray-300 bg-white hover:border-[#FFA700]',
-                                                helperText: t('currentProgram.startWorkout'),
-                                                helperClassName: 'text-[#FFA700]',
-                                            }
+                                            return (
+                                                <div
+                                                    key={workout.id}
+                                                    className="overflow-hidden rounded-xl border border-gray-200 bg-white"
+                                                >
+                                                    <div className="flex flex-col gap-3 border-b border-gray-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                                                        <div className="min-w-0">
+                                                            <div className="flex flex-wrap items-center gap-2">
+                                                                <h4 className="text-base font-bold text-gray-900">
+                                                                    {getWorkoutDayLabel(workout.dayOfWeek)}
+                                                                </h4>
+                                                                <div className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${workoutStatus.badgeClassName}`}>
+                                                                    <StatusIcon className={`h-4 w-4 ${workoutStatus.iconClassName}`} />
+                                                                    <span>{workoutStatus.label}</span>
+                                                                </div>
+                                                            </div>
 
-                                    const StatusIcon = workoutStatus.icon
+                                                            <p className="mt-1 text-sm text-gray-600">
+                                                                {t('currentProgram.exercises', {
+                                                                    count: workout.exerciseCount,
+                                                                })}
+                                                            </p>
+                                                        </div>
 
-                                    return (
-                                        <Link
-                                            key={workout.id}
-                                            href={`/trainee/workouts/${workout.id}`}
-                                            className={`border-2 rounded-lg p-4 transition-all hover:shadow-md ${workoutStatus.cardClassName}`}
-                                        >
-                                            <div className="flex items-start justify-between gap-3 mb-2">
-                                                <div>
-                                                    <p className="font-semibold text-gray-900">
-                                                        Giorno {workout.dayOfWeek}
-                                                    </p>
-                                                    <p className="text-sm text-gray-600 mt-1">
-                                                        {t('currentProgram.exercises', { count: workout.exerciseCount })}
-                                                    </p>
+                                                        <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">
+                                                            <Link
+                                                                href={`/trainee/workouts/${workout.id}`}
+                                                                className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${workoutStatus.buttonClassName}`}
+                                                            >
+                                                                {workoutStatus.helperText}
+                                                            </Link>
+
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => toggleWorkout(workout.id)}
+                                                                aria-expanded={expandedWorkouts[workout.id] ?? false}
+                                                                className="inline-flex items-center justify-center gap-1 text-xs font-semibold text-gray-600 hover:text-gray-800"
+                                                            >
+                                                                {(expandedWorkouts[workout.id] ?? false)
+                                                                    ? t('currentProgram.closeWorkoutDetails')
+                                                                    : t('currentProgram.openWorkoutDetails')}
+                                                                {(expandedWorkouts[workout.id] ?? false)
+                                                                    ? <ChevronUp className="h-4 w-4" />
+                                                                    : <ChevronDown className="h-4 w-4" />}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    {(expandedWorkouts[workout.id] ?? false) && (
+                                                        <div className="p-4">
+                                                            {workout.exercises.length === 0 ? (
+                                                                <p className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-4 text-sm text-gray-600">
+                                                                    {t('currentProgram.tableNoExercises')}
+                                                                </p>
+                                                            ) : (
+                                                                <>
+                                                                    <div className="space-y-3 md:hidden">
+                                                                        {workout.exercises.map((exercise) => {
+                                                                            const weightLabels = resolveWeightLabels(exercise)
+
+                                                                            return (
+                                                                                <article
+                                                                                    key={exercise.id}
+                                                                                    className="rounded-lg border border-gray-200 bg-gray-50 p-3"
+                                                                                >
+                                                                                    <div className="flex flex-wrap items-center gap-2">
+                                                                                        <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${exercise.exercise.type === 'fundamental'
+                                                                                            ? 'bg-red-100 text-red-700'
+                                                                                            : 'bg-blue-100 text-blue-700'
+                                                                                            }`}>
+                                                                                            {exercise.exercise.type === 'fundamental'
+                                                                                                ? t('currentProgram.fundamentalShort')
+                                                                                                : t('currentProgram.accessoryShort')}
+                                                                                        </span>
+
+                                                                                        {exercise.isWarmup && (
+                                                                                            <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                                                                                                {t('currentProgram.warmupShort')}
+                                                                                            </span>
+                                                                                        )}
+
+                                                                                        <h5 className="font-semibold text-gray-900">
+                                                                                            {exercise.exercise.name}
+                                                                                        </h5>
+                                                                                    </div>
+
+                                                                                    {exercise.variant && (
+                                                                                        <p className="mt-1 text-xs text-gray-600">
+                                                                                            {exercise.variant}
+                                                                                        </p>
+                                                                                    )}
+
+                                                                                    <div className="mt-3 space-y-1 text-xs text-gray-700">
+                                                                                        <p>
+                                                                                            <span className="font-semibold">
+                                                                                                {t('currentProgram.tableScheme')}:
+                                                                                            </span>{' '}
+                                                                                            {exercise.sets} x {exercise.reps}
+                                                                                        </p>
+                                                                                        <p>
+                                                                                            <span className="font-semibold">
+                                                                                                {t('currentProgram.tableWeight')}:
+                                                                                            </span>{' '}
+                                                                                            {t(
+                                                                                                'currentProgram.tableWeightEffective',
+                                                                                                { weight: weightLabels.effective }
+                                                                                            )}
+                                                                                        </p>
+                                                                                        <p className="text-gray-600">
+                                                                                            {t('currentProgram.tableWeightAssigned', {
+                                                                                                weight: weightLabels.assigned,
+                                                                                            })}
+                                                                                        </p>
+                                                                                        <p>
+                                                                                            <span className="font-semibold">
+                                                                                                {t('currentProgram.tableRest')}:
+                                                                                            </span>{' '}
+                                                                                            {formatRestTime(exercise.restTime)}
+                                                                                        </p>
+                                                                                        <p>
+                                                                                            <span className="font-semibold">
+                                                                                                {t('currentProgram.tableRpe')}:
+                                                                                            </span>{' '}
+                                                                                            {exercise.targetRpe ?? t('currentProgram.tableMissingValue')}
+                                                                                        </p>
+                                                                                        <p className="italic text-gray-600">
+                                                                                            {exercise.notes || t('currentProgram.tableMissingValue')}
+                                                                                        </p>
+                                                                                    </div>
+                                                                                </article>
+                                                                            )
+                                                                        })}
+                                                                    </div>
+
+                                                                    <div className="hidden overflow-x-auto md:block">
+                                                                        <table className="min-w-full divide-y divide-gray-200 text-sm">
+                                                                            <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
+                                                                                <tr>
+                                                                                    <th className="px-3 py-3">
+                                                                                        {t('currentProgram.tableExercise')}
+                                                                                    </th>
+                                                                                    <th className="px-3 py-3">
+                                                                                        {t('currentProgram.tableScheme')}
+                                                                                    </th>
+                                                                                    <th className="px-3 py-3">
+                                                                                        {t('currentProgram.tableWeight')}
+                                                                                    </th>
+                                                                                    <th className="px-3 py-3">
+                                                                                        {t('currentProgram.tableRest')}
+                                                                                    </th>
+                                                                                    <th className="px-3 py-3">
+                                                                                        {t('currentProgram.tableRpe')}
+                                                                                    </th>
+                                                                                    <th className="px-3 py-3">
+                                                                                        {t('currentProgram.tableNotes')}
+                                                                                    </th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody className="divide-y divide-gray-100 bg-white">
+                                                                                {workout.exercises.map((exercise) => {
+                                                                                    const weightLabels = resolveWeightLabels(exercise)
+
+                                                                                    return (
+                                                                                        <tr key={exercise.id}>
+                                                                                            <td className="px-3 py-3 align-top">
+                                                                                                <div className="flex items-center gap-2">
+                                                                                                    <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${exercise.exercise.type === 'fundamental'
+                                                                                                        ? 'bg-red-100 text-red-700'
+                                                                                                        : 'bg-blue-100 text-blue-700'
+                                                                                                        }`}>
+                                                                                                        {exercise.exercise.type === 'fundamental'
+                                                                                                            ? t('currentProgram.fundamentalShort')
+                                                                                                            : t('currentProgram.accessoryShort')}
+                                                                                                    </span>
+
+                                                                                                    <span className="font-medium text-gray-900">
+                                                                                                        {exercise.exercise.name}
+                                                                                                    </span>
+
+                                                                                                    {exercise.isWarmup && (
+                                                                                                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                                                                                                            {t('currentProgram.warmupShort')}
+                                                                                                        </span>
+                                                                                                    )}
+                                                                                                </div>
+
+                                                                                                {exercise.variant && (
+                                                                                                    <p className="mt-1 text-xs text-gray-500">
+                                                                                                        {exercise.variant}
+                                                                                                    </p>
+                                                                                                )}
+                                                                                            </td>
+                                                                                            <td className="px-3 py-3 align-top text-gray-700">
+                                                                                                {exercise.sets} x {exercise.reps}
+                                                                                            </td>
+                                                                                            <td className="px-3 py-3 align-top text-gray-700">
+                                                                                                <p className="text-xs font-semibold text-emerald-700">
+                                                                                                    {t('currentProgram.tableWeightEffective', {
+                                                                                                        weight: weightLabels.effective,
+                                                                                                    })}
+                                                                                                </p>
+                                                                                                <p className="text-xs text-gray-500">
+                                                                                                    {t('currentProgram.tableWeightAssigned', {
+                                                                                                        weight: weightLabels.assigned,
+                                                                                                    })}
+                                                                                                </p>
+                                                                                            </td>
+                                                                                            <td className="px-3 py-3 align-top text-gray-700">
+                                                                                                {formatRestTime(exercise.restTime)}
+                                                                                            </td>
+                                                                                            <td className="px-3 py-3 align-top text-gray-700">
+                                                                                                {exercise.targetRpe ?? t('currentProgram.tableMissingValue')}
+                                                                                            </td>
+                                                                                            <td className="px-3 py-3 align-top text-xs italic text-gray-600">
+                                                                                                {exercise.notes || t('currentProgram.tableMissingValue')}
+                                                                                            </td>
+                                                                                        </tr>
+                                                                                    )
+                                                                                })}
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                <div className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${workoutStatus.badgeClassName}`}>
-                                                    <StatusIcon className={`h-4 w-4 ${workoutStatus.iconClassName}`} />
-                                                    <span>{workoutStatus.label}</span>
-                                                </div>
-                                            </div>
-                                            <p className={`text-xs font-semibold ${workoutStatus.helperClassName}`}>
-                                                {workoutStatus.helperText}
-                                            </p>
-                                        </Link>
-                                    )
-                                })}
-                            </div>
+                                            )
+                                        })}
+                                </div>
+                            )}
                         </div>
                     )
                 })}

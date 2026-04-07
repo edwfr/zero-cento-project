@@ -362,7 +362,7 @@ describe('POST /api/feedback', () => {
                     ]),
                 }),
             }),
-        })
+        }))
         expect(body.data.feedback).toBeDefined()
     })
 

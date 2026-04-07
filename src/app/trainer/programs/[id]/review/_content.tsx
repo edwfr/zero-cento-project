@@ -10,8 +10,11 @@ import MovementPatternTag from '@/components/MovementPatternTag'
 import WeekTypeBadge from '@/components/WeekTypeBadge'
 import ProgramMuscleGroupCharts from '@/components/ProgramMuscleGroupCharts'
 import { getApiErrorMessage } from '@/lib/api-error'
+import ProgramPdfExportButton from '@/components/ProgramPdfExportButton'
+import { ProgramPdfData, ProgramPdfLabels } from '@/lib/program-pdf-export'
 
 const PRIMARY_COLOR = 'rgb(var(--brand-primary))'
+type RestTimeValue = 's30' | 'm1' | 'm2' | 'm3' | 'm5'
 
 interface MovementPatternColorSummary {
     color: string
@@ -33,7 +36,9 @@ interface WorkoutExerciseSummary {
     weightType: 'absolute' | 'percentage_1rm' | 'percentage_rm' | 'percentage_previous'
     weight: number | null
     effectiveWeight: number | null
+    restTime: RestTimeValue
     isWarmup: boolean
+    notes: string | null
     exercise: {
         id: string
         name: string
@@ -65,6 +70,7 @@ interface WeekSummary {
 interface ProgramSummary {
     id: string
     title: string
+    startDate: string | null
     status: 'draft' | 'active' | 'completed'
     isSbdProgram: boolean
     trainer: {
@@ -258,7 +264,7 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
     const params = useParams()
     const searchParams = useSearchParams()
     const programId = params.id as string
-    const { t } = useTranslation(['trainer', 'navigation'])
+    const { t, i18n } = useTranslation(['trainer', 'navigation'])
 
     const [loading, setLoading] = useState(true)
     const [program, setProgram] = useState<ProgramSummary | null>(null)
@@ -506,6 +512,85 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
         })
     }, [program])
 
+    const pdfLabels = useMemo<ProgramPdfLabels>(
+        () => ({
+            trainerLabel: t('reviewProgram.pdfTrainerLabel'),
+            startDateLabel: t('reviewProgram.pdfStartDateLabel'),
+            generatedAtLabel: t('reviewProgram.pdfGeneratedAtLabel'),
+            weekLabel: (week: number) => t('reviewProgram.weekTitle', { week }),
+            weekTypeLabel: (weekType: 'normal' | 'test' | 'deload') => {
+                if (weekType === 'test') {
+                    return t('reviewProgram.weekTypeTest')
+                }
+
+                if (weekType === 'deload') {
+                    return t('reviewProgram.weekTypeDeload')
+                }
+
+                return t('reviewProgram.weekTypeStandard')
+            },
+            workoutLabel: (dayIndex: number) =>
+                t('reviewProgram.workoutTitle', { number: dayIndex }),
+            tableExercise: t('reviewProgram.tableExercise'),
+            tableVariant: t('reviewProgram.tableVariant'),
+            tableScheme: t('reviewProgram.tableScheme'),
+            tableWeight: t('reviewProgram.tableWeight'),
+            tableRest: t('reviewProgram.tableRest'),
+            tableRpe: t('reviewProgram.tableRpe'),
+            tableNoExercises: t('reviewProgram.noExercises'),
+            tableWeightAssigned: (weight: string) =>
+                t('reviewProgram.tableWeightAssigned', { weight }),
+            tableWeightEffective: (weight: string) =>
+                t('reviewProgram.tableWeightEffective', { weight }),
+            warmupYesShort: t('reviewProgram.warmupYesShort'),
+            warmupNoShort: t('reviewProgram.warmupNoShort'),
+            fundamentalShort: 'F',
+            accessoryShort: 'A',
+            previousExerciseShort: t('reviewProgram.previousExerciseShort'),
+            missingValue: '-',
+        }),
+        [t]
+    )
+
+    const pdfProgramData = useMemo<ProgramPdfData | null>(() => {
+        if (!program) {
+            return null
+        }
+
+        return {
+            title: program.title,
+            traineeName: `${program.trainee.firstName} ${program.trainee.lastName}`,
+            trainerName: `${program.trainer.firstName} ${program.trainer.lastName}`,
+            startDate: program.startDate ?? new Date().toISOString(),
+            weeks: program.weeks.map((week) => ({
+                weekNumber: week.weekNumber,
+                weekType: week.weekType,
+                workouts: [...week.workouts]
+                    .sort((left, right) => left.dayIndex - right.dayIndex)
+                    .map((workout) => ({
+                        id: workout.id,
+                        dayIndex: workout.dayIndex,
+                        exercises: workout.workoutExercises.map((workoutExercise) => ({
+                            id: workoutExercise.id,
+                            name: workoutExercise.exercise.name,
+                            variant: workoutExercise.variant ?? null,
+                            type: workoutExercise.exercise.type,
+                            isWarmup: workoutExercise.isWarmup,
+                            sets: workoutExercise.sets,
+                            reps: workoutExercise.reps,
+                            targetRpe: workoutExercise.targetRpe,
+                            weightType: workoutExercise.weightType,
+                            weight: workoutExercise.weight,
+                            effectiveWeight: workoutExercise.effectiveWeight,
+                            restTime: workoutExercise.restTime,
+                        })),
+                    })),
+            })),
+        }
+    }, [program])
+
+    const locale = i18n.language === 'en' ? 'en-US' : 'it-IT'
+
     const isStructureStepActive = viewOnly && activeViewStep === 'structure'
     const isStructureStepComplete =
         !viewOnly || activeViewStep === 'exercises' || activeViewStep === 'report'
@@ -652,25 +737,38 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                             })}
                         </p>
                     </div>
-                    {viewOnly &&
-                        (isProgramEditable ? (
-                            <Link
-                                href={editProgramHref}
-                                className="inline-flex items-center gap-2 rounded-lg bg-[#FFA700] px-4 py-2 font-semibold text-white transition-colors hover:bg-[#FF9500]"
-                            >
-                                <FileEdit className="h-4 w-4" />
-                                {t('editProgram.edit')}
-                            </Link>
-                        ) : (
-                            <button
-                                type="button"
-                                disabled
-                                className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg bg-gray-300 px-4 py-2 font-semibold text-gray-500"
-                            >
-                                <FileEdit className="h-4 w-4" />
-                                {t('editProgram.edit')}
-                            </button>
-                        ))}
+
+                    <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
+                        <ProgramPdfExportButton
+                            program={pdfProgramData}
+                            labels={pdfLabels}
+                            buttonLabel={t('reviewProgram.exportPdf')}
+                            loadingLabel={t('reviewProgram.exportingPdf')}
+                            errorLabel={t('reviewProgram.exportPdfError')}
+                            fileNamePrefix={t('reviewProgram.pdfFileNamePrefix')}
+                            locale={locale}
+                        />
+
+                        {viewOnly &&
+                            (isProgramEditable ? (
+                                <Link
+                                    href={editProgramHref}
+                                    className="inline-flex items-center gap-2 rounded-lg bg-[#FFA700] px-4 py-2 font-semibold text-white transition-colors hover:bg-[#FF9500]"
+                                >
+                                    <FileEdit className="h-4 w-4" />
+                                    {t('editProgram.edit')}
+                                </Link>
+                            ) : (
+                                <button
+                                    type="button"
+                                    disabled
+                                    className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg bg-gray-300 px-4 py-2 font-semibold text-gray-500"
+                                >
+                                    <FileEdit className="h-4 w-4" />
+                                    {t('editProgram.edit')}
+                                </button>
+                            ))}
+                    </div>
                 </div>
 
                 {viewOnly && activeViewStep === 'structure' && (
