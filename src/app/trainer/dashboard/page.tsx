@@ -7,7 +7,16 @@ import { NavigationCard, ProgressBar } from '@/components'
 import WeekTypeBadge from '@/components/WeekTypeBadge'
 import { prisma } from '@/lib/prisma'
 import { formatDate } from '@/lib/date-format'
-import { Users, ClipboardList, Dumbbell, Flame, Plus, User } from 'lucide-react'
+import {
+    Users,
+    ClipboardList,
+    Dumbbell,
+    Flame,
+    Plus,
+    User,
+    Eye,
+    FlaskConical,
+} from 'lucide-react'
 import trainerIt from '../../../../public/locales/it/trainer.json'
 import trainerEn from '../../../../public/locales/en/trainer.json'
 
@@ -462,22 +471,25 @@ export default async function TrainerDashboard() {
                                             </div>
                                             <Link
                                                 href={`/trainer/programs/${testWeek.program.id}`}
-                                                className="inline-flex items-center justify-center rounded-lg bg-white px-3 py-2 font-semibold text-brand-primary shadow-sm ring-1 ring-inset ring-brand-primary/20 transition-colors hover:bg-brand-primary/5"
+                                                className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-3 py-2 font-semibold text-brand-primary shadow-sm ring-1 ring-inset ring-brand-primary/20 transition-colors hover:bg-brand-primary/5"
                                             >
+                                                <Eye className="h-4 w-4" />
                                                 {t('trainerDashboard.goToProgram')}
                                             </Link>
                                             {isTestWeekCompleted ? (
                                                 <Link
                                                     href={`/trainer/programs/${testWeek.program.id}/tests?backContext=dashboard`}
-                                                    className="inline-flex items-center justify-center rounded-lg bg-orange-50 px-3 py-2 font-semibold text-orange-700 shadow-sm ring-1 ring-inset ring-orange-200 transition-colors hover:bg-orange-100"
+                                                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-orange-50 px-3 py-2 font-semibold text-orange-700 shadow-sm ring-1 ring-inset ring-orange-200 transition-colors hover:bg-orange-100"
                                                 >
+                                                    <FlaskConical className="h-4 w-4" />
                                                     {t('trainerDashboard.openResults')}
                                                 </Link>
                                             ) : (
                                                 <span
                                                     aria-disabled="true"
-                                                    className="inline-flex cursor-not-allowed items-center justify-center rounded-lg bg-gray-100 px-3 py-2 font-semibold text-gray-400 ring-1 ring-inset ring-gray-200"
+                                                    className="inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-gray-100 px-3 py-2 font-semibold text-gray-400 ring-1 ring-inset ring-gray-200"
                                                 >
+                                                    <FlaskConical className="h-4 w-4" />
                                                     {t('trainerDashboard.openResults')}
                                                 </span>
                                             )}
