@@ -601,7 +601,7 @@ export default function WorkoutDetailContent() {
                     variant={confirmModal.variant ?? 'danger'}
                 />
             )}
-            <div className="max-w-5xl mx-auto px-4 pb-28 pt-8 sm:px-6 sm:pb-8 lg:px-8">
+            <div className="max-w-5xl mx-auto px-4 pb-8 pt-8 sm:px-6 lg:px-8">
                 {/* Header */}
                 <div className="mb-8">
                     <Link
@@ -696,59 +696,75 @@ export default function WorkoutDetailContent() {
                             >
                                 {/* Exercise Header */}
                                 <div
-                                    className="relative cursor-pointer p-4 pr-12 transition-colors hover:bg-gray-50 sm:p-6 sm:pr-14"
+                                    className="relative cursor-pointer p-4 transition-colors hover:bg-gray-50 sm:p-6"
                                     onClick={() => toggleExercise(we.id)}
                                 >
-                                    <div className="mb-3 flex items-start gap-3">
+                                    <div className="mb-3 flex items-start gap-3 pr-8 sm:pr-10">
                                         <span className="text-xl font-bold text-gray-400 sm:text-2xl">
                                             {idx + 1}
                                         </span>
                                         <div className="min-w-0 flex-1">
-                                            <h3 className="text-lg font-bold text-gray-900 sm:text-xl">
-                                                {we.exercise.name}
-                                            </h3>
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <span
+                                                    className={`inline-flex rounded-full border px-1.5 py-0.5 text-[10px] font-semibold leading-none ${we.exercise.type === 'fundamental'
+                                                        ? 'border-red-300 bg-white text-red-700'
+                                                        : 'border-blue-300 bg-white text-blue-700'
+                                                        }`}
+                                                >
+                                                    {we.exercise.type === 'fundamental'
+                                                        ? t('workouts.tagFundamentalShort')
+                                                        : t('workouts.tagAccessoryShort')}
+                                                </span>
+                                                <h3 className="text-lg font-bold text-gray-900 sm:text-xl">
+                                                    {we.exercise.name}
+                                                </h3>
+                                            </div>
                                             {we.variant && (
                                                 <p className="mt-1 text-sm font-medium text-gray-600">
                                                     {we.variant}
                                                 </p>
                                             )}
                                             <div className="mt-2 flex flex-wrap gap-2">
-                                                <span
-                                                    className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${we.exercise.type === 'fundamental'
-                                                        ? 'border-red-300 bg-red-100 text-red-700'
-                                                        : 'border-blue-300 bg-blue-100 text-blue-700'
-                                                        }`}
-                                                >
-                                                    {we.exercise.type === 'fundamental'
-                                                        ? t('workouts.tagFundamental')
-                                                        : t('workouts.tagAccessory')}
-                                                </span>
-                                                <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-                                                    <Clock3 className="h-3.5 w-3.5" />
-                                                    {formatRestTime(we.restTime)}
-                                                </span>
                                                 {we.targetRpe !== null && we.targetRpe !== undefined && (
                                                     <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700">
                                                         <Gauge className="h-3.5 w-3.5" />
                                                         {we.targetRpe}
                                                     </span>
                                                 )}
+                                                <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                                                    <Clock3 className="h-3.5 w-3.5" />
+                                                    {formatRestTime(we.restTime)}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="mt-2 flex flex-wrap gap-2">
-                                        <div className="inline-flex min-w-0 items-center gap-1 rounded-lg bg-gray-100 px-3 py-1.5 text-sm">
-                                            <span className="text-xs uppercase tracking-wide text-gray-500">
-                                                {t('workouts.sets')} x {t('workouts.reps')}:
-                                            </span>
-                                            <span className="font-semibold text-gray-900">{we.sets} x {we.reps}</span>
-                                        </div>
-                                        <div className="inline-flex min-w-0 items-center gap-1 rounded-lg bg-gray-100 px-3 py-1.5 text-sm">
-                                            <span className="text-xs uppercase tracking-wide text-gray-500">{t('workouts.weightLabel')}:</span>
-                                            <span className={`min-w-0 truncate font-semibold ${calculatedWeightMissing ? 'text-gray-500' : 'text-gray-900'}`}>
-                                                {compactWeightValue}
-                                            </span>
+                                    <div className="mt-2 flex justify-center">
+                                        <div className="grid w-fit grid-cols-3 gap-2">
+                                            <div className="rounded-lg bg-gray-100 px-3 py-2 text-center">
+                                                <span className="block text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                                                    {t('workouts.sets')}
+                                                </span>
+                                                <span className="mt-1 block text-lg font-bold text-gray-900">
+                                                    {we.sets}
+                                                </span>
+                                            </div>
+                                            <div className="rounded-lg bg-gray-100 px-3 py-2 text-center">
+                                                <span className="block text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                                                    {t('workouts.reps')}
+                                                </span>
+                                                <span className="mt-1 block text-lg font-bold text-gray-900">
+                                                    {we.reps}
+                                                </span>
+                                            </div>
+                                            <div className="min-w-0 rounded-lg bg-gray-100 px-3 py-2 text-center">
+                                                <span className="block text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                                                    KG
+                                                </span>
+                                                <span className={`mt-1 block text-sm font-bold leading-snug ${calculatedWeightMissing ? 'text-gray-500' : 'text-gray-900'}`}>
+                                                    {compactWeightValue}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -991,7 +1007,7 @@ export default function WorkoutDetailContent() {
                 <button
                     onClick={handleSubmit}
                     disabled={submitting}
-                    className="hidden w-full items-center justify-center rounded-lg bg-green-500 px-6 py-4 text-lg font-bold text-white transition-colors hover:bg-green-600 disabled:bg-gray-400 md:flex"
+                    className="flex w-full items-center justify-center rounded-lg bg-green-500 px-6 py-4 text-lg font-bold text-white transition-colors hover:bg-green-600 disabled:bg-gray-400"
                 >
                     {submitting ? (
                         <LoadingSpinner size="sm" color="white" />
@@ -999,22 +1015,6 @@ export default function WorkoutDetailContent() {
                         t('workouts.completeWorkout')
                     )}
                 </button>
-            </div>
-
-            <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 p-4 md:hidden" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)' }}>
-                <div className="mx-auto max-w-5xl">
-                    <button
-                        onClick={handleSubmit}
-                        disabled={submitting}
-                        className="pointer-events-auto ml-auto flex w-full max-w-md items-center justify-center rounded-lg border border-green-600 bg-green-500 px-6 py-4 text-base font-bold text-white shadow-lg transition-colors hover:bg-green-600 disabled:bg-gray-400"
-                    >
-                        {submitting ? (
-                            <LoadingSpinner size="sm" color="white" />
-                        ) : (
-                            t('workouts.completeWorkout')
-                        )}
-                    </button>
-                </div>
             </div>
         </div>
     )

@@ -145,6 +145,8 @@
         "swipeHint": "Swipe to navigate between exercises ({{current}}/{{total}})",
         "tagFundamental": "Fundamental",
         "tagAccessory": "Accessory",
+        "tagFundamentalShort": "F",
+        "tagAccessoryShort": "A",
         "sets": "Sets",
         "reps": "Reps",
         "weightKg": "Weight (kg)",
