@@ -2,6 +2,7 @@
 
 import { WeekType } from '@prisma/client'
 import { ClipboardList, Flame, Wind } from 'lucide-react'
+import WeekTypeBadge from './WeekTypeBadge'
 
 interface WeekTypeBannerProps {
     weekType: WeekType
@@ -22,7 +23,7 @@ export default function WeekTypeBanner({ weekType, weekNumber, className = '' }:
             bg: 'bg-gray-100',
             border: 'border-gray-300',
             text: 'text-gray-700',
-            icon: <ClipboardList className="w-7 h-7" />,
+            icon: <ClipboardList className="h-6 w-6 sm:h-7 sm:w-7" />,
             label: 'Settimana Standard',
             description: 'Allenamento normale secondo programma',
         },
@@ -30,7 +31,7 @@ export default function WeekTypeBanner({ weekType, weekNumber, className = '' }:
             bg: 'bg-week-test-light',
             border: 'border-week-test',
             text: 'text-week-test-dark',
-            icon: <Flame className="w-7 h-7" />,
+            icon: <Flame className="h-6 w-6 sm:h-7 sm:w-7" />,
             label: 'Settimana Test',
             description: 'Valutazione massimali e test',
         },
@@ -38,7 +39,7 @@ export default function WeekTypeBanner({ weekType, weekNumber, className = '' }:
             bg: 'bg-week-deload-light',
             border: 'border-week-deload',
             text: 'text-week-deload-dark',
-            icon: <Wind className="w-7 h-7" />,
+            icon: <Wind className="h-6 w-6 sm:h-7 sm:w-7" />,
             label: 'Settimana Scarico',
             description: 'Recupero e rigenerazione',
         },
@@ -49,35 +50,38 @@ export default function WeekTypeBanner({ weekType, weekNumber, className = '' }:
     return (
         <div
             className={`
-                flex items-center gap-3 rounded-lg border-2 p-4
+                rounded-lg border-2 p-3 sm:p-4
                 ${config.bg} ${config.border} ${config.text}
                 ${className}
             `}
         >
-            {/* Icon */}
-            <span className="flex-shrink-0" aria-label={config.label}>
-                {config.icon}
-            </span>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <div className="flex min-w-0 flex-1 items-start gap-3 sm:items-center">
+                    {/* Icon */}
+                    <span className="mt-0.5 flex-shrink-0 sm:mt-0" aria-label={config.label}>
+                        {config.icon}
+                    </span>
 
-            {/* Content */}
-            <div className="flex-1">
-                <h3 className="font-bold">
-                    {config.label} - Settimana {weekNumber}
-                </h3>
-                <p className="text-sm opacity-90">{config.description}</p>
+                    {/* Content */}
+                    <div className="min-w-0 flex-1">
+                        <h3 className="text-sm leading-tight font-bold sm:text-base">
+                            {config.label} - Settimana {weekNumber}
+                        </h3>
+                        <p className="mt-0.5 text-xs opacity-90 sm:text-sm">{config.description}</p>
+                    </div>
+                </div>
+
+                <div className="self-start sm:self-center">
+                    <WeekTypeBadge
+                        weekType={weekType}
+                        labels={{
+                            normal: 'Standard',
+                            test: 'Test',
+                            deload: 'Scarico',
+                        }}
+                    />
+                </div>
             </div>
-
-            {/* Week Type Badge */}
-            <span
-                className={`
-                    rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide
-                    ${weekType === 'test' ? 'bg-week-test text-white' : ''}
-                    ${weekType === 'deload' ? 'bg-week-deload text-white' : ''}
-                    ${weekType === 'normal' ? 'bg-gray-300 text-gray-700' : ''}
-                `}
-            >
-                {weekType}
-            </span>
         </div>
     )
 }
