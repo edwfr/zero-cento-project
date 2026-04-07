@@ -4,6 +4,7 @@ import { ReactNode, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useTranslation } from 'react-i18next'
 import { createClient } from '@/lib/supabase-client'
 import {
     Home,
@@ -30,33 +31,34 @@ interface DashboardLayoutProps {
     children: ReactNode
 }
 
-const NAV_ITEMS: Record<string, { href: string; icon: ReactNode; title: string }[]> = {
+const NAV_ITEMS: Record<string, { href: string; icon: ReactNode; titleKey: string }[]> = {
     trainer: [
-        { href: '/trainer/dashboard', icon: <Home className="w-5 h-5" />, title: 'Dashboard' },
-        { href: '/trainer/trainees', icon: <Users className="w-5 h-5" />, title: 'I Miei Atleti' },
-        { href: '/trainer/programs', icon: <ClipboardList className="w-5 h-5" />, title: 'Programmi' },
-        { href: '/trainer/exercises', icon: <Dumbbell className="w-5 h-5" />, title: 'Libreria Esercizi' },
-        { href: '/profile', icon: <User className="w-5 h-5" />, title: 'Il Mio Profilo' },
+        { href: '/trainer/dashboard', icon: <Home className="w-5 h-5" />, titleKey: 'navigation.dashboard' },
+        { href: '/trainer/trainees', icon: <Users className="w-5 h-5" />, titleKey: 'navigation.myAthletes' },
+        { href: '/trainer/programs', icon: <ClipboardList className="w-5 h-5" />, titleKey: 'navigation.programs' },
+        { href: '/trainer/exercises', icon: <Dumbbell className="w-5 h-5" />, titleKey: 'navigation.exercises' },
+        { href: '/profile', icon: <User className="w-5 h-5" />, titleKey: 'navigation.myProfile' },
     ],
     trainee: [
-        { href: '/trainee/dashboard', icon: <Home className="w-5 h-5" />, title: 'Dashboard' },
-        { href: '/trainee/programs/current', icon: <CalendarDays className="w-5 h-5" />, title: 'Programma Attivo' },
-        { href: '/trainee/records', icon: <Trophy className="w-5 h-5" />, title: 'I Miei Massimali' },
-        { href: '/trainee/history', icon: <BarChart2 className="w-5 h-5" />, title: 'Storico Allenamenti' },
-        { href: '/profile', icon: <User className="w-5 h-5" />, title: 'Il Mio Profilo' },
+        { href: '/trainee/dashboard', icon: <Home className="w-5 h-5" />, titleKey: 'navigation.dashboard' },
+        { href: '/trainee/programs/current', icon: <CalendarDays className="w-5 h-5" />, titleKey: 'navigation.activeProgram' },
+        { href: '/trainee/records', icon: <Trophy className="w-5 h-5" />, titleKey: 'navigation.myRecords' },
+        { href: '/trainee/history', icon: <BarChart2 className="w-5 h-5" />, titleKey: 'navigation.trainingHistory' },
+        { href: '/profile', icon: <User className="w-5 h-5" />, titleKey: 'navigation.myProfile' },
     ],
     admin: [
-        { href: '/admin/dashboard', icon: <Home className="w-5 h-5" />, title: 'Dashboard' },
-        { href: '/admin/users', icon: <Users className="w-5 h-5" />, title: 'Gestione Utenti' },
-        { href: '/admin/exercises', icon: <Dumbbell className="w-5 h-5" />, title: 'Libreria Esercizi' },
-        { href: '/admin/programs', icon: <ClipboardList className="w-5 h-5" />, title: 'Programmi Globali' },
-        { href: '/admin/statistics', icon: <BarChart2 className="w-5 h-5" />, title: 'Statistiche & Report' },
-        { href: '/admin/settings', icon: <Settings className="w-5 h-5" />, title: 'Impostazioni' },
+        { href: '/admin/dashboard', icon: <Home className="w-5 h-5" />, titleKey: 'navigation.dashboard' },
+        { href: '/admin/users', icon: <Users className="w-5 h-5" />, titleKey: 'navigation.userManagement' },
+        { href: '/admin/exercises', icon: <Dumbbell className="w-5 h-5" />, titleKey: 'navigation.exercises' },
+        { href: '/admin/programs', icon: <ClipboardList className="w-5 h-5" />, titleKey: 'navigation.globalPrograms' },
+        { href: '/admin/statistics', icon: <BarChart2 className="w-5 h-5" />, titleKey: 'navigation.statisticsReports' },
+        { href: '/admin/settings', icon: <Settings className="w-5 h-5" />, titleKey: 'navigation.settings' },
     ],
 }
 
 export default function DashboardLayout({ user, children }: DashboardLayoutProps) {
     const router = useRouter()
+    const { t } = useTranslation('navigation')
     const [menuOpen, setMenuOpen] = useState(false)
 
     const handleLogout = async () => {
@@ -66,6 +68,7 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
     }
 
     const navItems = NAV_ITEMS[user.role] ?? []
+    const translatedRole = t(`roles.${user.role}`, { defaultValue: user.role })
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -78,8 +81,8 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
                             <button
                                 onClick={() => setMenuOpen(true)}
                                 className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors"
-                                title="Menu di navigazione"
-                                aria-label="Apri menu di navigazione"
+                                title={t('navigation.navigationMenu')}
+                                aria-label={t('navigation.openNavigationMenu')}
                             >
                                 <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -90,7 +93,7 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
                             <Link href={`/${user.role}/dashboard`} className="flex items-center space-x-3 flex-shrink-0">
                                 <Image
                                     src="/images/logo/logo.png"
-                                    alt="ZeroCento Logo"
+                                    alt={t('navigation.logoAlt')}
                                     width={120}
                                     height={40}
                                     className="h-10 w-auto"
@@ -111,14 +114,14 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
                                 <div className="font-medium text-gray-900">
                                     {user.firstName} {user.lastName}
                                 </div>
-                                <div className="text-gray-500 capitalize">{user.role}</div>
+                                <div className="text-gray-500 capitalize">{translatedRole}</div>
                             </div>
 
                             {/* Profile Icon */}
                             <Link
                                 href="/profile"
                                 className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-                                title="Il mio profilo"
+                                title={t('navigation.profileTooltip')}
                             >
                                 <svg
                                     className="w-6 h-6 text-gray-600"
@@ -139,7 +142,7 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
                             <button
                                 onClick={handleLogout}
                                 className="flex items-center justify-center w-10 h-10 rounded-full bg-red-100 hover:bg-red-200 transition-colors"
-                                title="Logout"
+                                title={t('navigation.logout')}
                             >
                                 <svg
                                     className="w-6 h-6 text-red-600"
@@ -176,12 +179,12 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
                         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 bg-gray-50">
                             <div>
                                 <p className="font-bold text-gray-900">{user.firstName} {user.lastName}</p>
-                                <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+                                <p className="text-xs text-gray-500 capitalize">{translatedRole}</p>
                             </div>
                             <button
                                 onClick={() => setMenuOpen(false)}
                                 className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-200 transition-colors"
-                                aria-label="Chiudi menu"
+                                aria-label={t('navigation.closeMenu')}
                             >
                                 <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -191,7 +194,7 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
 
                         {/* Nav Items */}
                         <nav className="flex-1 overflow-y-auto py-4 px-3">
-                            <p className="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Navigazione</p>
+                            <p className="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">{t('navigation.navigationLabel')}</p>
                             <ul className="space-y-1">
                                 {navItems.map((item) => (
                                     <li key={item.href}>
@@ -201,7 +204,7 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
                                             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-brand-primary/10 hover:text-brand-primary font-medium transition-colors"
                                         >
                                             <span className="w-5 h-5 flex-shrink-0">{item.icon}</span>
-                                            <span>{item.title}</span>
+                                            <span>{t(item.titleKey)}</span>
                                         </Link>
                                     </li>
                                 ))}
@@ -217,7 +220,7 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                                 </svg>
-                                <span>Logout</span>
+                                <span>{t('navigation.logout')}</span>
                             </button>
                         </div>
                     </aside>

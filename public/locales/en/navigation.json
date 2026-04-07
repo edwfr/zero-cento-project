@@ -1,28 +1,42 @@
 {
-"navigation": {
-"dashboard":"Dashboard",
-"programs":"Programs",
-"exercises":"Exercise Library",
-"trainees":"Trainees",
-"settings":"Settings",
-"logout":"Logout",
-"myProfile":"My Profile",
-"activeProgram":"Active Program",
-"globalPrograms":"Global Programs",
-"myRecords":"My Personal Records",
-"trainingHistory":"Training History"
- },
-"breadcrumbs": {
-"backToLibrary":"Back to library",
-"backToAthletes":"Back to athletes",
-"backToAthleteProfile":"Back to athlete profile",
-"backToPrograms":"Back to programs",
-"backToProgram":"Back to Program",
-"backToHome":"Back to Home",
-"backToWeeks":"Back to weeks overview",
-"goToAthletesList":"Go to Athletes List",
-"nextPublish":"Next: Publish Program",
-"saveContinuePublish":"Save and Continue to Publication",
-"backToEdit":"Back to edit"
- }
+    "navigation": {
+        "dashboard": "Dashboard",
+        "programs": "Programs",
+        "myAthletes": "My Athletes",
+        "exercises": "Exercise Library",
+        "trainees": "Trainees",
+        "settings": "Settings",
+        "userManagement": "User Management",
+        "statisticsReports": "Statistics & Reports",
+        "logout": "Logout",
+        "navigationMenu": "Navigation menu",
+        "openNavigationMenu": "Open navigation menu",
+        "closeMenu": "Close menu",
+        "navigationLabel": "Navigation",
+        "profileTooltip": "My profile",
+        "logoAlt": "ZeroCento Logo",
+        "myProfile": "My Profile",
+        "activeProgram": "Active Program",
+        "globalPrograms": "Global Programs",
+        "myRecords": "My Personal Records",
+        "trainingHistory": "Training History"
+    },
+    "roles": {
+        "admin": "admin",
+        "trainer": "trainer",
+        "trainee": "trainee"
+    },
+    "breadcrumbs": {
+        "backToLibrary": "Back to library",
+        "backToAthletes": "Back to athletes",
+        "backToAthleteProfile": "Back to athlete profile",
+        "backToPrograms": "Back to programs",
+        "backToProgram": "Back to Program",
+        "backToHome": "Back to Home",
+        "backToWeeks": "Back to weeks overview",
+        "goToAthletesList": "Go to Athletes List",
+        "nextPublish": "Next: Publish Program",
+        "saveContinuePublish": "Save and Continue to Publication",
+        "backToEdit": "Back to edit"
+    }
 }

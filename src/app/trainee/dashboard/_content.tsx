@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { NavigationCard, ProgressBar, SkeletonDashboard } from '@/components'
-import { Dumbbell, Trophy, BarChart2, User, CalendarDays, ClipboardList, Play } from 'lucide-react'
+import { Dumbbell, Trophy, BarChart2, User, ClipboardList, Play } from 'lucide-react'
 
 type ProgramStatus = 'draft' | 'active' | 'completed'
 
@@ -274,13 +274,6 @@ export default function TraineeDashboardContent() {
             <div className="mb-8">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">{t('trainee:dashboard.sections')}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <NavigationCard
-                        href="/trainee/programs/current"
-                        icon={<CalendarDays className="w-6 h-6" />}
-                        title={t('navigation:navigation.activeProgram')}
-                        description={t('trainee:dashboard.activeProgramDesc')}
-                        color="primary"
-                    />
                     <NavigationCard
                         href="/trainee/records"
                         icon={<Trophy className="w-6 h-6" />}

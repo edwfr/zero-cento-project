@@ -2,15 +2,29 @@
     "navigation": {
         "dashboard": "Dashboard",
         "programs": "Programmi",
+        "myAthletes": "I Miei Atleti",
         "exercises": "Libreria Esercizi",
         "trainees": "Atleti",
         "settings": "Impostazioni",
+        "userManagement": "Gestione Utenti",
+        "statisticsReports": "Statistiche & Report",
         "logout": "Esci",
+        "navigationMenu": "Menu di navigazione",
+        "openNavigationMenu": "Apri menu di navigazione",
+        "closeMenu": "Chiudi menu",
+        "navigationLabel": "Navigazione",
+        "profileTooltip": "Il mio profilo",
+        "logoAlt": "ZeroCento Logo",
         "myProfile": "Il Mio Profilo",
         "activeProgram": "Programma Attivo",
         "globalPrograms": "Programmi Globali",
         "myRecords": "I Miei Massimali",
         "trainingHistory": "Storico Programmi"
+    },
+    "roles": {
+        "admin": "admin",
+        "trainer": "trainer",
+        "trainee": "trainee"
     },
     "breadcrumbs": {
         "backToLibrary": "Torna alla libreria",
