@@ -342,6 +342,29 @@ function buildEditableRow(
     }
 }
 
+function normalizeOptionalText(value: string | null): string | null {
+    const trimmedValue = value?.trim() ?? ''
+    return trimmedValue.length > 0 ? trimmedValue : null
+}
+
+function areEditableRowsEquivalent(
+    left: EditableWorkoutExerciseRow,
+    right: EditableWorkoutExerciseRow
+): boolean {
+    return (
+        left.exerciseId === right.exerciseId &&
+        left.variant.trim() === right.variant.trim() &&
+        left.sets.trim() === right.sets.trim() &&
+        left.reps.trim() === right.reps.trim() &&
+        left.targetRpe.trim() === right.targetRpe.trim() &&
+        left.weight.trim() === right.weight.trim() &&
+        left.isWarmup === right.isWarmup &&
+        left.order === right.order &&
+        left.restTime === right.restTime &&
+        normalizeOptionalText(left.notes) === normalizeOptionalText(right.notes)
+    )
+}
+
 export default function EditProgramContent({ readOnly = false }: EditProgramContentProps) {
     const params = useParams()
     const searchParams = useSearchParams()
@@ -1618,6 +1641,53 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         [draftRowIdsByWorkout, rowStateById]
     )
 
+    const hasWorkoutUnsavedChanges = useCallback(
+        (workout: Workout): boolean => {
+            const persistedRows = workout.workoutExercises
+                .map((workoutExercise) => buildEditableRow(workout.id, workoutExercise))
+                .sort((left, right) => left.order - right.order)
+
+            const currentRows = [...getWorkoutRows(workout)].sort(
+                (left, right) => left.order - right.order
+            )
+
+            if (currentRows.some((row) => row.isDraft)) {
+                return true
+            }
+
+            if (currentRows.length !== persistedRows.length) {
+                return true
+            }
+
+            const persistedRowsById = new Map(
+                persistedRows.map((row) => [row.id, row] as const)
+            )
+
+            return currentRows.some((row) => {
+                const persistedRow = persistedRowsById.get(row.id)
+
+                if (!persistedRow) {
+                    return true
+                }
+
+                return !areEditableRowsEquivalent(row, persistedRow)
+            })
+        },
+        [getWorkoutRows]
+    )
+
+    const hasUnsavedWorkoutChanges = useMemo(() => {
+        if (!program) {
+            return false
+        }
+
+        return program.weeks.some((week) =>
+            week.workouts.some((workout) => hasWorkoutUnsavedChanges(workout))
+        )
+    }, [hasWorkoutUnsavedChanges, program])
+
+    const canProceedToReview = completedWorkouts === totalWorkouts && !hasUnsavedWorkoutChanges
+
     const applyStructureToAllWeeks = useCallback(() => {
         if (!program || readOnly) {
             return
@@ -2370,6 +2440,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                 const workoutRows = [...getWorkoutRows(workout)].sort(
                                                     (left, right) => left.order - right.order
                                                 )
+                                                const workoutHasUnsavedChanges =
+                                                    hasWorkoutUnsavedChanges(workout)
                                                 const effectiveWeightPreviewByRowId: Record<string, number | null> = {}
                                                 const persistedEffectiveWeightByRowId =
                                                     workout.workoutExercises.reduce(
@@ -2434,7 +2506,13 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                         onClick={() => {
                                                                             void saveWorkoutRows(workout)
                                                                         }}
-                                                                        disabled={Boolean(savingRowId || deletingRowId || savingWorkoutId)}
+                                                                        disabled={
+                                                                            Boolean(
+                                                                                savingRowId ||
+                                                                                deletingRowId ||
+                                                                                savingWorkoutId
+                                                                            ) || !workoutHasUnsavedChanges
+                                                                        }
                                                                         className="inline-flex items-center gap-2 rounded-lg bg-brand-primary px-3 py-2 text-sm font-semibold text-white hover:bg-brand-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
                                                                         title={t('editProgram.saveRowTitle')}
                                                                     >
@@ -2876,7 +2954,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                         <div className="flex space-x-4 mt-8">
                             <Link
                                 href={reviewProgramHref}
-                                className={`flex-1 py-3 px-6 rounded-lg font-semibold text-center transition-colors ${completedWorkouts === totalWorkouts
+                                className={`flex-1 py-3 px-6 rounded-lg font-semibold text-center transition-colors ${canProceedToReview
                                     ? 'bg-brand-primary hover:bg-brand-primary/90 text-white'
                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                     }`}
@@ -2884,6 +2962,12 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                     if (completedWorkouts < totalWorkouts) {
                                         event.preventDefault()
                                         showToast(t('editProgram.configureAllFirst'), 'warning')
+                                        return
+                                    }
+
+                                    if (hasUnsavedWorkoutChanges) {
+                                        event.preventDefault()
+                                        showToast(t('editProgram.saveAllWorkoutsFirst'), 'warning')
                                     }
                                 }}
                             >

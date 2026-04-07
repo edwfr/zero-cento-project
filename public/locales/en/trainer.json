@@ -400,6 +400,7 @@
         "nextReview": "Next: Review",
         "saveDraft": "Save Draft",
         "configureAllFirst": "Configure all workouts before publishing",
+        "saveAllWorkoutsFirst": "Save all workouts before going to review",
         "errorLoading": "Error loading program",
         "notFound": "Program not found",
         "errorEditWeek": "Error editing week",

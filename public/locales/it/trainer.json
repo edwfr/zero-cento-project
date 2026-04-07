@@ -400,6 +400,7 @@
         "nextReview": "Avanti: Riepilogo",
         "saveDraft": "Salva Bozza",
         "configureAllFirst": "Configura tutti i workout prima di pubblicare",
+        "saveAllWorkoutsFirst": "Salva tutti i workout prima di passare al riepilogo",
         "errorLoading": "Errore caricamento programma",
         "notFound": "Programma non trovato",
         "errorEditWeek": "Errore modifica settimana",

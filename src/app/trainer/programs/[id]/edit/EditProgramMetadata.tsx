@@ -119,12 +119,10 @@ export default function EditProgramMetadata({
         return (
             <button
                 onClick={handleOpen}
-                className="text-sm text-brand-primary hover:text-brand-primary/80 font-semibold"
+                className="inline-flex items-center gap-2 rounded-lg border border-brand-primary/20 bg-brand-primary/10 px-3 py-2 text-sm font-semibold text-brand-primary transition-colors hover:bg-brand-primary/15"
             >
-                <span className="inline-flex items-center gap-1.5">
-                    <Pencil className="w-4 h-4" />
-                    Modifica Info Programma
-                </span>
+                <Pencil className="w-4 h-4" />
+                Modifica Info Programma
             </button>
         )
     }

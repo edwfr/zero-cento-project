@@ -128,7 +128,19 @@ export async function PUT(
         const existing = await prisma.trainingProgram.findUnique({
             where: { id: programId },
             include: {
-                weeks: true,
+                weeks: {
+                    include: {
+                        workouts: {
+                            select: {
+                                id: true,
+                                dayIndex: true,
+                            },
+                        },
+                    },
+                    orderBy: {
+                        weekNumber: 'asc',
+                    },
+                },
             },
         })
 
@@ -178,41 +190,151 @@ export async function PUT(
             }
         }
 
-        // Update program (basic fields only, weeks/workouts handled separately)
-        const program = await prisma.trainingProgram.update({
-            where: { id: programId },
-            data: {
-                ...(title && { title }),
-                ...(traineeId && { traineeId }),
-                ...(isSbdProgram !== undefined && { isSbdProgram }),
-                ...(durationWeeks !== undefined && { durationWeeks }),
-                ...(workoutsPerWeek !== undefined && { workoutsPerWeek }),
-            },
-            include: {
-                trainer: {
-                    select: {
-                        id: true,
-                        firstName: true,
-                        lastName: true,
+        const targetDurationWeeks = durationWeeks ?? existing.durationWeeks
+        const targetWorkoutsPerWeek = workoutsPerWeek ?? existing.workoutsPerWeek
+        const existingWeeksCount = existing.weeks.length
+        const maxExistingWorkoutsPerWeek = existing.weeks.reduce(
+            (max, week) => Math.max(max, week.workouts.length),
+            0
+        )
+
+        if (targetDurationWeeks < existingWeeksCount) {
+            return apiError(
+                'VALIDATION_ERROR',
+                `Cannot reduce durationWeeks below existing configured weeks (${existingWeeksCount})`,
+                400,
+                undefined,
+                'validation.invalidInput'
+            )
+        }
+
+        if (targetWorkoutsPerWeek < maxExistingWorkoutsPerWeek) {
+            return apiError(
+                'VALIDATION_ERROR',
+                `Cannot reduce workoutsPerWeek below existing configured workouts (${maxExistingWorkoutsPerWeek})`,
+                400,
+                undefined,
+                'validation.invalidInput'
+            )
+        }
+
+        // Update metadata and keep relational structure aligned to declared duration/workouts.
+        const program = await prisma.$transaction(async (tx) => {
+            await tx.trainingProgram.update({
+                where: { id: programId },
+                data: {
+                    ...(title !== undefined && { title }),
+                    ...(traineeId !== undefined && { traineeId }),
+                    ...(isSbdProgram !== undefined && { isSbdProgram }),
+                    ...(durationWeeks !== undefined && { durationWeeks }),
+                    ...(workoutsPerWeek !== undefined && { workoutsPerWeek }),
+                },
+            })
+
+            let weeks = await tx.week.findMany({
+                where: { programId },
+                include: {
+                    workouts: {
+                        select: {
+                            id: true,
+                            dayIndex: true,
+                        },
                     },
                 },
-                trainee: {
-                    select: {
-                        id: true,
-                        firstName: true,
-                        lastName: true,
+                orderBy: {
+                    weekNumber: 'asc',
+                },
+            })
+
+            if (weeks.length < targetDurationWeeks) {
+                const existingWeekNumbers = new Set(weeks.map((week) => week.weekNumber))
+                const weeksToCreate: Array<{ programId: string; weekNumber: number }> = []
+
+                for (let weekNumber = 1; weekNumber <= targetDurationWeeks; weekNumber += 1) {
+                    if (!existingWeekNumbers.has(weekNumber)) {
+                        weeksToCreate.push({
+                            programId,
+                            weekNumber,
+                        })
+                    }
+                }
+
+                if (weeksToCreate.length > 0) {
+                    await tx.week.createMany({
+                        data: weeksToCreate,
+                    })
+
+                    weeks = await tx.week.findMany({
+                        where: { programId },
+                        include: {
+                            workouts: {
+                                select: {
+                                    id: true,
+                                    dayIndex: true,
+                                },
+                            },
+                        },
+                        orderBy: {
+                            weekNumber: 'asc',
+                        },
+                    })
+                }
+            }
+
+            for (const week of weeks) {
+                const existingWorkoutDayIndexes = new Set(
+                    week.workouts.map((workout) => workout.dayIndex)
+                )
+                const workoutsToCreate: Array<{ weekId: string; dayIndex: number }> = []
+
+                for (let dayIndex = 1; dayIndex <= targetWorkoutsPerWeek; dayIndex += 1) {
+                    if (!existingWorkoutDayIndexes.has(dayIndex)) {
+                        workoutsToCreate.push({
+                            weekId: week.id,
+                            dayIndex,
+                        })
+                    }
+                }
+
+                if (workoutsToCreate.length > 0) {
+                    await tx.workout.createMany({
+                        data: workoutsToCreate,
+                    })
+                }
+            }
+
+            return tx.trainingProgram.findUnique({
+                where: { id: programId },
+                include: {
+                    trainer: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
+                        },
+                    },
+                    trainee: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
+                        },
+                    },
+                    weeks: {
+                        include: {
+                            workouts: true,
+                        },
+                        orderBy: {
+                            weekNumber: 'asc',
+                        },
                     },
                 },
-                weeks: {
-                    include: {
-                        workouts: true,
-                    },
-                    orderBy: {
-                        weekNumber: 'asc',
-                    },
-                },
-            },
+            })
         })
+
+        if (!program) {
+            return apiError('NOT_FOUND', 'Program not found', 404, undefined, 'program.notFound')
+        }
 
         logger.info({ programId, userId: session.user.id }, 'Program updated successfully')
 

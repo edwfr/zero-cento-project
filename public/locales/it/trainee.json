@@ -7,7 +7,7 @@
         "contactTrainer": "Contattalo per iniziare!",
         "viewRecords": "Visualizza i Tuoi Massimali",
         "myRecords": "I Miei Massimali",
-        "recordsDescription": "Visualizza e aggiorna i tuoi personal record su ogni esercizio",
+        "recordsDescription": "Visualizza i tuoi PR",
         "viewCompleted": "Consulta i programmi assegnati, completati e i feedback passati",
         "noCompletedPrograms": "Nessun Programma Completato",
         "profileDescription": "Aggiorna le tue informazioni personali e le impostazioni.",
@@ -155,7 +155,7 @@
     "records": {
         "backToDashboard": "Torna alla Dashboard",
         "title": "I Tuoi Massimali",
-        "description": "Visualizza i massimali inseriti dal tuo trainer e i calcoli 1RM",
+        "description": "Visualizza i tuoi PR",
         "noRecords": "Nessun Massimale Registrato",
         "noRecordsDesc": "Il tuo trainer non ha ancora registrato massimali per questo profilo",
         "searchLabel": "Cerca Esercizio",
