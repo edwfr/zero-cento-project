@@ -16,6 +16,12 @@ const formatNumberList = (values: Array<number>): string => {
     return values.map((value) => `${value}`).join(' / ')
 }
 
+const normalizeOptionalText = (value: string | null | undefined): string | null => {
+    if (!value) return null
+    const normalized = value.trim()
+    return normalized.length > 0 ? normalized : null
+}
+
 /**
  * GET /api/programs/[id]/test-results
  * Returns trainee test-week results grouped by week and workout.
@@ -129,10 +135,8 @@ export async function GET(
             weekId: week.id,
             weekNumber: week.weekNumber,
             startDate: week.startDate,
-            workouts: week.workouts.map((workout) => ({
-                workoutId: workout.id,
-                dayIndex: workout.dayIndex,
-                rows: workout.workoutExercises.map((workoutExercise) => {
+            workouts: week.workouts.map((workout) => {
+                const rows = workout.workoutExercises.map((workoutExercise) => {
                     const latestFeedback = workoutExercise.exerciseFeedbacks[0] ?? null
                     const completedSets = (latestFeedback?.setsPerformed ?? []).filter(
                         (set: SetPerformedEntry) => set.completed
@@ -160,11 +164,26 @@ export async function GET(
                         reps: repsValue,
                         rpe: latestFeedback?.actualRpe ?? workoutExercise.targetRpe ?? null,
                         weightUsed: weightValue,
-                        comments: latestFeedback?.notes ?? workoutExercise.notes ?? null,
+                        comments: normalizeOptionalText(latestFeedback?.notes),
                         feedbackDate: latestFeedback?.date ?? null,
                     }
-                }),
-            })),
+                })
+
+                const comments = Array.from(
+                    new Set(
+                        rows
+                            .map((row) => row.comments)
+                            .filter((comment): comment is string => comment !== null)
+                    )
+                )
+
+                return {
+                    workoutId: workout.id,
+                    dayIndex: workout.dayIndex,
+                    comments,
+                    rows,
+                }
+            }),
         }))
 
         logger.info({ programId, userId: session.user.id }, 'Program test results fetched successfully')

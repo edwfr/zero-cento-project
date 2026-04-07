@@ -26,6 +26,7 @@ interface TestResultRow {
 interface TestResultWorkout {
     workoutId: string
     dayIndex: number
+    comments: string[]
     rows: TestResultRow[]
 }
 
@@ -236,7 +237,7 @@ export default function ProgramTestResultsContent() {
     if (loading) {
         return (
             <div className="px-4 sm:px-6 lg:px-8 py-8">
-                <SkeletonTable rows={6} columns={6} />
+                <SkeletonTable rows={6} columns={5} />
             </div>
         )
     }
@@ -316,70 +317,108 @@ export default function ProgramTestResultsContent() {
                             </div>
 
                             <div className="space-y-6">
-                                {week.workouts.map((workout) => (
-                                    <div key={workout.workoutId}>
-                                        <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                                            {t('testResults.workoutTitle', { workout: workout.dayIndex })}
-                                        </h3>
+                                {week.workouts.map((workout) => {
+                                    const workoutComments = (
+                                        Array.isArray(workout.comments)
+                                            ? workout.comments
+                                            : Array.from(
+                                                new Set(
+                                                    workout.rows
+                                                        .map((row) => row.comments?.trim())
+                                                        .filter((comment): comment is string => !!comment)
+                                                )
+                                            )
+                                    ).filter((comment): comment is string => typeof comment === 'string' && comment.trim().length > 0)
 
-                                        {workout.rows.length === 0 ? (
-                                            <div className="rounded-lg border border-dashed border-gray-300 px-4 py-6 text-sm text-gray-500">
-                                                {t('testResults.noRowsForWorkout')}
-                                            </div>
-                                        ) : (
-                                            <div className="overflow-x-auto border border-gray-200 rounded-lg">
-                                                <table className="min-w-full divide-y divide-gray-200">
-                                                    <thead className="bg-gray-50">
-                                                        <tr>
-                                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                                                {t('testResults.colExercise')}
-                                                            </th>
-                                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                                                {t('testResults.colSets')}
-                                                            </th>
-                                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                                                {t('testResults.colReps')}
-                                                            </th>
-                                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                                                {t('testResults.colRpe')}
-                                                            </th>
-                                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                                                {t('testResults.colWeight')}
-                                                            </th>
-                                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                                                {t('testResults.colComments')}
-                                                            </th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="bg-white divide-y divide-gray-200">
-                                                        {workout.rows.map((row) => (
-                                                            <tr key={row.workoutExerciseId} className="hover:bg-gray-50 transition-colors">
-                                                                <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                                                                    {row.exerciseName}
-                                                                </td>
-                                                                <td className="px-4 py-3 text-sm text-gray-700">
-                                                                    {row.sets}
-                                                                </td>
-                                                                <td className="px-4 py-3 text-sm text-gray-700">
-                                                                    {row.reps}
-                                                                </td>
-                                                                <td className="px-4 py-3 text-sm text-gray-700">
-                                                                    {row.rpe !== null ? Number(row.rpe).toFixed(1) : '-'}
-                                                                </td>
-                                                                <td className="px-4 py-3 text-sm text-gray-700">
-                                                                    {row.weightUsed}
-                                                                </td>
-                                                                <td className="px-4 py-3 text-sm text-gray-700 max-w-[340px] break-words">
-                                                                    {row.comments?.trim() || t('testResults.noComments')}
-                                                                </td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
+                                    return (
+                                        <div key={workout.workoutId}>
+                                            <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                                                {t('testResults.workoutTitle', { workout: workout.dayIndex })}
+                                            </h3>
+
+                                            {workout.rows.length === 0 ? (
+                                                <div className="rounded-lg border border-dashed border-gray-300 px-4 py-6 text-sm text-gray-500">
+                                                    {t('testResults.noRowsForWorkout')}
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="overflow-x-auto border border-gray-200 rounded-lg">
+                                                        <table className="min-w-full divide-y divide-gray-200">
+                                                            <thead className="bg-gray-50">
+                                                                <tr>
+                                                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                                        {t('testResults.colExercise')}
+                                                                    </th>
+                                                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                                        {t('testResults.colSets')}
+                                                                    </th>
+                                                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                                        {t('testResults.colReps')}
+                                                                    </th>
+                                                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                                        {t('testResults.colRpe')}
+                                                                    </th>
+                                                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                                        {t('testResults.colWeight')}
+                                                                    </th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody className="bg-white divide-y divide-gray-200">
+                                                                {workout.rows.map((row) => (
+                                                                    <tr key={row.workoutExerciseId} className="hover:bg-gray-50 transition-colors">
+                                                                        <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                                                                            {row.exerciseName}
+                                                                        </td>
+                                                                        <td className="px-4 py-3 text-sm text-gray-700">
+                                                                            {row.sets}
+                                                                        </td>
+                                                                        <td className="px-4 py-3 text-sm text-gray-700">
+                                                                            {row.reps}
+                                                                        </td>
+                                                                        <td className="px-4 py-3 text-sm text-gray-700">
+                                                                            {row.rpe !== null ? Number(row.rpe).toFixed(1) : '-'}
+                                                                        </td>
+                                                                        <td className="px-4 py-3 text-sm text-gray-700">
+                                                                            {row.weightUsed}
+                                                                        </td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+
+                                                    <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                                                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                            {t('testResults.colComments')}
+                                                        </p>
+                                                        {workoutComments.length > 0 ? (
+                                                            workoutComments.length === 1 ? (
+                                                                <p className="mt-1 text-sm text-gray-700 break-words">
+                                                                    {workoutComments[0]}
+                                                                </p>
+                                                            ) : (
+                                                                <ul className="mt-2 space-y-1 list-disc pl-5">
+                                                                    {workoutComments.map((comment, index) => (
+                                                                        <li
+                                                                            key={`${workout.workoutId}-comment-${index}`}
+                                                                            className="text-sm text-gray-700 break-words"
+                                                                        >
+                                                                            {comment}
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            )
+                                                        ) : (
+                                                            <p className="mt-1 text-sm text-gray-500">
+                                                                {t('testResults.noComments')}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    )
+                                })}
                             </div>
                         </section>
                     ))}
