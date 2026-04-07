@@ -94,6 +94,22 @@ const formatRestTime = (restTime: RestTime): string => {
     return labels[restTime] ?? '-'
 }
 
+const formatWeightValue = (value: number): string => {
+    if (!Number.isFinite(value)) {
+        return '-'
+    }
+
+    return Number.isInteger(value) ? String(value) : value.toFixed(1)
+}
+
+const formatWeightKg = (value: number | null | undefined): string => {
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+        return '-'
+    }
+
+    return `${formatWeightValue(value)} kg`
+}
+
 const RPE_OPTIONS = [
     { value: 5, labelKey: 'rpe5' },
     { value: 5.5, labelKey: 'rpe5_5' },
@@ -199,7 +215,12 @@ export default function WorkoutDetailContent() {
             const initialFeedback: Record<string, SetPerformed[]> = {}
             const initialRPE: Record<string, number | null> = {}
 
-            data.data.workout.exercises.forEach((we: WorkoutExerciseWithWeight) => {
+            const initialExpanded: Record<string, boolean> = {}
+            const orderedExercises = [...data.data.workout.exercises].sort(
+                (left: WorkoutExerciseWithWeight, right: WorkoutExerciseWithWeight) => left.order - right.order
+            )
+
+            orderedExercises.forEach((we: WorkoutExerciseWithWeight, index: number) => {
                 // If feedback exists, load it
                 if (we.feedback) {
                     persistedExerciseIdsRef.current.add(we.id)
@@ -225,12 +246,15 @@ export default function WorkoutDetailContent() {
                     }))
                     initialRPE[we.id] = we.targetRpe
                 }
-                // Keep all exercises collapsed by default
-                setExpandedExercises((prev) => ({ ...prev, [we.id]: false }))
+
+                // Open first exercise by default for quicker mobile usage
+                initialExpanded[we.id] = index === 0
             })
 
             setFeedbackData(initialFeedback)
             setExerciseRPE(initialRPE)
+            setExpandedExercises(initialExpanded)
+            setActiveExerciseIndex(0)
             draftSyncEnabledRef.current = false
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : t('workouts.errorLoading'))
@@ -624,6 +648,38 @@ export default function WorkoutDetailContent() {
                     {sortedExercises.map((we, idx) => {
                         const isExpanded = expandedExercises[we.id]
                         const isVideoExpanded = expandedVideos[we.id] ?? false
+                        const trainerSettingValue = (() => {
+                            if (typeof we.weight !== 'number' || !Number.isFinite(we.weight)) {
+                                return '-'
+                            }
+
+                            const formattedWeight = formatWeightValue(we.weight)
+
+                            switch (we.weightType) {
+                                case 'absolute':
+                                    return `${formattedWeight} kg`
+                                case 'percentage_1rm':
+                                    return `${formattedWeight}% 1RM`
+                                case 'percentage_rm':
+                                    return `${formattedWeight}% RM`
+                                case 'percentage_previous': {
+                                    const sign = we.weight > 0 ? '+' : ''
+                                    return `${sign}${formattedWeight}% ${t('workouts.previousExerciseShort')}`
+                                }
+                                default:
+                                    return formattedWeight
+                            }
+                        })()
+
+                        const calculatedWeightValue =
+                            we.weightType === 'absolute'
+                                ? formatWeightKg(we.effectiveWeight ?? we.weight)
+                                : formatWeightKg(we.effectiveWeight)
+                        const calculatedWeightMissing = calculatedWeightValue === '-'
+                        const compactWeightValue =
+                            we.weightType !== 'absolute'
+                                ? `${calculatedWeightMissing ? t('workouts.calculatedWeightMissing') : calculatedWeightValue} (${trainerSettingValue})`
+                                : calculatedWeightValue
 
                         return (
                             <div
@@ -634,91 +690,83 @@ export default function WorkoutDetailContent() {
                             >
                                 {/* Exercise Header */}
                                 <div
-                                    className="relative p-6 pr-14 cursor-pointer hover:bg-gray-50 transition-colors"
+                                    className="relative cursor-pointer p-4 pr-12 transition-colors hover:bg-gray-50 sm:p-6 sm:pr-14"
                                     onClick={() => toggleExercise(we.id)}
                                 >
-                                    <div>
-                                        <div>
-                                            <div className="mb-3 flex items-start gap-3">
-                                                <span className="text-2xl font-bold text-gray-400">
-                                                    {idx + 1}
-                                                </span>
-                                                <div className="min-w-0 flex-1">
-                                                    <h3 className="text-xl font-bold text-gray-900">
-                                                        {we.exercise.name}
-                                                    </h3>
-                                                    {we.variant && (
-                                                        <p className="mt-1 text-sm font-medium text-gray-600">
-                                                            {we.variant}
-                                                        </p>
-                                                    )}
-                                                    <div className="mt-2 flex flex-wrap gap-2">
-                                                        <span
-                                                            className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${we.exercise.type === 'fundamental'
-                                                                ? 'border-red-300 bg-red-100 text-red-700'
-                                                                : 'border-blue-300 bg-blue-100 text-blue-700'
-                                                                }`}
-                                                        >
-                                                            {we.exercise.type === 'fundamental'
-                                                                ? t('workouts.tagFundamental')
-                                                                : t('workouts.tagAccessory')}
-                                                        </span>
-                                                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-                                                            <Clock3 className="h-3.5 w-3.5" />
-                                                            {formatRestTime(we.restTime)}
-                                                        </span>
-                                                        {we.targetRpe !== null && we.targetRpe !== undefined && (
-                                                            <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700">
-                                                                <Gauge className="h-3.5 w-3.5" />
-                                                                {we.targetRpe}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-stretch justify-center gap-2">
-                                                <div className="min-w-0 flex-1 rounded-lg bg-gray-100 px-3 py-2 text-center sm:max-w-[160px]">
-                                                    <p className="text-[11px] uppercase tracking-wide text-gray-500">
-                                                        {t('workouts.sets')} x {t('workouts.reps')}
-                                                    </p>
-                                                    <p className="text-sm font-semibold text-gray-900">{we.sets} x {we.reps}</p>
-                                                </div>
-                                                <div className="min-w-0 flex-1 rounded-lg bg-gray-100 px-3 py-2 text-center sm:max-w-[160px]">
-                                                    <p className="text-[11px] uppercase tracking-wide text-gray-500">{t('workouts.weightLabel')}</p>
-                                                    <p className="text-sm font-semibold text-gray-900">
-                                                        {we.effectiveWeight
-                                                            ? `${we.effectiveWeight.toFixed(1)} kg`
-                                                            : we.weight
-                                                                ? `${we.weight} ${we.weightType === 'absolute' ? 'kg' : '%'}`
-                                                                : '-'}
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            {we.notes && (
-                                                <p className="text-sm text-gray-600 mt-3 italic">
-                                                    <FileText className="w-4 h-4 inline mr-1" />{we.notes}
+                                    <div className="mb-3 flex items-start gap-3">
+                                        <span className="text-xl font-bold text-gray-400 sm:text-2xl">
+                                            {idx + 1}
+                                        </span>
+                                        <div className="min-w-0 flex-1">
+                                            <h3 className="text-lg font-bold text-gray-900 sm:text-xl">
+                                                {we.exercise.name}
+                                            </h3>
+                                            {we.variant && (
+                                                <p className="mt-1 text-sm font-medium text-gray-600">
+                                                    {we.variant}
                                                 </p>
                                             )}
+                                            <div className="mt-2 flex flex-wrap gap-2">
+                                                <span
+                                                    className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${we.exercise.type === 'fundamental'
+                                                        ? 'border-red-300 bg-red-100 text-red-700'
+                                                        : 'border-blue-300 bg-blue-100 text-blue-700'
+                                                        }`}
+                                                >
+                                                    {we.exercise.type === 'fundamental'
+                                                        ? t('workouts.tagFundamental')
+                                                        : t('workouts.tagAccessory')}
+                                                </span>
+                                                <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                                                    <Clock3 className="h-3.5 w-3.5" />
+                                                    {formatRestTime(we.restTime)}
+                                                </span>
+                                                {we.targetRpe !== null && we.targetRpe !== undefined && (
+                                                    <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700">
+                                                        <Gauge className="h-3.5 w-3.5" />
+                                                        {we.targetRpe}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
-
-                                        <button className="absolute right-6 top-6 text-gray-400 hover:text-gray-600">
-                                            {isExpanded ? '▲' : '▼'}
-                                        </button>
                                     </div>
+
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                        <div className="inline-flex min-w-0 items-center gap-1 rounded-lg bg-gray-100 px-3 py-1.5 text-sm">
+                                            <span className="text-xs uppercase tracking-wide text-gray-500">
+                                                {t('workouts.sets')} x {t('workouts.reps')}:
+                                            </span>
+                                            <span className="font-semibold text-gray-900">{we.sets} x {we.reps}</span>
+                                        </div>
+                                        <div className="inline-flex min-w-0 items-center gap-1 rounded-lg bg-gray-100 px-3 py-1.5 text-sm">
+                                            <span className="text-xs uppercase tracking-wide text-gray-500">{t('workouts.weightLabel')}:</span>
+                                            <span className={`min-w-0 truncate font-semibold ${calculatedWeightMissing ? 'text-gray-500' : 'text-gray-900'}`}>
+                                                {compactWeightValue}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {we.notes && (
+                                        <p className="mt-3 text-sm italic text-gray-600">
+                                            <FileText className="mr-1 inline h-4 w-4" />{we.notes}
+                                        </p>
+                                    )}
+
+                                    <button className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 sm:right-6 sm:top-6">
+                                        {isExpanded ? '▲' : '▼'}
+                                    </button>
                                 </div>
 
                                 {/* Exercise Details (Expandable) */}
                                 {isExpanded && (
-                                    <div className="border-t border-gray-200 p-6 bg-gray-50">
+                                    <div className="border-t border-gray-200 bg-gray-50 p-4 sm:p-6">
                                         {/* YouTube Video */}
                                         {we.exercise.youtubeUrl && (
                                             <div className="mb-6" data-swipe-ignore="true">
                                                 <button
                                                     type="button"
                                                     onClick={() => toggleVideo(we.id)}
-                                                    className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:border-[#FFA700] hover:text-[#FFA700]"
+                                                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:border-[#FFA700] hover:text-[#FFA700] sm:w-auto"
                                                 >
                                                     <PlayCircle className="h-4 w-4" />
                                                     {isVideoExpanded
@@ -738,7 +786,77 @@ export default function WorkoutDetailContent() {
                                         )}
 
                                         {/* Sets Input Table */}
-                                        <div className="overflow-x-auto mb-4">
+                                        <div className="mb-4 space-y-3 md:hidden">
+                                            {feedbackData[we.id]?.map((set, setIdx) => (
+                                                <div
+                                                    key={setIdx}
+                                                    className="rounded-lg border border-gray-200 bg-white p-3"
+                                                >
+                                                    <div className="mb-3 flex items-center justify-between">
+                                                        <p className="text-sm font-semibold text-gray-900">
+                                                            #{set.setNumber}
+                                                        </p>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => toggleSetCompleted(we.id, setIdx)}
+                                                            className={`flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${set.completed
+                                                                ? 'border-green-300 bg-green-100 text-green-700'
+                                                                : 'border-gray-300 bg-white text-gray-400 hover:border-green-300 hover:text-green-600'
+                                                                }`}
+                                                            aria-label={set.completed ? t('workouts.markSetUndone') : t('workouts.markSetDone')}
+                                                            title={set.completed ? t('workouts.markSetUndone') : t('workouts.markSetDone')}
+                                                        >
+                                                            <Check className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                                            {t('workouts.reps')}
+                                                            <input
+                                                                type="number"
+                                                                min="0"
+                                                                value={set.reps || ''}
+                                                                onChange={(e) =>
+                                                                    updateSet(
+                                                                        we.id,
+                                                                        setIdx,
+                                                                        'reps',
+                                                                        parseInt(e.target.value) || 0
+                                                                    )
+                                                                }
+                                                                disabled={!!set.completed}
+                                                                aria-label={`${t('workouts.reps')} ${set.setNumber}`}
+                                                                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-center focus:border-transparent focus:ring-2 focus:ring-[#FFA700]"
+                                                            />
+                                                        </label>
+
+                                                        <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                                            {t('workouts.weightKg')}
+                                                            <input
+                                                                type="number"
+                                                                min="0"
+                                                                step="0.5"
+                                                                value={set.weight || ''}
+                                                                onChange={(e) =>
+                                                                    updateSet(
+                                                                        we.id,
+                                                                        setIdx,
+                                                                        'weight',
+                                                                        parseFloat(e.target.value) || 0
+                                                                    )
+                                                                }
+                                                                disabled={!!set.completed}
+                                                                aria-label={`${t('workouts.weightKg')} ${set.setNumber}`}
+                                                                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-center focus:border-transparent focus:ring-2 focus:ring-[#FFA700]"
+                                                            />
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="mb-4 hidden overflow-x-auto md:block">
                                             <table className="w-full">
                                                 <thead>
                                                     <tr className="border-b border-gray-300">
@@ -861,20 +979,6 @@ export default function WorkoutDetailContent() {
                         rows={4}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
                     />
-
-                    <div className="mt-6 md:hidden">
-                        <button
-                            onClick={handleSubmit}
-                            disabled={submitting}
-                            className="flex w-full items-center justify-center rounded-lg bg-green-500 px-6 py-4 text-base font-bold text-white transition-colors hover:bg-green-600 disabled:bg-gray-400"
-                        >
-                            {submitting ? (
-                                <LoadingSpinner size="sm" color="white" />
-                            ) : (
-                                t('workouts.completeWorkout')
-                            )}
-                        </button>
-                    </div>
                 </div>
 
                 {/* Submit Button */}

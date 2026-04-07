@@ -236,80 +236,6 @@ export default async function TrainerDashboard() {
         (week) => week.plannedTestsCount > 0 && week.completedTestsCount === week.plannedTestsCount
     ).length
 
-    const testFeedbacksThisWeek = await prisma.exerciseFeedback.findMany({
-        where: {
-            completed: true,
-            date: {
-                gte: currentWeekRange.startDate,
-                lte: currentWeekRange.endDate,
-            },
-            workoutExercise: {
-                workout: {
-                    week: {
-                        weekType: 'test',
-                        program: {
-                            trainerId,
-                        },
-                    },
-                },
-            },
-        },
-        select: {
-            id: true,
-            date: true,
-            workoutExercise: {
-                select: {
-                    exercise: {
-                        select: {
-                            name: true,
-                        },
-                    },
-                    workout: {
-                        select: {
-                            dayIndex: true,
-                            week: {
-                                select: {
-                                    weekNumber: true,
-                                    program: {
-                                        select: {
-                                            id: true,
-                                            title: true,
-                                            trainee: {
-                                                select: {
-                                                    firstName: true,
-                                                    lastName: true,
-                                                },
-                                            },
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                    },
-                },
-            },
-        },
-        orderBy: {
-            date: 'desc',
-        },
-        take: 50,
-    })
-
-    const testFeedbacksByTestWeek = new Map<string, (typeof testFeedbacksThisWeek)[number]>()
-
-    for (const feedback of testFeedbacksThisWeek) {
-        const week = feedback.workoutExercise.workout.week
-        const testWeekKey = `${week.program.id}:${week.weekNumber}`
-
-        if (!testFeedbacksByTestWeek.has(testWeekKey)) {
-            testFeedbacksByTestWeek.set(testWeekKey, feedback)
-        }
-    }
-
-    const testFeedbacksCurrentWeek = Array.from(testFeedbacksByTestWeek.values())
-        .sort((leftFeedback, rightFeedback) => rightFeedback.date.getTime() - leftFeedback.date.getTime())
-        .slice(0, 12)
-
     return (
         <DashboardLayout user={session.user}>
             <div className="space-y-6">
@@ -492,6 +418,9 @@ export default async function TrainerDashboard() {
                                 const testWeekEndDate = testWeek.startDate
                                     ? addDays(testWeek.startDate, 6)
                                     : null
+                                const isTestWeekCompleted =
+                                    testWeek.plannedTestsCount > 0 &&
+                                    testWeek.completedTestsCount === testWeek.plannedTestsCount
 
                                 return (
                                     <div
@@ -537,6 +466,21 @@ export default async function TrainerDashboard() {
                                             >
                                                 {t('trainerDashboard.goToProgram')}
                                             </Link>
+                                            {isTestWeekCompleted ? (
+                                                <Link
+                                                    href={`/trainer/programs/${testWeek.program.id}/tests?backContext=dashboard`}
+                                                    className="inline-flex items-center justify-center rounded-lg bg-orange-50 px-3 py-2 font-semibold text-orange-700 shadow-sm ring-1 ring-inset ring-orange-200 transition-colors hover:bg-orange-100"
+                                                >
+                                                    {t('trainerDashboard.openResults')}
+                                                </Link>
+                                            ) : (
+                                                <span
+                                                    aria-disabled="true"
+                                                    className="inline-flex cursor-not-allowed items-center justify-center rounded-lg bg-gray-100 px-3 py-2 font-semibold text-gray-400 ring-1 ring-inset ring-gray-200"
+                                                >
+                                                    {t('trainerDashboard.openResults')}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 )
@@ -547,90 +491,6 @@ export default async function TrainerDashboard() {
                             {t('trainerDashboard.noCurrentTestWeeks')}
                         </div>
                     )}
-
-                    <div className="mt-8 border-t border-gray-200 pt-6">
-                        <div className="flex flex-col gap-1 mb-4">
-                            <h3 className="text-lg font-semibold text-gray-900">
-                                {t('trainerDashboard.weeklyFeedbackTitle')}
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                                {t('trainerDashboard.weeklyFeedbackRange', {
-                                    start: formatDate(currentWeekRange.startDate, 'medium'),
-                                    end: formatDate(currentWeekRange.endDate, 'medium'),
-                                })}
-                            </p>
-                        </div>
-
-                        {testFeedbacksCurrentWeek.length > 0 ? (
-                            <div className="overflow-x-auto rounded-lg border border-gray-200">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                                {t('trainerDashboard.feedbackTableDate')}
-                                            </th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                                {t('trainerDashboard.feedbackTableAthlete')}
-                                            </th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                                {t('trainerDashboard.feedbackTableProgram')}
-                                            </th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                                {t('trainerDashboard.feedbackTableWorkout')}
-                                            </th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                                {t('trainerDashboard.feedbackTableExercise')}
-                                            </th>
-                                            <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                                {t('trainerDashboard.feedbackTableDetail')}
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {testFeedbacksCurrentWeek.map((feedback) => {
-                                            const program = feedback.workoutExercise.workout.week.program
-                                            const trainee = program.trainee
-
-                                            return (
-                                                <tr key={feedback.id} className="hover:bg-gray-50 transition-colors">
-                                                    <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                                        {formatDate(feedback.date, 'medium')}
-                                                    </td>
-                                                    <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                                        {trainee.firstName} {trainee.lastName}
-                                                    </td>
-                                                    <td className="px-4 py-3 text-sm text-gray-700">
-                                                        <span className="line-clamp-1">{program.title}</span>
-                                                    </td>
-                                                    <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                                                        {t('trainerDashboard.feedbackWorkoutCell', {
-                                                            week: feedback.workoutExercise.workout.week.weekNumber,
-                                                            workout: feedback.workoutExercise.workout.dayIndex,
-                                                        })}
-                                                    </td>
-                                                    <td className="px-4 py-3 text-sm text-gray-700">
-                                                        {feedback.workoutExercise.exercise.name}
-                                                    </td>
-                                                    <td className="px-4 py-3 text-sm text-right">
-                                                        <Link
-                                                            href={`/trainer/programs/${program.id}/tests?backContext=dashboard`}
-                                                            className="inline-flex items-center rounded-lg bg-orange-50 px-3 py-1.5 text-xs font-semibold text-orange-700 hover:bg-orange-100 transition-colors"
-                                                        >
-                                                            {t('trainerDashboard.openResults')}
-                                                        </Link>
-                                                    </td>
-                                                </tr>
-                                            )
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                            <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-600">
-                                {t('trainerDashboard.noWeeklyFeedback')}
-                            </div>
-                        )}
-                    </div>
                 </div>
             </div>
         </DashboardLayout>

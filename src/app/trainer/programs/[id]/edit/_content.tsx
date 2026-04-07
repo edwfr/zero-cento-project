@@ -2534,12 +2534,17 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                 'percentage_previous'
                                                                             const persistedEffectiveWeight =
                                                                                 persistedEffectiveWeightByRowId[row.id]
-                                                                            const effectiveWeightToDisplay = readOnly
-                                                                                ? persistedEffectiveWeight
-                                                                                : previewEffectiveWeight
+                                                                            const assignedWeightDisplay =
+                                                                                row.weight.trim() === ''
+                                                                                    ? '-'
+                                                                                    : row.weight.trim()
+                                                                            const effectiveWeightToDisplay =
+                                                                                typeof persistedEffectiveWeight ===
+                                                                                    'number'
+                                                                                    ? persistedEffectiveWeight
+                                                                                    : previewEffectiveWeight
                                                                             const shouldShowEffectiveWeight = readOnly
-                                                                                ? typeof persistedEffectiveWeight ===
-                                                                                'number'
+                                                                                ? true
                                                                                 : shouldShowEffectiveWeightPreview &&
                                                                                 typeof previewEffectiveWeight ===
                                                                                 'number'
@@ -2732,33 +2737,65 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                     </td>
 
                                                                                     <td className="px-1.5 py-3">
-                                                                                        <input
-                                                                                            type="text"
-                                                                                            value={row.weight}
-                                                                                            onChange={(event) =>
-                                                                                                updateRowFields(row.id, {
-                                                                                                    weight: event.target.value,
-                                                                                                })
-                                                                                            }
-                                                                                            disabled={rowBusy || readOnly}
-                                                                                            placeholder={t('editProgram.weightPlaceholder')}
-                                                                                            className="w-full rounded-lg border border-gray-300 px-1.5 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
-                                                                                        />
-
-                                                                                        {shouldShowEffectiveWeight &&
-                                                                                            typeof effectiveWeightToDisplay ===
-                                                                                            'number' && (
-                                                                                                <p className="mt-1 text-[11px] font-semibold text-emerald-700">
-                                                                                                    {t(
-                                                                                                        'editProgram.effectiveWeightPreview',
-                                                                                                        {
-                                                                                                            weight: formatWeightForDisplay(
-                                                                                                                effectiveWeightToDisplay
-                                                                                                            ),
-                                                                                                        }
-                                                                                                    )}
+                                                                                        {readOnly ? (
+                                                                                            <div className="space-y-1">
+                                                                                                <p className="text-[11px] text-gray-600">
+                                                                                                    {t('editProgram.assignedWeightPreview', {
+                                                                                                        weight: assignedWeightDisplay,
+                                                                                                    })}
                                                                                                 </p>
-                                                                                            )}
+                                                                                                {shouldShowEffectiveWeight &&
+                                                                                                    typeof effectiveWeightToDisplay ===
+                                                                                                    'number' ? (
+                                                                                                    <p className="text-[11px] font-semibold text-emerald-700">
+                                                                                                        {t(
+                                                                                                            'editProgram.effectiveWeightPreview',
+                                                                                                            {
+                                                                                                                weight: `${formatWeightForDisplay(
+                                                                                                                    effectiveWeightToDisplay
+                                                                                                                )} kg`,
+                                                                                                            }
+                                                                                                        )}
+                                                                                                    </p>
+                                                                                                ) : (
+                                                                                                    <p className="text-[11px] font-semibold text-emerald-700">
+                                                                                                        {t(
+                                                                                                            'editProgram.effectiveWeightPreviewUnavailable'
+                                                                                                        )}
+                                                                                                    </p>
+                                                                                                )}
+                                                                                            </div>
+                                                                                        ) : (
+                                                                                            <>
+                                                                                                <input
+                                                                                                    type="text"
+                                                                                                    value={row.weight}
+                                                                                                    onChange={(event) =>
+                                                                                                        updateRowFields(row.id, {
+                                                                                                            weight: event.target.value,
+                                                                                                        })
+                                                                                                    }
+                                                                                                    disabled={rowBusy || readOnly}
+                                                                                                    placeholder={t('editProgram.weightPlaceholder')}
+                                                                                                    className="w-full rounded-lg border border-gray-300 px-1.5 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                                                                                                />
+
+                                                                                                {shouldShowEffectiveWeight &&
+                                                                                                    typeof effectiveWeightToDisplay ===
+                                                                                                    'number' && (
+                                                                                                        <p className="mt-1 text-[11px] font-semibold text-emerald-700">
+                                                                                                            {t(
+                                                                                                                'editProgram.effectiveWeightPreview',
+                                                                                                                {
+                                                                                                                    weight: `${formatWeightForDisplay(
+                                                                                                                        effectiveWeightToDisplay
+                                                                                                                    )} kg`,
+                                                                                                                }
+                                                                                                            )}
+                                                                                                        </p>
+                                                                                                    )}
+                                                                                            </>
+                                                                                        )}
                                                                                     </td>
 
                                                                                     <td className="px-1.5 py-3">

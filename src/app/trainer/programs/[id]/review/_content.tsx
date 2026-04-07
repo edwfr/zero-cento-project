@@ -32,6 +32,7 @@ interface WorkoutExerciseSummary {
     targetRpe: number | null
     weightType: 'absolute' | 'percentage_1rm' | 'percentage_rm' | 'percentage_previous'
     weight: number | null
+    effectiveWeight: number | null
     isWarmup: boolean
     exercise: {
         id: string
@@ -101,6 +102,20 @@ function parseRepsValue(repsValue: string): number {
 function estimateOneRMValue(weight: number, reps: number): number {
     if (reps <= 1) return weight
     return weight * (1 + reps / 30)
+}
+
+function roundWeightValue(value: number): number {
+    return Math.round((value + Number.EPSILON) * 100) / 100
+}
+
+function formatWeightForDisplay(value: number): string {
+    const roundedValue = roundWeightValue(value)
+
+    if (Number.isInteger(roundedValue)) {
+        return String(roundedValue)
+    }
+
+    return roundedValue.toFixed(2).replace(/\.?0+$/, '')
 }
 
 function parseRgbColor(color: string): { r: number; g: number; b: number } | null {
@@ -180,6 +195,63 @@ function formatPlannedWeight(
     }
 
     return `${weight}%`
+}
+
+function resolveEffectiveWeightFallback({
+    workoutExercise,
+    previousEffectiveWeightByExerciseId,
+    estimatedOneRMByExercise,
+    recordsByExercise,
+}: {
+    workoutExercise: WorkoutExerciseSummary
+    previousEffectiveWeightByExerciseId: Record<string, number | null>
+    estimatedOneRMByExercise: Record<string, number>
+    recordsByExercise: Record<string, PersonalRecord[]>
+}): number | null {
+    if (typeof workoutExercise.weight !== 'number') {
+        return null
+    }
+
+    if (workoutExercise.weightType === 'absolute') {
+        return roundWeightValue(workoutExercise.weight)
+    }
+
+    if (workoutExercise.weightType === 'percentage_1rm') {
+        const oneRm = estimatedOneRMByExercise[workoutExercise.exercise.id]
+        if (!Number.isFinite(oneRm) || oneRm <= 0) {
+            return null
+        }
+
+        return roundWeightValue((oneRm * workoutExercise.weight) / 100)
+    }
+
+    if (workoutExercise.weightType === 'percentage_rm') {
+        const targetReps = parseRepsValue(workoutExercise.reps)
+        if (targetReps <= 0) {
+            return null
+        }
+
+        const matchingRecords = (recordsByExercise[workoutExercise.exercise.id] || []).filter(
+            (record) => record.reps === targetReps
+        )
+
+        if (matchingRecords.length === 0) {
+            return null
+        }
+
+        const bestRecord = matchingRecords.reduce((best, current) =>
+            current.weight > best.weight ? current : best
+        )
+
+        return roundWeightValue((bestRecord.weight * workoutExercise.weight) / 100)
+    }
+
+    const previousEffectiveWeight = previousEffectiveWeightByExerciseId[workoutExercise.exercise.id]
+    if (!Number.isFinite(previousEffectiveWeight) || typeof previousEffectiveWeight !== 'number') {
+        return null
+    }
+
+    return roundWeightValue(previousEffectiveWeight * (1 + workoutExercise.weight / 100))
 }
 
 export default function ReviewProgramContent({ viewOnly = false }: ReviewProgramContentProps) {
@@ -731,100 +803,157 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                     </div>
 
                                     <div className="space-y-4 p-4">
-                                        {orderedWorkouts.map((workout, workoutIndex) => (
-                                            <div
-                                                key={workout.id}
-                                                className="rounded-lg border border-gray-200 bg-white"
-                                            >
-                                                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-                                                    <h3 className="text-base font-semibold text-gray-900">
-                                                        {t('reviewProgram.workoutTitle', {
-                                                            number: workoutIndex + 1,
-                                                        })}
-                                                    </h3>
-                                                    <span className="text-xs font-semibold text-gray-500">
-                                                        {t('reviewProgram.exerciseCount', {
-                                                            count: workout.workoutExercises.length,
-                                                        })}
-                                                    </span>
-                                                </div>
+                                        {orderedWorkouts.map((workout, workoutIndex) => {
+                                            const effectiveWeightByExerciseId: Record<string, number | null> = {}
 
-                                                {workout.workoutExercises.length === 0 ? (
-                                                    <p className="px-4 py-4 text-sm text-gray-500">
-                                                        {t('reviewProgram.noExercises')}
-                                                    </p>
-                                                ) : (
-                                                    <div className="overflow-x-auto">
-                                                        <table className="min-w-full divide-y divide-gray-200 text-sm">
-                                                            <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
-                                                                <tr>
-                                                                    <th className="px-3 py-3">
-                                                                        {t('reviewProgram.tableExercise')}
-                                                                    </th>
-                                                                    <th className="px-3 py-3">
-                                                                        {t('reviewProgram.tableScheme')}
-                                                                    </th>
-                                                                    <th className="px-3 py-3">
-                                                                        {t('reviewProgram.tableWeight')}
-                                                                    </th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody className="divide-y divide-gray-100 bg-white">
-                                                                {workout.workoutExercises.map((workoutExercise) => (
-                                                                    <tr key={workoutExercise.id}>
-                                                                        <td className="px-3 py-3 align-top">
-                                                                            <div className="flex items-center gap-2">
-                                                                                <span
-                                                                                    className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${workoutExercise.exercise.type ===
-                                                                                        'fundamental'
-                                                                                        ? 'bg-red-100 text-red-700'
-                                                                                        : 'bg-blue-100 text-blue-700'
-                                                                                        }`}
-                                                                                >
-                                                                                    {workoutExercise.exercise.type ===
-                                                                                        'fundamental'
-                                                                                        ? 'F'
-                                                                                        : 'A'}
-                                                                                </span>
-                                                                                <span className="font-medium text-gray-900">
-                                                                                    {workoutExercise.exercise.name}
-                                                                                </span>
-                                                                                {workoutExercise.isWarmup && (
-                                                                                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-                                                                                        W
-                                                                                    </span>
-                                                                                )}
-                                                                            </div>
-
-                                                                            {workoutExercise.variant && (
-                                                                                <p className="mt-1 text-xs text-gray-500">
-                                                                                    {workoutExercise.variant}
-                                                                                </p>
-                                                                            )}
-                                                                        </td>
-                                                                        <td className="px-3 py-3 align-top text-gray-700">
-                                                                            {workoutExercise.sets} x {workoutExercise.reps}
-                                                                            {typeof workoutExercise.targetRpe ===
-                                                                                'number' && (
-                                                                                    <span className="ml-2 text-xs text-gray-500">
-                                                                                        RPE {workoutExercise.targetRpe}
-                                                                                    </span>
-                                                                                )}
-                                                                        </td>
-                                                                        <td className="px-3 py-3 align-top text-gray-700">
-                                                                            {formatPlannedWeight(
-                                                                                workoutExercise.weightType,
-                                                                                workoutExercise.weight
-                                                                            )}
-                                                                        </td>
-                                                                    </tr>
-                                                                ))}
-                                                            </tbody>
-                                                        </table>
+                                            return (
+                                                <div
+                                                    key={workout.id}
+                                                    className="rounded-lg border border-gray-200 bg-white"
+                                                >
+                                                    <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+                                                        <h3 className="text-base font-semibold text-gray-900">
+                                                            {t('reviewProgram.workoutTitle', {
+                                                                number: workoutIndex + 1,
+                                                            })}
+                                                        </h3>
+                                                        <span className="text-xs font-semibold text-gray-500">
+                                                            {t('reviewProgram.exerciseCount', {
+                                                                count: workout.workoutExercises.length,
+                                                            })}
+                                                        </span>
                                                     </div>
-                                                )}
-                                            </div>
-                                        ))}
+
+                                                    {workout.workoutExercises.length === 0 ? (
+                                                        <p className="px-4 py-4 text-sm text-gray-500">
+                                                            {t('reviewProgram.noExercises')}
+                                                        </p>
+                                                    ) : (
+                                                        <div className="overflow-x-auto">
+                                                            <table className="min-w-full divide-y divide-gray-200 text-sm">
+                                                                <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
+                                                                    <tr>
+                                                                        <th className="px-3 py-3">
+                                                                            {t('reviewProgram.tableExercise')}
+                                                                        </th>
+                                                                        <th className="px-3 py-3">
+                                                                            {t('reviewProgram.tableScheme')}
+                                                                        </th>
+                                                                        <th className="px-3 py-3">
+                                                                            {t('reviewProgram.tableWeight')}
+                                                                        </th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody className="divide-y divide-gray-100 bg-white">
+                                                                    {workout.workoutExercises.map((workoutExercise) => (
+                                                                        <tr key={workoutExercise.id}>
+                                                                            <td className="px-3 py-3 align-top">
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <span
+                                                                                        className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${workoutExercise.exercise.type ===
+                                                                                            'fundamental'
+                                                                                            ? 'bg-red-100 text-red-700'
+                                                                                            : 'bg-blue-100 text-blue-700'
+                                                                                            }`}
+                                                                                    >
+                                                                                        {workoutExercise.exercise.type ===
+                                                                                            'fundamental'
+                                                                                            ? 'F'
+                                                                                            : 'A'}
+                                                                                    </span>
+                                                                                    <span className="font-medium text-gray-900">
+                                                                                        {workoutExercise.exercise.name}
+                                                                                    </span>
+                                                                                    {workoutExercise.isWarmup && (
+                                                                                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                                                                                            W
+                                                                                        </span>
+                                                                                    )}
+                                                                                </div>
+
+                                                                                {workoutExercise.variant && (
+                                                                                    <p className="mt-1 text-xs text-gray-500">
+                                                                                        {workoutExercise.variant}
+                                                                                    </p>
+                                                                                )}
+                                                                            </td>
+                                                                            <td className="px-3 py-3 align-top text-gray-700">
+                                                                                {workoutExercise.sets} x {workoutExercise.reps}
+                                                                                {typeof workoutExercise.targetRpe ===
+                                                                                    'number' && (
+                                                                                        <span className="ml-2 text-xs text-gray-500">
+                                                                                            RPE {workoutExercise.targetRpe}
+                                                                                        </span>
+                                                                                    )}
+                                                                            </td>
+                                                                            <td className="px-3 py-3 align-top text-gray-700">
+                                                                                {(() => {
+                                                                                    const assignedWeight = formatPlannedWeight(
+                                                                                        workoutExercise.weightType,
+                                                                                        workoutExercise.weight
+                                                                                    )
+                                                                                    const fallbackEffectiveWeight =
+                                                                                        resolveEffectiveWeightFallback({
+                                                                                            workoutExercise,
+                                                                                            previousEffectiveWeightByExerciseId:
+                                                                                                effectiveWeightByExerciseId,
+                                                                                            estimatedOneRMByExercise,
+                                                                                            recordsByExercise,
+                                                                                        })
+                                                                                    const effectiveWeightValue =
+                                                                                        typeof workoutExercise.effectiveWeight ===
+                                                                                            'number'
+                                                                                            ? workoutExercise.effectiveWeight
+                                                                                            : fallbackEffectiveWeight
+
+                                                                                    if (
+                                                                                        typeof effectiveWeightValue ===
+                                                                                        'number'
+                                                                                    ) {
+                                                                                        effectiveWeightByExerciseId[
+                                                                                            workoutExercise.exercise.id
+                                                                                        ] = effectiveWeightValue
+                                                                                    }
+
+                                                                                    const effectiveWeight =
+                                                                                        typeof effectiveWeightValue ===
+                                                                                            'number'
+                                                                                            ? `${formatWeightForDisplay(
+                                                                                                effectiveWeightValue
+                                                                                            )} kg`
+                                                                                            : '-'
+
+                                                                                    return (
+                                                                                        <div className="space-y-1">
+                                                                                            <p className="text-xs text-gray-500">
+                                                                                                {t(
+                                                                                                    'reviewProgram.tableWeightAssigned',
+                                                                                                    {
+                                                                                                        weight: assignedWeight,
+                                                                                                    }
+                                                                                                )}
+                                                                                            </p>
+                                                                                            <p className="text-xs font-semibold text-emerald-700">
+                                                                                                {t(
+                                                                                                    'reviewProgram.tableWeightEffective',
+                                                                                                    {
+                                                                                                        weight: effectiveWeight,
+                                                                                                    }
+                                                                                                )}
+                                                                                            </p>
+                                                                                        </div>
+                                                                                    )
+                                                                                })()}
+                                                                            </td>
+                                                                        </tr>
+                                                                    ))}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )
+                                        })}
                                     </div>
                                 </section>
                             )
