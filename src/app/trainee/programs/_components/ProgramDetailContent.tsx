@@ -810,36 +810,26 @@ export default function ProgramDetailContent({
                                                                                         )}
                                                                                     </div>
 
-                                                                                    {exercise.variant && (
-                                                                                        <p className="mt-1 text-xs text-gray-600">
-                                                                                            {exercise.variant}
-                                                                                        </p>
-                                                                                    )}
-
-                                                                                    <div className="mt-3 flex flex-wrap gap-2 text-sm">
-                                                                                        <div className="inline-flex min-w-0 items-center gap-1 rounded-lg bg-gray-100 px-3 py-1.5">
-                                                                                            <span className="text-[11px] uppercase tracking-wide text-gray-500">
-                                                                                                {t('currentProgram.tableScheme')}:
-                                                                                            </span>
-                                                                                            <span className="font-semibold text-gray-900">
+                                                                                    <div className="mt-3 flex flex-wrap justify-center gap-2">
+                                                                                        <div className="inline-flex min-w-0 items-center rounded-lg bg-gray-100 px-3 py-1.5">
+                                                                                            <span className="text-base font-bold text-gray-900">
                                                                                                 {exercise.sets} x {exercise.reps}
                                                                                             </span>
                                                                                         </div>
-                                                                                        <div className="inline-flex min-w-0 items-center gap-1 rounded-lg bg-gray-100 px-3 py-1.5">
-                                                                                            <span className="text-[11px] uppercase tracking-wide text-gray-500">
-                                                                                                {t('currentProgram.tableWeight')}:
-                                                                                            </span>
-                                                                                            <span className="font-semibold text-gray-900">
+                                                                                        <div className="inline-flex min-w-0 items-center rounded-lg bg-gray-100 px-3 py-1.5">
+                                                                                            <span className="text-base font-bold text-gray-900">
                                                                                                 {weightLabels.effective}
                                                                                             </span>
                                                                                         </div>
                                                                                     </div>
 
-                                                                                    <div className="mt-2 space-y-1 text-xs text-gray-700">
-                                                                                        <p className="italic text-gray-600">
-                                                                                            {exercise.notes || t('currentProgram.tableMissingValue')}
-                                                                                        </p>
-                                                                                    </div>
+                                                                                    {exercise.notes && (
+                                                                                        <div className="mt-2 space-y-1 text-xs text-gray-700">
+                                                                                            <p className="italic text-gray-600">
+                                                                                                {exercise.notes}
+                                                                                            </p>
+                                                                                        </div>
+                                                                                    )}
                                                                                 </article>
                                                                             )
                                                                         })}

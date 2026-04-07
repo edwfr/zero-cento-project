@@ -808,72 +808,69 @@ export default function WorkoutDetailContent() {
                                         )}
 
                                         {/* Sets Input Table */}
-                                        <div className="mb-4 space-y-3 md:hidden">
+                                        <div className="mb-4 space-y-2 md:hidden">
+                                            <div className="grid grid-cols-[52px_minmax(0,1fr)_minmax(0,1fr)_44px] items-center gap-2 px-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                                                <span className="text-center">{t('workouts.sets')}</span>
+                                                <span className="text-center">{t('workouts.reps')}</span>
+                                                <span className="text-center">KG</span>
+                                                <span className="sr-only">{t('workouts.markSetDone')}</span>
+                                            </div>
                                             {feedbackData[we.id]?.map((set, setIdx) => (
                                                 <div
                                                     key={setIdx}
-                                                    className="rounded-lg border border-gray-200 bg-white p-3"
+                                                    className="grid grid-cols-[52px_minmax(0,1fr)_minmax(0,1fr)_44px] items-center gap-2 rounded-lg border border-gray-200 bg-white p-2"
                                                 >
-                                                    <div className="mb-3 flex items-center justify-between">
-                                                        <p className="text-sm font-semibold text-gray-900">
-                                                            #{set.setNumber}
-                                                        </p>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => toggleSetCompleted(we.id, setIdx)}
-                                                            className={`flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${set.completed
-                                                                ? 'border-green-300 bg-green-100 text-green-700'
-                                                                : 'border-gray-300 bg-white text-gray-400 hover:border-green-300 hover:text-green-600'
-                                                                }`}
-                                                            aria-label={set.completed ? t('workouts.markSetUndone') : t('workouts.markSetDone')}
-                                                            title={set.completed ? t('workouts.markSetUndone') : t('workouts.markSetDone')}
-                                                        >
-                                                            <Check className="h-4 w-4" />
-                                                        </button>
-                                                    </div>
+                                                    <p className="text-center text-sm font-semibold text-gray-900">
+                                                        #{set.setNumber}
+                                                    </p>
 
-                                                    <div className="grid grid-cols-2 gap-3">
-                                                        <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                                            {t('workouts.reps')}
-                                                            <input
-                                                                type="number"
-                                                                min="0"
-                                                                value={set.reps || ''}
-                                                                onChange={(e) =>
-                                                                    updateSet(
-                                                                        we.id,
-                                                                        setIdx,
-                                                                        'reps',
-                                                                        parseInt(e.target.value) || 0
-                                                                    )
-                                                                }
-                                                                disabled={!!set.completed}
-                                                                aria-label={`${t('workouts.reps')} ${set.setNumber}`}
-                                                                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-center focus:border-transparent focus:ring-2 focus:ring-[#FFA700]"
-                                                            />
-                                                        </label>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        value={set.reps || ''}
+                                                        onChange={(e) =>
+                                                            updateSet(
+                                                                we.id,
+                                                                setIdx,
+                                                                'reps',
+                                                                parseInt(e.target.value) || 0
+                                                            )
+                                                        }
+                                                        disabled={!!set.completed}
+                                                        aria-label={`${t('workouts.reps')} ${set.setNumber}`}
+                                                        className="h-10 w-full rounded-lg border border-gray-300 px-2 text-center focus:border-transparent focus:ring-2 focus:ring-[#FFA700]"
+                                                    />
 
-                                                        <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                                            {t('workouts.weightKg')}
-                                                            <input
-                                                                type="number"
-                                                                min="0"
-                                                                step="0.5"
-                                                                value={set.weight || ''}
-                                                                onChange={(e) =>
-                                                                    updateSet(
-                                                                        we.id,
-                                                                        setIdx,
-                                                                        'weight',
-                                                                        parseFloat(e.target.value) || 0
-                                                                    )
-                                                                }
-                                                                disabled={!!set.completed}
-                                                                aria-label={`${t('workouts.weightKg')} ${set.setNumber}`}
-                                                                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-center focus:border-transparent focus:ring-2 focus:ring-[#FFA700]"
-                                                            />
-                                                        </label>
-                                                    </div>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        step="0.5"
+                                                        value={set.weight || ''}
+                                                        onChange={(e) =>
+                                                            updateSet(
+                                                                we.id,
+                                                                setIdx,
+                                                                'weight',
+                                                                parseFloat(e.target.value) || 0
+                                                            )
+                                                        }
+                                                        disabled={!!set.completed}
+                                                        aria-label={`${t('workouts.weightKg')} ${set.setNumber}`}
+                                                        className="h-10 w-full rounded-lg border border-gray-300 px-2 text-center focus:border-transparent focus:ring-2 focus:ring-[#FFA700]"
+                                                    />
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleSetCompleted(we.id, setIdx)}
+                                                        className={`mx-auto flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${set.completed
+                                                            ? 'border-green-300 bg-green-100 text-green-700'
+                                                            : 'border-gray-300 bg-white text-gray-400 hover:border-green-300 hover:text-green-600'
+                                                            }`}
+                                                        aria-label={set.completed ? t('workouts.markSetUndone') : t('workouts.markSetDone')}
+                                                        title={set.completed ? t('workouts.markSetUndone') : t('workouts.markSetDone')}
+                                                    >
+                                                        <Check className="h-4 w-4" />
+                                                    </button>
                                                 </div>
                                             ))}
                                         </div>
