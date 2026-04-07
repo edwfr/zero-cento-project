@@ -11,12 +11,12 @@ import ConfirmationModal from '@/components/ConfirmationModal'
 import { useToast } from '@/components/ToastNotification'
 import EditProgramMetadata from './EditProgramMetadata'
 import MovementPatternTag from '@/components/MovementPatternTag'
+import WeekTypeBadge from '@/components/WeekTypeBadge'
 import {
     ArrowLeft,
     BarChart3,
     ChevronDown,
     ChevronUp,
-    ClipboardList,
     Copy,
     Dumbbell,
     FileEdit,
@@ -26,7 +26,6 @@ import {
     Plus,
     Save,
     Trash2,
-    Wind,
 } from 'lucide-react'
 
 const PRIMARY_COLOR = 'rgb(var(--brand-primary))'
@@ -723,6 +722,15 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     )
 
     const shouldShowSbdReporting = program?.isSbdProgram ?? false
+
+    const weekTypeBadgeLabels = useMemo(
+        () => ({
+            normal: t('editProgram.weekTypeStandard'),
+            test: t('editProgram.weekTypeTest'),
+            deload: t('editProgram.weekTypeDeload'),
+        }),
+        [t]
+    )
 
     const weekSbdMetrics = useMemo(
         () =>
@@ -2010,50 +2018,44 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
                                             <div className="flex flex-wrap items-center gap-2">
                                                 {readOnly ? (
-                                                    <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700">
-                                                        {week.weekType === 'normal'
-                                                            ? t('editProgram.weekTypeStandard')
-                                                            : week.weekType === 'test'
-                                                                ? t('editProgram.weekTypeTest')
-                                                                : t('editProgram.weekTypeDeload')}
-                                                    </span>
+                                                    <WeekTypeBadge
+                                                        weekType={week.weekType}
+                                                        labels={weekTypeBadgeLabels}
+                                                    />
                                                 ) : (
                                                     <>
                                                         <button
                                                             type="button"
                                                             onClick={() => handleWeekTypeChange(week.id, 'normal')}
                                                             disabled={saving}
-                                                            className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all inline-flex items-center gap-1 ${week.weekType === 'normal'
-                                                                ? 'bg-gray-500 text-white border-gray-500'
-                                                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                                            className={`rounded-full transition-all disabled:cursor-not-allowed disabled:opacity-60 ${week.weekType === 'normal'
+                                                                ? 'ring-2 ring-gray-500 ring-offset-1'
+                                                                : 'opacity-70 hover:opacity-100'
                                                                 }`}
                                                         >
-                                                            <ClipboardList className="w-3.5 h-3.5" />
-                                                            {t('editProgram.weekTypeStandard')}
+                                                            <WeekTypeBadge weekType="normal" labels={weekTypeBadgeLabels} />
                                                         </button>
                                                         <button
                                                             type="button"
                                                             onClick={() => handleWeekTypeChange(week.id, 'test')}
                                                             disabled={saving}
-                                                            className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all inline-flex items-center gap-1 ${week.weekType === 'test'
-                                                                ? 'bg-week-test text-white border-week-test'
-                                                                : 'bg-white text-week-test-dark border-week-test hover:bg-week-test-light'
+                                                            className={`rounded-full transition-all disabled:cursor-not-allowed disabled:opacity-60 ${week.weekType === 'test'
+                                                                ? 'ring-2 ring-week-test ring-offset-1'
+                                                                : 'opacity-70 hover:opacity-100'
                                                                 }`}
                                                         >
-                                                            <Flame className="w-3.5 h-3.5" />
-                                                            {t('editProgram.weekTypeTest')}
+                                                            <WeekTypeBadge weekType="test" labels={weekTypeBadgeLabels} />
                                                         </button>
                                                         <button
                                                             type="button"
                                                             onClick={() => handleWeekTypeChange(week.id, 'deload')}
                                                             disabled={saving}
-                                                            className={`px-3 py-1 text-xs font-semibold rounded-full border-2 transition-all inline-flex items-center gap-1 ${week.weekType === 'deload'
-                                                                ? 'bg-week-deload text-white border-week-deload'
-                                                                : 'bg-white text-week-deload-dark border-week-deload hover:bg-week-deload-light'
+                                                            className={`rounded-full transition-all disabled:cursor-not-allowed disabled:opacity-60 ${week.weekType === 'deload'
+                                                                ? 'ring-2 ring-week-deload ring-offset-1'
+                                                                : 'opacity-70 hover:opacity-100'
                                                                 }`}
                                                         >
-                                                            <Wind className="w-3.5 h-3.5" />
-                                                            {t('editProgram.weekTypeDeload')}
+                                                            <WeekTypeBadge weekType="deload" labels={weekTypeBadgeLabels} />
                                                         </button>
                                                     </>
                                                 )}

@@ -15,7 +15,7 @@ interface WeekTypeBadgeProps {
 const DEFAULT_LABELS: WeekTypeBadgeLabels = {
     normal: 'Standard',
     test: 'Test',
-    deload: 'Scarico',
+    deload: 'Deload',
 }
 
 export default function WeekTypeBadge({ weekType, labels }: WeekTypeBadgeProps) {
