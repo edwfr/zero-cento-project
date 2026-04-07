@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { ArrowLeft, ChevronDown, ChevronUp, FileEdit } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import MovementPatternTag from '@/components/MovementPatternTag'
+import WeekTypeBadge from '@/components/WeekTypeBadge'
 import ProgramMuscleGroupCharts from '@/components/ProgramMuscleGroupCharts'
 import { getApiErrorMessage } from '@/lib/api-error'
 
@@ -703,15 +704,30 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                     className="rounded-2xl border border-gray-200 bg-white shadow-sm"
                                 >
                                     <div className="border-b border-gray-100 px-5 py-4">
-                                        <h2 className="text-lg font-bold text-gray-900">
-                                            {t('reviewProgram.weekTitle', { week: week.weekNumber })}
-                                        </h2>
-                                        <p className="mt-1 text-sm text-gray-600">
-                                            {t('reviewProgram.weekConfigured', {
-                                                done: configuredForWeek,
-                                                total: orderedWorkouts.length,
-                                            })}
-                                        </p>
+                                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                                            <div>
+                                                <h2 className="text-lg font-bold text-gray-900">
+                                                    {t('reviewProgram.weekTitle', { week: week.weekNumber })}
+                                                </h2>
+                                                <p className="mt-1 text-sm text-gray-600">
+                                                    {t('reviewProgram.weekConfigured', {
+                                                        done: configuredForWeek,
+                                                        total: orderedWorkouts.length,
+                                                    })}
+                                                </p>
+                                            </div>
+
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <WeekTypeBadge
+                                                    weekType={week.weekType}
+                                                    labels={{
+                                                        normal: t('reviewProgram.weekTypeStandard'),
+                                                        test: t('reviewProgram.weekTypeTest'),
+                                                        deload: t('reviewProgram.weekTypeDeload'),
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div className="space-y-4 p-4">

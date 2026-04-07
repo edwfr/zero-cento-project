@@ -33,6 +33,7 @@ const workoutExerciseBaseSchema = z.object({
         }
     ),
     weight: z.number().optional(),
+    effectiveWeight: z.number().nullable().optional(),
     restTime: z.enum(['s30', 'm1', 'm2', 'm3', 'm5'], {
         errorMap: () => ({ message: 'Tempo recupero non valido' }),
     }),
@@ -65,6 +66,21 @@ export const workoutExerciseSchema = workoutExerciseBaseSchema.superRefine(
                 inclusive: true,
                 message: 'Il peso deve essere >= 0',
                 path: ['weight'],
+            })
+        }
+
+        if (
+            data.effectiveWeight !== undefined &&
+            data.effectiveWeight !== null &&
+            data.effectiveWeight < 0
+        ) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.too_small,
+                minimum: 0,
+                type: 'number',
+                inclusive: true,
+                message: 'Il peso effettivo deve essere >= 0',
+                path: ['effectiveWeight'],
             })
         }
     }

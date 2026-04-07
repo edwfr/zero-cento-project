@@ -117,6 +117,7 @@ export async function POST(
                         targetRpe: exercise.targetRpe,
                         weightType: exercise.weightType,
                         weight: exercise.weight,
+                        effectiveWeight: exercise.effectiveWeight,
                         restTime: exercise.restTime,
                         isWarmup: exercise.isWarmup,
                         notes: exercise.notes,

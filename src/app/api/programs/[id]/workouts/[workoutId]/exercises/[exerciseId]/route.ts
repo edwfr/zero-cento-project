@@ -33,6 +33,7 @@ export async function PUT(
             targetRpe,
             weightType,
             weight,
+            effectiveWeight,
             restTime,
             isWarmup,
         } = validation.data
@@ -93,6 +94,7 @@ export async function PUT(
                 ...(targetRpe !== undefined && { targetRpe }),
                 ...(weightType !== undefined && { weightType }),
                 ...(weight !== undefined && { weight }),
+                ...(effectiveWeight !== undefined && { effectiveWeight }),
                 ...(restTime !== undefined && { restTime }),
                 ...(isWarmup !== undefined && { isWarmup }),
             },

@@ -105,24 +105,31 @@ export async function GET(
         // Calculate effective weight for each exercise
         const exercisesWithWeights = await Promise.all(
             workout.workoutExercises.map(async (we) => {
-                let effectiveWeight: number | null = null
+                let effectiveWeight: number | null =
+                    typeof we.effectiveWeight === 'number'
+                        ? we.effectiveWeight
+                        : we.weightType === 'absolute'
+                            ? we.weight
+                            : null
 
-                try {
-                    effectiveWeight = await calculateEffectiveWeight(
-                        we,
-                        session.user.id
-                    )
-                } catch (error) {
-                    // If calculation fails (e.g., missing 1RM), effectiveWeight remains null
-                    logger.warn(
-                        {
-                            workoutExerciseId: we.id,
-                            exerciseId: we.exerciseId,
-                            weightType: we.weightType,
-                            error: error instanceof Error ? error.message : String(error),
-                        },
-                        'Failed to calculate effective weight'
-                    )
+                if (effectiveWeight === null) {
+                    try {
+                        effectiveWeight = await calculateEffectiveWeight(
+                            we,
+                            session.user.id
+                        )
+                    } catch (error) {
+                        // If calculation fails (e.g., missing 1RM), effectiveWeight remains null
+                        logger.warn(
+                            {
+                                workoutExerciseId: we.id,
+                                exerciseId: we.exerciseId,
+                                weightType: we.weightType,
+                                error: error instanceof Error ? error.message : String(error),
+                            },
+                            'Failed to calculate effective weight'
+                        )
+                    }
                 }
 
                 // Get feedback for this exercise if exists

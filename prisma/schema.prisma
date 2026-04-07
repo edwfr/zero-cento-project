@@ -260,6 +260,7 @@ model WorkoutExercise {
   targetRpe  Float?     // 5.0-10.0 con incrementi 0.5
   weightType WeightType
   weight     Float?
+  effectiveWeight Float? // kg effettivi calcolati dal trainer
   restTime   RestTime
   isWarmup   Boolean    @default(false)
   notes      String?
