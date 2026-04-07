@@ -61,6 +61,7 @@ interface WorkoutExercise {
     targetRpe: number | null
     weightType: WeightType
     weight: number | null
+    effectiveWeight: number | null
     restTime: RestTime
     isWarmup: boolean
     notes: string | null
@@ -141,6 +142,35 @@ interface EditProgramContentProps {
     readOnly?: boolean
 }
 
+type ParsedWeightInputMode =
+    | 'empty'
+    | 'absolute'
+    | 'percentage_1rm'
+    | 'percentage_rm'
+    | 'percentage_previous'
+    | 'invalid'
+
+interface ParsedWeightInputValue {
+    mode: ParsedWeightInputMode
+    value: number | null
+}
+
+interface ParsedWeightInputResult {
+    weightType: WeightType
+    weight: number | null
+    effectiveWeight: number | null
+}
+
+type WeightInputParsingErrorCode =
+    | 'invalid_format'
+    | 'missing_previous_occurrence'
+    | 'missing_previous_weight'
+    | 'missing_1rm'
+
+type ResolveWeightInputOutcome =
+    | { parsedWeight: ParsedWeightInputResult }
+    | { errorCode: WeightInputParsingErrorCode }
+
 function parseRepsValue(repsValue: string): number {
     const match = repsValue.match(/^\d+/)
     return match ? parseInt(match[0], 10) : 0
@@ -149,6 +179,94 @@ function parseRepsValue(repsValue: string): number {
 function estimateOneRMValue(weight: number, reps: number): number {
     if (reps <= 1) return weight
     return weight * (1 + reps / 30)
+}
+
+function formatWeightInputFromStoredValues(weightType: WeightType, weight: number | null): string {
+    if (typeof weight !== 'number') {
+        return ''
+    }
+
+    if (weightType === 'absolute') {
+        return String(weight)
+    }
+
+    if (weightType === 'percentage_1rm') {
+        return `%${weight}`
+    }
+
+    if (weightType === 'percentage_rm') {
+        return `${weight}%RM`
+    }
+
+    return `${weight}%`
+}
+
+function parseWeightInputValue(rawValue: string): ParsedWeightInputValue {
+    const trimmedValue = rawValue.trim()
+
+    if (trimmedValue === '') {
+        return { mode: 'empty', value: null }
+    }
+
+    const normalizedValue = trimmedValue.replace(/\s+/g, '').replace(',', '.')
+
+    const percentagePreviousMatch = normalizedValue.match(/^-(\d+(?:\.\d+)?)%$/)
+    if (percentagePreviousMatch) {
+        return {
+            mode: 'percentage_previous',
+            value: -Number(percentagePreviousMatch[1]),
+        }
+    }
+
+    const percentageOneRmMatch =
+        normalizedValue.match(/^%(\d+(?:\.\d+)?)(?:1rm)?$/i) ||
+        normalizedValue.match(/^(\d+(?:\.\d+)?)%1rm$/i) ||
+        normalizedValue.match(/^(\d+(?:\.\d+)?)%$/)
+
+    if (percentageOneRmMatch) {
+        return {
+            mode: 'percentage_1rm',
+            value: Number(percentageOneRmMatch[1]),
+        }
+    }
+
+    const percentageRmMatch =
+        normalizedValue.match(/^%(\d+(?:\.\d+)?)rm$/i) ||
+        normalizedValue.match(/^(\d+(?:\.\d+)?)%rm$/i)
+
+    if (percentageRmMatch) {
+        return {
+            mode: 'percentage_rm',
+            value: Number(percentageRmMatch[1]),
+        }
+    }
+
+    const absoluteMatch = normalizedValue.match(/^(\d+(?:\.\d+)?)(?:kg)?$/i)
+    if (absoluteMatch) {
+        return {
+            mode: 'absolute',
+            value: Number(absoluteMatch[1]),
+        }
+    }
+
+    return {
+        mode: 'invalid',
+        value: null,
+    }
+}
+
+function roundWeightValue(value: number): number {
+    return Math.round((value + Number.EPSILON) * 100) / 100
+}
+
+function formatWeightForDisplay(value: number): string {
+    const roundedValue = roundWeightValue(value)
+
+    if (Number.isInteger(roundedValue)) {
+        return String(roundedValue)
+    }
+
+    return roundedValue.toFixed(2).replace(/\.?0+$/, '')
 }
 
 function parseRgbColor(color: string): { r: number; g: number; b: number } | null {
@@ -212,7 +330,10 @@ function buildEditableRow(
         reps: workoutExercise.reps,
         targetRpe:
             typeof workoutExercise.targetRpe === 'number' ? String(workoutExercise.targetRpe) : '',
-        weight: typeof workoutExercise.weight === 'number' ? String(workoutExercise.weight) : '',
+        weight: formatWeightInputFromStoredValues(
+            workoutExercise.weightType,
+            workoutExercise.weight
+        ),
         isWarmup: workoutExercise.isWarmup,
         order: workoutExercise.order,
         restTime: workoutExercise.restTime,
@@ -279,6 +400,10 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         rowId: string
         workoutId: string
         isDraft: boolean
+    } | null>(null)
+    const [blockingWeightErrorModal, setBlockingWeightErrorModal] = useState<{
+        title: string
+        message: string
     } | null>(null)
 
     const [isPrHelperCollapsed, setIsPrHelperCollapsed] = useState(false)
@@ -453,6 +578,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                     targetRpe: we.targetRpe,
                                     weightType: we.weightType,
                                     weight: we.weight,
+                                    effectiveWeight: we.effectiveWeight,
                                     restTime: we.restTime,
                                     isWarmup: we.isWarmup,
                                     notes: we.notes,
@@ -1133,10 +1259,9 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         })
     }
 
-    const getValidationError = (row: EditableWorkoutExerciseRow): string | null => {
+    const getBaseValidationError = (row: EditableWorkoutExerciseRow): string | null => {
         const repsPattern = /^(\d+|\d+-\d+|\d+\/\d+)$/
         const parsedSets = Number.parseInt(row.sets, 10)
-        const parsedWeight = row.weight.trim() === '' ? null : Number(row.weight)
         const parsedRpe = row.targetRpe.trim() === '' ? null : Number(row.targetRpe)
 
         if (!row.exerciseId) {
@@ -1161,16 +1286,128 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             return t('editProgram.rowValidationRpe')
         }
 
-        if (parsedWeight !== null && (!Number.isFinite(parsedWeight) || parsedWeight < 0)) {
-            return t('editProgram.rowValidationWeight')
-        }
-
         return null
     }
 
-    const buildWorkoutExercisePayload = (row: EditableWorkoutExerciseRow) => {
+    const resolveWeightInputForRow = ({
+        row,
+        rowIndex,
+        orderedRows,
+        effectiveWeightByRowId,
+    }: {
+        row: EditableWorkoutExerciseRow
+        rowIndex: number
+        orderedRows: EditableWorkoutExerciseRow[]
+        effectiveWeightByRowId: Record<string, number | null>
+    }): ResolveWeightInputOutcome => {
+        const parsedInput = parseWeightInputValue(row.weight)
+
+        if (parsedInput.mode === 'invalid') {
+            return { errorCode: 'invalid_format' }
+        }
+
+        if (parsedInput.mode === 'empty') {
+            return {
+                parsedWeight: {
+                    weightType: 'absolute',
+                    weight: null,
+                    effectiveWeight: null,
+                },
+            }
+        }
+
+        const value = parsedInput.value
+        if (typeof value !== 'number' || !Number.isFinite(value)) {
+            return { errorCode: 'invalid_format' }
+        }
+
+        if (parsedInput.mode === 'absolute') {
+            if (value < 0) {
+                return { errorCode: 'invalid_format' }
+            }
+
+            return {
+                parsedWeight: {
+                    weightType: 'absolute',
+                    weight: value,
+                    effectiveWeight: value,
+                },
+            }
+        }
+
+        if (parsedInput.mode === 'percentage_1rm') {
+            if (value < 0) {
+                return { errorCode: 'invalid_format' }
+            }
+
+            const oneRm = estimatedOneRMByExercise[row.exerciseId]
+            if (!Number.isFinite(oneRm) || oneRm <= 0) {
+                return { errorCode: 'missing_1rm' }
+            }
+
+            return {
+                parsedWeight: {
+                    weightType: 'percentage_1rm',
+                    weight: value,
+                    effectiveWeight: roundWeightValue((oneRm * value) / 100),
+                },
+            }
+        }
+
+        if (parsedInput.mode === 'percentage_rm') {
+            if (value < 0) {
+                return { errorCode: 'invalid_format' }
+            }
+
+            const targetReps = parseRepsValue(row.reps)
+            const rmRecord = (recordsByExercise[row.exerciseId] || [])
+                .filter((record) => record.reps === targetReps)
+                .sort((left, right) => {
+                    const leftDate = left.recordDate ? new Date(left.recordDate).getTime() : 0
+                    const rightDate = right.recordDate ? new Date(right.recordDate).getTime() : 0
+                    return rightDate - leftDate
+                })[0]
+
+            return {
+                parsedWeight: {
+                    weightType: 'percentage_rm',
+                    weight: value,
+                    effectiveWeight:
+                        typeof rmRecord?.weight === 'number'
+                            ? roundWeightValue((rmRecord.weight * value) / 100)
+                            : null,
+                },
+            }
+        }
+
+        const previousRow = orderedRows
+            .slice(0, rowIndex)
+            .reverse()
+            .find((candidateRow) => candidateRow.exerciseId === row.exerciseId)
+
+        if (!previousRow) {
+            return { errorCode: 'missing_previous_occurrence' }
+        }
+
+        const previousEffectiveWeight = effectiveWeightByRowId[previousRow.id]
+        if (typeof previousEffectiveWeight !== 'number' || !Number.isFinite(previousEffectiveWeight)) {
+            return { errorCode: 'missing_previous_weight' }
+        }
+
+        return {
+            parsedWeight: {
+                weightType: 'percentage_previous',
+                weight: value,
+                effectiveWeight: roundWeightValue(previousEffectiveWeight * (1 + value / 100)),
+            },
+        }
+    }
+
+    const buildWorkoutExercisePayload = (
+        row: EditableWorkoutExerciseRow,
+        parsedWeight: ParsedWeightInputResult
+    ) => {
         const parsedSets = Number.parseInt(row.sets, 10)
-        const parsedWeight = row.weight.trim() === '' ? null : Number(row.weight)
         const parsedRpe = row.targetRpe.trim() === '' ? null : Number(row.targetRpe)
 
         return {
@@ -1180,8 +1417,9 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             sets: parsedSets,
             reps: row.reps.trim(),
             targetRpe: parsedRpe,
-            weightType: 'absolute' as WeightType,
-            weight: parsedWeight,
+            weightType: parsedWeight.weightType,
+            weight: parsedWeight.weight,
+            effectiveWeight: parsedWeight.effectiveWeight,
             restTime: row.restTime,
             isWarmup: row.isWarmup,
             notes: row.notes,
@@ -1193,15 +1431,19 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             return
         }
 
-        const workoutRows = getWorkoutRows(workout)
+        const workoutRows = [...getWorkoutRows(workout)].sort((left, right) => left.order - right.order)
 
         if (workoutRows.length === 0) {
             showToast(t('editProgram.tableNoWorkoutExercises'), 'warning')
             return
         }
 
+        const payloadByRowId: Record<string, ReturnType<typeof buildWorkoutExercisePayload>> = {}
+        const effectiveWeightByRowId: Record<string, number | null> = {}
+
         for (let index = 0; index < workoutRows.length; index += 1) {
-            const validationError = getValidationError(workoutRows[index])
+            const row = workoutRows[index]
+            const validationError = getBaseValidationError(row)
 
             if (validationError) {
                 showToast(
@@ -1213,6 +1455,59 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 )
                 return
             }
+
+            const resolvedWeightInput = resolveWeightInputForRow({
+                row,
+                rowIndex: index,
+                orderedRows: workoutRows,
+                effectiveWeightByRowId,
+            })
+
+            if ('errorCode' in resolvedWeightInput) {
+                const exerciseName =
+                    exerciseNameById[row.exerciseId] ||
+                    t('editProgram.tableExercise')
+
+                if (
+                    resolvedWeightInput.errorCode === 'missing_previous_occurrence' ||
+                    resolvedWeightInput.errorCode === 'missing_previous_weight'
+                ) {
+                    setBlockingWeightErrorModal({
+                        title: t('editProgram.weightModalPreviousTitle'),
+                        message: t('editProgram.weightModalPreviousMessage', {
+                            index: index + 1,
+                            exercise: exerciseName,
+                        }),
+                    })
+                    return
+                }
+
+                if (resolvedWeightInput.errorCode === 'missing_1rm') {
+                    setBlockingWeightErrorModal({
+                        title: t('editProgram.weightModalOneRmTitle'),
+                        message: t('editProgram.weightModalOneRmMessage', {
+                            index: index + 1,
+                            exercise: exerciseName,
+                        }),
+                    })
+                    return
+                }
+
+                showToast(
+                    t('editProgram.rowValidationWithIndex', {
+                        index: index + 1,
+                        error: t('editProgram.rowValidationWeight'),
+                    }),
+                    'warning'
+                )
+                return
+            }
+
+            payloadByRowId[row.id] = buildWorkoutExercisePayload(
+                row,
+                resolvedWeightInput.parsedWeight
+            )
+            effectiveWeightByRowId[row.id] = resolvedWeightInput.parsedWeight.effectiveWeight
         }
 
         try {
@@ -1221,7 +1516,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             for (const row of workoutRows) {
                 setSavingRowId(row.id)
 
-                const payload = buildWorkoutExercisePayload(row)
+                const payload = payloadByRowId[row.id]
                 const endpoint = row.isDraft
                     ? `/api/programs/${programId}/workouts/${workout.id}/exercises`
                     : `/api/programs/${programId}/workouts/${workout.id}/exercises/${row.id}`
@@ -1955,6 +2250,12 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     </div>
 
                     <div className="space-y-5">
+                        {!readOnly && (
+                            <div className="rounded-lg border border-brand-primary/20 bg-brand-primary/10 px-4 py-3 text-sm font-semibold text-brand-primary">
+                                {t('editProgram.weightInputHelp')}
+                            </div>
+                        )}
+
                         {program.weeks.map((week) => {
                             const isExpanded = expandedWeekIds[week.id] ?? false
                             const isActive = activeWeek?.id === week.id
@@ -2066,7 +2367,19 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                     {isExpanded && (
                                         <div className="p-4 space-y-6">
                                             {week.workouts.map((workout, workoutIndex) => {
-                                                const workoutRows = getWorkoutRows(workout)
+                                                const workoutRows = [...getWorkoutRows(workout)].sort(
+                                                    (left, right) => left.order - right.order
+                                                )
+                                                const effectiveWeightPreviewByRowId: Record<string, number | null> = {}
+                                                const persistedEffectiveWeightByRowId =
+                                                    workout.workoutExercises.reduce(
+                                                        (acc, workoutExercise) => {
+                                                            acc[workoutExercise.id] =
+                                                                workoutExercise.effectiveWeight
+                                                            return acc
+                                                        },
+                                                        {} as Record<string, number | null>
+                                                    )
                                                 const workoutLabel = t('editProgram.workoutFallback', {
                                                     number: workoutIndex + 1,
                                                 })
@@ -2175,7 +2488,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                             </tr>
                                                                         )}
 
-                                                                        {workoutRows.map((row) => {
+                                                                        {workoutRows.map((row, rowIndex) => {
                                                                             const selectedExercise = row.exerciseId
                                                                                 ? exerciseLookupById.get(row.exerciseId)
                                                                                 : undefined
@@ -2193,6 +2506,43 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                 savingRowId === row.id ||
                                                                                 deletingRowId === row.id ||
                                                                                 savingWorkoutId === workout.id
+                                                                            const parsedWeightInputForPreview = parseWeightInputValue(
+                                                                                row.weight
+                                                                            )
+                                                                            const resolvedWeightInputForPreview =
+                                                                                resolveWeightInputForRow({
+                                                                                    row,
+                                                                                    rowIndex,
+                                                                                    orderedRows: workoutRows,
+                                                                                    effectiveWeightByRowId:
+                                                                                        effectiveWeightPreviewByRowId,
+                                                                                })
+                                                                            const previewEffectiveWeight =
+                                                                                'parsedWeight' in
+                                                                                    resolvedWeightInputForPreview
+                                                                                    ? resolvedWeightInputForPreview
+                                                                                        .parsedWeight.effectiveWeight
+                                                                                    : null
+
+                                                                            effectiveWeightPreviewByRowId[row.id] =
+                                                                                previewEffectiveWeight
+
+                                                                            const shouldShowEffectiveWeightPreview =
+                                                                                parsedWeightInputForPreview.mode ===
+                                                                                'percentage_1rm' ||
+                                                                                parsedWeightInputForPreview.mode ===
+                                                                                'percentage_previous'
+                                                                            const persistedEffectiveWeight =
+                                                                                persistedEffectiveWeightByRowId[row.id]
+                                                                            const effectiveWeightToDisplay = readOnly
+                                                                                ? persistedEffectiveWeight
+                                                                                : previewEffectiveWeight
+                                                                            const shouldShowEffectiveWeight = readOnly
+                                                                                ? typeof persistedEffectiveWeight ===
+                                                                                'number'
+                                                                                : shouldShowEffectiveWeightPreview &&
+                                                                                typeof previewEffectiveWeight ===
+                                                                                'number'
 
                                                                             return (
                                                                                 <tr key={row.id} className="align-top">
@@ -2383,9 +2733,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
                                                                                     <td className="px-1.5 py-3">
                                                                                         <input
-                                                                                            type="number"
-                                                                                            min="0"
-                                                                                            step="0.5"
+                                                                                            type="text"
                                                                                             value={row.weight}
                                                                                             onChange={(event) =>
                                                                                                 updateRowFields(row.id, {
@@ -2396,6 +2744,21 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                             placeholder={t('editProgram.weightPlaceholder')}
                                                                                             className="w-full rounded-lg border border-gray-300 px-1.5 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
                                                                                         />
+
+                                                                                        {shouldShowEffectiveWeight &&
+                                                                                            typeof effectiveWeightToDisplay ===
+                                                                                            'number' && (
+                                                                                                <p className="mt-1 text-[11px] font-semibold text-emerald-700">
+                                                                                                    {t(
+                                                                                                        'editProgram.effectiveWeightPreview',
+                                                                                                        {
+                                                                                                            weight: formatWeightForDisplay(
+                                                                                                                effectiveWeightToDisplay
+                                                                                                            ),
+                                                                                                        }
+                                                                                                    )}
+                                                                                                </p>
+                                                                                            )}
                                                                                     </td>
 
                                                                                     <td className="px-1.5 py-3">
@@ -2540,6 +2903,23 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     confirmText={t('editProgram.confirmDeleteRowConfirm')}
                     variant="danger"
                     isLoading={deletingRowId !== null}
+                />
+
+                <ConfirmationModal
+                    isOpen={blockingWeightErrorModal !== null}
+                    onClose={() => setBlockingWeightErrorModal(null)}
+                    onConfirm={() => setBlockingWeightErrorModal(null)}
+                    title={
+                        blockingWeightErrorModal?.title ||
+                        t('editProgram.weightModalGenericTitle')
+                    }
+                    message={
+                        blockingWeightErrorModal?.message ||
+                        t('editProgram.rowValidationWeight')
+                    }
+                    confirmText={t('editProgram.weightModalAcknowledge')}
+                    cancelText={t('editProgram.weightModalAcknowledge')}
+                    variant="danger"
                 />
             </div>
         </div>

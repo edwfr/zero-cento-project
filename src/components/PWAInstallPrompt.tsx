@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import Image from 'next/image'
 
 interface BeforeInstallPromptEvent extends Event {
     readonly platforms: string[]
@@ -19,6 +20,7 @@ export default function PWAInstallPrompt() {
     const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null)
     const [dismissed, setDismissed] = useState(false)
     const [isInstalled, setIsInstalled] = useState(false)
+    const [iconLoadError, setIconLoadError] = useState(false)
 
     useEffect(() => {
         // Check if already installed (standalone mode)
@@ -77,8 +79,19 @@ export default function PWAInstallPrompt() {
             className="fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:w-96 bg-white border border-gray-200 rounded-2xl shadow-xl p-4 z-50 flex items-start gap-4"
         >
             {/* App Icon */}
-            <div className="flex-shrink-0 w-12 h-12 bg-[#FFA700] rounded-xl flex items-center justify-center">
-                <span className="text-white font-bold text-lg">0c</span>
+            <div className="flex-shrink-0 w-12 h-12 bg-black rounded-xl overflow-hidden flex items-center justify-center">
+                {iconLoadError ? (
+                    <span className="text-[#FFA700] font-bold text-sm">0c</span>
+                ) : (
+                    <Image
+                        src="/icons/icon-192x192.png"
+                        alt="ZeroCento"
+                        width={48}
+                        height={48}
+                        className="w-full h-full object-cover"
+                        onError={() => setIconLoadError(true)}
+                    />
+                )}
             </div>
 
             {/* Content */}
