@@ -283,10 +283,10 @@ export default function HistoryContent() {
                                     )}
                                     <div className="mt-4">
                                         <Link
-                                            href={displayStatus === 'active' ? '/trainee/programs/current' : '/trainee/dashboard'}
+                                            href={`/trainee/programs/${program.id}`}
                                             className="inline-flex items-center rounded-lg border border-[#FFA700] px-4 py-2 font-semibold text-[#FFA700] transition-colors hover:bg-[#FFF7E5]"
                                         >
-                                            {displayStatus === 'active' ? t('history.viewActiveProgram') : t('history.backToDashboard')}
+                                            {t('history.viewProgramDetails')}
                                         </Link>
                                     </div>
                                 </div>

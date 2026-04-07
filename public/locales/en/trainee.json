@@ -62,6 +62,7 @@
         "completedProgramHint": "All workouts are completed and the program is waiting for final closure.",
         "activeProgramHint": "This program is currently in progress.",
         "draftProgramHint": "This program has been created but not published yet.",
+        "viewProgramDetails": "Go to program details",
         "viewActiveProgram": "Go to active program",
         "statsTotalPrograms": "Total Programs",
         "statsCompleted": "Completed Programs",
@@ -69,6 +70,7 @@
     },
     "currentProgram": {
         "backToDashboard": "Back to Dashboard",
+        "backToHistory": "Back to History",
         "programProgress": "Program Progress",
         "workoutsCompleted": "{{completed}} / {{total}} workouts completed",
         "completion": "completion",

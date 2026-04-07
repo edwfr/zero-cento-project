@@ -180,6 +180,42 @@ export default function TraineeDashboardContent() {
                 <p className="text-gray-600 mt-2">{t('trainee:dashboard.welcome')}</p>
             </div>
 
+            {nextWorkout && (
+                <div className="bg-white border border-gray-200 border-l-4 border-l-[#FFA700] rounded-lg shadow-md p-8 mb-8">
+                    <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+                        <div>
+                            <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#FFA700] mb-2">
+                                {t('trainee:dashboard.nextWorkout')}
+                            </p>
+                            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                                {t('trainee:dashboard.workoutDay', {
+                                    day: nextWorkout.name,
+                                    week: nextWorkout.weekNumber,
+                                })}
+                            </h2>
+                            <p className="text-gray-600">{t('trainee:dashboard.exercisesToComplete', { count: nextWorkout.exerciseCount })}</p>
+                        </div>
+                        <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">
+                            <Link
+                                href={`/trainee/workouts/${nextWorkout.id}`}
+                                className="inline-flex w-full items-center justify-center gap-2 border border-[#FFA700] text-[#FFA700] hover:bg-[#FFF7E5] font-semibold px-6 py-3 rounded-lg transition-colors sm:w-auto"
+                            >
+                                <Play className="w-4 h-4" />
+                                {nextWorkoutActionLabel}
+                            </Link>
+
+                            <Link
+                                href="/trainee/programs/current"
+                                className="inline-flex w-full items-center justify-center gap-2 border border-[#FFA700] text-[#FFA700] hover:bg-[#FFF7E5] font-semibold px-6 py-3 rounded-lg transition-colors sm:w-auto"
+                            >
+                                <ClipboardList className="w-4 h-4" />
+                                {t('trainee:dashboard.viewFullProgram')}
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Active Program Card */}
             <div className="bg-white border border-gray-200 border-l-4 border-l-[#FFA700] rounded-lg shadow-md p-8 mb-8">
                 <div className="flex flex-col items-start justify-between mb-6 gap-4 sm:flex-row">
@@ -233,32 +269,6 @@ export default function TraineeDashboardContent() {
                     />
                 </div>
             </div>
-
-            {nextWorkout && (
-                <div className="bg-white border border-gray-200 border-l-4 border-l-[#FFA700] rounded-lg shadow-md p-8 mb-8">
-                    <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-                        <div>
-                            <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#FFA700] mb-2">
-                                {t('trainee:dashboard.nextWorkout')}
-                            </p>
-                            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                                {t('trainee:dashboard.workoutDay', {
-                                    day: nextWorkout.name,
-                                    week: nextWorkout.weekNumber,
-                                })}
-                            </h2>
-                            <p className="text-gray-600">{t('trainee:dashboard.exercisesToComplete', { count: nextWorkout.exerciseCount })}</p>
-                        </div>
-                        <Link
-                            href={`/trainee/workouts/${nextWorkout.id}`}
-                            className="inline-flex w-full items-center justify-center gap-2 border border-[#FFA700] text-[#FFA700] hover:bg-[#FFF7E5] font-semibold px-6 py-3 rounded-lg transition-colors sm:w-auto"
-                        >
-                            <Play className="w-4 h-4" />
-                            {nextWorkoutActionLabel}
-                        </Link>
-                    </div>
-                </div>
-            )}
 
             {/* Quick Actions */}
             <div className="mb-8">
