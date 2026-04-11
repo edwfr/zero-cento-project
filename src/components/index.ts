@@ -16,10 +16,7 @@ export { Card } from './Card'
 export type { CardProps, CardVariant } from './Card'
 
 // Form Components
-export { default as WeightTypeSelector } from './WeightTypeSelector'
 export { default as RPESelector } from './RPESelector'
-export { default as RestTimeSelector } from './RestTimeSelector'
-export { default as RepsInput } from './RepsInput'
 export { default as FeedbackForm } from './FeedbackForm'
 export { default as DatePicker } from './DatePicker'
 export { default as AutocompleteSearch } from './AutocompleteSearch'

@@ -9,15 +9,6 @@
         "message": "An unexpected error occurred. Try again or contact support.",
         "details": "Error Details (dev only)"
     },
-    "repsInput": {
-        "invalidFormat": "Invalid format (e.g. 8, 8-10, 6/8)",
-        "placeholder": "e.g. 8, 8-10, 6/8",
-        "label": "Repetitions",
-        "help": "Formats: single number (8), range (8-10), slash (6/8)"
-    },
-    "restTime": {
-        "label": "Rest Time"
-    },
     "rpeSelector": {
         "placeholder": "Select RPE"
     },
@@ -71,13 +62,6 @@
             "test": "Test",
             "deload": "Deload"
         }
-    },
-    "weightType": {
-        "label": "Weight Type",
-        "absolute": "Absolute weight",
-        "percent1RM": "Percentage of 1RM",
-        "percentNRM": "Percentage of nRM",
-        "percentPrev": "Relative to first occurrence"
     },
     "pagination": {
         "pageOf": "Page {{current}} of {{total}}",

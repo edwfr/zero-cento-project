@@ -1,20 +1,16 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
-import AutocompleteSearch, { AutocompleteOption } from '@/components/AutocompleteSearch'
-import WeightTypeSelector from '@/components/WeightTypeSelector'
-import RestTimeSelector from '@/components/RestTimeSelector'
-import RepsInput from '@/components/RepsInput'
 import MovementPatternTag from '@/components/MovementPatternTag'
 import { WeightType, RestTime } from '@prisma/client'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { FileText, Pencil, Trash2, Dumbbell, Lock, Unlock, GripVertical, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react'
+import { Trash2, Dumbbell, GripVertical, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react'
 import {
     DndContext,
     closestCenter,
@@ -134,36 +130,19 @@ function SortableExerciseItem({ id, children }: { id: string; children: React.Re
 }
 
 export default function WorkoutDetailContent() {
-    const router = useRouter()
     const params = useParams()
     const programId = params.id as string
     const workoutId = params.wId as string
     const { t } = useTranslation(['trainer', 'common'])
 
     const [loading, setLoading] = useState(true)
-    const [saving, setSaving] = useState(false)
     const [program, setProgram] = useState<Program | null>(null)
     const [workout, setWorkout] = useState<Workout | null>(null)
-    const [exercises, setExercises] = useState<Exercise[]>([])
     const [personalRecords, setPersonalRecords] = useState<PersonalRecord[]>([])
     const [error, setError] = useState<string | null>(null)
 
-    // Add/Edit exercise form
-    const [showAddForm, setShowAddForm] = useState(false)
     const [isPRPanelCollapsed, setIsPRPanelCollapsed] = useState(false)
     const [isSbdPanelCollapsed, setIsSbdPanelCollapsed] = useState(false)
-    const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null)
-    const [selectedExerciseId, setSelectedExerciseId] = useState('')
-    const [variant, setVariant] = useState('')
-    const [sets, setSets] = useState<number | undefined>(undefined)
-    const [reps, setReps] = useState('')
-    const [restTime, setRestTime] = useState<RestTime | undefined>(undefined)
-    const [targetRpe, setTargetRpe] = useState<number | undefined>(undefined)
-    const [weightType, setWeightType] = useState<WeightType | undefined>(undefined)
-    const [weight, setWeight] = useState<number | undefined>(undefined)
-    const [isWarmup, setIsWarmup] = useState(false)
-    const [notes, setNotes] = useState('')
-    const [variantMode, setVariantMode] = useState<'select' | 'freetext'>('select')
     const { showToast } = useToast()
     const [confirmModal, setConfirmModal] = useState<{
         title: string
@@ -181,19 +160,10 @@ export default function WorkoutDetailContent() {
         try {
             setLoading(true)
 
-            const [programRes, exercisesRes, movementPatternsRes] = await Promise.all([
-                fetch(`/api/programs/${programId}`, { cache: 'no-store' }),
-                fetch('/api/exercises'),
-                fetch('/api/movement-patterns'),
-            ])
+            const programRes = await fetch(`/api/programs/${programId}`, { cache: 'no-store' })
+            const programData = await programRes.json()
 
-            const [programData, exercisesData, movementPatternsData] = await Promise.all([
-                programRes.json(),
-                exercisesRes.json(),
-                movementPatternsRes.json(),
-            ])
-
-            if (!programRes.ok || !exercisesRes.ok) {
+            if (!programRes.ok) {
                 throw new Error(t('common:errors.loadFailed'))
             }
 
@@ -210,31 +180,6 @@ export default function WorkoutDetailContent() {
 
             setWorkout(foundWorkout)
 
-            // Get movement pattern colors from API response (if included) or fetch separately
-            const patternColorsMap = new Map<string, string>()
-
-            // If movement patterns include color info in movementPatternColors relation
-            if (movementPatternsRes.ok && movementPatternsData.data?.items) {
-                movementPatternsData.data.items.forEach((pattern: any) => {
-                    // Check if pattern has color customization for this trainer
-                    if (pattern.movementPatternColors && pattern.movementPatternColors.length > 0) {
-                        // Use the first color (should be unique per trainer)
-                        patternColorsMap.set(pattern.id, pattern.movementPatternColors[0].color)
-                    }
-                })
-            }
-
-            // Apply colors to exercises' movement patterns
-            const exercisesWithColors = exercisesData.data.items.map((ex: any) => ({
-                ...ex,
-                movementPattern: {
-                    ...ex.movementPattern,
-                    color: patternColorsMap.get(ex.movementPattern.id),
-                }
-            }))
-
-            setExercises(exercisesWithColors)
-
             // Fetch personal records for the trainee
             const traineeId = programData.data.program.trainee.id
             const recordsRes = await fetch(`/api/personal-records?traineeId=${traineeId}`)
@@ -246,109 +191,6 @@ export default function WorkoutDetailContent() {
             setError(err instanceof Error ? err.message : String(err))
         } finally {
             setLoading(false)
-        }
-    }
-
-    const resetForm = () => {
-        setSelectedExerciseId('')
-        setVariant('')
-        setSets(undefined)
-        setReps('')
-        setRestTime(undefined)
-        setTargetRpe(undefined)
-        setWeightType(undefined)
-        setWeight(undefined)
-        setIsWarmup(false)
-        setNotes('')
-        setVariantMode('select')
-        setEditingExerciseId(null)
-    }
-
-    const loadExerciseForEdit = (we: WorkoutExercise) => {
-        setEditingExerciseId(we.id)
-        setSelectedExerciseId(we.exercise.id)
-        setVariant(we.variant ?? '')
-
-        // Determine if variant is from predefined options or free text
-        const exercise = exercises.find(ex => ex.id === we.exercise.id)
-        const hasVariant = (we.variant ?? '').trim() !== ''
-        const isVariantInOptions = hasVariant && (exercise?.notes?.includes(we.variant ?? '') ?? false)
-        setVariantMode(hasVariant && !isVariantInOptions ? 'freetext' : 'select')
-
-        setSets(we.sets)
-        setReps(we.reps)
-        setRestTime(we.restTime)
-        setTargetRpe(we.targetRpe ?? undefined)
-        setWeightType(we.weightType)
-        setWeight(we.weight ?? undefined)
-        setIsWarmup(we.isWarmup)
-        setNotes(we.notes ?? '')
-        setShowAddForm(true)
-    }
-
-    const handleSaveExercise = async () => {
-        if (!workout || !selectedExerciseId) return
-
-        // Validate required fields
-        if (!sets || !reps || !restTime || !weightType) {
-            showToast(t('workoutDetail.errorMissingFields') || 'Compila tutti i campi obbligatori', 'error')
-            return
-        }
-
-        try {
-            setSaving(true)
-
-            const payload = {
-                exerciseId: selectedExerciseId,
-                variant: variant.trim() || null,
-                order: editingExerciseId
-                    ? workout.workoutExercises.find(e => e.id === editingExerciseId)?.order
-                    : workout.workoutExercises.length + 1,
-                sets,
-                reps,
-                targetRpe: targetRpe ?? null,
-                weightType,
-                weight: weight ?? null,
-                restTime,
-                isWarmup,
-                notes: notes.trim() || null,
-            }
-
-            let res
-            if (editingExerciseId) {
-                // Update existing exercise
-                res = await fetch(`/api/programs/${programId}/workouts/${workoutId}/exercises/${editingExerciseId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                })
-            } else {
-                // Add new exercise
-                res = await fetch(`/api/programs/${programId}/workouts/${workoutId}/exercises`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                })
-            }
-
-            const data = await res.json()
-
-            if (!res.ok) {
-                throw new Error(getApiErrorMessage(data, t('workoutDetail.errorSave'), t))
-            }
-
-            showToast(editingExerciseId ? t('workoutDetail.exerciseSaved') : t('workoutDetail.exerciseAdded'), 'success')
-
-            // Refresh workout
-            await fetchData()
-
-            // Reset form
-            setShowAddForm(false)
-            resetForm()
-        } catch (err: unknown) {
-            showToast(err instanceof Error ? err.message : String(err), 'error')
-        } finally {
-            setSaving(false)
         }
     }
 
@@ -434,14 +276,6 @@ export default function WorkoutDetailContent() {
     }
 
     const sortedExercises = [...workout.workoutExercises].sort((a, b) => a.order - b.order)
-
-    const exerciseOptions: AutocompleteOption[] = exercises
-        .map(ex => ({
-            id: ex.id,
-            label: ex.name,
-            sublabel: ex.type === 'fundamental' ? t('exercises.fundamental') : t('exercises.accessory')
-        }))
-        .sort((a, b) => a.label.localeCompare(b.label, 'it', { sensitivity: 'base' }))
 
     const getRestTimeLabel = (rt: RestTime): string => {
         const opts = { s30: '30s', m1: '1m', m2: '2m', m3: '3m', m5: '5m' }
@@ -794,13 +628,6 @@ export default function WorkoutDetailContent() {
                                                 </div>
                                                 <div className="flex items-center space-x-2">
                                                     <button
-                                                        onClick={() => loadExerciseForEdit(we)}
-                                                        className="p-1.5 text-[#FFA700] hover:text-[#FF9500] hover:bg-orange-50 rounded transition-colors"
-                                                        title={t('workoutDetail.editBtn')}
-                                                    >
-                                                        <Pencil className="w-4 h-4" />
-                                                    </button>
-                                                    <button
                                                         onClick={() => handleDeleteExercise(we.id)}
                                                         className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
                                                         title={t('workoutDetail.deleteBtn')}
@@ -871,245 +698,6 @@ export default function WorkoutDetailContent() {
                         <p className="text-gray-600">
                             {t('workoutDetail.noExercisesDesc')}
                         </p>
-                    </div>
-                )}
-
-                {/* Add/Edit Exercise Button */}
-                {!showAddForm && (
-                    <button
-                        onClick={() => {
-                            resetForm()
-                            setShowAddForm(true)
-                        }}
-                        className="w-full bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold py-4 px-6 rounded-lg transition-colors mb-6"
-                    >
-                        {t('workoutDetail.addExercise')}
-                    </button>
-                )}
-
-                {/* Add/Edit Exercise Form */}
-                {showAddForm && (
-                    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                        <h3 className="text-xl font-bold text-gray-900 mb-4">
-                            {editingExerciseId ? t('workoutDetail.editExerciseTitle') : t('workoutDetail.addExerciseTitle')}
-                        </h3>
-
-                        <div className="space-y-6">
-                            {/* Exercise Selection with Autocomplete */}
-                            <AutocompleteSearch
-                                options={exerciseOptions}
-                                value={selectedExerciseId}
-                                onSelect={(option) => setSelectedExerciseId(option?.id || '')}
-                                label={t('workoutDetail.exerciseLabel')}
-                                placeholder={t('exercises.searchExercise')}
-                                required
-                                disabled={!!editingExerciseId} // Cannot change exercise when editing
-                            />
-
-                            {/* Variant */}
-                            <div>
-                                <div className="flex items-center justify-between mb-2">
-                                    <label className="block text-sm font-semibold text-gray-700">
-                                        {t('workoutDetail.variantLabel') || 'Variante'}
-                                    </label>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setVariantMode(variantMode === 'select' ? 'freetext' : 'select')
-                                        }}
-                                        disabled={saving}
-                                        className="flex items-center space-x-1 px-3 py-1 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
-                                        title={variantMode === 'select' ? 'Passa a testo libero' : 'Passa a selezione'}
-                                    >
-                                        {variantMode === 'select' ? (
-                                            <>
-                                                <Lock className="w-3 h-3" />
-                                                <span>Testo libero</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Unlock className="w-3 h-3" />
-                                                <span>Selezione</span>
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
-
-                                {variantMode === 'select' ? (
-                                    <AutocompleteSearch
-                                        options={
-                                            selectedExerciseId && exercises.find(ex => ex.id === selectedExerciseId)?.notes
-                                                ? exercises.find(ex => ex.id === selectedExerciseId)!.notes!.map((note) => ({
-                                                    id: note,
-                                                    label: note,
-                                                }))
-                                                : []
-                                        }
-                                        value={variant}
-                                        onSelect={(option) => setVariant(option?.id || '')}
-                                        placeholder="es. bilanciere, manubri, presa stretta..."
-                                        disabled={saving || !selectedExerciseId}
-                                    />
-                                ) : (
-                                    <input
-                                        type="text"
-                                        value={variant}
-                                        onChange={(e) => setVariant(e.target.value)}
-                                        disabled={saving}
-                                        placeholder="es. bilanciere, manubri, presa stretta..."
-                                        maxLength={100}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
-                                    />
-                                )}
-
-                                <p className="text-xs text-gray-500 mt-1">
-                                    {variantMode === 'select' && 'Seleziona una variante predefinita o passa a testo libero'}
-                                    {variantMode === 'freetext' && t('workoutDetail.variantHelp')}
-                                </p>
-                            </div>
-
-                            {/* Sets */}
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    {t('workoutDetail.setsLabel')} <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max="20"
-                                    value={sets ?? ''}
-                                    onChange={(e) => setSets(e.target.value ? parseInt(e.target.value) : undefined)}
-                                    disabled={saving}
-                                    placeholder="es. 3"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
-                                />
-                            </div>
-
-                            {/* Reps - using RepsInput component */}
-                            <RepsInput
-                                value={reps}
-                                onChange={setReps}
-                                disabled={saving}
-                                required={true}
-                            />
-
-                            {/* Rest Time - using RestTimeSelector component */}
-                            <RestTimeSelector
-                                value={restTime}
-                                onChange={setRestTime}
-                                disabled={saving}
-                                required={true}
-                            />
-
-                            {/* RPE Target */}
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    {t('workoutDetail.rpeTargetLabel')}
-                                </label>
-                                <div className="flex flex-wrap gap-2">
-                                    {[5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10].map((rpe) => (
-                                        <button
-                                            key={rpe}
-                                            type="button"
-                                            onClick={() => setTargetRpe(rpe)}
-                                            disabled={saving}
-                                            className={`px-4 py-2 text-sm font-semibold rounded transition-colors ${targetRpe === rpe
-                                                ? 'bg-[#FFA700] text-white'
-                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                                } disabled:opacity-50`}
-                                        >
-                                            {rpe}
-                                        </button>
-                                    ))}
-                                    <button
-                                        type="button"
-                                        onClick={() => setTargetRpe(undefined)}
-                                        disabled={saving}
-                                        className={`px-4 py-2 text-sm font-semibold rounded transition-colors ${targetRpe === undefined
-                                            ? 'bg-gray-400 text-white'
-                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                            } disabled:opacity-50`}
-                                    >
-                                        N/A
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Weight Type - using WeightTypeSelector component */}
-                            <WeightTypeSelector
-                                value={weightType}
-                                onChange={setWeightType}
-                                disabled={saving}
-                                required={true}
-                            />
-
-                            {/* Weight Amount */}
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    {weightType?.startsWith('percentage') ? t('workoutDetail.weightRequired') : t('workoutDetail.weightLabel')}
-                                </label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    max="1000"
-                                    step="0.5"
-                                    value={weight ?? ''}
-                                    onChange={(e) => setWeight(e.target.value ? parseFloat(e.target.value) : undefined)}
-                                    disabled={saving}
-                                    placeholder={weightType === 'absolute' ? 'es. 100' : 'es. 80'}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
-                                />
-                                <p className="text-xs text-gray-500 mt-1">
-                                    {weightType === 'absolute' && t('workoutDetail.weightKg')}
-                                    {weightType === 'percentage_1rm' && t('workoutDetail.weightPct1rm')}
-                                    {weightType === 'percentage_rm' && t('workoutDetail.weightPctRm')}
-                                    {weightType === 'percentage_previous' && t('workoutDetail.weightPctPrev')}
-                                    {!weightType && (t('workoutDetail.selectWeightTypeFirst') || 'Seleziona prima il tipo di peso')}
-                                </p>
-                            </div>
-
-                            {/* Is Warmup Checkbox */}
-                            <div className="flex items-center space-x-2">
-                                <input
-                                    type="checkbox"
-                                    id="isWarmup"
-                                    checked={isWarmup}
-                                    onChange={(e) => setIsWarmup(e.target.checked)}
-                                    disabled={saving}
-                                    className="w-5 h-5 text-[#FFA700] border-gray-300 rounded focus:ring-[#FFA700]"
-                                />
-                                <label htmlFor="isWarmup" className="text-sm font-semibold text-gray-700">
-                                    {t('workoutDetail.warmupLabel')}
-                                </label>
-                            </div>
-
-                            {/* Actions */}
-                            <div className="flex space-x-4">
-                                <button
-                                    onClick={handleSaveExercise}
-                                    disabled={saving || !selectedExerciseId}
-                                    className="flex-1 bg-[#FFA700] hover:bg-[#FF9500] disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
-                                >
-                                    {saving ? (
-                                        <LoadingSpinner size="sm" color="white" />
-                                    ) : editingExerciseId ? (
-                                        t('workoutDetail.saveChanges')
-                                    ) : (
-                                        t('workoutDetail.add')
-                                    )}
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setShowAddForm(false)
-                                        resetForm()
-                                    }}
-                                    disabled={saving}
-                                    className="bg-gray-300 hover:bg-gray-400 disabled:bg-gray-200 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
-                                >
-                                    {t('workoutDetail.cancel')}
-                                </button>
-                            </div>
-                        </div>
                     </div>
                 )}
 

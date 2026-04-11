@@ -1,19 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { Users, Dumbbell, Star, ClipboardList, Medal, TrendingDown, BarChart2, Trophy, Settings, Mail, Lock, Search, Save, Trash2, Plus, Check } from 'lucide-react'
-import { WeightType, RestTime, ExerciseType, WeekType } from '@prisma/client'
+import { Users, Dumbbell, Star, ClipboardList, Medal, TrendingDown, BarChart2, Trophy, Settings, Mail, Lock, Save, Trash2, Plus, Check } from 'lucide-react'
 import {
     Button,
     Input,
     Textarea,
     FormLabel,
     Card,
-    WeightTypeSelector,
     RPESelector,
-    RestTimeSelector,
-    RepsInput,
-    FeedbackForm,
     ExerciseCard,
     MovementPatternTag,
     YoutubeEmbed,
@@ -44,10 +39,7 @@ function ComponentShowcase() {
     const [isButtonLoading, setIsButtonLoading] = useState(false)
 
     // Existing State
-    const [weightType, setWeightType] = useState<WeightType>('absolute')
     const [rpe, setRpe] = useState<number | null>(null)
-    const [restTime, setRestTime] = useState<RestTime>('m2')
-    const [reps, setReps] = useState<string>('8')
     const [showFullPageLoader, setShowFullPageLoader] = useState(false)
     const [confirmModalOpen, setConfirmModalOpen] = useState(false)
     const [confirmVariant, setConfirmVariant] = useState<'danger' | 'warning' | 'info' | 'success'>('danger')
@@ -314,29 +306,12 @@ function ComponentShowcase() {
                 <section className="rounded-lg bg-white p-6 shadow">
                     <h2 className="mb-4 text-2xl font-bold text-gray-900">Form Labels</h2>
                     <p className="text-sm text-gray-600 mb-6">
-                        Label unificata per form con supporto required, tooltip e badge.
+                        Label unificata per form con supporto standard e required.
                     </p>
 
                     <div className="space-y-4">
                         <FormLabel htmlFor="demo1">Label standard</FormLabel>
                         <FormLabel htmlFor="demo2" required>Label con required</FormLabel>
-                        <FormLabel htmlFor="demo3" tooltip="Questa è una spiegazione del campo">
-                            Label con tooltip
-                        </FormLabel>
-                        <FormLabel
-                            htmlFor="demo4"
-                            badge={<span className="text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-600">Opzionale</span>}
-                        >
-                            Label con badge
-                        </FormLabel>
-                        <FormLabel
-                            htmlFor="demo5"
-                            required
-                            tooltip="Campo obbligatorio per il completamento"
-                            badge={<span className="text-xs bg-blue-100 px-2 py-0.5 rounded text-blue-700">Importante</span>}
-                        >
-                            Label completa
-                        </FormLabel>
                     </div>
                 </section>
 
@@ -519,10 +494,7 @@ function ComponentShowcase() {
                 <section className="space-y-6 rounded-lg bg-white p-6 shadow">
                     <h2 className="mb-4 text-2xl font-bold text-gray-900">Form Components</h2>
 
-                    <WeightTypeSelector value={weightType} onChange={setWeightType} />
                     <RPESelector value={rpe} onChange={setRpe} />
-                    <RestTimeSelector value={restTime} onChange={setRestTime} />
-                    <RepsInput value={reps} onChange={setReps} />
                 </section>
 
                 {/* Exercise Cards */}
@@ -877,21 +849,6 @@ function ComponentShowcase() {
                     )}
                 </section>
 
-                {/* Feedback Form */}
-                <section className="rounded-lg bg-white p-6 shadow">
-                    <h2 className="mb-4 text-2xl font-bold text-gray-900">Feedback Form</h2>
-                    <FeedbackForm
-                        workoutExerciseName="Back Squat"
-                        prescribedSets={4}
-                        prescribedReps="8"
-                        prescribedWeight={100}
-                        onSubmit={(data) => {
-                            console.log('Feedback submitted:', data)
-                            showToast('Feedback salvato con successo!', 'success')
-                        }}
-                        onCancel={() => showToast('Operazione annullata', 'info')}
-                    />
-                </section>
             </div>
         </div>
     )

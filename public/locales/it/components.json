@@ -9,15 +9,6 @@
         "message": "Si è verificato un errore inaspettato. Riprova o contatta il supporto.",
         "details": "Dettagli Errore (solo dev)"
     },
-    "repsInput": {
-        "invalidFormat": "Formato non valido (es. 8, 8-10, 6/8)",
-        "placeholder": "es. 8, 8-10, 6/8",
-        "label": "Ripetizioni",
-        "help": "Formati: numero singolo (8), range (8-10), slash (6/8)"
-    },
-    "restTime": {
-        "label": "Tempo Recupero"
-    },
     "rpeSelector": {
         "placeholder": "Seleziona RPE"
     },
@@ -71,13 +62,6 @@
             "test": "Test",
             "deload": "Scarico"
         }
-    },
-    "weightType": {
-        "label": "Tipo Peso",
-        "absolute": "Peso assoluto",
-        "percent1RM": "Percentuale massimale",
-        "percentNRM": "Percentuale di nRM",
-        "percentPrev": "Relativo alla prima occorrenza"
     },
     "pagination": {
         "pageOf": "Pagina {{current}} di {{total}}",
