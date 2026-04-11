@@ -74,6 +74,7 @@ export async function POST(request: Request) {
 
         return apiSuccess({
             message: 'Password changed successfully',
+            messageKey: 'auth.passwordChangedSuccess',
         })
     } catch (error: any) {
         return apiError('INTERNAL_ERROR', error.message || 'Failed to change password', 500, undefined, 'internal.default')

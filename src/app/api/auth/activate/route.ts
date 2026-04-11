@@ -20,7 +20,10 @@ export async function POST(request: NextRequest) {
 
         logger.info({ userId: session.user.id }, 'User activated after onboarding')
 
-        return apiSuccess({ message: 'User activated successfully' })
+        return apiSuccess({
+            message: 'User activated successfully',
+            messageKey: 'user.activatedSuccess',
+        })
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error activating user')

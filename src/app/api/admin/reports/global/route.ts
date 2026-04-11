@@ -90,6 +90,6 @@ export async function GET(request: NextRequest) {
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error fetching global admin report')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch global report', 500)
+        return apiError('INTERNAL_ERROR', 'Failed to fetch global report', 500, undefined, 'internal.globalReportFailed')
     }
 }

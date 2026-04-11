@@ -221,7 +221,9 @@ export async function PUT(
             return apiError(
                 'FORBIDDEN',
                 'Cannot modify program: only draft programs can be edited',
-                403
+                403,
+                undefined,
+                'program.cannotModifyNonDraft'
             )
         }
 
@@ -267,7 +269,7 @@ export async function PUT(
                 `Cannot reduce durationWeeks below existing configured weeks (${existingWeeksCount})`,
                 400,
                 undefined,
-                'validation.invalidInput'
+                'program.cannotReduceDurationWeeks'
             )
         }
 
@@ -277,7 +279,7 @@ export async function PUT(
                 `Cannot reduce workoutsPerWeek below existing configured workouts (${maxExistingWorkoutsPerWeek})`,
                 400,
                 undefined,
-                'validation.invalidInput'
+                'program.cannotReduceWorkoutsPerWeek'
             )
         }
 
@@ -441,7 +443,9 @@ export async function DELETE(
             return apiError(
                 'FORBIDDEN',
                 'Cannot delete program: only draft programs can be deleted',
-                403
+                403,
+                undefined,
+                'program.cannotDeleteNonDraft'
             )
         }
 
@@ -452,7 +456,10 @@ export async function DELETE(
 
         logger.info({ programId, userId: session.user.id }, 'Program deleted successfully')
 
-        return apiSuccess({ message: 'Program deleted successfully' })
+        return apiSuccess({
+            message: 'Program deleted successfully',
+            messageKey: 'program.deletedSuccess',
+        })
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error, programId: params.id }, 'Error deleting program')

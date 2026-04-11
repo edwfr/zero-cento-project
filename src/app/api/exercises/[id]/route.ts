@@ -270,7 +270,8 @@ export async function DELETE(
                 {
                     programId: activeProgram.workout.week.program.id,
                     programName: activeProgram.workout.week.program.title,
-                }
+                },
+                'exercise.cannotDeleteInActiveProgram'
             )
         }
 
@@ -281,7 +282,10 @@ export async function DELETE(
 
         logger.info({ exerciseId, userId: session.user.id }, 'Exercise deleted successfully')
 
-        return apiSuccess({ message: 'Exercise deleted successfully' })
+        return apiSuccess({
+            message: 'Exercise deleted successfully',
+            messageKey: 'exercise.deletedSuccess',
+        })
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error, exerciseId: params.id }, 'Error deleting exercise')

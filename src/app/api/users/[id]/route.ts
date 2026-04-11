@@ -176,7 +176,10 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
         logger.info({ userId: id }, 'User deleted')
 
-        return apiSuccess({ message: 'User deleted successfully' })
+        return apiSuccess({
+            message: 'User deleted successfully',
+            messageKey: 'user.deletedSuccess',
+        })
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error deleting user')

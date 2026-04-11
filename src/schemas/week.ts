@@ -6,7 +6,7 @@ import { z } from 'zod'
 
 export const weekConfigSchema = z.object({
     weekType: z.enum(['normal', 'test', 'deload'], {
-        errorMap: () => ({ message: 'Tipo settimana non valido' }),
+        errorMap: () => ({ message: 'validation.invalidWeekType' }),
     }),
     feedbackRequested: z.boolean().default(false),
 })

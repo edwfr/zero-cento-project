@@ -5,32 +5,32 @@ import { z } from 'zod'
  */
 
 export const muscleGroupAssignmentSchema = z.object({
-    muscleGroupId: z.string().uuid('ID gruppo muscolare non valido'),
+    muscleGroupId: z.string().uuid('validation.invalidMuscleGroupId'),
     coefficient: z
         .number()
-        .min(0, 'Coefficiente minimo 0.0')
-        .max(1, 'Coefficiente massimo 1.0'),
+        .min(0, 'validation.coefficientMin')
+        .max(1, 'validation.coefficientMax'),
 })
 
 export const exerciseSchema = z.object({
     name: z
         .string()
-        .min(3, 'Nome troppo corto')
-        .max(100, 'Nome troppo lungo'),
+        .min(3, 'validation.exerciseNameTooShort')
+        .max(100, 'validation.exerciseNameTooLong'),
     description: z.string().max(500).optional(),
     youtubeUrl: z
         .string()
-        .url('URL non valido')
-        .regex(/(youtube\.com|youtu\.be)/, 'Deve essere un link YouTube')
+        .url('validation.invalidUrl')
+        .regex(/(youtube\.com|youtu\.be)/, 'validation.mustBeYoutube')
         .optional(),
     type: z.enum(['fundamental', 'accessory'], {
-        errorMap: () => ({ message: 'Tipo esercizio non valido' }),
+        errorMap: () => ({ message: 'validation.invalidExerciseType' }),
     }),
-    movementPatternId: z.string().uuid('ID schema motorio non valido'),
+    movementPatternId: z.string().uuid('validation.invalidMovementPatternId'),
     muscleGroups: z
         .array(muscleGroupAssignmentSchema)
         .min(0)
-        .max(5, 'Massimo 5 gruppi muscolari'),
+        .max(5, 'validation.maxMuscleGroups'),
     notes: z.array(z.string().max(200)).optional(),
 })
 

@@ -70,6 +70,7 @@ export async function POST(
 
         return apiSuccess({
             message: `Trainee reassigned successfully`,
+            messageKey: 'trainee.reassignedSuccess',
             relation,
         })
     } catch (error: any) {

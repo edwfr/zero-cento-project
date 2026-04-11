@@ -86,7 +86,9 @@ export async function DELETE(request: NextRequest, { params }: Params) {
             return apiError(
                 'CONFLICT',
                 `Cannot delete muscle group. Used in ${usageCount} exercise(s)`,
-                409
+                409,
+                undefined,
+                'muscleGroup.cannotDeleteInUse'
             )
         }
 
@@ -96,7 +98,10 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
         logger.info({ muscleGroupId: params.id }, 'Muscle group deleted')
 
-        return apiSuccess({ message: 'Muscle group deleted successfully' })
+        return apiSuccess({
+            message: 'Muscle group deleted successfully',
+            messageKey: 'muscleGroup.deletedSuccess',
+        })
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error deleting muscle group')

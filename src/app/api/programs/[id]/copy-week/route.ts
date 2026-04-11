@@ -19,7 +19,7 @@ export async function POST(
         const sourceWeekId = body?.sourceWeekId
 
         if (!sourceWeekId || typeof sourceWeekId !== 'string') {
-            return apiError('VALIDATION_ERROR', 'Source week is required', 400)
+            return apiError('VALIDATION_ERROR', 'Source week is required', 400, undefined, 'validation.sourceWeekRequired')
         }
 
         const program = await prisma.trainingProgram.findUnique({
@@ -59,18 +59,20 @@ export async function POST(
             return apiError(
                 'FORBIDDEN',
                 'Cannot modify program: only draft programs can be edited',
-                403
+                403,
+                undefined,
+                'program.cannotModifyNonDraft'
             )
         }
 
         const sourceWeekIndex = program.weeks.findIndex((week) => week.id === sourceWeekId)
 
         if (sourceWeekIndex === -1) {
-            return apiError('NOT_FOUND', 'Source week not found', 404)
+            return apiError('NOT_FOUND', 'Source week not found', 404, undefined, 'week.sourceNotFound')
         }
 
         if (sourceWeekIndex >= program.weeks.length - 1) {
-            return apiError('VALIDATION_ERROR', 'Source week has no following week to copy into', 400)
+            return apiError('VALIDATION_ERROR', 'Source week has no following week to copy into', 400, undefined, 'program.noFollowingWeek')
         }
 
         const sourceWeek = program.weeks[sourceWeekIndex]

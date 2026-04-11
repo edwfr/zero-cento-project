@@ -12,35 +12,44 @@
     },
     "auth": {
         "required": "Authentication required",
-        "accessDenied": "Access denied"
+        "accessDenied": "Access denied",
+        "passwordChangedSuccess": "Password changed successfully"
     },
     "exercise": {
         "notFound": "Exercise not found",
         "nameExists": "An exercise with this name already exists",
         "modifyDenied": "You can only modify exercises you created",
-        "deleteDenied": "You can only delete exercises you created"
+        "deleteDenied": "You can only delete exercises you created",
+        "deletedSuccess": "Exercise deleted successfully",
+        "cannotDeleteInActiveProgram": "Cannot delete exercise: it is used in an active program"
     },
     "feedback": {
         "notFound": "Feedback not found",
         "createDenied": "You can only create feedback for your own workouts",
         "modifyDenied": "You can only modify your own feedback",
         "viewDenied": "You can only view feedback from your trainees",
-        "viewOwnDenied": "You can only view your own feedback"
+        "viewOwnDenied": "You can only view your own feedback",
+        "cannotModifyAfter24h": "Cannot modify feedback: editing is only allowed within 24 hours of creation"
     },
     "movementPattern": {
         "notFound": "Movement pattern not found",
-        "nameExists": "A movement pattern with this name already exists"
+        "nameExists": "A movement pattern with this name already exists",
+        "cannotDeleteInUse": "Cannot delete movement pattern: it is used in one or more exercises",
+        "deletedSuccess": "Movement pattern deleted successfully"
     },
     "muscleGroup": {
         "notFound": "Muscle group not found",
         "someNotFound": "One or more muscle groups not found",
-        "nameExists": "A muscle group with this name already exists"
+        "nameExists": "A muscle group with this name already exists",
+        "cannotDeleteInUse": "Cannot delete muscle group: it is used in one or more exercises",
+        "deletedSuccess": "Muscle group deleted successfully"
     },
     "personalRecord": {
         "notFound": "Personal record not found",
         "createDenied": "You can only create records for your own trainees",
         "updateDenied": "You can only update records for your own trainees",
-        "deleteDenied": "You can only delete records for your own trainees"
+        "deleteDenied": "You can only delete records for your own trainees",
+        "deletedSuccess": "Personal record deleted successfully"
     },
     "program": {
         "notFound": "Program not found",
@@ -48,16 +57,24 @@
         "assignDenied": "You can only assign programs to your own trainees",
         "modifyDenied": "You can only modify your own programs",
         "deleteDenied": "You can only delete your own programs",
+        "deletedSuccess": "Program deleted successfully",
         "publishDenied": "You can only publish your own programs",
         "completeDenied": "You can only complete your own programs",
         "viewDenied": "You can only view your own programs",
         "viewAssignedDenied": "You can only view programs assigned to you",
         "alreadyCompleted": "Program is already completed",
         "alreadyPublished": "Program is already published or completed",
-        "cannotCompleteDraft": "Cannot complete a draft program. Publish it first."
+        "cannotCompleteDraft": "Cannot complete a draft program. Publish it first.",
+        "cannotModifyNonDraft": "Cannot modify program: only draft programs can be edited",
+        "cannotDeleteNonDraft": "Cannot delete program: only draft programs can be deleted",
+        "cannotPublishEmptyWorkouts": "Cannot publish: one or more workouts have no exercises",
+        "cannotReduceDurationWeeks": "Cannot reduce duration below the number of already configured weeks",
+        "cannotReduceWorkoutsPerWeek": "Cannot reduce workouts per week below the number of already configured workouts",
+        "noFollowingWeek": "Source week has no following week to copy into"
     },
     "trainee": {
-        "notFound": "Trainee not found"
+        "notFound": "Trainee not found",
+        "reassignedSuccess": "Trainee reassigned successfully"
     },
     "trainer": {
         "notFound": "Trainer not found"
@@ -67,6 +84,8 @@
         "emailExists": "Email already exists",
         "cannotCreateAdmin": "Cannot create admin users",
         "cannotDeleteAdmin": "Cannot delete admin users",
+        "activatedSuccess": "User activated successfully",
+        "deletedSuccess": "User deleted successfully",
         "cannotModifyStatus": "Cannot modify user status",
         "canOnlyActivateTrainee": "Can only activate trainee accounts",
         "canOnlyDeactivateTrainee": "Can only deactivate trainee accounts",
@@ -75,7 +94,8 @@
     },
     "week": {
         "notFound": "Week not found",
-        "modifyDenied": "You can only modify weeks from your own programs"
+        "modifyDenied": "You can only modify weeks from your own programs",
+        "sourceNotFound": "Source week not found"
     },
     "workout": {
         "notFound": "Workout not found",
@@ -84,7 +104,8 @@
         "exercisesNotFound": "One or more exercises not found in this workout"
     },
     "workoutExercise": {
-        "notFound": "Workout exercise not found"
+        "notFound": "Workout exercise not found",
+        "removedSuccess": "Exercise removed from workout successfully"
     },
     "validation": {
         "invalidInput": "Invalid input",
@@ -95,9 +116,11 @@
         "traineeIdRequired": "traineeId is required for trainer/admin requests",
         "targetMustBeTrainee": "Target user must have trainee role",
         "targetMustBeTrainer": "Target user must have trainer role",
-        "userMustBeTrainee": "User must have trainee role"
+        "userMustBeTrainee": "User must have trainee role",
+        "sourceWeekRequired": "Source week is required"
     },
     "internal": {
-        "default": "An error occurred. Please try again."
+        "default": "An error occurred. Please try again.",
+        "globalReportFailed": "Failed to fetch the global report"
     }
 }

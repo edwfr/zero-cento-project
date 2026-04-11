@@ -57,7 +57,9 @@ export async function PUT(
             return apiError(
                 'FORBIDDEN',
                 'Cannot modify program: only draft programs can be edited',
-                403
+                403,
+                undefined,
+                'program.cannotModifyNonDraft'
             )
         }
 
@@ -169,7 +171,9 @@ export async function DELETE(
             return apiError(
                 'FORBIDDEN',
                 'Cannot modify program: only draft programs can be edited',
-                403
+                403,
+                undefined,
+                'program.cannotModifyNonDraft'
             )
         }
 
@@ -210,7 +214,10 @@ export async function DELETE(
             'Exercise removed from workout'
         )
 
-        return apiSuccess({ message: 'Exercise removed from workout successfully' })
+        return apiSuccess({
+            message: 'Exercise removed from workout successfully',
+            messageKey: 'workoutExercise.removedSuccess',
+        })
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error(

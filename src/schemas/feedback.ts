@@ -7,35 +7,35 @@ import { z } from 'zod'
 export const setPerformedSchema = z.object({
     setNumber: z
         .number()
-        .int('Numero serie deve essere intero')
-        .min(1, 'Minimo serie 1')
-        .max(50, 'Massimo 50 serie'),
+        .int('validation.setsInteger')
+        .min(1, 'validation.minSets')
+        .max(50, 'validation.maxSets'),
     completed: z.boolean().default(true),
     reps: z
         .number()
-        .int('Ripetizioni deve essere intero')
-        .min(0, 'Minimo 0 ripetizioni')
-        .max(50, 'Massimo 50 ripetizioni'),
+        .int('validation.repsInteger')
+        .min(0, 'validation.minReps')
+        .max(50, 'validation.maxReps'),
     weight: z
         .number()
-        .min(0, 'Peso minimo 0 kg')
-        .max(500, 'Peso massimo 500 kg'),
+        .min(0, 'validation.minWeight')
+        .max(500, 'validation.maxWeight'),
 })
 
 export const feedbackSchema = z.object({
-    workoutExerciseId: z.string().uuid('ID esercizio workout non valido'),
+    workoutExerciseId: z.string().uuid('validation.invalidWorkoutExerciseId'),
     completed: z.boolean().default(false),
     actualRpe: z
         .number()
-        .min(5.0, 'RPE minimo 5.0')
-        .max(10.0, 'RPE massimo 10.0')
-        .multipleOf(0.5, 'RPE deve essere multiplo di 0.5')
+        .min(5.0, 'validation.rpeMin')
+        .max(10.0, 'validation.rpeMax')
+        .multipleOf(0.5, 'validation.rpeStep')
         .nullish(),
     sets: z
         .array(setPerformedSchema)
-        .min(1, 'Almeno una serie richiesta')
-        .max(50, 'Massimo 50 serie'),
-    notes: z.string().max(1000, 'Note troppo lunghe (max 1000 caratteri)').nullish(),
+        .min(1, 'validation.minOneSeries')
+        .max(50, 'validation.maxSeries'),
+    notes: z.string().max(1000, 'validation.notesTooLong').nullish(),
 })
 
 export const updateFeedbackSchema = feedbackSchema.partial().extend({
@@ -43,11 +43,11 @@ export const updateFeedbackSchema = feedbackSchema.partial().extend({
 })
 
 export const weekFeedbackSchema = z.object({
-    weekId: z.string().uuid('ID settimana non valido'),
+    weekId: z.string().uuid('validation.invalidWeekId'),
     generalFeedback: z
         .string()
-        .min(10, 'Feedback troppo breve (minimo 10 caratteri)')
-        .max(2000, 'Feedback troppo lungo (max 2000 caratteri)'),
+        .min(10, 'validation.feedbackTooShort')
+        .max(2000, 'validation.feedbackTooLong'),
 })
 
 export type SetPerformedInput = z.infer<typeof setPerformedSchema>

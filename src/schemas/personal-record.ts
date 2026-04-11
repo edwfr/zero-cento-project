@@ -5,16 +5,16 @@ import { z } from 'zod'
  */
 
 export const personalRecordSchema = z.object({
-    exerciseId: z.string().uuid('ID esercizio non valido'),
+    exerciseId: z.string().uuid('validation.invalidExerciseId'),
     reps: z
         .number()
-        .int('Ripetizioni deve essere intero')
-        .min(1, 'Minimo 1 ripetizione')
-        .max(100, 'Massimo 100 ripetizioni'),
+        .int('validation.repsInteger')
+        .min(1, 'validation.minOneRep')
+        .max(100, 'validation.maxReps100'),
     weight: z
         .number()
-        .positive('Peso deve essere maggiore di 0')
-        .max(1000, 'Peso massimo 1000 kg'),
+        .positive('validation.weightPositive')
+        .max(1000, 'validation.maxWeight1000'),
     recordDate: z
         .union([z.string(), z.date()])
         .transform((val) => {
@@ -22,13 +22,13 @@ export const personalRecordSchema = z.object({
                 // Accept both date (YYYY-MM-DD) and datetime (ISO 8601) formats
                 const date = new Date(val)
                 if (isNaN(date.getTime())) {
-                    throw new Error('Data non valida')
+                    throw new Error('validation.invalidDate')
                 }
                 return date
             }
             return val
         })
-        .refine((date) => date <= new Date(), 'La data del record non può essere futura'),
+        .refine((date) => date <= new Date(), 'validation.dateCannotBeFuture'),
     notes: z.string().max(500).optional(),
 })
 

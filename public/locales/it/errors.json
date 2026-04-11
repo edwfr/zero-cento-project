@@ -12,35 +12,44 @@
     },
     "auth": {
         "required": "Autenticazione richiesta",
-        "accessDenied": "Accesso negato"
+        "accessDenied": "Accesso negato",
+        "passwordChangedSuccess": "Password aggiornata con successo"
     },
     "exercise": {
         "notFound": "Esercizio non trovato",
         "nameExists": "Un esercizio con questo nome esiste già",
         "modifyDenied": "Puoi modificare solo gli esercizi che hai creato",
-        "deleteDenied": "Puoi eliminare solo gli esercizi che hai creato"
+        "deleteDenied": "Puoi eliminare solo gli esercizi che hai creato",
+        "deletedSuccess": "Esercizio eliminato con successo",
+        "cannotDeleteInActiveProgram": "Impossibile eliminare l'esercizio: è utilizzato in un programma attivo"
     },
     "feedback": {
         "notFound": "Feedback non trovato",
         "createDenied": "Puoi creare feedback solo per i tuoi workout",
         "modifyDenied": "Puoi modificare solo il tuo feedback",
         "viewDenied": "Puoi visualizzare solo il feedback dei tuoi atleti",
-        "viewOwnDenied": "Puoi visualizzare solo il tuo feedback"
+        "viewOwnDenied": "Puoi visualizzare solo il tuo feedback",
+        "cannotModifyAfter24h": "Impossibile modificare il feedback: la modifica è consentita solo entro 24 ore dalla creazione"
     },
     "movementPattern": {
         "notFound": "Schema motorio non trovato",
-        "nameExists": "Uno schema motorio con questo nome esiste già"
+        "nameExists": "Uno schema motorio con questo nome esiste già",
+        "cannotDeleteInUse": "Impossibile eliminare lo schema motorio: è utilizzato in uno o più esercizi",
+        "deletedSuccess": "Schema motorio eliminato con successo"
     },
     "muscleGroup": {
         "notFound": "Gruppo muscolare non trovato",
         "someNotFound": "Uno o più gruppi muscolari non trovati",
-        "nameExists": "Un gruppo muscolare con questo nome esiste già"
+        "nameExists": "Un gruppo muscolare con questo nome esiste già",
+        "cannotDeleteInUse": "Impossibile eliminare il gruppo muscolare: è utilizzato in uno o più esercizi",
+        "deletedSuccess": "Gruppo muscolare eliminato con successo"
     },
     "personalRecord": {
         "notFound": "Massimale non trovato",
         "createDenied": "Puoi creare massimali solo per i tuoi atleti",
         "updateDenied": "Puoi aggiornare i massimali solo dei tuoi atleti",
-        "deleteDenied": "Puoi eliminare i massimali solo dei tuoi atleti"
+        "deleteDenied": "Puoi eliminare i massimali solo dei tuoi atleti",
+        "deletedSuccess": "Massimale eliminato con successo"
     },
     "program": {
         "notFound": "Programma non trovato",
@@ -48,16 +57,24 @@
         "assignDenied": "Puoi assegnare programmi solo ai tuoi atleti",
         "modifyDenied": "Puoi modificare solo i tuoi programmi",
         "deleteDenied": "Puoi eliminare solo i tuoi programmi",
+        "deletedSuccess": "Programma eliminato con successo",
         "publishDenied": "Puoi pubblicare solo i tuoi programmi",
         "completeDenied": "Puoi completare solo i tuoi programmi",
         "viewDenied": "Puoi visualizzare solo i tuoi programmi",
         "viewAssignedDenied": "Puoi visualizzare solo i programmi assegnati a te",
         "alreadyCompleted": "Il programma è già completato",
         "alreadyPublished": "Il programma è già pubblicato o completato",
-        "cannotCompleteDraft": "Non puoi completare un programma in bozza. Pubblicalo prima."
+        "cannotCompleteDraft": "Non puoi completare un programma in bozza. Pubblicalo prima.",
+        "cannotModifyNonDraft": "Impossibile modificare il programma: solo i programmi in bozza possono essere modificati",
+        "cannotDeleteNonDraft": "Impossibile eliminare il programma: solo i programmi in bozza possono essere eliminati",
+        "cannotPublishEmptyWorkouts": "Impossibile pubblicare: uno o più workout non hanno esercizi",
+        "cannotReduceDurationWeeks": "Impossibile ridurre la durata al di sotto del numero di settimane già configurate",
+        "cannotReduceWorkoutsPerWeek": "Impossibile ridurre i workout settimanali al di sotto del numero di workout già configurati",
+        "noFollowingWeek": "La settimana sorgente non ha una settimana successiva in cui copiare"
     },
     "trainee": {
-        "notFound": "Atleta non trovato"
+        "notFound": "Atleta non trovato",
+        "reassignedSuccess": "Atleta riassegnato con successo"
     },
     "trainer": {
         "notFound": "Trainer non trovato"
@@ -67,6 +84,8 @@
         "emailExists": "Email già in uso",
         "cannotCreateAdmin": "Non è possibile creare utenti admin",
         "cannotDeleteAdmin": "Non è possibile eliminare utenti admin",
+        "activatedSuccess": "Utente attivato con successo",
+        "deletedSuccess": "Utente eliminato con successo",
         "cannotModifyStatus": "Non è possibile modificare lo stato di questo utente",
         "canOnlyActivateTrainee": "È possibile attivare solo account atleta",
         "canOnlyDeactivateTrainee": "È possibile disattivare solo account atleta",
@@ -75,7 +94,8 @@
     },
     "week": {
         "notFound": "Settimana non trovata",
-        "modifyDenied": "Puoi modificare solo le settimane dei tuoi programmi"
+        "modifyDenied": "Puoi modificare solo le settimane dei tuoi programmi",
+        "sourceNotFound": "Settimana sorgente non trovata"
     },
     "workout": {
         "notFound": "Workout non trovato",
@@ -84,7 +104,8 @@
         "exercisesNotFound": "Uno o più esercizi non trovati in questo workout"
     },
     "workoutExercise": {
-        "notFound": "Esercizio workout non trovato"
+        "notFound": "Esercizio workout non trovato",
+        "removedSuccess": "Esercizio rimosso dal workout con successo"
     },
     "validation": {
         "invalidInput": "Dati non validi",
@@ -95,9 +116,11 @@
         "traineeIdRequired": "Il traineeId è obbligatorio per le richieste trainer/admin",
         "targetMustBeTrainee": "L'utente destinatario deve avere il ruolo atleta",
         "targetMustBeTrainer": "L'utente destinatario deve avere il ruolo trainer",
-        "userMustBeTrainee": "L'utente deve avere il ruolo atleta"
+        "userMustBeTrainee": "L'utente deve avere il ruolo atleta",
+        "sourceWeekRequired": "La settimana sorgente è obbligatoria"
     },
     "internal": {
-        "default": "Si è verificato un errore. Riprova."
+        "default": "Si è verificato un errore. Riprova.",
+        "globalReportFailed": "Impossibile recuperare il report globale"
     }
 }

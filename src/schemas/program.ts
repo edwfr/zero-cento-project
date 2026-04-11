@@ -7,20 +7,20 @@ import { z } from 'zod'
 export const createProgramSchema = z.object({
     title: z
         .string()
-        .min(3, 'Titolo troppo corto')
-        .max(100, 'Titolo troppo lungo'),
-    traineeId: z.string().uuid('ID trainee non valido'),
+        .min(3, 'validation.titleTooShort')
+        .max(100, 'validation.titleTooLong'),
+    traineeId: z.string().uuid('validation.invalidTraineeId'),
     isSbdProgram: z.boolean().default(false),
     durationWeeks: z
         .number()
-        .int('Durata deve essere intero')
-        .min(1, 'Minimo 1 settimana')
-        .max(52, 'Massimo 52 settimane'),
+        .int('validation.durationInteger')
+        .min(1, 'validation.minWeeks')
+        .max(52, 'validation.maxWeeks'),
     workoutsPerWeek: z
         .number()
-        .int('Allenamenti per settimana deve essere intero')
-        .min(1, 'Minimo 1 allenamento/settimana')
-        .max(7, 'Massimo 7 allenamenti/settimana'),
+        .int('validation.workoutsInteger')
+        .min(1, 'validation.minWorkouts')
+        .max(7, 'validation.maxWorkouts'),
 })
 
 export const updateProgramSchema = createProgramSchema.partial()
@@ -33,7 +33,7 @@ export const publishProgramSchema = z.object({
                 // Accept both date (YYYY-MM-DD) and datetime (ISO 8601) formats
                 const date = new Date(val)
                 if (isNaN(date.getTime())) {
-                    throw new Error('Data di inizio non valida')
+                    throw new Error('validation.invalidStartDate')
                 }
                 return date
             }

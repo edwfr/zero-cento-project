@@ -49,7 +49,7 @@ export const workoutExerciseSchema = workoutExerciseBaseSchema.superRefine(
         if (data.weightType.startsWith('percentage') && data.weight === undefined) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: 'Peso è obbligatorio per i tipi percentuale',
+                message: 'validation.weightRequiredForPercentage',
                 path: ['weight'],
             })
         }
@@ -64,7 +64,7 @@ export const workoutExerciseSchema = workoutExerciseBaseSchema.superRefine(
                 minimum: 0,
                 type: 'number',
                 inclusive: true,
-                message: 'Il peso deve essere >= 0',
+                message: 'validation.weightMinZero',
                 path: ['weight'],
             })
         }
@@ -79,7 +79,7 @@ export const workoutExerciseSchema = workoutExerciseBaseSchema.superRefine(
                 minimum: 0,
                 type: 'number',
                 inclusive: true,
-                message: 'Il peso effettivo deve essere >= 0',
+                message: 'validation.effectiveWeightMinZero',
                 path: ['effectiveWeight'],
             })
         }
@@ -92,7 +92,7 @@ export const updateWorkoutExerciseSchema = workoutExerciseBaseSchema.partial().e
 
 export const bulkWorkoutExercisesSchema = z.object({
     workoutId: z.string().uuid(),
-    exercises: z.array(workoutExerciseSchema).min(1, 'Almeno un esercizio richiesto'),
+    exercises: z.array(workoutExerciseSchema).min(1, 'validation.atLeastOneExercise'),
 })
 
 export type WorkoutExerciseInput = z.infer<typeof workoutExerciseSchema>

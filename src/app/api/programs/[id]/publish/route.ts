@@ -77,7 +77,8 @@ export async function POST(
                 400,
                 {
                     emptyWorkoutIds: emptyWorkouts.map((w: any) => w.id),
-                }
+                },
+                'program.cannotPublishEmptyWorkouts'
             )
         }
 

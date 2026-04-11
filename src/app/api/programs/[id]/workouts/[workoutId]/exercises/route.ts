@@ -67,7 +67,9 @@ export async function POST(
             return apiError(
                 'FORBIDDEN',
                 'Cannot modify program: only draft programs can be edited',
-                403
+                403,
+                undefined,
+                'program.cannotModifyNonDraft'
             )
         }
 

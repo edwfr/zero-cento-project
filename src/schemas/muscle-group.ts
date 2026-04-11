@@ -7,8 +7,8 @@ import { z } from 'zod'
 export const muscleGroupSchema = z.object({
     name: z
         .string()
-        .min(2, 'Nome troppo corto')
-        .max(50, 'Nome troppo lungo'),
+        .min(2, 'validation.nameTooShort')
+        .max(50, 'validation.nameTooLong'),
     description: z.string().max(200).optional(),
 })
 

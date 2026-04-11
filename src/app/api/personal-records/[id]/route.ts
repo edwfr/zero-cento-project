@@ -142,7 +142,10 @@ export async function DELETE(
 
         logger.info({ recordId, userId: session.user.id }, 'Personal record deleted')
 
-        return apiSuccess({ message: 'Personal record deleted successfully' })
+        return apiSuccess({
+            message: 'Personal record deleted successfully',
+            messageKey: 'personalRecord.deletedSuccess',
+        })
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error, recordId: params.id }, 'Error deleting personal record')

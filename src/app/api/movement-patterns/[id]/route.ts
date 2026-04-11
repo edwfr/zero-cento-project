@@ -86,7 +86,9 @@ export async function DELETE(request: NextRequest, { params }: Params) {
             return apiError(
                 'CONFLICT',
                 `Cannot delete movement pattern. Used in ${usageCount} exercise(s)`,
-                409
+                409,
+                undefined,
+                'movementPattern.cannotDeleteInUse'
             )
         }
 
@@ -96,7 +98,10 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
         logger.info({ movementPatternId: params.id }, 'Movement pattern deleted')
 
-        return apiSuccess({ message: 'Movement pattern deleted successfully' })
+        return apiSuccess({
+            message: 'Movement pattern deleted successfully',
+            messageKey: 'movementPattern.deletedSuccess',
+        })
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error deleting movement pattern')

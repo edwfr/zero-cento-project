@@ -137,7 +137,9 @@ export async function PUT(
             return apiError(
                 'FORBIDDEN',
                 'Cannot modify feedback: can only edit within 24 hours of creation',
-                403
+                403,
+                undefined,
+                'feedback.cannotModifyAfter24h'
             )
         }
 
