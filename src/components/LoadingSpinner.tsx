@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useTranslation } from 'react-i18next'
 
 interface LoadingSpinnerProps {
@@ -64,25 +65,41 @@ export default function LoadingSpinner({
  * FullPageLoader Component
  * Full-screen loading overlay con spinner e logo Zero Cento
  */
-export function FullPageLoader({ message }: { message?: string }) {
+interface FullPageLoaderProps {
+    message?: string
+    messageKey?: string
+}
+
+export function FullPageLoader({ message, messageKey = 'common.loadingPageTransition' }: FullPageLoaderProps) {
     const { t } = useTranslation('common')
-    const resolvedMessage = message ?? t('common.loadingEllipsis', { defaultValue: t('common.loading') })
+    const resolvedMessage = message ?? t(messageKey, { defaultValue: t('common.loadingProgress') })
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/95 backdrop-blur-sm">
-            <div className="flex flex-col items-center gap-6">
-                {/* Zero Cento Logo/Text */}
-                <div className="text-center">
-                    <h1 className="text-4xl font-bold">
-                        <span className="text-gray-900">Zero</span>
-                        <span className="text-brand-primary">Cento</span>
-                    </h1>
-                    <p className="mt-1 text-sm text-gray-500">{t('brand.tagline', { defaultValue: t('app.tagline') })}</p>
+        <div className="fixed inset-0 z-50 overflow-hidden bg-gradient-to-b from-amber-50 via-white to-white">
+            {/* Decorative brand accents */}
+            <div className="pointer-events-none absolute -top-24 -left-16 h-64 w-64 rounded-full bg-brand-primary/10 blur-3xl" aria-hidden="true"></div>
+            <div className="pointer-events-none absolute -right-24 bottom-0 h-72 w-72 rounded-full bg-brand-primary/10 blur-3xl" aria-hidden="true"></div>
+
+            <div className="relative flex min-h-screen items-center justify-center px-6">
+                <div className="w-full max-w-sm rounded-3xl border border-brand-primary/20 bg-white/90 p-8 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.35)] backdrop-blur-sm">
+                    <div className="flex flex-col items-center gap-6 text-center">
+                        <Image
+                            src="/images/logo/logo.png"
+                            alt="Zero Cento"
+                            width={156}
+                            height={48}
+                            priority
+                            className="h-auto w-auto max-w-[156px]"
+                        />
+
+                        <LoadingSpinner size="lg" color="primary" />
+
+                        <p className="text-sm font-medium text-gray-700">{resolvedMessage}</p>
+                        <p className="text-xs uppercase tracking-[0.2em] text-gray-400">
+                            {t('brand.tagline', { defaultValue: t('app.tagline') })}
+                        </p>
+                    </div>
                 </div>
-
-                <LoadingSpinner size="lg" color="primary" />
-
-                <p className="text-sm text-gray-600">{resolvedMessage}</p>
             </div>
         </div>
     )

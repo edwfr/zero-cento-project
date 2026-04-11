@@ -2536,10 +2536,21 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
                                                         {isWorkoutExpanded && (
                                                             <div className="overflow-x-auto">
-                                                                <table className="min-w-[1160px] w-full divide-y divide-gray-200 text-sm">
+                                                                <table className="w-full table-fixed divide-y divide-gray-200 text-sm">
+                                                                    <colgroup>
+                                                                        <col className="w-10" />
+                                                                        <col className="w-[18%]" />
+                                                                        <col className="w-[16%]" />
+                                                                        <col className="w-16" />
+                                                                        <col className="w-16" />
+                                                                        <col className="w-14" />
+                                                                        <col className="w-20" />
+                                                                        <col className="w-16" />
+                                                                        <col className="w-[24%]" />
+                                                                    </colgroup>
                                                                     <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
                                                                         <tr>
-                                                                            <th className="px-1.5 py-3 w-12 text-center">
+                                                                            <th className="px-1 py-3 text-center">
                                                                                 <span
                                                                                     className="inline-flex items-center justify-center w-full"
                                                                                     title={t('editProgram.tableWarmup')}
@@ -2551,23 +2562,26 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                     </span>
                                                                                 </span>
                                                                             </th>
-                                                                            <th className="px-1.5 py-3 min-w-[210px]">{t('editProgram.tableExercise')}</th>
-                                                                            <th className="px-1.5 py-3 min-w-[175px]">{t('editProgram.tableVariant')}</th>
-                                                                            <th className="px-1.5 py-3 w-16 text-center">{t('editProgram.tableSets')}</th>
-                                                                            <th className="px-1.5 py-3 w-20">{t('editProgram.tableReps')}</th>
-                                                                            <th className="px-1.5 py-3 w-16">{t('editProgram.tableRpe')}</th>
-                                                                            <th className="px-1.5 py-3 w-24">{t('editProgram.tableWeightKg')}</th>
-                                                                            <th className="px-1.5 py-3 w-20">{t('editProgram.tableRest')}</th>
-                                                                            <th className="px-1.5 py-3 min-w-[130px]">{t('editProgram.tableMeta')}</th>
-                                                                            <th className="px-1.5 py-3 w-28 text-right">{t('editProgram.tableActions')}</th>
+                                                                            <th className="px-1 py-3">{t('editProgram.tableExercise')}</th>
+                                                                            <th className="px-1 py-3">{t('editProgram.tableVariant')}</th>
+                                                                            <th className="px-1 py-3 text-center">{t('editProgram.tableSets')}</th>
+                                                                            <th className="px-1 py-3">{t('editProgram.tableReps')}</th>
+                                                                            <th className="px-1 py-3">{t('editProgram.tableRpe')}</th>
+                                                                            <th className="px-1 py-3">{t('editProgram.tableWeightKg')}</th>
+                                                                            <th className="px-1 py-3">{t('editProgram.tableRest')}</th>
+                                                                            <th className="px-1 py-3">
+                                                                                {readOnly
+                                                                                    ? t('editProgram.tableMeta')
+                                                                                    : `${t('editProgram.tableMeta')} / ${t('editProgram.tableActions')}`}
+                                                                            </th>
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody className="divide-y divide-gray-100 bg-white">
                                                                         {workoutRows.length === 0 && (
                                                                             <tr>
                                                                                 <td
-                                                                                    colSpan={10}
-                                                                                    className="px-1.5 py-6 text-center text-sm text-gray-500"
+                                                                                    colSpan={9}
+                                                                                    className="px-1 py-6 text-center text-sm text-gray-500"
                                                                                 >
                                                                                     {t('editProgram.tableNoWorkoutExercises')}
                                                                                 </td>
@@ -2637,7 +2651,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
                                                                             return (
                                                                                 <tr key={row.id} className="align-top">
-                                                                                    <td className="px-1.5 py-3 w-12 align-middle">
+                                                                                    <td className="px-1 py-3 align-middle">
                                                                                         <label className="flex h-full w-full items-center justify-center">
                                                                                             <input
                                                                                                 type="checkbox"
@@ -2653,7 +2667,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                         </label>
                                                                                     </td>
 
-                                                                                    <td className="px-1.5 py-3">
+                                                                                    <td className="px-1 py-3">
                                                                                         <select
                                                                                             value={row.exerciseId}
                                                                                             onChange={(event) => {
@@ -2682,7 +2696,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                         </select>
                                                                                     </td>
 
-                                                                                    <td className="px-1.5 py-3">
+                                                                                    <td className="px-1 py-3">
                                                                                         <div className="flex items-center gap-1">
                                                                                             <div className="min-w-0 flex-1">
                                                                                                 {isCustomVariantInput ? (
@@ -2770,7 +2784,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                         )}
                                                                                     </td>
 
-                                                                                    <td className="px-1.5 py-3 w-16">
+                                                                                    <td className="px-1 py-3 text-center">
                                                                                         <input
                                                                                             type="number"
                                                                                             min="1"
@@ -2783,11 +2797,11 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                 })
                                                                                             }
                                                                                             disabled={rowBusy || readOnly}
-                                                                                            className="mx-auto w-14 rounded-lg border border-gray-300 px-1.5 py-2 text-center text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                                                                                            className="mx-auto block w-full max-w-[3rem] rounded-lg border border-gray-300 px-1 py-2 text-center text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
                                                                                         />
                                                                                     </td>
 
-                                                                                    <td className="px-1.5 py-3 w-20">
+                                                                                    <td className="px-1 py-3">
                                                                                         <input
                                                                                             type="text"
                                                                                             value={row.reps}
@@ -2802,7 +2816,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                         />
                                                                                     </td>
 
-                                                                                    <td className="px-1.5 py-3 w-16">
+                                                                                    <td className="px-1 py-3">
                                                                                         <select
                                                                                             value={row.targetRpe}
                                                                                             onChange={(event) =>
@@ -2822,7 +2836,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                         </select>
                                                                                     </td>
 
-                                                                                    <td className="px-1.5 py-3">
+                                                                                    <td className="px-1 py-3">
                                                                                         {readOnly ? (
                                                                                             <div className="space-y-1">
                                                                                                 <p className="text-[11px] text-gray-600">
@@ -2884,7 +2898,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                         )}
                                                                                     </td>
 
-                                                                                    <td className="px-1.5 py-3 w-20">
+                                                                                    <td className="px-1 py-3">
                                                                                         <select
                                                                                             value={row.restTime}
                                                                                             onChange={(event) =>
@@ -2908,62 +2922,64 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                         </select>
                                                                                     </td>
 
-                                                                                    <td className="px-1.5 py-3">
-                                                                                        {selectedExercise ? (
-                                                                                            <div className="flex items-center gap-1.5">
-                                                                                                <span
-                                                                                                    className={`inline-flex w-fit rounded-full px-2 py-0.5 text-[10px] font-semibold ${selectedExercise.type ===
-                                                                                                        'fundamental'
-                                                                                                        ? 'bg-red-100 text-red-700'
-                                                                                                        : 'bg-blue-100 text-blue-700'
-                                                                                                        }`}
-                                                                                                >
-                                                                                                    {selectedExercise.type === 'fundamental'
-                                                                                                        ? 'F'
-                                                                                                        : 'A'}
-                                                                                                </span>
-                                                                                                {selectedExercise.movementPattern && (
-                                                                                                    <MovementPatternTag
-                                                                                                        name={selectedExercise.movementPattern.name}
-                                                                                                        color={selectedExercise.movementPattern.color}
-                                                                                                        className="w-fit"
-                                                                                                    />
+                                                                                    <td className="px-1 py-3">
+                                                                                        <div className="flex items-center justify-between gap-2">
+                                                                                            <div className="min-w-0">
+                                                                                                {selectedExercise ? (
+                                                                                                    <div className="flex items-center gap-1.5">
+                                                                                                        <span
+                                                                                                            className={`inline-flex w-fit rounded-full px-2 py-0.5 text-[10px] font-semibold ${selectedExercise.type ===
+                                                                                                                'fundamental'
+                                                                                                                ? 'bg-red-100 text-red-700'
+                                                                                                                : 'bg-blue-100 text-blue-700'
+                                                                                                                }`}
+                                                                                                        >
+                                                                                                            {selectedExercise.type === 'fundamental'
+                                                                                                                ? 'F'
+                                                                                                                : 'A'}
+                                                                                                        </span>
+                                                                                                        {selectedExercise.movementPattern && (
+                                                                                                            <MovementPatternTag
+                                                                                                                name={selectedExercise.movementPattern.name}
+                                                                                                                color={selectedExercise.movementPattern.color}
+                                                                                                                className="w-fit"
+                                                                                                            />
+                                                                                                        )}
+                                                                                                    </div>
+                                                                                                ) : (
+                                                                                                    <span className="text-xs text-gray-400">
+                                                                                                        -
+                                                                                                    </span>
                                                                                                 )}
                                                                                             </div>
-                                                                                        ) : (
-                                                                                            <span className="text-xs text-gray-400">
-                                                                                                -
-                                                                                            </span>
-                                                                                        )}
-                                                                                    </td>
 
-                                                                                    <td className="px-1.5 py-3">
-                                                                                        {!readOnly && (
-                                                                                            <div className="flex items-center justify-end gap-1">
-                                                                                                <button
-                                                                                                    type="button"
-                                                                                                    onClick={() =>
-                                                                                                        setConfirmDeleteRow({
-                                                                                                            rowId: row.id,
-                                                                                                            workoutId: workout.id,
-                                                                                                            isDraft: row.isDraft,
-                                                                                                        })
-                                                                                                    }
-                                                                                                    disabled={rowBusy}
-                                                                                                    className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
-                                                                                                    title={t('editProgram.deleteRowTitle')}
-                                                                                                >
-                                                                                                    {deletingRowId === row.id ? (
-                                                                                                        <LoadingSpinner
-                                                                                                            size="sm"
-                                                                                                            color="primary"
-                                                                                                        />
-                                                                                                    ) : (
-                                                                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                                                                    )}
-                                                                                                </button>
-                                                                                            </div>
-                                                                                        )}
+                                                                                            {!readOnly && (
+                                                                                                <div className="shrink-0">
+                                                                                                    <button
+                                                                                                        type="button"
+                                                                                                        onClick={() =>
+                                                                                                            setConfirmDeleteRow({
+                                                                                                                rowId: row.id,
+                                                                                                                workoutId: workout.id,
+                                                                                                                isDraft: row.isDraft,
+                                                                                                            })
+                                                                                                        }
+                                                                                                        disabled={rowBusy}
+                                                                                                        className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                                                                                        title={t('editProgram.deleteRowTitle')}
+                                                                                                    >
+                                                                                                        {deletingRowId === row.id ? (
+                                                                                                            <LoadingSpinner
+                                                                                                                size="sm"
+                                                                                                                color="primary"
+                                                                                                            />
+                                                                                                        ) : (
+                                                                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                                                                        )}
+                                                                                                    </button>
+                                                                                                </div>
+                                                                                            )}
+                                                                                        </div>
                                                                                     </td>
                                                                                 </tr>
                                                                             )

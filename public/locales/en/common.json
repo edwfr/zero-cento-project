@@ -26,6 +26,7 @@
         "loading": "Loading...",
         "loadingEllipsis": "Loading...",
         "loadingProgress": "Loading in progress...",
+        "loadingPageTransition": "Preparing the next screen...",
         "saving": "Saving...",
         "creating": "Creating...",
         "submitting": "Submitting...",
