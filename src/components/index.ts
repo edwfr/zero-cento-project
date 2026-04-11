@@ -3,6 +3,18 @@
  * Barrel export for easy importing
  */
 
+// Design System Base Components
+export { Button } from './Button'
+export type { ButtonProps, ButtonVariant, ButtonSize } from './Button'
+export { Input } from './Input'
+export type { InputProps, InputSize, InputState } from './Input'
+export { Textarea } from './Textarea'
+export type { TextareaProps, TextareaState } from './Textarea'
+export { FormLabel } from './FormLabel'
+export type { FormLabelProps } from './FormLabel'
+export { Card } from './Card'
+export type { CardProps, CardVariant } from './Card'
+
 // Form Components
 export { default as WeightTypeSelector } from './WeightTypeSelector'
 export { default as RPESelector } from './RPESelector'

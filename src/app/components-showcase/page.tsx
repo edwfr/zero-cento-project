@@ -1,9 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { Users, Dumbbell, Star, ClipboardList, Medal, TrendingDown, BarChart2, Trophy, Settings } from 'lucide-react'
+import { Users, Dumbbell, Star, ClipboardList, Medal, TrendingDown, BarChart2, Trophy, Settings, Mail, Lock, Search, Save, Trash2, Plus, Check } from 'lucide-react'
 import { WeightType, RestTime, ExerciseType, WeekType } from '@prisma/client'
 import {
+    Button,
+    Input,
+    Textarea,
+    FormLabel,
+    Card,
     WeightTypeSelector,
     RPESelector,
     RestTimeSelector,
@@ -30,6 +35,15 @@ import type { AutocompleteOption } from '@/components'
 
 function ComponentShowcase() {
     const { showToast } = useToast()
+
+    // Design System Base Components State
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [notes, setNotes] = useState('')
+    const [bio, setBio] = useState('')
+    const [isButtonLoading, setIsButtonLoading] = useState(false)
+
+    // Existing State
     const [weightType, setWeightType] = useState<WeightType>('absolute')
     const [rpe, setRpe] = useState<number | null>(null)
     const [restTime, setRestTime] = useState<RestTime>('m2')
@@ -80,34 +94,392 @@ function ComponentShowcase() {
                     </div>
                 </div>
 
+                {/* === DESIGN SYSTEM BASE COMPONENTS === */}
+
+                {/* Buttons */}
+                <section className="rounded-lg bg-white p-6 shadow">
+                    <h2 className="mb-4 text-2xl font-bold text-gray-900">Buttons</h2>
+                    <p className="text-sm text-gray-600 mb-6">
+                        Componente Button unificato con varianti (primary, secondary, danger) e dimensioni (sm, md, lg).
+                    </p>
+
+                    <div className="space-y-8">
+                        {/* Variants */}
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-700 mb-3">Varianti</h3>
+                            <div className="flex flex-wrap gap-3">
+                                <Button variant="primary" onClick={() => showToast('Primary clicked', 'info')}>
+                                    Primary Button
+                                </Button>
+                                <Button variant="secondary" onClick={() => showToast('Secondary clicked', 'info')}>
+                                    Secondary Button
+                                </Button>
+                                <Button variant="danger" onClick={() => showToast('Danger clicked', 'warning')}>
+                                    Danger Button
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Sizes */}
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-700 mb-3">Dimensioni</h3>
+                            <div className="flex flex-wrap items-center gap-3">
+                                <Button variant="primary" size="sm">Small</Button>
+                                <Button variant="primary" size="md">Medium</Button>
+                                <Button variant="primary" size="lg">Large</Button>
+                            </div>
+                        </div>
+
+                        {/* With Icons */}
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-700 mb-3">Con icone</h3>
+                            <div className="flex flex-wrap gap-3">
+                                <Button variant="primary" icon={<Save />} iconPosition="left">
+                                    Salva
+                                </Button>
+                                <Button variant="secondary" icon={<Plus />} iconPosition="left">
+                                    Aggiungi
+                                </Button>
+                                <Button variant="danger" icon={<Trash2 />} iconPosition="left">
+                                    Elimina
+                                </Button>
+                                <Button variant="primary" icon={<Check />} iconPosition="right">
+                                    Conferma
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* States */}
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-700 mb-3">Stati</h3>
+                            <div className="flex flex-wrap gap-3">
+                                <Button variant="primary" disabled>Disabilitato</Button>
+                                <Button
+                                    variant="primary"
+                                    isLoading={isButtonLoading}
+                                    loadingText="Caricamento..."
+                                    onClick={() => {
+                                        setIsButtonLoading(true)
+                                        setTimeout(() => setIsButtonLoading(false), 2000)
+                                    }}
+                                >
+                                    Click me (loading demo)
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Full Width */}
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-700 mb-3">Full Width</h3>
+                            <Button variant="primary" fullWidth icon={<Save />}>
+                                Save Full Width
+                            </Button>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Inputs & Textareas */}
+                <section className="rounded-lg bg-white p-6 shadow">
+                    <h2 className="mb-4 text-2xl font-bold text-gray-900">Inputs & Textareas</h2>
+                    <p className="text-sm text-gray-600 mb-6">
+                        Input e Textarea unificati con supporto per stati (default, error, success) e helper text.
+                    </p>
+
+                    <div className="space-y-8">
+                        {/* Input Sizes */}
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-700 mb-3">Input - Dimensioni</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <FormLabel htmlFor="input-md">Medium Input</FormLabel>
+                                    <Input
+                                        id="input-md"
+                                        inputSize="md"
+                                        placeholder="Dimensione medium..."
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <FormLabel htmlFor="input-lg">Large Input</FormLabel>
+                                    <Input
+                                        id="input-lg"
+                                        inputSize="lg"
+                                        placeholder="Dimensione large..."
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Input States */}
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-700 mb-3">Input - Stati</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <FormLabel htmlFor="input-default">Default State</FormLabel>
+                                    <Input
+                                        id="input-default"
+                                        state="default"
+                                        placeholder="Campo normale..."
+                                        helperText="Questo è un campo normale"
+                                    />
+                                </div>
+                                <div>
+                                    <FormLabel htmlFor="input-error" required>Error State</FormLabel>
+                                    <Input
+                                        id="input-error"
+                                        state="error"
+                                        placeholder="Campo con errore..."
+                                        helperText="Questo campo è obbligatorio"
+                                    />
+                                </div>
+                                <div>
+                                    <FormLabel htmlFor="input-success">Success State</FormLabel>
+                                    <Input
+                                        id="input-success"
+                                        state="success"
+                                        placeholder="Campo valido..."
+                                        helperText="Email confermata!"
+                                        value="user@example.com"
+                                        readOnly
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Input With Icons */}
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-700 mb-3">Input - Con icone</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <FormLabel htmlFor="email-input">Email</FormLabel>
+                                    <Input
+                                        id="email-input"
+                                        type="email"
+                                        placeholder="email@example.com"
+                                        icon={<Mail className="w-5 h-5" />}
+                                        iconPosition="left"
+                                    />
+                                </div>
+                                <div>
+                                    <FormLabel htmlFor="password-input">Password</FormLabel>
+                                    <Input
+                                        id="password-input"
+                                        type="password"
+                                        placeholder="••••••••"
+                                        icon={<Lock className="w-5 h-5" />}
+                                        iconPosition="left"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Textarea */}
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-700 mb-3">Textarea</h3>
+                            <div className="space-y-4">
+                                <div>
+                                    <FormLabel htmlFor="notes">Note di allenamento</FormLabel>
+                                    <Textarea
+                                        id="notes"
+                                        placeholder="Scrivi le tue note qui..."
+                                        rows={4}
+                                        value={notes}
+                                        onChange={(e) => setNotes(e.target.value)}
+                                        helperText="Le note aiutano a tracciare i progressi"
+                                    />
+                                </div>
+                                <div>
+                                    <FormLabel htmlFor="bio" required>Bio con conteggio caratteri</FormLabel>
+                                    <Textarea
+                                        id="bio"
+                                        placeholder="Scrivi una breve biografia..."
+                                        rows={3}
+                                        value={bio}
+                                        onChange={(e) => setBio(e.target.value)}
+                                        showCharCount
+                                        maxLength={200}
+                                        state={bio.length > 200 ? 'error' : 'default'}
+                                        helperText={bio.length > 200 ? 'Limite caratteri superato' : undefined}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Form Labels */}
+                <section className="rounded-lg bg-white p-6 shadow">
+                    <h2 className="mb-4 text-2xl font-bold text-gray-900">Form Labels</h2>
+                    <p className="text-sm text-gray-600 mb-6">
+                        Label unificata per form con supporto required, tooltip e badge.
+                    </p>
+
+                    <div className="space-y-4">
+                        <FormLabel htmlFor="demo1">Label standard</FormLabel>
+                        <FormLabel htmlFor="demo2" required>Label con required</FormLabel>
+                        <FormLabel htmlFor="demo3" tooltip="Questa è una spiegazione del campo">
+                            Label con tooltip
+                        </FormLabel>
+                        <FormLabel
+                            htmlFor="demo4"
+                            badge={<span className="text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-600">Opzionale</span>}
+                        >
+                            Label con badge
+                        </FormLabel>
+                        <FormLabel
+                            htmlFor="demo5"
+                            required
+                            tooltip="Campo obbligatorio per il completamento"
+                            badge={<span className="text-xs bg-blue-100 px-2 py-0.5 rounded text-blue-700">Importante</span>}
+                        >
+                            Label completa
+                        </FormLabel>
+                    </div>
+                </section>
+
+                {/* Cards */}
+                <section className="rounded-lg bg-white p-6 shadow">
+                    <h2 className="mb-4 text-2xl font-bold text-gray-900">Cards</h2>
+                    <p className="text-sm text-gray-600 mb-6">
+                        Card container unificato con varianti (base, elevated) e supporto header/footer opzionali.
+                    </p>
+
+                    <div className="space-y-6">
+                        {/* Variants */}
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-700 mb-3">Varianti</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <Card variant="base">
+                                    <h4 className="font-semibold text-gray-900 mb-2">Base Card</h4>
+                                    <p className="text-sm text-gray-600">
+                                        Card base con shadow-sm e border sottile. Ideale per contenitori standard.
+                                    </p>
+                                </Card>
+                                <Card variant="elevated">
+                                    <h4 className="font-semibold text-gray-900 mb-2">Elevated Card</h4>
+                                    <p className="text-sm text-gray-600">
+                                        Card elevata con shadow-lg senza border. Ideale per modal e elementi evidenziati.
+                                    </p>
+                                </Card>
+                            </div>
+                        </div>
+
+                        {/* With Header */}
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-700 mb-3">Con Header</h3>
+                            <Card
+                                variant="base"
+                                header={{
+                                    title: 'Statistiche Allenamento',
+                                    subtitle: 'Ultime 4 settimane',
+                                    badge: <span className="text-xs bg-green-100 px-2 py-1 rounded text-green-700">Attivo</span>,
+                                    actions: <Button size="sm" variant="secondary">Modifica</Button>
+                                }}
+                            >
+                                <div className="space-y-2">
+                                    <p className="text-sm text-gray-600">• 12 workout completati</p>
+                                    <p className="text-sm text-gray-600">• 4.8 RPE medio</p>
+                                    <p className="text-sm text-gray-600">• 95% aderenza al programma</p>
+                                </div>
+                            </Card>
+                        </div>
+
+                        {/* With Footer */}
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-700 mb-3">Con Footer</h3>
+                            <Card
+                                variant="base"
+                                footer={{
+                                    links: <a href="#" className="text-sm text-brand-primary hover:underline">Vai ai dettagli →</a>,
+                                    actions: (
+                                        <div className="flex gap-2">
+                                            <Button size="sm" variant="secondary">Annulla</Button>
+                                            <Button size="sm" variant="primary">Salva</Button>
+                                        </div>
+                                    )
+                                }}
+                            >
+                                <h4 className="font-semibold text-gray-900 mb-2">Card con Footer</h4>
+                                <p className="text-sm text-gray-600">
+                                    Il footer può contenere link o azioni associate alla card.
+                                </p>
+                            </Card>
+                        </div>
+
+                        {/* Complete Example */}
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-700 mb-3">Esempio Completo</h3>
+                            <Card
+                                variant="elevated"
+                                header={{
+                                    title: 'Nuovo Programma',
+                                    subtitle: 'Crea un programma di allenamento personalizzato',
+                                    badge: <span className="text-xs bg-brand-primary text-white px-2 py-1 rounded">Draft</span>,
+                                }}
+                                footer={{
+                                    actions: (
+                                        <div className="flex gap-2">
+                                            <Button size="md" variant="secondary">Annulla</Button>
+                                            <Button size="md" variant="primary" icon={<Save />}>Salva Bozza</Button>
+                                        </div>
+                                    )
+                                }}
+                            >
+                                <div className="space-y-4">
+                                    <div>
+                                        <FormLabel htmlFor="program-name" required>Nome programma</FormLabel>
+                                        <Input id="program-name" placeholder="Es: Forza Base 12 settimane" />
+                                    </div>
+                                    <div>
+                                        <FormLabel htmlFor="program-desc">Descrizione</FormLabel>
+                                        <Textarea id="program-desc" placeholder="Descrivi gli obiettivi del programma..." rows={3} />
+                                    </div>
+                                </div>
+                            </Card>
+                        </div>
+                    </div>
+                </section>
+
+                {/* === SPECIALIZED COMPONENTS === */}
+
                 {/* Toast Demos */}
                 <section className="rounded-lg bg-white p-6 shadow">
                     <h2 className="mb-4 text-2xl font-bold text-gray-900">Toast Notifications</h2>
                     <div className="flex flex-wrap gap-3">
-                        <button
+                        <Button
+                            variant="primary"
+                            size="md"
                             onClick={() => showToast('Operazione completata con successo!', 'success')}
-                            className="rounded-lg bg-green-500 px-4 py-2 font-semibold text-white hover:bg-green-600"
+                            className="bg-green-500 hover:bg-green-600 focus:ring-green-500"
                         >
                             Success Toast
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                            variant="primary"
+                            size="md"
                             onClick={() => showToast('Si è verificato un errore', 'error')}
-                            className="rounded-lg bg-red-500 px-4 py-2 font-semibold text-white hover:bg-red-600"
+                            className="bg-red-500 hover:bg-red-600 focus:ring-red-500"
                         >
                             Error Toast
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                            variant="primary"
+                            size="md"
                             onClick={() => showToast('Attenzione: controlla i dati inseriti', 'warning')}
-                            className="rounded-lg bg-yellow-500 px-4 py-2 font-semibold text-white hover:bg-yellow-600"
+                            className="bg-yellow-500 hover:bg-yellow-600 focus:ring-yellow-500"
                         >
                             Warning Toast
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                            variant="primary"
+                            size="md"
                             onClick={() => showToast('Informazione: caricamento completato', 'info')}
-                            className="rounded-lg bg-brand-primary px-4 py-2 font-semibold text-white hover:bg-brand-primary/90"
                         >
                             Info Toast
-                        </button>
+                        </Button>
                     </div>
                 </section>
 
@@ -121,15 +493,15 @@ function ComponentShowcase() {
                         <LoadingSpinner size="xl" label="Extra Large" />
                     </div>
                     <div className="mt-6">
-                        <button
+                        <Button
+                            variant="primary"
                             onClick={() => {
                                 setShowFullPageLoader(true)
                                 setTimeout(() => setShowFullPageLoader(false), 3000)
                             }}
-                            className="rounded-lg bg-brand-primary px-4 py-2 font-semibold text-white hover:bg-brand-primary/90"
                         >
                             Show Full Page Loader (3s)
-                        </button>
+                        </Button>
                         <InlineLoader className="ml-4" />
                     </div>
                     {showFullPageLoader && <FullPageLoader message="Caricamento demo..." />}
@@ -298,42 +670,45 @@ function ComponentShowcase() {
                 <section className="rounded-lg bg-white p-6 shadow">
                     <h2 className="mb-4 text-2xl font-bold text-gray-900">Confirmation Modals</h2>
                     <div className="flex flex-wrap gap-3">
-                        <button
+                        <Button
+                            variant="primary"
                             onClick={() => {
                                 setConfirmVariant('danger')
                                 setConfirmModalOpen(true)
                             }}
-                            className="rounded-lg bg-red-500 px-4 py-2 font-semibold text-white hover:bg-red-600"
+                            className="bg-red-500 hover:bg-red-600 focus:ring-red-500"
                         >
                             Danger Modal
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                            variant="primary"
                             onClick={() => {
                                 setConfirmVariant('warning')
                                 setConfirmModalOpen(true)
                             }}
-                            className="rounded-lg bg-yellow-500 px-4 py-2 font-semibold text-white hover:bg-yellow-600"
+                            className="bg-yellow-500 hover:bg-yellow-600 focus:ring-yellow-500"
                         >
                             Warning Modal
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                            variant="primary"
                             onClick={() => {
                                 setConfirmVariant('info')
                                 setConfirmModalOpen(true)
                             }}
-                            className="rounded-lg bg-brand-primary px-4 py-2 font-semibold text-white hover:bg-brand-primary/90"
                         >
                             Info Modal
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                            variant="primary"
                             onClick={() => {
                                 setConfirmVariant('success')
                                 setConfirmModalOpen(true)
                             }}
-                            className="rounded-lg bg-green-500 px-4 py-2 font-semibold text-white hover:bg-green-600"
+                            className="bg-green-500 hover:bg-green-600 focus:ring-green-500"
                         >
                             Success Modal
-                        </button>
+                        </Button>
                     </div>
 
                     <ConfirmationModal
