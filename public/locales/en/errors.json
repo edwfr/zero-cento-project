@@ -12,7 +12,10 @@
     },
     "auth": {
         "required": "Authentication required",
+        "authenticationRequired": "Authentication required",
         "accessDenied": "Access denied",
+        "traineeAccessDenied": "You do not have access to this trainee",
+        "programAccessDenied": "You do not have access to this program",
         "passwordChangedSuccess": "Password changed successfully"
     },
     "exercise": {
@@ -71,6 +74,10 @@
         "cannotReduceDurationWeeks": "Cannot reduce duration below the number of already configured weeks",
         "cannotReduceWorkoutsPerWeek": "Cannot reduce workouts per week below the number of already configured workouts",
         "noFollowingWeek": "Source week has no following week to copy into"
+    },
+    "calculation": {
+        "maxRecursionDepthExceeded": "Maximum recursion depth exceeded for percentage_previous",
+        "noPreviousOccurrenceFound": "No previous occurrence found for percentage_previous"
     },
     "trainee": {
         "notFound": "Trainee not found",

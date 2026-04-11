@@ -45,6 +45,7 @@
         "title": "📊 Storico Programmi",
         "backToDashboard": "Torna alla Dashboard",
         "description": "Consulta lo storico dei tuoi programmi con stato, data di inizio e data di fine quando disponibile",
+        "loadingError": "Errore caricamento storico",
         "noPrograms": "Nessun Programma",
         "noProgramsDesc": "Quando il trainer pubblicherà un programma lo troverai qui con stato e date.",
         "goToDashboard": "Vai alla Dashboard",

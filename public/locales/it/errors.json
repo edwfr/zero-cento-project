@@ -12,7 +12,10 @@
     },
     "auth": {
         "required": "Autenticazione richiesta",
+        "authenticationRequired": "Autenticazione richiesta",
         "accessDenied": "Accesso negato",
+        "traineeAccessDenied": "Non hai accesso a questo atleta",
+        "programAccessDenied": "Non hai accesso a questo programma",
         "passwordChangedSuccess": "Password aggiornata con successo"
     },
     "exercise": {
@@ -71,6 +74,10 @@
         "cannotReduceDurationWeeks": "Impossibile ridurre la durata al di sotto del numero di settimane già configurate",
         "cannotReduceWorkoutsPerWeek": "Impossibile ridurre i workout settimanali al di sotto del numero di workout già configurati",
         "noFollowingWeek": "La settimana sorgente non ha una settimana successiva in cui copiare"
+    },
+    "calculation": {
+        "maxRecursionDepthExceeded": "Profondità massima di ricorsione superata per percentage_previous",
+        "noPreviousOccurrenceFound": "Nessuna occorrenza precedente trovata per percentage_previous"
     },
     "trainee": {
         "notFound": "Atleta non trovato",

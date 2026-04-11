@@ -4,6 +4,14 @@ import type { User as SupabaseUser } from '@supabase/supabase-js'
 import type { Role } from '@prisma/client'
 import { apiError } from './api-response'
 
+const AUTH_ERROR_KEYS = {
+    authenticationRequired: 'auth.authenticationRequired',
+    accessDenied: 'auth.accessDenied',
+    traineeAccessDenied: 'auth.traineeAccessDenied',
+    programAccessDenied: 'auth.programAccessDenied',
+    userNotFound: 'user.notFound',
+} as const
+
 export interface AuthSession {
     user: {
         id: string
@@ -77,7 +85,13 @@ export async function requireAuthDuringOnboarding(): Promise<{ user: any; supaba
     } = await supabase.auth.getUser()
 
     if (error || !supabaseUser) {
-        throw apiError('UNAUTHORIZED', 'Authentication required', 401)
+        throw apiError(
+            'UNAUTHORIZED',
+            'Authentication required',
+            401,
+            undefined,
+            AUTH_ERROR_KEYS.authenticationRequired
+        )
     }
 
     // Fetch user data from Prisma using email (without checking isActive)
@@ -94,7 +108,7 @@ export async function requireAuthDuringOnboarding(): Promise<{ user: any; supaba
     })
 
     if (!user) {
-        throw apiError('UNAUTHORIZED', 'User not found', 401)
+        throw apiError('UNAUTHORIZED', 'User not found', 401, undefined, AUTH_ERROR_KEYS.userNotFound)
     }
 
     return {
@@ -110,7 +124,13 @@ export async function requireAuth(): Promise<AuthSession> {
     const session = await getSession()
 
     if (!session) {
-        throw apiError('UNAUTHORIZED', 'Authentication required', 401)
+        throw apiError(
+            'UNAUTHORIZED',
+            'Authentication required',
+            401,
+            undefined,
+            AUTH_ERROR_KEYS.authenticationRequired
+        )
     }
 
     return session
@@ -130,7 +150,9 @@ export async function requireRole(
         throw apiError(
             'FORBIDDEN',
             `Access denied. Required role: ${roles.join(' or ')}`,
-            403
+            403,
+            { requiredRoles: roles },
+            AUTH_ERROR_KEYS.accessDenied
         )
     }
 
@@ -169,7 +191,9 @@ export async function requireTrainerOwnership(
         throw apiError(
             'FORBIDDEN',
             'You do not have access to this trainee',
-            403
+            403,
+            undefined,
+            AUTH_ERROR_KEYS.traineeAccessDenied
         )
     }
 
@@ -207,7 +231,9 @@ export async function requireTrainerProgramOwnership(
         throw apiError(
             'FORBIDDEN',
             'You do not have access to this program',
-            403
+            403,
+            undefined,
+            AUTH_ERROR_KEYS.programAccessDenied
         )
     }
 

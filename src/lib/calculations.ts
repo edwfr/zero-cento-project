@@ -1,6 +1,11 @@
 import type { WorkoutExercise, PersonalRecord } from '@prisma/client'
 import { prisma } from './prisma'
 
+export const CALCULATION_ERROR_KEYS = {
+    maxRecursionDepthExceeded: 'calculation.maxRecursionDepthExceeded',
+    noPreviousOccurrenceFound: 'calculation.noPreviousOccurrenceFound',
+} as const
+
 /**
  * Calculate effective weight for a workout exercise
  * Resolves percentage_previous recursively
@@ -12,7 +17,7 @@ export async function calculateEffectiveWeight(
 ): Promise<number | null> {
     // Prevent infinite recursion
     if (depth > 10) {
-        throw new Error('Maximum recursion depth exceeded for percentage_previous')
+        throw new Error(CALCULATION_ERROR_KEYS.maxRecursionDepthExceeded)
     }
 
     switch (workoutExercise.weightType) {
@@ -74,7 +79,7 @@ export async function calculateEffectiveWeight(
             })
 
             if (!previousExercise) {
-                throw new Error('No previous occurrence found for percentage_previous')
+                throw new Error(CALCULATION_ERROR_KEYS.noPreviousOccurrenceFound)
             }
 
             // Recursively resolve base weight

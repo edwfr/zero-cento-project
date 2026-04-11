@@ -441,18 +441,22 @@ Tutti i messaggi di validazione Zod sono stringhe hardcoded in italiano. Questi 
 
 > ✅ **Sottosezione 4.4 completata** (2026-04-11) — convertite a i18n le stringhe hardcoded nelle pagine trainer (`exercises`, `exercises/[id]/edit`, `programs/[id]/edit/EditProgramMetadata`, `trainees/new`) e aggiunti token mancanti in `public/locales/it/trainer.json` e `public/locales/en/trainer.json`.
 
-| File                                                         | Intervento                                                                                                                    | Token/Namespace toccati                                                                                                  | Stato |
-| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ----- |
-| `src/app/trainer/exercises/_content.tsx`                     | Header, ricerca/filtri, empty-state, tabella card action label, conferma delete e fallback error convertiti a `t()`        | `trainer:exercises.*` (incl. `viewGrid`, `viewTable`, `allTypes`, `confirmDeleteWithName`, `loadingExercisesError`) + `common:common.*` | ✅     |
-| `src/app/trainer/exercises/[id]/edit/_content.tsx`           | Fallback errore caricamento e placeholder URL YouTube convertiti a token                                                     | `trainer:exercises.loadingError`, `trainer:exercises.youtubeUrlPlaceholder`                                             | ✅     |
-| `src/app/trainer/programs/[id]/edit/EditProgramMetadata.tsx` | Toast/warning/CTA/label configurazione metadata convertiti a `t()` + gestione errori API con `getApiErrorMessage()`        | `trainer:programMetadata.*`, `trainer:programs.*`, `common:common.saveChanges|cancel`                                  | ✅     |
-| `src/app/trainer/trainees/new/_content.tsx`                  | Blocco successo invito email, helper testo email e CTA “crea altro atleta” convertiti a `t()`                               | `trainer:athletes.inviteEmailSent*`, `trainer:athletes.createAnotherAthlete`, `trainer:athletes.emailInstructions`     | ✅     |
+| File                                                         | Intervento                                                                                                          | Token/Namespace toccati                                                                                                                 | Stato   |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `src/app/trainer/exercises/_content.tsx`                     | Header, ricerca/filtri, empty-state, tabella card action label, conferma delete e fallback error convertiti a `t()` | `trainer:exercises.*` (incl. `viewGrid`, `viewTable`, `allTypes`, `confirmDeleteWithName`, `loadingExercisesError`) + `common:common.*` | ✅       |
+| `src/app/trainer/exercises/[id]/edit/_content.tsx`           | Fallback errore caricamento e placeholder URL YouTube convertiti a token                                            | `trainer:exercises.loadingError`, `trainer:exercises.youtubeUrlPlaceholder`                                                             | ✅       |
+| `src/app/trainer/programs/[id]/edit/EditProgramMetadata.tsx` | Toast/warning/CTA/label configurazione metadata convertiti a `t()` + gestione errori API con `getApiErrorMessage()` | `trainer:programMetadata.*`, `trainer:programs.*`, `common:common.saveChanges                                                           | cancel` | ✅ |
+| `src/app/trainer/trainees/new/_content.tsx`                  | Blocco successo invito email, helper testo email e CTA “crea altro atleta” convertiti a `t()`                       | `trainer:athletes.inviteEmailSent*`, `trainer:athletes.createAnotherAthlete`, `trainer:athletes.emailInstructions`                      | ✅       |
 
-### 4.5 Pagine Trainee
+### 4.5 Pagine Trainee – ✅ Completata
 
-| File                                   | Stringhe hardcoded (stima) | Esempio                        |
-| -------------------------------------- | -------------------------- | ------------------------------ |
-| `src/app/trainee/history/_content.tsx` | ~1                         | `"Errore caricamento storico"` |
+> ✅ **Sottosezione 4.5 completata** (2026-04-11) — convertito a token i18n il fallback hardcoded in `src/app/trainee/history/_content.tsx`; aggiunto token mancante in `public/locales/it/trainee.json` e `public/locales/en/trainee.json`.
+
+| File                                   | Intervento                                                                      | Token/Namespace toccati                             | Stato |
+| -------------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------- | ----- |
+| `src/app/trainee/history/_content.tsx` | Fallback errore caricamento storico convertito a `t()` con `getApiErrorMessage` | `trainee:history.loadingError`                      | ✅     |
+| `public/locales/it/trainee.json`       | Aggiunta chiave locale italiana per errore caricamento storico                  | `history.loadingError = Errore caricamento storico` | ✅     |
+| `public/locales/en/trainee.json`       | Aggiunta chiave locale inglese per errore caricamento storico                   | `history.loadingError = Error loading history`      | ✅     |
 
 ### 4.6 Pagine con i18n ✅ corretto
 
@@ -473,25 +477,29 @@ Le seguenti pagine usano correttamente `t()`:
 
 ## 5. Librerie (`src/lib/`) – Stringhe EN hardcoded
 
-### 5.1 `src/lib/auth.ts`
+### 5.1 `src/lib/auth.ts` – ✅ Completata
 
-| Riga | Stringa                                    | Token suggerito               |
-| ---- | ------------------------------------------ | ----------------------------- |
-| 80   | `'Authentication required'`                | `auth.authenticationRequired` |
-| 97   | `'User not found'`                         | `user.notFound`               |
-| 113  | `'Authentication required'`                | `auth.authenticationRequired` |
-| 131  | `'Access denied. Required role: ...'`      | `auth.accessDenied`           |
-| 170  | `'You do not have access to this trainee'` | `auth.traineeAccessDenied`    |
-| 207  | `'You do not have access to this program'` | `auth.programAccessDenied`    |
+> ✅ **Sottosezione 5.1 completata** (2026-04-11) — in `src/lib/auth.ts` aggiunto `error.key` a tutti i principali errori auth/permission usando token i18n nel payload API; mantenuto `error.message` come fallback human-readable e aggiunto `details.requiredRoles` nel controllo ruolo.
 
-> **Nota:** Queste stringhe sono usate in risposte API → devono diventare token i18n nel payload JSON.
+| Punto | Intervento                                                                | Token/Chiave adottata                         | Stato |
+| ----- | ------------------------------------------------------------------------- | --------------------------------------------- | ----- |
+| Auth  | `requireAuthDuringOnboarding` e `requireAuth`: aggiunta chiave errore API | `auth.authenticationRequired`                 | ✅     |
+| User  | `requireAuthDuringOnboarding`: utente non trovato                         | `user.notFound`                               | ✅     |
+| Role  | `requireRole`: accesso negato con dettagli ruoli richiesti                | `auth.accessDenied` + `details.requiredRoles` | ✅     |
+| Scope | `requireTrainerOwnership`: accesso trainee negato                         | `auth.traineeAccessDenied`                    | ✅     |
+| Scope | `requireTrainerProgramOwnership`: accesso programma negato                | `auth.programAccessDenied`                    | ✅     |
 
-### 5.2 `src/lib/calculations.ts`
+> ✅ Aggiunti anche i token mancanti in `public/locales/it/errors.json` e `public/locales/en/errors.json` per allineare la traduzione lato client (`getApiErrorMessage` usa `error.key`).
 
-| Riga | Stringa                                 | Nota                            |
-| ---- | --------------------------------------- | ------------------------------- |
-| 15   | `'Maximum recursion depth exceeded...'` | Errore tecnico – bassa priorità |
-| 77   | `'No previous occurrence found...'`     | Errore tecnico – bassa priorità |
+### 5.2 `src/lib/calculations.ts` – ✅ Completata
+
+> ✅ **Sottosezione 5.2 completata** (2026-04-11) — sostituite in `src/lib/calculations.ts` le stringhe EN hardcoded con chiavi tokenizzate (`calculation.*`) tramite costante centralizzata `CALCULATION_ERROR_KEYS`; aggiunte anche le traduzioni in `public/locales/it/errors.json` e `public/locales/en/errors.json`.
+
+| Punto | Intervento                                                      | Token/Chiave adottata                   | Stato |
+| ----- | --------------------------------------------------------------- | --------------------------------------- | ----- |
+| Calc  | Superamento profondità ricorsione in `calculateEffectiveWeight` | `calculation.maxRecursionDepthExceeded` | ✅     |
+| Calc  | Assenza occorrenza precedente per `percentage_previous`         | `calculation.noPreviousOccurrenceFound` | ✅     |
+| I18N  | Aggiunta mapping traduzioni in namespace `errors` (IT/EN)       | `errors:calculation.*`                  | ✅     |
 
 ---
 

@@ -45,6 +45,7 @@
         "title": "📊 Program History",
         "backToDashboard": "Back to Dashboard",
         "description": "Review your program history with status, start date, and end date when available",
+        "loadingError": "Error loading history",
         "noPrograms": "No Programs",
         "noProgramsDesc": "Published programs will appear here with their status and dates.",
         "goToDashboard": "Go to Dashboard",

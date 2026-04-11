@@ -57,7 +57,7 @@ export default function HistoryContent() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(getApiErrorMessage(data, 'Errore caricamento storico', t))
+                throw new Error(getApiErrorMessage(data, t('history.loadingError'), t))
             }
 
             const publishedPrograms = (data.data.items ?? []).filter(isPublishedProgram) as Program[]
