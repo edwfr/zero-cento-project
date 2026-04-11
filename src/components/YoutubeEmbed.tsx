@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface YoutubeEmbedProps {
     videoUrl: string
@@ -20,6 +21,7 @@ export default function YoutubeEmbed({
     className = '',
     autoplay = false,
 }: YoutubeEmbedProps) {
+    const { t } = useTranslation('components')
     const [isLoaded, setIsLoaded] = useState(false)
 
     // Extract YouTube video ID from various URL formats
@@ -65,7 +67,7 @@ export default function YoutubeEmbed({
     if (!videoId) {
         return (
             <div className="flex items-center justify-center rounded-lg bg-gray-100 p-6 text-gray-500">
-                URL video non valido
+                {t('youtube.invalidUrl')}
             </div>
         )
     }

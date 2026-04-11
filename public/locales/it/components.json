@@ -1,60 +1,85 @@
 {
-"confirmationModal": {
-"sideEffects":"Questa operazione potrebbe avere effetti collaterali. Vuoi continuare?",
-"informational":"Questa è una finestra informativa. Conferma per procedere.",
-"confirmed":"Azione confermata!"
- },
-"errorBoundary": {
-"message":"Si è verificato un errore inaspettato. Riprova o contatta il supporto.",
-"details":"Dettagli Errore (solo dev)"
- },
-"exerciseCard": {
-"edit":"Modifica esercizio",
-"delete":"Elimina esercizio"
- },
-"feedbackForm": {
-"prescribed":"Prescritto",
-"sets":"serie",
-"reps":"reps",
-"completed":"Esercizio completato",
-"set":"Serie",
-"weight":"Peso (kg)",
-"removeSet":"Rimuovi serie",
-"addSet":"Aggiungi Serie",
-"notes":"Note (opzionale)",
-"notesPlaceholder":"Eventuali note sull'esecuzione, sensazioni, difficoltà...",
-"feedbackSaved":"Feedback salvato con successo!",
-"saveFeedback":"Salva Feedback",
-"total":"Totale"
- },
-"navigationCard": {
-"description":"Card di navigazione utilizzate nelle dashboard per indirizzare l'utente alle sezioni principali"
- },
-"datePicker": {
-"programStart":"Data inizio programma",
-"defaultValue":"Data con valore default",
-"disabled":"Campo disabilitato",
-"selectedValue":"Valore selezionato (ISO)"
- },
-"autocomplete": {
-"noResults":"Nessun risultato trovato",
-"description":"Dropdown ricercabile con navigazione tastiera",
-"selected":"Selezionato"
- },
-"pwaPrompt": {
-"install":"Installa ZeroCento",
-"description":"Aggiungi alla home per un accesso rapido e il supporto offline",
-"installButton":"Installa",
-"notNow":"Non ora"
- },
-"weekTypeBanner": {
-"week":"Settimana"
- },
-"pagination": {
-"pageOf":"Pagina {{current}} di {{total}}",
-"previous":"Precedente",
-"next":"Successiva",
-"first":"Prima",
-"last":"Ultima"
- }
+    "confirmationModal": {
+        "sideEffects": "Questa operazione potrebbe avere effetti collaterali. Vuoi continuare?",
+        "informational": "Questa è una finestra informativa. Conferma per procedere.",
+        "confirmed": "Azione confermata!"
+    },
+    "errorBoundary": {
+        "title": "Oops! Qualcosa è andato storto",
+        "message": "Si è verificato un errore inaspettato. Riprova o contatta il supporto.",
+        "details": "Dettagli Errore (solo dev)"
+    },
+    "repsInput": {
+        "invalidFormat": "Formato non valido (es. 8, 8-10, 6/8)",
+        "placeholder": "es. 8, 8-10, 6/8",
+        "label": "Ripetizioni",
+        "help": "Formati: numero singolo (8), range (8-10), slash (6/8)"
+    },
+    "restTime": {
+        "label": "Tempo Recupero"
+    },
+    "youtube": {
+        "invalidUrl": "URL video non valido"
+    },
+    "exerciseCard": {
+        "edit": "Modifica esercizio",
+        "delete": "Elimina esercizio"
+    },
+    "feedbackForm": {
+        "prescribed": "Prescritto",
+        "sets": "serie",
+        "reps": "reps",
+        "completed": "Esercizio completato",
+        "set": "Serie",
+        "weight": "Peso (kg)",
+        "removeSet": "Rimuovi serie",
+        "addSet": "Aggiungi Serie",
+        "notes": "Note (opzionale)",
+        "notesPlaceholder": "Eventuali note sull'esecuzione, sensazioni, difficoltà...",
+        "feedbackSaved": "Feedback salvato con successo!",
+        "saveFeedback": "Salva Feedback",
+        "total": "Totale"
+    },
+    "navigationCard": {
+        "description": "Card di navigazione utilizzate nelle dashboard per indirizzare l'utente alle sezioni principali"
+    },
+    "datePicker": {
+        "programStart": "Data inizio programma",
+        "defaultValue": "Data con valore default",
+        "disabled": "Campo disabilitato",
+        "selectedValue": "Valore selezionato (ISO)"
+    },
+    "autocomplete": {
+        "noResults": "Nessun risultato trovato",
+        "description": "Dropdown ricercabile con navigazione tastiera",
+        "selected": "Selezionato"
+    },
+    "pwaPrompt": {
+        "install": "Installa ZeroCento",
+        "description": "Aggiungi alla home per un accesso rapido e il supporto offline",
+        "installButton": "Installa",
+        "notNow": "Non ora"
+    },
+    "weekTypeBanner": {
+        "week": "Settimana",
+        "badges": {
+            "normal": "Standard",
+            "test": "Test",
+            "deload": "Scarico"
+        }
+    },
+    "weightType": {
+        "label": "Tipo Peso",
+        "absolute": "Peso assoluto",
+        "percent1RM": "Percentuale massimale",
+        "percentNRM": "Percentuale di nRM",
+        "percentPrev": "Relativo alla prima occorrenza"
+    },
+    "pagination": {
+        "pageOf": "Pagina {{current}} di {{total}}",
+        "previous": "Precedente",
+        "next": "Successiva",
+        "first": "Prima",
+        "last": "Ultima"
+    }
 }

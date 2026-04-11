@@ -1,9 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { createClient } from '@/lib/supabase-client'
 
 export default function ChangePasswordSection() {
+    const { t } = useTranslation(['auth', 'common'])
     const [currentPassword, setCurrentPassword] = useState('')
     const [newPassword, setNewPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
@@ -19,15 +21,15 @@ export default function ChangePasswordSection() {
 
         // Validation
         if (newPassword.length < 8) {
-            setError('La nuova password deve essere di almeno 8 caratteri.')
+            setError(t('changePassword.errorMinLength'))
             return
         }
         if (newPassword !== confirmPassword) {
-            setError('Le nuove password non coincidono.')
+            setError(t('changePassword.errorMismatch'))
             return
         }
         if (currentPassword === newPassword) {
-            setError('La nuova password deve essere diversa da quella attuale.')
+            setError(t('changePassword.errorMustBeDifferent'))
             return
         }
 
@@ -42,7 +44,7 @@ export default function ChangePasswordSection() {
             } = await supabase.auth.getUser()
 
             if (getUserError || !user?.email) {
-                throw new Error('Sessione non valida. Effettua nuovamente il login.')
+                throw new Error(t('changePassword.errorSessionInvalid'))
             }
 
             const email = user.email
@@ -51,7 +53,7 @@ export default function ChangePasswordSection() {
                 password: currentPassword,
             })
             if (signInError) {
-                setError('Password attuale non corretta.')
+                setError(t('changePassword.errorInvalidCurrent'))
                 return
             }
 
@@ -71,7 +73,7 @@ export default function ChangePasswordSection() {
                 setIsEditing(false)
             }, 3000)
         } catch (err: any) {
-            setError(err.message || 'Impossibile aggiornare la password.')
+            setError(err.message || t('changePassword.errorGeneric'))
         } finally {
             setLoading(false)
         }
@@ -93,7 +95,7 @@ export default function ChangePasswordSection() {
                     onClick={() => setIsEditing(true)}
                     className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 transition-colors"
                 >
-                    Modifica Password
+                    {t('changePassword.editButton')}
                 </button>
             </div>
         )
@@ -102,7 +104,7 @@ export default function ChangePasswordSection() {
     return (
         <div>
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                Modifica Password
+                {t('changePassword.title')}
             </h2>
 
             {success && (
@@ -111,7 +113,7 @@ export default function ChangePasswordSection() {
                         <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
-                        <p className="text-sm text-green-600 font-medium">Password aggiornata con successo!</p>
+                        <p className="text-sm text-green-600 font-medium">{t('changePassword.success')}</p>
                     </div>
                 </div>
             )}
@@ -125,7 +127,7 @@ export default function ChangePasswordSection() {
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                     <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                        Password attuale
+                        {t('changePassword.currentPassword')}
                     </label>
                     <input
                         type="password"
@@ -134,7 +136,7 @@ export default function ChangePasswordSection() {
                         onChange={(e) => setCurrentPassword(e.target.value)}
                         required
                         disabled={loading}
-                        placeholder="Inserisci la password attuale"
+                        placeholder={t('changePassword.currentPasswordPlaceholder')}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
                         autoComplete="current-password"
                     />
@@ -142,7 +144,7 @@ export default function ChangePasswordSection() {
 
                 <div>
                     <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                        Nuova password
+                        {t('changePassword.newPassword')}
                     </label>
                     <input
                         type="password"
@@ -152,7 +154,7 @@ export default function ChangePasswordSection() {
                         required
                         disabled={loading}
                         minLength={8}
-                        placeholder="Minimo 8 caratteri"
+                        placeholder={t('changePassword.newPasswordPlaceholder')}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
                         autoComplete="new-password"
                     />
@@ -160,7 +162,7 @@ export default function ChangePasswordSection() {
 
                 <div>
                     <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                        Conferma nuova password
+                        {t('changePassword.confirmPassword')}
                     </label>
                     <input
                         type="password"
@@ -170,7 +172,7 @@ export default function ChangePasswordSection() {
                         required
                         disabled={loading}
                         minLength={8}
-                        placeholder="Ripeti la nuova password"
+                        placeholder={t('changePassword.confirmPasswordPlaceholder')}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
                         autoComplete="new-password"
                     />
@@ -182,7 +184,7 @@ export default function ChangePasswordSection() {
                         disabled={loading || !currentPassword || !newPassword || !confirmPassword}
                         className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                     >
-                        {loading ? 'Aggiornamento...' : 'Salva Nuova Password'}
+                        {loading ? t('changePassword.submitting') : t('changePassword.submit')}
                     </button>
                     <button
                         type="button"
@@ -190,7 +192,7 @@ export default function ChangePasswordSection() {
                         disabled={loading}
                         className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
                     >
-                        Annulla
+                        {t('common:common.cancel')}
                     </button>
                 </div>
             </form>

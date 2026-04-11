@@ -2,6 +2,7 @@
 
 import { ReactNode, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslation } from 'react-i18next'
 
 interface RoleGuardProps {
     children: ReactNode
@@ -24,6 +25,7 @@ export default function RoleGuard({
     redirectTo,
 }: RoleGuardProps) {
     const router = useRouter()
+    const { t } = useTranslation('common')
 
     useEffect(() => {
         if (!userRole) {
@@ -55,15 +57,15 @@ export default function RoleGuard({
             <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
                 <div className="bg-white rounded-lg shadow-lg p-8 max-w-md text-center">
                     <div className="text-6xl mb-4">🚫</div>
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Accesso Negato</h1>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('errors.accessDeniedTitle')}</h1>
                     <p className="text-gray-600 mb-6">
-                        Non hai i permessi per accedere a questa pagina.
+                        {t('errors.accessDeniedMessage')}
                     </p>
                     <button
                         onClick={() => router.back()}
                         className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-3 rounded-lg transition-colors"
                     >
-                        Torna Indietro
+                        {t('common.back')}
                     </button>
                 </div>
             </div>

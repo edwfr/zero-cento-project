@@ -2,6 +2,7 @@
 
 import { WeekType } from '@prisma/client'
 import { ClipboardList, Flame, Wind } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import WeekTypeBadge from './WeekTypeBadge'
 
 interface WeekTypeBannerProps {
@@ -18,30 +19,32 @@ interface WeekTypeBannerProps {
  * - deload: verde rilassante (scarico/recupero)
  */
 export default function WeekTypeBanner({ weekType, weekNumber, className = '' }: WeekTypeBannerProps) {
+    const { t } = useTranslation(['trainer', 'components'])
+
     const configs = {
         normal: {
             bg: 'bg-gray-100',
             border: 'border-gray-300',
             text: 'text-gray-700',
             icon: <ClipboardList className="h-6 w-6 sm:h-7 sm:w-7" />,
-            label: 'Settimana Standard',
-            description: 'Allenamento normale secondo programma',
+            label: t('trainer:weekTypes.standard'),
+            description: t('trainer:weekTypes.standardDesc'),
         },
         test: {
             bg: 'bg-week-test-light',
             border: 'border-week-test',
             text: 'text-week-test-dark',
             icon: <Flame className="h-6 w-6 sm:h-7 sm:w-7" />,
-            label: 'Settimana Test',
-            description: 'Valutazione massimali e test',
+            label: t('trainer:weekTypes.test'),
+            description: t('trainer:weekTypes.testDesc'),
         },
         deload: {
             bg: 'bg-week-deload-light',
             border: 'border-week-deload',
             text: 'text-week-deload-dark',
             icon: <Wind className="h-6 w-6 sm:h-7 sm:w-7" />,
-            label: 'Settimana Scarico',
-            description: 'Recupero e rigenerazione',
+            label: t('trainer:weekTypes.deload'),
+            description: t('trainer:weekTypes.deloadDesc'),
         },
     }
 
@@ -65,7 +68,7 @@ export default function WeekTypeBanner({ weekType, weekNumber, className = '' }:
                     {/* Content */}
                     <div className="min-w-0 flex-1">
                         <h3 className="text-sm leading-tight font-bold sm:text-base">
-                            {config.label} - Settimana {weekNumber}
+                            {config.label} - {t('components:weekTypeBanner.week')} {weekNumber}
                         </h3>
                         <p className="mt-0.5 text-xs opacity-90 sm:text-sm">{config.description}</p>
                     </div>
@@ -75,9 +78,9 @@ export default function WeekTypeBanner({ weekType, weekNumber, className = '' }:
                     <WeekTypeBadge
                         weekType={weekType}
                         labels={{
-                            normal: 'Standard',
-                            test: 'Test',
-                            deload: 'Scarico',
+                            normal: t('components:weekTypeBanner.badges.normal'),
+                            test: t('components:weekTypeBanner.badges.test'),
+                            deload: t('components:weekTypeBanner.badges.deload'),
                         }}
                     />
                 </div>

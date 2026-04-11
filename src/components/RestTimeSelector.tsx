@@ -1,6 +1,7 @@
 'use client'
 
 import { RestTime } from '@prisma/client'
+import { useTranslation } from 'react-i18next'
 
 interface RestTimeSelectorProps {
     value: RestTime | undefined
@@ -25,10 +26,12 @@ export default function RestTimeSelector({
     className = '',
     required = false,
 }: RestTimeSelectorProps) {
+    const { t } = useTranslation('components')
+
     return (
         <div className={`flex flex-col gap-2 ${className}`}>
             <label className="text-sm font-medium text-gray-700">
-                Tempo Recupero {required && <span className="text-red-500">*</span>}
+                {t('restTime.label')} {required && <span className="text-red-500">*</span>}
             </label>
             <div className="flex gap-2">
                 {REST_TIME_OPTIONS.map((option) => {

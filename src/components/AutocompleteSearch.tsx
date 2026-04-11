@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 
 export interface AutocompleteOption {
     id: string
@@ -35,16 +36,21 @@ export default function AutocompleteSearch({
     onSelect,
     onSearch,
     label,
-    placeholder = 'Cerca...',
+    placeholder,
     loading = false,
     disabled = false,
     required = false,
     error,
-    emptyMessage = 'Nessun risultato trovato',
+    emptyMessage,
     className = '',
     id,
 }: AutocompleteSearchProps) {
+    const { t } = useTranslation(['common', 'components'])
     const inputId = id || `autocomplete-${Math.random().toString(36).slice(2, 9)}`
+    const resolvedPlaceholder = placeholder ?? `${t('common:common.search')}...`
+    const resolvedEmptyMessage = emptyMessage ?? t('common:common.noResultsFound', {
+        defaultValue: t('components:autocomplete.noResults'),
+    })
     const [query, setQuery] = useState('')
     const [isOpen, setIsOpen] = useState(false)
     const [activeIndex, setActiveIndex] = useState(-1)
@@ -163,7 +169,7 @@ export default function AutocompleteSearch({
                     onChange={handleInputChange}
                     onFocus={() => setIsOpen(true)}
                     onKeyDown={handleKeyDown}
-                    placeholder={placeholder}
+                    placeholder={resolvedPlaceholder}
                     disabled={disabled}
                     required={required}
                     autoComplete="off"
@@ -208,11 +214,11 @@ export default function AutocompleteSearch({
                 >
                     {loading ? (
                         <li className="px-4 py-3 text-sm text-gray-500 text-center">
-                            Ricerca in corso...
+                            {t('common:common.loading')}
                         </li>
                     ) : filteredOptions.length === 0 ? (
                         <li className="px-4 py-3 text-sm text-gray-500 text-center">
-                            {emptyMessage}
+                            {resolvedEmptyMessage}
                         </li>
                     ) : (
                         filteredOptions.map((option, index) => (

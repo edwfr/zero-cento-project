@@ -179,6 +179,8 @@ Tutti i messaggi di validazione Zod sono stringhe hardcoded in italiano. Questi 
 
 ### 3.1 `ChangePasswordSection.tsx` – 🔴 Interamente hardcoded
 
+> ✅ **Sottosezione 3.1 completata** (2026-04-11) — tutte le stringhe (errori + label/CTA/placeholder/success) sono state convertite a token i18n in `ChangePasswordSection.tsx` usando `auth:changePassword.*` e `common:common.cancel`.
+
 | Riga    | Stringa                                                      | Token suggerito                                    |
 | ------- | ------------------------------------------------------------ | -------------------------------------------------- |
 | 22      | `'La nuova password deve essere di almeno 8 caratteri.'`     | `auth:password.minLength`                          |
@@ -200,6 +202,8 @@ Tutti i messaggi di validazione Zod sono stringhe hardcoded in italiano. Questi 
 
 ### 3.2 `ExerciseCreateModal.tsx` – 🔴 Interamente hardcoded
 
+> ✅ **Sottosezione 3.2 completata** (2026-04-11) — tutte le stringhe UI del modal (errori, label, placeholder, CTA, helper text) sono state convertite a token i18n in `ExerciseCreateModal.tsx` usando namespace `trainer:exercises.*` e `common:common.*`.
+
 | Riga    | Stringa                                           | Token suggerito                                                 |
 | ------- | ------------------------------------------------- | --------------------------------------------------------------- |
 | 80      | `"Crea Nuovo Esercizio"`                          | `trainer:exercises.createNew`                                   |
@@ -219,6 +223,8 @@ Tutti i messaggi di validazione Zod sono stringhe hardcoded in italiano. Questi 
 
 ### 3.3 `ErrorBoundary.tsx` – 🔴 Interamente hardcoded
 
+> ✅ **Sottosezione 3.3 completata** (2026-04-11) — tutte le stringhe del fallback (titolo, messaggio, dettagli dev, azioni pulsanti) sono state convertite a token i18n (`components:errorBoundary.*`, `common:common.retry`, `common:common.backHome`).
+
 | Riga | Stringa                                      | Token suggerito                 |
 | ---- | -------------------------------------------- | ------------------------------- |
 | 14   | `"Oops! Qualcosa è Andato Storto"`           | `common:errors.boundaryTitle`   |
@@ -229,6 +235,8 @@ Tutti i messaggi di validazione Zod sono stringhe hardcoded in italiano. Questi 
 
 ### 3.4 `AutocompleteSearch.tsx`
 
+> ✅ **Sottosezione 3.4 completata** (2026-04-11) — convertiti a token i18n i default di placeholder e messaggio empty (`common:common.search`, `common:common.noResultsFound`) e il testo di loading (`common:common.loading`).
+
 | Riga | Stringa                                     | Token suggerito                |
 | ---- | ------------------------------------------- | ------------------------------ |
 | 30   | `placeholder = 'Cerca...'`                  | `common:common.search`         |
@@ -236,12 +244,16 @@ Tutti i messaggi di validazione Zod sono stringhe hardcoded in italiano. Questi 
 
 ### 3.5 `DatePicker.tsx`
 
+> ✅ **Sottosezione 3.5 completata** (2026-04-11) — convertiti a token i18n il placeholder e l'`aria-label` del pulsante calendario (`common:common.dateFormat`, `common:common.openCalendar`).
+
 | Riga | Stringa                        | Token suggerito              |
 | ---- | ------------------------------ | ---------------------------- |
 | 35   | `placeholder = 'GG/MM/AAAA'`   | `common:common.dateFormat`   |
 | 129  | `aria-label="Apri calendario"` | `common:common.openCalendar` |
 
 ### 3.6 `RoleGuard.tsx`
+
+> ✅ **Messaggi di errore corretti** (2026-04-11) — convertite a token i18n le stringhe alle righe 58 e 60 (`common:errors.accessDeniedTitle`, `common:errors.accessDeniedMessage`).
 
 | Riga | Stringa                                              | Token suggerito                     |
 | ---- | ---------------------------------------------------- | ----------------------------------- |
@@ -251,6 +263,8 @@ Tutti i messaggi di validazione Zod sono stringhe hardcoded in italiano. Questi 
 
 ### 3.7 `LoadingSpinner.tsx`
 
+> ✅ **Sottosezione 3.7 completata** (2026-04-11) — convertite a token i18n le stringhe per `aria-label`, messaggio loader e tagline (`common:common.loading`, `common:common.loadingEllipsis`, `common:brand.tagline`).
+
 | Riga | Stringa                               | Token suggerito                 |
 | ---- | ------------------------------------- | ------------------------------- |
 | 29   | `'Caricamento in corso'` (aria-label) | `common:common.loading`         |
@@ -258,6 +272,8 @@ Tutti i messaggi di validazione Zod sono stringhe hardcoded in italiano. Questi 
 | 54   | `"Training Platform"`                 | `common:brand.tagline`          |
 
 ### 3.8 `WeekTypeBanner.tsx`
+
+> ✅ **Sottosezione 3.8 completata** (2026-04-11) — convertiti a token i18n label/descrizione per i tipi settimana e badge (`trainer:weekTypes.*`, `components:weekTypeBanner.*`).
 
 | Riga  | Stringa                                                            | Token suggerito                               |
 | ----- | ------------------------------------------------------------------ | --------------------------------------------- |
@@ -267,12 +283,16 @@ Tutti i messaggi di validazione Zod sono stringhe hardcoded in italiano. Questi 
 
 ### 3.9 `WeightTypeSelector.tsx`
 
+> ✅ **Sottosezione 3.9 completata** (2026-04-11) — convertite a token i18n la label e le descrizioni delle opzioni (`components:weightType.label|absolute|percent1RM|percentNRM|percentPrev`).
+
 | Riga | Stringa                                                                                                  | Token suggerito                                                                |
 | ---- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
 | 8-11 | `'Peso assoluto'`, `'Percentuale massimale'`, `'Percentuale di nRM'`, `'Relativo alla prima occorrenza'` | `components:weightType.absolute`, `.percent1RM`, `.percentNRM`, `.percentPrev` |
 | 18   | `"Tipo Peso"` label                                                                                      | `components:weightType.label`                                                  |
 
 ### 3.10 `ProfileForm.tsx`
+
+> ✅ **Sottosezione 3.10 completata** (2026-04-11) — convertite a token i18n tutte le stringhe UI (errore, success, titolo, label, CTA) con namespace `common` e `profile`.
 
 | Riga    | Stringa                               | Token suggerito                                      |
 | ------- | ------------------------------------- | ---------------------------------------------------- |
@@ -285,6 +305,8 @@ Tutti i messaggi di validazione Zod sono stringhe hardcoded in italiano. Questi 
 | 122     | `"Annulla"`                           | `common:common.cancel`                               |
 
 ### 3.11 `MovementPatternColorsSection.tsx`
+
+> ✅ **Sottosezione 3.11 completata** (2026-04-11) — convertite a token i18n tutte le stringhe UI (errori, descrizioni, titoli, CTA, success, label preview) con namespace `admin` e `common`.
 
 | Riga | Stringa                                           | Token suggerito                    |
 | ---- | ------------------------------------------------- | ---------------------------------- |
@@ -299,6 +321,8 @@ Tutti i messaggi di validazione Zod sono stringhe hardcoded in italiano. Questi 
 
 ### 3.12 `RepsInput.tsx`
 
+> ✅ **Sottosezione 3.12 completata** (2026-04-11) — convertite a token i18n tutte le stringhe UI (placeholder, errore formato, label, help) con namespace `components:repsInput.*`.
+
 | Riga | Stringa                                                    | Token suggerito                      |
 | ---- | ---------------------------------------------------------- | ------------------------------------ |
 | 28   | `"es. 8, 8-10, 6/8"`                                       | `components:repsInput.placeholder`   |
@@ -308,11 +332,15 @@ Tutti i messaggi di validazione Zod sono stringhe hardcoded in italiano. Questi 
 
 ### 3.13 `RestTimeSelector.tsx`
 
+> ✅ **Sottosezione 3.13 completata** (2026-04-11) — convertita a token i18n la label alla riga 31 (`components:restTime.label`).
+
 | Riga | Stringa            | Token suggerito             |
 | ---- | ------------------ | --------------------------- |
 | 31   | `"Tempo Recupero"` | `components:restTime.label` |
 
 ### 3.14 `YoutubeEmbed.tsx`
+
+> ✅ **Messaggio di errore corretto** (2026-04-11) — convertita a token i18n la stringa alla riga 66 (`components:youtube.invalidUrl`).
 
 | Riga | Stringa                  | Token suggerito                   |
 | ---- | ------------------------ | --------------------------------- |

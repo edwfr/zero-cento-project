@@ -18,7 +18,7 @@ interface ProfileFormProps {
 
 export default function ProfileForm({ user }: ProfileFormProps) {
     const router = useRouter()
-    const { t } = useTranslation('common')
+    const { t } = useTranslation(['common', 'profile'])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const [success, setSuccess] = useState('')
@@ -45,10 +45,10 @@ export default function ProfileForm({ user }: ProfileFormProps) {
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(getApiErrorMessage(data, 'Errore durante l\'aggiornamento', t))
+                throw new Error(getApiErrorMessage(data, t('errors.updateError'), t))
             }
 
-            setSuccess('Profilo aggiornato con successo')
+            setSuccess(t('profile:profile.updated'))
 
             // Refresh page to update session data
             setTimeout(() => {
@@ -73,7 +73,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
     return (
         <div>
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                Modifica Dati Personali
+                {t('profile:profile.editPersonalData')}
             </h2>
 
             {error && (
@@ -91,7 +91,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                     <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-                        Nome
+                        {t('common:common.firstName')}
                     </label>
                     <input
                         type="text"
@@ -106,7 +106,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
 
                 <div>
                     <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-                        Cognome
+                        {t('common:common.lastName')}
                     </label>
                     <input
                         type="text"
@@ -125,7 +125,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
                         disabled={loading}
                         className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                     >
-                        {loading ? 'Salvando...' : 'Salva Modifiche'}
+                        {loading ? t('common:common.saving') : t('common:common.saveChanges')}
                     </button>
                     <button
                         type="button"
@@ -133,7 +133,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
                         disabled={loading}
                         className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
                     >
-                        Annulla
+                        {t('common:common.cancel')}
                     </button>
                 </div>
             </form>

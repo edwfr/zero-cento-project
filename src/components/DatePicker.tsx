@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface DatePickerProps {
     value?: string // ISO date string YYYY-MM-DD
@@ -25,7 +26,7 @@ export default function DatePicker({
     value = '',
     onChange,
     label,
-    placeholder = 'GG/MM/AAAA',
+    placeholder,
     min,
     max,
     disabled = false,
@@ -34,7 +35,9 @@ export default function DatePicker({
     className = '',
     id,
 }: DatePickerProps) {
+    const { t } = useTranslation('common')
     const inputId = id || `datepicker-${Math.random().toString(36).slice(2, 9)}`
+    const resolvedPlaceholder = placeholder ?? t('common.dateFormat')
 
     // Format YYYY-MM-DD to display as GG/MM/AAAA for Italian locale
     const formatDisplay = (iso: string) => {
@@ -108,7 +111,7 @@ export default function DatePicker({
                     value={textValue}
                     onChange={handleTextChange}
                     onBlur={handleTextBlur}
-                    placeholder={placeholder}
+                    placeholder={resolvedPlaceholder}
                     disabled={disabled}
                     required={required}
                     className={baseInputClasses}
@@ -126,7 +129,7 @@ export default function DatePicker({
                         setTimeout(() => nativeRef.current?.showPicker?.(), 50)
                     }}
                     className="absolute right-3 text-gray-400 hover:text-[#FFA700] transition-colors disabled:opacity-40"
-                    aria-label="Apri calendario"
+                    aria-label={t('common.openCalendar')}
                     tabIndex={-1}
                 >
                     <svg

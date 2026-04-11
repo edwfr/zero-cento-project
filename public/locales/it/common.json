@@ -3,6 +3,9 @@
         "name": "ZeroCento Training",
         "tagline": "La tua piattaforma di training"
     },
+    "brand": {
+        "tagline": "La tua piattaforma di training"
+    },
     "common": {
         "email": "Email",
         "password": "Password",
@@ -15,18 +18,24 @@
         "edit": "Modifica",
         "create": "Crea",
         "search": "Cerca",
+        "dateFormat": "GG/MM/AAAA",
+        "openCalendar": "Apri calendario",
         "filter": "Filtra",
         "loading": "Caricamento...",
+        "loadingEllipsis": "Caricamento...",
         "loadingProgress": "Caricamento in corso...",
         "saving": "Salvando...",
         "creating": "Creando...",
         "submitting": "Invio...",
         "deleting": "Eliminando...",
         "noResults": "Nessun risultato",
+        "noResultsFound": "Nessun risultato trovato",
         "error": "Errore",
         "success": "Successo",
         "confirm": "Conferma",
+        "retry": "Riprova",
         "back": "Indietro",
+        "backHome": "Torna alla Home",
         "next": "Avanti",
         "previous": "Precedente",
         "close": "Chiudi",
@@ -127,6 +136,8 @@
         "creationError": "Errore durante la creazione",
         "updateError": "Errore durante l'aggiornamento",
         "deletionError": "Errore durante l'eliminazione",
+        "accessDeniedTitle": "Accesso Negato",
+        "accessDeniedMessage": "Non hai i permessi per accedere a questa pagina.",
         "unexpected": "Si è verificato un errore inaspettato. Riprova o contatta il supporto."
     },
     "success": {

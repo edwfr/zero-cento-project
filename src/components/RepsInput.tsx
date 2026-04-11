@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface RepsInputProps {
     value: string
@@ -25,10 +26,12 @@ export default function RepsInput({
     onChange,
     disabled = false,
     className = '',
-    placeholder = 'es. 8, 8-10, 6/8',
+    placeholder,
     showLabel = true,
     required = false,
 }: RepsInputProps) {
+    const { t } = useTranslation('components')
+    const resolvedPlaceholder = placeholder ?? t('repsInput.placeholder')
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
@@ -40,7 +43,7 @@ export default function RepsInput({
 
         const validPattern = /^[0-9]+(-[0-9]+|\/[0-9]+)?$/
         if (!validPattern.test(value)) {
-            setError('Formato non valido (es. 8, 8-10, 6/8)')
+            setError(t('repsInput.invalidFormat'))
         } else {
             setError(null)
         }
@@ -58,7 +61,7 @@ export default function RepsInput({
         <div className={`flex flex-col gap-1 ${className}`}>
             {showLabel && (
                 <label className="text-sm font-medium text-gray-700">
-                    Ripetizioni {required && <span className="text-red-500">*</span>}
+                    {t('repsInput.label')} {required && <span className="text-red-500">*</span>}
                 </label>
             )}
             <input
@@ -67,7 +70,7 @@ export default function RepsInput({
                 value={value}
                 onChange={handleChange}
                 disabled={disabled}
-                placeholder={placeholder}
+                placeholder={resolvedPlaceholder}
                 className={`
                     min-h-touch rounded-lg border-2 px-4 py-2 text-center font-semibold
                     transition-all duration-200
@@ -84,7 +87,7 @@ export default function RepsInput({
             />
             {error && <span className="text-xs text-red-600">{error}</span>}
             <span className="text-xs text-gray-500">
-                Formati: numero singolo (8), range (8-10), slash (6/8)
+                {t('repsInput.help')}
             </span>
         </div>
     )

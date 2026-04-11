@@ -116,5 +116,18 @@
         "actionProgress": "Progress",
         "actionReport": "Report",
         "loadingError": "Errore caricamento programmi"
+    },
+    "movementPatterns": {
+        "loadError": "Errore nel caricamento dei movement pattern"
+    },
+    "colors": {
+        "loadError": "Errore nel caricamento dei colori",
+        "saveFailed": "Impossibile salvare i colori",
+        "description": "Personalizza i colori dei movement pattern che verranno visualizzati negli esercizi.",
+        "edit": "Modifica Colori",
+        "editTitle": "Modifica Colori Movement Pattern",
+        "saveSuccess": "Colori salvati con successo!",
+        "save": "Salva Colori",
+        "preview": "Anteprima:"
     }
 }

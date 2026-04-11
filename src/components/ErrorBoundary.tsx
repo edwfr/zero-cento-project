@@ -1,6 +1,7 @@
 'use client'
 
 import { Component, ReactNode, ErrorInfo } from 'react'
+import i18n from '@/lib/i18n/client'
 
 interface ErrorFallbackProps {
     error: Error
@@ -27,17 +28,17 @@ function DefaultErrorFallback({ error, resetError }: ErrorFallbackProps) {
                 <div className="text-center mb-6">
                     <div className="text-6xl mb-4">💥</div>
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                        Oops! Qualcosa è Andato Storto
+                        {i18n.t('components:errorBoundary.title')}
                     </h1>
                     <p className="text-gray-600">
-                        Si è verificato un errore inaspettato. Riprova o contatta il supporto.
+                        {i18n.t('components:errorBoundary.message')}
                     </p>
                 </div>
 
                 {process.env.NODE_ENV === 'development' && error && (
                     <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
                         <p className="text-sm font-semibold text-red-900 mb-2">
-                            Dettagli Errore (solo dev):
+                            {i18n.t('components:errorBoundary.details')}:
                         </p>
                         <pre className="text-xs text-red-800 overflow-x-auto whitespace-pre-wrap">
                             {error.message}
@@ -51,13 +52,13 @@ function DefaultErrorFallback({ error, resetError }: ErrorFallbackProps) {
                         onClick={resetError}
                         className="flex-1 bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold py-3 px-6 rounded-lg transition-colors"
                     >
-                        Riprova
+                        {i18n.t('common:common.retry')}
                     </button>
                     <button
                         onClick={() => (window.location.href = '/')}
                         className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
                     >
-                        Torna alla Home
+                        {i18n.t('common:common.backHome')}
                     </button>
                 </div>
             </div>

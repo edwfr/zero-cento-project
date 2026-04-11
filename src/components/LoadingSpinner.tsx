@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslation } from 'react-i18next'
+
 interface LoadingSpinnerProps {
     size?: 'sm' | 'md' | 'lg' | 'xl'
     color?: 'primary' | 'white' | 'gray'
@@ -17,6 +19,7 @@ export default function LoadingSpinner({
     className = '',
     label,
 }: LoadingSpinnerProps) {
+    const { t } = useTranslation('common')
     const sizeClasses = {
         sm: 'h-4 w-4 border-2',
         md: 'h-8 w-8 border-2',
@@ -39,7 +42,7 @@ export default function LoadingSpinner({
                     ${colorClasses[color]}
                 `}
                 role="status"
-                aria-label={label || 'Caricamento in corso'}
+                aria-label={label || t('common.loading')}
             ></div>
             {label && (
                 <span
@@ -61,7 +64,10 @@ export default function LoadingSpinner({
  * FullPageLoader Component
  * Full-screen loading overlay con spinner e logo Zero Cento
  */
-export function FullPageLoader({ message = 'Caricamento...' }: { message?: string }) {
+export function FullPageLoader({ message }: { message?: string }) {
+    const { t } = useTranslation('common')
+    const resolvedMessage = message ?? t('common.loadingEllipsis', { defaultValue: t('common.loading') })
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/95 backdrop-blur-sm">
             <div className="flex flex-col items-center gap-6">
@@ -71,12 +77,12 @@ export function FullPageLoader({ message = 'Caricamento...' }: { message?: strin
                         <span className="text-gray-900">Zero</span>
                         <span className="text-brand-primary">Cento</span>
                     </h1>
-                    <p className="mt-1 text-sm text-gray-500">Training Platform</p>
+                    <p className="mt-1 text-sm text-gray-500">{t('brand.tagline', { defaultValue: t('app.tagline') })}</p>
                 </div>
 
                 <LoadingSpinner size="lg" color="primary" />
 
-                <p className="text-sm text-gray-600">{message}</p>
+                <p className="text-sm text-gray-600">{resolvedMessage}</p>
             </div>
         </div>
     )

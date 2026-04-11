@@ -1,60 +1,85 @@
 {
-"confirmationModal": {
-"sideEffects":"This operation may have side effects. Continue?",
-"informational":"This is an informational window. Confirm to proceed.",
-"confirmed":"Action confirmed!"
- },
-"errorBoundary": {
-"message":"An unexpected error occurred. Try again or contact support.",
-"details":"Error Details (dev only)"
- },
-"exerciseCard": {
-"edit":"Edit exercise",
-"delete":"Delete exercise"
- },
-"feedbackForm": {
-"prescribed":"Prescribed",
-"sets":"sets",
-"reps":"reps",
-"completed":"Exercise completed",
-"set":"Set",
-"weight":"Weight (kg)",
-"removeSet":"Remove set",
-"addSet":"Add Set",
-"notes":"Notes (optional)",
-"notesPlaceholder":"Any notes on execution, feelings, difficulties...",
-"feedbackSaved":"Feedback saved successfully!",
-"saveFeedback":"Save Feedback",
-"total":"Total"
- },
-"navigationCard": {
-"description":"Navigation cards used in dashboards to direct users to main sections"
- },
-"datePicker": {
-"programStart":"Program start date",
-"defaultValue":"Date with default value",
-"disabled":"Disabled field",
-"selectedValue":"Selected value (ISO)"
- },
-"autocomplete": {
-"noResults":"No results found",
-"description":"Searchable dropdown with keyboard navigation",
-"selected":"Selected"
- },
-"pwaPrompt": {
-"install":"Install ZeroCento",
-"description":"Add to home for quick access and offline support",
-"installButton":"Install",
-"notNow":"Not now"
- },
-"weekTypeBanner": {
-"week":"Week"
- },
-"pagination": {
-"pageOf":"Page {{current}} of {{total}}",
-"previous":"Previous",
-"next":"Next",
-"first":"First",
-"last":"Last"
- }
+    "confirmationModal": {
+        "sideEffects": "This operation may have side effects. Continue?",
+        "informational": "This is an informational window. Confirm to proceed.",
+        "confirmed": "Action confirmed!"
+    },
+    "errorBoundary": {
+        "title": "Oops! Something went wrong",
+        "message": "An unexpected error occurred. Try again or contact support.",
+        "details": "Error Details (dev only)"
+    },
+    "repsInput": {
+        "invalidFormat": "Invalid format (e.g. 8, 8-10, 6/8)",
+        "placeholder": "e.g. 8, 8-10, 6/8",
+        "label": "Repetitions",
+        "help": "Formats: single number (8), range (8-10), slash (6/8)"
+    },
+    "restTime": {
+        "label": "Rest Time"
+    },
+    "youtube": {
+        "invalidUrl": "Invalid video URL"
+    },
+    "exerciseCard": {
+        "edit": "Edit exercise",
+        "delete": "Delete exercise"
+    },
+    "feedbackForm": {
+        "prescribed": "Prescribed",
+        "sets": "sets",
+        "reps": "reps",
+        "completed": "Exercise completed",
+        "set": "Set",
+        "weight": "Weight (kg)",
+        "removeSet": "Remove set",
+        "addSet": "Add Set",
+        "notes": "Notes (optional)",
+        "notesPlaceholder": "Any notes on execution, feelings, difficulties...",
+        "feedbackSaved": "Feedback saved successfully!",
+        "saveFeedback": "Save Feedback",
+        "total": "Total"
+    },
+    "navigationCard": {
+        "description": "Navigation cards used in dashboards to direct users to main sections"
+    },
+    "datePicker": {
+        "programStart": "Program start date",
+        "defaultValue": "Date with default value",
+        "disabled": "Disabled field",
+        "selectedValue": "Selected value (ISO)"
+    },
+    "autocomplete": {
+        "noResults": "No results found",
+        "description": "Searchable dropdown with keyboard navigation",
+        "selected": "Selected"
+    },
+    "pwaPrompt": {
+        "install": "Install ZeroCento",
+        "description": "Add to home for quick access and offline support",
+        "installButton": "Install",
+        "notNow": "Not now"
+    },
+    "weekTypeBanner": {
+        "week": "Week",
+        "badges": {
+            "normal": "Standard",
+            "test": "Test",
+            "deload": "Deload"
+        }
+    },
+    "weightType": {
+        "label": "Weight Type",
+        "absolute": "Absolute weight",
+        "percent1RM": "Percentage of 1RM",
+        "percentNRM": "Percentage of nRM",
+        "percentPrev": "Relative to first occurrence"
+    },
+    "pagination": {
+        "pageOf": "Page {{current}} of {{total}}",
+        "previous": "Previous",
+        "next": "Next",
+        "first": "First",
+        "last": "Last"
+    }
 }

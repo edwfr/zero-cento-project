@@ -25,7 +25,7 @@ interface ExerciseCreateModalProps {
 }
 
 export default function ExerciseCreateModal({ onClose, onExerciseCreated }: ExerciseCreateModalProps) {
-    const { t } = useTranslation('trainer')
+    const { t } = useTranslation(['trainer', 'common'])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const [muscleGroups, setMuscleGroups] = useState<MuscleGroup[]>([])
@@ -144,7 +144,7 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
 
         // Validation
         if (selectedMuscleGroups.some((mg) => !mg.muscleGroupId)) {
-            setError('Completa tutti i gruppi muscolari selezionati')
+            setError(t('exercises.completeAllGroups'))
             setLoading(false)
             return
         }
@@ -164,7 +164,7 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(getApiErrorMessage(data, 'Errore durante la creazione', t))
+                throw new Error(getApiErrorMessage(data, t('exercises.createError'), t))
             }
 
             onExerciseCreated()
@@ -184,7 +184,7 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                 className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
             >
                 <h2 id={titleId} className="text-2xl font-bold text-gray-900 mb-4">
-                    Crea Nuovo Esercizio
+                    {t('exercises.createNew')}
                 </h2>
 
                 {error && (
@@ -196,7 +196,7 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                            Nome Esercizio *
+                            {t('exercises.exerciseNameLabel')}
                         </label>
                         <input
                             ref={firstInputRef}
@@ -207,13 +207,13 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                             disabled={loading}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                             required
-                            placeholder="es. Bench Press"
+                            placeholder={t('exercises.exerciseNamePlaceholder')}
                         />
                     </div>
 
                     <div>
                         <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                            Descrizione
+                            {t('exercises.descriptionLabel')}
                         </label>
                         <textarea
                             id="description"
@@ -222,13 +222,13 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                             disabled={loading}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                             rows={3}
-                            placeholder="Descrizione dell'esercizio..."
+                            placeholder={t('exercises.descriptionPlaceholder')}
                         />
                     </div>
 
                     <div>
                         <label htmlFor="youtubeUrl" className="block text-sm font-medium text-gray-700 mb-1">
-                            URL YouTube *
+                            {t('exercises.youtubeUrlLabel')} *
                         </label>
                         <input
                             type="url"
@@ -238,14 +238,14 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                             disabled={loading}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                             required
-                            placeholder="https://www.youtube.com/watch?v=..."
+                            placeholder={t('exercises.youtubeUrlPlaceholder')}
                         />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
-                                Tipo *
+                                {t('exercises.typeLabel')}
                             </label>
                             <select
                                 id="type"
@@ -255,14 +255,14 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                 required
                             >
-                                <option value="fundamental" className="text-gray-900">Fondamentale</option>
-                                <option value="accessory" className="text-gray-900">Accessorio</option>
+                                <option value="fundamental" className="text-gray-900">{t('exercises.fundamental')}</option>
+                                <option value="accessory" className="text-gray-900">{t('exercises.accessory')}</option>
                             </select>
                         </div>
 
                         <div>
                             <label htmlFor="movementPattern" className="block text-sm font-medium text-gray-700 mb-1">
-                                Schema Motorio *
+                                {t('exercises.movementPattern')} *
                             </label>
                             <select
                                 id="movementPattern"
@@ -272,7 +272,7 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                 required
                             >
-                                <option value="" className="text-gray-900">Seleziona schema...</option>
+                                <option value="" className="text-gray-900">{t('exercises.selectPattern')}</option>
                                 {movementPatterns.map((mp) => (
                                     <option key={mp.id} value={mp.id} className="text-gray-900">
                                         {mp.name}
@@ -285,7 +285,7 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                     <div>
                         <div className="flex justify-between items-center mb-2">
                             <label className="block text-sm font-medium text-gray-700">
-                                Gruppi Muscolari * (min 1, max 5)
+                                {t('exercises.muscleGroupsRangeLabel')}
                             </label>
                             <button
                                 type="button"
@@ -293,7 +293,7 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                                 disabled={selectedMuscleGroups.length >= 5 || loading}
                                 className="text-sm px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                             >
-                                + Aggiungi
+                                {t('exercises.addButton')}
                             </button>
                         </div>
 
@@ -307,7 +307,7 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                                         className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                         required
                                     >
-                                        <option value="" className="text-gray-900">Seleziona gruppo...</option>
+                                        <option value="" className="text-gray-900">{t('exercises.selectMuscleGroup')}</option>
                                         {muscleGroups.map((group) => (
                                             <option key={group.id} value={group.id} className="text-gray-900">
                                                 {group.name}
@@ -341,13 +341,13 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
 
                             {selectedMuscleGroups.length === 0 && (
                                 <p className="text-sm text-gray-500 italic">
-                                    Nessun gruppo muscolare selezionato. Clicca &quot;+ Aggiungi&quot; per iniziare.
+                                    {t('exercises.noMuscleGroupSelected')}. {t('exercises.addMuscleGroup')}
                                 </p>
                             )}
                         </div>
 
                         <p className="text-xs text-gray-500 mt-2">
-                            Il coefficiente indica l&apos;intensità di coinvolgimento (0.0 = minimo, 1.0 = massimo)
+                            {t('exercises.coefficientHint')}
                         </p>
                     </div>
 
@@ -357,7 +357,7 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                             disabled={loading}
                             className="flex-1 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                         >
-                            {loading ? 'Creando...' : 'Crea Esercizio'}
+                            {loading ? t('common:common.creating') : t('exercises.createExercise')}
                         </button>
                         <button
                             type="button"
@@ -365,7 +365,7 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                             disabled={loading}
                             className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
                         >
-                            Annulla
+                            {t('common:common.cancel')}
                         </button>
                     </div>
                 </form>

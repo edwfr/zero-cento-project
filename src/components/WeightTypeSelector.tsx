@@ -1,6 +1,7 @@
 'use client'
 
 import { WeightType } from '@prisma/client'
+import { useTranslation } from 'react-i18next'
 
 interface WeightTypeSelectorProps {
     value: WeightType | undefined
@@ -11,13 +12,13 @@ interface WeightTypeSelectorProps {
 }
 
 const WEIGHT_TYPE_OPTIONS = [
-    { value: 'absolute' as WeightType, label: 'kg', description: 'Peso assoluto' },
-    { value: 'percentage_1rm' as WeightType, label: '% 1RM', description: 'Percentuale massimale' },
-    { value: 'percentage_rm' as WeightType, label: '% nRM', description: 'Percentuale di nRM' },
+    { value: 'absolute' as WeightType, label: 'kg', descriptionKey: 'weightType.absolute' },
+    { value: 'percentage_1rm' as WeightType, label: '% 1RM', descriptionKey: 'weightType.percent1RM' },
+    { value: 'percentage_rm' as WeightType, label: '% nRM', descriptionKey: 'weightType.percentNRM' },
     {
         value: 'percentage_previous' as WeightType,
         label: '% Prev',
-        description: 'Relativo alla prima occorrenza',
+        descriptionKey: 'weightType.percentPrev',
     },
 ]
 
@@ -28,14 +29,17 @@ export default function WeightTypeSelector({
     className = '',
     required = false,
 }: WeightTypeSelectorProps) {
+    const { t } = useTranslation('components')
+
     return (
         <div className={`flex flex-col gap-2 ${className}`}>
             <label className="text-sm font-medium text-gray-700">
-                Tipo Peso {required && <span className="text-red-500">*</span>}
+                {t('weightType.label')} {required && <span className="text-red-500">*</span>}
             </label>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {WEIGHT_TYPE_OPTIONS.map((option) => {
                     const isSelected = value === option.value
+                    const description = t(option.descriptionKey)
                     return (
                         <button
                             key={option.value}
@@ -52,10 +56,10 @@ export default function WeightTypeSelector({
                                 ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
                                 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:ring-offset-2
                             `}
-                            title={option.description}
+                            title={description}
                         >
                             <span className="text-sm font-bold">{option.label}</span>
-                            <span className="text-xs opacity-75">{option.description}</span>
+                            <span className="text-xs opacity-75">{description}</span>
                         </button>
                     )
                 })}

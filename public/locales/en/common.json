@@ -3,6 +3,9 @@
         "name": "ZeroCento Training",
         "tagline": "Your training platform"
     },
+    "brand": {
+        "tagline": "Your training platform"
+    },
     "common": {
         "email": "Email",
         "password": "Password",
@@ -15,18 +18,24 @@
         "edit": "Edit",
         "create": "Create",
         "search": "Search",
+        "dateFormat": "DD/MM/YYYY",
+        "openCalendar": "Open calendar",
         "filter": "Filter",
         "loading": "Loading...",
+        "loadingEllipsis": "Loading...",
         "loadingProgress": "Loading in progress...",
         "saving": "Saving...",
         "creating": "Creating...",
         "submitting": "Submitting...",
         "deleting": "Deleting...",
         "noResults": "No results",
+        "noResultsFound": "No results found",
         "error": "Error",
         "success": "Success",
         "confirm": "Confirm",
+        "retry": "Retry",
         "back": "Back",
+        "backHome": "Back to Home",
         "next": "Next",
         "previous": "Previous",
         "close": "Close",
@@ -127,6 +136,8 @@
         "creationError": "Error during creation",
         "updateError": "Error during update",
         "deletionError": "Error during deletion",
+        "accessDeniedTitle": "Access Denied",
+        "accessDeniedMessage": "You do not have permission to access this page.",
         "unexpected": "An unexpected error occurred. Try again or contact support."
     },
     "success": {

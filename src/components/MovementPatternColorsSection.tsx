@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import MovementPatternTag from './MovementPatternTag'
+import { getApiErrorMessage } from '@/lib/api-error'
 
 interface MovementPattern {
     id: string
@@ -30,6 +32,7 @@ const PRESET_COLORS = [
 ]
 
 export default function MovementPatternColorsSection() {
+    const { t } = useTranslation(['admin', 'common'])
     const [movementPatterns, setMovementPatterns] = useState<MovementPattern[]>([])
     const [colorConfig, setColorConfig] = useState<ColorConfig>({})
     const [loading, setLoading] = useState(true)
@@ -50,7 +53,7 @@ export default function MovementPatternColorsSection() {
             // Load movement patterns
             const patternsRes = await fetch('/api/movement-patterns')
             if (!patternsRes.ok) {
-                throw new Error('Failed to load movement patterns')
+                throw new Error(t('admin:movementPatterns.loadError'))
             }
             const patternsData = await patternsRes.json()
             const patterns = patternsData.data.items.map((p: any) => ({
@@ -62,7 +65,7 @@ export default function MovementPatternColorsSection() {
             // Load existing colors
             const colorsRes = await fetch('/api/movement-pattern-colors')
             if (!colorsRes.ok) {
-                throw new Error('Failed to load colors')
+                throw new Error(t('admin:colors.loadError'))
             }
             const colorsData = await colorsRes.json()
 
@@ -81,7 +84,7 @@ export default function MovementPatternColorsSection() {
 
             setColorConfig(config)
         } catch (err: any) {
-            setError(err.message || 'Errore nel caricamento dei dati')
+            setError(err.message || t('common:errors.loadingError'))
         } finally {
             setLoading(false)
         }
@@ -115,7 +118,7 @@ export default function MovementPatternColorsSection() {
 
             if (!res.ok) {
                 const errorData = await res.json()
-                throw new Error(errorData.error?.message || 'Failed to save colors')
+                throw new Error(getApiErrorMessage(errorData, t('admin:colors.saveFailed'), t))
             }
 
             setSuccess(true)
@@ -126,7 +129,7 @@ export default function MovementPatternColorsSection() {
                 setSuccess(false)
             }, 3000)
         } catch (err: any) {
-            setError(err.message || 'Impossibile salvare i colori')
+            setError(err.message || t('admin:colors.saveFailed'))
         } finally {
             setSaving(false)
         }
@@ -152,7 +155,7 @@ export default function MovementPatternColorsSection() {
             <div>
                 <div className="mb-4">
                     <p className="text-sm text-gray-600 mb-4">
-                        Personalizza i colori dei movement pattern che verranno visualizzati negli esercizi.
+                        {t('admin:colors.description')}
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {movementPatterns.map((pattern) => (
@@ -179,7 +182,7 @@ export default function MovementPatternColorsSection() {
                     onClick={() => setIsEditing(true)}
                     className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 transition-colors"
                 >
-                    Modifica Colori
+                    {t('admin:colors.edit')}
                 </button>
             </div>
         )
@@ -188,7 +191,7 @@ export default function MovementPatternColorsSection() {
     return (
         <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Modifica Colori Movement Pattern
+                {t('admin:colors.editTitle')}
             </h3>
 
             {success && (
@@ -197,7 +200,7 @@ export default function MovementPatternColorsSection() {
                         <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
-                        <p className="text-sm text-green-600 font-medium">Colori salvati con successo!</p>
+                        <p className="text-sm text-green-600 font-medium">{t('admin:colors.saveSuccess')}</p>
                     </div>
                 </div>
             )}
@@ -241,7 +244,7 @@ export default function MovementPatternColorsSection() {
                                 </div>
                             </div>
                             <div className="flex flex-col items-end gap-2">
-                                <span className="text-xs font-medium text-gray-600">Anteprima:</span>
+                                <span className="text-xs font-medium text-gray-600">{t('admin:colors.preview')}</span>
                                 <MovementPatternTag
                                     name={pattern.name}
                                     color={colorConfig[pattern.id] || PRIMARY_COLOR}
@@ -258,14 +261,14 @@ export default function MovementPatternColorsSection() {
                     disabled={saving}
                     className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                    {saving ? 'Salvataggio...' : 'Salva Colori'}
+                    {saving ? t('common:common.saving') : t('admin:colors.save')}
                 </button>
                 <button
                     onClick={handleCancel}
                     disabled={saving}
                     className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors disabled:cursor-not-allowed"
                 >
-                    Annulla
+                    {t('common:common.cancel')}
                 </button>
             </div>
         </div>
