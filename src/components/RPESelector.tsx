@@ -53,15 +53,17 @@ export default function RPESelector({
     centeredMenu = false,
     label = 'RPE (Fatica Percepita)',
     title,
-    placeholder = 'Seleziona RPE',
+    placeholder,
     descriptions,
 }: RPESelectorProps) {
-    const { t } = useTranslation('common')
+    const { t: tCommon } = useTranslation('common')
+    const { t: tComponents } = useTranslation('components')
     const [isOpen, setIsOpen] = useState(false)
     const dialogRef = useRef<HTMLDivElement>(null)
+    const resolvedPlaceholder = placeholder ?? tComponents('rpeSelector.placeholder')
 
     const getRPEDescription = (rpe: number | null): string => {
-        if (!rpe) return placeholder
+        if (!rpe) return resolvedPlaceholder
         const translatedDescription = descriptions?.[rpe]
 
         if (translatedDescription) {
@@ -94,7 +96,7 @@ export default function RPESelector({
         }
     }, [centeredMenu, isOpen])
 
-    const selectedLabel = value ? `RPE ${value.toFixed(1)}` : placeholder
+    const selectedLabel = value ? `RPE ${value.toFixed(1)}` : resolvedPlaceholder
     const modalTitle = title || label
     const optionsGrid = (
         <>
@@ -137,14 +139,14 @@ export default function RPESelector({
                     }}
                     className="text-sm text-gray-500 hover:text-gray-700 underline"
                 >
-                    {t('common.deselect')}
+                    {tCommon('common.deselect')}
                 </button>
                 <button
                     type="button"
                     onClick={() => setIsOpen(false)}
                     className="text-sm font-medium text-brand-primary hover:text-brand-primary/80"
                 >
-                    {t('common.close')}
+                    {tCommon('common.close')}
                 </button>
             </div>
         </>
@@ -195,7 +197,7 @@ export default function RPESelector({
                             <div className="mb-4">
                                 <h3 className="text-lg font-bold text-gray-900">{modalTitle}</h3>
                                 <p className="mt-1 text-sm text-gray-600">
-                                    {value ? getRPEDescription(value) : placeholder}
+                                    {value ? getRPEDescription(value) : resolvedPlaceholder}
                                 </p>
                             </div>
                             {optionsGrid}

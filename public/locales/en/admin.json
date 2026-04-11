@@ -43,6 +43,8 @@
         "deleteUser": "Delete User",
         "userCreated": "User Created",
         "userUpdated": "User updated successfully",
+        "createdSuccessfully": "User has been created successfully! An invitation email has been sent to:",
+        "inviteNotice": "The user will receive a link to set their password and complete registration.",
         "role": "Role",
         "created": "Created",
         "createdSuccess": "User was created successfully",

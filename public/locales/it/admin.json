@@ -43,6 +43,8 @@
         "deleteUser": "Elimina Utente",
         "userCreated": "Utente Creato",
         "userUpdated": "Utente aggiornato con successo",
+        "createdSuccessfully": "L'utente è stato creato con successo! Un'email di invito è stata inviata a:",
+        "inviteNotice": "L'utente riceverà un link per impostare la propria password e completare la registrazione.",
         "role": "Ruolo",
         "created": "Creato",
         "createdSuccess": "L'utente è stato creato con successo",

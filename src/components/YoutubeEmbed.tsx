@@ -17,12 +17,13 @@ interface YoutubeEmbedProps {
  */
 export default function YoutubeEmbed({
     videoUrl,
-    title = 'Video esercizio',
+    title,
     className = '',
     autoplay = false,
 }: YoutubeEmbedProps) {
     const { t } = useTranslation('components')
     const [isLoaded, setIsLoaded] = useState(false)
+    const resolvedTitle = title ?? t('youtube.defaultTitle')
 
     // Extract YouTube video ID from various URL formats
     const getYouTubeVideoId = (url: string): string | null => {
@@ -86,12 +87,12 @@ export default function YoutubeEmbed({
                             e.stopPropagation()
                             setIsLoaded(true)
                         }}
-                        aria-label={`Riproduci ${title}`}
+                        aria-label={`Riproduci ${resolvedTitle}`}
                         className="absolute inset-0 flex items-center justify-center bg-black transition-opacity hover:opacity-90"
                     >
                         <img
                             src={thumbnailUrl}
-                            alt={title}
+                            alt={resolvedTitle}
                             className="absolute inset-0 h-full w-full object-cover"
                         />
                         <div className="relative z-10 flex h-16 w-16 items-center justify-center rounded-full bg-red-600 shadow-lg transition-transform hover:scale-110">
@@ -111,7 +112,7 @@ export default function YoutubeEmbed({
                     <iframe
                         className="absolute inset-0 h-full w-full"
                         src={embedUrl}
-                        title={title}
+                        title={resolvedTitle}
                         frameBorder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                         referrerPolicy="strict-origin-when-cross-origin"
@@ -122,9 +123,9 @@ export default function YoutubeEmbed({
             </div>
 
             {/* Video Title Overlay */}
-            {title && !isLoaded && (
+            {resolvedTitle && !isLoaded && (
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
-                    <p className="text-sm font-semibold text-white">{title}</p>
+                    <p className="text-sm font-semibold text-white">{resolvedTitle}</p>
                 </div>
             )}
         </div>

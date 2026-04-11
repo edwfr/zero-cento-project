@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 
 type ToastType = 'success' | 'error' | 'warning' | 'info'
 
@@ -60,10 +61,16 @@ interface ToastContainerProps {
 }
 
 function ToastContainer({ toasts, onClose }: ToastContainerProps) {
+    const { t } = useTranslation('common')
+
     if (toasts.length === 0) return null
 
     return (
-        <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2" role="region" aria-label="Notifiche">
+        <div
+            className="fixed bottom-4 right-4 z-50 flex flex-col gap-2"
+            role="region"
+            aria-label={t('common.notifications')}
+        >
             {toasts.map((toast) => (
                 <ToastNotification key={toast.id} toast={toast} onClose={onClose} />
             ))}
@@ -77,6 +84,8 @@ interface ToastNotificationProps {
 }
 
 function ToastNotification({ toast, onClose }: ToastNotificationProps) {
+    const { t } = useTranslation('common')
+
     const configs = {
         success: {
             bg: 'bg-green-50',
@@ -131,7 +140,7 @@ function ToastNotification({ toast, onClose }: ToastNotificationProps) {
             <button
                 onClick={() => onClose(toast.id)}
                 className={`flex-shrink-0 rounded p-1 transition-colors ${config.text} hover:bg-black/10`}
-                aria-label="Chiudi notifica"
+                aria-label={t('common.closeNotification')}
             >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

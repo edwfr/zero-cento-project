@@ -64,6 +64,8 @@
         "exerciseType": "Tipo Esercizio",
         "fundamental": "Fondamentale",
         "accessory": "Accessorio",
+        "fundamentalPlural": "Fondamentali",
+        "accessoryPlural": "Accessori",
         "fundamentalSBD": "Fondamentale (SBD)",
         "movementPattern": "Schema Motorio",
         "selectPattern": "Seleziona uno schema motorio",

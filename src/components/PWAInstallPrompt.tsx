@@ -16,7 +16,8 @@ interface BeforeInstallPromptEvent extends Event {
  * Persists dismissal in localStorage.
  */
 export default function PWAInstallPrompt() {
-    const { t } = useTranslation('components')
+    const { t: tComponents } = useTranslation('components')
+    const { t: tCommon } = useTranslation('common')
     const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null)
     const [dismissed, setDismissed] = useState(false)
     const [isInstalled, setIsInstalled] = useState(false)
@@ -96,22 +97,22 @@ export default function PWAInstallPrompt() {
 
             {/* Content */}
             <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-bold text-gray-900">{t('pwaPrompt.install')}</h3>
+                <h3 className="text-sm font-bold text-gray-900">{tComponents('pwaPrompt.install')}</h3>
                 <p className="text-xs text-gray-500 mt-0.5">
-                    {t('pwaPrompt.description')}
+                    {tComponents('pwaPrompt.description')}
                 </p>
                 <div className="flex gap-2 mt-3">
                     <button
                         onClick={handleInstall}
                         className="flex-1 bg-[#FFA700] hover:bg-[#FF9500] text-white text-xs font-semibold py-2 rounded-lg transition-colors"
                     >
-                        {t('pwaPrompt.installButton')}
+                        {tComponents('pwaPrompt.installButton')}
                     </button>
                     <button
                         onClick={handleDismiss}
                         className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold py-2 rounded-lg transition-colors"
                     >
-                        {t('pwaPrompt.notNow')}
+                        {tComponents('pwaPrompt.notNow')}
                     </button>
                 </div>
             </div>
@@ -120,7 +121,7 @@ export default function PWAInstallPrompt() {
             <button
                 onClick={handleDismiss}
                 className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
-                aria-label="Chiudi"
+                aria-label={tCommon('common.close')}
             >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

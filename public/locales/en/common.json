@@ -39,6 +39,8 @@
         "next": "Next",
         "previous": "Previous",
         "close": "Close",
+        "notifications": "Notifications",
+        "closeNotification": "Close notification",
         "yes": "Yes",
         "no": "No",
         "add": "Add",

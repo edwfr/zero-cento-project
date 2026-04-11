@@ -18,6 +18,8 @@
         "exerciseType": "Exercise Type",
         "fundamental": "Fundamental",
         "accessory": "Accessory",
+        "fundamentalPlural": "Fundamentals",
+        "accessoryPlural": "Accessories",
         "fundamentalSBD": "Fundamental (SBD)",
         "movementPattern": "Movement Pattern",
         "selectPattern": "Select a movement pattern",

@@ -340,7 +340,7 @@ Tutti i messaggi di validazione Zod sono stringhe hardcoded in italiano. Questi 
 
 ### 3.14 `YoutubeEmbed.tsx`
 
-> ✅ **Messaggio di errore corretto** (2026-04-11) — convertita a token i18n la stringa alla riga 66 (`components:youtube.invalidUrl`).
+> ✅ **Sottosezione 3.14 completata** (2026-04-11) — convertite a token i18n le stringhe alla riga 19 e 66 (`components:youtube.defaultTitle`, `components:youtube.invalidUrl`).
 
 | Riga | Stringa                  | Token suggerito                   |
 | ---- | ------------------------ | --------------------------------- |
@@ -348,6 +348,8 @@ Tutti i messaggi di validazione Zod sono stringhe hardcoded in italiano. Questi 
 | 66   | `"URL video non valido"` | `components:youtube.invalidUrl`   |
 
 ### 3.15 `RPESelector.tsx`
+
+> ✅ **Sottosezione 3.15 completata** (2026-04-11) — convertito a token i18n il placeholder (`components:rpeSelector.placeholder`); confermato uso token già presenti per le azioni (`common:common.deselect`, `common:common.close`).
 
 | Riga | Stringa           | Token suggerito                      |
 | ---- | ----------------- | ------------------------------------ |
@@ -357,6 +359,8 @@ Tutti i messaggi di validazione Zod sono stringhe hardcoded in italiano. Questi 
 
 ### 3.16 `ToastNotification.tsx`
 
+> ✅ **Sottosezione 3.16 completata** (2026-04-11) — convertite a token i18n le `aria-label` di container e pulsante chiusura (`common:common.notifications`, `common:common.closeNotification`).
+
 | Riga | Stringa                          | Token suggerito                   |
 | ---- | -------------------------------- | --------------------------------- |
 | 66   | `"Notifiche"` (aria-label)       | `common:common.notifications`     |
@@ -364,11 +368,15 @@ Tutti i messaggi di validazione Zod sono stringhe hardcoded in italiano. Questi 
 
 ### 3.17 `PWAInstallPrompt.tsx`
 
+> ✅ **Sottosezione 3.17 completata** (2026-04-11) — convertita a token i18n l'`aria-label` del pulsante chiusura (`common:common.close`).
+
 | Riga | Stringa                 | Token suggerito       |
 | ---- | ----------------------- | --------------------- |
 | 124  | `"Chiudi"` (aria-label) | `common:common.close` |
 
 ### 3.18 `UserCreateModal.tsx`
+
+> ✅ **Sottosezione 3.18 completata** (2026-04-11) — convertiti a token i18n i messaggi di conferma creazione utente (`admin:users.createdSuccessfully`, `admin:users.inviteNotice`).
 
 | Riga | Stringa                                      | Token suggerito                   |
 | ---- | -------------------------------------------- | --------------------------------- |
@@ -377,7 +385,13 @@ Tutti i messaggi di validazione Zod sono stringhe hardcoded in italiano. Questi 
 
 ### 3.19 `UserDeleteModal.tsx`, `UserEditModal.tsx`, `ExercisesTable.tsx`
 
-Questi file necessitano verifica — probabile presenza di label, intestazioni tabella e messaggi di conferma hardcoded.
+> ✅ **Sottosezione 3.19 completata** (2026-04-11) — verifica conclusa sui tre file: `UserDeleteModal.tsx` già conforme; in `UserEditModal.tsx` localizzata l'etichetta ruolo dinamica; in `ExercisesTable.tsx` rimossa pluralizzazione hardcoded nelle opzioni filtro.
+
+| File                | Riga indicativa | Stringa/Punto verificato              | Token adottato                                                |
+| ------------------- | --------------- | ------------------------------------- | ------------------------------------------------------------- |
+| `UserDeleteModal.tsx` | -               | Nessuna stringa hardcoded residua     | Già coperto da `admin:*` / `common:*`                        |
+| `UserEditModal.tsx`   | 159             | Valore ruolo mostrato come stringa raw | `common:roles.admin` / `common:roles.trainer` / `common:roles.trainee` |
+| `ExercisesTable.tsx`  | 132-133         | Pluralizzazione con suffisso hardcoded `i` | `trainer:exercises.fundamentalPlural` / `trainer:exercises.accessoryPlural` |
 
 ---
 

@@ -137,14 +137,14 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
 
                     <div className="bg-green-50 border border-green-200 rounded-md p-4 mb-4">
                         <p className="text-sm text-green-800 mb-3">
-                            L&apos;utente è stato creato con successo! Un&apos;email di invito è stata inviata a:
+                            {t('admin:users.createdSuccessfully')}
                         </p>
                         <div className="bg-white p-3 rounded border border-green-300 font-mono text-sm break-all">
                             {createdUserEmail}
                         </div>
                         <p className="text-xs text-green-700 mt-3">
                             <AlertTriangle className="inline w-3 h-3 mr-1" />
-                            L&apos;utente riceverà un link per impostare la propria password e completare la registrazione.
+                            {t('admin:users.inviteNotice')}
                         </p>
                     </div>
 

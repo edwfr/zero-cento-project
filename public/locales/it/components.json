@@ -18,7 +18,11 @@
     "restTime": {
         "label": "Tempo Recupero"
     },
+    "rpeSelector": {
+        "placeholder": "Seleziona RPE"
+    },
     "youtube": {
+        "defaultTitle": "Video esercizio",
         "invalidUrl": "URL video non valido"
     },
     "exerciseCard": {

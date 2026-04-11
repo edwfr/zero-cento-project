@@ -82,6 +82,17 @@ export default function ExercisesTable() {
         }
     }
 
+    const getFilterOptionLabel = (type: string) => {
+        switch (type) {
+            case 'fundamental':
+                return t('trainer:exercises.fundamentalPlural')
+            case 'accessory':
+                return t('trainer:exercises.accessoryPlural')
+            default:
+                return type
+        }
+    }
+
     const getTypeBadgeColor = (type: string) => {
         switch (type) {
             case 'fundamental':
@@ -128,8 +139,8 @@ export default function ExercisesTable() {
                             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                         >
                             <option value="all" className="text-gray-900">{t('common:common.all')}</option>
-                            <option value="fundamental" className="text-gray-900">{t('trainer:exercises.fundamental')}i</option>
-                            <option value="accessory" className="text-gray-900">{t('trainer:exercises.accessory')}i</option>
+                            <option value="fundamental" className="text-gray-900">{getFilterOptionLabel('fundamental')}</option>
+                            <option value="accessory" className="text-gray-900">{getFilterOptionLabel('accessory')}</option>
                         </select>
                     </div>
 

@@ -113,6 +113,19 @@ export default function UserEditModal({ user, onClose, onUserUpdated }: UserEdit
         }
     }
 
+    const getRoleLabel = (role: string) => {
+        switch (role) {
+            case 'admin':
+                return t('common:roles.admin')
+            case 'trainer':
+                return t('common:roles.trainer')
+            case 'trainee':
+                return t('common:roles.trainee')
+            default:
+                return role
+        }
+    }
+
     if (success) {
         return (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="presentation">
@@ -156,7 +169,7 @@ export default function UserEditModal({ user, onClose, onUserUpdated }: UserEdit
                         <span className="font-medium">{t('common:common.email')}:</span> {user.email}
                     </p>
                     <p className="text-sm text-gray-600 mt-1">
-                        <span className="font-medium">{t('admin:users.role')}:</span> {user.role}
+                        <span className="font-medium">{t('admin:users.role')}:</span> {getRoleLabel(user.role)}
                     </p>
                 </div>
 
