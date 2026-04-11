@@ -30,6 +30,13 @@ import {
 
 const PRIMARY_COLOR = 'rgb(var(--brand-primary))'
 const RPE_OPTIONS = [5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10]
+const REST_TIME_OPTIONS: Array<{ value: RestTime; label: string }> = [
+    { value: 's30', label: '30s' },
+    { value: 'm1', label: '1m' },
+    { value: 'm2', label: '2m' },
+    { value: 'm3', label: '3m' },
+    { value: 'm5', label: '5m' },
+]
 
 interface MovementPattern {
     id: string
@@ -2529,7 +2536,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
                                                         {isWorkoutExpanded && (
                                                             <div className="overflow-x-auto">
-                                                                <table className="min-w-[1060px] w-full divide-y divide-gray-200 text-sm">
+                                                                <table className="min-w-[1160px] w-full divide-y divide-gray-200 text-sm">
                                                                     <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
                                                                         <tr>
                                                                             <th className="px-1.5 py-3 w-12 text-center">
@@ -2550,6 +2557,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                             <th className="px-1.5 py-3 w-20">{t('editProgram.tableReps')}</th>
                                                                             <th className="px-1.5 py-3 w-16">{t('editProgram.tableRpe')}</th>
                                                                             <th className="px-1.5 py-3 w-24">{t('editProgram.tableWeightKg')}</th>
+                                                                            <th className="px-1.5 py-3 w-20">{t('editProgram.tableRest')}</th>
                                                                             <th className="px-1.5 py-3 min-w-[130px]">{t('editProgram.tableMeta')}</th>
                                                                             <th className="px-1.5 py-3 w-28 text-right">{t('editProgram.tableActions')}</th>
                                                                         </tr>
@@ -2558,7 +2566,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                         {workoutRows.length === 0 && (
                                                                             <tr>
                                                                                 <td
-                                                                                    colSpan={9}
+                                                                                    colSpan={10}
                                                                                     className="px-1.5 py-6 text-center text-sm text-gray-500"
                                                                                 >
                                                                                     {t('editProgram.tableNoWorkoutExercises')}
@@ -2874,6 +2882,30 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                     )}
                                                                                             </>
                                                                                         )}
+                                                                                    </td>
+
+                                                                                    <td className="px-1.5 py-3 w-20">
+                                                                                        <select
+                                                                                            value={row.restTime}
+                                                                                            onChange={(event) =>
+                                                                                                updateRowFields(row.id, {
+                                                                                                    restTime:
+                                                                                                        event.target
+                                                                                                            .value as RestTime,
+                                                                                                })
+                                                                                            }
+                                                                                            disabled={rowBusy || readOnly}
+                                                                                            className="w-full rounded-lg border border-gray-300 px-1.5 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                                                                                        >
+                                                                                            {REST_TIME_OPTIONS.map((restOption) => (
+                                                                                                <option
+                                                                                                    key={restOption.value}
+                                                                                                    value={restOption.value}
+                                                                                                >
+                                                                                                    {restOption.label}
+                                                                                                </option>
+                                                                                            ))}
+                                                                                        </select>
                                                                                     </td>
 
                                                                                     <td className="px-1.5 py-3">

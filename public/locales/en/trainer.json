@@ -454,6 +454,7 @@
         "tableReps": "Reps",
         "tableRpe": "RPE",
         "tableWeightKg": "Weight",
+        "tableRest": "Rest",
         "tableMeta": "Info",
         "tableActions": "Actions",
         "tableNoWorkoutExercises": "No exercises configured for this workout.",
