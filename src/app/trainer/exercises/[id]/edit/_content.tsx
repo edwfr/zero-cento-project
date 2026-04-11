@@ -80,7 +80,7 @@ export default function EditExerciseContent() {
             const mpData = await mpRes.json()
 
             if (!exRes.ok) {
-                throw new Error(getApiErrorMessage(exData, 'Errore caricamento esercizio', t))
+                throw new Error(getApiErrorMessage(exData, t('exercises.loadingError'), t))
             }
 
             const exercise: Exercise = exData.data.exercise
@@ -288,7 +288,7 @@ export default function EditExerciseContent() {
                             value={youtubeUrl}
                             onChange={(e) => setYoutubeUrl(e.target.value)}
                             disabled={saving}
-                            placeholder="https://www.youtube.com/watch?v=..."
+                            placeholder={t('exercises.youtubeUrlPlaceholder')}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                         />
                     </div>

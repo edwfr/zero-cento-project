@@ -1,4 +1,10 @@
+'use client'
+
+import { useTranslation } from 'react-i18next'
+
 export default function OfflinePage() {
+    const { t } = useTranslation('common')
+
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
             <div className="max-w-md w-full text-center">
@@ -18,21 +24,20 @@ export default function OfflinePage() {
                     </svg>
                 </div>
 
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">Sei offline</h1>
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('offline.title')}</h1>
                 <p className="text-gray-500 text-sm mb-6">
-                    La connessione internet non è disponibile. Alcune funzionalità potrebbero non
-                    essere accessibili.
+                    {t('offline.description')}
                 </p>
 
                 <button
                     onClick={() => window.location.reload()}
                     className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-8 py-3 rounded-xl transition-colors"
                 >
-                    Riprova
+                    {t('common.retry')}
                 </button>
 
                 <p className="text-gray-400 text-xs mt-6">
-                    ZeroCento Training Platform
+                    {t('app.fullName')}
                 </p>
             </div>
         </div>

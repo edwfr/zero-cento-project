@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase-client'
+import { useTranslation } from 'react-i18next'
 
 export default function ResetPasswordPage() {
+    const { t } = useTranslation(['auth', 'common'])
     const router = useRouter()
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
@@ -37,11 +39,11 @@ export default function ResetPasswordPage() {
         setError(null)
 
         if (password.length < 8) {
-            setError('La password deve essere di almeno 8 caratteri.')
+            setError(t('auth:resetPassword.errorMinLength'))
             return
         }
         if (password !== confirmPassword) {
-            setError('Le password non coincidono.')
+            setError(t('auth:resetPassword.errorMismatch'))
             return
         }
 
@@ -52,7 +54,7 @@ export default function ResetPasswordPage() {
             if (error) throw error
             router.push('/login?message=password-updated')
         } catch (err: any) {
-            setError('Impossibile aggiornare la password. Il link potrebbe essere scaduto.')
+            setError(t('auth:resetPassword.errorUpdateFailed'))
         } finally {
             setLoading(false)
         }
@@ -78,9 +80,9 @@ export default function ResetPasswordPage() {
                             <span className="text-white text-4xl font-bold">0→100</span>
                         </div>
                     </div>
-                    <h1 className="text-2xl font-bold text-gray-900">Nuova password</h1>
+                    <h1 className="text-2xl font-bold text-gray-900">{t('auth:resetPassword.title')}</h1>
                     <p className="text-gray-600 mt-2 text-sm">
-                        Scegli una nuova password sicura per il tuo account
+                        {t('auth:resetPassword.description')}
                     </p>
                 </div>
 
@@ -88,11 +90,11 @@ export default function ResetPasswordPage() {
                     {!sessionReady ? (
                         <div className="text-center py-8">
                             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#FFA700] mx-auto mb-4" />
-                            <p className="text-gray-600 text-sm">Verifica del link in corso...</p>
+                            <p className="text-gray-600 text-sm">{t('auth:resetPassword.verifyingLink')}</p>
                             <p className="text-gray-400 text-xs mt-2">
-                                Se il problema persiste,{' '}
+                                {t('auth:resetPassword.verifyingHelp')}{' '}
                                 <Link href="/forgot-password" className="text-[#FFA700] hover:underline">
-                                    richiedi un nuovo link
+                                    {t('auth:resetPassword.requestNewLink')}
                                 </Link>
                             </p>
                         </div>
@@ -106,7 +108,7 @@ export default function ResetPasswordPage() {
 
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                    Nuova password
+                                    {t('auth:resetPassword.newPassword')}
                                 </label>
                                 <input
                                     type="password"
@@ -115,14 +117,14 @@ export default function ResetPasswordPage() {
                                     required
                                     disabled={loading}
                                     minLength={8}
-                                    placeholder="Minimo 8 caratteri"
+                                    placeholder={t('auth:resetPassword.newPasswordPlaceholder')}
                                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                                 />
                             </div>
 
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                    Conferma password
+                                    {t('auth:resetPassword.confirmPassword')}
                                 </label>
                                 <input
                                     type="password"
@@ -131,7 +133,7 @@ export default function ResetPasswordPage() {
                                     required
                                     disabled={loading}
                                     minLength={8}
-                                    placeholder="Ripeti la nuova password"
+                                    placeholder={t('auth:resetPassword.confirmPasswordPlaceholder')}
                                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                                 />
                             </div>
@@ -141,7 +143,7 @@ export default function ResetPasswordPage() {
                                 disabled={loading || !password || !confirmPassword}
                                 className="w-full bg-[#FFA700] hover:bg-[#FF9500] disabled:bg-gray-300 text-white font-semibold py-3 rounded-lg transition-colors"
                             >
-                                {loading ? 'Aggiornamento...' : 'Imposta nuova password'}
+                                {loading ? t('auth:resetPassword.submitting') : t('auth:resetPassword.submit')}
                             </button>
                         </form>
                     )}

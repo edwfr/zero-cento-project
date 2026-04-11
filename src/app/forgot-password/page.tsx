@@ -26,7 +26,7 @@ export default function ForgotPasswordPage() {
             if (error) throw error
             setSent(true)
         } catch (err: any) {
-            setError('Impossibile inviare l\'email di ripristino. Verifica l\'indirizzo inserito.')
+            setError(t('auth:forgotPassword.errorSend'))
         } finally {
             setLoading(false)
         }
@@ -68,7 +68,7 @@ export default function ForgotPasswordPage() {
                             </div>
                             <h2 className="text-lg font-semibold text-gray-900 mb-2">{t('auth:forgotPassword.success')}</h2>
                             <p className="text-gray-600 text-sm mb-6">
-                                Controlla la tua casella di posta. Se l&apos;indirizzo è registrato, riceverai a breve un link per reimpostare la password.
+                                {t('auth:forgotPassword.successDescription')}
                             </p>
                             <Link
                                 href="/login"
@@ -95,7 +95,7 @@ export default function ForgotPasswordPage() {
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
                                     disabled={loading}
-                                    placeholder="la-tua@email.com"
+                                    placeholder={t('auth:forgotPassword.emailPlaceholder')}
                                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                                 />
                             </div>
@@ -109,7 +109,7 @@ export default function ForgotPasswordPage() {
                             </button>
 
                             <div className="text-center text-sm text-gray-600">
-                                Ricordi la password?{' '}
+                                {t('auth:forgotPassword.rememberPassword')}{' '}
                                 <Link href="/login" className="text-[#FFA700] hover:text-[#FF9500] font-semibold">
                                     {t('auth:login.title')}
                                 </Link>

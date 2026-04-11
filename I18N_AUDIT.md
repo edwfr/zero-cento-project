@@ -387,56 +387,66 @@ Tutti i messaggi di validazione Zod sono stringhe hardcoded in italiano. Questi 
 
 > ✅ **Sottosezione 3.19 completata** (2026-04-11) — verifica conclusa sui tre file: `UserDeleteModal.tsx` già conforme; in `UserEditModal.tsx` localizzata l'etichetta ruolo dinamica; in `ExercisesTable.tsx` rimossa pluralizzazione hardcoded nelle opzioni filtro.
 
-| File                | Riga indicativa | Stringa/Punto verificato              | Token adottato                                                |
-| ------------------- | --------------- | ------------------------------------- | ------------------------------------------------------------- |
-| `UserDeleteModal.tsx` | -               | Nessuna stringa hardcoded residua     | Già coperto da `admin:*` / `common:*`                        |
-| `UserEditModal.tsx`   | 159             | Valore ruolo mostrato come stringa raw | `common:roles.admin` / `common:roles.trainer` / `common:roles.trainee` |
+| File                  | Riga indicativa | Stringa/Punto verificato                   | Token adottato                                                              |
+| --------------------- | --------------- | ------------------------------------------ | --------------------------------------------------------------------------- |
+| `UserDeleteModal.tsx` | -               | Nessuna stringa hardcoded residua          | Già coperto da `admin:*` / `common:*`                                       |
+| `UserEditModal.tsx`   | 159             | Valore ruolo mostrato come stringa raw     | `common:roles.admin` / `common:roles.trainer` / `common:roles.trainee`      |
 | `ExercisesTable.tsx`  | 132-133         | Pluralizzazione con suffisso hardcoded `i` | `trainer:exercises.fundamentalPlural` / `trainer:exercises.accessoryPlural` |
 
 ---
 
 ## 4. Pagine e Layout (`src/app/`) – Stringhe hardcoded
 
-### 4.1 Pagine root – 🔴 Interamente hardcoded
+### 4.1 Pagine root – ✅ Completata
 
-| File                       | Riga | Stringa                                          | Token suggerito                         |
-| -------------------------- | ---- | ------------------------------------------------ | --------------------------------------- |
-| `src/app/error.tsx`        | 17   | `"Si è verificato un errore"`                    | `common:errors.generic`                 |
-| `src/app/error.tsx`        | 18   | `"Riprova più tardi"`                            | `common:errors.tryLater`                |
-| `src/app/error.tsx`        | 24   | `"Riprova"`                                      | `common:common.retry`                   |
-| `src/app/layout.tsx`       | 12   | `'ZeroCento Training Platform'`                  | `common:app.fullName`                   |
-| `src/app/layout.tsx`       | 13   | `'Piattaforma di gestione training...'`          | `common:app.description`                |
-| `src/app/not-found.tsx`    | 3    | `"Pagina non trovata"`                           | `common:errors.notFound`                |
-| `src/app/not-found.tsx`    | 4    | `"La pagina che stai cercando non esiste"`       | `common:errors.pageNotFoundDescription` |
-| `src/app/not-found.tsx`    | 9    | `"Torna alla Home"`                              | `common:common.backToHome`              |
-| `src/app/offline/page.tsx` | 28   | `"Sei offline"`                                  | `common:offline.title`                  |
-| `src/app/offline/page.tsx` | 29   | `"La connessione internet non è disponibile..."` | `common:offline.description`            |
-| `src/app/offline/page.tsx` | 33   | `"Riprova"`                                      | `common:common.retry`                   |
+> ✅ **Fix messaggi di errore completato** (2026-04-11) — convertite a token i18n tutte le stringhe di errore in `src/app/error.tsx`, `src/app/not-found.tsx`, `src/app/offline/page.tsx`; aggiunti i token mancanti in `public/locales/it/common.json` e `public/locales/en/common.json`.  
+> ✅ **Metadata layout completato** (2026-04-11) — in `src/app/layout.tsx` sostituiti title/description hardcoded con valori da dizionario i18n `common:app.fullName` e `common:app.description` (risoluzione locale da cookie `i18next`).  
+> ℹ️ **Nota:** in `src/app/offline/page.tsx` è stato anche convertito il testo footer in `common:app.fullName`.
 
-### 4.2 Pagine Autenticazione – 🔴 Quasi interamente hardcoded
+| File                       | Riga | Stringa                                          | Token suggerito                         | Stato |
+| -------------------------- | ---- | ------------------------------------------------ | --------------------------------------- | ----- |
+| `src/app/error.tsx`        | 17   | `"Si è verificato un errore"`                    | `common:errors.generic`                 | ✅     |
+| `src/app/error.tsx`        | 18   | `"Riprova più tardi"`                            | `common:errors.tryLater`                | ✅     |
+| `src/app/error.tsx`        | 24   | `"Riprova"`                                      | `common:common.retry`                   | ✅     |
+| `src/app/layout.tsx`       | 12   | `'ZeroCento Training Platform'`                  | `common:app.fullName`                   | ✅     |
+| `src/app/layout.tsx`       | 13   | `'Piattaforma di gestione training...'`          | `common:app.description`                | ✅     |
+| `src/app/not-found.tsx`    | 3    | `"Pagina non trovata"`                           | `common:errors.notFound`                | ✅     |
+| `src/app/not-found.tsx`    | 4    | `"La pagina che stai cercando non esiste"`       | `common:errors.pageNotFoundDescription` | ✅     |
+| `src/app/not-found.tsx`    | 9    | `"Torna alla Home"`                              | `common:common.backToHome`              | ✅     |
+| `src/app/offline/page.tsx` | 28   | `"Sei offline"`                                  | `common:offline.title`                  | ✅     |
+| `src/app/offline/page.tsx` | 29   | `"La connessione internet non è disponibile..."` | `common:offline.description`            | ✅     |
+| `src/app/offline/page.tsx` | 33   | `"Riprova"`                                      | `common:common.retry`                   | ✅     |
 
-| File                                       | Stringhe hardcoded (stima) | Esempio                                                                                                |
-| ------------------------------------------ | -------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `src/app/forgot-password/page.tsx`         | ~5                         | `"Impossibile inviare l'email..."`, `"Controlla la tua casella di posta..."`, `"Ricordi la password?"` |
-| `src/app/reset-password/page.tsx`          | ~10                        | `"La password deve essere di almeno 8 caratteri."`, `"Nuova password"`, `"Conferma password"`          |
-| `src/app/force-change-password/page.tsx`   | ~10                        | `"Cambio password obbligatorio"`, validazioni, label                                                   |
-| `src/app/onboarding/set-password/page.tsx` | ~8                         | `"Link di invito non valido o scaduto"`, `"Le password non coincidono"`                                |
+### 4.2 Pagine Autenticazione – ✅ Completata
 
-### 4.3 Pagine Profilo
+> ✅ **Sottosezione 4.2 completata** (2026-04-11) — convertite a token i18n le stringhe hardcoded nelle 4 pagine auth (`forgot-password`, `reset-password`, `force-change-password`, `onboarding/set-password`) e aggiunti i token mancanti in `public/locales/it/auth.json` e `public/locales/en/auth.json`.
 
-| File                                           | Stringhe hardcoded (stima) | Esempio                                                                                                         |
-| ---------------------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `src/app/profile/page.tsx`                     | ~10                        | `"Il Mio Profilo"`, `"Informazioni Account"`, `"Email"`, `"Ruolo"`, `"Amministratore"`, `"Trainer"`, `"Atleta"` |
-| `src/app/profile/change-password/_content.tsx` | ~15                        | `"Modifica password"`, `"Password aggiornata!"`, label, placeholder, validazioni                                |
+| File                                       | Intervento                                                                                   | Token/Namespace toccati                                                                          | Stato |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ----- |
+| `src/app/forgot-password/page.tsx`         | Messaggi errore/successo, helper text e placeholder email convertiti a `t()`                 | `auth:forgotPassword.errorSend`, `.successDescription`, `.emailPlaceholder`, `.rememberPassword` | ✅     |
+| `src/app/reset-password/page.tsx`          | Validazioni locali, testi verifica link, label/placeholder e CTA convertiti a `t()`          | `auth:resetPassword.description`, `.verifyingLink`, `.requestNewLink`, `.error*`, `.submitting`  | ✅     |
+| `src/app/force-change-password/page.tsx`   | Label/placeholder/CTA/help + error handling con fallback i18n tramite `getApiErrorMessage()` | `auth:forceChangePassword.*` (incl. `errorReLogin`, `errorUserData`, `errorSessionInvalid`)      | ✅     |
+| `src/app/onboarding/set-password/page.tsx` | Errori verifica invito e setup password, contenuti hero/form/footer convertiti a `t()`       | `auth:setPassword.*` (nuovo blocco token)                                                        | ✅     |
 
-### 4.4 Pagine Trainer
+### 4.3 Pagine Profilo – ✅ Completata
 
-| File                                                         | Stringhe hardcoded (stima) | Esempio                                                                                                                                     |
-| ------------------------------------------------------------ | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/app/trainer/exercises/_content.tsx`                     | ~12                        | `"Libreria Esercizi"`, `"Griglia"`, `"Tabella"`, `"Fondamentali"`, `"Accessori"`, `"Cerca esercizio..."`, `"Nuovo Esercizio"`               |
-| `src/app/trainer/exercises/[id]/edit/_content.tsx`           | ~2                         | `"Errore caricamento esercizio"`                                                                                                            |
-| `src/app/trainer/programs/[id]/edit/EditProgramMetadata.tsx` | ~12                        | `"Solo i programmi in bozza possono essere modificati"`, `"Modifica Info Programma"`, `"Nome Programma *"`, `"Atleta *"`, `"Programma SBD"` |
-| `src/app/trainer/trainees/new/_content.tsx`                  | ~6                         | `"📧 Email di invito inviata"`, `"Crea un altro atleta"`                                                                                     |
+> ✅ **Sottosezione 4.3 completata** (2026-04-11) — convertite a i18n le stringhe hardcoded in `src/app/profile/page.tsx` e `src/app/profile/change-password/_content.tsx`; aggiunti token mancanti in `public/locales/it/profile.json`, `public/locales/en/profile.json`, `public/locales/it/auth.json` e `public/locales/en/auth.json`.
+
+| File                                           | Intervento                                                                                  | Token/Namespace toccati                                                              | Stato       |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ----------- |
+| `src/app/profile/page.tsx`                     | Titoli, label account, ruolo e sezione sicurezza convertiti a dizionario locale server-side | `profile:profile.title                                                               | accountInfo | roleLabel | security | movementPatternColors`, `common:*`, `common:roles.*` | ✅ |
+| `src/app/profile/change-password/_content.tsx` | Header, success, label, placeholder, validazioni e CTA convertiti a `t()`                   | `auth:changePassword.*` (incl. `description`, `successDescription`, `backToProfile`) | ✅           |
+
+### 4.4 Pagine Trainer – ✅ Completata
+
+> ✅ **Sottosezione 4.4 completata** (2026-04-11) — convertite a i18n le stringhe hardcoded nelle pagine trainer (`exercises`, `exercises/[id]/edit`, `programs/[id]/edit/EditProgramMetadata`, `trainees/new`) e aggiunti token mancanti in `public/locales/it/trainer.json` e `public/locales/en/trainer.json`.
+
+| File                                                         | Intervento                                                                                                                    | Token/Namespace toccati                                                                                                  | Stato |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ----- |
+| `src/app/trainer/exercises/_content.tsx`                     | Header, ricerca/filtri, empty-state, tabella card action label, conferma delete e fallback error convertiti a `t()`        | `trainer:exercises.*` (incl. `viewGrid`, `viewTable`, `allTypes`, `confirmDeleteWithName`, `loadingExercisesError`) + `common:common.*` | ✅     |
+| `src/app/trainer/exercises/[id]/edit/_content.tsx`           | Fallback errore caricamento e placeholder URL YouTube convertiti a token                                                     | `trainer:exercises.loadingError`, `trainer:exercises.youtubeUrlPlaceholder`                                             | ✅     |
+| `src/app/trainer/programs/[id]/edit/EditProgramMetadata.tsx` | Toast/warning/CTA/label configurazione metadata convertiti a `t()` + gestione errori API con `getApiErrorMessage()`        | `trainer:programMetadata.*`, `trainer:programs.*`, `common:common.saveChanges|cancel`                                  | ✅     |
+| `src/app/trainer/trainees/new/_content.tsx`                  | Blocco successo invito email, helper testo email e CTA “crea altro atleta” convertiti a `t()`                               | `trainer:athletes.inviteEmailSent*`, `trainer:athletes.createAnotherAthlete`, `trainer:athletes.emailInstructions`     | ✅     |
 
 ### 4.5 Pagine Trainee
 

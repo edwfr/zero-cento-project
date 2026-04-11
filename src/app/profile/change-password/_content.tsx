@@ -4,8 +4,10 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase-client'
+import { useTranslation } from 'react-i18next'
 
 export default function ChangePasswordContent() {
+    const { t } = useTranslation(['auth', 'common', 'profile'])
     const router = useRouter()
     const [currentPassword, setCurrentPassword] = useState('')
     const [newPassword, setNewPassword] = useState('')
@@ -19,15 +21,15 @@ export default function ChangePasswordContent() {
         setError(null)
 
         if (newPassword.length < 8) {
-            setError('La nuova password deve essere di almeno 8 caratteri.')
+            setError(t('auth:changePassword.errorMinLength'))
             return
         }
         if (newPassword !== confirmPassword) {
-            setError('Le nuove password non coincidono.')
+            setError(t('auth:changePassword.errorMismatch'))
             return
         }
         if (currentPassword === newPassword) {
-            setError('La nuova password deve essere diversa da quella attuale.')
+            setError(t('auth:changePassword.errorMustBeDifferent'))
             return
         }
 
@@ -42,7 +44,7 @@ export default function ChangePasswordContent() {
             } = await supabase.auth.getUser()
 
             if (getUserError || !user?.email) {
-                throw new Error('Sessione non valida. Effettua nuovamente il login.')
+                throw new Error(t('auth:changePassword.errorSessionInvalid'))
             }
 
             const email = user.email
@@ -51,7 +53,7 @@ export default function ChangePasswordContent() {
                 password: currentPassword,
             })
             if (signInError) {
-                setError('Password attuale non corretta.')
+                setError(t('auth:changePassword.errorInvalidCurrent'))
                 return
             }
 
@@ -63,7 +65,7 @@ export default function ChangePasswordContent() {
             setSuccess(true)
             setTimeout(() => router.push('/profile'), 2000)
         } catch (err: any) {
-            setError(err.message || 'Impossibile aggiornare la password.')
+            setError(err.message || t('auth:changePassword.errorGeneric'))
         } finally {
             setLoading(false)
         }
@@ -73,9 +75,9 @@ export default function ChangePasswordContent() {
         <div className="max-w-md w-full mx-auto">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
                 <div className="mb-6">
-                    <h2 className="text-xl font-bold text-gray-900">Modifica password</h2>
+                    <h2 className="text-xl font-bold text-gray-900">{t('auth:changePassword.title')}</h2>
                     <p className="text-gray-600 mt-1 text-sm">
-                        Aggiorna la tua password di accesso
+                        {t('auth:changePassword.description')}
                     </p>
                 </div>
 
@@ -86,9 +88,9 @@ export default function ChangePasswordContent() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                         </div>
-                        <h2 className="text-lg font-semibold text-gray-900 mb-2">Password aggiornata!</h2>
+                        <h2 className="text-lg font-semibold text-gray-900 mb-2">{t('auth:changePassword.success')}</h2>
                         <p className="text-gray-600 text-sm">
-                            La tua password è stata modificata con successo. Sarai reindirizzato al profilo...
+                            {t('auth:changePassword.successDescription')}
                         </p>
                     </div>
                 ) : (
@@ -101,7 +103,7 @@ export default function ChangePasswordContent() {
 
                         <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                Password attuale
+                                {t('auth:changePassword.currentPassword')}
                             </label>
                             <input
                                 type="password"
@@ -109,14 +111,14 @@ export default function ChangePasswordContent() {
                                 onChange={(e) => setCurrentPassword(e.target.value)}
                                 required
                                 disabled={loading}
-                                placeholder="Inserisci la password attuale"
+                                placeholder={t('auth:changePassword.currentPasswordPlaceholder')}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                             />
                         </div>
 
                         <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                Nuova password
+                                {t('auth:changePassword.newPassword')}
                             </label>
                             <input
                                 type="password"
@@ -125,14 +127,14 @@ export default function ChangePasswordContent() {
                                 required
                                 disabled={loading}
                                 minLength={8}
-                                placeholder="Minimo 8 caratteri"
+                                placeholder={t('auth:changePassword.newPasswordPlaceholder')}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                             />
                         </div>
 
                         <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                Conferma nuova password
+                                {t('auth:changePassword.confirmPassword')}
                             </label>
                             <input
                                 type="password"
@@ -141,7 +143,7 @@ export default function ChangePasswordContent() {
                                 required
                                 disabled={loading}
                                 minLength={8}
-                                placeholder="Ripeti la nuova password"
+                                placeholder={t('auth:changePassword.confirmPasswordPlaceholder')}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                             />
                         </div>
@@ -151,7 +153,7 @@ export default function ChangePasswordContent() {
                             disabled={loading || !currentPassword || !newPassword || !confirmPassword}
                             className="w-full bg-[#FFA700] hover:bg-[#FF9500] disabled:bg-gray-300 text-white font-semibold py-3 rounded-lg transition-colors"
                         >
-                            {loading ? 'Aggiornamento...' : 'Modifica password'}
+                            {loading ? t('auth:changePassword.submitting') : t('auth:changePassword.submit')}
                         </button>
 
                         <div className="text-center">
@@ -159,7 +161,7 @@ export default function ChangePasswordContent() {
                                 href="/profile"
                                 className="text-gray-500 hover:text-gray-700 text-sm"
                             >
-                                ← Torna al profilo
+                                {t('auth:changePassword.backToProfile')}
                             </Link>
                         </div>
                     </form>

@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/components/ToastNotification'
 import { Pencil } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { getApiErrorMessage } from '@/lib/api-error'
 
 interface Trainee {
     id: string
@@ -33,6 +35,7 @@ export default function EditProgramMetadata({
     onUpdate,
 }: EditProgramMetadataProps) {
     const { showToast } = useToast()
+    const { t } = useTranslation(['trainer', 'common'])
     const [isOpen, setIsOpen] = useState(false)
     const [saving, setSaving] = useState(false)
     const [trainees, setTrainees] = useState<Trainee[]>([])
@@ -55,7 +58,7 @@ export default function EditProgramMetadata({
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || 'Errore caricamento atleti')
+                throw new Error(getApiErrorMessage(data, t('programMetadata.loadingAthletesError'), t))
             }
 
             const activeTrainees = data.data.items.filter((t: any) => t.isActive)
@@ -69,7 +72,7 @@ export default function EditProgramMetadata({
         e.preventDefault()
 
         if (status !== 'draft') {
-            showToast('Solo i programmi in bozza possono essere modificati', 'error')
+            showToast(t('programMetadata.draftOnlyError'), 'error')
             return
         }
 
@@ -91,10 +94,10 @@ export default function EditProgramMetadata({
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(data.error?.message || 'Errore aggiornamento programma')
+                throw new Error(getApiErrorMessage(data, t('programMetadata.updateError'), t))
             }
 
-            showToast('Programma aggiornato con successo', 'success')
+            showToast(t('programMetadata.updateSuccess'), 'success')
             setIsOpen(false)
             onUpdate()
         } catch (err: any) {
@@ -107,7 +110,7 @@ export default function EditProgramMetadata({
     const handleOpen = () => {
         if (status !== 'draft') {
             showToast(
-                'Solo i programmi in bozza possono essere modificati. I programmi attivi o completati non possono essere modificati.',
+                t('programMetadata.draftOnlyWarning'),
                 'warning'
             )
             return
@@ -122,7 +125,7 @@ export default function EditProgramMetadata({
                 className="inline-flex items-center gap-2 rounded-lg border border-brand-primary/20 bg-brand-primary/10 px-3 py-2 text-sm font-semibold text-brand-primary transition-colors hover:bg-brand-primary/15"
             >
                 <Pencil className="w-4 h-4" />
-                Modifica Info Programma
+                {t('programMetadata.editProgramInfo')}
             </button>
         )
     }
@@ -133,7 +136,7 @@ export default function EditProgramMetadata({
                 <div className="sticky top-0 bg-white border-b px-6 py-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-2xl font-bold text-gray-900">
-                            Modifica Informazioni Programma
+                            {t('programMetadata.editProgramInfoTitle')}
                         </h2>
                         <button
                             onClick={() => setIsOpen(false)}
@@ -148,7 +151,7 @@ export default function EditProgramMetadata({
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     {status !== 'draft' && (
                         <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg">
-                            ⚠️ Attenzione: Solo i programmi in bozza possono essere modificati
+                            {t('programMetadata.draftOnlyWarningBanner')}
                         </div>
                     )}
 
@@ -162,9 +165,9 @@ export default function EditProgramMetadata({
                                 className="mt-1 h-4 w-4 rounded border-gray-300 text-[#FFA700] focus:ring-[#FFA700]"
                             />
                             <span>
-                                <span className="block text-sm font-semibold text-gray-900">Programma SBD</span>
+                                <span className="block text-sm font-semibold text-gray-900">{t('programs.sbdProgramLabel')}</span>
                                 <span className="block text-sm text-gray-600">
-                                    Mostra o nasconde la reportistica SBD nelle schermate del programma.
+                                    {t('programs.sbdProgramDescription')}
                                 </span>
                             </span>
                         </label>
@@ -173,14 +176,14 @@ export default function EditProgramMetadata({
                     {/* Program Title */}
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Nome Programma *
+                            {t('programs.programNameLabel')}
                         </label>
                         <input
                             type="text"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             disabled={saving || status !== 'draft'}
-                            placeholder="es. Programma Forza Base 8 Settimane"
+                            placeholder={t('programs.programNamePlaceholder')}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                             required
                         />
@@ -190,7 +193,7 @@ export default function EditProgramMetadata({
                     {trainees.length > 0 && (
                         <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                Atleta *
+                                {t('programs.athleteLabel')}
                             </label>
                             <select
                                 value={traineeId}
@@ -211,7 +214,7 @@ export default function EditProgramMetadata({
                     {/* Duration Weeks */}
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Durata (settimane) *
+                            {t('programs.durationWeeksLabel')}
                         </label>
                         <div className="space-y-2">
                             <input
@@ -226,8 +229,7 @@ export default function EditProgramMetadata({
                             />
                             {durationWeeks !== initialDurationWeeks && (
                                 <p className="text-sm text-amber-600">
-                                    ⚠️ Modifica della durata: le settimane esistenti verranno mantenute.
-                                    Potrebbe essere necessario aggiungere o rimuovere settimane manualmente.
+                                    {t('programMetadata.durationChangedWarning')}
                                 </p>
                             )}
                         </div>
@@ -236,7 +238,7 @@ export default function EditProgramMetadata({
                     {/* Workouts Per Week */}
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Allenamenti per settimana *
+                            {t('programs.workoutsPerWeekLabel')}
                         </label>
                         <div className="space-y-2">
                             <input
@@ -251,8 +253,7 @@ export default function EditProgramMetadata({
                             />
                             {workoutsPerWeek !== initialWorkoutsPerWeek && (
                                 <p className="text-sm text-amber-600">
-                                    ⚠️ Modifica degli allenamenti settimanali: i workout esistenti verranno mantenuti.
-                                    Potrebbe essere necessario aggiungere o rimuovere workout manualmente.
+                                    {t('programMetadata.workoutsChangedWarning')}
                                 </p>
                             )}
                         </div>
@@ -260,11 +261,13 @@ export default function EditProgramMetadata({
 
                     {/* Updated Summary */}
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <p className="text-sm font-semibold text-blue-900 mb-2">📊 Configurazione</p>
+                        <p className="text-sm font-semibold text-blue-900 mb-2">{t('programMetadata.configurationSummaryTitle')}</p>
                         <p className="text-sm text-blue-700">
-                            <span className="font-semibold">{durationWeeks} settimane</span> ×{' '}
-                            <span className="font-semibold">{workoutsPerWeek} allenamenti/settimana</span> ={' '}
-                            <span className="font-semibold">{durationWeeks * workoutsPerWeek} workout totali</span>
+                            {t('programMetadata.configurationSummaryValue', {
+                                durationWeeks,
+                                workoutsPerWeek,
+                                totalWorkouts: durationWeeks * workoutsPerWeek,
+                            })}
                         </p>
                     </div>
 
@@ -275,7 +278,7 @@ export default function EditProgramMetadata({
                             disabled={saving || status !== 'draft'}
                             className="flex-1 bg-[#FFA700] hover:bg-[#FF9500] disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
                         >
-                            {saving ? <LoadingSpinner size="sm" color="white" /> : 'Salva Modifiche'}
+                            {saving ? <LoadingSpinner size="sm" color="white" /> : t('common:common.saveChanges')}
                         </button>
                         <button
                             type="button"
@@ -283,7 +286,7 @@ export default function EditProgramMetadata({
                             disabled={saving}
                             className="flex-1 bg-gray-300 hover:bg-gray-400 disabled:opacity-50 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
                         >
-                            Annulla
+                            {t('common:common.cancel')}
                         </button>
                     </div>
                 </form>

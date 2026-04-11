@@ -1,7 +1,9 @@
 {
     "app": {
         "name": "ZeroCento Training",
-        "tagline": "Your training platform"
+        "tagline": "Your training platform",
+        "fullName": "ZeroCento Training Platform",
+        "description": "Sports training management platform for trainers and athletes"
     },
     "brand": {
         "tagline": "Your training platform"
@@ -36,6 +38,7 @@
         "retry": "Retry",
         "back": "Back",
         "backHome": "Back to Home",
+        "backToHome": "Back to Home",
         "next": "Next",
         "previous": "Previous",
         "close": "Close",
@@ -134,13 +137,20 @@
     },
     "errors": {
         "generic": "An error occurred",
+        "tryLater": "Try again later",
         "loadingError": "Error during loading",
         "creationError": "Error during creation",
         "updateError": "Error during update",
         "deletionError": "Error during deletion",
+        "notFound": "Page not found",
+        "pageNotFoundDescription": "The page you are looking for does not exist",
         "accessDeniedTitle": "Access Denied",
         "accessDeniedMessage": "You do not have permission to access this page.",
         "unexpected": "An unexpected error occurred. Try again or contact support."
+    },
+    "offline": {
+        "title": "You are offline",
+        "description": "Internet connection is unavailable. Some features may not be accessible."
     },
     "success": {
         "operationCompleted": "Operation completed successfully"

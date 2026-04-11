@@ -3,8 +3,11 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
+import { getApiErrorMessage } from '@/lib/api-error'
+import { useTranslation } from 'react-i18next'
 
 export default function ForceChangePasswordPage() {
+    const { t } = useTranslation(['auth', 'common'])
     const router = useRouter()
     const [currentPassword, setCurrentPassword] = useState('')
     const [newPassword, setNewPassword] = useState('')
@@ -18,15 +21,15 @@ export default function ForceChangePasswordPage() {
 
         // Validation
         if (newPassword.length < 8) {
-            setError('La nuova password deve essere di almeno 8 caratteri.')
+            setError(t('auth:forceChangePassword.errorMinLength'))
             return
         }
         if (newPassword !== confirmPassword) {
-            setError('Le nuove password non coincidono.')
+            setError(t('auth:forceChangePassword.errorMismatch'))
             return
         }
         if (currentPassword === newPassword) {
-            setError('La nuova password deve essere diversa da quella temporanea.')
+            setError(t('auth:forceChangePassword.errorSame'))
             return
         }
 
@@ -48,7 +51,9 @@ export default function ForceChangePasswordPage() {
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data.error?.message || 'Impossibile aggiornare la password.')
+                throw new Error(
+                    getApiErrorMessage(data, t('auth:forceChangePassword.errorGeneric'), t)
+                )
             }
 
             // Re-authenticate with new password to get updated session with mustChangePassword=false
@@ -66,7 +71,7 @@ export default function ForceChangePasswordPage() {
                 })
 
                 if (signInError) {
-                    throw new Error('Errore durante il re-login con la nuova password.')
+                    throw new Error(t('auth:forceChangePassword.errorReLogin'))
                 }
 
                 // Get user role and redirect to dashboard
@@ -81,13 +86,13 @@ export default function ForceChangePasswordPage() {
                     // Use hard redirect to ensure session is fully refreshed
                     window.location.href = `/${role}/dashboard`
                 } else {
-                    throw new Error('Impossibile ottenere i dati utente.')
+                    throw new Error(t('auth:forceChangePassword.errorUserData'))
                 }
             } else {
-                throw new Error('Sessione non valida.')
+                throw new Error(t('auth:forceChangePassword.errorSessionInvalid'))
             }
         } catch (err: any) {
-            setError(err.message || 'Impossibile aggiornare la password.')
+            setError(err.message || t('auth:forceChangePassword.errorGeneric'))
         } finally {
             setLoading(false)
         }
@@ -105,10 +110,10 @@ export default function ForceChangePasswordPage() {
                             </svg>
                         </div>
                         <h2 className="text-xl font-bold text-gray-900 text-center mb-2">
-                            Cambio password obbligatorio
+                            {t('auth:forceChangePassword.title')}
                         </h2>
                         <p className="text-gray-600 text-sm text-center">
-                            Per motivi di sicurezza, devi cambiare la password temporanea ricevuta prima di poter accedere all&apos;applicazione.
+                            {t('auth:forceChangePassword.description')}
                         </p>
                     </div>
 
@@ -121,7 +126,7 @@ export default function ForceChangePasswordPage() {
 
                         <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                Password temporanea
+                                {t('auth:forceChangePassword.temporaryPassword')}
                             </label>
                             <input
                                 type="password"
@@ -129,7 +134,7 @@ export default function ForceChangePasswordPage() {
                                 onChange={(e) => setCurrentPassword(e.target.value)}
                                 required
                                 disabled={loading}
-                                placeholder="Inserisci la password temporanea ricevuta"
+                                placeholder={t('auth:forceChangePassword.temporaryPasswordPlaceholder')}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                                 autoComplete="current-password"
                             />
@@ -137,7 +142,7 @@ export default function ForceChangePasswordPage() {
 
                         <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                Nuova password
+                                {t('auth:forceChangePassword.newPassword')}
                             </label>
                             <input
                                 type="password"
@@ -146,18 +151,18 @@ export default function ForceChangePasswordPage() {
                                 required
                                 disabled={loading}
                                 minLength={8}
-                                placeholder="Minimo 8 caratteri"
+                                placeholder={t('auth:forceChangePassword.newPasswordPlaceholder')}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                                 autoComplete="new-password"
                             />
                             <p className="text-xs text-gray-500 mt-1">
-                                Scegli una password sicura, diversa dalla temporanea
+                                {t('auth:forceChangePassword.newPasswordHint')}
                             </p>
                         </div>
 
                         <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                Conferma nuova password
+                                {t('auth:forceChangePassword.confirmPassword')}
                             </label>
                             <input
                                 type="password"
@@ -166,7 +171,7 @@ export default function ForceChangePasswordPage() {
                                 required
                                 disabled={loading}
                                 minLength={8}
-                                placeholder="Ripeti la nuova password"
+                                placeholder={t('auth:forceChangePassword.confirmPasswordPlaceholder')}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                                 autoComplete="new-password"
                             />
@@ -177,13 +182,13 @@ export default function ForceChangePasswordPage() {
                             disabled={loading || !currentPassword || !newPassword || !confirmPassword}
                             className="w-full bg-[#FFA700] hover:bg-[#FF9500] disabled:bg-gray-300 text-white font-semibold py-3 rounded-lg transition-colors"
                         >
-                            {loading ? 'Aggiornamento...' : 'Cambia password e accedi'}
+                            {loading ? t('auth:forceChangePassword.submitting') : t('auth:forceChangePassword.submit')}
                         </button>
                     </form>
                 </div>
 
                 <p className="text-center text-sm text-gray-500 mt-4">
-                    Hai bisogno di aiuto? Contatta il tuo trainer.
+                    {t('auth:forceChangePassword.helpText')}
                 </p>
             </div>
         </div>

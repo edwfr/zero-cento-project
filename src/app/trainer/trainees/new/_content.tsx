@@ -76,13 +76,13 @@ export default function NewTraineePageContent() {
 
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                         <p className="text-sm font-semibold text-blue-800 mb-2">
-                            📧 Email di invito inviata
+                            {t('athletes.inviteEmailSentTitle')}
                         </p>
                         <p className="text-sm text-blue-700 mb-2">
-                            Un&apos;email è stata inviata a <strong>{email}</strong> con le istruzioni per completare la registrazione.
+                            {t('athletes.inviteEmailSentBody', { email })}
                         </p>
                         <p className="text-xs text-blue-600">
-                            L&apos;atleta riceverà un link per impostare la propria password e accedere alla piattaforma.
+                            {t('athletes.inviteEmailSentFootnote')}
                         </p>
                     </div>
 
@@ -102,7 +102,7 @@ export default function NewTraineePageContent() {
                             }}
                             className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
                         >
-                            Crea un altro atleta
+                            {t('athletes.createAnotherAthlete')}
                         </button>
                     </div>
                 </div>
@@ -182,7 +182,7 @@ export default function NewTraineePageContent() {
                             required
                         />
                         <p className="text-sm text-gray-500 mt-2">
-                            L&apos;atleta riceverà un&apos;email con le istruzioni per impostare la propria password.
+                            {t('athletes.emailInstructions')}
                         </p>
                     </div>
 

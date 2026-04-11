@@ -36,7 +36,7 @@ interface Exercise {
 
 export default function TrainerExercisesContent() {
     const { showToast } = useToast()
-    const { t } = useTranslation('trainer')
+    const { t } = useTranslation(['trainer', 'common'])
     const { t: tNav } = useTranslation('navigation')
     const [exercises, setExercises] = useState<Exercise[]>([])
     const [loading, setLoading] = useState(true)
@@ -63,7 +63,7 @@ export default function TrainerExercisesContent() {
             const data = await res.json()
 
             if (!res.ok) {
-                throw new Error(getApiErrorMessage(data, 'Errore nel caricamento esercizi', t))
+                throw new Error(getApiErrorMessage(data, t('exercises.loadingExercisesError'), t))
             }
 
             setExercises(data.data.items)
@@ -76,9 +76,9 @@ export default function TrainerExercisesContent() {
 
     const handleDelete = (id: string, name: string) => {
         setConfirmModal({
-            title: 'Elimina Esercizio',
-            message: `Sei sicuro di voler eliminare l'esercizio "${name}"?`,
-            confirmText: 'Elimina',
+            title: t('exercises.deleteExercise'),
+            message: t('exercises.confirmDeleteWithName', { name }),
+            confirmText: t('common:common.delete'),
             onConfirm: async () => {
                 setConfirmModal(null)
                 try {
@@ -89,7 +89,7 @@ export default function TrainerExercisesContent() {
                     const data = await res.json()
 
                     if (!res.ok) {
-                        throw new Error(getApiErrorMessage(data, 'Errore eliminazione esercizio', t))
+                        throw new Error(getApiErrorMessage(data, t('exercises.deleteError'), t))
                     }
 
                     fetchExercises()
@@ -138,7 +138,7 @@ export default function TrainerExercisesContent() {
                     onConfirm={confirmModal.onConfirm}
                     title={confirmModal.title}
                     message={confirmModal.message}
-                    confirmText={confirmModal.confirmText ?? 'Conferma'}
+                    confirmText={confirmModal.confirmText ?? t('common:common.confirm')}
                     variant={confirmModal.variant ?? 'danger'}
                 />
             )}
@@ -154,9 +154,9 @@ export default function TrainerExercisesContent() {
 
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Libreria Esercizi</h1>
+                    <h1 className="text-3xl font-bold text-gray-900">{t('exercises.title')}</h1>
                     <p className="text-gray-600 mt-2">
-                        Gestisci gli esercizi della tua libreria personale
+                        {t('dashboard.exercisesDescription')}
                     </p>
                 </div>
 
@@ -167,7 +167,7 @@ export default function TrainerExercisesContent() {
                         <div className="flex-1 max-w-md">
                             <input
                                 type="text"
-                                placeholder="Cerca esercizio..."
+                                placeholder={t('exercises.searchExercise')}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
@@ -185,7 +185,7 @@ export default function TrainerExercisesContent() {
                                         : 'text-gray-600 hover:text-gray-900'
                                         }`}
                                 >
-                                    Griglia
+                                    {t('exercises.viewGrid')}
                                 </button>
                                 <button
                                     type="button"
@@ -195,7 +195,7 @@ export default function TrainerExercisesContent() {
                                         : 'text-gray-600 hover:text-gray-900'
                                         }`}
                                 >
-                                    Tabella
+                                    {t('exercises.viewTable')}
                                 </button>
                             </div>
 
@@ -204,16 +204,16 @@ export default function TrainerExercisesContent() {
                                 onChange={(e) => setTypeFilter(e.target.value as any)}
                                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
                             >
-                                <option value="all">Tutti i tipi</option>
-                                <option value="fundamental">Fondamentali</option>
-                                <option value="accessory">Accessori</option>
+                                <option value="all">{t('exercises.allTypes')}</option>
+                                <option value="fundamental">{t('exercises.fundamentalPlural')}</option>
+                                <option value="accessory">{t('exercises.accessoryPlural')}</option>
                             </select>
 
                             <Link
                                 href="/trainer/exercises/new"
                                 className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-2 rounded-lg transition-colors"
                             >
-                                <Plus className="w-4 h-4 inline mr-2" />Nuovo Esercizio
+                                <Plus className="w-4 h-4 inline mr-2" />{t('exercises.createNew')}
                             </Link>
                         </div>
                     </div>
@@ -231,8 +231,8 @@ export default function TrainerExercisesContent() {
                     <div className="bg-white rounded-lg shadow-md p-12 text-center">
                         <p className="text-gray-500 text-lg">
                             {searchTerm || typeFilter !== 'all'
-                                ? 'Nessun esercizio trovato con questi filtri'
-                                : 'Nessun esercizio creato. Inizia creandone uno!'}
+                                ? t('exercises.noExercisesFoundWithFilters')
+                                : t('exercises.noExercisesCreated')}
                         </p>
                     </div>
                 ) : viewMode === 'table' ? (
@@ -241,19 +241,19 @@ export default function TrainerExercisesContent() {
                             <thead className="bg-gray-50">
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Nome
+                                        {t('exercises.exerciseName')}
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Tipo
+                                        {t('exercises.typeLabelTable')}
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Pattern
+                                        {t('exercises.movementPattern')}
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Muscoli
+                                        {t('exercises.muscleGroups')}
                                     </th>
                                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Azioni
+                                        {t('common:common.actions')}
                                     </th>
                                 </tr>
                             </thead>
@@ -288,16 +288,16 @@ export default function TrainerExercisesContent() {
                                                 <Link
                                                     href={`/trainer/exercises/${exercise.id}/edit`}
                                                     className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
-                                                    title="Modifica"
-                                                    aria-label="Modifica"
+                                                    title={t('common:common.edit')}
+                                                    aria-label={t('common:common.edit')}
                                                 >
                                                     <FileEdit className="w-4 h-4" />
                                                 </Link>
                                                 <button
                                                     onClick={() => handleDelete(exercise.id, exercise.name)}
                                                     className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
-                                                    title="Elimina"
-                                                    aria-label="Elimina"
+                                                    title={t('common:common.delete')}
+                                                    aria-label={t('common:common.delete')}
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
@@ -356,7 +356,7 @@ export default function TrainerExercisesContent() {
 
                                     {/* Muscle Groups */}
                                     <div className="mb-4">
-                                        <p className="text-xs text-gray-500 mb-1">Muscoli:</p>
+                                        <p className="text-xs text-gray-500 mb-1">{t('exercises.musclesLabel')}</p>
                                         <div className="flex flex-wrap gap-1">
                                             {sortMuscleGroups(exercise.exerciseMuscleGroups).map((emg) => (
                                                 <span
@@ -375,16 +375,16 @@ export default function TrainerExercisesContent() {
                                         <Link
                                             href={`/trainer/exercises/${exercise.id}/edit`}
                                             className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
-                                            title="Modifica"
-                                            aria-label="Modifica"
+                                            title={t('common:common.edit')}
+                                            aria-label={t('common:common.edit')}
                                         >
                                             <FileEdit className="w-4 h-4" />
                                         </Link>
                                         <button
                                             onClick={() => handleDelete(exercise.id, exercise.name)}
                                             className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
-                                            title="Elimina"
-                                            aria-label="Elimina"
+                                            title={t('common:common.delete')}
+                                            aria-label={t('common:common.delete')}
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </button>

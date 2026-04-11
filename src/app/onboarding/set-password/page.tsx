@@ -18,7 +18,6 @@ export default function SetPasswordPage() {
 
     useEffect(() => {
         const supabase = createClient()
-        let isSubscribed = true
 
         const setupAuth = async () => {
             try {
@@ -43,7 +42,7 @@ export default function SetPasswordPage() {
 
                     if (sessionError) {
                         console.error('Session error:', sessionError)
-                        setError('Link di invito non valido o scaduto')
+                        setError(t('auth:setPassword.invalidInvite'))
                         setVerifying(false)
                         return
                     }
@@ -77,7 +76,7 @@ export default function SetPasswordPage() {
 
                     if (error || !user) {
                         console.log('No session found')
-                        setError('Link di invito non valido o scaduto')
+                        setError(t('auth:setPassword.invalidInvite'))
                         setVerifying(false)
                         return
                     }
@@ -95,29 +94,25 @@ export default function SetPasswordPage() {
                 }
             } catch (err) {
                 console.error('Setup error:', err)
-                setError('Errore durante la verifica dell\'invito')
+                setError(t('auth:setPassword.verifyError'))
                 setVerifying(false)
             }
         }
 
         setupAuth()
-
-        return () => {
-            isSubscribed = false
-        }
-    }, [router])
+    }, [router, t])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError(null)
 
         if (password !== confirmPassword) {
-            setError('Le password non coincidono')
+            setError(t('auth:setPassword.errorMismatch'))
             return
         }
 
         if (password.length < 8) {
-            setError('La password deve essere lunga almeno 8 caratteri')
+            setError(t('auth:setPassword.errorMinLength'))
             return
         }
 
@@ -140,14 +135,14 @@ export default function SetPasswordPage() {
             })
 
             if (!activateResponse.ok) {
-                throw new Error('Failed to activate user')
+                throw new Error(t('auth:setPassword.errorActivateUser'))
             }
 
             // Redirect to role-based dashboard
             const role = userData.user_metadata.role
             router.push(`/${role}/dashboard`)
         } catch (err: any) {
-            setError('Impossibile impostare la password. Riprova.')
+            setError(err.message || t('auth:setPassword.errorGeneric'))
             console.error('Error setting password:', err)
         } finally {
             setLoading(false)
@@ -172,7 +167,7 @@ export default function SetPasswordPage() {
                     <div className="bg-red-50 border border-red-200 rounded-lg p-6">
                         <p className="text-red-800 mb-4">{error}</p>
                         <Link href="/login" className="text-[#FFA700] hover:underline">
-                            Torna al login
+                            {t('auth:setPassword.backToLogin')}
                         </Link>
                     </div>
                 </div>
@@ -201,12 +196,16 @@ export default function SetPasswordPage() {
                             <span className="text-white text-4xl font-bold">0→100</span>
                         </div>
                     </div>
-                    <h1 className="text-2xl font-bold text-gray-900">Benvenuto su ZeroCento</h1>
+                    <h1 className="text-2xl font-bold text-gray-900">{t('auth:setPassword.title')}</h1>
                     <p className="text-gray-600 mt-2 text-sm">
                         {userData?.user_metadata?.firstName && (
-                            <>Ciao <strong>{userData.user_metadata.firstName}</strong>! </>
+                            <>
+                                {t('auth:setPassword.greeting', {
+                                    firstName: userData.user_metadata.firstName,
+                                })}{' '}
+                            </>
                         )}
-                        Imposta la tua password per iniziare.
+                        {t('auth:setPassword.description')}
                     </p>
                 </div>
 
@@ -229,14 +228,14 @@ export default function SetPasswordPage() {
                                 required
                                 minLength={8}
                                 disabled={loading}
-                                placeholder="Minimo 8 caratteri"
+                                placeholder={t('auth:setPassword.passwordPlaceholder')}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                             />
                         </div>
 
                         <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                Conferma Password
+                                {t('auth:setPassword.confirmPassword')}
                             </label>
                             <input
                                 type="password"
@@ -245,7 +244,7 @@ export default function SetPasswordPage() {
                                 required
                                 minLength={8}
                                 disabled={loading}
-                                placeholder="Ripeti la password"
+                                placeholder={t('auth:setPassword.confirmPasswordPlaceholder')}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                             />
                         </div>
@@ -255,16 +254,16 @@ export default function SetPasswordPage() {
                             disabled={loading || !password || !confirmPassword}
                             className="w-full bg-[#FFA700] hover:bg-[#FF9500] disabled:bg-gray-300 text-white font-semibold py-3 rounded-lg transition-colors disabled:cursor-not-allowed"
                         >
-                            {loading ? t('common:common.loadingProgress') : 'Completa Registrazione'}
+                            {loading ? t('common:common.loadingProgress') : t('auth:setPassword.submit')}
                         </button>
                     </form>
                 </div>
 
                 <div className="text-center mt-6">
                     <p className="text-sm text-gray-600">
-                        Hai già un account?{' '}
+                        {t('auth:setPassword.alreadyHaveAccount')}{' '}
                         <Link href="/login" className="text-[#FFA700] hover:text-[#FF9500] font-semibold">
-                            Accedi
+                            {t('auth:login.title')}
                         </Link>
                     </p>
                 </div>
