@@ -724,23 +724,11 @@ export default function WorkoutDetailContent() {
                                                     {we.variant}
                                                 </p>
                                             )}
-                                            <div className="mt-2 flex flex-wrap gap-2">
-                                                {we.targetRpe !== null && we.targetRpe !== undefined && (
-                                                    <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700">
-                                                        <Gauge className="h-3.5 w-3.5" />
-                                                        {we.targetRpe}
-                                                    </span>
-                                                )}
-                                                <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-                                                    <Clock3 className="h-3.5 w-3.5" />
-                                                    {formatRestTime(we.restTime)}
-                                                </span>
-                                            </div>
                                         </div>
                                     </div>
 
                                     <div className="mt-2 flex justify-center">
-                                        <div className="grid w-fit grid-cols-3 gap-2">
+                                        <div className="flex flex-wrap items-center justify-center gap-2">
                                             <div className="rounded-lg bg-gray-100 px-3 py-2 text-center">
                                                 <span className="block text-[10px] font-semibold uppercase tracking-wide text-gray-500">
                                                     {t('workouts.sets')}
@@ -764,6 +752,19 @@ export default function WorkoutDetailContent() {
                                                 <span className={`mt-1 block text-sm font-bold leading-snug ${calculatedWeightMissing ? 'text-gray-500' : 'text-gray-900'}`}>
                                                     {compactWeightValue}
                                                 </span>
+                                            </div>
+
+                                            <div className="flex flex-col gap-1">
+                                                <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                                                    <Clock3 className="h-3.5 w-3.5" />
+                                                    {formatRestTime(we.restTime)}
+                                                </span>
+                                                {we.targetRpe !== null && we.targetRpe !== undefined && (
+                                                    <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700">
+                                                        <Gauge className="h-3.5 w-3.5" />
+                                                        {we.targetRpe}
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -1004,10 +1005,10 @@ export default function WorkoutDetailContent() {
                 <button
                     onClick={handleSubmit}
                     disabled={submitting}
-                    className="flex w-full items-center justify-center rounded-lg bg-green-500 px-6 py-4 text-lg font-bold text-white transition-colors hover:bg-green-600 disabled:bg-gray-400"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[#FFA700] bg-white px-6 py-4 text-lg font-semibold text-[#FFA700] transition-colors hover:bg-[#FFF7E5] disabled:border-gray-300 disabled:bg-gray-100 disabled:text-gray-400"
                 >
                     {submitting ? (
-                        <LoadingSpinner size="sm" color="white" />
+                        <LoadingSpinner size="sm" color="primary" />
                     ) : (
                         t('workouts.completeWorkout')
                     )}

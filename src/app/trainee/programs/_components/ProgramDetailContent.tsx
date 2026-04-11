@@ -442,7 +442,7 @@ export default function ProgramDetailContent({
             label: t('currentProgram.toDo'),
             helperText: t('currentProgram.startWorkout'),
             buttonClassName:
-                'border-gray-300 bg-white text-gray-700 hover:border-[#FFA700] hover:text-[#FFA700]',
+                'border-[#FFA700] bg-white text-[#FFA700] hover:bg-[#FFF7E5]',
         }
     }
 
@@ -691,7 +691,7 @@ export default function ProgramDetailContent({
                                     type="button"
                                     onClick={() => toggleWeek(week.weekNumber)}
                                     aria-expanded={expandedWeeks[week.weekNumber] ?? false}
-                                    className="inline-flex items-center gap-1 self-start rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 hover:border-gray-400 hover:text-gray-800"
+                                    className="inline-flex items-center gap-1 self-start rounded-lg border border-[#FFA700] bg-white px-3 py-1.5 text-xs font-semibold text-[#FFA700] transition-colors hover:bg-[#FFF7E5]"
                                 >
                                     {expandedWeeks[week.weekNumber]
                                         ? t('currentProgram.closeWeek')
@@ -797,19 +797,6 @@ export default function ProgramDetailContent({
                                                                                         </h5>
                                                                                     </div>
 
-                                                                                    <div className="mt-2 flex flex-wrap gap-2">
-                                                                                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-                                                                                            <Clock3 className="h-3.5 w-3.5" />
-                                                                                            {formatRestTime(exercise.restTime)}
-                                                                                        </span>
-                                                                                        {exercise.targetRpe !== null && exercise.targetRpe !== undefined && (
-                                                                                            <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700">
-                                                                                                <Gauge className="h-3.5 w-3.5" />
-                                                                                                {exercise.targetRpe}
-                                                                                            </span>
-                                                                                        )}
-                                                                                    </div>
-
                                                                                     <div className="mt-3 flex flex-wrap justify-center gap-2">
                                                                                         <div className="inline-flex min-w-0 items-center rounded-lg bg-gray-100 px-3 py-1.5">
                                                                                             <span className="text-base font-bold text-gray-900">
@@ -820,6 +807,18 @@ export default function ProgramDetailContent({
                                                                                             <span className="text-base font-bold text-gray-900">
                                                                                                 {weightLabels.effective}
                                                                                             </span>
+                                                                                        </div>
+                                                                                        <div className="flex flex-col gap-1">
+                                                                                            <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                                                                                                <Clock3 className="h-3.5 w-3.5" />
+                                                                                                {formatRestTime(exercise.restTime)}
+                                                                                            </span>
+                                                                                            {exercise.targetRpe !== null && exercise.targetRpe !== undefined && (
+                                                                                                <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700">
+                                                                                                    <Gauge className="h-3.5 w-3.5" />
+                                                                                                    {exercise.targetRpe}
+                                                                                                </span>
+                                                                                            )}
                                                                                         </div>
                                                                                     </div>
 
