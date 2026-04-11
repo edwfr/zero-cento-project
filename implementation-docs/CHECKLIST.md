@@ -3,32 +3,32 @@
 **Posizionamento prodotto:** training management platform trainer-led  
 **Stato attuale:** 142/160 task completati (~89%)  
 **Task rimanenti:** 18 (Sprint 6: 7 task, Sprint 8: 7 task, Sprint 11: 4 task)  
-**Riferimenti:** [SYSTEM_REVIEW.md](../SYSTEM_REVIEW.md) · [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md) · [CHANGELOG.md](./CHANGELOG.md)
+**Riferimenti:** [system-review.md](./system-review.md) · [changelog.md](./changelog.md)
 
 ---
 
 ## Come usare questa checklist
 
 - Spunta `[x]` quando un task è completato
-- Annota la data e un breve commento nel [CHANGELOG.md](./CHANGELOG.md)
-- Le priorità seguono il backlog del [SYSTEM_REVIEW.md § 9](../SYSTEM_REVIEW.md#9-task-backlog-completo)
+- Annota la data e un breve commento nel [changelog.md](./changelog.md)
+- Le priorità seguono il backlog del [system-review.md § 9](./system-review.md#9-task-backlog-completo)
 
 ---
 
 ## Sprint 1 — Fix Critici & Sicurezza (~4h)
 
 - [x] **1.1** Fix RBAC bypass personal records — aggiungere ownership check trainer-trainee  
-      File: `src/app/api/personal-records/route.ts` · Dettagli: [SYSTEM_REVIEW § 3.1](../SYSTEM_REVIEW.md#31-critico---rbac-bypass-su-personal-records)
+      File: `src/app/api/personal-records/route.ts` · Dettagli: [system-review § 3.1](./system-review.md#31-critico---rbac-bypass-su-personal-records)
 - [x] **1.2** Validazione range personal-record schema (peso ≤ 1000, reps intero ≤ 100, date non future)  
-      File: `src/schemas/personal-record.ts` · Dettagli: [SYSTEM_REVIEW § 3.3](../SYSTEM_REVIEW.md#33-medio---validazione-input-mancante)
+      File: `src/schemas/personal-record.ts` · Dettagli: [system-review § 3.3](./system-review.md#33-medio---validazione-input-mancante)
 - [x] **1.3** Validazione lunghezza parametro search (2-100 char) su exercises, programs, feedback  
-      File: `src/app/api/exercises/route.ts`, `programs/route.ts`, `feedback/route.ts` · Dettagli: [SYSTEM_REVIEW § 3.4](../SYSTEM_REVIEW.md#34-medio---search-parameter-length-non-validata)
+      File: `src/app/api/exercises/route.ts`, `programs/route.ts`, `feedback/route.ts` · Dettagli: [system-review § 3.4](./system-review.md#34-medio---search-parameter-length-non-validata)
 - [x] **1.4** Reject coefficiente esercizi > 3.0 con HTTP 400  
-      File: `src/app/api/exercises/route.ts` · Dettagli: [SYSTEM_REVIEW § 3.5](../SYSTEM_REVIEW.md#35-basso---coefficiente-esercizi-solo-warning)
+      File: `src/app/api/exercises/route.ts` · Dettagli: [system-review § 3.5](./system-review.md#35-basso---coefficiente-esercizi-solo-warning)
 - [x] **1.5** Fix errori TypeScript test integrazione (NextRequest signal)  
-      File: `tests/integration/programs.test.ts`, `tests/integration/users.test.ts` · Dettagli: [SYSTEM_REVIEW § 6](../SYSTEM_REVIEW.md#6-errori-di-compilazione)
+      File: `tests/integration/programs.test.ts`, `tests/integration/users.test.ts` · Dettagli: [system-review § 6](./system-review.md#6-errori-di-compilazione)
 - [x] **1.6** Disabilitare form durante submit (~8 componenti)  
-      Dettagli: [SYSTEM_REVIEW § 4.5](../SYSTEM_REVIEW.md#45-form-non-disabilitati-durante-submit)
+      Dettagli: [system-review § 4.5](./system-review.md#45-form-non-disabilitati-durante-submit)
 
 ---
 
@@ -37,7 +37,7 @@
 ### API Endpoints
 
 - [x] **2.1** `POST /api/feedback` — creazione feedback trainee con nested SetPerformed (3h)  
-      Spec: [NEXT_ACTIONS.md § 7](./NEXT_ACTIONS.md#7-post-apifeedback---creazione-feedback-trainee-3h) · Design: [design/03_backend_api.md](../design/03_backend_api.md)
+      Spec: [NEXT_ACTIONS.md § 7](./NEXT_ACTIONS.md#7-post-apifeedback---creazione-feedback-trainee-3h) · Design: [design/03-backend-api.md](../design/03-backend-api.md)
 - [x] **2.2** `GET /api/trainee/workouts/[id]` — vista workout con peso effettivo pre-calcolato (4h)  
       Spec: [NEXT_ACTIONS.md § 8](./NEXT_ACTIONS.md#8-get-apitraineeworkoutsid---vista-workout-4h)
 - [x] **2.3** `POST /api/programs/[id]/complete` — completamento manuale programma (2h)  

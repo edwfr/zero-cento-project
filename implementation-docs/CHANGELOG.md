@@ -2,9 +2,9 @@
 
 Registro cronologico degli sviluppi effettuati.  
 Le metriche percentuali nelle entry sono snapshot storici della data dell'entry.  
-Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).  
-**Checklist task pendenti:** [CHECKLIST.md](./CHECKLIST.md)  
-**Review sistema:** [SYSTEM_REVIEW.md](../SYSTEM_REVIEW.md)
+Per stato corrente usare sempre [checklist.md](./checklist.md).  
+**Checklist task pendenti:** [checklist.md](./checklist.md)  
+**Review sistema:** [system-review.md](./system-review.md)
 
 ---
 
@@ -335,14 +335,14 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ### [30 Marzo 2026] — System Review & riorganizzazione documentazione
 
 **Cosa è stato fatto:**
-- Creato [SYSTEM_REVIEW.md](../SYSTEM_REVIEW.md) — review completo del sistema con stato per area, issue sicurezza, backlog prioritizzato
-- Aggiornato [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md) — percentuali corrette (da ~40% dichiarato a ~58% reale)
-- Riscritto [NEXT_ACTIONS.md](./NEXT_ACTIONS.md) — rimossi task già completati, aggiunto backlog reale con effort
-- Aggiornato [README.md](./README.md) — indice file aggiornato, stato corretto
-- Creato [CHECKLIST.md](./CHECKLIST.md) — checklist sviluppo con 49 task in 8 sprint
-- Creato questo file [CHANGELOG.md](./CHANGELOG.md)
+- Creato [system-review.md](./system-review.md) — review completo del sistema con stato per area, issue sicurezza, backlog prioritizzato
+- Aggiornato IMPLEMENTATION_SUMMARY.md (ora incluso in README.md) — percentuali corrette (da ~40% dichiarato a ~58% reale)
+- Riscritto [next-actions.md](./next-actions.md) — rimossi task già completati, aggiunto backlog reale con effort
+- Aggiornato [README.md](../README.md) — indice file aggiornato, stato corretto
+- Creato [checklist.md](./checklist.md) — checklist sviluppo con 49 task in 8 sprint
+- Creato questo file [changelog.md](./changelog.md)
 
-**Note:** La documentazione precedente dichiarava ~40% di completamento; l'analisi reale del codice ha rilevato ~58% in quello snapshot. Lo stato corrente e canonico e mantenuto in [CHECKLIST.md](./CHECKLIST.md).
+**Note:** La documentazione precedente dichiarava ~40% di completamento; l'analisi reale del codice ha rilevato ~58% in quello snapshot. Lo stato corrente e canonico e mantenuto in [checklist.md](./checklist.md).
 
 ---
 

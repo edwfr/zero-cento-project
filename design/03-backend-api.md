@@ -189,7 +189,7 @@
 - **Calcolo server-side obbligatorio**: Il client NON deve calcolare i pesi. Il server calcola `effectiveWeight` per ogni `WorkoutExercise` usando la funzione `calculateEffectiveWeight()` (vedi sezione Validazione sotto)
 - **Gestione errori**: Se calcolo fallisce (es. massimale 1RM mancante per `percentage_1rm`), `effectiveWeight: null` + UI trainee mostra messaggio "Massimale non registrato - contatta il tuo trainer"
 - **Performance**: Batch fetch di PersonalRecords in singola query all'inizio, caching client-side con TanStack Query (5min staleTime)
-- Vedi [docs/weight-calculation-trainee-view.md](../docs/weight-calculation-trainee-view.md) per implementazione dettagliata
+- Vedi [docs/weight-calculation.md](../docs/weight-calculation.md) per implementazione dettagliata
 
 **Esempio response GET `/api/trainee/workouts/[id]`**:
 ```json

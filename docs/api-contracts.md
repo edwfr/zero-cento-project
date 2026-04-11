@@ -189,7 +189,7 @@ Paginazione cursor-based per tutti gli endpoint lista. Parametri query:
 
 ## Discrepanze note tra design e implementazione
 
-> Le seguenti differenze tra `design/03_backend_api.md` e l'implementazione corrente sono documentate per trasparenza. Questa tabella canonica riflette lo **stato reale implementato**.
+> Le seguenti differenze tra `design/03-backend-api.md` e l'implementazione corrente sono documentate per trasparenza. Questa tabella canonica riflette lo **stato reale implementato**.
 
 | Area              | Design Doc                                                                    | Implementazione                                 | Azione                                       |
 | ----------------- | ----------------------------------------------------------------------------- | ----------------------------------------------- | -------------------------------------------- |

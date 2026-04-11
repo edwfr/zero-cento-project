@@ -1,267 +1,188 @@
-# ZeroCento Training Platform - Implementation Status
+# ZeroCento Training Platform
 
-> Nota: questo file contiene anche snapshot storici di avanzamento.
-> Per stato operativo corrente usa `implementation-docs/CHECKLIST.md` e `implementation-docs/NEXT_ACTIONS.md`.
-> Posizionamento prodotto ufficiale: training management platform trainer-led.
+Training management platform (trainer-led) for fitness coaching. Trainers build and assign multi-week workout programs; trainees follow them and provide feedback.
 
-## 📊 Project Overview
+## Overview
 
-ZeroCento è una piattaforma web per la gestione di servizi di training sportivo/fitness con tre ruoli principali:
-- **Admin** (desktop): gestione utenti, riassegnazione trainee, override
-- **Trainer** (desktop): creazione esercizi e schede, monitoraggio progressi
-- **Trainee** (mobile/palestra): consultazione schede e feedback allenamenti
+| Role        | Focus                                                   | Device       |
+| ----------- | ------------------------------------------------------- | ------------ |
+| **Admin**   | User management, trainer reassignment, global oversight | Desktop      |
+| **Trainer** | Create exercises, build programs, monitor progress      | Desktop      |
+| **Trainee** | View workouts, log feedback, track personal records     | Mobile (gym) |
 
-## ✅ Completato
+**Scale**: 1 admin, 3 trainers, ~50 trainees (20% annual growth)
 
-### Fase 1: Fondamenta (100%)
-- ✅ Setup progetto Next.js con TypeScript
-- ✅ Configurazione completa package.json con tutte le dipendenze
-- ✅ tsconfig.json, next.config.js, tailwind.config.ts
-- ✅ Prisma schema completo (14 entità)
-- ✅ Vitest e Playwright configurati
+## Tech Stack
 
-### Fase 2: Library & Utilities (100%)
-- ✅ `src/lib/prisma.ts` - Singleton Prisma Client
-- ✅ `src/lib/supabase-client.ts` - Supabase browser client
-- ✅ `src/lib/supabase-server.ts` - Supabase server client  
-- ✅ `src/lib/api-response.ts` - Helper apiSuccess/apiError
-- ✅ `src/lib/auth.ts` - Middleware auth helpers (getSession, requireRole, ownership checks)
-- ✅ `src/lib/logger.ts` - Pino structured logging
-- ✅ `src/lib/password-utils.ts` - Generazione password sicure
-- ✅ `src/lib/calculations.ts` - Calcoli peso effettivo, volume, percentage_previous
+- **Framework**: Next.js 14 (App Router) — full-stack (frontend + API Routes)
+- **Database**: Supabase PostgreSQL + Prisma ORM
+- **Auth**: Supabase Auth (email/password, JWT sessions)
+- **Styling**: Tailwind CSS + MUI (targeted usage)
+- **Testing**: Vitest (unit) + Playwright (E2E)
+- **i18n**: i18next (Italian + English)
+- **Hosting**: Vercel (serverless) + Supabase
 
-### Fase 3: Validation Schemas (100%)
-- ✅ `src/schemas/user.ts` - Validazione utenti e password
-- ✅ `src/schemas/exercise.ts` - Validazione esercizi con muscoli e coefficienti
-- ✅ `src/schemas/workout-exercise.ts` - Validazione esercizi workout
-- ✅ `src/schemas/feedback.ts` - Validazione feedback e serie eseguite
-- ✅ `src/schemas/program.ts` - Validazione programmi training
-- ✅ `src/schemas/week.ts` - Validazione settimane (normal/test/deload)
-- ✅ `src/schemas/personal-record.ts` - Validazione massimali
-- ✅ `src/schemas/muscle-group.ts` - Validazione gruppi muscolari
-- ✅ `src/schemas/movement-pattern.ts` - Validazione schemi motori
+## Quick Start
 
-### Fase 4: Middleware & i18n (100%)
-- ✅ `src/middleware.ts` - Auth, rate limiting (Redis + in-memory), role-based routing
-- ✅ `src/i18n/config.ts` - Configurazione i18n (IT default + EN)
-- ✅ Traduzioni IT/EN per common, auth, errors
+### Prerequisites
 
-### Fase 5: PWA & Assets (100%)
-- ✅ `public/manifest.json` - PWA manifest per trainee
-- ✅ File i18n completi (IT + EN)
+- Node.js >= 20
+- npm/pnpm
+- [Supabase](https://supabase.com) account (free tier)
 
-### Fase 6: App Structure (100%)
-- ✅ `src/app/layout.tsx` - Root layout Next.js
-- ✅ `src/app/globals.css` - Tailwind base styles
-- ✅ `src/app/page.tsx` - Root redirect
-- ✅ `src/app/loading.tsx` - Loading fallback
-- ✅ `src/app/error.tsx` - Error boundary
-- ✅ `src/app/not-found.tsx` - 404 page
+### Setup
 
-### Fase 7: Authentication (90%)
-- ✅ `src/app/login/page.tsx` - Pagina login completa
-- ✅ `src/app/forgot-password/page.tsx` - Richiesta reset password
-- ✅ `src/app/reset-password/page.tsx` - Reset password con token
-- ✅ `src/app/profile/page.tsx` - Profilo utente
-- ✅ `src/app/profile/change-password/page.tsx` - Cambio password
-
-### Fase 8: API Endpoints (85% - 29/34 endpoint implementati)
-#### ✅ Completati:
-- ✅ **Health & Auth**: `GET /api/health`, `GET /api/auth/me`
-- ✅ **Users CRUD completo** (7 endpoint): GET, POST, GET [id], PUT [id], DELETE [id], activate, deactivate
-- ✅ **Exercises CRUD completo** (4 endpoint): GET con pagination, POST, GET [id], PUT [id], DELETE [id]
-- ✅ **Muscle Groups CRUD completo** (6 endpoint): GET, POST, GET [id], PUT [id], DELETE [id], archive
-- ✅ **Movement Patterns CRUD completo** (6 endpoint): GET, POST, GET [id], PUT [id], DELETE [id], archive
-- ✅ **Programs** (8 endpoint): GET, POST, GET [id], PUT [id], DELETE [id], publish, progress, reports
-- ✅ **Workout Exercises** (4 endpoint): POST add, PUT edit, DELETE remove, PATCH reorder
-- ✅ **Feedback** (3 endpoint): GET lista, GET [id], PUT edit (24h window)
-- ✅ **Personal Records** (3 endpoint): GET, POST, DELETE [id]
-- ✅ **Admin** (3 endpoint): reassign trainee, override program, global reports
-
-#### ⏳ Mancanti (5 endpoint):
-- ⏳ `POST /api/feedback` - Creazione feedback trainee
-- ⏳ `POST /api/programs/[id]/complete` - Completamento manuale
-- ⏳ `GET /api/trainee/workouts/[id]` - Vista workout con peso effettivo
-- ⏳ `PATCH /api/weeks/[id]` - Config tipo settimana
-- ⏳ `GET /api/admin/programs` - Lista globale programmi
-
-### Fase 9: Frontend Pages (52% - 21/30 pagine funzionali)
-#### ✅ Completati:
-**Authentication (5 pagine):**
-- ✅ Login, forgot-password, reset-password, profile, change-password
-
-**Admin (4 pagine):**
-- ✅ Dashboard, users, exercises, programs
-
-**Trainer (8 pagine):**
-- ✅ Dashboard, exercises, exercises/new, programs, programs/new
-- ✅ Trainees, trainees/new, components-showcase
-
-**Trainee (4 pagine):**
-- ✅ Dashboard, programs/current, history, records
-
-#### ⏳ Da Completare (9 pagine - route create ma vuote):
-**Trainer (8):**
-- ⏳ exercises/[id]/edit, programs/[id]/edit, programs/[id]/publish
-- ⏳ programs/[id]/progress, programs/[id]/reports
-- ⏳ programs/[id]/workouts/[wId] (wizard step 3)
-- ⏳ trainees/[id], trainees/[id]/records
-
-**Trainee (1):**
-- ⏳ workouts/[id] (workout view con feedback form)
-
-### Fase 10: Componenti UI (100% - 27+ componenti implementati)
-- ✅ **Layout**: DashboardLayout, NavigationCard, RoleGuard
-- ✅ **Tables**: UsersTable, ExercisesTable, ProgramsTable
-- ✅ **Forms**: ProfileForm, AutocompleteSearch, DatePicker
-- ✅ **Specialized**: WeightTypeSelector, RPESelector, RestTimeSelector, RepsInput
-- ✅ **Modals**: UserCreateModal, UserEditModal, UserDeleteModal, ExerciseCreateModal, ConfirmationModal
-- ✅ **Feedback**: ToastNotification, LoadingSpinner, ErrorBoundary, ProgressBar
-- ✅ **Media**: YoutubeEmbed (lazy-loading)
-- ✅ **PWA**: PWAInstallPrompt
-- ✅ **Tags**: MovementPatternTag, WeekTypeBanner
-- ✅ **Forms**: FeedbackForm
-
-### Fase 11: Seed Data (100%)
-- ✅ `prisma/seed.ts` - Seed completo:
-  - 1 admin + 2 trainer + 10 trainee
-  - 5 gruppi muscolari + 5 schemi motori
-  - 12+ esercizi (fundamental + accessory)
-  - 2 programmi (1 draft + 1 active)
-  - Massimali sample
-
-### Fase 12: Testing (30% coverage - target 80%)
-- ✅ 8 file test implementati:
-  - Unit: schemas, calculations, components
-  - Integration: users, programs
-  - E2E: trainer create program, trainee complete workout
-- ⏳ Da aggiungere: RBAC violations, feedback CRUD, login flow, coverage 80%
-
-### Fase 13: CI/CD & PWA (80%)
-- ✅ `.github/workflows/ci.yml` - Pipeline test + lint + coverage check
-- ✅ `public/manifest.json` - PWA manifest trainee
-- ⏳ Service worker Serwist da completare
-- ⏳ Vercel deployment config da aggiungere
-
----
-
-## 🚧 In Progress & TODO
-
-Vedi [SYSTEM_REVIEW.md](SYSTEM_REVIEW.md) per analisi dettagliata issue e backlog prioritizzato.
-
----
-
-## 🚀 Quick Start
-
-### Prerequisiti:
-- Node.js >= 20.0.0
-- Account Supabase (Frankfurt region)
-- PostgreSQL via Supabase
-
-### Setup Completo (15 minuti):
-
-Vedi [implementation-docs/QUICK_START.md](implementation-docs/QUICK_START.md) per guida passo-passo completa.
-
-**TL;DR:**
 ```bash
-# 1. Install dependencies
+# 1. Clone and install
+git clone <repo-url>
+cd ZeroCentoProject
 npm install
 
-# 2. Configura .env.local con credenziali Supabase
+# 2. Configure environment
+cp .env.example .env.local
+# Edit .env.local with your Supabase credentials
 
 # 3. Setup database
-npm run prisma:migrate -- --name init
+npm run prisma:generate
+npm run prisma:migrate
+
+# 4. Seed test data (1 admin + 2 trainers + 10 trainees + exercises)
 npm run prisma:seed
 
-# 4. Avvia server
+# 5. Start dev server
 npm run dev
+# → http://localhost:3000
 ```
 
-### Next Actions:
+### Environment Variables
 
-Per task immediati e prioritizzati: [implementation-docs/NEXT_ACTIONS.md](implementation-docs/NEXT_ACTIONS.md)
-
-**Priorità correnti:**
-1. 🔴 **Sprint 6 (CI/CD & Deploy)** - 7 task aperti
-2. 🟠 **Sprint 8 (PWA & Final Polish)** - 7 task aperti
-3. 🟡 **Sprint 11 (I18n error-key rollout)** - 4 task aperti
-
----
-
-## 📊 Stato Complessivo
-
-**Stato canonico (1 Aprile 2026):**
-- **Task completati:** 142/160 (~89%)
-- **Task aperti:** 18
-- **Sprint completati:** 1, 2, 3, 4, 5, 7, 9, 10
-- **Sprint aperti:** 6, 8, 11
-
-Fonte di verità: [implementation-docs/CHECKLIST.md](implementation-docs/CHECKLIST.md)
-
----
-
-## 📝 Note Tecniche
-
-### Variabili Ambiente:
 ```env
-# Supabase (obbligatorio)
-NEXT_PUBLIC_SUPABASE_URL=      # Project URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY= # Anon public key
-SUPABASE_SERVICE_ROLE_KEY=     # Service role key (secret)
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
 
-# Database (obbligatorio)
-DATABASE_URL=                  # Connection pooled (port 6543)
-DIRECT_URL=                    # Direct connection (port 5432)
+# Database
+DATABASE_URL=postgresql://...:6543/postgres?pgbouncer=true   # Pooled
+DIRECT_URL=postgresql://...:5432/postgres                     # Direct (migrations)
 
-# Redis (opzionale - fallback in-memory)
-UPSTASH_REDIS_REST_URL=        # Per rate limiting distribuito
-UPSTASH_REDIS_REST_TOKEN=      # Token Upstash
+# Auth
+NEXTAUTH_SECRET=...   # openssl rand -base64 32
 ```
 
-### Business Logic Chiave:
-- ✅ **percentage_previous**: Calcolo ricorsivo peso relativo (max 10 livelli, `lib/calculations.ts`)
-- ✅ **RBAC completo**: Admin/Trainer/Trainee con ownership checks (`lib/auth.ts`)
-- ✅ **Trainer-Trainee 1:1**: UNIQUE constraint su traineeId (schema Prisma)
-- ✅ **Rate limiting ibrido**: Redis (auth 5/15min) + in-memory (API 100/1min)
-- ✅ **Password generation**: 12+ caratteri sicure per nuovi trainee
+### Common Commands
 
-### Convenzioni Progetto:
-- **Lingua codice**: Inglese (variables, functions, comments, logs)
-- **Lingua UI**: Italiano (default) + Inglese (i18n configurato)
-- **API response format**: `{ data: {...}, meta: {...} }` per success, `{ error: {...} }` per errori
-- **Error codes standard**: VALIDATION_ERROR, UNAUTHORIZED, FORBIDDEN, NOT_FOUND, CONFLICT, RATE_LIMIT_EXCEEDED, INTERNAL_ERROR
+```bash
+# Development
+npm run dev              # Dev server (http://localhost:3000)
+npm run build            # Production build
+npm run lint             # ESLint
+npm run type-check       # TypeScript check
 
----
+# Database
+npm run prisma:studio    # DB explorer (http://localhost:5555)
+npm run prisma:generate  # Regenerate Prisma Client
+npm run prisma:migrate   # Create new migration
+npm run prisma:seed      # Re-seed database
 
-## 📚 Riferimenti Documentazione
+# Testing
+npm run test:unit        # Unit tests (Vitest)
+npm run test:e2e         # E2E tests (Playwright)
+```
 
-### Design & Architettura
-- **[📁 design/](design/)** - Design docs completi (11 file)
-- **[PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)** - Struttura progetto e indice docs
+## Project Status
 
-### Implementazione & Stato
-- **[SYSTEM_REVIEW.md](SYSTEM_REVIEW.md)** - Review completo sistema (30/03/2026)
-- **[📁 implementation-docs/](implementation-docs/)** - Guide operative e stato avanzamento
+**142/160 tasks completed (~89%)**
 
-### Documentazione Tecnica
-- **[📁 docs/](docs/)** - Guide specifiche (pagination, indexes, i18n, auth)
-- **[prisma/schema.prisma](prisma/schema.prisma)** - Database schema
+| Sprint               | Status            |
+| -------------------- | ----------------- |
+| 1–5, 7, 9, 10        | Completed         |
+| 6 (CI/CD & Deploy)   | 7 tasks remaining |
+| 8 (PWA & Polish)     | 7 tasks remaining |
+| 11 (i18n Error Keys) | 4 tasks remaining |
 
-## 📂 Documentazione Implementazione
+Source of truth: [implementation-docs/checklist.md](implementation-docs/checklist.md)
 
-Per guide operative dettagliate, checklist e stato avanzamento vedi:
+## Project Structure
 
-**[📁 implementation-docs/](implementation-docs/)** - Documentazione fase di implementazione
+```
+ZeroCentoProject/
+├── design/                    # Design documents (11 files)
+├── design-review/             # Architectural reviews
+├── docs/                      # Technical reference docs
+├── implementation-docs/       # Development tracking
+│   ├── checklist.md           # Task status (source of truth)
+│   ├── changelog.md           # Development log
+│   ├── next-actions.md        # Active backlog
+│   └── system-review.md       # System analysis
+├── prisma/                    # Database schema + migrations
+├── src/
+│   ├── app/                   # Next.js App Router (pages + API)
+│   ├── components/            # React components (30+)
+│   ├── i18n/                  # i18n configuration
+│   ├── lib/                   # Utilities (auth, prisma, calculations)
+│   └── schemas/               # Zod validation schemas (9)
+├── tests/
+│   ├── unit/                  # Vitest
+│   ├── integration/           # API tests
+│   └── e2e/                   # Playwright
+└── public/
+    ├── locales/               # i18n translations (IT + EN)
+    └── manifest.json          # PWA manifest
+```
 
-Contiene:
-- **[IMPLEMENTATION_SUMMARY.md](implementation-docs/IMPLEMENTATION_SUMMARY.md)** - Snapshot canonico + appendice storica
-- **[QUICK_START.md](implementation-docs/QUICK_START.md)** - Guida rapida setup progetto (15 minuti)
-- **[NEXT_ACTIONS.md](implementation-docs/NEXT_ACTIONS.md)** - Prossimi step immediati
-- **[IMPLEMENTATION_PROMPT.md](implementation-docs/IMPLEMENTATION_PROMPT.md)** - Requisiti e specifiche tecniche
+## Documentation Map
 
-**[SYSTEM_REVIEW.md](SYSTEM_REVIEW.md)** - Analisi completa dello stato del sistema:
-- Stato implementazione dettagliato per area (API, Frontend, Testing)
-- Issue di sicurezza identificati e fix richiesti
-- Issue di qualità codice
-- Backlog prioritizzato con effort stimati
-- Roadmap sviluppo organizzata in 8 sprint
+| Document                                                         | Content                              |
+| ---------------------------------------------------------------- | ------------------------------------ |
+| [design/00-problem-statement.md](design/00-problem-statement.md) | Goals, users, scope                  |
+| [design/01-architecture.md](design/01-architecture.md)           | Stack, components, risks             |
+| [design/02-frontend.md](design/02-frontend.md)                   | Routes, UI/UX per role               |
+| [design/03-backend-api.md](design/03-backend-api.md)             | API endpoints, validation            |
+| [design/04-data-model.md](design/04-data-model.md)               | Entities, relations, ER diagram      |
+| [design/05-security-auth.md](design/05-security-auth.md)         | Auth, RBAC, sessions                 |
+| [design/06-deployment.md](design/06-deployment.md)               | Deploy, CI/CD, scaling               |
+| [design/07-testing.md](design/07-testing.md)                     | Test strategy, coverage              |
+| [design/08-decisions.md](design/08-decisions.md)                 | Architectural decisions (all closed) |
+| [design/09-changelog.md](design/09-changelog.md)                 | Design change history                |
+| [design/10-user-stories.md](design/10-user-stories.md)           | 56 user stories                      |
+| [prisma/schema.prisma](prisma/schema.prisma)                     | Database schema                      |
+
+## Code Conventions
+
+| Category      | Convention         |
+| ------------- | ------------------ |
+| Files/Folders | `kebab-case.tsx`   |
+| Components    | `PascalCase`       |
+| Functions     | `camelCase`        |
+| Constants     | `UPPER_SNAKE_CASE` |
+
+### API Route Pattern
+
+```typescript
+export async function GET(request: Request) {
+  // 1. Auth check
+  // 2. Input validation (Zod)
+  // 3. Business logic (Prisma)
+  // 4. Response formatting (apiSuccess/apiError)
+}
+```
+
+## Testing
+
+- **Unit**: Vitest + @testing-library/react — business logic, schemas, calculations
+- **Integration**: API endpoint tests with mocked Prisma
+- **E2E**: Playwright — critical user flows
+- **Coverage target**: 80%+
+
+See [design/07-testing.md](design/07-testing.md) for full strategy.
+
+## Troubleshooting
+
+| Error                                 | Fix                                                           |
+| ------------------------------------- | ------------------------------------------------------------- |
+| `Cannot find module '@prisma/client'` | `npm run prisma:generate`                                     |
+| `Database connection failed`          | Check `DATABASE_URL` uses port 6543 (pooled)                  |
+| `PrismaClient in browser`             | Only use Prisma in Server Components or API Routes            |
+| `User not found after login`          | Run `npm run prisma:seed`, verify user IDs match `auth.users` |
+| `RATE_LIMIT_EXCEEDED` in dev          | Comment out `checkRateLimit()` in `src/middleware.ts`         |

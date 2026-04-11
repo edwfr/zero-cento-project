@@ -83,7 +83,7 @@ src/app/api/exercises/route.ts           — API GET/POST per esercizi
 src/components/ExercisesTable.tsx         — Tabella lista esercizi con filtri
 src/components/ExerciseCreateModal.tsx    — Modal creazione esercizio
 src/app/admin/exercises/page.tsx          — Pagina admin gestione esercizi
-design/09_change_log.md                   — Documentazione modifiche
+design/09-changelog.md                   — Documentazione modifiche
 ```
 
 ### Note Implementative
@@ -147,7 +147,7 @@ src/app/admin/dashboard/page.tsx      — Rinomina sezione + aggiunta libreria e
 src/components/DashboardLayout.tsx     — Aggiunta nome app nell'header
 src/components/UserCreateModal.tsx     — Fix colore testo select ruolo
 src/components/UsersTable.tsx          — Fix colore testo filtro ruolo
-design/09_change_log.md                — Documentazione modifiche
+design/09-changelog.md                — Documentazione modifiche
 ```
 
 ### Note Implementative
@@ -286,22 +286,22 @@ design/09_change_log.md                — Documentazione modifiche
   1. Il valore impostato dal trainer (es. "80% 1RM", "-5%")
   2. Il peso effettivo calcolato (es. "100 kg", "95 kg")
 - **Soluzione**:
-  - Creato documento dettagliato `docs/weight-calculation-trainee-view.md` con:
+  - Creato documento dettagliato `docs/weight-calculation.md` con:
     - Specifica endpoint `GET /api/trainee/workouts/[id]` con campo `effectiveWeight` aggiunto a ogni WorkoutExercise
-    - Implementazione calcolo server-side con `calculateEffectiveWeight()` già definita in 03_backend_api.md
+    - Implementazione calcolo server-side con `calculateEffectiveWeight()` già definita in 03-backend-api.md
     - Ottimizzazioni performance: batch fetch PersonalRecords, caching client-side TanStack Query (5min)
     - Gestione errori: `effectiveWeight: null` se massimale mancante + UI message per trainee
     - Test cases per validazione calcolo (absolute, percentage_1rm, percentage_previous chain)
     - Roadmap future: pre-calculation al publish in campo `effectiveWeightSnapshot` (fase 2)
 - **File modificati**: 
-  - `design/03_backend_api.md` — Aggiunta sezione "Workout View (Trainee)" con specifica `GET /api/trainee/workouts/[id]` e esempio response JSON con `effectiveWeight`
-  - `docs/weight-calculation-trainee-view.md` — NUOVO file con implementazione completa
+  - `design/03-backend-api.md` — Aggiunta sezione "Workout View (Trainee)" con specifica `GET /api/trainee/workouts/[id]` e esempio response JSON con `effectiveWeight`
+  - `docs/weight-calculation.md` — NUOVO file con implementazione completa
 - **Impatto**: Chiarezza implementativa per backend team, risolve item design review 4.2b, specifica UX trainee per visualizzazione pesi dinamici
 - **Priority**: HIGH (blocker per trainee workout view MVP)
 
 ### Riepilogo File Modificati
-- `design/03_backend_api.md` — Nuova tabella endpoint "Workout View (Trainee)", specifica calcolo pesi server-side
-- `docs/weight-calculation-trainee-view.md` — Documento implementazione completo (NUOVO)
+- `design/03-backend-api.md` — Nuova tabella endpoint "Workout View (Trainee)", specifica calcolo pesi server-side
+- `docs/weight-calculation.md` — Documento implementazione completo (NUOVO)
 
 ---
 
@@ -309,10 +309,10 @@ design/09_change_log.md                — Documentazione modifiche
 
 ### Modifiche
 
-**1. Rimozione duplicazione schema Zod in 03_backend_api.md**
+**1. Rimozione duplicazione schema Zod in 03-backend-api.md**
 - **Problema**: Presenza di due versioni degli schema Zod (aggiornata con `percentage_previous` e legacy con `movementPattern` hardcoded)
 - **Soluzione**: Rimosso blocco legacy duplicato (exerciseSchema e workoutExerciseSchema obsoleti)
-- **File modificati**: `design/03_backend_api.md`
+- **File modificati**: `design/03-backend-api.md`
 - **Impatto**: Elimina confusione per sviluppatori, mantiene solo schema aggiornati come fonte di verità
 
 **2. Chiarimento logica calculateEffectiveWeight per percentage_previous**
@@ -320,9 +320,9 @@ design/09_change_log.md                — Documentazione modifiche
 - **Soluzione**: 
   - Modificato `orderBy` da `'asc'` a `'desc'` per prendere la riga IMMEDIATAMENTE precedente
   - Aggiunta documentazione esplicita sul comportamento ricorsivo e catene progressive
-  - Aggiornati test unitari in `07_testing_strategy.md` per riflettere il comportamento corretto (catena: 100kg → -5% = 95kg → -10% = 85.5kg)
+  - Aggiornati test unitari in `07-testing.md` per riflettere il comportamento corretto (catena: 100kg → -5% = 95kg → -10% = 85.5kg)
 - **Comportamento**: `percentage_previous` si attiva SOLO se nello stesso workout c'è già lo stesso esercizio. Ogni riga con `-x%` calcola il peso sulla base della riga immediatamente precedente, permettendo catene progressive
-- **File modificati**: `design/03_backend_api.md`, `design/07_testing_strategy.md`, `design-review/00_design_review_v2.md`
+- **File modificati**: `design/03-backend-api.md`, `design/07-testing.md`, `design-review/design-review.md`
 - **Impatto**: Risolve ambiguità sul comportamento ricorsivo, permette wave loading e back-off set con logica prevista dai trainer
 
 **3. Completamento scheda: doppia modalità (automatica e manuale)**
@@ -332,7 +332,7 @@ design/09_change_log.md                — Documentazione modifiche
   - Aggiunti campi `completedAt` e `completionReason` al model `TrainingProgram` in Prisma schema
   - Documentate DUE modalità: AUTOMATICA (cron daily) + MANUALE (trainer)
   - Use case manuale: trainee termina anticipatamente, cambio programmazione, infortunio
-- **File modificati**: `design/03_backend_api.md`, `design/04_data_model.md`, `prisma/schema.prisma`, `design-review/00_design_review_v2.md`
+- **File modificati**: `design/03-backend-api.md`, `design/04-data-model.md`, `prisma/schema.prisma`, `design-review/design-review.md`
 - **Impatto**: Maggiore flessibilità per trainer, tracking motivazione completamento anticipato
 
 **4. Chiarimento feedback disponibili subito al trainer**
@@ -341,19 +341,19 @@ design/09_change_log.md                — Documentazione modifiche
   - Documentato esplicitamente che trainer vede feedback appena disponibili dopo `POST /api/feedback`
   - `POST /api/programs/[id]/submit` serve per: validazione completezza, timestamp formale, trigger notifica trainer (non blocco visibilità)
   - Dashboard trainer mostra feedback aggiornati tramite `GET /api/programs/[id]/progress`
-- **File modificati**: `design/03_backend_api.md`, `design-review/00_design_review_v2.md`
+- **File modificati**: `design/03-backend-api.md`, `design-review/design-review.md`
 - **Impatto**: UX più naturale per contesto palestra, monitoraggio continuo allenamento trainee da parte del trainer
 
 ### Riepilogo File Modificati
-- `design/03_backend_api.md` — Rimozione duplicati Zod, chiarimento calculateEffectiveWeight, nuovo endpoint complete, feedback disponibili subito
-- `design/04_data_model.md` — Aggiornamento schema TrainingProgram con completedAt/completionReason, note workflow completamento
-- `design/07_testing_strategy.md` — Test unit calculateEffectiveWeight con comportamento corretto catena
+- `design/03-backend-api.md` — Rimozione duplicati Zod, chiarimento calculateEffectiveWeight, nuovo endpoint complete, feedback disponibili subito
+- `design/04-data-model.md` — Aggiornamento schema TrainingProgram con completedAt/completionReason, note workflow completamento
+- `design/07-testing.md` — Test unit calculateEffectiveWeight con comportamento corretto catena
 - `prisma/schema.prisma` — Aggiunti campi completedAt e completionReason a TrainingProgram
-- `design-review/00_design_review_v2.md` — Marcate criticità risolte con ✅
+- `design-review/design-review.md` — Marcate criticità risolte con ✅
 
 ---
 
-> Ogni entry documenta una decisione chiusa. Le decisioni aperte vivono in 08_open_decisions.md.
+> Ogni entry documenta una decisione chiusa. Le decisioni aperte vivono in 08-decisions.md.
 
 ---
 
@@ -968,7 +968,7 @@ design/09_change_log.md                — Documentazione modifiche
 - **Azione**: Chiusura ODR-22 con creazione diagramma ER completo per visualizzazione data model.
 - **ODR-22 - Diagramma ER**:
   - **Problema**: Documentazione data model testuale completa ma nessuna visualizzazione grafica delle relazioni tra entità, difficile overview rapida per review design
-  - **Decisione**: Creato **diagramma ER completo in formato Mermaid** inserito in `04_data_model.md`
+  - **Decisione**: Creato **diagramma ER completo in formato Mermaid** inserito in `04-data-model.md`
   - **Contenuto diagramma**:
     - **14 entità visualizzate**: User, TrainerTrainee, MuscleGroup, MovementPattern, MovementPatternColor, Exercise, ExerciseMuscleGroup, TrainingProgram, Week, Workout, WorkoutExercise, ExerciseFeedback, SetPerformed, PersonalRecord
     - **Relazioni con cardinalità**: 1:1 (TrainerTrainee.traineeId UNIQUE), 1:N (User → TrainingProgram, Week → Workout), N:M (Exercise ↔ MuscleGroup via ExerciseMuscleGroup)
@@ -980,7 +980,7 @@ design/09_change_log.md                — Documentazione modifiche
     - Renderizzabile direttamente su GitHub, GitLab, VS Code (con estensioni), documentazione online
     - Sintassi `erDiagram` con relazioni `||--o{` (one-to-many), `||--o|` (one-to-one), entità con campi dettagliati
     - Code block markdown standard (```mermaid), versionabile Git, no dipendenze tool esterni
-  - **Posizionamento**: Inserito in `04_data_model.md` tra sezione "Entità principali" (tabella riassuntiva) e "Schema (logico)" (dettaglio testuale)
+  - **Posizionamento**: Inserito in `04-data-model.md` tra sezione "Entità principali" (tabella riassuntiva) e "Schema (logico)" (dettaglio testuale)
   - **Note diagramma**: Aggiunta legenda sotto diagramma con spiegazioni relazione 1:1 trainee-trainer UNIQUE, tabelle junction M:N, gerarchia cascade, feedback normalizzato, libreria condivisa
   - **Benefici**:
     - ✅ **Visualizzazione rapida**: Review design relazioni a colpo d'occhio senza leggere centinaia righe testo
@@ -988,10 +988,10 @@ design/09_change_log.md                — Documentazione modifiche
     - ✅ **Verifica integrità**: Spot immediato relazioni mancanti, FK inconsistenti, cardinalità errate
     - ✅ **Documentazione sempre aggiornata**: Mermaid in markdown, aggiornabile insieme al codice, no tool esterni che si disallineano
     - ✅ **Comunicazione stakeholder**: Diagramma condivisibile con non-dev per review architettura dati
-  - **Manutenzione**: Se schema Prisma cambia (aggiunte entità, nuove relazioni), diagramma Mermaid va aggiornato manualmente in sync. Pattern: modifica `prisma/schema.prisma` → commit → aggiorna diagramma in `04_data_model.md` → commit insieme
+  - **Manutenzione**: Se schema Prisma cambia (aggiunte entità, nuove relazioni), diagramma Mermaid va aggiornato manualmente in sync. Pattern: modifica `prisma/schema.prisma` → commit → aggiorna diagramma in `04-data-model.md` → commit insieme
 - **Chiusura decisione**: **ODR-22** risolto ✅
 - **Implicazioni implementative**:
-  - Documentazione: diagramma permanente in `04_data_model.md`, template per futuri aggiornamenti schema
+  - Documentazione: diagramma permanente in `04-data-model.md`, template per futuri aggiornamenti schema
   - Review process: verificare sync diagramma-schema Prisma durante PR review che toccano data model
   - Tooling: suggerito plugin VS Code "Markdown Preview Mermaid Support" per preview locale durante editing
 - **Implicazioni**: Data model completamente documentato con visualizzazione grafica professionale. Gap design ↔ codice eliminato. Developer experience migliorata per onboarding e review. Stakeholder possono comprendere architettura dati senza leggere codice Prisma.
@@ -1012,7 +1012,7 @@ design/09_change_log.md                — Documentazione modifiche
     - **Convenzioni CSS**: Utility-first con Tailwind, MUI styled con `sx` prop o Emotion quando necessario, zero CSS globale custom (solo reset e variabili tema)
   - **Alternative future**: shadcn/ui valutato come sostituto post-MVP se conflitti persistono (Tailwind-native, componenti accessibili, bundle più leggero)
   - **Benefici**: Stack ibrido funzionale per MVP, componenti MUI riutilizzabili per funzionalità complesse, Tailwind per velocità sviluppo layout, DX accettabile con convenzioni chiare
-  - **Documentato in**: `design-review/00_review_v1.md` (5.1 Rischio MEDIO), `02_frontend_design.md` (Convenzioni CSS)
+  - **Documentato in**: `design-review/design-review.md` (5.1 Rischio MEDIO), `02-frontend.md` (Convenzioni CSS)
 - **ODR-19 - Service Worker con App Router**:
   - **Problema**: `next-pwa` ha supporto limitato per Next.js App Router (maturo solo per Pages Router). Potenziali problemi con RSC (React Server Components) + SW caching
   - **Impatto**: Comportamento offline non predicibile, cache invalidation complessa, bug difficili da debuggare
@@ -1027,7 +1027,7 @@ design/09_change_log.md                — Documentazione modifiche
       - **StaleWhileRevalidate** per immagini/loghi
     - **Cache invalidation**: Service Worker verifica versione app, invalida cache se mismatch
   - **Benefici**: Offline support garantito per trainee in palestra (scheda corrente, feedback), performance migliorate con asset caching, comportamento predicibile
-  - **Documentato in**: `design-review/00_review_v1.md` (5.3 Rischio BASSO), `02_frontend_design.md` (Service Worker per Offline Support)
+  - **Documentato in**: `design-review/design-review.md` (5.3 Rischio BASSO), `02-frontend.md` (Service Worker per Offline Support)
 - **ODR-20 - Vendor Lock-in Supabase**:
   - **Problema**: Auth + DB + Storage + Branching + Email tutti su Supabase. Se Supabase ha outage prolungato o cambia pricing drasticamente, intera piattaforma bloccata. Single point of failure per servizi critici
   - **Impatto**: Dipendenza completa da vendor esterno, difficoltà migrazione se necessario
@@ -1039,7 +1039,7 @@ design/09_change_log.md                — Documentazione modifiche
        - Zero code change necessario (solo DATABASE_URL env var)
        - Connection pooling gestibile con PgBouncer esterno se necessario
     2. **Auth** (lock-in MEDIO → MITIGATO):
-       - **Documentate tutte le API Supabase Auth** usate nella piattaforma in `docs/supabase-auth-api-surface.md`:
+       - **Documentate tutte le API Supabase Auth** usate nella piattaforma in `docs/supabase-auth-api.md`:
          - Client-side: `signInWithPassword()`, `signUp()`, `signOut()`, `getSession()`, `refreshSession()`
          - Server-side: JWT verification con `@supabase/ssr`, custom middleware per session check
          - OAuth (post-MVP): `signInWithOAuth()` per Google/GitHub
@@ -1060,12 +1060,12 @@ design/09_change_log.md                — Documentazione modifiche
     - Community attiva (40K+ GitHub stars), documentazione eccellente, roadmap pubblica
     - Pricing trasparente e competitivo (Pro $25/mese vs AWS RDS ~$50-100/mese)
   - **Benefici**: Lock-in mitigato su tutti i servizi, migration path documentato e fattibile, effort stimato accettabile, costo opportunità basso (velocity sviluppo MVP alta con Supabase)
-  - **Documentato in**: `design-review/00_review_v1.md` (5.2 Rischio BASSO-MEDIO), `docs/supabase-auth-api-surface.md` (API surface completa)
+  - **Documentato in**: `design-review/design-review.md` (5.2 Rischio BASSO-MEDIO), `docs/supabase-auth-api.md` (API surface completa)
 - **Chiusura decisioni**: **ODR-18**, **ODR-19**, **ODR-20** risolti ✅
 - **Implicazioni implementative**:
   - **Frontend**: Webpack Bundle Analyzer configurato in `next.config.js` per monitoring bundle size
   - **Service Worker**: Installare `@serwist/next`, configurare Workbox strategies, testare offline behavior
-  - **Documentazione operativa**: Mantenere aggiornato `docs/supabase-auth-api-surface.md` se aggiunte nuove API auth
+  - **Documentazione operativa**: Mantenere aggiornato `docs/supabase-auth-api.md` se aggiunte nuove API auth
   - **Monitoring**: Alert su bundle size >150KB per MUI (threshold warning)
 - **Implicazioni**: Stack tecnologico validato con mitigazioni robuste. Vendor lock-in gestibile con effort contenuto. Service Worker funzionale per offline support trainee. Coesistenza Tailwind+MUI accettabile per MVP con convenzioni chiare. Migration path documentato per ridurre rischio lungo termine.
 
@@ -1120,7 +1120,7 @@ design/09_change_log.md                — Documentazione modifiche
     - Aggiungere campo `Exercise.version INT` auto-incrementale
     - Update API: `PUT /api/exercises/[id]` invia `version` attesa, backend verifica match prima di UPDATE
     - Conflict UI: se mismatch, mostra diff e permette merge/overwrite manuale
-  - **Documentato in**: `design-review/00_review_v1.md` tabella "Parti mancanti nella documentazione"
+  - **Documentato in**: `design-review/design-review.md` tabella "Parti mancanti nella documentazione"
   - **Benefici**: Zero effort per scenario improbabile, focus su funzionalità core, soluzione rinviata quando/se emerge necessità reale
 - **ODR-12 - Idempotency su POST Feedback**:
   - **Problema**: Double-tap o network retry su `POST /api/feedback` può creare due `ExerciseFeedback` duplicati per stesso esercizio/trainee/giorno
@@ -1139,7 +1139,7 @@ design/09_change_log.md                — Documentazione modifiche
     }
     ```
   - **Response API duplicato**: `409 Conflict { error: { code: 'DUPLICATE_FEEDBACK', message: 'Feedback già inviato per questo esercizio' } }`
-  - **Documentazione**: `docs/database-indexes.md` (constraint UNIQUE), `design-review/00_review_v1.md` (A2 - Idempotency POST feedback)
+  - **Documentazione**: `docs/database-indexes.md` (constraint UNIQUE), `design-review/design-review.md` (A2 - Idempotency POST feedback)
   - **Benefici**: Zero feedback duplicati garantito a livello DB, UX client reattiva con debouncing, gestione errori chiara
 - **Chiusura decisioni**: **ODR-09**, **ODR-10**, **ODR-11**, **ODR-12** risolti ✅
 - **Implicazioni implementative**:
@@ -1262,7 +1262,7 @@ design/09_change_log.md                — Documentazione modifiche
   - **Feedback**: Admin ha lettura completa di tutti i feedback (vs limitato precedente)
   - **Massimali**: Admin ha CRUD su massimali di tutti i trainee (vs solo lettura precedente)
   - **Reportistica**: Admin accede a report system-wide di tutti i trainee e tutti i trainer
-- **Nuovi endpoint API** (03_backend_api.md):
+- **Nuovi endpoint API** (03-backend-api.md):
   - `GET /api/admin/programs` — lista TUTTE le schede con filtri (trainer/trainee/status/search)
   - `GET /api/admin/programs/[id]` — dettaglio scheda di qualsiasi trainer
   - `POST /api/admin/programs` — crea scheda per qualsiasi trainee (bypass ownership)
@@ -1276,13 +1276,13 @@ design/09_change_log.md                — Documentazione modifiche
   - Schede esistenti mantengono `trainerId` originale (paternità), nuovo trainer può visualizzarle (read) ma non modificarle
   - Nuovo trainer può creare nuove schede per trainee riassegnato
   - Response: `{ "traineeId", "oldTrainerId", "newTrainerId", "reassignedAt" }`
-- **Nuove pagine frontend** (02_frontend_design.md):
+- **Nuove pagine frontend** (02-frontend.md):
   - `/admin/programs` — lista globale schede con filtri e ricerca
   - `/admin/programs/[id]` — dettaglio/modifica scheda qualsiasi trainer (override immutabilità)
   - `/admin/programs/[id]/progress` — monitoraggio avanzamento con feedback
   - `/admin/trainees/[id]/reassign` — form riassegnazione trainee a nuovo trainer
   - `/admin/reports` — dashboard report globali (volume, SBD, feedback system-wide)
-- **Nuove User Stories** (10_user_stories.md):
+- **Nuove User Stories** (10-user-stories.md):
   - **US-A09**: Visualizzare tutte le schede di tutti i trainer con filtri
   - **US-A10**: Modificare qualsiasi scheda (anche active/completed) per emergenze
   - **US-A11**: Eliminare schede di qualsiasi trainer per gestione eccezionale
@@ -1299,7 +1299,7 @@ design/09_change_log.md                — Documentazione modifiche
   - Helper `canAccessProgram(user, program)`: admin bypassa tutti i check
   - Admin può operare su schede immutabili (trainer/trainee ricevono 403 Forbidden)
   - Audit log per operazioni admin su schede e riassegnazioni (tracciabilità)
-- **Sezione dettagliata** in 05_security_auth.md:
+- **Sezione dettagliata** in 05-security-auth.md:
   - "Admin Override: Gestione Operativa Globale"
   - Permessi admin su schede, workflow riassegnazione, UI admin, casi d'uso, validazione
   - Note su gestione schede dopo riassegnazione (paternità vs accesso)
@@ -1355,11 +1355,11 @@ design/09_change_log.md                — Documentazione modifiche
   - E2E test P2: Trainer prova percentage_previous senza occorrenza precedente → validazione blocca con errore
 - **User Story**: Aggiunta **US-T20a** per riferimento carico riga precedente con tecniche avanzate (wave loading, cluster set, back-off set)
 - **Documentazione aggiornata**:
-  - 04_data_model.md: Schema WorkoutExercise con nuovo enum `percentage_previous`, sezione "Gestione Peso e Intensità" espansa con esempi dettagliati e logica calcolo
-  - 03_backend_api.md: Schema Zod validation per `percentage_previous`, helper `calculateEffectiveWeight()` con logica ricorsiva completa
-  - 02_frontend_design.md: Componente `WeightTypeSelector` nella lista componenti riutilizzabili, sezione dettagliata con UI design, props, logica validazione, query occorrenza precedente, casi d'uso
-  - 10_user_stories.md: User Story US-T20a con esempi concreti, totale user stories aggiornato a 42
-  - 07_testing_strategy.md: Unit test per `calculateEffectiveWeight()` con tutti i casi edge, unit test per schema validation, E2E test workflow completo e validazione errori, aggiunta flusso P1 "trainer inserisce stesso esercizio con percentage_previous"
+  - 04-data-model.md: Schema WorkoutExercise con nuovo enum `percentage_previous`, sezione "Gestione Peso e Intensità" espansa con esempi dettagliati e logica calcolo
+  - 03-backend-api.md: Schema Zod validation per `percentage_previous`, helper `calculateEffectiveWeight()` con logica ricorsiva completa
+  - 02-frontend.md: Componente `WeightTypeSelector` nella lista componenti riutilizzabili, sezione dettagliata con UI design, props, logica validazione, query occorrenza precedente, casi d'uso
+  - 10-user-stories.md: User Story US-T20a con esempi concreti, totale user stories aggiornato a 42
+  - 07-testing.md: Unit test per `calculateEffectiveWeight()` con tutti i casi edge, unit test per schema validation, E2E test workflow completo e validazione errori, aggiunta flusso P1 "trainer inserisce stesso esercizio con percentage_previous"
 - **Benefici**:
   - ✅ **Automazione calcoli**: Trainer non deve ricalcolare manualmente pesi per ogni occorrenza ripetuta
   - ✅ **Tecniche avanzate**: Supporta wave loading, cluster set, back-off set con configurazione semplice
@@ -1388,9 +1388,9 @@ design/09_change_log.md                — Documentazione modifiche
   - `DELETE /api/programs/[id]` su scheda `active/completed` → **403 Forbidden** (già esistente, confermato)
   - Validazione backend: `if (program.status !== 'draft') throw new ForbiddenError('...')`
 - **Aggiornamenti documentazione**:
-  - 03_backend_api.md: Corretto note workflow con `PUT` bloccato su schede pubblicate, aggiunto warning su `POST /publish`
-  - 04_data_model.md: Aggiunto commento IMPORTANTE su immutabilità schede nell'entità `TrainingProgram`
-  - design-review/00_review_v1.md: Marcato "Versionamento schede" come ✅ **RISOLTO** (non previsto versionamento)
+  - 03-backend-api.md: Corretto note workflow con `PUT` bloccato su schede pubblicate, aggiunto warning su `POST /publish`
+  - 04-data-model.md: Aggiunto commento IMPORTANTE su immutabilità schede nell'entità `TrainingProgram`
+  - design-review/design-review.md: Marcato "Versionamento schede" come ✅ **RISOLTO** (non previsto versionamento)
 - **Implicazioni implementative**:
   - Validazione API: aggiungere check `status === 'draft'` prima di permettere PUT/DELETE su `TrainingProgram`
   - Frontend: disabilitare pulsante "Modifica" su schede active/completed, mostrare badge "Pubblicata - Non modificabile"
@@ -1418,9 +1418,9 @@ design/09_change_log.md                — Documentazione modifiche
   - Se ci sono feedback pendenti all'ultima settimana, la scheda passa comunque a 'completed'
   - Trainee NON può fornire feedback su schede 'completed'
 - **Aggiornamenti documentazione**:
-  - 04_data_model.md: Schema `TrainerTrainee` con UNIQUE constraint, note relazione 1:1, workflow transizione schede
-  - 03_backend_api.md: Endpoint `POST /api/programs/[id]/submit`, note vincolo 1:1, workflow feedback
-  - 08_open_decisions.md: **ODR-05** e **ODR-06** marcate come risolte
+  - 04-data-model.md: Schema `TrainerTrainee` con UNIQUE constraint, note relazione 1:1, workflow transizione schede
+  - 03-backend-api.md: Endpoint `POST /api/programs/[id]/submit`, note vincolo 1:1, workflow feedback
+  - 08-decisions.md: **ODR-05** e **ODR-06** marcate come risolte
 - **Implicazioni implementative**:
   - Migration Prisma: ADD UNIQUE constraint su `TrainerTrainee.traineeId`, ADD column `createdAt`
   - Validazione API `/api/users` (POST trainee): verificare che non esista già record `TrainerTrainee` per quel `traineeId`
@@ -1442,9 +1442,9 @@ design/09_change_log.md                — Documentazione modifiche
   - ❌ Rimosso: `User.initialPassword String?`
   - ✅ Confermato: flag `mustChangePassword` gestito da Supabase per forzare cambio password
 - **Aggiornamenti documentazione**:
-  - 04_data_model.md: Rimosso campo `initialPassword` da schema User, aggiornate note creazione trainee
-  - 05_security_auth.md: Aggiornata sezione "Gestione Password Iniziali", rimossa logica di salvataggio password
-  - 08_open_decisions.md: **ODR-04** marcata come risolta
+  - 04-data-model.md: Rimosso campo `initialPassword` da schema User, aggiornate note creazione trainee
+  - 05-security-auth.md: Aggiornata sezione "Gestione Password Iniziali", rimossa logica di salvataggio password
+  - 08-decisions.md: **ODR-04** marcata come risolta
 - **Implicazioni implementative**:
   - Migration Prisma: DROP column `initialPassword` da tabella User
   - API `/api/trainer/trainees` (POST): non salvare più la password temporanea, restituirla solo nella response
@@ -1479,10 +1479,10 @@ design/09_change_log.md                — Documentazione modifiche
   - ✅ Confermato: `notes String?` per commenti testuali liberi trainee
   - ✅ Aggiunti: `createdAt` e `updatedAt` per audit trail
 - **Aggiornamenti documentazione**:
-  - 04_data_model.md: Aggiunta tabella SetPerformed, aggiornate relazioni e query esempio
-  - 03_backend_api.md: Schema Zod aggiornato con validazione `sets` array (setNumber, reps, weight)
-  - 02_frontend_design.md: Interface FeedbackDraft con `sets: Array<{setNumber, reps, weight}>`
-  - 10_user_stories.md: US-U07 e US-T26 già menzionano note testuali (no modifiche)
+  - 04-data-model.md: Aggiunta tabella SetPerformed, aggiornate relazioni e query esempio
+  - 03-backend-api.md: Schema Zod aggiornato con validazione `sets` array (setNumber, reps, weight)
+  - 02-frontend.md: Interface FeedbackDraft con `sets: Array<{setNumber, reps, weight}>`
+  - 10-user-stories.md: US-U07 e US-T26 già menzionano note testuali (no modifiche)
 - **Rationale**:
   - Campo JSON bypassa type-safety, impedisce query aggregate ("peso max esercizio X negli ultimi 3 mesi")
   - Volumetria ~50K set è gestibile con normalizzazione (nessun vincolo sharding)
@@ -1500,12 +1500,12 @@ design/09_change_log.md                — Documentazione modifiche
 - **Azione**: Chiusura decisione architetturale su provider autenticazione.
 - **Decisione**: **Supabase Auth confermato definitivamente** come provider esclusivo per autenticazione e sessioni.
 - **Modifiche documentazione**:
-  - 03_backend_api.md: Rimossa tabella endpoint `/api/auth/[...nextauth]` (pattern NextAuth.js). Sostituita con sezione "Auth" che chiarisce:
+  - 03-backend-api.md: Rimossa tabella endpoint `/api/auth/[...nextauth]` (pattern NextAuth.js). Sostituita con sezione "Auth" che chiarisce:
     - Autenticazione gestita da Supabase client SDK (`@supabase/auth-helpers-nextjs`)
     - Login/Logout/Session via `supabase.auth.signInWithPassword()` e `supabase.auth.signOut()`
     - Non servono endpoint API Routes custom per MVP (email+password)
     - Endpoint `/api/auth/callback` necessario solo per OAuth post-MVP (Google, GitHub)
-  - 08_open_decisions.md: **ODR-01 chiuso** — conflitto NextAuth vs Supabase Auth risolto
+  - 08-decisions.md: **ODR-01 chiuso** — conflitto NextAuth vs Supabase Auth risolto
 - **Rationale**:
   - Supabase Auth è già infrastruttura scelta per DB e sessioni JWT
   - NextAuth richiederebbe duplicazione gestione sessioni e configurazione manuale
@@ -1619,9 +1619,9 @@ design/09_change_log.md                — Documentazione modifiche
   - ✅ **Validazione pre-pubblicazione**: Previene schede incomplete pubblicate per errore
 - **Testing**: Aggiunti test P1 per workflow completo creazione-pubblicazione, P2 per salvataggio draft incrementale, P2 per validazione pubblicazione, P3 per personalizzazione colori
 - **Documentazione aggiornata**:
-  - 04_data_model.md: Entità MovementPatternColor, campi TrainingProgram/Week aggiornati, sezione "Workflow Creazione Scheda" con esempi step-by-step
-  - 02_frontend_design.md: Nuove route workflow schede, nuovi componenti vista overview
-  - 03_backend_api.md: Endpoint `/api/programs/[id]/publish` e `/api/trainer/movement-pattern-colors/*`
+  - 04-data-model.md: Entità MovementPatternColor, campi TrainingProgram/Week aggiornati, sezione "Workflow Creazione Scheda" con esempi step-by-step
+  - 02-frontend.md: Nuove route workflow schede, nuovi componenti vista overview
+  - 03-backend-api.md: Endpoint `/api/programs/[id]/publish` e `/api/trainer/movement-pattern-colors/*`
 - **Implicazioni**: Workflow UX ottimizzato per processo reale trainer (top-down: strategia → tattica). Colori personalizzati migliorano usabilità per trainer con metodologie diverse (powerlifting vs bodybuilding). Mapping calendario essenziale per reportistica temporale accurata. Draft incrementale elimina pressione "completare tutto in una sessione".
 
 ---
@@ -1695,9 +1695,9 @@ design/09_change_log.md                — Documentazione modifiche
   - ✅ **Audit trail**: `createdBy` traccia autore gruppo/schema
 - **Testing**: Aggiunti test P2 per CRUD gruppi/schemi, P2 per archiviazione, P2 per blocco eliminazione con riferimenti, P3 per filtri esercizi per gruppo/schema
 - **Documentazione aggiornata**:
-  - 04_data_model.md: Nuove entità MuscleGroup, MovementPattern, ExerciseMuscleGroup con schema e relazioni; sezione "Gruppi Muscolari Gestibili" e "Schemi Motori Gestibili" con esempi seed
-  - 05_security_auth.md: Matrice permessi con nuove righe "Gruppi muscolari" e "Schemi motori" CRUD per admin/trainer; sezione "Dettaglio gruppi muscolari e schemi motori condivisi"
-  - 03_backend_api.md: Nuovi gruppi endpoint `/api/muscle-groups` e `/api/movement-patterns` con authorization notes
+  - 04-data-model.md: Nuove entità MuscleGroup, MovementPattern, ExerciseMuscleGroup con schema e relazioni; sezione "Gruppi Muscolari Gestibili" e "Schemi Motori Gestibili" con esempi seed
+  - 05-security-auth.md: Matrice permessi con nuove righe "Gruppi muscolari" e "Schemi motori" CRUD per admin/trainer; sezione "Dettaglio gruppi muscolari e schemi motori condivisi"
+  - 03-backend-api.md: Nuovi gruppi endpoint `/api/muscle-groups` e `/api/movement-patterns` con authorization notes
 - **Implicazioni**: Architettura data-driven per tassonomia esercizi. Elimina necessità modifiche codice per aggiungere categorizzazioni. Trainer autonomi nella gestione metadata esercizi. Sistema scalabile per metodologie training diverse (powerlifting, bodybuilding, crossfit, etc.).
 
 ---
@@ -1754,9 +1754,9 @@ design/09_change_log.md                — Documentazione modifiche
   - Component `InstallPrompt` per suggerire installazione PWA
 - **Testing**: Aggiunti test P2 per session expiry + auto-refresh, P3 per PWA install prompt, P3 per feedback draft persistence
 - **Documentazione aggiornata**:
-  - 00_problem_statement.md: Sezione "Contesto d'uso" con dettaglio sessioni trainer/trainee
-  - 05_security_auth.md: Sezione "Session Management per Allenamenti Lunghi" con configuration, workflow, security
-  - 02_frontend_design.md: Sezione "PWA (Progressive Web App) per Trainee" con manifest, service worker, state persistence
+  - 00-problem-statement.md: Sezione "Contesto d'uso" con dettaglio sessioni trainer/trainee
+  - 05-security-auth.md: Sezione "Session Management per Allenamenti Lunghi" con configuration, workflow, security
+  - 02-frontend.md: Sezione "PWA (Progressive Web App) per Trainee" con manifest, service worker, state persistence
 - **Implicazioni**: UX trainee ottimizzata per uso reale palestra. Session 4h + auto-refresh elimina frustrazione re-login. PWA offre esperienza app nativa senza development iOS/Android. State persistence protegge lavoro utente da perdita dati accidentale. Strategia allineata con best practice mobile fitness apps.
 
 ---
@@ -1846,9 +1846,9 @@ design/09_change_log.md                — Documentazione modifiche
   - **Developer experience**: Feature branch → preview URL immediato (per review UI), unit tests rapidi (Vitest), E2E solo quando merge staging (no wait su ogni push)
   - **Monitoraggio production-ready**: Sentry error tracking, Vercel analytics, Supabase connection pool monitoring
 - **Documentazione aggiornata**:
-  - 06_deploy_and_scaling.md: Sezioni "Ambienti 3-tier", "Supabase Database Branching setup", "CI/CD GitHub Actions workflow", "Connection Pooling dettaglio", "Budget breakdown"
-  - 07_testing_strategy.md: Sezioni "Unit Testing Vitest", "E2E Testing Playwright", "Automazione e Coverage", esempi codice completi
-  - 08_open_decisions.md: OD-33/34/36/37/38/39/40/41 marcate [x] con riassunto decisioni
+  - 06-deployment.md: Sezioni "Ambienti 3-tier", "Supabase Database Branching setup", "CI/CD GitHub Actions workflow", "Connection Pooling dettaglio", "Budget breakdown"
+  - 07-testing.md: Sezioni "Unit Testing Vitest", "E2E Testing Playwright", "Automazione e Coverage", esempi codice completi
+  - 08-decisions.md: OD-33/34/36/37/38/39/40/41 marcate [x] con riassunto decisioni
 - **Implicazioni**: Tutti gli open decision chiusi. Architettura deploy production-ready con 3 ambienti isolati. Testing strategy completa (unit 80% + E2E critici). Budget ottimizzato sotto €50/mese. CI/CD automatizzato con quality gates. Developer può iniziare implementazione con specifiche complete.
 
 ---
@@ -1887,7 +1887,7 @@ design/09_change_log.md                — Documentazione modifiche
   - Pino logging: €0 (libreria open source)
   - Sentry free tier: €0 fino a 5K errori/mese (ampiamente sufficiente MVP)
   - Vercel log retention: incluso in piano Pro (7 giorni)
-- **Documentazione aggiornata**: 03_backend_api.md con sezioni dettagliate "Rate Limiting" e "Logging Strutturato" (implementazione, pattern, esempi codice)
+- **Documentazione aggiornata**: 03-backend-api.md con sezioni dettagliate "Rate Limiting" e "Logging Strutturato" (implementazione, pattern, esempi codice)
 - **Implicazioni**: Backend protetto da abusi con rate limiting granulare. Logging strutturato garantisce diagnostica errori efficace e monitoring production. Sentry free tier per alerting critici. Setup immediato, zero costi aggiuntivi, coverage AI ottima.
 
 ---
@@ -1959,9 +1959,9 @@ design/09_change_log.md                — Documentazione modifiche
   - trainer che crea trainee: sistema crea automaticamente record `TrainerTrainee` per associazione
   - Frontend: pagina `/admin/users/new` mostra dropdown ruolo con `trainer` e `trainee`, `/trainer/trainees/new` crea solo trainee
 - **Aggiornamenti file**:
-  - 05_security_auth.md: matrice permessi espansa con dettaglio creazione + gestione utenti
-  - 03_backend_api.md: sezione "Utenti" rinominata in "Utenti (Admin + trainer)" con note autorizzazione
-  - 02_frontend_design.md: aggiunta pagina `/admin/users/new`, corretta pagina trainer `/trainer/trainees/new`
+  - 05-security-auth.md: matrice permessi espansa con dettaglio creazione + gestione utenti
+  - 03-backend-api.md: sezione "Utenti" rinominata in "Utenti (Admin + trainer)" con note autorizzazione
+  - 02-frontend.md: aggiunta pagina `/admin/users/new`, corretta pagina trainer `/trainer/trainees/new`
 - **Implicazioni**: Permission granulare garantisce separazione responsabilità e autonomia operativa trainer. Validazione ruolo sul backend previene privilege escalation. UX riflette i permessi effettivi (trainer non vede opzione per creare altri trainer).
 
 ---
@@ -1985,7 +1985,7 @@ design/09_change_log.md                — Documentazione modifiche
   - Hook custom `useRoleLayout()` per classi CSS condizionali basate su ruolo
   - Componenti role-aware: MUI `DataGrid`/`Drawer` per Admin/trainer, MUI `BottomNavigation`/`SwipeableDrawer` per Trainee
   - Testing responsive differenziato: desktop 1280-1920px per Admin/trainer, mobile 360-428px per Trainee
-  - Vincolo UX documentato in 00_problem_statement.md
+  - Vincolo UX documentato in 00-problem-statement.md
 - **Nota importante**: Entrambe le esperienze rimangono **responsive** e funzionali su tutti i device, ma l'ottimizzazione UX è polarizzata per il caso d'uso principale.
 - **Implicazioni**: Design polarizzato chiarisce priorità implementative. Nessun compromesso UX necessario: ogni ruolo ottiene l'esperienza migliore per il suo workflow reale. Testing strategy aggiornata con device target specifici.
 
@@ -2020,7 +2020,7 @@ design/09_change_log.md                — Documentazione modifiche
   - Componenti: `MuscleGroupBadge`, `MovementPatternIcon`, `SetInput`, `PersonalRecordCard/Form`, `SBDReportChart`, `TrainingVolumeChart`, `RPESelector`, `RestTimeSelector`, `RepsInput`
 - **Security - Gestione password iniziali**:
   - Flusso sicuro per trainer che crea trainee: generazione password temporanea, visualizzazione una-tantum, encrypted storage opzionale, cambio obbligatorio al primo login
-  - Pattern implementativo documentato in 05_security_auth.md
+  - Pattern implementativo documentato in 05-security-auth.md
 - **Testing - Nuovi flussi critici**:
   - P1: trainer crea profilo trainee con password, trainee aggiunge massimale
   - P1: Trainee invia feedback con array serie (reps + kg)
@@ -2044,7 +2044,7 @@ design/09_change_log.md                — Documentazione modifiche
     5. Right to Erasure (Delete Account feature obbligatoria)
     6. Data Processing Agreement (Supabase + Vercel DPA)
     7. **Supabase region EU** (dati in UE per GDPR)
-  - **Checklist implementativa**: 9 task operativi in 05_security_auth.md
+  - **Checklist implementativa**: 9 task operativi in 05-security-auth.md
   - **Non bloccante sviluppo**: policy possono essere scritte in parallelo, feature "Delete Account" implementabile in fase finale MVP
 - **Implicazioni**: GDPR compliance garantita con checklist chiara. Cookie consent + privacy policy obbligatori pre-launch. Delete account obbligatorio. Supabase region EU da configurare.
 

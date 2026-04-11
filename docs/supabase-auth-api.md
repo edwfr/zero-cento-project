@@ -256,7 +256,7 @@ Supabase Auth Helpers gestiscono automaticamente i cookie per sessioni persisten
 - Limite 5 tentativi falliti login → account temporaneamente bloccato per 1 ora
 - Non configurabile via dashboard (hard limit backend)
 
-**Per MVP**: Rate limiting aggiuntivo gestito con **Upstash Redis** (vedi `05_security_auth.md`)
+**Per MVP**: Rate limiting aggiuntivo gestito con **Upstash Redis** (vedi `05-security-auth.md`)
 
 **Migrazione provider**:
 - NextAuth.js: Nessun rate limiting nativo, implementare con Redis/Cache

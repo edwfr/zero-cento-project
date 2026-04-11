@@ -75,7 +75,7 @@ Response deve includere peso effettivo pre-calcolato per ogni esercizio:
 
 ### 2. Logica Server - calculateEffectiveWeight
 
-Utilizzo della funzione helper già definita in `design/03_backend_api.md`:
+Utilizzo della funzione helper già definita in `design/03-backend-api.md`:
 
 ```typescript
 // app/api/trainee/workouts/[workoutId]/route.ts
@@ -323,4 +323,4 @@ describe('calculateEffectiveWeight', () => {
 **Status**: Documento implementazione - ready for development
 **Owner**: Backend team
 **Priority**: HIGH (blocker per trainee workout view MVP)
-**Related**: design-review/00_design_review_v2.md (Rischio MEDIO, item A3)
+**Related**: design-review/design-review.md (Rischio MEDIO, item A3)
