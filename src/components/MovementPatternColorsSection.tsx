@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import MovementPatternTag from './MovementPatternTag'
 import { getApiErrorMessage } from '@/lib/api-error'
+import { Button } from '@/components/Button'
 
 interface MovementPattern {
     id: string
@@ -178,12 +179,13 @@ export default function MovementPatternColorsSection() {
                         ))}
                     </div>
                 </div>
-                <button
+                <Button
                     onClick={() => setIsEditing(true)}
-                    className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 transition-colors"
+                    variant="primary"
+                    size="md"
                 >
                     {t('admin:colors.edit')}
-                </button>
+                </Button>
             </div>
         )
     }
@@ -256,20 +258,24 @@ export default function MovementPatternColorsSection() {
             </div>
 
             <div className="flex gap-3">
-                <button
+                <Button
                     onClick={handleSave}
+                    variant="primary"
+                    size="md"
                     disabled={saving}
-                    className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    isLoading={saving}
+                    loadingText={t('common:common.saving')}
                 >
-                    {saving ? t('common:common.saving') : t('admin:colors.save')}
-                </button>
-                <button
+                    {t('admin:colors.save')}
+                </Button>
+                <Button
                     onClick={handleCancel}
+                    variant="secondary"
+                    size="md"
                     disabled={saving}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors disabled:cursor-not-allowed"
                 >
                     {t('common:common.cancel')}
-                </button>
+                </Button>
             </div>
         </div>
     )

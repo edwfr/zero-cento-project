@@ -32,7 +32,7 @@ export default function ProgressBar({
     }
 
     const colorClasses = {
-        primary: 'bg-[#FFA700]',
+        primary: 'bg-brand-primary',
         success: 'bg-green-500',
         warning: 'bg-yellow-500',
         danger: 'bg-red-500',

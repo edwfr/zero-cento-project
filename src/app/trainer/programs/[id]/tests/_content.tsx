@@ -11,6 +11,7 @@ import { useToast } from '@/components/ToastNotification'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { estimateOneRMFromRpeTable } from '@/lib/calculations'
 import { formatDate, getTodayForInput } from '@/lib/date-format'
+import { Button } from '@/components/Button'
 
 interface TestResultRow {
     workoutExerciseId: string
@@ -277,23 +278,20 @@ export default function ProgramTestResultsContent() {
                             })}
                         </p>
                     </div>
-                    <button
+                    <Button
                         type="button"
                         onClick={() => {
                             void openAddRecordModal()
                         }}
+                        variant="primary"
+                        size="md"
                         disabled={isOpeningModal}
-                        className="bg-[#FFA700] hover:bg-[#FF9500] disabled:bg-gray-400 text-white font-semibold px-6 py-2 rounded-lg transition-colors inline-flex items-center justify-center gap-2"
+                        isLoading={isOpeningModal}
+                        loadingText={t('personalRecords.addRecordButton')}
+                        icon={<Plus className="w-4 h-4" />}
                     >
-                        {isOpeningModal ? (
-                            <LoadingSpinner size="sm" color="white" />
-                        ) : (
-                            <>
-                                <Plus className="w-4 h-4" />
-                                {t('personalRecords.addRecordButton')}
-                            </>
-                        )}
-                    </button>
+                        {t('personalRecords.addRecordButton')}
+                    </Button>
                 </div>
             </div>
 
@@ -534,24 +532,26 @@ export default function ProgramTestResultsContent() {
                                 )}
 
                             <div className="flex space-x-4 pt-4">
-                                <button
+                                <Button
                                     type="submit"
+                                    variant="primary"
+                                    size="lg"
+                                    className="flex-1"
                                     disabled={isSavingRecord}
-                                    className="flex-1 bg-[#FFA700] hover:bg-[#FF9500] disabled:bg-gray-400 text-white font-semibold py-3 rounded-lg transition-colors flex items-center justify-center"
+                                    isLoading={isSavingRecord}
+                                    loadingText={t('personalRecords.saveRecord')}
                                 >
-                                    {isSavingRecord ? (
-                                        <LoadingSpinner size="sm" color="white" />
-                                    ) : (
-                                        t('personalRecords.saveRecord')
-                                    )}
-                                </button>
-                                <button
+                                    {t('personalRecords.saveRecord')}
+                                </Button>
+                                <Button
                                     type="button"
                                     onClick={closeAddRecordModal}
-                                    className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 rounded-lg transition-colors"
+                                    variant="secondary"
+                                    size="lg"
+                                    className="flex-1"
                                 >
                                     {t('workoutDetail.cancel')}
-                                </button>
+                                </Button>
                             </div>
                         </form>
                     </div>

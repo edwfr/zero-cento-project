@@ -9,6 +9,7 @@ import UserDeleteModal from '@/components/UserDeleteModal'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import { formatDate } from '@/lib/date-format'
+import { Button } from '@/components/Button'
 
 interface User {
     id: string
@@ -234,12 +235,14 @@ export default function AdminUsersContent() {
                         <option value="inactive">{t('admin:users.filterStatusInactive')}</option>
                     </select>
 
-                    <button
+                    <Button
                         onClick={() => setIsCreateOpen(true)}
-                        className="ml-auto bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-2 rounded-lg transition-colors whitespace-nowrap"
+                        variant="primary"
+                        size="md"
+                        className="ml-auto whitespace-nowrap"
                     >
                         {t('admin:users.createUser')}
-                    </button>
+                    </Button>
                 </div>
 
                 {/* Bulk action bar */}
@@ -251,14 +254,14 @@ export default function AdminUsersContent() {
                         <button
                             onClick={() => handleBulkStatus(true)}
                             disabled={bulkLoading}
-                            className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white text-sm font-semibold px-4 py-1 rounded-lg transition-colors"
+                            className="bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold px-4 py-1 rounded-lg transition-colors"
                         >
                             ✓ {t('admin:users.activateAll')}
                         </button>
                         <button
                             onClick={() => handleBulkStatus(false)}
                             disabled={bulkLoading}
-                            className="bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white text-sm font-semibold px-4 py-1 rounded-lg transition-colors"
+                            className="bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold px-4 py-1 rounded-lg transition-colors"
                         >
                             ✗ {t('admin:users.deactivateAll')}
                         </button>
@@ -428,7 +431,7 @@ export default function AdminUsersContent() {
                                     key={p}
                                     onClick={() => setPage(p)}
                                     className={`px-3 py-1 text-sm border rounded-lg transition-colors ${p === page
-                                        ? 'bg-[#FFA700] text-white border-[#FFA700]'
+                                        ? 'bg-brand-primary text-white border-[#FFA700]'
                                         : 'border-gray-300 hover:bg-gray-50'
                                         }`}
                                 >

@@ -1921,7 +1921,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             {readOnly && program.status === 'draft' && (
                                 <Link
                                     href={editProgramHref}
-                                    className="bg-brand-primary hover:bg-brand-primary/90 text-white font-semibold py-2 px-4 rounded-lg transition-colors inline-flex items-center gap-2"
+                                    className="bg-brand-primary hover:bg-brand-primary-hover text-white font-semibold py-2 px-4 rounded-lg transition-colors inline-flex items-center gap-2"
                                 >
                                     <FileEdit className="w-4 h-4" />
                                     {t('editProgram.editProgram', 'Modifica Programma')}
@@ -2097,7 +2097,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             type="button"
                             onClick={applyStructureToAllWeeks}
                             disabled={applyingStructure}
-                            className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-brand-primary px-6 py-3 font-semibold text-white transition-colors hover:bg-brand-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-brand-primary px-6 py-3 font-semibold text-white transition-colors hover:bg-brand-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {applyingStructure ? (
                                 <LoadingSpinner size="sm" color="white" />
@@ -2520,7 +2520,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                 savingWorkoutId
                                                                             ) || !workoutHasUnsavedChanges
                                                                         }
-                                                                        className="inline-flex items-center gap-2 rounded-lg bg-brand-primary px-3 py-2 text-sm font-semibold text-white hover:bg-brand-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                                                                        className="inline-flex items-center gap-2 rounded-lg bg-brand-primary px-3 py-2 text-sm font-semibold text-white hover:bg-brand-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
                                                                         title={t('editProgram.saveRowTitle')}
                                                                     >
                                                                         {savingWorkoutId === workout.id ? (
@@ -3003,7 +3003,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             <Link
                                 href={reviewProgramHref}
                                 className={`flex-1 py-3 px-6 rounded-lg font-semibold text-center transition-colors ${canProceedToReview
-                                    ? 'bg-brand-primary hover:bg-brand-primary/90 text-white'
+                                    ? 'bg-brand-primary hover:bg-brand-primary-hover text-white'
                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                     }`}
                                 onClick={(event) => {

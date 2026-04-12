@@ -689,7 +689,7 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                 {t('editProgram.stepExercises')}
                             </span>
                         </button>
-                        <div className={`h-1 w-16 ${isExercisesStepComplete ? 'bg-[#FFA700]' : 'bg-gray-300'}`}></div>
+                        <div className={`h-1 w-16 ${isExercisesStepComplete ? 'bg-brand-primary' : 'bg-gray-300'}`}></div>
                         <button
                             type="button"
                             onClick={() => {
@@ -701,7 +701,7 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                         >
                             <div
                                 className={`flex h-10 w-10 items-center justify-center rounded-full font-bold ${isReportStepActive
-                                    ? 'bg-[#FFA700] text-white'
+                                    ? 'bg-brand-primary text-white'
                                     : 'bg-gray-300 text-gray-600'
                                     }`}
                             >
@@ -753,7 +753,7 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                             (isProgramEditable ? (
                                 <Link
                                     href={editProgramHref}
-                                    className="inline-flex items-center gap-2 rounded-lg bg-[#FFA700] px-4 py-2 font-semibold text-white transition-colors hover:bg-[#FF9500]"
+                                    className="inline-flex items-center gap-2 rounded-lg bg-brand-primary px-4 py-2 font-semibold text-white transition-colors hover:bg-brand-primary-hover"
                                 >
                                     <FileEdit className="h-4 w-4" />
                                     {t('editProgram.edit')}
@@ -1144,7 +1144,7 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                         <Link
                             href={`/trainer/programs/${programId}/publish`}
                             className={`flex-1 rounded-lg px-6 py-3 text-center font-semibold transition-colors ${isDraft && configuredWorkouts === totalWorkouts
-                                ? 'bg-[#FFA700] text-white hover:bg-[#FF9500]'
+                                ? 'bg-brand-primary text-white hover:bg-brand-primary-hover'
                                 : 'cursor-not-allowed bg-gray-300 text-gray-500'
                                 }`}
                             onClick={(event: MouseEvent<HTMLAnchorElement>) => {

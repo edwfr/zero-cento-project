@@ -629,7 +629,7 @@ export default function TraineeDetailContent() {
                             </Link>
                             <Link
                                 href={`/trainer/trainees/${traineeId}/records`}
-                                className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-2 rounded-lg transition-colors inline-flex items-center gap-2"
+                                className="bg-brand-primary hover:bg-brand-primary-hover text-white font-semibold px-6 py-2 rounded-lg transition-colors inline-flex items-center gap-2"
                             >
                                 <Trophy size={16} />{t('athletes.manageRecords')}
                             </Link>
@@ -681,7 +681,7 @@ export default function TraineeDetailContent() {
                                 </p>
                                 <Link
                                     href={`/trainer/programs/new?traineeId=${traineeId}`}
-                                    className="inline-block bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-2 rounded-lg transition-colors"
+                                    className="inline-block bg-brand-primary hover:bg-brand-primary-hover text-white font-semibold px-6 py-2 rounded-lg transition-colors"
                                 >
                                     {t('athletes.createNewProgram')}
                                 </Link>
@@ -775,7 +775,7 @@ export default function TraineeDetailContent() {
                                 <p className="text-gray-500 text-lg mb-4">{t('personalRecords.noRecords')}</p>
                                 <Link
                                     href={`/trainer/trainees/${traineeId}/records`}
-                                    className="inline-block bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-2 rounded-lg transition-colors"
+                                    className="inline-block bg-brand-primary hover:bg-brand-primary-hover text-white font-semibold px-6 py-2 rounded-lg transition-colors"
                                 >
                                     {t('personalRecords.addRecordButton')}
                                 </Link>

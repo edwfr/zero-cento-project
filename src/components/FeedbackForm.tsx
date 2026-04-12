@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import RPESelector from './RPESelector'
+import { Button } from '@/components/Button'
 
 interface SetPerformed {
     setNumber: number
@@ -197,22 +198,28 @@ export default function FeedbackForm({
             {/* Actions */}
             <div className="flex gap-3 border-t border-gray-200 pt-4">
                 {onCancel && (
-                    <button
+                    <Button
                         type="button"
                         onClick={onCancel}
+                        variant="secondary"
+                        size="md"
+                        className="flex-1"
                         disabled={isSubmitting}
-                        className="flex-1 rounded-lg border-2 border-gray-300 px-4 py-2 font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {t('common:common.cancel')}
-                    </button>
+                    </Button>
                 )}
-                <button
+                <Button
                     type="submit"
+                    variant="primary"
+                    size="md"
+                    className="flex-1 shadow-md"
                     disabled={isSubmitting}
-                    className="flex-1 rounded-lg bg-brand-primary px-4 py-2 font-semibold text-white shadow-md hover:bg-brand-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                    isLoading={isSubmitting}
+                    loadingText={t('common:common.submitting')}
                 >
-                    {isSubmitting ? t('common:common.submitting') : t('components:feedbackForm.saveFeedback')}
-                </button>
+                    {t('components:feedbackForm.saveFeedback')}
+                </Button>
             </div>
         </form>
     )

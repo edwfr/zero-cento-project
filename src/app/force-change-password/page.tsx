@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@/components/Button'
 
 export default function ForceChangePasswordPage() {
     const { t } = useTranslation(['auth', 'common'])
@@ -177,13 +178,17 @@ export default function ForceChangePasswordPage() {
                             />
                         </div>
 
-                        <button
+                        <Button
                             type="submit"
+                            variant="primary"
+                            size="lg"
+                            fullWidth
                             disabled={loading || !currentPassword || !newPassword || !confirmPassword}
-                            className="w-full bg-[#FFA700] hover:bg-[#FF9500] disabled:bg-gray-300 text-white font-semibold py-3 rounded-lg transition-colors"
+                            isLoading={loading}
+                            loadingText={t('auth:forceChangePassword.submitting')}
                         >
-                            {loading ? t('auth:forceChangePassword.submitting') : t('auth:forceChangePassword.submit')}
-                        </button>
+                            {t('auth:forceChangePassword.submit')}
+                        </Button>
                     </form>
                 </div>
 

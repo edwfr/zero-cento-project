@@ -8,6 +8,7 @@ import UserEditModal from './UserEditModal'
 import UserDeleteModal from './UserDeleteModal'
 import { useToast } from '@/components/ToastNotification'
 import { formatDate } from '@/lib/date-format'
+import { Button } from '@/components/Button'
 
 interface User {
     id: string
@@ -151,15 +152,18 @@ export default function UsersTable() {
                     </select>
                 </div>
 
-                <button
+                <Button
                     onClick={() => setIsCreateModalOpen(true)}
-                    className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 transition-colors flex items-center space-x-2"
+                    variant="primary"
+                    size="md"
+                    icon={(
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                    )}
                 >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    <span>{t('admin:users.createUser')}</span>
-                </button>
+                    {t('admin:users.createUser')}
+                </Button>
             </div>
 
             {/* Users Table */}

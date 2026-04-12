@@ -129,7 +129,7 @@ export default function TraineeDashboardContent() {
                     </p>
                     <Link
                         href="/trainee/records"
-                        className="inline-block bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+                        className="inline-block bg-brand-primary hover:bg-brand-primary-hover text-white font-semibold px-6 py-3 rounded-lg transition-colors"
                     >
                         {t('trainee:dashboard.viewRecords')}
                     </Link>
@@ -264,7 +264,7 @@ export default function TraineeDashboardContent() {
 
                 <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                     <div
-                        className="bg-[#FFA700] h-3 rounded-full transition-all duration-500"
+                        className="bg-brand-primary h-3 rounded-full transition-all duration-500"
                         style={{ width: `${progressPercent}%` }}
                     />
                 </div>

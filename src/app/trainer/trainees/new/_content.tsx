@@ -7,6 +7,7 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import Link from 'next/link'
 import { CheckCircle2, ArrowLeft } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import { Button } from '@/components/Button'
 
 export default function NewTraineePageContent() {
     const router = useRouter()
@@ -89,21 +90,23 @@ export default function NewTraineePageContent() {
                     <div className="space-y-3">
                         <Link
                             href="/trainer/trainees"
-                            className="block w-full bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold py-3 px-6 rounded-lg text-center transition-colors"
+                            className="block w-full bg-brand-primary hover:bg-brand-primary-hover text-white font-semibold py-3 px-6 rounded-lg text-center transition-colors"
                         >
                             {t('athletes.goToAthleteList')}
                         </Link>
-                        <button
+                        <Button
                             onClick={() => {
                                 setSuccess(false)
                                 setFirstName('')
                                 setLastName('')
                                 setEmail('')
                             }}
-                            className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
+                            variant="secondary"
+                            size="lg"
+                            fullWidth
                         >
                             {t('athletes.createAnotherAthlete')}
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -188,17 +191,17 @@ export default function NewTraineePageContent() {
 
                     {/* Actions */}
                     <div className="flex space-x-4 pt-4">
-                        <button
+                        <Button
                             type="submit"
+                            variant="primary"
+                            size="lg"
+                            className="flex-1"
                             disabled={loading}
-                            className="flex-1 bg-[#FFA700] hover:bg-[#FF9500] disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
+                            isLoading={loading}
+                            loadingText={t('common:common.loadingProgress')}
                         >
-                            {loading ? (
-                                <LoadingSpinner size="sm" color="white" />
-                            ) : (
-                                t('athletes.createAthlete')
-                            )}
-                        </button>
+                            {t('athletes.createAthlete')}
+                        </Button>
                         <Link
                             href="/trainer/trainees"
                             className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-lg text-center transition-colors"

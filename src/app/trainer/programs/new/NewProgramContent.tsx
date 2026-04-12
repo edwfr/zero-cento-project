@@ -108,7 +108,7 @@ export default function NewProgramContent({
                     </p>
                     <Link
                         href="/trainer/trainees/new"
-                        className="inline-block bg-brand-primary hover:bg-brand-primary/90 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+                        className="inline-block bg-brand-primary hover:bg-brand-primary-hover text-white font-semibold px-6 py-3 rounded-lg transition-colors"
                     >
                         {t('athletes.newAthlete')}
                     </Link>
@@ -321,7 +321,7 @@ export default function NewProgramContent({
                     <button
                         type="submit"
                         disabled={loading}
-                        className="flex-1 bg-brand-primary hover:bg-brand-primary/90 disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
+                        className="flex-1 bg-brand-primary hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
                     >
                         {loading ? (
                             <LoadingSpinner size="sm" color="white" />

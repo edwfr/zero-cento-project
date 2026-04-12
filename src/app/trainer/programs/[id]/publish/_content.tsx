@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -251,9 +251,9 @@ export default function PublishProgramPage() {
                             </div>
                             <span className="ml-2 font-semibold text-gray-900">{t('editProgram.stepReview')}</span>
                         </div>
-                        <div className="w-16 h-1 bg-[#FFA700]"></div>
+                        <div className="w-16 h-1 bg-brand-primary"></div>
                         <div className="flex items-center">
-                            <div className="w-10 h-10 bg-[#FFA700] text-white rounded-full flex items-center justify-center font-bold">
+                            <div className="w-10 h-10 bg-brand-primary text-white rounded-full flex items-center justify-center font-bold">
                                 4
                             </div>
                             <span className="ml-2 font-semibold text-gray-900">{t('editProgram.stepPublish')}</span>
@@ -396,7 +396,7 @@ export default function PublishProgramPage() {
                             <button
                                 onClick={handlePublish}
                                 disabled={publishing || !startDate}
-                                className="flex-1 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white font-semibold py-4 px-6 rounded-lg transition-colors flex items-center justify-center"
+                                className="flex-1 bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-lg transition-colors flex items-center justify-center"
                             >
                                 {publishing ? (
                                     <LoadingSpinner size="sm" color="white" />
@@ -414,7 +414,7 @@ export default function PublishProgramPage() {
                     ) : (
                         <Link
                             href={`/trainer/programs/${programId}/edit`}
-                            className="flex-1 bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold py-4 px-6 rounded-lg text-center transition-colors"
+                            className="flex-1 bg-brand-primary hover:bg-brand-primary-hover text-white font-semibold py-4 px-6 rounded-lg text-center transition-colors"
                         >
                             {t('publish.backToEdit')}
                         </Link>

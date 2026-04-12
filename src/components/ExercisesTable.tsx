@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import ExerciseCreateModal from './ExerciseCreateModal'
+import { Button } from '@/components/Button'
 
 interface MuscleGroupAssignment {
     muscleGroup: {
@@ -155,15 +156,19 @@ export default function ExercisesTable() {
                     </div>
                 </div>
 
-                <button
+                <Button
                     onClick={() => setIsCreateModalOpen(true)}
-                    className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 transition-colors flex items-center space-x-2 justify-center sm:justify-start"
+                    variant="primary"
+                    size="md"
+                    className="justify-center sm:justify-start"
+                    icon={(
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                    )}
                 >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    <span>{t('trainer:exercises.createExercise')}</span>
-                </button>
+                    {t('trainer:exercises.createExercise')}
+                </Button>
             </div>
 
             {/* Exercises Table */}

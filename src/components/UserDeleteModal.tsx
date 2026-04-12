@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
+import { Button } from '@/components/Button'
 
 interface User {
     id: string
@@ -139,23 +140,29 @@ export default function UserDeleteModal({ user, onClose, onUserDeleted }: UserDe
                 )}
 
                 <div className="flex space-x-3">
-                    <button
+                    <Button
                         ref={deleteButtonRef}
                         onClick={handleDelete}
+                        variant="danger"
+                        size="md"
+                        className="flex-1"
                         disabled={loading}
-                        className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                         aria-label={`${t('common:common.delete')} ${user.firstName} ${user.lastName}`}
+                        isLoading={loading}
+                        loadingText={t('common:common.deleting')}
                     >
-                        {loading ? t('common:common.deleting') : t('common:common.delete')}
-                    </button>
-                    <button
+                        {t('common:common.delete')}
+                    </Button>
+                    <Button
                         onClick={onClose}
+                        variant="secondary"
+                        size="md"
+                        className="flex-1"
                         disabled={loading}
-                        className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
                         aria-label={t('common:common.cancel')}
                     >
                         {t('common:common.cancel')}
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>

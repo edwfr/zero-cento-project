@@ -220,11 +220,11 @@ Questi file usano già il token ma con hover `/90` (opacity). Vanno migrati al c
 
 ### Verifica
 
-- [ ] Grep di conferma: `grep -r "bg-\[#FFA700\]" src/` deve dare **0 risultati**
-- [ ] Grep di conferma: `grep -r "hover:bg-\[#FF9500\]" src/` deve dare **0 risultati**
-- [ ] Grep di conferma: `grep -r "hover:bg-\[#E69500\]" src/` deve dare **0 risultati**
-- [ ] Grep di conferma: `grep -r "hover:bg-brand-primary/90" src/` deve dare **0 risultati** (nei bottoni)
-- [ ] Grep di conferma: `grep -r "disabled:bg-gray-300\|disabled:bg-gray-400" src/` deve dare **0 risultati** nei bottoni
+- [x] Grep di conferma: `grep -r "bg-\[#FFA700\]" src/` deve dare **0 risultati**
+- [x] Grep di conferma: `grep -r "hover:bg-\[#FF9500\]" src/` deve dare **0 risultati**
+- [x] Grep di conferma: `grep -r "hover:bg-\[#E69500\]" src/` deve dare **0 risultati**
+- [x] Grep di conferma: `grep -r "hover:bg-brand-primary/90" src/` deve dare **0 risultati** (nei bottoni)
+- [x] Grep di conferma: `grep -r "disabled:bg-gray-300\|disabled:bg-gray-400" src/` deve dare **0 risultati** nei bottoni
 - [ ] Test e2e passano
 - [ ] Verifica visiva su almeno: login, forgot-password, admin/users, trainer/programs, trainee/dashboard
 

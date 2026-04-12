@@ -8,6 +8,7 @@ import '@/lib/i18n/client'
 import { getApiErrorMessage } from '@/lib/api-error'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { Trash2, ArrowLeft } from 'lucide-react'
+import { Button } from '@/components/Button'
 
 interface MuscleGroup {
     id: string
@@ -246,7 +247,7 @@ export default function EditExerciseContent() {
                                 type="button"
                                 onClick={addVariant}
                                 disabled={saving}
-                                className="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                className="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {t('exercises.addVariant')}
                             </button>
@@ -352,7 +353,7 @@ export default function EditExerciseContent() {
                                 type="button"
                                 onClick={addMuscleGroup}
                                 disabled={saving}
-                                className="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                className="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {t('exercises.addButton')}
                             </button>
@@ -412,13 +413,17 @@ export default function EditExerciseContent() {
 
                     {/* Actions */}
                     <div className="flex space-x-4 pt-4">
-                        <button
+                        <Button
                             type="submit"
+                            variant="primary"
+                            size="lg"
+                            className="flex-1"
                             disabled={saving}
-                            className="flex-1 bg-[#FFA700] hover:bg-[#FF9500] disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
+                            isLoading={saving}
+                            loadingText={t('common:common.saving')}
                         >
-                            {saving ? <LoadingSpinner size="sm" color="white" /> : t('exercises.saveChanges')}
-                        </button>
+                            {t('exercises.saveChanges')}
+                        </Button>
                         <Link
                             href="/trainer/exercises"
                             className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-lg text-center transition-colors"

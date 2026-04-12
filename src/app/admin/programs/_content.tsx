@@ -219,7 +219,7 @@ export default function AdminProgramsPageContent() {
                                     key={p}
                                     onClick={() => setPage(p)}
                                     className={`px-3 py-1 text-sm border rounded-lg transition-colors ${p === page
-                                        ? 'bg-[#FFA700] text-white border-[#FFA700]'
+                                        ? 'bg-brand-primary text-white border-[#FFA700]'
                                         : 'border-gray-300 hover:bg-gray-50'
                                         }`}
                                 >

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { createClient } from '@/lib/supabase-client'
+import { Button } from '@/components/Button'
 
 export default function ChangePasswordSection() {
     const { t } = useTranslation(['auth', 'common'])
@@ -91,12 +92,13 @@ export default function ChangePasswordSection() {
     if (!isEditing) {
         return (
             <div>
-                <button
+                <Button
                     onClick={() => setIsEditing(true)}
-                    className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 transition-colors"
+                    variant="primary"
+                    size="md"
                 >
                     {t('changePassword.editButton')}
-                </button>
+                </Button>
             </div>
         )
     }
@@ -179,21 +181,25 @@ export default function ChangePasswordSection() {
                 </div>
 
                 <div className="flex space-x-3 pt-4">
-                    <button
+                    <Button
                         type="submit"
+                        variant="primary"
+                        size="md"
                         disabled={loading || !currentPassword || !newPassword || !confirmPassword}
-                        className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                        isLoading={loading}
+                        loadingText={t('changePassword.submitting')}
                     >
-                        {loading ? t('changePassword.submitting') : t('changePassword.submit')}
-                    </button>
-                    <button
+                        {t('changePassword.submit')}
+                    </Button>
+                    <Button
                         type="button"
                         onClick={handleCancel}
+                        variant="secondary"
+                        size="md"
                         disabled={loading}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
                     >
                         {t('common:common.cancel')}
-                    </button>
+                    </Button>
                 </div>
             </form>
         </div>

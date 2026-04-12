@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import Image from 'next/image'
+import { Button } from '@/components/Button'
 
 interface BeforeInstallPromptEvent extends Event {
     readonly platforms: string[]
@@ -102,18 +103,22 @@ export default function PWAInstallPrompt() {
                     {tComponents('pwaPrompt.description')}
                 </p>
                 <div className="flex gap-2 mt-3">
-                    <button
+                    <Button
                         onClick={handleInstall}
-                        className="flex-1 bg-[#FFA700] hover:bg-[#FF9500] text-white text-xs font-semibold py-2 rounded-lg transition-colors"
+                        variant="primary"
+                        size="sm"
+                        className="flex-1 text-xs"
                     >
                         {tComponents('pwaPrompt.installButton')}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         onClick={handleDismiss}
-                        className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold py-2 rounded-lg transition-colors"
+                        variant="secondary"
+                        size="sm"
+                        className="flex-1 text-xs"
                     >
                         {tComponents('pwaPrompt.notNow')}
-                    </button>
+                    </Button>
                 </div>
             </div>
 

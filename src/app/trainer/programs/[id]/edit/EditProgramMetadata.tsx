@@ -6,6 +6,7 @@ import { useToast } from '@/components/ToastNotification'
 import { Pencil } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
+import { Button } from '@/components/Button'
 
 interface Trainee {
     id: string
@@ -273,21 +274,27 @@ export default function EditProgramMetadata({
 
                     {/* Actions */}
                     <div className="flex space-x-4 pt-4 border-t">
-                        <button
+                        <Button
                             type="submit"
+                            variant="primary"
+                            size="lg"
+                            className="flex-1"
                             disabled={saving || status !== 'draft'}
-                            className="flex-1 bg-[#FFA700] hover:bg-[#FF9500] disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
+                            isLoading={saving}
+                            loadingText={t('common:common.saving')}
                         >
-                            {saving ? <LoadingSpinner size="sm" color="white" /> : t('common:common.saveChanges')}
-                        </button>
-                        <button
+                            {t('common:common.saveChanges')}
+                        </Button>
+                        <Button
                             type="button"
                             onClick={() => setIsOpen(false)}
+                            variant="secondary"
+                            size="lg"
+                            className="flex-1"
                             disabled={saving}
-                            className="flex-1 bg-gray-300 hover:bg-gray-400 disabled:opacity-50 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
                         >
                             {t('common:common.cancel')}
-                        </button>
+                        </Button>
                     </div>
                 </form>
             </div>

@@ -141,7 +141,7 @@ export default function TrainerTraineesContent() {
 
                             <Link
                                 href="/trainer/trainees/new"
-                                className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-2 rounded-lg transition-colors flex items-center gap-2"
+                                className="bg-brand-primary hover:bg-brand-primary-hover text-white font-semibold px-6 py-2 rounded-lg transition-colors flex items-center gap-2"
                             >
                                 <Plus className="w-4 h-4" />{t('athletes.newAthlete')}
                             </Link>

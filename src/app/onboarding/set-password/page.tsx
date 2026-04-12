@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import { useTranslation } from 'react-i18next'
 import Link from 'next/link'
+import { Button } from '@/components/Button'
 
 export default function SetPasswordPage() {
     const { t } = useTranslation(['auth', 'common'])
@@ -249,13 +250,17 @@ export default function SetPasswordPage() {
                             />
                         </div>
 
-                        <button
+                        <Button
                             type="submit"
+                            variant="primary"
+                            size="lg"
+                            fullWidth
                             disabled={loading || !password || !confirmPassword}
-                            className="w-full bg-[#FFA700] hover:bg-[#FF9500] disabled:bg-gray-300 text-white font-semibold py-3 rounded-lg transition-colors disabled:cursor-not-allowed"
+                            isLoading={loading}
+                            loadingText={t('common:common.loadingProgress')}
                         >
-                            {loading ? t('common:common.loadingProgress') : t('auth:setPassword.submit')}
-                        </button>
+                            {t('auth:setPassword.submit')}
+                        </Button>
                     </form>
                 </div>
 

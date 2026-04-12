@@ -211,7 +211,7 @@ export default function TrainerExercisesContent() {
 
                             <Link
                                 href="/trainer/exercises/new"
-                                className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-2 rounded-lg transition-colors"
+                                className="bg-brand-primary hover:bg-brand-primary-hover text-white font-semibold px-6 py-2 rounded-lg transition-colors"
                             >
                                 <Plus className="w-4 h-4 inline mr-2" />{t('exercises.createNew')}
                             </Link>

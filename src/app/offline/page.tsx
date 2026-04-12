@@ -1,6 +1,7 @@
 'use client'
 
 import { useTranslation } from 'react-i18next'
+import { Button } from '@/components/Button'
 
 export default function OfflinePage() {
     const { t } = useTranslation('common')
@@ -8,7 +9,7 @@ export default function OfflinePage() {
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
             <div className="max-w-md w-full text-center">
-                <div className="inline-flex items-center justify-center w-20 h-20 bg-[#FFA700]/10 rounded-2xl mb-6">
+                <div className="inline-flex items-center justify-center w-20 h-20 bg-brand-primary/10 rounded-2xl mb-6">
                     <svg
                         className="w-10 h-10 text-[#FFA700]"
                         fill="none"
@@ -29,12 +30,13 @@ export default function OfflinePage() {
                     {t('offline.description')}
                 </p>
 
-                <button
+                <Button
                     onClick={() => window.location.reload()}
-                    className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-8 py-3 rounded-xl transition-colors"
+                    variant="primary"
+                    size="lg"
                 >
                     {t('common.retry')}
-                </button>
+                </Button>
 
                 <p className="text-gray-400 text-xs mt-6">
                     {t('app.fullName')}

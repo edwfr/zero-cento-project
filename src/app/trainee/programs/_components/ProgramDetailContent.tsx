@@ -643,7 +643,7 @@ export default function ProgramDetailContent({
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
                     <div
-                        className="bg-[#FFA700] h-3 rounded-full transition-all duration-500"
+                        className="bg-brand-primary h-3 rounded-full transition-all duration-500"
                         style={{ width: `${progressPercent}%` }}
                     />
                 </div>

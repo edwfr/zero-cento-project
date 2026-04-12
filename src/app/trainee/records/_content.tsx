@@ -180,7 +180,7 @@ export default function PersonalRecordsContent() {
                                                 setTypeFilter(option.value as typeof typeFilter)
                                             }
                                             className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors ${typeFilter === option.value
-                                                ? 'bg-[#FFA700] text-white'
+                                                ? 'bg-brand-primary text-white'
                                                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                                 }`}
                                         >

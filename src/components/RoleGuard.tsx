@@ -3,6 +3,7 @@
 import { ReactNode, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@/components/Button'
 
 interface RoleGuardProps {
     children: ReactNode
@@ -61,12 +62,13 @@ export default function RoleGuard({
                     <p className="text-gray-600 mb-6">
                         {t('errors.accessDeniedMessage')}
                     </p>
-                    <button
+                    <Button
                         onClick={() => router.back()}
-                        className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+                        variant="primary"
+                        size="lg"
                     >
                         {t('common.back')}
-                    </button>
+                    </Button>
                 </div>
             </div>
         )

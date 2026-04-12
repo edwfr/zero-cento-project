@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useEffect, useRef } from 'react'
 import LoadingSpinner from './LoadingSpinner'
 import { AlertTriangle, Zap, Info, CheckCircle2 } from 'lucide-react'
+import { Button } from '@/components/Button'
 
 interface ConfirmationModalProps {
     isOpen: boolean
@@ -109,7 +110,7 @@ export default function ConfirmationModal({
         },
         info: {
             icon: <Info className="w-7 h-7 text-blue-600" />,
-            confirmBg: 'bg-brand-primary hover:bg-brand-primary/90',
+            confirmBg: 'bg-brand-primary hover:bg-brand-primary-hover',
             titleColor: 'text-blue-900',
             iconBg: 'bg-blue-100',
         },
@@ -157,20 +158,22 @@ export default function ConfirmationModal({
                         ref={confirmButtonRef}
                         onClick={onConfirm}
                         disabled={isLoading}
-                        className={`flex-1 ${styles.confirmBg} disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center`}
+                        className={`flex-1 ${styles.confirmBg} disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center`}
                         aria-label={`${finalConfirmText} - ${title}`}
                     >
                         {isLoading ? <LoadingSpinner size="sm" color="white" /> : finalConfirmText}
                     </button>
 
-                    <button
+                    <Button
                         onClick={onClose}
+                        variant="secondary"
+                        size="lg"
+                        className="flex-1"
                         disabled={isLoading}
-                        className="flex-1 bg-gray-300 hover:bg-gray-400 disabled:bg-gray-200 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
                         aria-label={finalCancelText}
                     >
                         {finalCancelText}
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>

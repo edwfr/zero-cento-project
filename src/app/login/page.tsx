@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@/components/Button'
 
 export default function LoginPage() {
     const router = useRouter()
@@ -179,13 +180,18 @@ export default function LoginPage() {
                     </div>
 
                     <div>
-                        <button
+                        <Button
                             type="submit"
+                            variant="primary"
+                            size="lg"
+                            fullWidth
                             disabled={loading}
-                            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-brand-primary hover:bg-[#E69500] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                            isLoading={loading}
+                            loadingText={t('common:common.loadingProgress')}
+                            className="shadow-sm"
                         >
-                            {loading ? t('common:common.loadingProgress') : t('auth:login.submit')}
-                        </button>
+                            {t('auth:login.submit')}
+                        </Button>
                     </div>
 
                     <div className="text-center">

@@ -194,7 +194,7 @@ export default function HistoryContent() {
                     </p>
                     <Link
                         href="/trainee/dashboard"
-                        className="inline-block bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+                        className="inline-block bg-brand-primary hover:bg-brand-primary-hover text-white font-semibold px-6 py-3 rounded-lg transition-colors"
                     >
                         {t('history.goToDashboard')}
                     </Link>

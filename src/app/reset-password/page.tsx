@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase-client'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@/components/Button'
 
 export default function ResetPasswordPage() {
     const { t } = useTranslation(['auth', 'common'])
@@ -138,13 +139,17 @@ export default function ResetPasswordPage() {
                                 />
                             </div>
 
-                            <button
+                            <Button
                                 type="submit"
+                                variant="primary"
+                                size="lg"
+                                fullWidth
                                 disabled={loading || !password || !confirmPassword}
-                                className="w-full bg-[#FFA700] hover:bg-[#FF9500] disabled:bg-gray-300 text-white font-semibold py-3 rounded-lg transition-colors"
+                                isLoading={loading}
+                                loadingText={t('auth:resetPassword.submitting')}
                             >
-                                {loading ? t('auth:resetPassword.submitting') : t('auth:resetPassword.submit')}
-                            </button>
+                                {t('auth:resetPassword.submit')}
+                            </Button>
                         </form>
                     )}
                 </div>

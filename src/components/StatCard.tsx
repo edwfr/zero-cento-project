@@ -32,7 +32,7 @@ export default function StatCard({
     className = '',
 }: StatCardProps) {
     const colorClasses = {
-        primary: 'bg-[#FFA700]/10 text-[#FFA700]',
+        primary: 'bg-brand-primary/10 text-[#FFA700]',
         success: 'bg-green-100 text-green-600',
         info: 'bg-blue-100 text-blue-600',
         warning: 'bg-yellow-100 text-yellow-600',

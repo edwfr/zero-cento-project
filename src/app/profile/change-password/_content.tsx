@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase-client'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@/components/Button'
 
 export default function ChangePasswordContent() {
     const { t } = useTranslation(['auth', 'common', 'profile'])
@@ -148,13 +149,17 @@ export default function ChangePasswordContent() {
                             />
                         </div>
 
-                        <button
+                        <Button
                             type="submit"
+                            variant="primary"
+                            size="lg"
+                            fullWidth
                             disabled={loading || !currentPassword || !newPassword || !confirmPassword}
-                            className="w-full bg-[#FFA700] hover:bg-[#FF9500] disabled:bg-gray-300 text-white font-semibold py-3 rounded-lg transition-colors"
+                            isLoading={loading}
+                            loadingText={t('auth:changePassword.submitting')}
                         >
-                            {loading ? t('auth:changePassword.submitting') : t('auth:changePassword.submit')}
-                        </button>
+                            {t('auth:changePassword.submit')}
+                        </Button>
 
                         <div className="text-center">
                             <Link

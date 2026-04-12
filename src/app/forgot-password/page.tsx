@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase-client'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@/components/Button'
 
 export default function ForgotPasswordPage() {
     const { t } = useTranslation(['auth', 'common'])
@@ -100,13 +101,17 @@ export default function ForgotPasswordPage() {
                                 />
                             </div>
 
-                            <button
+                            <Button
                                 type="submit"
+                                variant="primary"
+                                size="lg"
+                                fullWidth
                                 disabled={loading || !email}
-                                className="w-full bg-[#FFA700] hover:bg-[#FF9500] disabled:bg-gray-300 text-white font-semibold py-3 rounded-lg transition-colors"
+                                isLoading={loading}
+                                loadingText={t('common:common.loadingProgress')}
                             >
-                                {loading ? t('common:common.loadingProgress') : t('auth:forgotPassword.submit')}
-                            </button>
+                                {t('auth:forgotPassword.submit')}
+                            </Button>
 
                             <div className="text-center text-sm text-gray-600">
                                 {t('auth:forgotPassword.rememberPassword')}{' '}

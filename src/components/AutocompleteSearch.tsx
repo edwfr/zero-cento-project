@@ -234,7 +234,7 @@ export default function AutocompleteSearch({
                                 onMouseEnter={() => setActiveIndex(index)}
                                 className={`
                                     px-4 py-2 cursor-pointer transition-colors text-sm
-                                    ${index === activeIndex ? 'bg-[#FFA700]/10 text-[#FFA700]' : 'hover:bg-gray-50'}
+                                    ${index === activeIndex ? 'bg-brand-primary/10 text-[#FFA700]' : 'hover:bg-gray-50'}
                                     ${option.id === value ? 'font-semibold' : ''}
                                 `}
                             >

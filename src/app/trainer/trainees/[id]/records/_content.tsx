@@ -12,6 +12,7 @@ import { formatDateForInput, getTodayForInput } from '@/lib/date-format'
 import { estimateOneRMFromRpeTable } from '@/lib/calculations'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
+import { Button } from '@/components/Button'
 
 interface Trainee {
     id: string
@@ -272,12 +273,14 @@ export default function TraineeRecordsContent() {
                                 </p>
                             )}
                         </div>
-                        <button
+                        <Button
                             onClick={openAddModal}
-                            className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-2 rounded-lg transition-colors inline-flex items-center gap-2"
+                            variant="primary"
+                            size="md"
+                            icon={<Plus size={16} />}
                         >
-                            <Plus size={16} /> Aggiungi Massimale
-                        </button>
+                            Aggiungi Massimale
+                        </Button>
                     </div>
                 </div>
 
@@ -300,12 +303,13 @@ export default function TraineeRecordsContent() {
                         <p className="text-gray-600 mb-6">
                             Inizia aggiungendo i massimali dell&apos;atleta per monitorare i progressi
                         </p>
-                        <button
+                        <Button
                             onClick={openAddModal}
-                            className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+                            variant="primary"
+                            size="lg"
                         >
                             Aggiungi Primo Massimale
-                        </button>
+                        </Button>
                     </div>
                 ) : (
                     <PersonalRecordsExplorer
@@ -424,30 +428,30 @@ export default function TraineeRecordsContent() {
                                 )}
 
                                 <div className="flex space-x-4 pt-4">
-                                    <button
+                                    <Button
                                         type="submit"
+                                        variant="primary"
+                                        size="lg"
+                                        className="flex-1"
                                         disabled={modalLoading}
-                                        className="flex-1 bg-[#FFA700] hover:bg-[#FF9500] disabled:bg-gray-400 text-white font-semibold py-3 rounded-lg transition-colors flex items-center justify-center"
+                                        isLoading={modalLoading}
+                                        loadingText={editingRecord ? 'Aggiorna Massimale' : 'Salva Massimale'}
                                     >
-                                        {modalLoading ? (
-                                            <LoadingSpinner size="sm" color="white" />
-                                        ) : editingRecord ? (
-                                            'Aggiorna Massimale'
-                                        ) : (
-                                            'Salva Massimale'
-                                        )}
-                                    </button>
-                                    <button
+                                        {editingRecord ? 'Aggiorna Massimale' : 'Salva Massimale'}
+                                    </Button>
+                                    <Button
                                         type="button"
                                         onClick={() => {
                                             setShowModal(false)
                                             setEditingRecord(null)
                                             setError(null)
                                         }}
-                                        className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 rounded-lg transition-colors"
+                                        variant="secondary"
+                                        size="lg"
+                                        className="flex-1"
                                     >
                                         Annulla
-                                    </button>
+                                    </Button>
                                 </div>
                             </form>
                         </div>

@@ -343,14 +343,14 @@ export default async function TrainerDashboard() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <Link
                             href="/trainer/programs/new"
-                            className="flex items-center justify-center bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                            className="flex items-center justify-center bg-brand-primary hover:bg-brand-primary-hover text-white font-semibold py-3 px-6 rounded-lg transition-colors"
                         >
                             <Plus className="w-5 h-5 mr-2" />
                             {t('trainerDashboard.quickActionCreateProgram')}
                         </Link>
                         <Link
                             href="/trainer/trainees/new"
-                            className="flex items-center justify-center bg-brand-primary hover:bg-brand-primary/90 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                            className="flex items-center justify-center bg-brand-primary hover:bg-brand-primary-hover text-white font-semibold py-3 px-6 rounded-lg transition-colors"
                         >
                             <User className="w-5 h-5 mr-2" />
                             {t('trainerDashboard.quickActionAddTrainee')}

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
+import { Button } from '@/components/Button'
 
 interface User {
     id: string
@@ -212,21 +213,27 @@ export default function UserEditModal({ user, onClose, onUserUpdated }: UserEdit
                     </div>
 
                     <div className="flex space-x-3 pt-4">
-                        <button
+                        <Button
                             type="submit"
+                            variant="primary"
+                            size="md"
+                            className="flex-1"
                             disabled={loading}
-                            className="flex-1 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                            isLoading={loading}
+                            loadingText={t('common:common.saving')}
                         >
-                            {loading ? t('common:common.saving') : t('common:common.saveChanges')}
-                        </button>
-                        <button
+                            {t('common:common.saveChanges')}
+                        </Button>
+                        <Button
                             type="button"
                             onClick={onClose}
+                            variant="secondary"
+                            size="md"
+                            className="flex-1"
                             disabled={loading}
-                            className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
                         >
                             {t('common:common.cancel')}
-                        </button>
+                        </Button>
                     </div>
                 </form>
             </div>

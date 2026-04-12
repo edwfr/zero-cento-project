@@ -2,6 +2,7 @@
 
 import { Component, ReactNode, ErrorInfo } from 'react'
 import i18n from '@/lib/i18n/client'
+import { Button } from '@/components/Button'
 
 interface ErrorFallbackProps {
     error: Error
@@ -48,18 +49,22 @@ function DefaultErrorFallback({ error, resetError }: ErrorFallbackProps) {
                 )}
 
                 <div className="flex space-x-4">
-                    <button
+                    <Button
                         onClick={resetError}
-                        className="flex-1 bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                        variant="primary"
+                        size="lg"
+                        className="flex-1"
                     >
                         {i18n.t('common:common.retry')}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         onClick={() => (window.location.href = '/')}
-                        className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
+                        variant="secondary"
+                        size="lg"
+                        className="flex-1"
                     >
                         {i18n.t('common:common.backHome')}
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>

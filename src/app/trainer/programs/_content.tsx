@@ -222,7 +222,7 @@ export default function TrainerProgramsContent() {
                         {/* New Program Button */}
                         <Link
                             href="/trainer/programs/new"
-                            className="bg-[#FFA700] hover:bg-[#FF9500] text-white font-semibold px-6 py-2 rounded-lg transition-colors"
+                            className="bg-brand-primary hover:bg-brand-primary-hover text-white font-semibold px-6 py-2 rounded-lg transition-colors"
                         >
                             <Plus className="w-4 h-4 inline mr-2" />{t('programs.newProgram')}
                         </Link>
@@ -398,7 +398,7 @@ export default function TrainerProgramsContent() {
                                                                     href={`/trainer/programs/${program.id}`}
                                                                     title={t('programs.viewProgram')}
                                                                     aria-label={t('programs.viewProgram')}
-                                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-primary text-white hover:bg-brand-primary/90 transition-colors"
+                                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-primary text-white hover:bg-brand-primary-hover transition-colors"
                                                                 >
                                                                     <Eye className="w-4 h-4" />
                                                                 </Link>
@@ -419,7 +419,7 @@ export default function TrainerProgramsContent() {
                                                                     href={`/trainer/programs/${program.id}`}
                                                                     title={t('programs.viewProgram')}
                                                                     aria-label={t('programs.viewProgram')}
-                                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-primary text-white hover:bg-brand-primary/90 transition-colors"
+                                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-primary text-white hover:bg-brand-primary-hover transition-colors"
                                                                 >
                                                                     <Eye className="w-4 h-4" />
                                                                 </Link>
@@ -428,7 +428,7 @@ export default function TrainerProgramsContent() {
                                                                         href={`/trainer/programs/${program.id}/tests?backContext=programs`}
                                                                         title={t('programs.viewTests')}
                                                                         aria-label={t('programs.viewTests')}
-                                                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#FFA700] text-white hover:bg-[#FF9500] transition-colors"
+                                                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-primary text-white hover:bg-brand-primary-hover transition-colors"
                                                                     >
                                                                         <FlaskConical className="w-4 h-4" />
                                                                     </Link>
