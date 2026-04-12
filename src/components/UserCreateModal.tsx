@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { CheckCircle2, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/Button'
+import { Input } from '@/components/Input'
 
 interface UserCreateModalProps {
     onClose: () => void
@@ -188,14 +189,14 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
                         <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                             {t('common:common.email')} *
                         </label>
-                        <input
+                        <Input
                             ref={firstInputRef}
                             type="email"
                             id="email"
                             value={formData.email}
                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                             disabled={loading}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            inputSize="md"
                             required
                         />
                     </div>
@@ -204,13 +205,13 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
                         <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
                             {t('common:common.firstName')} *
                         </label>
-                        <input
+                        <Input
                             type="text"
                             id="firstName"
                             value={formData.firstName}
                             onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                             disabled={loading}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            inputSize="md"
                             required
                         />
                     </div>
@@ -219,13 +220,13 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
                         <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
                             {t('common:common.lastName')} *
                         </label>
-                        <input
+                        <Input
                             type="text"
                             id="lastName"
                             value={formData.lastName}
                             onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                             disabled={loading}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            inputSize="md"
                             required
                         />
                     </div>

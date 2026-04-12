@@ -10,6 +10,7 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 import WeekTypeBadge from '@/components/WeekTypeBadge'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
+import { Input } from '@/components/Input'
 
 interface WorkoutSummary {
     id: string
@@ -377,12 +378,12 @@ export default function PublishProgramPage() {
                             <label className="block text-sm font-semibold text-gray-700 mb-2">
                                 {t('publish.startDateLabel')}
                             </label>
-                            <input
+                            <Input
                                 type="date"
                                 value={startDate}
                                 onChange={(e) => setStartDate(e.target.value)}
                                 min={new Date().toISOString().split('T')[0]}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                                inputSize="md"
                                 required
                             />
                         </div>

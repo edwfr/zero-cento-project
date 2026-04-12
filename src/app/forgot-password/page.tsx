@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase-client'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/Button'
+import { Input } from '@/components/Input'
 
 export default function ForgotPasswordPage() {
     const { t } = useTranslation(['auth', 'common'])
@@ -90,14 +91,14 @@ export default function ForgotPasswordPage() {
                                 <label className="block text-sm font-semibold text-gray-700 mb-1">
                                     {t('common:common.email')}
                                 </label>
-                                <input
+                                <Input
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
                                     disabled={loading}
                                     placeholder={t('auth:forgotPassword.emailPlaceholder')}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                    inputSize="lg"
                                 />
                             </div>
 

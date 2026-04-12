@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { createClient } from '@/lib/supabase-client'
 import { Button } from '@/components/Button'
+import { Input } from '@/components/Input'
 
 export default function ChangePasswordSection() {
     const { t } = useTranslation(['auth', 'common'])
@@ -131,7 +132,7 @@ export default function ChangePasswordSection() {
                     <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">
                         {t('changePassword.currentPassword')}
                     </label>
-                    <input
+                    <Input
                         type="password"
                         id="currentPassword"
                         value={currentPassword}
@@ -139,7 +140,7 @@ export default function ChangePasswordSection() {
                         required
                         disabled={loading}
                         placeholder={t('changePassword.currentPasswordPlaceholder')}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        inputSize="md"
                         autoComplete="current-password"
                     />
                 </div>
@@ -148,7 +149,7 @@ export default function ChangePasswordSection() {
                     <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
                         {t('changePassword.newPassword')}
                     </label>
-                    <input
+                    <Input
                         type="password"
                         id="newPassword"
                         value={newPassword}
@@ -157,7 +158,7 @@ export default function ChangePasswordSection() {
                         disabled={loading}
                         minLength={8}
                         placeholder={t('changePassword.newPasswordPlaceholder')}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        inputSize="md"
                         autoComplete="new-password"
                     />
                 </div>
@@ -166,7 +167,7 @@ export default function ChangePasswordSection() {
                     <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
                         {t('changePassword.confirmPassword')}
                     </label>
-                    <input
+                    <Input
                         type="password"
                         id="confirmPassword"
                         value={confirmPassword}
@@ -175,7 +176,7 @@ export default function ChangePasswordSection() {
                         disabled={loading}
                         minLength={8}
                         placeholder={t('changePassword.confirmPasswordPlaceholder')}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        inputSize="md"
                         autoComplete="new-password"
                     />
                 </div>

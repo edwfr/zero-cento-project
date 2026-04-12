@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import ExerciseCreateModal from './ExerciseCreateModal'
 import { Button } from '@/components/Button'
+import { Input } from '@/components/Input'
 
 interface MuscleGroupAssignment {
     muscleGroup: {
@@ -146,12 +147,13 @@ export default function ExercisesTable() {
                     </div>
 
                     <div className="flex items-center space-x-2">
-                        <input
+                        <Input
                             type="text"
                             placeholder={t('trainer:exercises.searchExercise')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary text-gray-900"
+                            inputSize="md"
+                            className="text-gray-900"
                         />
                     </div>
                 </div>

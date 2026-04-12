@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase-client'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/Button'
+import { Input } from '@/components/Input'
 
 export default function ForceChangePasswordPage() {
     const { t } = useTranslation(['auth', 'common'])
@@ -129,14 +130,14 @@ export default function ForceChangePasswordPage() {
                             <label className="block text-sm font-semibold text-gray-700 mb-1">
                                 {t('auth:forceChangePassword.temporaryPassword')}
                             </label>
-                            <input
+                            <Input
                                 type="password"
                                 value={currentPassword}
                                 onChange={(e) => setCurrentPassword(e.target.value)}
                                 required
                                 disabled={loading}
                                 placeholder={t('auth:forceChangePassword.temporaryPasswordPlaceholder')}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                inputSize="lg"
                                 autoComplete="current-password"
                             />
                         </div>
@@ -145,7 +146,7 @@ export default function ForceChangePasswordPage() {
                             <label className="block text-sm font-semibold text-gray-700 mb-1">
                                 {t('auth:forceChangePassword.newPassword')}
                             </label>
-                            <input
+                            <Input
                                 type="password"
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
@@ -153,7 +154,7 @@ export default function ForceChangePasswordPage() {
                                 disabled={loading}
                                 minLength={8}
                                 placeholder={t('auth:forceChangePassword.newPasswordPlaceholder')}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                inputSize="lg"
                                 autoComplete="new-password"
                             />
                             <p className="text-xs text-gray-500 mt-1">
@@ -165,7 +166,7 @@ export default function ForceChangePasswordPage() {
                             <label className="block text-sm font-semibold text-gray-700 mb-1">
                                 {t('auth:forceChangePassword.confirmPassword')}
                             </label>
-                            <input
+                            <Input
                                 type="password"
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -173,7 +174,7 @@ export default function ForceChangePasswordPage() {
                                 disabled={loading}
                                 minLength={8}
                                 placeholder={t('auth:forceChangePassword.confirmPasswordPlaceholder')}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                inputSize="lg"
                                 autoComplete="new-password"
                             />
                         </div>

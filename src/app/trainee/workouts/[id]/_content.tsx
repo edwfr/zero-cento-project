@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import type { RestTime } from '@prisma/client'
@@ -13,6 +13,7 @@ import YoutubeEmbed from '@/components/YoutubeEmbed'
 import { useSwipe } from '@/lib/useSwipe'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
+import { Input } from '@/components/Input'
 
 interface Exercise {
     id: string
@@ -825,7 +826,7 @@ export default function WorkoutDetailContent() {
                                                         #{set.setNumber}
                                                     </p>
 
-                                                    <input
+                                                    <Input
                                                         type="number"
                                                         min="0"
                                                         value={set.reps || ''}
@@ -839,10 +840,11 @@ export default function WorkoutDetailContent() {
                                                         }
                                                         disabled={!!set.completed}
                                                         aria-label={`${t('workouts.reps')} ${set.setNumber}`}
-                                                        className="h-10 w-full rounded-lg border border-gray-300 px-2 text-center focus:border-transparent focus:ring-2 focus:ring-[#FFA700]"
+                                                        inputSize="md"
+                                                        className="h-10 px-2 text-center focus:ring-brand-primary"
                                                     />
 
-                                                    <input
+                                                    <Input
                                                         type="number"
                                                         min="0"
                                                         step="0.5"
@@ -857,7 +859,8 @@ export default function WorkoutDetailContent() {
                                                         }
                                                         disabled={!!set.completed}
                                                         aria-label={`${t('workouts.weightKg')} ${set.setNumber}`}
-                                                        className="h-10 w-full rounded-lg border border-gray-300 px-2 text-center focus:border-transparent focus:ring-2 focus:ring-[#FFA700]"
+                                                        inputSize="md"
+                                                        className="h-10 px-2 text-center focus:ring-brand-primary"
                                                     />
 
                                                     <button
@@ -904,7 +907,7 @@ export default function WorkoutDetailContent() {
                                                                 #{set.setNumber}
                                                             </td>
                                                             <td className="py-3 px-3">
-                                                                <input
+                                                                <Input
                                                                     type="number"
                                                                     min="0"
                                                                     value={set.reps || ''}
@@ -919,11 +922,12 @@ export default function WorkoutDetailContent() {
                                                                         )
                                                                     }
                                                                     disabled={!!set.completed}
-                                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-center focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                                                                    inputSize="md"
+                                                                    className="px-3 py-2 text-center"
                                                                 />
                                                             </td>
                                                             <td className="py-3 px-3">
-                                                                <input
+                                                                <Input
                                                                     type="number"
                                                                     min="0"
                                                                     step="0.5"
@@ -939,7 +943,8 @@ export default function WorkoutDetailContent() {
                                                                         )
                                                                     }
                                                                     disabled={!!set.completed}
-                                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-center focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                                                                    inputSize="md"
+                                                                    className="px-3 py-2 text-center"
                                                                 />
                                                             </td>
                                                             <td className="py-3 px-3">
@@ -997,7 +1002,7 @@ export default function WorkoutDetailContent() {
                         onChange={(e) => setGlobalNotes(e.target.value)}
                         placeholder={t('workouts.notesPlaceholder')}
                         rows={4}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                     />
                 </div>
 

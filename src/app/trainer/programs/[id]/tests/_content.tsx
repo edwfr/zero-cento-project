@@ -12,6 +12,7 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import { estimateOneRMFromRpeTable } from '@/lib/calculations'
 import { formatDate, getTodayForInput } from '@/lib/date-format'
 import { Button } from '@/components/Button'
+import { Input } from '@/components/Input'
 
 interface TestResultRow {
     workoutExerciseId: string
@@ -444,7 +445,7 @@ export default function ProgramTestResultsContent() {
                                 <select
                                     value={selectedExerciseId}
                                     onChange={(event) => setSelectedExerciseId(event.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                                     required
                                 >
                                     {exercises.map((exercise) => (
@@ -460,14 +461,14 @@ export default function ProgramTestResultsContent() {
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                                         {t('personalRecords.weight')} *
                                     </label>
-                                    <input
+                                    <Input
                                         type="number"
                                         step="0.5"
                                         min="0"
                                         max="1000"
                                         value={weight}
                                         onChange={(event) => setWeight(event.target.value)}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                                        inputSize="md"
                                         placeholder="100"
                                         required
                                     />
@@ -476,13 +477,13 @@ export default function ProgramTestResultsContent() {
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                                         {t('personalRecords.reps')} *
                                     </label>
-                                    <input
+                                    <Input
                                         type="number"
                                         min="1"
                                         max="100"
                                         value={reps}
                                         onChange={(event) => setReps(event.target.value)}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                                        inputSize="md"
                                         placeholder="5"
                                         required
                                     />
@@ -493,12 +494,12 @@ export default function ProgramTestResultsContent() {
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                                     {t('personalRecords.recordDate')} *
                                 </label>
-                                <input
+                                <Input
                                     type="date"
                                     value={recordDate}
                                     max={getTodayForInput()}
                                     onChange={(event) => setRecordDate(event.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                                    inputSize="md"
                                     required
                                 />
                             </div>
@@ -512,7 +513,7 @@ export default function ProgramTestResultsContent() {
                                     onChange={(event) => setNotes(event.target.value)}
                                     rows={2}
                                     maxLength={500}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                                     placeholder={t('testResults.notesPlaceholder')}
                                 />
                             </div>

@@ -9,6 +9,7 @@ import { formatDate } from '@/lib/date-format'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { Plus, Eye, UserX, UserCheck, ArrowLeft } from 'lucide-react'
+import { Input } from '@/components/Input'
 
 interface Trainee {
     id: string
@@ -118,12 +119,12 @@ export default function TrainerTraineesContent() {
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
                         {/* Search */}
                         <div className="flex-1 max-w-md">
-                            <input
+                            <Input
                                 type="text"
                                 placeholder={t('athletes.searchPlaceholder')}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                                inputSize="md"
                             />
                         </div>
 
@@ -132,7 +133,7 @@ export default function TrainerTraineesContent() {
                             <select
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value as any)}
-                                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                             >
                                 <option value="all">{t('athletes.allStatuses')}</option>
                                 <option value="active">{t('athletes.active')}</option>

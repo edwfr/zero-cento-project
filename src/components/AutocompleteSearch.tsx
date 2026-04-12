@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Input } from '@/components/Input'
 
 export interface AutocompleteOption {
     id: string
@@ -154,7 +155,7 @@ export default function AutocompleteSearch({
             )}
 
             <div className="relative">
-                <input
+                <Input
                     ref={inputRef}
                     id={inputId}
                     type="text"
@@ -173,12 +174,9 @@ export default function AutocompleteSearch({
                     disabled={disabled}
                     required={required}
                     autoComplete="off"
-                    className={`
-                        w-full px-4 py-2 pr-10 border rounded-lg transition-colors
-                        focus:ring-2 focus:ring-[#FFA700] focus:border-transparent
-                        disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed
-                        ${error ? 'border-red-500 bg-red-50' : 'border-gray-300'}
-                    `}
+                    inputSize="md"
+                    state={error ? 'error' : 'default'}
+                    className="pr-10"
                     aria-invalid={!!error}
                 />
 

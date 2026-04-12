@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import RPESelector from './RPESelector'
 import { Button } from '@/components/Button'
+import { Input } from '@/components/Input'
 
 interface SetPerformed {
     setNumber: number
@@ -117,7 +118,7 @@ export default function FeedbackForm({
                             <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
                                 <td className="px-2 py-2 font-medium text-gray-900">{set.setNumber}</td>
                                 <td className="px-2 py-2">
-                                    <input
+                                    <Input
                                         type="number"
                                         inputMode="numeric"
                                         min="0"
@@ -126,11 +127,12 @@ export default function FeedbackForm({
                                         onChange={(e) =>
                                             handleSetChange(index, 'reps', parseInt(e.target.value) || 0)
                                         }
-                                        className="w-16 rounded border border-gray-300 px-2 py-1 text-center focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/50"
+                                        inputSize="md"
+                                        className="w-16 px-2 py-1 text-center focus:ring-brand-primary/50"
                                     />
                                 </td>
                                 <td className="px-2 py-2">
-                                    <input
+                                    <Input
                                         type="number"
                                         inputMode="decimal"
                                         min="0"
@@ -140,7 +142,8 @@ export default function FeedbackForm({
                                         onChange={(e) =>
                                             handleSetChange(index, 'weight', parseFloat(e.target.value) || 0)
                                         }
-                                        className="w-20 rounded border border-gray-300 px-2 py-1 text-center focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/50"
+                                        inputSize="md"
+                                        className="w-20 px-2 py-1 text-center focus:ring-brand-primary/50"
                                     />
                                 </td>
                                 <td className="px-2 py-2">

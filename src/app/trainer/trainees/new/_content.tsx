@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { CheckCircle2, ArrowLeft } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { Button } from '@/components/Button'
+import { Input } from '@/components/Input'
 
 export default function NewTraineePageContent() {
     const router = useRouter()
@@ -143,13 +144,13 @@ export default function NewTraineePageContent() {
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
                             {t('athletes.firstNameLabel')}
                         </label>
-                        <input
+                        <Input
                             type="text"
                             value={firstName}
                             onChange={(e) => setFirstName(e.target.value)}
                             disabled={loading}
                             placeholder={t('athletes.firstNamePlaceholder')}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            inputSize="md"
                             required
                         />
                     </div>
@@ -159,13 +160,13 @@ export default function NewTraineePageContent() {
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
                             {t('athletes.lastNameLabel')}
                         </label>
-                        <input
+                        <Input
                             type="text"
                             value={lastName}
                             onChange={(e) => setLastName(e.target.value)}
                             disabled={loading}
                             placeholder={t('athletes.lastNamePlaceholder')}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            inputSize="md"
                             required
                         />
                     </div>
@@ -175,13 +176,13 @@ export default function NewTraineePageContent() {
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
                             {t('common:common.email')} *
                         </label>
-                        <input
+                        <Input
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             disabled={loading}
                             placeholder={t('athletes.emailPlaceholder')}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            inputSize="md"
                             required
                         />
                         <p className="text-sm text-gray-500 mt-2">

@@ -12,6 +12,8 @@ import { useToast } from '@/components/ToastNotification'
 import EditProgramMetadata from './EditProgramMetadata'
 import MovementPatternTag from '@/components/MovementPatternTag'
 import WeekTypeBadge from '@/components/WeekTypeBadge'
+import AutocompleteSearch from '@/components/AutocompleteSearch'
+import { Input } from '@/components/Input'
 import {
     ArrowLeft,
     BarChart3,
@@ -816,6 +818,26 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             return acc
         }, {} as Record<string, string>)
     }, [exerciseLookupById])
+
+    const autocompleteExerciseOptions = useMemo(
+        () =>
+            Array.from(exerciseLookupById.values()).map((exercise) => {
+                const typeLabel =
+                    exercise.type === 'fundamental'
+                        ? t('exercises.fundamental')
+                        : t('exercises.accessory')
+                const sublabel = exercise.movementPattern
+                    ? `${exercise.movementPattern.name} · ${typeLabel}`
+                    : typeLabel
+
+                return {
+                    id: exercise.id,
+                    label: exercise.name,
+                    sublabel,
+                }
+            }),
+        [exerciseLookupById, t]
+    )
 
     const activeWeek = useMemo(() => {
         if (!program) {
@@ -1955,14 +1977,19 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                         </div>
 
                         <div className="overflow-x-auto p-5">
-                            <div className="flex min-w-max gap-4">
+                            <div
+                                className="grid min-w-full gap-4"
+                                style={{
+                                    gridTemplateColumns: `repeat(${program.workoutsPerWeek}, minmax(260px, 1fr))`,
+                                }}
+                            >
                                 {Array.from({ length: program.workoutsPerWeek }).map((_, workoutIndex) => {
                                     const structureRows = structureRowsByWorkoutIndex[workoutIndex] || []
 
                                     return (
                                         <div
                                             key={`structure-workout-${workoutIndex}`}
-                                            className="w-[340px] shrink-0 rounded-lg border border-gray-200 bg-white"
+                                            className="min-w-0 rounded-lg border border-gray-200 bg-white"
                                         >
                                             <div className="flex flex-col gap-2 border-b border-gray-100 px-4 py-3">
                                                 <div>
@@ -2010,31 +2037,22 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                             style={rowStyle}
                                                         >
                                                             <div className="flex items-center gap-2">
-                                                                <select
-                                                                    value={structureRow.exerciseId}
-                                                                    onChange={(event) => {
+                                                                <AutocompleteSearch
+                                                                    id={`structure-exercise-${workoutIndex}-${structureRow.id}`}
+                                                                    options={autocompleteExerciseOptions}
+                                                                    value={structureRow.exerciseId || undefined}
+                                                                    onSelect={(option) => {
                                                                         updateStructureRowFields(
                                                                             workoutIndex,
                                                                             structureRow.id,
                                                                             {
-                                                                                exerciseId: event.target.value,
+                                                                                exerciseId: option?.id ?? '',
                                                                             }
                                                                         )
                                                                     }}
-                                                                    className="min-w-0 flex-1 rounded-lg border border-gray-300 px-2 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
-                                                                >
-                                                                    <option value="">{t('editProgram.selectExercise')}</option>
-                                                                    {Array.from(exerciseLookupById.values()).map(
-                                                                        (exercise) => (
-                                                                            <option
-                                                                                key={exercise.id}
-                                                                                value={exercise.id}
-                                                                            >
-                                                                                {exercise.name}
-                                                                            </option>
-                                                                        )
-                                                                    )}
-                                                                </select>
+                                                                    placeholder={t('editProgram.selectExercise')}
+                                                                    className="min-w-0 flex-1"
+                                                                />
 
                                                                 <button
                                                                     type="button"
@@ -2668,11 +2686,13 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                     </td>
 
                                                                                     <td className="px-1 py-3">
-                                                                                        <select
-                                                                                            value={row.exerciseId}
-                                                                                            onChange={(event) => {
+                                                                                        <AutocompleteSearch
+                                                                                            id={`exercise-row-${row.id}`}
+                                                                                            options={autocompleteExerciseOptions}
+                                                                                            value={row.exerciseId || undefined}
+                                                                                            onSelect={(option) => {
                                                                                                 updateRowFields(row.id, {
-                                                                                                    exerciseId: event.target.value,
+                                                                                                    exerciseId: option?.id ?? '',
                                                                                                     variant: '',
                                                                                                 })
 
@@ -2682,25 +2702,18 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                         [row.id]: false,
                                                                                                     })
                                                                                                 )
-                                                                                            }
-                                                                                            }
+                                                                                            }}
+                                                                                            placeholder={t('editProgram.selectExercise')}
                                                                                             disabled={rowBusy || readOnly}
-                                                                                            className="w-full rounded-lg border border-gray-300 px-1.5 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
-                                                                                        >
-                                                                                            <option value="">{t('editProgram.selectExercise')}</option>
-                                                                                            {Array.from(exerciseLookupById.values()).map((exercise) => (
-                                                                                                <option key={exercise.id} value={exercise.id}>
-                                                                                                    {exercise.name}
-                                                                                                </option>
-                                                                                            ))}
-                                                                                        </select>
+                                                                                            className="w-full"
+                                                                                        />
                                                                                     </td>
 
                                                                                     <td className="px-1 py-3">
                                                                                         <div className="flex items-center gap-1">
                                                                                             <div className="min-w-0 flex-1">
                                                                                                 {isCustomVariantInput ? (
-                                                                                                    <input
+                                                                                                    <Input
                                                                                                         type="text"
                                                                                                         value={row.variant}
                                                                                                         onChange={(event) =>
@@ -2717,30 +2730,27 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                         placeholder={t('editProgram.variantPlaceholder')}
                                                                                                     />
                                                                                                 ) : (
-                                                                                                    <select
-                                                                                                        value={row.variant}
-                                                                                                        onChange={(event) =>
+                                                                                                    <AutocompleteSearch
+                                                                                                        id={`variant-row-${row.id}`}
+                                                                                                        options={variantOptions.map((variantOption) => ({
+                                                                                                            id: variantOption,
+                                                                                                            label: variantOption,
+                                                                                                        }))}
+                                                                                                        value={row.variant || undefined}
+                                                                                                        onSelect={(option) =>
                                                                                                             updateRowFields(row.id, {
-                                                                                                                variant: event.target.value,
+                                                                                                                variant: option?.id ?? '',
                                                                                                             })
                                                                                                         }
+                                                                                                        placeholder={t('editProgram.noVariantOption')}
+                                                                                                        emptyMessage={t('editProgram.noVariantAvailable')}
                                                                                                         disabled={
                                                                                                             rowBusy ||
                                                                                                             readOnly ||
                                                                                                             !selectedExercise
                                                                                                         }
-                                                                                                        className={variantFieldClassName}
-                                                                                                    >
-                                                                                                        <option value="">{t('editProgram.noVariantOption')}</option>
-                                                                                                        {variantOptions.map((variantOption) => (
-                                                                                                            <option
-                                                                                                                key={variantOption}
-                                                                                                                value={variantOption}
-                                                                                                            >
-                                                                                                                {variantOption}
-                                                                                                            </option>
-                                                                                                        ))}
-                                                                                                    </select>
+                                                                                                        className="w-full"
+                                                                                                    />
                                                                                                 )}
                                                                                             </div>
 
@@ -2785,24 +2795,26 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                     </td>
 
                                                                                     <td className="px-1 py-3 text-center">
-                                                                                        <input
-                                                                                            type="number"
-                                                                                            min="1"
-                                                                                            max="20"
-                                                                                            step="1"
-                                                                                            value={row.sets}
-                                                                                            onChange={(event) =>
-                                                                                                updateRowFields(row.id, {
-                                                                                                    sets: event.target.value,
-                                                                                                })
-                                                                                            }
-                                                                                            disabled={rowBusy || readOnly}
-                                                                                            className="mx-auto block w-full max-w-[3rem] rounded-lg border border-gray-300 px-1 py-2 text-center text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
-                                                                                        />
+                                                                                        <div className="mx-auto w-full max-w-[3rem]">
+                                                                                            <Input
+                                                                                                type="number"
+                                                                                                min="1"
+                                                                                                max="20"
+                                                                                                step="1"
+                                                                                                value={row.sets}
+                                                                                                onChange={(event) =>
+                                                                                                    updateRowFields(row.id, {
+                                                                                                        sets: event.target.value,
+                                                                                                    })
+                                                                                                }
+                                                                                                disabled={rowBusy || readOnly}
+                                                                                                className="px-1 py-2 text-center text-sm focus:ring-1"
+                                                                                            />
+                                                                                        </div>
                                                                                     </td>
 
                                                                                     <td className="px-1 py-3">
-                                                                                        <input
+                                                                                        <Input
                                                                                             type="text"
                                                                                             value={row.reps}
                                                                                             onChange={(event) =>
@@ -2812,7 +2824,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                             }
                                                                                             disabled={rowBusy || readOnly}
                                                                                             placeholder={t('editProgram.repsPlaceholder')}
-                                                                                            className="w-full rounded-lg border border-gray-300 px-1.5 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                                                                                            className="px-1.5 py-2 text-sm focus:ring-1"
                                                                                         />
                                                                                     </td>
 
@@ -2867,7 +2879,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                             </div>
                                                                                         ) : (
                                                                                             <>
-                                                                                                <input
+                                                                                                <Input
                                                                                                     type="text"
                                                                                                     value={row.weight}
                                                                                                     onChange={(event) =>
@@ -2877,7 +2889,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                     }
                                                                                                     disabled={rowBusy || readOnly}
                                                                                                     placeholder={t('editProgram.weightPlaceholder')}
-                                                                                                    className="w-full rounded-lg border border-gray-300 px-1.5 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                                                                                                    className="px-1.5 py-2 text-sm focus:ring-1"
                                                                                                 />
 
                                                                                                 {shouldShowEffectiveWeight &&

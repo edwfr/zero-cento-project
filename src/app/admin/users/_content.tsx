@@ -10,6 +10,7 @@ import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import { formatDate } from '@/lib/date-format'
 import { Button } from '@/components/Button'
+import { Input } from '@/components/Input'
 
 interface User {
     id: string
@@ -204,19 +205,21 @@ export default function AdminUsersContent() {
                 {/* Search + Filters row */}
                 <div className="flex flex-col md:flex-row gap-3 items-start md:items-center">
                     {/* Search */}
-                    <input
-                        type="text"
-                        placeholder={t('admin:users.searchPlaceholder')}
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="flex-1 max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
-                    />
+                    <div className="flex-1 max-w-md">
+                        <Input
+                            type="text"
+                            placeholder={t('admin:users.searchPlaceholder')}
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            inputSize="md"
+                        />
+                    </div>
 
                     {/* Role filter */}
                     <select
                         value={filterRole}
                         onChange={(e) => setFilterRole(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                     >
                         <option value="all">{t('admin:users.filterAllRoles')}</option>
                         <option value="admin">{t('common:roles.admin')}</option>
@@ -228,7 +231,7 @@ export default function AdminUsersContent() {
                     <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
+                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                     >
                         <option value="all">{t('admin:users.filterAllStatuses')}</option>
                         <option value="active">{t('admin:users.filterStatusActive')}</option>
@@ -294,7 +297,7 @@ export default function AdminUsersContent() {
                                         type="checkbox"
                                         checked={allPageSelected}
                                         onChange={toggleSelectAll}
-                                        className="rounded border-gray-300 text-[#FFA700] focus:ring-[#FFA700]"
+                                        className="rounded border-gray-300 text-[#FFA700] focus:ring-brand-primary"
                                     />
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
@@ -339,7 +342,7 @@ export default function AdminUsersContent() {
                                                 type="checkbox"
                                                 checked={selectedIds.has(user.id)}
                                                 onChange={() => toggleSelect(user.id)}
-                                                className="rounded border-gray-300 text-[#FFA700] focus:ring-[#FFA700]"
+                                                className="rounded border-gray-300 text-[#FFA700] focus:ring-brand-primary"
                                             />
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">

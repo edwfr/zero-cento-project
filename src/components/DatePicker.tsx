@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Input } from '@/components/Input'
 
 interface DatePickerProps {
     value?: string // ISO date string YYYY-MM-DD
@@ -86,14 +87,6 @@ export default function DatePicker({
         setShowNative(false)
     }
 
-    const baseInputClasses = `
-        w-full px-4 py-2 border rounded-lg transition-colors text-gray-900
-        focus:ring-2 focus:ring-[#FFA700] focus:border-transparent
-        disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed
-        ${error ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-white'}
-        ${className}
-    `
-
     return (
         <div className="relative">
             {label && (
@@ -105,7 +98,7 @@ export default function DatePicker({
 
             <div className="relative flex items-center">
                 {/* Text input for manual entry */}
-                <input
+                <Input
                     id={inputId}
                     type="text"
                     value={textValue}
@@ -114,7 +107,9 @@ export default function DatePicker({
                     placeholder={resolvedPlaceholder}
                     disabled={disabled}
                     required={required}
-                    className={baseInputClasses}
+                    inputSize="md"
+                    state={error ? 'error' : 'default'}
+                    className={`text-gray-900 bg-white ${className}`}
                     aria-invalid={!!error}
                     aria-describedby={error ? `${inputId}-error` : undefined}
                     maxLength={10}

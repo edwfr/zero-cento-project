@@ -333,8 +333,8 @@ Se nella Fase 1 è stato fatto solo il find&replace del colore ring, in questa f
 
 ### Verifica
 
-- [ ] Grep di conferma: `grep -r "focus:ring-\[#FFA700\]" src/` deve dare **0 risultati**
-- [ ] Grep di conferma: `grep -r "focus:ring-blue-500" src/` deve dare **0 risultati**
+- [x] Grep di conferma: `grep -r "focus:ring-\[#FFA700\]" src/` deve dare **0 risultati**
+- [x] Grep di conferma: `grep -r "focus:ring-blue-500" src/` deve dare **0 risultati**
 - [ ] Tutti gli input hanno anello arancione al focus
 - [ ] Input con errore mostrano bordo rosso e anello rosso
 - [ ] Verifica visiva pagine auth (login, forgot, reset, force-change, onboarding)

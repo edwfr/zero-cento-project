@@ -8,6 +8,7 @@ import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import { formatDate } from '@/lib/date-format'
 import { FileEdit, CheckCircle2, FlagTriangleRight } from 'lucide-react'
+import { Input } from '@/components/Input'
 
 interface Program {
     id: string
@@ -180,13 +181,15 @@ export default function ProgramsTable({
             )}
             {/* Search */}
             <div className="mb-4">
-                <input
-                    type="text"
-                    placeholder={t('trainer:programs.searchPlaceholder')}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full max-w-sm px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent"
-                />
+                <div className="w-full max-w-sm">
+                    <Input
+                        type="text"
+                        placeholder={t('trainer:programs.searchPlaceholder')}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        inputSize="md"
+                    />
+                </div>
             </div>
 
             {/* Tabs */}

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { Button } from '@/components/Button'
+import { Input } from '@/components/Input'
 
 interface MuscleGroup {
     id: string
@@ -199,14 +200,15 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                         <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                             {t('exercises.exerciseNameLabel')}
                         </label>
-                        <input
+                        <Input
                             ref={firstInputRef}
                             type="text"
                             id="name"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             disabled={loading}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            inputSize="md"
+                            className="text-gray-900"
                             required
                             placeholder={t('exercises.exerciseNamePlaceholder')}
                         />
@@ -231,13 +233,14 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                         <label htmlFor="youtubeUrl" className="block text-sm font-medium text-gray-700 mb-1">
                             {t('exercises.youtubeUrlLabel')} *
                         </label>
-                        <input
+                        <Input
                             type="url"
                             id="youtubeUrl"
                             value={formData.youtubeUrl}
                             onChange={(e) => setFormData({ ...formData, youtubeUrl: e.target.value })}
                             disabled={loading}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            inputSize="md"
+                            className="text-gray-900"
                             required
                             placeholder={t('exercises.youtubeUrlPlaceholder')}
                         />
@@ -316,7 +319,7 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                                         ))}
                                     </select>
 
-                                    <input
+                                    <Input
                                         type="number"
                                         min="0"
                                         max="1"
@@ -324,7 +327,8 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                                         value={mg.coefficient}
                                         onChange={(e) => handleMuscleGroupChange(index, 'coefficient', parseFloat(e.target.value))}
                                         disabled={loading}
-                                        className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                        inputSize="md"
+                                        className="w-24 text-gray-900"
                                         placeholder="0.0-1.0"
                                         required
                                     />

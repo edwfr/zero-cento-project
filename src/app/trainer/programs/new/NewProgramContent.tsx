@@ -7,6 +7,7 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { ArrowLeft, BarChart3 } from 'lucide-react'
+import { Input } from '@/components/Input'
 
 interface Trainee {
     id: string
@@ -176,13 +177,13 @@ export default function NewProgramContent({
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                         {t('programs.programNameLabel')}
                     </label>
-                    <input
+                    <Input
                         type="text"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         disabled={loading}
                         placeholder={t('programs.programNamePlaceholder')}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        inputSize="md"
                         required
                     />
                 </div>
@@ -232,16 +233,18 @@ export default function NewProgramContent({
                         {t('programs.durationWeeksLabel')}
                     </label>
                     <div className="flex items-center space-x-4">
-                        <input
-                            type="number"
-                            min="1"
-                            max="52"
-                            value={durationWeeks}
-                            onChange={(e) => setDurationWeeks(parseInt(e.target.value))}
-                            disabled={loading}
-                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                            required
-                        />
+                        <div className="flex-1">
+                            <Input
+                                type="number"
+                                min="1"
+                                max="52"
+                                value={durationWeeks}
+                                onChange={(e) => setDurationWeeks(parseInt(e.target.value))}
+                                disabled={loading}
+                                inputSize="md"
+                                required
+                            />
+                        </div>
                         <div className="flex space-x-2">
                             {[3, 4, 5, 6].map((weeks) => (
                                 <button
@@ -266,16 +269,18 @@ export default function NewProgramContent({
                         {t('programs.workoutsPerWeekLabel')}
                     </label>
                     <div className="flex items-center space-x-4">
-                        <input
-                            type="number"
-                            min="1"
-                            max="7"
-                            value={workoutsPerWeek}
-                            onChange={(e) => setWorkoutsPerWeek(parseInt(e.target.value))}
-                            disabled={loading}
-                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                            required
-                        />
+                        <div className="flex-1">
+                            <Input
+                                type="number"
+                                min="1"
+                                max="7"
+                                value={workoutsPerWeek}
+                                onChange={(e) => setWorkoutsPerWeek(parseInt(e.target.value))}
+                                disabled={loading}
+                                inputSize="md"
+                                required
+                            />
+                        </div>
                         <div className="flex space-x-2">
                             {[2, 3, 4].map((workouts) => (
                                 <button

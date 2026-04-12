@@ -9,6 +9,7 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { Trash2, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/Button'
+import { Input } from '@/components/Input'
 
 interface MuscleGroup {
     id: string
@@ -226,13 +227,13 @@ export default function EditExerciseContent() {
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
                             {t('exercises.exerciseNameLabel')}
                         </label>
-                        <input
+                        <Input
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             disabled={saving}
                             placeholder={t('exercises.exerciseNamePlaceholder')}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            inputSize="md"
                             required
                         />
                     </div>
@@ -258,14 +259,16 @@ export default function EditExerciseContent() {
                             <div className="space-y-2">
                                 {variants.map((variant, index) => (
                                     <div key={index} className="flex items-center space-x-2">
-                                        <input
-                                            type="text"
-                                            value={variant}
-                                            onChange={(e) => updateVariant(index, e.target.value)}
-                                            disabled={saving}
-                                            placeholder={t('exercises.variantPlaceholder')}
-                                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                        />
+                                        <div className="flex-1">
+                                            <Input
+                                                type="text"
+                                                value={variant}
+                                                onChange={(e) => updateVariant(index, e.target.value)}
+                                                disabled={saving}
+                                                placeholder={t('exercises.variantPlaceholder')}
+                                                inputSize="md"
+                                            />
+                                        </div>
                                         <button
                                             type="button"
                                             onClick={() => removeVariant(index)}
@@ -284,13 +287,13 @@ export default function EditExerciseContent() {
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
                             {t('exercises.youtubeUrlLabel')}
                         </label>
-                        <input
+                        <Input
                             type="url"
                             value={youtubeUrl}
                             onChange={(e) => setYoutubeUrl(e.target.value)}
                             disabled={saving}
                             placeholder={t('exercises.youtubeUrlPlaceholder')}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            inputSize="md"
                         />
                     </div>
 
@@ -332,7 +335,7 @@ export default function EditExerciseContent() {
                             value={movementPatternId}
                             onChange={(e) => setMovementPatternId(e.target.value)}
                             disabled={saving}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                             required
                         >
                             {movementPatterns.map((mp) => (
@@ -381,22 +384,24 @@ export default function EditExerciseContent() {
                                                 </option>
                                             ))}
                                         </select>
-                                        <input
-                                            type="number"
-                                            min="0.1"
-                                            max="1.0"
-                                            step="0.1"
-                                            value={mg.coefficient}
-                                            onChange={(e) =>
-                                                updateMuscleGroup(
-                                                    index,
-                                                    'coefficient',
-                                                    parseFloat(e.target.value)
-                                                )
-                                            }
-                                            disabled={saving}
-                                            className="w-24 px-3 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                        />
+                                        <div className="w-24">
+                                            <Input
+                                                type="number"
+                                                min="0.1"
+                                                max="1.0"
+                                                step="0.1"
+                                                value={mg.coefficient}
+                                                onChange={(e) =>
+                                                    updateMuscleGroup(
+                                                        index,
+                                                        'coefficient',
+                                                        parseFloat(e.target.value)
+                                                    )
+                                                }
+                                                disabled={saving}
+                                                inputSize="md"
+                                            />
+                                        </div>
                                         <button
                                             type="button"
                                             onClick={() => removeMuscleGroup(index)}

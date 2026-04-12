@@ -7,6 +7,7 @@ import { Pencil } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { Button } from '@/components/Button'
+import { Input } from '@/components/Input'
 
 interface Trainee {
     id: string
@@ -163,7 +164,7 @@ export default function EditProgramMetadata({
                                 checked={isSbdProgram}
                                 onChange={(e) => setIsSbdProgram(e.target.checked)}
                                 disabled={saving || status !== 'draft'}
-                                className="mt-1 h-4 w-4 rounded border-gray-300 text-[#FFA700] focus:ring-[#FFA700]"
+                                className="mt-1 h-4 w-4 rounded border-gray-300 text-[#FFA700] focus:ring-brand-primary"
                             />
                             <span>
                                 <span className="block text-sm font-semibold text-gray-900">{t('programs.sbdProgramLabel')}</span>
@@ -179,13 +180,13 @@ export default function EditProgramMetadata({
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
                             {t('programs.programNameLabel')}
                         </label>
-                        <input
+                        <Input
                             type="text"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             disabled={saving || status !== 'draft'}
                             placeholder={t('programs.programNamePlaceholder')}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            inputSize="md"
                             required
                         />
                     </div>
@@ -200,7 +201,7 @@ export default function EditProgramMetadata({
                                 value={traineeId}
                                 onChange={(e) => setTraineeId(e.target.value)}
                                 disabled={saving || status !== 'draft'}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                                 required
                             >
                                 {trainees.map((trainee) => (
@@ -218,14 +219,14 @@ export default function EditProgramMetadata({
                             {t('programs.durationWeeksLabel')}
                         </label>
                         <div className="space-y-2">
-                            <input
+                            <Input
                                 type="number"
                                 min="1"
                                 max="52"
                                 value={durationWeeks}
                                 onChange={(e) => setDurationWeeks(parseInt(e.target.value) || 1)}
                                 disabled={saving || status !== 'draft'}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                inputSize="md"
                                 required
                             />
                             {durationWeeks !== initialDurationWeeks && (
@@ -242,14 +243,14 @@ export default function EditProgramMetadata({
                             {t('programs.workoutsPerWeekLabel')}
                         </label>
                         <div className="space-y-2">
-                            <input
+                            <Input
                                 type="number"
                                 min="1"
                                 max="7"
                                 value={workoutsPerWeek}
                                 onChange={(e) => setWorkoutsPerWeek(parseInt(e.target.value) || 1)}
                                 disabled={saving || status !== 'draft'}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                inputSize="md"
                                 required
                             />
                             {workoutsPerWeek !== initialWorkoutsPerWeek && (

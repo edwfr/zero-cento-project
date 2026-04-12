@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase-client'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/Button'
+import { Input } from '@/components/Input'
 
 export default function ChangePasswordContent() {
     const { t } = useTranslation(['auth', 'common', 'profile'])
@@ -106,14 +107,14 @@ export default function ChangePasswordContent() {
                             <label className="block text-sm font-semibold text-gray-700 mb-1">
                                 {t('auth:changePassword.currentPassword')}
                             </label>
-                            <input
+                            <Input
                                 type="password"
                                 value={currentPassword}
                                 onChange={(e) => setCurrentPassword(e.target.value)}
                                 required
                                 disabled={loading}
                                 placeholder={t('auth:changePassword.currentPasswordPlaceholder')}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                inputSize="lg"
                             />
                         </div>
 
@@ -121,7 +122,7 @@ export default function ChangePasswordContent() {
                             <label className="block text-sm font-semibold text-gray-700 mb-1">
                                 {t('auth:changePassword.newPassword')}
                             </label>
-                            <input
+                            <Input
                                 type="password"
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
@@ -129,7 +130,7 @@ export default function ChangePasswordContent() {
                                 disabled={loading}
                                 minLength={8}
                                 placeholder={t('auth:changePassword.newPasswordPlaceholder')}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                inputSize="lg"
                             />
                         </div>
 
@@ -137,7 +138,7 @@ export default function ChangePasswordContent() {
                             <label className="block text-sm font-semibold text-gray-700 mb-1">
                                 {t('auth:changePassword.confirmPassword')}
                             </label>
-                            <input
+                            <Input
                                 type="password"
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -145,7 +146,7 @@ export default function ChangePasswordContent() {
                                 disabled={loading}
                                 minLength={8}
                                 placeholder={t('auth:changePassword.confirmPasswordPlaceholder')}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFA700] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                inputSize="lg"
                             />
                         </div>
 
