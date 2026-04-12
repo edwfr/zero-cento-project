@@ -482,8 +482,8 @@ import { FormLabel } from '@/components/FormLabel'
 
 ### Checklist finale
 
-- [ ] **8.1** — Eseguire `npm run build` — zero errori
-- [ ] **8.2** — Eseguire `npm run test` (unit) — tutti pass
+- [x] **8.1** — Eseguire `npm run build` — zero errori
+- [x] **8.2** — Eseguire `npm run test` (unit) — tutti pass
 - [ ] **8.3** — Eseguire `npm run test:e2e` — tutti pass
 - [x] **8.4** — Grep finale su tutti i pattern deprecati:
 

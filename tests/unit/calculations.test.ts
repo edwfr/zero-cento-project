@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import {
+    CALCULATION_ERROR_KEYS,
     calculateVolume,
     calculateTrainingSets,
     parseReps,
@@ -720,7 +721,7 @@ describe('calculateEffectiveWeight', () => {
 
             await expect(
                 calculateEffectiveWeight(currentExercise, mockTraineeId)
-            ).rejects.toThrow('No previous occurrence found for percentage_previous')
+            ).rejects.toThrow(CALCULATION_ERROR_KEYS.noPreviousOccurrenceFound)
         })
 
         it('throws error when recursion depth exceeds limit', async () => {
@@ -766,7 +767,7 @@ describe('calculateEffectiveWeight', () => {
 
             await expect(
                 calculateEffectiveWeight(currentExercise, mockTraineeId)
-            ).rejects.toThrow('Maximum recursion depth exceeded for percentage_previous')
+            ).rejects.toThrow(CALCULATION_ERROR_KEYS.maxRecursionDepthExceeded)
         })
     })
 

@@ -89,7 +89,7 @@ const mockPrograms = [
         createdAt: new Date('2026-02-25'),
         trainer: { id: 'trainer-uuid-1', firstName: 'Marco', lastName: 'Trainer' },
         trainee: { id: 'trainee-uuid-1', firstName: 'Mario', lastName: 'Atleta' },
-        _count: { trainingWeeks: 8, feedbacks: 12 },
+        weeks: [],
     },
 ]
 
@@ -101,6 +101,7 @@ function makeRequest(url = 'http://localhost:3000/api/programs', options?: Reque
 describe('GET /api/programs', () => {
     beforeEach(() => {
         vi.clearAllMocks()
+        vi.mocked(prisma.trainingProgram.findMany).mockResolvedValue([] as any)
         vi.mocked(prisma.exerciseFeedback.findMany).mockResolvedValue([] as any)
     })
 

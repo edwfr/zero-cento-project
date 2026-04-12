@@ -29,7 +29,7 @@ export const exerciseSchema = z.object({
     movementPatternId: z.string().uuid('validation.invalidMovementPatternId'),
     muscleGroups: z
         .array(muscleGroupAssignmentSchema)
-        .min(0)
+        .min(1, 'validation.minOneMuscleGroup')
         .max(5, 'validation.maxMuscleGroups'),
     notes: z.array(z.string().max(200)).optional(),
 })

@@ -295,7 +295,7 @@ export async function POST(request: NextRequest) {
 
         // Calculate derived metrics
         const totalVolume = feedback.setsPerformed.reduce(
-            (sum, set) => sum + (set.completed ? set.reps * set.weight : 0),
+            (sum, set) => sum + set.reps * set.weight,
             0
         )
         const avgRPE = feedback.actualRpe || null

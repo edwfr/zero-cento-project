@@ -62,6 +62,16 @@ vi.mock('@/lib/supabase-server', () => ({
             },
         },
     })),
+    createAdminClient: vi.fn(() => ({
+        auth: {
+            admin: {
+                inviteUserByEmail: vi.fn().mockResolvedValue({
+                    data: { user: { id: 'supabase-uid' } },
+                    error: null,
+                }),
+            },
+        },
+    })),
 }))
 
 vi.mock('@/lib/logger', () => ({
@@ -181,10 +191,6 @@ describe('GET /api/users', () => {
 })
 
 // ─── POST /api/users ──────────────────────────────────────────────────────────
-
-import { POST } from '@/app/api/users/route'
-import { generateSecurePassword } from '@/lib/password-utils'
-import { createClient } from '@/lib/supabase-server'
 
 describe('POST /api/users', () => {
     beforeEach(() => {
