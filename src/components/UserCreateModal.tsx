@@ -192,7 +192,7 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
                             value={formData.email}
                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                             disabled={loading}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
                             required
                         />
                     </div>
@@ -207,7 +207,7 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
                             value={formData.firstName}
                             onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                             disabled={loading}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
                             required
                         />
                     </div>
@@ -222,7 +222,7 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
                             value={formData.lastName}
                             onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                             disabled={loading}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
                             required
                         />
                     </div>
@@ -236,7 +236,7 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
                             value={formData.role}
                             onChange={(e) => setFormData({ ...formData, role: e.target.value as 'trainer' | 'trainee' })}
                             disabled={loading}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                             required
                         >
                             <option value="trainee" className="text-gray-900">{t('common:roles.trainee')}</option>
@@ -266,3 +266,4 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
         </div>
     )
 }
+

@@ -191,7 +191,7 @@ export default function UserEditModal({ user, onClose, onUserUpdated }: UserEdit
                             value={formData.firstName}
                             onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                             disabled={loading}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
                             required
                         />
                     </div>
@@ -206,7 +206,7 @@ export default function UserEditModal({ user, onClose, onUserUpdated }: UserEdit
                             value={formData.lastName}
                             onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                             disabled={loading}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
                             required
                         />
                     </div>
@@ -233,3 +233,4 @@ export default function UserEditModal({ user, onClose, onUserUpdated }: UserEdit
         </div>
     )
 }
+

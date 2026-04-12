@@ -205,7 +205,7 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             disabled={loading}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                             required
                             placeholder={t('exercises.exerciseNamePlaceholder')}
                         />
@@ -220,7 +220,7 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             disabled={loading}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                             rows={3}
                             placeholder={t('exercises.descriptionPlaceholder')}
                         />
@@ -236,7 +236,7 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                             value={formData.youtubeUrl}
                             onChange={(e) => setFormData({ ...formData, youtubeUrl: e.target.value })}
                             disabled={loading}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                             required
                             placeholder={t('exercises.youtubeUrlPlaceholder')}
                         />
@@ -252,7 +252,7 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                                 value={formData.type}
                                 onChange={(e) => setFormData({ ...formData, type: e.target.value as 'fundamental' | 'accessory' })}
                                 disabled={loading}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                 required
                             >
                                 <option value="fundamental" className="text-gray-900">{t('exercises.fundamental')}</option>
@@ -269,7 +269,7 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                                 value={formData.movementPatternId}
                                 onChange={(e) => setFormData({ ...formData, movementPatternId: e.target.value })}
                                 disabled={loading}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                 required
                             >
                                 <option value="" className="text-gray-900">{t('exercises.selectPattern')}</option>
@@ -304,7 +304,7 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                                         value={mg.muscleGroupId}
                                         onChange={(e) => handleMuscleGroupChange(index, 'muscleGroupId', e.target.value)}
                                         disabled={loading}
-                                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                         required
                                     >
                                         <option value="" className="text-gray-900">{t('exercises.selectMuscleGroup')}</option>
@@ -323,7 +323,7 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                                         value={mg.coefficient}
                                         onChange={(e) => handleMuscleGroupChange(index, 'coefficient', parseFloat(e.target.value))}
                                         disabled={loading}
-                                        className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                        className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                         placeholder="0.0-1.0"
                                         required
                                     />
@@ -373,3 +373,4 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
         </div>
     )
 }
+

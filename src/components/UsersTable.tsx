@@ -142,7 +142,7 @@ export default function UsersTable() {
                     <select
                         value={filterRole}
                         onChange={(e) => setFilterRole(e.target.value)}
-                        className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                        className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary text-gray-900"
                     >
                         <option value="all" className="text-gray-900">{t('common:common.all')}</option>
                         <option value="admin" className="text-gray-900">{t('common:roles.admin')}</option>
@@ -279,3 +279,4 @@ export default function UsersTable() {
         </div>
     )
 }
+
