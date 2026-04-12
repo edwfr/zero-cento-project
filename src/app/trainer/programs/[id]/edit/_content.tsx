@@ -23,6 +23,7 @@ import {
     Dumbbell,
     FileEdit,
     Flame,
+    Info,
     Lock,
     LockOpen,
     Plus,
@@ -437,6 +438,10 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         title: string
         message: string
     } | null>(null)
+    const [openHeaderHint, setOpenHeaderHint] = useState<{
+        workoutId: string
+        field: 'reps' | 'weight'
+    } | null>(null)
 
     const [isPrHelperCollapsed, setIsPrHelperCollapsed] = useState(false)
     const [isSbdHelperCollapsed, setIsSbdHelperCollapsed] = useState(false)
@@ -785,6 +790,44 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             return nextStructureRowsByWorkoutIndex
         })
     }, [program, activeWeekId])
+
+    useEffect(() => {
+        if (!openHeaderHint) {
+            return
+        }
+
+        const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+            const target = event.target
+
+            if (!(target instanceof Element)) {
+                return
+            }
+
+            const clickInsideHint = target.closest(
+                '[data-header-hint-trigger="true"], [data-header-hint-popover="true"]'
+            )
+
+            if (!clickInsideHint) {
+                setOpenHeaderHint(null)
+            }
+        }
+
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setOpenHeaderHint(null)
+            }
+        }
+
+        document.addEventListener('mousedown', handlePointerDown)
+        document.addEventListener('touchstart', handlePointerDown)
+        document.addEventListener('keydown', handleEscape)
+
+        return () => {
+            document.removeEventListener('mousedown', handlePointerDown)
+            document.removeEventListener('touchstart', handlePointerDown)
+            document.removeEventListener('keydown', handleEscape)
+        }
+    }, [openHeaderHint])
 
     const exerciseLookupById = useMemo(() => {
         const nextLookup = new Map<string, ExerciseCatalogItem>()
@@ -2345,12 +2388,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     </div>
 
                     <div className="space-y-5">
-                        {!readOnly && (
-                            <div className="rounded-lg border border-brand-primary/20 bg-brand-primary/10 px-4 py-3 text-sm font-semibold text-brand-primary">
-                                {t('editProgram.weightInputHelp')}
-                            </div>
-                        )}
-
                         {program.weeks.map((week) => {
                             const isExpanded = expandedWeekIds[week.id] ?? false
                             const isActive = activeWeek?.id === week.id
@@ -2482,6 +2519,12 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                 })
                                                 const isWorkoutExpanded =
                                                     expandedWorkoutIds[workout.id] ?? true
+                                                const isRepsHintOpen =
+                                                    openHeaderHint?.workoutId === workout.id &&
+                                                    openHeaderHint.field === 'reps'
+                                                const isWeightHintOpen =
+                                                    openHeaderHint?.workoutId === workout.id &&
+                                                    openHeaderHint.field === 'weight'
 
                                                 return (
                                                     <div
@@ -2556,15 +2599,15 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                             <div className="overflow-x-auto">
                                                                 <table className="w-full table-fixed divide-y divide-gray-200 text-sm">
                                                                     <colgroup>
-                                                                        <col className="w-10" />
-                                                                        <col className="w-[18%]" />
-                                                                        <col className="w-[16%]" />
-                                                                        <col className="w-16" />
-                                                                        <col className="w-16" />
-                                                                        <col className="w-14" />
-                                                                        <col className="w-20" />
-                                                                        <col className="w-16" />
+                                                                        <col className="w-[4%]" />
                                                                         <col className="w-[24%]" />
+                                                                        <col className="w-[24%]" />
+                                                                        <col className="w-[8%]" />
+                                                                        <col className="w-[8%]" />
+                                                                        <col className="w-[8%]" />
+                                                                        <col className="w-[8%]" />
+                                                                        <col className="w-[8%]" />
+                                                                        <col className="w-[8%]" />
                                                                     </colgroup>
                                                                     <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
                                                                         <tr>
@@ -2582,15 +2625,85 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                             </th>
                                                                             <th className="px-1 py-3">{t('editProgram.tableExercise')}</th>
                                                                             <th className="px-1 py-3">{t('editProgram.tableVariant')}</th>
-                                                                            <th className="px-1 py-3 text-center">{t('editProgram.tableSets')}</th>
-                                                                            <th className="px-1 py-3">{t('editProgram.tableReps')}</th>
+                                                                            <th className="px-1 py-3">{t('editProgram.tableSets')}</th>
+                                                                            <th className="relative px-1 py-3">
+                                                                                <div className="flex items-center justify-start gap-1">
+                                                                                    <span>{t('editProgram.tableReps')}</span>
+                                                                                    {!readOnly && (
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={() =>
+                                                                                                setOpenHeaderHint((currentHint) =>
+                                                                                                    currentHint?.workoutId === workout.id &&
+                                                                                                        currentHint.field === 'reps'
+                                                                                                        ? null
+                                                                                                        : {
+                                                                                                            workoutId: workout.id,
+                                                                                                            field: 'reps',
+                                                                                                        }
+                                                                                                )
+                                                                                            }
+                                                                                            data-header-hint-trigger="true"
+                                                                                            className="inline-flex h-4 w-4 items-center justify-center rounded text-gray-500 hover:text-brand-primary"
+                                                                                            aria-label={t('editProgram.repsPlaceholder')}
+                                                                                            aria-expanded={isRepsHintOpen}
+                                                                                        >
+                                                                                            <Info className="h-3.5 w-3.5" />
+                                                                                        </button>
+                                                                                    )}
+                                                                                </div>
+                                                                                {!readOnly && isRepsHintOpen && (
+                                                                                    <div
+                                                                                        data-header-hint-popover="true"
+                                                                                        className="absolute left-1 top-full mt-1 w-44 rounded-md border border-gray-200 bg-white p-2 text-[11px] normal-case tracking-normal text-gray-600 shadow-lg"
+                                                                                        style={{ zIndex: 2147483647 }}
+                                                                                    >
+                                                                                        {t('editProgram.repsPlaceholder')}
+                                                                                    </div>
+                                                                                )}
+                                                                            </th>
                                                                             <th className="px-1 py-3">{t('editProgram.tableRpe')}</th>
-                                                                            <th className="px-1 py-3">{t('editProgram.tableWeightKg')}</th>
+                                                                            <th className="relative px-1 py-3">
+                                                                                <div className="flex items-center justify-start gap-1">
+                                                                                    <span>{t('editProgram.tableWeightKg')}</span>
+                                                                                    {!readOnly && (
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={() =>
+                                                                                                setOpenHeaderHint((currentHint) =>
+                                                                                                    currentHint?.workoutId === workout.id &&
+                                                                                                        currentHint.field === 'weight'
+                                                                                                        ? null
+                                                                                                        : {
+                                                                                                            workoutId: workout.id,
+                                                                                                            field: 'weight',
+                                                                                                        }
+                                                                                                )
+                                                                                            }
+                                                                                            data-header-hint-trigger="true"
+                                                                                            className="inline-flex h-4 w-4 items-center justify-center rounded text-gray-500 hover:text-brand-primary"
+                                                                                            aria-label={t('editProgram.weightPlaceholder')}
+                                                                                            aria-expanded={isWeightHintOpen}
+                                                                                        >
+                                                                                            <Info className="h-3.5 w-3.5" />
+                                                                                        </button>
+                                                                                    )}
+                                                                                </div>
+                                                                                {!readOnly && isWeightHintOpen && (
+                                                                                    <div
+                                                                                        data-header-hint-popover="true"
+                                                                                        className="absolute left-1 top-full mt-1 w-52 rounded-md border border-gray-200 bg-white p-2 text-[11px] normal-case tracking-normal text-gray-600 shadow-lg"
+                                                                                        style={{ zIndex: 2147483647 }}
+                                                                                    >
+                                                                                        {t('editProgram.weightPlaceholder')}
+                                                                                    </div>
+                                                                                )}
+                                                                            </th>
                                                                             <th className="px-1 py-3">{t('editProgram.tableRest')}</th>
-                                                                            <th className="px-1 py-3">
+                                                                            <th className="px-1 py-3 whitespace-nowrap text-[10px] normal-case tracking-normal">
                                                                                 {readOnly
                                                                                     ? t('editProgram.tableMeta')
-                                                                                    : `${t('editProgram.tableMeta')} / ${t('editProgram.tableActions')}`}
+                                                                                    : `${t('editProgram.tableMeta')}/${t('editProgram.tableActions')}`}
                                                                             </th>
                                                                         </tr>
                                                                     </thead>
@@ -2620,6 +2733,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                 )
                                                                             const variantFieldClassName =
                                                                                 'h-9 w-full rounded-lg border border-gray-300 px-1.5 text-sm leading-5 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-400'
+                                                                            const metricFieldClassName =
+                                                                                'h-9 w-full rounded-lg border border-gray-300 px-1.5 text-left text-sm leading-5 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-400'
                                                                             const rowBusy =
                                                                                 savingRowId === row.id ||
                                                                                 deletingRowId === row.id ||
@@ -2794,23 +2909,21 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                         )}
                                                                                     </td>
 
-                                                                                    <td className="px-1 py-3 text-center">
-                                                                                        <div className="mx-auto w-full max-w-[3rem]">
-                                                                                            <Input
-                                                                                                type="number"
-                                                                                                min="1"
-                                                                                                max="20"
-                                                                                                step="1"
-                                                                                                value={row.sets}
-                                                                                                onChange={(event) =>
-                                                                                                    updateRowFields(row.id, {
-                                                                                                        sets: event.target.value,
-                                                                                                    })
-                                                                                                }
-                                                                                                disabled={rowBusy || readOnly}
-                                                                                                className="px-1 py-2 text-center text-sm focus:ring-1"
-                                                                                            />
-                                                                                        </div>
+                                                                                    <td className="px-1 py-3">
+                                                                                        <Input
+                                                                                            type="number"
+                                                                                            min="1"
+                                                                                            max="20"
+                                                                                            step="1"
+                                                                                            value={row.sets}
+                                                                                            onChange={(event) =>
+                                                                                                updateRowFields(row.id, {
+                                                                                                    sets: event.target.value,
+                                                                                                })
+                                                                                            }
+                                                                                            disabled={rowBusy || readOnly}
+                                                                                            className={metricFieldClassName}
+                                                                                        />
                                                                                     </td>
 
                                                                                     <td className="px-1 py-3">
@@ -2823,8 +2936,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                 })
                                                                                             }
                                                                                             disabled={rowBusy || readOnly}
-                                                                                            placeholder={t('editProgram.repsPlaceholder')}
-                                                                                            className="px-1.5 py-2 text-sm focus:ring-1"
+                                                                                            className={metricFieldClassName}
                                                                                         />
                                                                                     </td>
 
@@ -2837,7 +2949,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                 })
                                                                                             }
                                                                                             disabled={rowBusy || readOnly}
-                                                                                            className="w-full rounded-lg border border-gray-300 px-1.5 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                                                                                            className={metricFieldClassName}
                                                                                         >
                                                                                             <option value="">-</option>
                                                                                             {RPE_OPTIONS.map((rpeValue) => (
@@ -2888,8 +3000,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                         })
                                                                                                     }
                                                                                                     disabled={rowBusy || readOnly}
-                                                                                                    placeholder={t('editProgram.weightPlaceholder')}
-                                                                                                    className="px-1.5 py-2 text-sm focus:ring-1"
+                                                                                                    className={metricFieldClassName}
                                                                                                 />
 
                                                                                                 {shouldShowEffectiveWeight &&
@@ -2935,8 +3046,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                     </td>
 
                                                                                     <td className="px-1 py-3">
-                                                                                        <div className="flex items-center justify-between gap-2">
-                                                                                            <div className="min-w-0">
+                                                                                        <div className="mx-auto flex max-w-full items-center justify-center gap-1">
+                                                                                            <div>
                                                                                                 {selectedExercise ? (
                                                                                                     <div className="flex items-center gap-1.5">
                                                                                                         <span
@@ -2954,6 +3065,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                             <MovementPatternTag
                                                                                                                 name={selectedExercise.movementPattern.name}
                                                                                                                 color={selectedExercise.movementPattern.color}
+                                                                                                                compact
                                                                                                                 className="w-fit"
                                                                                                             />
                                                                                                         )}
@@ -2966,7 +3078,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                             </div>
 
                                                                                             {!readOnly && (
-                                                                                                <div className="shrink-0">
+                                                                                                <div>
                                                                                                     <button
                                                                                                         type="button"
                                                                                                         onClick={() =>
@@ -2977,7 +3089,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                             })
                                                                                                         }
                                                                                                         disabled={rowBusy}
-                                                                                                        className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                                                                                        className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-1.5 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
                                                                                                         title={t('editProgram.deleteRowTitle')}
                                                                                                     >
                                                                                                         {deletingRowId === row.id ? (

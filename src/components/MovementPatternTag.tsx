@@ -5,6 +5,7 @@ interface MovementPatternTagProps {
     color?: string
     onClick?: () => void
     className?: string
+    compact?: boolean
 }
 
 /**
@@ -17,6 +18,7 @@ export default function MovementPatternTag({
     color = 'rgb(var(--brand-primary))',
     onClick,
     className = '',
+    compact = false,
 }: MovementPatternTagProps) {
     // Convert hex to RGB for transparency
     const hexToRgb = (hex: string) => {
@@ -42,7 +44,8 @@ export default function MovementPatternTag({
     return (
         <span
             className={`
-                inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold
+                inline-flex items-center rounded-full border text-xs font-semibold
+                ${compact ? 'px-1.5 py-1' : 'gap-1 px-2 py-0.5'}
                 transition-all duration-200
                 ${onClick ? 'cursor-pointer hover:scale-105 hover:shadow-sm' : ''}
                 ${className}
@@ -53,12 +56,14 @@ export default function MovementPatternTag({
                 color,
             }}
             onClick={onClick}
+            title={compact ? name : undefined}
+            aria-label={name}
         >
             <span
                 className="h-2 w-2 rounded-full"
                 style={{ backgroundColor: color }}
             ></span>
-            {name}
+            {!compact && name}
         </span>
     )
 }
