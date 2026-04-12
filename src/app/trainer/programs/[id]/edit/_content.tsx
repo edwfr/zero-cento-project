@@ -2701,9 +2701,11 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                             </th>
                                                                             <th className="px-1 py-3">{t('editProgram.tableRest')}</th>
                                                                             <th className="px-1 py-3 whitespace-nowrap text-[10px] normal-case tracking-normal">
-                                                                                {readOnly
-                                                                                    ? t('editProgram.tableMeta')
-                                                                                    : `${t('editProgram.tableMeta')}/${t('editProgram.tableActions')}`}
+                                                                                <span className="sr-only">
+                                                                                    {readOnly
+                                                                                        ? t('editProgram.tableMeta')
+                                                                                        : `${t('editProgram.tableMeta')}/${t('editProgram.tableActions')}`}
+                                                                                </span>
                                                                             </th>
                                                                         </tr>
                                                                     </thead>
