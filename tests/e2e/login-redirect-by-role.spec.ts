@@ -1,14 +1,12 @@
 import { test, expect } from '@playwright/test'
+import { E2E_CREDENTIALS } from './fixtures/test-users'
 
 /**
  * E2E Test: Login flow with role-based redirects
  * TEST-E2E-003
  *
  * Prerequisites:
- *   - Seed data with users:
- *     - admin@zerocento.it / TestPass123!
- *     - trainer@zerocento.it / TestPass123!
- *     - trainee1@zerocento.it / TestPass123!
+ *   - Seed data with users (see ./fixtures/test-users.ts)
  *   - Server running at http://localhost:3000
  *
  * Test Coverage:
@@ -28,8 +26,8 @@ test.describe('Login: Role-based redirects', () => {
 
     test('admin logs in and redirects to /admin/dashboard', async ({ page }) => {
         // Fill credentials
-        await page.fill('input[name="email"]', 'admin@zerocento.it')
-        await page.fill('input[name="password"]', 'TestPass123!')
+        await page.fill('input[name="email"]', E2E_CREDENTIALS.admin.email)
+        await page.fill('input[name="password"]', E2E_CREDENTIALS.admin.password)
 
         // Submit
         await page.click('button[type="submit"]')
@@ -46,8 +44,8 @@ test.describe('Login: Role-based redirects', () => {
 
     test('trainer logs in and redirects to /trainer/dashboard', async ({ page }) => {
         // Fill credentials
-        await page.fill('input[name="email"]', 'trainer@zerocento.it')
-        await page.fill('input[name="password"]', 'TestPass123!')
+        await page.fill('input[name="email"]', E2E_CREDENTIALS.trainer.email)
+        await page.fill('input[name="password"]', E2E_CREDENTIALS.trainer.password)
 
         // Submit
         await page.click('button[type="submit"]')
@@ -64,8 +62,8 @@ test.describe('Login: Role-based redirects', () => {
 
     test('trainee logs in and redirects to /trainee/dashboard', async ({ page }) => {
         // Fill credentials
-        await page.fill('input[name="email"]', 'trainee1@zerocento.it')
-        await page.fill('input[name="password"]', 'TestPass123!')
+        await page.fill('input[name="email"]', E2E_CREDENTIALS.trainee.email)
+        await page.fill('input[name="password"]', E2E_CREDENTIALS.trainee.password)
 
         // Submit
         await page.click('button[type="submit"]')
@@ -82,8 +80,8 @@ test.describe('Login: Role-based redirects', () => {
 
     test('shows error message for invalid credentials', async ({ page }) => {
         // Fill invalid credentials
-        await page.fill('input[name="email"]', 'invalid@zerocento.it')
-        await page.fill('input[name="password"]', 'WrongPassword123!')
+        await page.fill('input[name="email"]', E2E_CREDENTIALS.invalid.email)
+        await page.fill('input[name="password"]', E2E_CREDENTIALS.invalid.password)
 
         // Submit
         await page.click('button[type="submit"]')
@@ -110,8 +108,8 @@ test.describe('Login: Role-based redirects', () => {
 
     test('already logged in user auto-redirects to their dashboard', async ({ page, context }) => {
         // First login as trainer
-        await page.fill('input[name="email"]', 'trainer@zerocento.it')
-        await page.fill('input[name="password"]', 'TestPass123!')
+        await page.fill('input[name="email"]', E2E_CREDENTIALS.trainer.email)
+        await page.fill('input[name="password"]', E2E_CREDENTIALS.trainer.password)
         await page.click('button[type="submit"]')
         await page.waitForURL('**/trainer/dashboard', { timeout: 10_000 })
 
@@ -125,8 +123,8 @@ test.describe('Login: Role-based redirects', () => {
 
     test('disables form during submission', async ({ page }) => {
         // Fill credentials
-        await page.fill('input[name="email"]', 'trainer@zerocento.it')
-        await page.fill('input[name="password"]', 'TestPass123!')
+        await page.fill('input[name="email"]', E2E_CREDENTIALS.trainer.email)
+        await page.fill('input[name="password"]', E2E_CREDENTIALS.trainer.password)
 
         // Get references to form elements
         const submitButton = page.locator('button[type="submit"]')
@@ -152,11 +150,11 @@ test.describe('Login: Role-based redirects', () => {
     })
 
     test('preserves email input on failed login', async ({ page }) => {
-        const testEmail = 'invalid@zerocento.it'
+        const testEmail = E2E_CREDENTIALS.invalid.email
 
         // Fill invalid credentials
         await page.fill('input[name="email"]', testEmail)
-        await page.fill('input[name="password"]', 'WrongPassword!')
+        await page.fill('input[name="password"]', E2E_CREDENTIALS.invalid.password)
 
         // Submit
         await page.click('button[type="submit"]')

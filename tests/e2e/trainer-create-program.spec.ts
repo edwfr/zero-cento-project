@@ -1,19 +1,20 @@
 import { test, expect } from '@playwright/test'
+import { E2E_CREDENTIALS } from './fixtures/test-users'
 
 /**
  * E2E Test: Trainer creates a complete training program
  * TEST-E2E-001
  *
  * Prerequisites:
- *   - Seed data must be present (trainer@zerocento.it / TestPass123!)
+ *   - Seed data must be present (see ./fixtures/test-users.ts)
  *   - Server running at http://localhost:3000
  */
 test.describe('Trainer: Create program flow', () => {
     test.beforeEach(async ({ page }) => {
         // Login as trainer
         await page.goto('/login')
-        await page.fill('input[name="email"]', 'trainer@zerocento.it')
-        await page.fill('input[name="password"]', 'TestPass123!')
+        await page.fill('input[name="email"]', E2E_CREDENTIALS.trainer.email)
+        await page.fill('input[name="password"]', E2E_CREDENTIALS.trainer.password)
         await page.click('button[type="submit"]')
 
         // Wait for redirect to trainer dashboard

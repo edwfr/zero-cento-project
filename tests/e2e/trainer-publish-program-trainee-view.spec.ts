@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test'
+import { E2E_CREDENTIALS } from './fixtures/test-users'
 
 /**
  * E2E Test: Complete program lifecycle - create → publish → trainee view
@@ -39,9 +40,9 @@ async function logout(page: Page) {
 test.describe('Trainer publishes program → Trainee views', () => {
     let programId: string
     const programTitle = `E2E Test Program ${Date.now()}`
-    const trainerEmail = 'trainer1@zerocento.app'
-    const traineeEmail = 'trainee1@zerocento.app'
-    const testPassword = 'TestPass123!'
+    const trainerEmail = E2E_CREDENTIALS.trainer.email
+    const traineeEmail = E2E_CREDENTIALS.trainee.email
+    const testPassword = E2E_CREDENTIALS.trainer.password
 
     test('trainer creates and publishes program, trainee can view it', async ({ page }) => {
         // ═══════════════════════════════════════════════════════════════════
@@ -367,8 +368,8 @@ test.describe('Trainer publishes program → Trainee views', () => {
 })
 
 test.describe('Error handling and edge cases', () => {
-    const trainerEmail = 'trainer1@zerocento.app'
-    const testPassword = 'TestPass123!'
+    const trainerEmail = E2E_CREDENTIALS.trainer.email
+    const testPassword = E2E_CREDENTIALS.trainer.password
 
     test('cannot publish program without exercises', async ({ page }) => {
         await test.step('Trainer logs in', async () => {

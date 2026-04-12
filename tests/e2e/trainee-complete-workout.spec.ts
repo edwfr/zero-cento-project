@@ -1,5 +1,6 @@
 import { test, expect, Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
+import { E2E_CREDENTIALS } from './fixtures/test-users'
 
 /**
  * E2E Test: Trainee completes a workout with feedback
@@ -28,7 +29,7 @@ import AxeBuilder from '@axe-core/playwright'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-async function loginAs(page: Page, email: string, password = 'TestPass123!') {
+async function loginAs(page: Page, email: string, password = E2E_CREDENTIALS.trainee.password) {
     await page.goto('/login')
     await page.fill('input[name="email"]', email)
     await page.fill('input[name="password"]', password)
@@ -73,7 +74,7 @@ async function navigateToFirstWorkout(page: Page): Promise<string | null> {
 // ─── Main describe block ──────────────────────────────────────────────────────
 
 test.describe('Trainee: Complete workout with feedback', () => {
-    const traineeEmail = 'trainee1@zerocento.app'
+    const traineeEmail = E2E_CREDENTIALS.trainee.email
 
     test.beforeEach(async ({ page, context }) => {
         await context.clearCookies()
@@ -437,8 +438,8 @@ test.describe('Trainee: Dashboard and secondary pages', () => {
     test.beforeEach(async ({ page }) => {
         // Login as trainee
         await page.goto('/login')
-        await page.fill('input[name="email"]', 'trainee1@zerocento.it')
-        await page.fill('input[name="password"]', 'TestPass123!')
+        await page.fill('input[name="email"]', E2E_CREDENTIALS.trainee.email)
+        await page.fill('input[name="password"]', E2E_CREDENTIALS.trainee.password)
         await page.click('button[type="submit"]')
 
         // Wait for redirect to trainee dashboard
