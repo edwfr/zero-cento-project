@@ -241,7 +241,7 @@ export default function PersonalRecordsContent() {
                                                     <p className="text-sm text-gray-600 mb-1">
                                                         {t('records.bestRecord')}
                                                     </p>
-                                                    <p className="text-3xl font-bold text-[#FFA700]">
+                                                    <p className="text-3xl font-bold text-brand-primary">
                                                         {pr.weight} kg
                                                     </p>
                                                     <p className="text-sm text-gray-600">
@@ -318,3 +318,4 @@ export default function PersonalRecordsContent() {
         </div>
     )
 }
+

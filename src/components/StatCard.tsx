@@ -32,7 +32,7 @@ export default function StatCard({
     className = '',
 }: StatCardProps) {
     const colorClasses = {
-        primary: 'bg-brand-primary/10 text-[#FFA700]',
+        primary: 'bg-brand-primary/10 text-brand-primary',
         success: 'bg-green-100 text-green-600',
         info: 'bg-blue-100 text-blue-600',
         warning: 'bg-yellow-100 text-yellow-600',
@@ -71,7 +71,7 @@ export default function StatCard({
 
             {trend && (
                 <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${trendColorClasses}`}>
-                    <span className="mr-1">{trend.isPositive ? '↑' : '↓'}</span>
+                    <span className="mr-1">{trend.isPositive ? '^' : 'v'}</span>
                     <span>{Math.abs(trend.value)}%</span>
                     <span className="ml-1 text-gray-600">{trend.label}</span>
                 </div>
@@ -79,3 +79,4 @@ export default function StatCard({
         </div>
     )
 }
+

@@ -284,7 +284,7 @@ export default function HistoryContent() {
                                     <div className="mt-4">
                                         <Link
                                             href={`/trainee/programs/${program.id}`}
-                                            className="inline-flex items-center rounded-lg border border-[#FFA700] px-4 py-2 font-semibold text-[#FFA700] transition-colors hover:bg-[#FFF7E5]"
+                                            className="inline-flex items-center rounded-lg border border-brand-primary px-4 py-2 font-semibold text-brand-primary transition-colors hover:bg-[#FFF7E5]"
                                         >
                                             {t('history.viewProgramDetails')}
                                         </Link>
@@ -300,17 +300,17 @@ export default function HistoryContent() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
                     <div className="bg-white rounded-lg shadow-md p-6 text-center">
                         <p className="text-sm text-gray-600 mb-1">{t('history.statsTotalPrograms')}</p>
-                        <p className="text-3xl font-bold text-[#FFA700]">{programs.length}</p>
+                        <p className="text-3xl font-bold text-brand-primary">{programs.length}</p>
                     </div>
                     <div className="bg-white rounded-lg shadow-md p-6 text-center">
                         <p className="text-sm text-gray-600 mb-1">{t('history.statsCompleted')}</p>
-                        <p className="text-3xl font-bold text-[#FFA700]">
+                        <p className="text-3xl font-bold text-brand-primary">
                             {completedPrograms}
                         </p>
                     </div>
                     <div className="bg-white rounded-lg shadow-md p-6 text-center">
                         <p className="text-sm text-gray-600 mb-1">{t('history.statsActive')}</p>
-                        <p className="text-3xl font-bold text-[#FFA700]">
+                        <p className="text-3xl font-bold text-brand-primary">
                             {activePrograms}
                         </p>
                     </div>
@@ -319,3 +319,4 @@ export default function HistoryContent() {
         </div>
     )
 }
+

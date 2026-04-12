@@ -51,8 +51,8 @@ export default function ForgotPasswordPage() {
                                 e.currentTarget.nextElementSibling?.classList.remove('hidden')
                             }}
                         />
-                        <div className="hidden w-24 h-24 rounded-full bg-gradient-to-br from-[#FFA700] to-[#FF8C00] flex items-center justify-center shadow-lg">
-                            <span className="text-white text-4xl font-bold">0→100</span>
+                        <div className="hidden w-24 h-24 rounded-full bg-gradient-to-br from-brand-primary to-[#FF8C00] flex items-center justify-center shadow-lg">
+                            <span className="text-white text-4xl font-bold">0&rarr;100</span>
                         </div>
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900">{t('auth:forgotPassword.title')}</h1>
@@ -75,7 +75,7 @@ export default function ForgotPasswordPage() {
                             </p>
                             <Link
                                 href="/login"
-                                className="text-[#FFA700] hover:text-[#FF9500] font-semibold text-sm"
+                                className="text-brand-primary hover:text-brand-primary-hover font-semibold text-sm"
                             >
                                 {t('auth:forgotPassword.backToLogin')}
                             </Link>
@@ -117,7 +117,7 @@ export default function ForgotPasswordPage() {
 
                             <div className="text-center text-sm text-gray-600">
                                 {t('auth:forgotPassword.rememberPassword')}{' '}
-                                <Link href="/login" className="text-[#FFA700] hover:text-[#FF9500] font-semibold">
+                                <Link href="/login" className="text-brand-primary hover:text-brand-primary-hover font-semibold">
                                     {t('auth:login.title')}
                                 </Link>
                             </div>
@@ -128,3 +128,4 @@ export default function ForgotPasswordPage() {
         </div>
     )
 }
+

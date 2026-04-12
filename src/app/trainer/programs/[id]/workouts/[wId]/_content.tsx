@@ -488,7 +488,7 @@ export default function WorkoutDetailContent() {
                 <div
                     className={`max-h-[calc(50vh-6rem)] overflow-y-auto bg-white rounded-lg shadow-lg border border-gray-200 transition-all duration-200 ${isPRPanelCollapsed ? 'w-16' : 'w-80'}`}
                 >
-                    <div className="sticky top-0 bg-gradient-to-r from-[#FFA700] to-[#FF9500] text-white px-3 py-3 rounded-t-lg">
+                    <div className="sticky top-0 bg-gradient-to-r from-brand-primary to-brand-primary-hover text-white px-3 py-3 rounded-t-lg">
                         <div className={`flex items-center ${isPRPanelCollapsed ? 'justify-center' : 'justify-between gap-2'}`}>
                             <div className="flex items-center space-x-2 overflow-hidden">
                                 <Dumbbell className="w-5 h-5 shrink-0" />
@@ -525,7 +525,7 @@ export default function WorkoutDetailContent() {
                                                         {pr.exercise.name}
                                                     </p>
                                                     <div className="mt-1 flex items-baseline space-x-2">
-                                                        <span className="text-2xl font-bold text-[#FFA700]">
+                                                        <span className="text-2xl font-bold text-brand-primary">
                                                             {pr.weight}
                                                         </span>
                                                         <span className="text-xs text-gray-500">kg</span>

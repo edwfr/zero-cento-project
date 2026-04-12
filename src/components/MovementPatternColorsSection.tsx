@@ -20,7 +20,31 @@ interface ColorConfig {
     [movementPatternId: string]: string
 }
 
-const PRIMARY_COLOR = '#FFA700' // Brand primary color - default for all patterns
+const FALLBACK_PRIMARY_COLOR = '#f59e0b'
+
+const resolveBrandPrimaryHex = () => {
+    if (typeof window === 'undefined') {
+        return FALLBACK_PRIMARY_COLOR
+    }
+
+    const rawValue = getComputedStyle(document.documentElement)
+        .getPropertyValue('--brand-primary')
+        .trim()
+
+    const channels = rawValue
+        .split(',')
+        .map((value) => Number.parseInt(value.trim(), 10))
+
+    if (
+        channels.length !== 3 ||
+        channels.some((channel) => Number.isNaN(channel) || channel < 0 || channel > 255)
+    ) {
+        return FALLBACK_PRIMARY_COLOR
+    }
+
+    return `#${channels.map((channel) => channel.toString(16).padStart(2, '0')).join('')}`
+}
+
 const PRESET_COLORS = [
     '#3b82f6', // blue
     '#ef4444', // red
@@ -36,6 +60,7 @@ export default function MovementPatternColorsSection() {
     const { t } = useTranslation(['admin', 'common'])
     const [movementPatterns, setMovementPatterns] = useState<MovementPattern[]>([])
     const [colorConfig, setColorConfig] = useState<ColorConfig>({})
+    const [primaryColor, setPrimaryColor] = useState(FALLBACK_PRIMARY_COLOR)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -43,10 +68,12 @@ export default function MovementPatternColorsSection() {
     const [isEditing, setIsEditing] = useState(false)
 
     useEffect(() => {
-        loadData()
+        const resolvedPrimaryColor = resolveBrandPrimaryHex()
+        setPrimaryColor(resolvedPrimaryColor)
+        loadData(resolvedPrimaryColor)
     }, [])
 
-    const loadData = async () => {
+    const loadData = async (defaultPrimaryColor: string = primaryColor) => {
         setLoading(true)
         setError(null)
 
@@ -79,7 +106,7 @@ export default function MovementPatternColorsSection() {
             // Assign primary color as default to patterns without custom colors
             patterns.forEach((pattern: MovementPattern) => {
                 if (!config[pattern.id]) {
-                    config[pattern.id] = PRIMARY_COLOR
+                    config[pattern.id] = defaultPrimaryColor
                 }
             })
 
@@ -219,7 +246,7 @@ export default function MovementPatternColorsSection() {
                         <div className="flex items-start gap-4">
                             <input
                                 type="color"
-                                value={colorConfig[pattern.id] || PRIMARY_COLOR}
+                                value={colorConfig[pattern.id] || primaryColor}
                                 onChange={(e) => handleColorChange(pattern.id, e.target.value)}
                                 disabled={saving}
                                 className="w-12 h-12 rounded-md border-2 border-gray-300 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
@@ -228,7 +255,7 @@ export default function MovementPatternColorsSection() {
                                 <div>
                                     <span className="text-sm font-medium text-gray-900">{pattern.name}</span>
                                     <p className="text-xs text-gray-500 mt-1">
-                                        {colorConfig[pattern.id] || PRIMARY_COLOR}
+                                        {colorConfig[pattern.id] || primaryColor}
                                     </p>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
@@ -249,7 +276,7 @@ export default function MovementPatternColorsSection() {
                                 <span className="text-xs font-medium text-gray-600">{t('admin:colors.preview')}</span>
                                 <MovementPatternTag
                                     name={pattern.name}
-                                    color={colorConfig[pattern.id] || PRIMARY_COLOR}
+                                    color={colorConfig[pattern.id] || primaryColor}
                                 />
                             </div>
                         </div>

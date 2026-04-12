@@ -527,7 +527,7 @@ export default function ProgramTestResultsContent() {
                                         <div className="text-sm text-gray-600 mb-1">
                                             {t('personalRecords.estimated1RM')}
                                         </div>
-                                        <div className="text-2xl font-bold text-[#FFA700]">
+                                        <div className="text-2xl font-bold text-brand-primary">
                                             {calculateOneRepMax(parseFloat(weight), parseInt(reps, 10))} kg
                                         </div>
                                     </div>

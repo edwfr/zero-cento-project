@@ -423,7 +423,7 @@ export default function TraineeRecordsContent() {
                                         <div className="text-sm text-gray-600 mb-1">
                                             1RM Normalizzato (tabella RPE Mike Tuchscherer - RPE 10):
                                         </div>
-                                        <div className="text-2xl font-bold text-[#FFA700]">
+                                        <div className="text-2xl font-bold text-brand-primary">
                                             {calculateOneRepMax(parseFloat(weight), parseInt(reps))} kg
                                         </div>
                                     </div>

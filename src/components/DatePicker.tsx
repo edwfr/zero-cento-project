@@ -123,7 +123,7 @@ export default function DatePicker({
                         setShowNative(true)
                         setTimeout(() => nativeRef.current?.showPicker?.(), 50)
                     }}
-                    className="absolute right-3 text-gray-400 hover:text-[#FFA700] transition-colors disabled:opacity-40"
+                    className="absolute right-3 text-gray-400 hover:text-brand-primary transition-colors disabled:opacity-40"
                     aria-label={t('common.openCalendar')}
                     tabIndex={-1}
                 >
@@ -168,3 +168,4 @@ export default function DatePicker({
         </div>
     )
 }
+

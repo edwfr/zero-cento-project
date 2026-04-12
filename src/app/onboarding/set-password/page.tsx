@@ -156,7 +156,7 @@ export default function SetPasswordPage() {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FFA700] mx-auto mb-4" />
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto mb-4" />
                     <p className="text-gray-600">{t('common:common.loading')}</p>
                 </div>
             </div>
@@ -169,7 +169,7 @@ export default function SetPasswordPage() {
                 <div className="max-w-md w-full text-center">
                     <div className="bg-red-50 border border-red-200 rounded-lg p-6">
                         <p className="text-red-800 mb-4">{error}</p>
-                        <Link href="/login" className="text-[#FFA700] hover:underline">
+                        <Link href="/login" className="text-brand-primary hover:underline">
                             {t('auth:setPassword.backToLogin')}
                         </Link>
                     </div>
@@ -195,8 +195,8 @@ export default function SetPasswordPage() {
                                 fallback?.classList.remove('hidden')
                             }}
                         />
-                        <div className="hidden w-24 h-24 rounded-full bg-gradient-to-br from-[#FFA700] to-[#FF8C00] flex items-center justify-center shadow-lg">
-                            <span className="text-white text-4xl font-bold">0→100</span>
+                        <div className="hidden w-24 h-24 rounded-full bg-gradient-to-br from-brand-primary to-[#FF8C00] flex items-center justify-center shadow-lg">
+                            <span className="text-white text-4xl font-bold">0&rarr;100</span>
                         </div>
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900">{t('auth:setPassword.title')}</h1>
@@ -269,7 +269,7 @@ export default function SetPasswordPage() {
                 <div className="text-center mt-6">
                     <p className="text-sm text-gray-600">
                         {t('auth:setPassword.alreadyHaveAccount')}{' '}
-                        <Link href="/login" className="text-[#FFA700] hover:text-[#FF9500] font-semibold">
+                        <Link href="/login" className="text-brand-primary hover:text-brand-primary-hover font-semibold">
                             {t('auth:login.title')}
                         </Link>
                     </p>
@@ -278,3 +278,4 @@ export default function SetPasswordPage() {
         </div>
     )
 }
+

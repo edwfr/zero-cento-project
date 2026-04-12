@@ -75,7 +75,7 @@ export default function AdminProgramsPageContent() {
     if (loading) {
         return (
             <div className="flex items-center justify-center py-20">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#FFA700]" />
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-primary" />
             </div>
         )
     }
@@ -162,12 +162,12 @@ export default function AdminProgramsPageContent() {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                             {program.trainee
                                                 ? `${program.trainee.firstName} ${program.trainee.lastName}`
-                                                : '—'}
+                                                : '-'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                             {program.trainer
                                                 ? `${program.trainer.firstName} ${program.trainer.lastName}`
-                                                : '—'}
+                                                : '-'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span
@@ -183,7 +183,7 @@ export default function AdminProgramsPageContent() {
                                             {formatDate(program.endDate)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                            <span className="text-gray-400">—</span>
+                                            <span className="text-gray-400">-</span>
                                         </td>
                                     </tr>
                                 ))
@@ -205,14 +205,14 @@ export default function AdminProgramsPageContent() {
                             disabled={page === 1}
                             className="px-3 py-1 text-sm border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors"
                         >
-                            «
+                            &laquo;
                         </button>
                         <button
                             onClick={() => setPage((p) => Math.max(1, p - 1))}
                             disabled={page === 1}
                             className="px-3 py-1 text-sm border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors"
                         >
-                            ‹
+                            &lsaquo;
                         </button>
                         {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                             const start = Math.max(1, Math.min(page - 2, totalPages - 4))
@@ -222,7 +222,7 @@ export default function AdminProgramsPageContent() {
                                     key={p}
                                     onClick={() => setPage(p)}
                                     className={`px-3 py-1 text-sm border rounded-lg transition-colors ${p === page
-                                        ? 'bg-brand-primary text-white border-[#FFA700]'
+                                        ? 'bg-brand-primary text-white border-brand-primary'
                                         : 'border-gray-300 hover:bg-gray-50'
                                         }`}
                                 >
@@ -235,14 +235,14 @@ export default function AdminProgramsPageContent() {
                             disabled={page === totalPages}
                             className="px-3 py-1 text-sm border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors"
                         >
-                            ›
+                            &rsaquo;
                         </button>
                         <button
                             onClick={() => setPage(totalPages)}
                             disabled={page === totalPages}
                             className="px-3 py-1 text-sm border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors"
                         >
-                            »
+                            &raquo;
                         </button>
                     </div>
                 </div>
@@ -250,3 +250,4 @@ export default function AdminProgramsPageContent() {
         </div>
     )
 }
+

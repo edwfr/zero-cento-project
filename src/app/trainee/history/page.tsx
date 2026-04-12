@@ -1,4 +1,4 @@
-﻿import { getSession } from '@/lib/auth'
+import { getSession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import HistoryContent from './_content'

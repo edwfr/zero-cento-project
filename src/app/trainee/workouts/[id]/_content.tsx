@@ -692,7 +692,7 @@ export default function WorkoutDetailContent() {
                             <div
                                 key={we.id}
                                 ref={(el) => { exerciseRefs.current[we.id] = el }}
-                                className={`bg-white rounded-lg shadow-md overflow-hidden transition-shadow ${idx === activeExerciseIndex ? 'ring-2 ring-[#FFA700]' : ''
+                                className={`bg-white rounded-lg shadow-md overflow-hidden transition-shadow ${idx === activeExerciseIndex ? 'ring-2 ring-brand-primary' : ''
                                     }`}
                             >
                                 {/* Exercise Header */}
@@ -790,7 +790,7 @@ export default function WorkoutDetailContent() {
                                                 <button
                                                     type="button"
                                                     onClick={() => toggleVideo(we.id)}
-                                                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:border-[#FFA700] hover:text-[#FFA700] sm:w-auto"
+                                                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:border-brand-primary hover:text-brand-primary sm:w-auto"
                                                 >
                                                     <PlayCircle className="h-4 w-4" />
                                                     {isVideoExpanded
@@ -1010,7 +1010,7 @@ export default function WorkoutDetailContent() {
                 <button
                     onClick={handleSubmit}
                     disabled={submitting}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[#FFA700] bg-white px-6 py-4 text-lg font-semibold text-[#FFA700] transition-colors hover:bg-[#FFF7E5] disabled:border-gray-300 disabled:bg-gray-100 disabled:text-gray-400"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-brand-primary bg-white px-6 py-4 text-lg font-semibold text-brand-primary transition-colors hover:bg-[#FFF7E5] disabled:border-gray-300 disabled:bg-gray-100 disabled:text-gray-400"
                 >
                     {submitting ? (
                         <LoadingSpinner size="sm" color="primary" />

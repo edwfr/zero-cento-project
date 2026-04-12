@@ -174,7 +174,7 @@ export default function AdminUsersContent() {
     if (loading) {
         return (
             <div className="flex items-center justify-center py-20">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#FFA700]" />
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-primary" />
             </div>
         )
     }
@@ -259,14 +259,14 @@ export default function AdminUsersContent() {
                             disabled={bulkLoading}
                             className="bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold px-4 py-1 rounded-lg transition-colors"
                         >
-                            ✓ {t('admin:users.activateAll')}
+                            + {t('admin:users.activateAll')}
                         </button>
                         <button
                             onClick={() => handleBulkStatus(false)}
                             disabled={bulkLoading}
                             className="bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold px-4 py-1 rounded-lg transition-colors"
                         >
-                            ✗ {t('admin:users.deactivateAll')}
+                            - {t('admin:users.deactivateAll')}
                         </button>
                         <button
                             onClick={() => setSelectedIds(new Set())}
@@ -297,7 +297,7 @@ export default function AdminUsersContent() {
                                         type="checkbox"
                                         checked={allPageSelected}
                                         onChange={toggleSelectAll}
-                                        className="rounded border-gray-300 text-[#FFA700] focus:ring-brand-primary"
+                                        className="rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
                                     />
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
@@ -342,7 +342,7 @@ export default function AdminUsersContent() {
                                                 type="checkbox"
                                                 checked={selectedIds.has(user.id)}
                                                 onChange={() => toggleSelect(user.id)}
-                                                className="rounded border-gray-300 text-[#FFA700] focus:ring-brand-primary"
+                                                className="rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
                                             />
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
@@ -416,14 +416,14 @@ export default function AdminUsersContent() {
                             disabled={page === 1}
                             className="px-3 py-1 text-sm border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors"
                         >
-                            «
+                            &laquo;
                         </button>
                         <button
                             onClick={() => setPage((p) => Math.max(1, p - 1))}
                             disabled={page === 1}
                             className="px-3 py-1 text-sm border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors"
                         >
-                            ‹
+                            &lsaquo;
                         </button>
 
                         {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -434,7 +434,7 @@ export default function AdminUsersContent() {
                                     key={p}
                                     onClick={() => setPage(p)}
                                     className={`px-3 py-1 text-sm border rounded-lg transition-colors ${p === page
-                                        ? 'bg-brand-primary text-white border-[#FFA700]'
+                                        ? 'bg-brand-primary text-white border-brand-primary'
                                         : 'border-gray-300 hover:bg-gray-50'
                                         }`}
                                 >
@@ -448,14 +448,14 @@ export default function AdminUsersContent() {
                             disabled={page === totalPages}
                             className="px-3 py-1 text-sm border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors"
                         >
-                            ›
+                            &rsaquo;
                         </button>
                         <button
                             onClick={() => setPage(totalPages)}
                             disabled={page === totalPages}
                             className="px-3 py-1 text-sm border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors"
                         >
-                            »
+                            &raquo;
                         </button>
                     </div>
                 </div>
@@ -494,3 +494,4 @@ export default function AdminUsersContent() {
         </div>
     )
 }
+

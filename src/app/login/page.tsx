@@ -118,7 +118,7 @@ export default function LoginPage() {
                         {t('auth:login.title')}
                     </p>
 
-                    {/* Logo - Se manca il file, verrà mostrato un placeholder */}
+                    {/* Logo - Se manca il file, verra mostrato un placeholder */}
                     <div className="mt-6 mb-4 flex justify-center">
                         <img
                             src="/images/logo/logo.png"
@@ -130,8 +130,8 @@ export default function LoginPage() {
                                 e.currentTarget.nextElementSibling?.classList.remove('hidden')
                             }}
                         />
-                        <div className="hidden w-24 h-24 rounded-full bg-gradient-to-br from-[#FFA700] to-[#FF8C00] flex items-center justify-center shadow-lg">
-                            <span className="text-white text-4xl font-bold">0→100</span>
+                        <div className="hidden w-24 h-24 rounded-full bg-gradient-to-br from-brand-primary to-[#FF8C00] flex items-center justify-center shadow-lg">
+                            <span className="text-white text-4xl font-bold">0&rarr;100</span>
                         </div>
                     </div>
                 </div>
@@ -176,7 +176,7 @@ export default function LoginPage() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="mt-1 bg-white text-gray-900 shadow-sm"
-                                placeholder="••••••••"
+                                placeholder="********"
                             />
                         </div>
                     </div>
@@ -199,7 +199,7 @@ export default function LoginPage() {
                     <div className="text-center">
                         <a
                             href="/forgot-password"
-                            className="text-sm text-brand-primary hover:text-[#E69500]"
+                            className="text-sm text-brand-primary hover:text-brand-primary-hover"
                         >
                             {t('auth:login.forgotPassword')}
                         </a>
@@ -209,3 +209,5 @@ export default function LoginPage() {
         </div>
     )
 }
+
+

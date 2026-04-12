@@ -183,7 +183,7 @@ export default function AutocompleteSearch({
                 {/* Chevron icon */}
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                     {loading ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#FFA700] border-t-transparent" />
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-brand-primary border-t-transparent" />
                     ) : (
                         <svg
                             className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
@@ -232,7 +232,7 @@ export default function AutocompleteSearch({
                                 onMouseEnter={() => setActiveIndex(index)}
                                 className={`
                                     px-4 py-2 cursor-pointer transition-colors text-sm
-                                    ${index === activeIndex ? 'bg-brand-primary/10 text-[#FFA700]' : 'hover:bg-gray-50'}
+                                    ${index === activeIndex ? 'bg-brand-primary/10 text-brand-primary' : 'hover:bg-gray-50'}
                                     ${option.id === value ? 'font-semibold' : ''}
                                 `}
                             >
@@ -250,3 +250,4 @@ export default function AutocompleteSearch({
         </div>
     )
 }
+

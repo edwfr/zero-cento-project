@@ -16,7 +16,7 @@ import { ChevronDown, ChevronRight, Pencil, Trash2 } from 'lucide-react'
 import { formatDate } from '@/lib/date-format'
 import { estimateOneRMFromRpeTable } from '@/lib/calculations'
 
-const CHART_COLORS = ['#FFA700', '#0F766E', '#2563EB', '#DC2626', '#7C3AED', '#0891B2', '#65A30D', '#EA580C']
+const CHART_COLORS = ['rgb(var(--brand-primary))', '#0F766E', '#2563EB', '#DC2626', '#7C3AED', '#0891B2', '#65A30D', '#EA580C']
 
 type TimeWindow = '30d' | '90d' | '180d' | '365d' | 'all'
 
@@ -338,7 +338,7 @@ export default function PersonalRecordsExplorer({
                                                         reps: group.latestRecord.reps,
                                                     })}
                                                 </td>
-                                                <td className="px-4 py-3 text-sm font-semibold text-[#FFA700]">
+                                                <td className="px-4 py-3 text-sm font-semibold text-brand-primary">
                                                     {formatWeight(latestOneRepMax)} {t('common.personalRecordsExplorer.oneRmUnit')}
                                                 </td>
                                                 <td className="px-4 py-3 text-sm text-gray-700">
@@ -562,3 +562,4 @@ export default function PersonalRecordsExplorer({
         </div>
     )
 }
+

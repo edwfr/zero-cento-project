@@ -15,9 +15,9 @@ import {
     YAxis,
 } from 'recharts'
 
-const PRIMARY_COLOR = '#FFA700'
+const PRIMARY_COLOR = 'var(--brand-primary)'
 const MUSCLE_GROUP_CHART_COLORS = [
-    '#FFA700',
+    'rgb(var(--brand-primary))',
     '#0F766E',
     '#2563EB',
     '#DC2626',
@@ -75,6 +75,10 @@ export default function ProgramMuscleGroupCharts({ weeks }: ProgramMuscleGroupCh
         }
 
         const normalized = Math.max(0.18, value / maxValue)
+        if (baseColor.includes('var(--brand-primary)')) {
+            return `rgba(var(--brand-primary), ${normalized})`
+        }
+
         const hex = baseColor.replace('#', '')
         const normalizedHex =
             hex.length === 3

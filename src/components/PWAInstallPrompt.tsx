@@ -83,7 +83,7 @@ export default function PWAInstallPrompt() {
             {/* App Icon */}
             <div className="flex-shrink-0 w-12 h-12 bg-black rounded-xl overflow-hidden flex items-center justify-center">
                 {iconLoadError ? (
-                    <span className="text-[#FFA700] font-bold text-sm">0c</span>
+                    <span className="text-brand-primary font-bold text-sm">0c</span>
                 ) : (
                     <Image
                         src="/icons/icon-192x192.png"
@@ -135,3 +135,4 @@ export default function PWAInstallPrompt() {
         </div>
     )
 }
+

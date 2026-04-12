@@ -1,4 +1,4 @@
-﻿import DashboardLayout from '@/components/DashboardLayout'
+import DashboardLayout from '@/components/DashboardLayout'
 import { getSession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import TraineeRecordsContent from './_content'

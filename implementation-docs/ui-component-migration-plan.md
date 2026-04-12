@@ -471,8 +471,8 @@ import { FormLabel } from '@/components/FormLabel'
 
 ### Verifica
 
-- [ ] `grep -r "#FFA700\|#FF9500\|#E69500" src/` deve dare **0 risultati**
-- [ ] Unica fonte di verità per il brand color: `tailwind.config.ts`
+- [x] `grep -r "#FFA700\|#FF9500\|#E69500" src/` deve dare **0 risultati**
+- [x] Unica fonte di verità per il brand color: `tailwind.config.ts`
 
 **Commit:** `refactor(ui): migrate all hardcoded hex brand colors to tokens`
 

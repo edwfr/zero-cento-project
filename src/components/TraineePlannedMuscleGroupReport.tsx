@@ -18,7 +18,7 @@ import type { ApiSuccessResponse } from '@/lib/api-response'
 import { FormLabel } from '@/components/FormLabel'
 
 const MUSCLE_GROUP_CHART_COLORS = [
-    '#FFA700',
+    'rgb(var(--brand-primary))',
     '#0F766E',
     '#2563EB',
     '#DC2626',
@@ -281,7 +281,7 @@ export default function TraineePlannedMuscleGroupReport({
                         id="time-window"
                         value={timeWindow}
                         onChange={(event) => setTimeWindow(event.target.value as TimeWindow)}
-                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-[#FFA700] focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
+                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
                     >
                         <option value="4">{t('athletes.reportingWindow4Weeks')}</option>
                         <option value="8">{t('athletes.reportingWindow8Weeks')}</option>

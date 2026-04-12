@@ -181,10 +181,10 @@ export default function TraineeDashboardContent() {
             </div>
 
             {nextWorkout && (
-                <div className="bg-white border border-gray-200 border-l-4 border-l-[#FFA700] rounded-lg shadow-md p-8 mb-8">
+                <div className="bg-white border border-gray-200 border-l-4 border-l-brand-primary rounded-lg shadow-md p-8 mb-8">
                     <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
                         <div>
-                            <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#FFA700] mb-2">
+                            <p className="text-sm font-semibold uppercase tracking-[0.12em] text-brand-primary mb-2">
                                 {t('trainee:dashboard.nextWorkout')}
                             </p>
                             <h2 className="text-3xl font-bold text-gray-900 mb-2">
@@ -198,7 +198,7 @@ export default function TraineeDashboardContent() {
                         <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">
                             <Link
                                 href={`/trainee/workouts/${nextWorkout.id}`}
-                                className="inline-flex w-full items-center justify-center gap-2 border border-[#FFA700] text-[#FFA700] hover:bg-[#FFF7E5] font-semibold px-6 py-3 rounded-lg transition-colors sm:w-auto"
+                                className="inline-flex w-full items-center justify-center gap-2 border border-brand-primary text-brand-primary hover:bg-[#FFF7E5] font-semibold px-6 py-3 rounded-lg transition-colors sm:w-auto"
                             >
                                 <Play className="w-4 h-4" />
                                 {nextWorkoutActionLabel}
@@ -206,7 +206,7 @@ export default function TraineeDashboardContent() {
 
                             <Link
                                 href="/trainee/programs/current"
-                                className="inline-flex w-full items-center justify-center gap-2 border border-[#FFA700] text-[#FFA700] hover:bg-[#FFF7E5] font-semibold px-6 py-3 rounded-lg transition-colors sm:w-auto"
+                                className="inline-flex w-full items-center justify-center gap-2 border border-brand-primary text-brand-primary hover:bg-[#FFF7E5] font-semibold px-6 py-3 rounded-lg transition-colors sm:w-auto"
                             >
                                 <ClipboardList className="w-4 h-4" />
                                 {t('trainee:dashboard.viewFullProgram')}
@@ -217,10 +217,10 @@ export default function TraineeDashboardContent() {
             )}
 
             {/* Active Program Card */}
-            <div className="bg-white border border-gray-200 border-l-4 border-l-[#FFA700] rounded-lg shadow-md p-8 mb-8">
+            <div className="bg-white border border-gray-200 border-l-4 border-l-brand-primary rounded-lg shadow-md p-8 mb-8">
                 <div className="flex flex-col items-start justify-between mb-6 gap-4 sm:flex-row">
                     <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#FFA700] mb-2">
+                        <p className="text-sm font-semibold uppercase tracking-[0.12em] text-brand-primary mb-2">
                             {t('navigation:navigation.activeProgram')}
                         </p>
                         <h2 className="text-3xl font-bold text-gray-900 mb-2">{activeProgram.title}</h2>
@@ -233,7 +233,7 @@ export default function TraineeDashboardContent() {
                     </div>
                     <Link
                         href="/trainee/programs/current"
-                        className="inline-flex w-full items-center justify-center gap-2 border border-[#FFA700] text-[#FFA700] hover:bg-[#FFF7E5] font-semibold px-6 py-3 rounded-lg transition-colors sm:w-auto"
+                        className="inline-flex w-full items-center justify-center gap-2 border border-brand-primary text-brand-primary hover:bg-[#FFF7E5] font-semibold px-6 py-3 rounded-lg transition-colors sm:w-auto"
                     >
                         <ClipboardList className="w-4 h-4" />
                         {t('trainee:dashboard.viewFullProgram')}
@@ -243,13 +243,13 @@ export default function TraineeDashboardContent() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
                         <p className="text-gray-600 text-sm mb-1">{t('trainee:dashboard.duration')}</p>
-                        <p className="text-2xl font-bold text-[#FFA700]">
+                        <p className="text-2xl font-bold text-brand-primary">
                             {t('trainee:dashboard.weeks', { count: activeProgram.durationWeeks })}
                         </p>
                     </div>
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
                         <p className="text-gray-600 text-sm mb-1">{t('trainee:dashboard.progression')}</p>
-                        <p className="text-2xl font-bold text-[#FFA700]">
+                        <p className="text-2xl font-bold text-brand-primary">
                             {t('trainee:dashboard.workoutsProgress', {
                                 completed: completedWorkouts,
                                 total: totalWorkouts,
@@ -258,7 +258,7 @@ export default function TraineeDashboardContent() {
                     </div>
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
                         <p className="text-gray-600 text-sm mb-1">{t('trainee:dashboard.completion')}</p>
-                        <p className="text-2xl font-bold text-[#FFA700]">{progressPercent}%</p>
+                        <p className="text-2xl font-bold text-brand-primary">{progressPercent}%</p>
                     </div>
                 </div>
 
@@ -300,3 +300,4 @@ export default function TraineeDashboardContent() {
         </div>
     )
 }
+

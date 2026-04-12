@@ -77,7 +77,7 @@ function ComponentShowcase() {
                     <div className="mt-4 flex justify-center gap-4">
                         <div className="flex items-center gap-2">
                             <div className="h-4 w-4 rounded-full bg-brand-primary"></div>
-                            <span className="text-sm text-gray-600">Primary: #FFA700</span>
+                            <span className="text-sm text-gray-600">Primary: brand-primary token</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="h-4 w-4 rounded-full bg-black"></div>
@@ -527,7 +527,7 @@ function ComponentShowcase() {
                             id="3"
                             name="Bench Press"
                             type="fundamental"
-                            movementPattern={{ id: '3', name: 'Press', color: '#FFA700' }}
+                            movementPattern={{ id: '3', name: 'Press', color: 'rgb(var(--brand-primary))' }}
                             muscleGroups={[
                                 { id: '4', name: 'Pettorali' },
                                 { id: '5', name: 'Deltoidi' },
@@ -543,7 +543,7 @@ function ComponentShowcase() {
                     <div className="flex flex-wrap gap-3">
                         <MovementPatternTag name="Squat" color="#ef4444" />
                         <MovementPatternTag name="Hinge" color="#10b981" />
-                        <MovementPatternTag name="Press" color="#FFA700" />
+                        <MovementPatternTag name="Press" color="rgb(var(--brand-primary))" />
                         <MovementPatternTag name="Pull" color="#3b82f6" />
                         <MovementPatternTag name="Carry" color="#8b5cf6" />
                         <MovementPatternTag name="Lunge" color="#ec4899" />

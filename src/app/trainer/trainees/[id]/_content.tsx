@@ -76,7 +76,7 @@ interface SbdKpiRow {
     averageIntensity: number | null
 }
 
-const CHART_COLORS = ['#FFA700', '#0F766E', '#2563EB', '#DC2626', '#7C3AED', '#0891B2', '#65A30D', '#EA580C']
+const CHART_COLORS = ['rgb(var(--brand-primary))', '#0F766E', '#2563EB', '#DC2626', '#7C3AED', '#0891B2', '#65A30D', '#EA580C']
 
 const SBD_COLORS: Record<SbdLiftValue, string> = {
     squat: '#16A34A',
@@ -643,7 +643,7 @@ export default function TraineeDetailContent() {
                             <button
                                 onClick={() => setActiveTab('programs')}
                                 className={`pb-4 px-1 border-b-2 font-semibold text-sm ${activeTab === 'programs'
-                                    ? 'border-[#FFA700] text-[#FFA700]'
+                                    ? 'border-brand-primary text-brand-primary'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
@@ -652,7 +652,7 @@ export default function TraineeDetailContent() {
                             <button
                                 onClick={() => setActiveTab('records')}
                                 className={`pb-4 px-1 border-b-2 font-semibold text-sm ${activeTab === 'records'
-                                    ? 'border-[#FFA700] text-[#FFA700]'
+                                    ? 'border-brand-primary text-brand-primary'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
@@ -661,7 +661,7 @@ export default function TraineeDetailContent() {
                             <button
                                 onClick={() => setActiveTab('reports')}
                                 className={`pb-4 px-1 border-b-2 font-semibold text-sm ${activeTab === 'reports'
-                                    ? 'border-[#FFA700] text-[#FFA700]'
+                                    ? 'border-brand-primary text-brand-primary'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
@@ -850,7 +850,7 @@ export default function TraineeDetailContent() {
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                                                 {record.reps} reps
                                                             </td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-[#FFA700]">
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-brand-primary">
                                                                 {calculateOneRepMax(record.weight, record.reps)} kg
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">

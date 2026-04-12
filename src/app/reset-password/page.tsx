@@ -79,8 +79,8 @@ export default function ResetPasswordPage() {
                                 e.currentTarget.nextElementSibling?.classList.remove('hidden')
                             }}
                         />
-                        <div className="hidden w-24 h-24 rounded-full bg-gradient-to-br from-[#FFA700] to-[#FF8C00] flex items-center justify-center shadow-lg">
-                            <span className="text-white text-4xl font-bold">0→100</span>
+                        <div className="hidden w-24 h-24 rounded-full bg-gradient-to-br from-brand-primary to-[#FF8C00] flex items-center justify-center shadow-lg">
+                            <span className="text-white text-4xl font-bold">0&rarr;100</span>
                         </div>
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900">{t('auth:resetPassword.title')}</h1>
@@ -92,11 +92,11 @@ export default function ResetPasswordPage() {
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
                     {!sessionReady ? (
                         <div className="text-center py-8">
-                            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#FFA700] mx-auto mb-4" />
+                            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-primary mx-auto mb-4" />
                             <p className="text-gray-600 text-sm">{t('auth:resetPassword.verifyingLink')}</p>
                             <p className="text-gray-400 text-xs mt-2">
                                 {t('auth:resetPassword.verifyingHelp')}{' '}
-                                <Link href="/forgot-password" className="text-[#FFA700] hover:underline">
+                                <Link href="/forgot-password" className="text-brand-primary hover:underline">
                                     {t('auth:resetPassword.requestNewLink')}
                                 </Link>
                             </p>
@@ -159,3 +159,4 @@ export default function ResetPasswordPage() {
         </div>
     )
 }
+
