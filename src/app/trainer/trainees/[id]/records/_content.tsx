@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { PersonalRecordsExplorer, RPEOneRMTable, SkeletonTable } from '@/components'
@@ -28,13 +28,19 @@ interface Exercise {
     type: 'fundamental' | 'accessory'
 }
 
+interface PersonalRecordExercise {
+    id: string
+    name: string
+    type?: string
+}
+
 interface PersonalRecord {
     id: string
     weight: number
     reps: number
     recordDate: string
     notes: string | null
-    exercise: Exercise
+    exercise: PersonalRecordExercise
 }
 
 export default function TraineeRecordsContent() {
@@ -65,15 +71,11 @@ export default function TraineeRecordsContent() {
     } | null>(null)
     const { showToast } = useToast()
 
-    useEffect(() => {
-        fetchData()
-    }, [traineeId])
-
     const sortExercisesByName = (items: Exercise[]) => {
         return [...items].sort((a, b) => a.name.localeCompare(b.name, 'it', { sensitivity: 'base' }))
     }
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             setLoading(true)
 
@@ -107,7 +109,11 @@ export default function TraineeRecordsContent() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [traineeId, t])
+
+    useEffect(() => {
+        void fetchData()
+    }, [fetchData])
 
     const openAddModal = () => {
         setEditingRecord(null)

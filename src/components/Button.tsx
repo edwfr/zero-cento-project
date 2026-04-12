@@ -1,4 +1,4 @@
-import { ButtonHTMLAttributes, ReactNode } from 'react'
+import { ButtonHTMLAttributes, ReactNode, forwardRef } from 'react'
 import LoadingSpinner from './LoadingSpinner'
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger'
@@ -24,19 +24,22 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * <Button variant="danger" isLoading>Delete</Button>
  * ```
  */
-export function Button({
-    variant = 'primary',
-    size = 'md',
-    isLoading = false,
-    loadingText,
-    icon,
-    iconPosition = 'left',
-    fullWidth = false,
-    children,
-    className = '',
-    disabled,
-    ...props
-}: ButtonProps) {
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+    {
+        variant = 'primary',
+        size = 'md',
+        isLoading = false,
+        loadingText,
+        icon,
+        iconPosition = 'left',
+        fullWidth = false,
+        children,
+        className = '',
+        disabled,
+        ...props
+    },
+    ref
+) {
     // Base styles
     const baseStyles = 'inline-flex items-center justify-center font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed'
 
@@ -67,6 +70,7 @@ export function Button({
 
     return (
         <button
+            ref={ref}
             className={combinedClassName}
             disabled={isDisabled}
             {...props}
@@ -86,4 +90,4 @@ export function Button({
             )}
         </button>
     )
-}
+})

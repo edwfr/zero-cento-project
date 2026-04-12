@@ -485,7 +485,7 @@ import { FormLabel } from '@/components/FormLabel'
 - [ ] **8.1** — Eseguire `npm run build` — zero errori
 - [ ] **8.2** — Eseguire `npm run test` (unit) — tutti pass
 - [ ] **8.3** — Eseguire `npm run test:e2e` — tutti pass
-- [ ] **8.4** — Grep finale su tutti i pattern deprecati:
+- [x] **8.4** — Grep finale su tutti i pattern deprecati:
 
 ```bash
 # Deve dare 0 risultati per ciascuno:

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import { SkeletonTable } from '@/components'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
@@ -35,6 +36,15 @@ interface Exercise {
     }
 }
 
+const getYoutubeThumbnailUrl = (youtubeUrl: string | null): string | null => {
+    if (!youtubeUrl) {
+        return null
+    }
+
+    const videoId = youtubeUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/)?.[1]
+    return videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : null
+}
+
 export default function TrainerExercisesContent() {
     const { showToast } = useToast()
     const { t } = useTranslation(['trainer', 'common'])
@@ -53,11 +63,7 @@ export default function TrainerExercisesContent() {
         variant?: 'danger' | 'warning' | 'info' | 'success'
     } | null>(null)
 
-    useEffect(() => {
-        fetchExercises()
-    }, [])
-
-    const fetchExercises = async () => {
+    const fetchExercises = useCallback(async () => {
         try {
             setLoading(true)
             const res = await fetch('/api/exercises?limit=100')
@@ -73,7 +79,11 @@ export default function TrainerExercisesContent() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [t])
+
+    useEffect(() => {
+        void fetchExercises()
+    }, [fetchExercises])
 
     const handleDelete = (id: string, name: string) => {
         setConfirmModal({
@@ -317,18 +327,24 @@ export default function TrainerExercisesContent() {
                                 className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden"
                             >
                                 {/* Video Thumbnail */}
-                                {exercise.youtubeUrl && (
-                                    <div className="aspect-video bg-gray-200">
-                                        <img
-                                            src={`https://img.youtube.com/vi/${exercise.youtubeUrl.match(
-                                                /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/
-                                            )?.[1]
-                                                }/mqdefault.jpg`}
-                                            alt={exercise.name}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    </div>
-                                )}
+                                {(() => {
+                                    const thumbnailUrl = getYoutubeThumbnailUrl(exercise.youtubeUrl)
+                                    if (!thumbnailUrl) {
+                                        return null
+                                    }
+
+                                    return (
+                                        <div className="relative aspect-video bg-gray-200">
+                                            <Image
+                                                src={thumbnailUrl}
+                                                alt={exercise.name}
+                                                fill
+                                                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
+                                                className="object-cover"
+                                            />
+                                        </div>
+                                    )
+                                })()}
 
                                 {/* Content */}
                                 <div className="p-3">

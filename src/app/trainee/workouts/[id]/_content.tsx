@@ -167,45 +167,7 @@ export default function WorkoutDetailContent() {
 
     const STORAGE_KEY = `workout_${workoutId}_feedback`
 
-    useEffect(() => {
-        fetchWorkout()
-        loadLocalData()
-    }, [workoutId])
-
-    useEffect(() => {
-        // Auto-save to localStorage every time feedbackData changes
-        if (Object.keys(feedbackData).length > 0) {
-            saveLocalData()
-        }
-    }, [feedbackData, exerciseRPE, globalNotes])
-
-    useEffect(() => {
-        if (!workout || loading) {
-            return
-        }
-
-        if (submitting || draftSyncPausedRef.current) {
-            return
-        }
-
-        if (!draftSyncEnabledRef.current) {
-            draftSyncEnabledRef.current = true
-            return
-        }
-
-        draftSyncTimeoutRef.current = window.setTimeout(() => {
-            void syncDraftFeedback()
-        }, 800)
-
-        return () => {
-            if (draftSyncTimeoutRef.current !== null) {
-                window.clearTimeout(draftSyncTimeoutRef.current)
-                draftSyncTimeoutRef.current = null
-            }
-        }
-    }, [feedbackData, workout, loading, submitting])
-
-    const fetchWorkout = async () => {
+    const fetchWorkout = useCallback(async () => {
         try {
             setLoading(true)
 
@@ -268,9 +230,9 @@ export default function WorkoutDetailContent() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [t, workoutId])
 
-    const loadLocalData = () => {
+    const loadLocalData = useCallback(() => {
         try {
             const saved = localStorage.getItem(STORAGE_KEY)
             if (saved) {
@@ -296,9 +258,9 @@ export default function WorkoutDetailContent() {
         } catch (err) {
             console.error('Error loading local data:', err)
         }
-    }
+    }, [STORAGE_KEY])
 
-    const saveLocalData = () => {
+    const saveLocalData = useCallback(() => {
         try {
             localStorage.setItem(
                 STORAGE_KEY,
@@ -312,7 +274,7 @@ export default function WorkoutDetailContent() {
         } catch (err) {
             console.error('Error saving local data:', err)
         }
-    }
+    }, [STORAGE_KEY, exerciseRPE, feedbackData, globalNotes])
 
     const clearLocalData = () => {
         try {
@@ -322,7 +284,7 @@ export default function WorkoutDetailContent() {
         }
     }
 
-    const syncDraftFeedback = async () => {
+    const syncDraftFeedback = useCallback(async () => {
         if (!workout || draftSyncPausedRef.current) {
             return
         }
@@ -385,7 +347,45 @@ export default function WorkoutDetailContent() {
 
         draftSyncPromiseRef.current = pendingSync
         await pendingSync
-    }
+    }, [feedbackData, workout])
+
+    useEffect(() => {
+        void fetchWorkout()
+        loadLocalData()
+    }, [fetchWorkout, loadLocalData])
+
+    useEffect(() => {
+        // Auto-save to localStorage every time feedbackData changes
+        if (Object.keys(feedbackData).length > 0) {
+            saveLocalData()
+        }
+    }, [feedbackData, exerciseRPE, globalNotes, saveLocalData])
+
+    useEffect(() => {
+        if (!workout || loading) {
+            return
+        }
+
+        if (submitting || draftSyncPausedRef.current) {
+            return
+        }
+
+        if (!draftSyncEnabledRef.current) {
+            draftSyncEnabledRef.current = true
+            return
+        }
+
+        draftSyncTimeoutRef.current = window.setTimeout(() => {
+            void syncDraftFeedback()
+        }, 800)
+
+        return () => {
+            if (draftSyncTimeoutRef.current !== null) {
+                window.clearTimeout(draftSyncTimeoutRef.current)
+                draftSyncTimeoutRef.current = null
+            }
+        }
+    }, [feedbackData, loading, submitting, syncDraftFeedback, workout])
 
     const updateSet = (
         workoutExerciseId: string,

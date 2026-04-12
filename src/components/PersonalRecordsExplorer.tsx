@@ -97,11 +97,15 @@ export default function PersonalRecordsExplorer({
 
     const showActions = Boolean(onEditRecord || onDeleteRecord)
 
-    const computeOneRepMax =
-        calculateOneRepMax ||
-        ((weight: number, reps: number) => {
+    const computeOneRepMax = useMemo(() => {
+        if (calculateOneRepMax) {
+            return calculateOneRepMax
+        }
+
+        return (weight: number, reps: number) => {
             return Math.round(estimateOneRMFromRpeTable(weight, reps, 10) * 10) / 10
-        })
+        }
+    }, [calculateOneRepMax])
 
     const groupedRecords = useMemo<GroupedExerciseRecords[]>(() => {
         const exerciseMap = new Map<string, { exercise: RecordExercise; history: PersonalRecordExplorerItem[] }>()

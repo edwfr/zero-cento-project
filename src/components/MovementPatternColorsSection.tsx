@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import MovementPatternTag from './MovementPatternTag'
 import { getApiErrorMessage } from '@/lib/api-error'
@@ -67,15 +67,11 @@ export default function MovementPatternColorsSection() {
     const [success, setSuccess] = useState(false)
     const [isEditing, setIsEditing] = useState(false)
 
-    useEffect(() => {
-        const resolvedPrimaryColor = resolveBrandPrimaryHex()
-        setPrimaryColor(resolvedPrimaryColor)
-        loadData(resolvedPrimaryColor)
-    }, [])
-
-    const loadData = async (defaultPrimaryColor: string = primaryColor) => {
+    const loadData = useCallback(async (defaultPrimaryColor?: string) => {
         setLoading(true)
         setError(null)
+
+        const resolvedDefaultPrimaryColor = defaultPrimaryColor ?? resolveBrandPrimaryHex()
 
         try {
             // Load movement patterns
@@ -106,7 +102,7 @@ export default function MovementPatternColorsSection() {
             // Assign primary color as default to patterns without custom colors
             patterns.forEach((pattern: MovementPattern) => {
                 if (!config[pattern.id]) {
-                    config[pattern.id] = defaultPrimaryColor
+                    config[pattern.id] = resolvedDefaultPrimaryColor
                 }
             })
 
@@ -116,7 +112,13 @@ export default function MovementPatternColorsSection() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [t])
+
+    useEffect(() => {
+        const resolvedPrimaryColor = resolveBrandPrimaryHex()
+        setPrimaryColor(resolvedPrimaryColor)
+        void loadData(resolvedPrimaryColor)
+    }, [loadData])
 
     const handleColorChange = (movementPatternId: string, color: string) => {
         setColorConfig((prev) => ({

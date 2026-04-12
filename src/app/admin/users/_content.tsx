@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import UserCreateModal from '@/components/UserCreateModal'
@@ -61,7 +61,7 @@ export default function AdminUsersContent() {
     const [editingUser, setEditingUser] = useState<User | null>(null)
     const [deletingUser, setDeletingUser] = useState<User | null>(null)
 
-    const fetchUsers = async () => {
+    const fetchUsers = useCallback(async () => {
         try {
             setLoading(true)
             const res = await fetch('/api/users')
@@ -75,11 +75,11 @@ export default function AdminUsersContent() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [t])
 
     useEffect(() => {
-        fetchUsers()
-    }, [])
+        void fetchUsers()
+    }, [fetchUsers])
 
     // Reset to page 1 when filters change
     useEffect(() => {

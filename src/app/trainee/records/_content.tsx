@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
@@ -37,11 +37,7 @@ export default function PersonalRecordsContent() {
     const [typeFilter, setTypeFilter] = useState<'all' | 'fundamental' | 'accessory'>('all')
     const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set())
 
-    useEffect(() => {
-        fetchRecords()
-    }, [])
-
-    const fetchRecords = async () => {
+    const fetchRecords = useCallback(async () => {
         try {
             setLoading(true)
 
@@ -59,7 +55,11 @@ export default function PersonalRecordsContent() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [t])
+
+    useEffect(() => {
+        void fetchRecords()
+    }, [fetchRecords])
 
     const calculateOneRepMax = (weight: number, reps: number): number => {
         if (reps === 1) return weight

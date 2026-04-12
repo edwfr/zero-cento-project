@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase-client'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/Button'
@@ -69,9 +70,11 @@ export default function ResetPasswordPage() {
                 {/* Logo */}
                 <div className="text-center mb-8">
                     <div className="flex justify-center mb-4">
-                        <img
+                        <Image
                             src="/images/logo/logo.png"
                             alt="ZeroCento Logo"
+                            width={96}
+                            height={96}
                             className="w-24 h-24 object-contain"
                             onError={(e) => {
                                 // Fallback al placeholder se l'immagine non esiste

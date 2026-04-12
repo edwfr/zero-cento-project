@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Users, Dumbbell, BarChart2, TrendingUp, GraduationCap, PersonStanding, ClipboardList, Info, Settings } from 'lucide-react'
 import { StatCard, NavigationCard, SkeletonDashboard } from '@/components'
@@ -20,11 +20,7 @@ export default function AdminDashboardContent() {
     const [stats, setStats] = useState<DashboardStats | null>(null)
     const [error, setError] = useState<string | null>(null)
 
-    useEffect(() => {
-        fetchDashboardStats()
-    }, [])
-
-    const fetchDashboardStats = async () => {
+    const fetchDashboardStats = useCallback(async () => {
         try {
             setLoading(true)
 
@@ -64,7 +60,11 @@ export default function AdminDashboardContent() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [t])
+
+    useEffect(() => {
+        void fetchDashboardStats()
+    }, [fetchDashboardStats])
 
     if (loading) {
         return <SkeletonDashboard cards={6} showTable={false} />

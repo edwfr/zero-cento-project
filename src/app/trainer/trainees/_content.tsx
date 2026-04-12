@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { SkeletonTable } from '@/components'
@@ -31,11 +31,7 @@ export default function TrainerTraineesContent() {
     const [searchTerm, setSearchTerm] = useState('')
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('active')
 
-    useEffect(() => {
-        fetchTrainees()
-    }, [])
-
-    const fetchTrainees = async () => {
+    const fetchTrainees = useCallback(async () => {
         try {
             setLoading(true)
             const res = await fetch('/api/users?role=trainee')
@@ -51,7 +47,11 @@ export default function TrainerTraineesContent() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [t])
+
+    useEffect(() => {
+        void fetchTrainees()
+    }, [fetchTrainees])
 
     const handleToggleStatus = async (id: string, currentStatus: boolean) => {
         try {

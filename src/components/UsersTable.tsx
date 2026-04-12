@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import UserCreateModal from './UserCreateModal'
@@ -31,7 +31,7 @@ export default function UsersTable() {
     const [deletingUser, setDeletingUser] = useState<User | null>(null)
     const { showToast } = useToast()
 
-    const fetchUsers = async () => {
+    const fetchUsers = useCallback(async () => {
         try {
             setLoading(true)
             const url = filterRole === 'all'
@@ -52,11 +52,11 @@ export default function UsersTable() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [filterRole, t])
 
     useEffect(() => {
-        fetchUsers()
-    }, [filterRole])
+        void fetchUsers()
+    }, [fetchUsers])
 
     const handleUserCreated = () => {
         fetchUsers()

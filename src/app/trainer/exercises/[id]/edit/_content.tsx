@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
@@ -65,11 +65,7 @@ export default function EditExerciseContent() {
     const [variants, setVariants] = useState<string[]>([])
     const [selectedMuscleGroups, setSelectedMuscleGroups] = useState<MuscleGroupInput[]>([])
 
-    useEffect(() => {
-        fetchAll()
-    }, [exerciseId])
-
-    const fetchAll = async () => {
+    const fetchAll = useCallback(async () => {
         try {
             setLoadingData(true)
             const [exRes, mgRes, mpRes] = await Promise.all([
@@ -108,7 +104,11 @@ export default function EditExerciseContent() {
         } finally {
             setLoadingData(false)
         }
-    }
+    }, [exerciseId, t])
+
+    useEffect(() => {
+        void fetchAll()
+    }, [fetchAll])
 
     const addVariant = () => setVariants([...variants, ''])
     const removeVariant = (index: number) => setVariants(variants.filter((_, i) => i !== index))

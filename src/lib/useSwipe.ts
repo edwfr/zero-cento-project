@@ -22,7 +22,8 @@ export function useSwipe({ onSwipeLeft, onSwipeRight, threshold = 60 }: SwipeHan
     const shouldIgnoreSwipe = useRef(false)
 
     const onTouchStart = useCallback((e: React.TouchEvent) => {
-        shouldIgnoreSwipe.current = !!e.target.closest?.(INTERACTIVE_SELECTOR)
+        shouldIgnoreSwipe.current =
+            e.target instanceof Element && e.target.closest(INTERACTIVE_SELECTOR) !== null
 
         if (shouldIgnoreSwipe.current) {
             touchStartX.current = null

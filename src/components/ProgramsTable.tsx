@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import Link from 'next/link'
@@ -78,7 +78,7 @@ export default function ProgramsTable({
         variant?: 'danger' | 'warning' | 'info' | 'success'
     } | null>(null)
 
-    const fetchPrograms = async () => {
+    const fetchPrograms = useCallback(async () => {
         try {
             setLoading(true)
             const res = await fetch('/api/programs')
@@ -91,13 +91,13 @@ export default function ProgramsTable({
         } finally {
             setLoading(false)
         }
-    }
+    }, [t])
 
     useEffect(() => {
         if (!externalPrograms) {
-            fetchPrograms()
+            void fetchPrograms()
         }
-    }, [externalPrograms])
+    }, [externalPrograms, fetchPrograms])
 
     // Sync when parent updates props
     useEffect(() => {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
@@ -43,13 +43,9 @@ export default function HistoryContent() {
     const [progressByProgramId, setProgressByProgramId] = useState<Record<string, ProgramProgressSummary>>({})
     const [error, setError] = useState<string | null>(null)
 
-    useEffect(() => {
-        fetchHistory()
-    }, [])
-
     const isPublishedProgram = (program: Program): boolean => program.status !== 'draft'
 
-    const fetchHistory = async () => {
+    const fetchHistory = useCallback(async () => {
         try {
             setLoading(true)
 
@@ -99,7 +95,11 @@ export default function HistoryContent() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [t])
+
+    useEffect(() => {
+        void fetchHistory()
+    }, [fetchHistory])
 
     const getDisplayStatus = (program: Program): ProgramStatus => {
         if (program.status !== 'active') {

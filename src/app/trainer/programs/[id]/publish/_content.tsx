@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft } from 'lucide-react'
 import { getApiErrorMessage } from '@/lib/api-error'
@@ -61,18 +61,34 @@ export default function PublishProgramPage() {
         variant?: 'danger' | 'warning' | 'info' | 'success'
     } | null>(null)
 
-    useEffect(() => {
-        fetchProgram()
+    const validateProgram = useCallback((prog: Program) => {
+        const errors: string[] = []
 
-        // Set default start date to next Monday
-        const today = new Date()
-        const nextMonday = new Date(today)
-        const daysUntilMonday = (8 - today.getDay()) % 7 || 7
-        nextMonday.setDate(today.getDate() + daysUntilMonday)
-        setStartDate(nextMonday.toISOString().split('T')[0])
-    }, [programId])
+        // Check all workouts have exercises
+        const totalWorkouts = prog.durationWeeks * prog.workoutsPerWeek
+        const configuredWorkouts = prog.weeks.reduce(
+            (sum, week) => sum + week.workouts.filter((w) => w.exerciseCount > 0).length,
+            0
+        )
 
-    const fetchProgram = async () => {
+        if (configuredWorkouts < totalWorkouts) {
+            errors.push(
+                t('publish.validationWorkoutsEmpty', { count: totalWorkouts - configuredWorkouts })
+            )
+        }
+
+        // Check at least one fundamental exercise per week
+        prog.weeks.forEach((week) => {
+            const weekHasExercises = week.workouts.some((w) => w.exerciseCount > 0)
+            if (!weekHasExercises) {
+                errors.push(t('publish.validationWeekEmpty', { week: week.weekNumber }))
+            }
+        })
+
+        setValidationErrors(errors)
+    }, [t])
+
+    const fetchProgram = useCallback(async () => {
         try {
             setLoading(true)
             const res = await fetch(`/api/programs/${programId}`, {
@@ -106,34 +122,18 @@ export default function PublishProgramPage() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [programId, t, validateProgram])
 
-    const validateProgram = (prog: Program) => {
-        const errors: string[] = []
+    useEffect(() => {
+        void fetchProgram()
 
-        // Check all workouts have exercises
-        const totalWorkouts = prog.durationWeeks * prog.workoutsPerWeek
-        const configuredWorkouts = prog.weeks.reduce(
-            (sum, week) => sum + week.workouts.filter((w) => w.exerciseCount > 0).length,
-            0
-        )
-
-        if (configuredWorkouts < totalWorkouts) {
-            errors.push(
-                t('publish.validationWorkoutsEmpty', { count: totalWorkouts - configuredWorkouts })
-            )
-        }
-
-        // Check at least one fundamental exercise per week
-        prog.weeks.forEach((week) => {
-            const weekHasExercises = week.workouts.some((w) => w.exerciseCount > 0)
-            if (!weekHasExercises) {
-                errors.push(t('publish.validationWeekEmpty', { week: week.weekNumber }))
-            }
-        })
-
-        setValidationErrors(errors)
-    }
+        // Set default start date to next Monday
+        const today = new Date()
+        const nextMonday = new Date(today)
+        const daysUntilMonday = (8 - today.getDay()) % 7 || 7
+        nextMonday.setDate(today.getDate() + daysUntilMonday)
+        setStartDate(nextMonday.toISOString().split('T')[0])
+    }, [fetchProgram])
 
     const doPublish = async () => {
         setConfirmModal(null)

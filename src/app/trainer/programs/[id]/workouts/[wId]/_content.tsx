@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
@@ -152,11 +152,7 @@ export default function WorkoutDetailContent() {
         variant?: 'danger' | 'warning' | 'info' | 'success'
     } | null>(null)
 
-    useEffect(() => {
-        fetchData()
-    }, [workoutId])
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             setLoading(true)
 
@@ -192,7 +188,11 @@ export default function WorkoutDetailContent() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [programId, t, workoutId])
+
+    useEffect(() => {
+        void fetchData()
+    }, [fetchData])
 
     const handleDeleteExercise = (workoutExerciseId: string) => {
         setConfirmModal({

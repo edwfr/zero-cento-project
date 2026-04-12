@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase-client'
 import { useTranslation } from 'react-i18next'
 import Link from 'next/link'
@@ -184,9 +185,11 @@ export default function SetPasswordPage() {
                 {/* Logo */}
                 <div className="text-center mb-8">
                     <div className="flex justify-center mb-4">
-                        <img
+                        <Image
                             src="/images/logo/logo.png"
                             alt="ZeroCento Logo"
+                            width={96}
+                            height={96}
                             className="w-24 h-24 object-contain"
                             onError={(e) => {
                                 // Fallback to placeholder if image doesn't load

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import ExerciseCreateModal from './ExerciseCreateModal'
@@ -39,7 +39,7 @@ export default function ExercisesTable() {
     const [searchQuery, setSearchQuery] = useState('')
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
-    const fetchExercises = async () => {
+    const fetchExercises = useCallback(async () => {
         try {
             setLoading(true)
             const params = new URLSearchParams()
@@ -68,11 +68,11 @@ export default function ExercisesTable() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [filterType, searchQuery, t])
 
     useEffect(() => {
-        fetchExercises()
-    }, [filterType, searchQuery])
+        void fetchExercises()
+    }, [fetchExercises])
 
     const getTypeLabel = (type: string) => {
         switch (type) {

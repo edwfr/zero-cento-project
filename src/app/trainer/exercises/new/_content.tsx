@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
@@ -43,11 +43,7 @@ export default function NewExerciseContent() {
     const [movementPatternId, setMovementPatternId] = useState('')
     const [selectedMuscleGroups, setSelectedMuscleGroups] = useState<MuscleGroupInput[]>([])
 
-    useEffect(() => {
-        fetchData()
-    }, [])
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             const [mgRes, mpRes] = await Promise.all([
                 fetch('/api/muscle-groups'),
@@ -66,7 +62,11 @@ export default function NewExerciseContent() {
         } catch (err: unknown) {
             setError(t('exercises.loadingDataError'))
         }
-    }
+    }, [t])
+
+    useEffect(() => {
+        void fetchData()
+    }, [fetchData])
 
     const addVariant = () => setVariants([...variants, ''])
     const removeVariant = (index: number) => setVariants(variants.filter((_, i) => i !== index))

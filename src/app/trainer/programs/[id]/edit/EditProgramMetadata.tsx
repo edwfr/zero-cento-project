@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/components/ToastNotification'
 import { Pencil } from 'lucide-react'
@@ -49,13 +49,7 @@ export default function EditProgramMetadata({
     const [durationWeeks, setDurationWeeks] = useState(initialDurationWeeks)
     const [workoutsPerWeek, setWorkoutsPerWeek] = useState(initialWorkoutsPerWeek)
 
-    useEffect(() => {
-        if (isOpen) {
-            fetchTrainees()
-        }
-    }, [isOpen])
-
-    const fetchTrainees = async () => {
+    const fetchTrainees = useCallback(async () => {
         try {
             const res = await fetch('/api/users?role=trainee')
             const data = await res.json()
@@ -69,7 +63,13 @@ export default function EditProgramMetadata({
         } catch (err: any) {
             showToast(err.message, 'error')
         }
-    }
+    }, [showToast, t])
+
+    useEffect(() => {
+        if (isOpen) {
+            void fetchTrainees()
+        }
+    }, [fetchTrainees, isOpen])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()

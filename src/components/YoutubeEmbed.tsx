@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Image from 'next/image'
 import { useTranslation } from 'react-i18next'
 
 interface YoutubeEmbedProps {
@@ -90,9 +91,11 @@ export default function YoutubeEmbed({
                         aria-label={`Riproduci ${resolvedTitle}`}
                         className="absolute inset-0 flex items-center justify-center bg-black transition-opacity hover:opacity-90"
                     >
-                        <img
+                        <Image
                             src={thumbnailUrl}
                             alt={resolvedTitle}
+                            fill
+                            sizes="(max-width: 768px) 100vw, 50vw"
                             className="absolute inset-0 h-full w-full object-cover"
                         />
                         <div className="relative z-10 flex h-16 w-16 items-center justify-center rounded-full bg-red-600 shadow-lg transition-transform hover:scale-110">
