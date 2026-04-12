@@ -432,8 +432,8 @@ import { FormLabel } from '@/components/FormLabel'
 
 ### Verifica
 
-- [ ] Grep: `grep -rn "font-semibold text-gray-700 mb-" src/` su tag `<label` deve dare **0 risultati**
-- [ ] Le label appaiono con `font-medium` (500) uniformemente
+- [x] Grep: `grep -rn "font-semibold text-gray-700 mb-" src/` su tag `<label` deve dare **0 risultati**
+- [x] Le label appaiono con `font-medium` (500) uniformemente
 - [ ] Lo spacing sotto la label è uniforme (mb-1 = 0.25rem)
 - [ ] Verifica visiva su form con molte label: trainer/exercises/new, trainer/programs/new, records
 

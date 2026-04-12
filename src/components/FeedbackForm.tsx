@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import RPESelector from './RPESelector'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
+import { FormLabel } from '@/components/FormLabel'
 
 interface SetPerformed {
     setNumber: number
@@ -186,7 +187,7 @@ export default function FeedbackForm({
 
             {/* Notes */}
             <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium text-gray-700">{t('components:feedbackForm.notes')}</label>
+                <FormLabel className="mb-0">{t('components:feedbackForm.notes')}</FormLabel>
                 <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}

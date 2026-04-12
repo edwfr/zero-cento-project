@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import Link from 'next/link'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
+import { FormLabel } from '@/components/FormLabel'
 
 export default function SetPasswordPage() {
     const { t } = useTranslation(['auth', 'common'])
@@ -220,9 +221,9 @@ export default function SetPasswordPage() {
                         )}
 
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            <FormLabel>
                                 {t('common:common.password')}
-                            </label>
+                            </FormLabel>
                             <Input
                                 type="password"
                                 value={password}
@@ -236,9 +237,9 @@ export default function SetPasswordPage() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            <FormLabel>
                                 {t('auth:setPassword.confirmPassword')}
-                            </label>
+                            </FormLabel>
                             <Input
                                 type="password"
                                 value={confirmPassword}

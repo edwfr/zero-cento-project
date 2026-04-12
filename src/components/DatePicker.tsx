@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/Input'
+import { FormLabel } from '@/components/FormLabel'
 
 interface DatePickerProps {
     value?: string // ISO date string YYYY-MM-DD
@@ -90,10 +91,9 @@ export default function DatePicker({
     return (
         <div className="relative">
             {label && (
-                <label htmlFor={inputId} className="block text-sm font-semibold text-gray-700 mb-1">
+                <FormLabel htmlFor={inputId} required={required}>
                     {label}
-                    {required && <span className="text-red-500 ml-1">*</span>}
-                </label>
+                </FormLabel>
             )}
 
             <div className="relative flex items-center">

@@ -13,6 +13,17 @@
     color-scheme: light;
 }
 
+/* Prevent horizontal layout shifts when overlays/dropdowns change page scrollability. */
+html {
+    scrollbar-gutter: stable;
+}
+
+@supports not (scrollbar-gutter: stable) {
+    html {
+        overflow-y: scroll;
+    }
+}
+
 body {
     color: rgb(var(--foreground-rgb));
     background: linear-gradient(to bottom,

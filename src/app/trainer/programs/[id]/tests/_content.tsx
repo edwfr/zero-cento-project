@@ -13,6 +13,7 @@ import { estimateOneRMFromRpeTable } from '@/lib/calculations'
 import { formatDate, getTodayForInput } from '@/lib/date-format'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
+import { FormLabel } from '@/components/FormLabel'
 
 interface TestResultRow {
     workoutExerciseId: string
@@ -439,9 +440,9 @@ export default function ProgramTestResultsContent() {
 
                         <form onSubmit={handleCreateRecord} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    {t('personalRecords.exercise')} *
-                                </label>
+                                <FormLabel required>
+                                    {t('personalRecords.exercise')}
+                                </FormLabel>
                                 <select
                                     value={selectedExerciseId}
                                     onChange={(event) => setSelectedExerciseId(event.target.value)}
@@ -458,9 +459,9 @@ export default function ProgramTestResultsContent() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        {t('personalRecords.weight')} *
-                                    </label>
+                                    <FormLabel required>
+                                        {t('personalRecords.weight')}
+                                    </FormLabel>
                                     <Input
                                         type="number"
                                         step="0.5"
@@ -474,9 +475,9 @@ export default function ProgramTestResultsContent() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        {t('personalRecords.reps')} *
-                                    </label>
+                                    <FormLabel required>
+                                        {t('personalRecords.reps')}
+                                    </FormLabel>
                                     <Input
                                         type="number"
                                         min="1"
@@ -491,9 +492,9 @@ export default function ProgramTestResultsContent() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    {t('personalRecords.recordDate')} *
-                                </label>
+                                <FormLabel required>
+                                    {t('personalRecords.recordDate')}
+                                </FormLabel>
                                 <Input
                                     type="date"
                                     value={recordDate}
@@ -505,9 +506,9 @@ export default function ProgramTestResultsContent() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                <FormLabel>
                                     {t('workoutDetail.notesLabel')}
-                                </label>
+                                </FormLabel>
                                 <textarea
                                     value={notes}
                                     onChange={(event) => setNotes(event.target.value)}

@@ -11,6 +11,7 @@ import WeekTypeBadge from '@/components/WeekTypeBadge'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import { Input } from '@/components/Input'
+import { FormLabel } from '@/components/FormLabel'
 
 interface WorkoutSummary {
     id: string
@@ -375,9 +376,9 @@ export default function PublishProgramPage() {
                             {t('publish.startDateTitle')}
                         </h3>
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            <FormLabel>
                                 {t('publish.startDateLabel')}
-                            </label>
+                            </FormLabel>
                             <Input
                                 type="date"
                                 value={startDate}

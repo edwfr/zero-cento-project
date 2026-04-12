@@ -6,6 +6,7 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import { CheckCircle2, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
+import { FormLabel } from '@/components/FormLabel'
 
 interface UserCreateModalProps {
     onClose: () => void
@@ -186,9 +187,9 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                            {t('common:common.email')} *
-                        </label>
+                        <FormLabel htmlFor="email" required>
+                            {t('common:common.email')}
+                        </FormLabel>
                         <Input
                             ref={firstInputRef}
                             type="email"
@@ -202,9 +203,9 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
                     </div>
 
                     <div>
-                        <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-                            {t('common:common.firstName')} *
-                        </label>
+                        <FormLabel htmlFor="firstName" required>
+                            {t('common:common.firstName')}
+                        </FormLabel>
                         <Input
                             type="text"
                             id="firstName"
@@ -217,9 +218,9 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
                     </div>
 
                     <div>
-                        <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-                            {t('common:common.lastName')} *
-                        </label>
+                        <FormLabel htmlFor="lastName" required>
+                            {t('common:common.lastName')}
+                        </FormLabel>
                         <Input
                             type="text"
                             id="lastName"
@@ -232,9 +233,9 @@ export default function UserCreateModal({ onClose, onUserCreated }: UserCreateMo
                     </div>
 
                     <div>
-                        <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
-                            {t('admin:users.role')} *
-                        </label>
+                        <FormLabel htmlFor="role" required>
+                            {t('admin:users.role')}
+                        </FormLabel>
                         <select
                             id="role"
                             value={formData.role}

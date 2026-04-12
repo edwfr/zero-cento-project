@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase-client'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
+import { FormLabel } from '@/components/FormLabel'
 
 export default function ChangePasswordContent() {
     const { t } = useTranslation(['auth', 'common', 'profile'])
@@ -104,9 +105,9 @@ export default function ChangePasswordContent() {
                         )}
 
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            <FormLabel>
                                 {t('auth:changePassword.currentPassword')}
-                            </label>
+                            </FormLabel>
                             <Input
                                 type="password"
                                 value={currentPassword}
@@ -119,9 +120,9 @@ export default function ChangePasswordContent() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            <FormLabel>
                                 {t('auth:changePassword.newPassword')}
-                            </label>
+                            </FormLabel>
                             <Input
                                 type="password"
                                 value={newPassword}
@@ -135,9 +136,9 @@ export default function ChangePasswordContent() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
+                            <FormLabel>
                                 {t('auth:changePassword.confirmPassword')}
-                            </label>
+                            </FormLabel>
                             <Input
                                 type="password"
                                 value={confirmPassword}

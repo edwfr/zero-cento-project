@@ -8,6 +8,7 @@ import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { ArrowLeft, BarChart3 } from 'lucide-react'
 import { Input } from '@/components/Input'
+import { FormLabel } from '@/components/FormLabel'
 
 interface Trainee {
     id: string
@@ -174,9 +175,9 @@ export default function NewProgramContent({
 
             <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6 space-y-6">
                 <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <FormLabel>
                         {t('programs.programNameLabel')}
-                    </label>
+                    </FormLabel>
                     <Input
                         type="text"
                         value={title}
@@ -189,9 +190,9 @@ export default function NewProgramContent({
                 </div>
 
                 <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <FormLabel>
                         {t('programs.athleteLabel')}
-                    </label>
+                    </FormLabel>
                     <select
                         value={traineeId}
                         onChange={(e) => setTraineeId(e.target.value)}
@@ -229,9 +230,9 @@ export default function NewProgramContent({
                 </div>
 
                 <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <FormLabel>
                         {t('programs.durationWeeksLabel')}
-                    </label>
+                    </FormLabel>
                     <div className="flex items-center space-x-4">
                         <div className="flex-1">
                             <Input
@@ -265,9 +266,9 @@ export default function NewProgramContent({
                 </div>
 
                 <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <FormLabel>
                         {t('programs.workoutsPerWeekLabel')}
-                    </label>
+                    </FormLabel>
                     <div className="flex items-center space-x-4">
                         <div className="flex-1">
                             <Input

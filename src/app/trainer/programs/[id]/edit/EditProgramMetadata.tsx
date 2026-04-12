@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
+import { FormLabel } from '@/components/FormLabel'
 
 interface Trainee {
     id: string
@@ -177,9 +178,9 @@ export default function EditProgramMetadata({
 
                     {/* Program Title */}
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        <FormLabel>
                             {t('programs.programNameLabel')}
-                        </label>
+                        </FormLabel>
                         <Input
                             type="text"
                             value={title}
@@ -194,9 +195,9 @@ export default function EditProgramMetadata({
                     {/* Trainee Selection */}
                     {trainees.length > 0 && (
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            <FormLabel>
                                 {t('programs.athleteLabel')}
-                            </label>
+                            </FormLabel>
                             <select
                                 value={traineeId}
                                 onChange={(e) => setTraineeId(e.target.value)}
@@ -215,9 +216,9 @@ export default function EditProgramMetadata({
 
                     {/* Duration Weeks */}
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        <FormLabel>
                             {t('programs.durationWeeksLabel')}
-                        </label>
+                        </FormLabel>
                         <div className="space-y-2">
                             <Input
                                 type="number"
@@ -239,9 +240,9 @@ export default function EditProgramMetadata({
 
                     {/* Workouts Per Week */}
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        <FormLabel>
                             {t('programs.workoutsPerWeekLabel')}
-                        </label>
+                        </FormLabel>
                         <div className="space-y-2">
                             <Input
                                 type="number"

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
+import { FormLabel } from '@/components/FormLabel'
 
 interface MuscleGroup {
     id: string
@@ -197,9 +198,9 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                        <FormLabel htmlFor="name">
                             {t('exercises.exerciseNameLabel')}
-                        </label>
+                        </FormLabel>
                         <Input
                             ref={firstInputRef}
                             type="text"
@@ -215,9 +216,9 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                     </div>
 
                     <div>
-                        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                        <FormLabel htmlFor="description">
                             {t('exercises.descriptionLabel')}
-                        </label>
+                        </FormLabel>
                         <textarea
                             id="description"
                             value={formData.description}
@@ -230,9 +231,9 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                     </div>
 
                     <div>
-                        <label htmlFor="youtubeUrl" className="block text-sm font-medium text-gray-700 mb-1">
-                            {t('exercises.youtubeUrlLabel')} *
-                        </label>
+                        <FormLabel htmlFor="youtubeUrl" required>
+                            {t('exercises.youtubeUrlLabel')}
+                        </FormLabel>
                         <Input
                             type="url"
                             id="youtubeUrl"
@@ -248,9 +249,9 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
+                            <FormLabel htmlFor="type">
                                 {t('exercises.typeLabel')}
-                            </label>
+                            </FormLabel>
                             <select
                                 id="type"
                                 value={formData.type}
@@ -265,9 +266,9 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                         </div>
 
                         <div>
-                            <label htmlFor="movementPattern" className="block text-sm font-medium text-gray-700 mb-1">
-                                {t('exercises.movementPattern')} *
-                            </label>
+                            <FormLabel htmlFor="movementPattern" required>
+                                {t('exercises.movementPattern')}
+                            </FormLabel>
                             <select
                                 id="movementPattern"
                                 value={formData.movementPatternId}
@@ -288,9 +289,9 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
 
                     <div>
                         <div className="flex justify-between items-center mb-2">
-                            <label className="block text-sm font-medium text-gray-700">
+                            <FormLabel className="mb-0">
                                 {t('exercises.muscleGroupsRangeLabel')}
-                            </label>
+                            </FormLabel>
                             <button
                                 type="button"
                                 onClick={handleAddMuscleGroup}

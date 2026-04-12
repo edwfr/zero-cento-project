@@ -15,6 +15,7 @@ import {
 import { getApiErrorMessage } from '@/lib/api-error'
 import { formatDate } from '@/lib/date-format'
 import type { ApiSuccessResponse } from '@/lib/api-response'
+import { FormLabel } from '@/components/FormLabel'
 
 const MUSCLE_GROUP_CHART_COLORS = [
     '#FFA700',
@@ -273,9 +274,9 @@ export default function TraineePlannedMuscleGroupReport({
                 </div>
 
                 <div className="w-full lg:max-w-xs">
-                    <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="time-window">
+                    <FormLabel className="mb-2" htmlFor="time-window">
                         {t('athletes.reportingTimeWindowLabel')}
-                    </label>
+                    </FormLabel>
                     <select
                         id="time-window"
                         value={timeWindow}

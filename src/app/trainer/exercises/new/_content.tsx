@@ -10,6 +10,7 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 import { Trash2, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
+import { FormLabel } from '@/components/FormLabel'
 
 interface MuscleGroup {
     id: string
@@ -173,9 +174,9 @@ export default function NewExerciseContent() {
             <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6 space-y-6">
                 {/* Basic Info */}
                 <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <FormLabel>
                         {t('exercises.exerciseNameLabel')}
-                    </label>
+                    </FormLabel>
                     <Input
                         type="text"
                         value={name}
@@ -233,9 +234,9 @@ export default function NewExerciseContent() {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <FormLabel>
                         {t('exercises.youtubeUrlLabel')}
-                    </label>
+                    </FormLabel>
                     <Input
                         type="url"
                         value={youtubeUrl}
@@ -248,7 +249,7 @@ export default function NewExerciseContent() {
 
                 {/* Type */}
                 <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">{t('exercises.typeLabel')}</label>
+                    <FormLabel>{t('exercises.typeLabel')}</FormLabel>
                     <div className="flex space-x-4">
                         <label className="flex items-center">
                             <input
@@ -277,9 +278,9 @@ export default function NewExerciseContent() {
 
                 {/* Movement Pattern */}
                 <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        {t('exercises.movementPattern')} *
-                    </label>
+                    <FormLabel required>
+                        {t('exercises.movementPattern')}
+                    </FormLabel>
                     <select
                         value={movementPatternId}
                         onChange={(e) => setMovementPatternId(e.target.value)}

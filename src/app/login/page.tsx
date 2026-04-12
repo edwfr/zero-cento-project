@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase-client'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
+import { FormLabel } from '@/components/FormLabel'
 
 export default function LoginPage() {
     const router = useRouter()
@@ -144,9 +145,9 @@ export default function LoginPage() {
 
                     <div className="space-y-4">
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                            <FormLabel htmlFor="email" className="mb-0">
                                 {t('common:common.email')}
-                            </label>
+                            </FormLabel>
                             <Input
                                 id="email"
                                 name="email"
@@ -162,9 +163,9 @@ export default function LoginPage() {
                         </div>
 
                         <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                            <FormLabel htmlFor="password" className="mb-0">
                                 {t('common:common.password')}
-                            </label>
+                            </FormLabel>
                             <Input
                                 id="password"
                                 name="password"

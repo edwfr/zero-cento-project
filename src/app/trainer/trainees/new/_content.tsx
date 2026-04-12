@@ -9,6 +9,7 @@ import { CheckCircle2, ArrowLeft } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
+import { FormLabel } from '@/components/FormLabel'
 
 export default function NewTraineePageContent() {
     const router = useRouter()
@@ -141,9 +142,9 @@ export default function NewTraineePageContent() {
                 <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6 space-y-6">
                     {/* First Name */}
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        <FormLabel>
                             {t('athletes.firstNameLabel')}
-                        </label>
+                        </FormLabel>
                         <Input
                             type="text"
                             value={firstName}
@@ -157,9 +158,9 @@ export default function NewTraineePageContent() {
 
                     {/* Last Name */}
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        <FormLabel>
                             {t('athletes.lastNameLabel')}
-                        </label>
+                        </FormLabel>
                         <Input
                             type="text"
                             value={lastName}
@@ -173,9 +174,9 @@ export default function NewTraineePageContent() {
 
                     {/* Email */}
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            {t('common:common.email')} *
-                        </label>
+                        <FormLabel required>
+                            {t('common:common.email')}
+                        </FormLabel>
                         <Input
                             type="email"
                             value={email}

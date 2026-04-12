@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
+import { FormLabel } from '@/components/FormLabel'
 
 interface User {
     id: string
@@ -92,9 +93,9 @@ export default function ProfileForm({ user }: ProfileFormProps) {
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                    <FormLabel htmlFor="firstName">
                         {t('common:common.firstName')}
-                    </label>
+                    </FormLabel>
                     <Input
                         type="text"
                         id="firstName"
@@ -107,9 +108,9 @@ export default function ProfileForm({ user }: ProfileFormProps) {
                 </div>
 
                 <div>
-                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                    <FormLabel htmlFor="lastName">
                         {t('common:common.lastName')}
-                    </label>
+                    </FormLabel>
                     <Input
                         type="text"
                         id="lastName"

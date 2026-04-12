@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase-client'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
+import { FormLabel } from '@/components/FormLabel'
 
 export default function ForgotPasswordPage() {
     const { t } = useTranslation(['auth', 'common'])
@@ -88,9 +89,9 @@ export default function ForgotPasswordPage() {
                             )}
 
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                <FormLabel>
                                     {t('common:common.email')}
-                                </label>
+                                </FormLabel>
                                 <Input
                                     type="email"
                                     value={email}

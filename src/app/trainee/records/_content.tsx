@@ -9,6 +9,7 @@ import { BarChart2, ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react'
 import { formatDate } from '@/lib/date-format'
 import MovementPatternTag from '@/components/MovementPatternTag'
 import { Input } from '@/components/Input'
+import { FormLabel } from '@/components/FormLabel'
 
 interface PersonalRecord {
     id: string
@@ -152,9 +153,9 @@ export default function PersonalRecordsContent() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Search */}
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                <FormLabel>
                                     {t('records.searchLabel')}
-                                </label>
+                                </FormLabel>
                                 <Input
                                     type="text"
                                     value={searchQuery}
@@ -166,9 +167,9 @@ export default function PersonalRecordsContent() {
 
                             {/* Type Filter */}
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                <FormLabel>
                                     {t('records.typeLabel')}
-                                </label>
+                                </FormLabel>
                                 <div className="flex space-x-2">
                                     {[
                                         { value: 'all', label: t('records.typeAll') },

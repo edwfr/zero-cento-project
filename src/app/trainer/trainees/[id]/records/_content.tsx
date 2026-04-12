@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
+import { FormLabel } from '@/components/FormLabel'
 
 interface Trainee {
     id: string
@@ -331,9 +332,9 @@ export default function TraineeRecordsContent() {
 
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        {t('personalRecords.exercise')} *
-                                    </label>
+                                    <FormLabel required>
+                                        {t('personalRecords.exercise')}
+                                    </FormLabel>
                                     <select
                                         value={selectedExerciseId}
                                         onChange={(e) => setSelectedExerciseId(e.target.value)}
@@ -356,9 +357,9 @@ export default function TraineeRecordsContent() {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                            Peso (kg) *
-                                        </label>
+                                        <FormLabel required>
+                                            Peso (kg)
+                                        </FormLabel>
                                         <Input
                                             type="number"
                                             step="0.5"
@@ -372,9 +373,9 @@ export default function TraineeRecordsContent() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                            Ripetizioni *
-                                        </label>
+                                        <FormLabel required>
+                                            Ripetizioni
+                                        </FormLabel>
                                         <Input
                                             type="number"
                                             min="1"
@@ -389,9 +390,9 @@ export default function TraineeRecordsContent() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Data Massimale *
-                                    </label>
+                                    <FormLabel required>
+                                        Data Massimale
+                                    </FormLabel>
                                     <Input
                                         type="date"
                                         value={recordDate}
@@ -403,9 +404,9 @@ export default function TraineeRecordsContent() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    <FormLabel>
                                         Note (opzionali)
-                                    </label>
+                                    </FormLabel>
                                     <textarea
                                         value={notes}
                                         onChange={(e) => setNotes(e.target.value)}

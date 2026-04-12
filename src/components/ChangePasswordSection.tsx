@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { createClient } from '@/lib/supabase-client'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
+import { FormLabel } from '@/components/FormLabel'
 
 export default function ChangePasswordSection() {
     const { t } = useTranslation(['auth', 'common'])
@@ -129,9 +130,9 @@ export default function ChangePasswordSection() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                    <FormLabel htmlFor="currentPassword">
                         {t('changePassword.currentPassword')}
-                    </label>
+                    </FormLabel>
                     <Input
                         type="password"
                         id="currentPassword"
@@ -146,9 +147,9 @@ export default function ChangePasswordSection() {
                 </div>
 
                 <div>
-                    <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                    <FormLabel htmlFor="newPassword">
                         {t('changePassword.newPassword')}
-                    </label>
+                    </FormLabel>
                     <Input
                         type="password"
                         id="newPassword"
@@ -164,9 +165,9 @@ export default function ChangePasswordSection() {
                 </div>
 
                 <div>
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                    <FormLabel htmlFor="confirmPassword">
                         {t('changePassword.confirmPassword')}
-                    </label>
+                    </FormLabel>
                     <Input
                         type="password"
                         id="confirmPassword"

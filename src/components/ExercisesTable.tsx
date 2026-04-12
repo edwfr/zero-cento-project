@@ -6,6 +6,7 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import ExerciseCreateModal from './ExerciseCreateModal'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
+import { FormLabel } from '@/components/FormLabel'
 
 interface MuscleGroupAssignment {
     muscleGroup: {
@@ -134,7 +135,7 @@ export default function ExercisesTable() {
             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                     <div className="flex items-center space-x-4">
-                        <label className="text-sm font-medium text-gray-700">{t('trainer:exercises.filterByType')}</label>
+                        <FormLabel className="inline mb-0">{t('trainer:exercises.filterByType')}</FormLabel>
                         <select
                             value={filterType}
                             onChange={(e) => setFilterType(e.target.value)}

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
+import { FormLabel } from '@/components/FormLabel'
 
 interface User {
     id: string
@@ -183,9 +184,9 @@ export default function UserEditModal({ user, onClose, onUserUpdated }: UserEdit
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-                            {t('common:common.firstName')} *
-                        </label>
+                        <FormLabel htmlFor="firstName" required>
+                            {t('common:common.firstName')}
+                        </FormLabel>
                         <Input
                             ref={firstInputRef}
                             type="text"
@@ -199,9 +200,9 @@ export default function UserEditModal({ user, onClose, onUserUpdated }: UserEdit
                     </div>
 
                     <div>
-                        <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-                            {t('common:common.lastName')} *
-                        </label>
+                        <FormLabel htmlFor="lastName" required>
+                            {t('common:common.lastName')}
+                        </FormLabel>
                         <Input
                             type="text"
                             id="lastName"

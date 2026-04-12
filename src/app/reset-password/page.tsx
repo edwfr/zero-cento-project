@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase-client'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
+import { FormLabel } from '@/components/FormLabel'
 
 export default function ResetPasswordPage() {
     const { t } = useTranslation(['auth', 'common'])
@@ -109,9 +110,9 @@ export default function ResetPasswordPage() {
                             )}
 
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                <FormLabel>
                                     {t('auth:resetPassword.newPassword')}
-                                </label>
+                                </FormLabel>
                                 <Input
                                     type="password"
                                     value={password}
@@ -125,9 +126,9 @@ export default function ResetPasswordPage() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                <FormLabel>
                                     {t('auth:resetPassword.confirmPassword')}
-                                </label>
+                                </FormLabel>
                                 <Input
                                     type="password"
                                     value={confirmPassword}
