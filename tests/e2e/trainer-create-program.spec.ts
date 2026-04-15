@@ -21,7 +21,7 @@ test.describe('Trainer: Create program flow', () => {
         await page.waitForURL('**/trainer/dashboard', { timeout: 10_000 })
     })
 
-    test('navigates to create program page', async ({ page }) => {
+    test('navigates to create program page', { tag: '@smoke' }, async ({ page }) => {
         // From dashboard click on Programmi or new program
         await page.goto('/trainer/programs/new')
         await expect(page).toHaveURL(/trainer\/programs\/new/)

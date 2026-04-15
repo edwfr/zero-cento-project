@@ -88,7 +88,7 @@ test.describe('Trainee: Complete workout with feedback', () => {
     })
 
     // ── 1. Full happy-path ───────────────────────────────────────────────────
-    test('trainee completes a workout end-to-end and receives success feedback', async ({ page }) => {
+    test('trainee completes a workout end-to-end and receives success feedback', { tag: '@smoke' }, async ({ page }) => {
         // ────────────────────────────────────────────
         // STEP 1: Login
         // ────────────────────────────────────────────
