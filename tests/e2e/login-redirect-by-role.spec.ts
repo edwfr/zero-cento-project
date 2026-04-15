@@ -24,7 +24,7 @@ test.describe('Login: Role-based redirects', () => {
         await page.goto('/login')
     })
 
-    test('admin logs in and redirects to /admin/dashboard', async ({ page }) => {
+    test('admin logs in and redirects to /admin/dashboard', { tag: '@smoke' }, async ({ page }) => {
         // Fill credentials
         await page.fill('input[name="email"]', E2E_CREDENTIALS.admin.email)
         await page.fill('input[name="password"]', E2E_CREDENTIALS.admin.password)
@@ -39,7 +39,7 @@ test.describe('Login: Role-based redirects', () => {
         expect(page.url()).toContain('/admin/dashboard')
     })
 
-    test('trainer logs in and redirects to /trainer/dashboard', async ({ page }) => {
+    test('trainer logs in and redirects to /trainer/dashboard', { tag: '@smoke' }, async ({ page }) => {
         // Fill credentials
         await page.fill('input[name="email"]', E2E_CREDENTIALS.trainer.email)
         await page.fill('input[name="password"]', E2E_CREDENTIALS.trainer.password)
@@ -57,7 +57,7 @@ test.describe('Login: Role-based redirects', () => {
         await expect(page.locator('h1, h2').first()).toBeVisible({ timeout: 5_000 })
     })
 
-    test('trainee logs in and redirects to /trainee/dashboard', async ({ page }) => {
+    test('trainee logs in and redirects to /trainee/dashboard', { tag: '@smoke' }, async ({ page }) => {
         // Fill credentials
         await page.fill('input[name="email"]', E2E_CREDENTIALS.trainee.email)
         await page.fill('input[name="password"]', E2E_CREDENTIALS.trainee.password)
