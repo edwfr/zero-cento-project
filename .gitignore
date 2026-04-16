@@ -40,3 +40,6 @@ prisma/migrations/**/*.sql
 
 # Sentry
 .sentryclirc
+
+#Claude
+.claude
