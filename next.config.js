@@ -8,12 +8,9 @@ const withSerwist = require('@serwist/next').default({
 
 const nextConfig = {
     reactStrictMode: true,
+    turbopack: {},
     images: {
         remotePatterns: [
-            {
-                protocol: 'https',
-                hostname: 'youtube.com',
-            },
             {
                 protocol: 'https',
                 hostname: 'img.youtube.com',
@@ -24,7 +21,6 @@ const nextConfig = {
             },
         ],
     },
-    // i18n configuration
     i18n: {
         locales: ['it', 'en'],
         defaultLocale: 'it',
@@ -32,9 +28,9 @@ const nextConfig = {
     },
 };
 
-// Sentry configuration
 const sentryWebpackPluginOptions = {
-    silent: true,
+    silent: !process.env.CI,
+    widenClientFileUpload: true,
     org: process.env.SENTRY_ORG,
     project: process.env.SENTRY_PROJECT,
     authToken: process.env.SENTRY_AUTH_TOKEN,
