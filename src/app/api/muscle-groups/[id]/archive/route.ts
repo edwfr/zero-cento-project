@@ -5,9 +5,7 @@ import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 
 type Params = {
-    params: {
-        id: string
-    }
+    params: Promise<{ id: string }>
 }
 
 /**
@@ -15,15 +13,16 @@ type Params = {
  * Archive muscle group (set isActive = false)
  */
 export async function PATCH(request: NextRequest, { params }: Params) {
+    const { id } = await params
     try {
         await requireRole(['admin', 'trainer'])
 
         const muscleGroup = await prisma.muscleGroup.update({
-            where: { id: params.id },
+            where: { id },
             data: { isActive: false },
         })
 
-        logger.info({ muscleGroupId: params.id }, 'Muscle group archived')
+        logger.info({ muscleGroupId: id }, 'Muscle group archived')
 
         return apiSuccess({ muscleGroup })
     } catch (error: any) {

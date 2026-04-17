@@ -37,7 +37,7 @@ export async function POST(request: Request) {
         const { currentPassword, newPassword } = validation.data
 
         // Verify current password by attempting to sign in
-        const supabase = createClient()
+        const supabase = await createClient()
         const { error: signInError } = await supabase.auth.signInWithPassword({
             email: session.user.email!,
             password: currentPassword,

@@ -5,9 +5,7 @@ import { calculateTrainingSets } from '@/lib/calculations'
 import { logger } from '@/lib/logger'
 
 type Params = {
-    params: {
-        id: string
-    }
+    params: Promise<{ id: string }>
 }
 
 const formatDateKey = (date: Date) => date.toISOString().split('T')[0]
@@ -30,9 +28,9 @@ const getWeekStartDate = (
 }
 
 export async function GET(request: Request, { params }: Params) {
+    const { id } = await params
     try {
         const session = await requireAuth()
-        const { id } = params
 
         if (session.user.role === 'trainer') {
             const association = await prisma.trainerTrainee.findFirst({
@@ -176,7 +174,7 @@ export async function GET(request: Request, { params }: Params) {
             return error
         }
 
-        logger.error({ error, traineeId: params.id }, 'Error fetching planned training sets report')
+        logger.error({ error, traineeId: id }, 'Error fetching planned training sets report')
         return apiError(
             'INTERNAL_ERROR',
             'Failed to fetch planned training sets report',

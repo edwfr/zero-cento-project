@@ -22,8 +22,8 @@ const resolveLocale = (cookieLocale?: string): SupportedLocale => {
     return cookieLocale.toLowerCase().startsWith('en') ? 'en' : 'it'
 }
 
-export function generateMetadata(): Metadata {
-    const locale = resolveLocale(cookies().get('i18next')?.value)
+export async function generateMetadata(): Promise<Metadata> {
+    const locale = resolveLocale((await cookies()).get('i18next')?.value)
     const dictionary = COMMON_DICTIONARIES[locale]
     const fallback = COMMON_DICTIONARIES.it
 

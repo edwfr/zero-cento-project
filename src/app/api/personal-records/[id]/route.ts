@@ -11,11 +11,11 @@ import { updatePersonalRecordSchema } from '@/schemas/personal-record'
  */
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id: recordId } = await params
     try {
         const session = await requireRole(['admin', 'trainer'])
-        const recordId = params.id
         const body = await request.json()
 
         // Validate input
@@ -95,7 +95,7 @@ export async function PATCH(
         return apiSuccess({ record: updatedRecord })
     } catch (error: any) {
         if (error instanceof Response) return error
-        logger.error({ error, recordId: params.id }, 'Error updating personal record')
+        logger.error({ error, recordId }, 'Error updating personal record')
         return apiError('INTERNAL_ERROR', 'Failed to update personal record', 500, undefined, 'internal.default')
     }
 }
@@ -106,11 +106,11 @@ export async function PATCH(
  */
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id: recordId } = await params
     try {
         const session = await requireRole(['admin', 'trainer'])
-        const recordId = params.id
 
         // Check if record exists
         const record = await prisma.personalRecord.findUnique({
@@ -148,7 +148,7 @@ export async function DELETE(
         })
     } catch (error: any) {
         if (error instanceof Response) return error
-        logger.error({ error, recordId: params.id }, 'Error deleting personal record')
+        logger.error({ error, recordId }, 'Error deleting personal record')
         return apiError('INTERNAL_ERROR', 'Failed to delete personal record', 500, undefined, 'internal.default')
     }
 }

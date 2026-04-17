@@ -12,11 +12,11 @@ import { logger } from '@/lib/logger'
  */
 export async function POST(
     request: NextRequest,
-    { params }: { params: { id: string; workoutId: string } }
+    { params }: { params: Promise<{ id: string; workoutId: string }> }
 ) {
+    const { id: programId, workoutId } = await params
     try {
         const session = await requireRole(['admin', 'trainer'])
-        const { id: programId, workoutId } = params
         const body = await request.json()
 
         const validation = workoutExerciseSchema.safeParse(body)
@@ -144,7 +144,7 @@ export async function POST(
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error(
-            { error, programId: params.id, workoutId: params.workoutId },
+            { error, programId, workoutId },
             'Error adding exercise to workout'
         )
         return apiError('INTERNAL_ERROR', 'Failed to add exercise to workout', 500, undefined, 'internal.default')

@@ -43,7 +43,7 @@ const translate = (dictionary: Record<string, unknown>, key: string): string => 
 
 export default async function ProfilePage() {
     const session = await getSession()
-    const locale = resolveLocale(cookies().get('i18next')?.value)
+    const locale = resolveLocale((await cookies()).get('i18next')?.value)
     const profileDictionary = PROFILE_DICTIONARIES[locale] as Record<string, unknown>
     const commonDictionary = COMMON_DICTIONARIES[locale] as Record<string, unknown>
 

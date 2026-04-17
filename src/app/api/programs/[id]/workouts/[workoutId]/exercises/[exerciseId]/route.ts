@@ -11,11 +11,11 @@ import { logger } from '@/lib/logger'
  */
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string; workoutId: string; exerciseId: string } }
+    { params }: { params: Promise<{ id: string; workoutId: string; exerciseId: string }> }
 ) {
+    const { id: programId, workoutId, exerciseId } = await params
     try {
         const session = await requireRole(['admin', 'trainer'])
-        const { id: programId, workoutId, exerciseId } = params
         const body = await request.json()
 
         const validation = workoutExerciseSchema.safeParse(body)
@@ -127,12 +127,7 @@ export async function PUT(
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error(
-            {
-                error,
-                programId: params.id,
-                workoutId: params.workoutId,
-                exerciseId: params.exerciseId,
-            },
+            { error, programId, workoutId, exerciseId },
             'Error updating workout exercise'
         )
         return apiError('INTERNAL_ERROR', 'Failed to update workout exercise', 500, undefined, 'internal.default')
@@ -146,11 +141,11 @@ export async function PUT(
  */
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string; workoutId: string; exerciseId: string } }
+    { params }: { params: Promise<{ id: string; workoutId: string; exerciseId: string }> }
 ) {
+    const { id: programId, workoutId, exerciseId } = await params
     try {
         const session = await requireRole(['admin', 'trainer'])
-        const { id: programId, workoutId, exerciseId } = params
 
         // Verify program exists and check ownership
         const programCheck = await prisma.trainingProgram.findUnique({
@@ -221,12 +216,7 @@ export async function DELETE(
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error(
-            {
-                error,
-                programId: params.id,
-                workoutId: params.workoutId,
-                exerciseId: params.exerciseId,
-            },
+            { error, programId, workoutId, exerciseId },
             'Error removing exercise from workout'
         )
         return apiError('INTERNAL_ERROR', 'Failed to remove exercise from workout', 500, undefined, 'internal.default')

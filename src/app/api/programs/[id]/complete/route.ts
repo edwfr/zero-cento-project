@@ -20,11 +20,11 @@ const completeSchema = z.object({
  */
 export async function POST(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id: programId } = await params
     try {
         const session = await requireRole(['admin', 'trainer'])
-        const programId = params.id
         const body = await request.json()
 
         const validation = completeSchema.safeParse(body)
@@ -109,7 +109,7 @@ export async function POST(
         return apiSuccess({ program: updatedProgram }, 200)
     } catch (error: any) {
         if (error instanceof Response) return error
-        logger.error({ error, programId: params.id }, 'Error completing program')
+        logger.error({ error, programId }, 'Error completing program')
         return apiError('INTERNAL_ERROR', 'Failed to complete program', 500, undefined, 'internal.default')
     }
 }

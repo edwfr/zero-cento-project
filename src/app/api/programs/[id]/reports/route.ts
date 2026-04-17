@@ -14,11 +14,11 @@ import { logger } from '@/lib/logger'
  */
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id: programId } = await params
     try {
         const session = await requireRole(['admin', 'trainer', 'trainee'])
-        const programId = params.id
 
         // Fetch program with full structure
         const program = await prisma.trainingProgram.findUnique({
@@ -331,7 +331,7 @@ export async function GET(
         })
     } catch (error: any) {
         if (error instanceof Response) return error
-        logger.error({ error, programId: params.id }, 'Error fetching program reports')
+        logger.error({ error, programId }, 'Error fetching program reports')
         return apiError('INTERNAL_ERROR', 'Failed to fetch program reports', 500, undefined, 'internal.default')
     }
 }

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { Redis } from '@upstash/redis'
+import { Redis } from '@upstash/redis/cloudflare'
 import { logger } from './lib/logger'
 
 // Rate limiting stores

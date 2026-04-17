@@ -30,7 +30,7 @@ export interface AuthSession {
  * Uses getUser() instead of getSession() for security (authenticates against Supabase Auth server)
  */
 export async function getSession(): Promise<AuthSession | null> {
-    const supabase = createClient()
+    const supabase = await createClient()
 
     // Use getUser() instead of getSession() for security
     // getUser() authenticates the token against Supabase Auth server
@@ -76,7 +76,7 @@ export async function getSession(): Promise<AuthSession | null> {
  * Used for activate endpoint where user needs to be authenticated but not yet active
  */
 export async function requireAuthDuringOnboarding(): Promise<{ user: any; supabaseUser: SupabaseUser }> {
-    const supabase = createClient()
+    const supabase = await createClient()
 
     // Use getUser() to authenticate the token
     const {

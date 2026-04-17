@@ -11,12 +11,11 @@ import { logger } from '@/lib/logger'
  */
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id: exerciseId } = await params
     try {
         await requireRole(['admin', 'trainer', 'trainee'])
-
-        const exerciseId = params.id
 
         const exercise = await prisma.exercise.findUnique({
             where: { id: exerciseId },
@@ -57,7 +56,7 @@ export async function GET(
         return apiSuccess({ exercise })
     } catch (error: any) {
         if (error instanceof Response) return error
-        logger.error({ error, exerciseId: params.id }, 'Error fetching exercise')
+        logger.error({ error, exerciseId }, 'Error fetching exercise')
         return apiError('INTERNAL_ERROR', 'Failed to fetch exercise', 500, undefined, 'internal.default')
     }
 }
@@ -68,11 +67,11 @@ export async function GET(
  */
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id: exerciseId } = await params
     try {
         const session = await requireRole(['admin', 'trainer'])
-        const exerciseId = params.id
         const body = await request.json()
 
         const validation = exerciseSchema.safeParse(body)
@@ -201,7 +200,7 @@ export async function PUT(
         return apiSuccess({ exercise })
     } catch (error: any) {
         if (error instanceof Response) return error
-        logger.error({ error, exerciseId: params.id }, 'Error updating exercise')
+        logger.error({ error, exerciseId }, 'Error updating exercise')
         return apiError('INTERNAL_ERROR', 'Failed to update exercise', 500, undefined, 'internal.default')
     }
 }
@@ -212,11 +211,11 @@ export async function PUT(
  */
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id: exerciseId } = await params
     try {
         const session = await requireRole(['admin', 'trainer'])
-        const exerciseId = params.id
 
         // Check if exercise exists
         const exercise = await prisma.exercise.findUnique({
@@ -288,7 +287,7 @@ export async function DELETE(
         })
     } catch (error: any) {
         if (error instanceof Response) return error
-        logger.error({ error, exerciseId: params.id }, 'Error deleting exercise')
+        logger.error({ error, exerciseId }, 'Error deleting exercise')
         return apiError('INTERNAL_ERROR', 'Failed to delete exercise', 500, undefined, 'internal.default')
     }
 }

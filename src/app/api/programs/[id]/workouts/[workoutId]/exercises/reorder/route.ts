@@ -20,11 +20,11 @@ const reorderSchema = z.object({
  */
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { id: string; workoutId: string } }
+    { params }: { params: Promise<{ id: string; workoutId: string }> }
 ) {
+    const { id: programId, workoutId } = await params
     try {
         const session = await requireRole(['admin', 'trainer'])
-        const { id: programId, workoutId } = params
         const body = await request.json()
 
         const validation = reorderSchema.safeParse(body)
@@ -113,7 +113,7 @@ export async function PATCH(
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error(
-            { error, programId: params.id, workoutId: params.workoutId },
+            { error, programId, workoutId },
             'Error reordering exercises'
         )
         return apiError('INTERNAL_ERROR', 'Failed to reorder exercises', 500, undefined, 'internal.default')

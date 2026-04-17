@@ -6,20 +6,19 @@ import { updateMuscleGroupSchema } from '@/schemas/muscle-group'
 import { logger } from '@/lib/logger'
 
 type Params = {
-    params: {
-        id: string
-    }
+    params: Promise<{ id: string }>
 }
 
 /**
  * GET /api/muscle-groups/[id]
  */
 export async function GET(request: NextRequest, { params }: Params) {
+    const { id } = await params
     try {
         await requireRole(['admin', 'trainer', 'trainee'])
 
         const muscleGroup = await prisma.muscleGroup.findUnique({
-            where: { id: params.id },
+            where: { id },
             include: {
                 creator: {
                     select: {
@@ -46,6 +45,7 @@ export async function GET(request: NextRequest, { params }: Params) {
  * PUT /api/muscle-groups/[id]
  */
 export async function PUT(request: NextRequest, { params }: Params) {
+    const { id } = await params
     try {
         await requireRole(['admin', 'trainer'])
         const body = await request.json()
@@ -56,11 +56,11 @@ export async function PUT(request: NextRequest, { params }: Params) {
         }
 
         const muscleGroup = await prisma.muscleGroup.update({
-            where: { id: params.id },
+            where: { id },
             data: validation.data,
         })
 
-        logger.info({ muscleGroupId: params.id }, 'Muscle group updated')
+        logger.info({ muscleGroupId: id }, 'Muscle group updated')
 
         return apiSuccess({ muscleGroup })
     } catch (error: any) {
@@ -74,12 +74,13 @@ export async function PUT(request: NextRequest, { params }: Params) {
  * DELETE /api/muscle-groups/[id]
  */
 export async function DELETE(request: NextRequest, { params }: Params) {
+    const { id } = await params
     try {
         await requireRole(['admin', 'trainer'])
 
         // Check if used in exercises
         const usageCount = await prisma.exerciseMuscleGroup.count({
-            where: { muscleGroupId: params.id },
+            where: { muscleGroupId: id },
         })
 
         if (usageCount > 0) {
@@ -93,10 +94,10 @@ export async function DELETE(request: NextRequest, { params }: Params) {
         }
 
         await prisma.muscleGroup.delete({
-            where: { id: params.id },
+            where: { id },
         })
 
-        logger.info({ muscleGroupId: params.id }, 'Muscle group deleted')
+        logger.info({ muscleGroupId: id }, 'Muscle group deleted')
 
         return apiSuccess({
             message: 'Muscle group deleted successfully',

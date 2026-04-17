@@ -13,11 +13,11 @@ import { calculateEffectiveWeight } from '@/lib/calculations'
  */
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id: programId } = await params
     try {
         const session = await requireRole(['admin', 'trainer', 'trainee'])
-        const programId = params.id
 
         const program = await prisma.trainingProgram.findUnique({
             where: { id: programId },
@@ -161,7 +161,7 @@ export async function GET(
         return apiSuccess({ program: resolvedProgram })
     } catch (error: any) {
         if (error instanceof Response) return error
-        logger.error({ error, programId: params.id }, 'Error fetching program')
+        logger.error({ error, programId }, 'Error fetching program')
         return apiError('INTERNAL_ERROR', 'Failed to fetch program', 500, undefined, 'internal.default')
     }
 }
@@ -173,11 +173,11 @@ export async function GET(
  */
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id: programId } = await params
     try {
         const session = await requireRole(['admin', 'trainer'])
-        const programId = params.id
         const body = await request.json()
 
         const validation = createProgramSchema.partial().safeParse(body)
@@ -406,7 +406,7 @@ export async function PUT(
         return apiSuccess({ program })
     } catch (error: any) {
         if (error instanceof Response) return error
-        logger.error({ error, programId: params.id }, 'Error updating program')
+        logger.error({ error, programId }, 'Error updating program')
         return apiError('INTERNAL_ERROR', 'Failed to update program', 500, undefined, 'internal.default')
     }
 }
@@ -418,11 +418,11 @@ export async function PUT(
  */
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id: programId } = await params
     try {
         const session = await requireRole(['admin', 'trainer'])
-        const programId = params.id
 
         // Check if program exists
         const program = await prisma.trainingProgram.findUnique({
@@ -462,7 +462,7 @@ export async function DELETE(
         })
     } catch (error: any) {
         if (error instanceof Response) return error
-        logger.error({ error, programId: params.id }, 'Error deleting program')
+        logger.error({ error, programId }, 'Error deleting program')
         return apiError('INTERNAL_ERROR', 'Failed to delete program', 500, undefined, 'internal.default')
     }
 }

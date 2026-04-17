@@ -16,7 +16,7 @@ export async function GET() {
         logger.info('Database health check passed')
 
         // Test Supabase auth client reachability.
-        const supabase = createClient()
+        const supabase = await createClient()
         const { error: authError } = await supabase.auth.getUser()
         const isMissingSession = authError?.name === 'AuthSessionMissingError'
 

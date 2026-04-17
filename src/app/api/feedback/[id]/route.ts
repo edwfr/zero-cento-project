@@ -11,11 +11,11 @@ import { logger } from '@/lib/logger'
  */
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id: feedbackId } = await params
     try {
         const session = await requireRole(['admin', 'trainer', 'trainee'])
-        const feedbackId = params.id
 
         const feedback = await prisma.exerciseFeedback.findUnique({
             where: { id: feedbackId },
@@ -74,7 +74,7 @@ export async function GET(
         return apiSuccess({ feedback })
     } catch (error: any) {
         if (error instanceof Response) return error
-        logger.error({ error, feedbackId: params.id }, 'Error fetching feedback')
+        logger.error({ error, feedbackId }, 'Error fetching feedback')
         return apiError('INTERNAL_ERROR', 'Failed to fetch feedback', 500, undefined, 'internal.default')
     }
 }
@@ -85,11 +85,11 @@ export async function GET(
  */
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id: feedbackId } = await params
     try {
         const session = await requireRole(['trainee'])
-        const feedbackId = params.id
         const body = await request.json()
 
         const validation = feedbackSchema.safeParse(body)
@@ -185,7 +185,7 @@ export async function PUT(
         return apiSuccess({ feedback })
     } catch (error: any) {
         if (error instanceof Response) return error
-        logger.error({ error, feedbackId: params.id }, 'Error updating feedback')
+        logger.error({ error, feedbackId }, 'Error updating feedback')
         return apiError('INTERNAL_ERROR', 'Failed to update feedback', 500, undefined, 'internal.default')
     }
 }

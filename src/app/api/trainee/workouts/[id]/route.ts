@@ -12,11 +12,11 @@ import { logger } from '@/lib/logger'
  */
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id: workoutId } = await params
     try {
         const session = await requireRole(['trainee'])
-        const workoutId = params.id
 
         // Fetch workout with all relations
         const workout = await prisma.workout.findUnique({
@@ -175,7 +175,7 @@ export async function GET(
         })
     } catch (error: any) {
         if (error instanceof Response) return error
-        logger.error({ error, workoutId: params.id }, 'Error fetching workout details')
+        logger.error({ error, workoutId }, 'Error fetching workout details')
         return apiError('INTERNAL_ERROR', 'Failed to fetch workout details', 500, undefined, 'internal.default')
     }
 }

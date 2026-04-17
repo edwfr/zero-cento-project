@@ -10,11 +10,11 @@ import { logger } from '@/lib/logger'
  */
 export async function POST(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id: programId } = await params
     try {
         const session = await requireRole(['admin', 'trainer'])
-        const programId = params.id
 
         const program = await prisma.trainingProgram.findUnique({
             where: { id: programId },
@@ -138,7 +138,7 @@ export async function POST(
         })
     } catch (error: any) {
         if (error instanceof Response) return error
-        logger.error({ error, programId: params.id }, 'Error copying first week workouts')
+        logger.error({ error, programId }, 'Error copying first week workouts')
         return apiError('INTERNAL_ERROR', 'Failed to copy first week workouts', 500, undefined, 'internal.default')
     }
 }

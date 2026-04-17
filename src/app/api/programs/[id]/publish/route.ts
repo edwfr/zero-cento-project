@@ -20,11 +20,11 @@ const publishSchema = z.object({
  */
 export async function POST(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id: programId } = await params
     try {
         const session = await requireRole(['admin', 'trainer'])
-        const programId = params.id
         const body = await request.json()
 
         const validation = publishSchema.safeParse(body)
@@ -166,7 +166,7 @@ export async function POST(
         })
     } catch (error: any) {
         if (error instanceof Response) return error
-        logger.error({ error, programId: params.id }, 'Error publishing program')
+        logger.error({ error, programId }, 'Error publishing program')
         return apiError('INTERNAL_ERROR', 'Failed to publish program', 500, undefined, 'internal.default')
     }
 }

@@ -5,9 +5,7 @@ import { requireAuth } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 
 type Params = {
-    params: {
-        id: string
-    }
+    params: Promise<{ id: string }>
 }
 
 /**
@@ -15,9 +13,9 @@ type Params = {
  * Disable trainee (login blocked)
  */
 export async function PATCH(request: NextRequest, { params }: Params) {
+    const { id } = await params
     try {
         const session = await requireAuth()
-        const { id } = params
 
         // Check user exists
         const existingUser = await prisma.user.findUnique({

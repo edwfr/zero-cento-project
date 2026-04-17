@@ -91,7 +91,7 @@ function hasCompletedFeedback(feedbacks: Array<{ completed: boolean }>) {
 
 export default async function TrainerDashboard() {
     const session = await getSession()
-    const locale = resolveLocale(cookies().get('i18next')?.value)
+    const locale = resolveLocale((await cookies()).get('i18next')?.value)
     const dictionary = TRAINER_DICTIONARIES[locale] as Record<string, unknown>
     const t = (key: string, params?: Record<string, TranslationValue>) =>
         translate(dictionary, key, params)

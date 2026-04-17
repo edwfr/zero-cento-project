@@ -13,11 +13,11 @@ import { logger } from '@/lib/logger'
  */
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id: weekId } = await params
     try {
         const session = await requireRole(['admin', 'trainer'])
-        const weekId = params.id
         const body = await request.json()
 
         // Validate input
@@ -105,7 +105,7 @@ export async function PATCH(
         return apiSuccess({ week: updatedWeek })
     } catch (error: any) {
         if (error instanceof Response) return error
-        logger.error({ error, weekId: params.id }, 'Error updating week configuration')
+        logger.error({ error, weekId }, 'Error updating week configuration')
         return apiError('INTERNAL_ERROR', 'Failed to update week configuration', 500, undefined, 'internal.default')
     }
 }

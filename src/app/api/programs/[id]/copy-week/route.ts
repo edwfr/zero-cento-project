@@ -10,11 +10,11 @@ import { logger } from '@/lib/logger'
  */
 export async function POST(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id: programId } = await params
     try {
         const session = await requireRole(['admin', 'trainer'])
-        const programId = params.id
         const body = await request.json()
         const sourceWeekId = body?.sourceWeekId
 
@@ -146,7 +146,7 @@ export async function POST(
         })
     } catch (error: any) {
         if (error instanceof Response) return error
-        logger.error({ error, programId: params.id }, 'Error copying workouts to next week')
+        logger.error({ error, programId }, 'Error copying workouts to next week')
         return apiError('INTERNAL_ERROR', 'Failed to copy workouts to next week', 500, undefined, 'internal.default')
     }
 }

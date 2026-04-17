@@ -6,20 +6,19 @@ import { updateMovementPatternSchema } from '@/schemas/movement-pattern'
 import { logger } from '@/lib/logger'
 
 type Params = {
-    params: {
-        id: string
-    }
+    params: Promise<{ id: string }>
 }
 
 /**
  * GET /api/movement-patterns/[id]
  */
 export async function GET(request: NextRequest, { params }: Params) {
+    const { id } = await params
     try {
         await requireRole(['admin', 'trainer', 'trainee'])
 
         const movementPattern = await prisma.movementPattern.findUnique({
-            where: { id: params.id },
+            where: { id },
             include: {
                 creator: {
                     select: {
@@ -46,6 +45,7 @@ export async function GET(request: NextRequest, { params }: Params) {
  * PUT /api/movement-patterns/[id]
  */
 export async function PUT(request: NextRequest, { params }: Params) {
+    const { id } = await params
     try {
         await requireRole(['admin', 'trainer'])
         const body = await request.json()
@@ -56,11 +56,11 @@ export async function PUT(request: NextRequest, { params }: Params) {
         }
 
         const movementPattern = await prisma.movementPattern.update({
-            where: { id: params.id },
+            where: { id },
             data: validation.data,
         })
 
-        logger.info({ movementPatternId: params.id }, 'Movement pattern updated')
+        logger.info({ movementPatternId: id }, 'Movement pattern updated')
 
         return apiSuccess({ movementPattern })
     } catch (error: any) {
@@ -74,12 +74,13 @@ export async function PUT(request: NextRequest, { params }: Params) {
  * DELETE /api/movement-patterns/[id]
  */
 export async function DELETE(request: NextRequest, { params }: Params) {
+    const { id } = await params
     try {
         await requireRole(['admin', 'trainer'])
 
         // Check if used in exercises
         const usageCount = await prisma.exercise.count({
-            where: { movementPatternId: params.id },
+            where: { movementPatternId: id },
         })
 
         if (usageCount > 0) {
@@ -93,10 +94,10 @@ export async function DELETE(request: NextRequest, { params }: Params) {
         }
 
         await prisma.movementPattern.delete({
-            where: { id: params.id },
+            where: { id },
         })
 
-        logger.info({ movementPatternId: params.id }, 'Movement pattern deleted')
+        logger.info({ movementPatternId: id }, 'Movement pattern deleted')
 
         return apiSuccess({
             message: 'Movement pattern deleted successfully',

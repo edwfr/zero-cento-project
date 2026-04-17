@@ -12,11 +12,11 @@ import { logger } from '@/lib/logger'
  */
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id: programId } = await params
     try {
         const session = await requireRole(['admin'])
-        const programId = params.id
         const body = await request.json()
 
         const { title, traineeId } = body
@@ -75,7 +75,7 @@ export async function PUT(
         return apiSuccess({ program })
     } catch (error: any) {
         if (error instanceof Response) return error
-        logger.error({ error, programId: params.id }, 'Error overriding program')
+        logger.error({ error, programId }, 'Error overriding program')
         return apiError('INTERNAL_ERROR', 'Failed to override program', 500, undefined, 'internal.default')
     }
 }

@@ -5,9 +5,7 @@ import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 
 type Params = {
-    params: {
-        id: string
-    }
+    params: Promise<{ id: string }>
 }
 
 /**
@@ -15,15 +13,16 @@ type Params = {
  * Archive movement pattern (set isActive = false)
  */
 export async function PATCH(request: NextRequest, { params }: Params) {
+    const { id } = await params
     try {
         await requireRole(['admin', 'trainer'])
 
         const movementPattern = await prisma.movementPattern.update({
-            where: { id: params.id },
+            where: { id },
             data: { isActive: false },
         })
 
-        logger.info({ movementPatternId: params.id }, 'Movement pattern archived')
+        logger.info({ movementPatternId: id }, 'Movement pattern archived')
 
         return apiSuccess({ movementPattern })
     } catch (error: any) {

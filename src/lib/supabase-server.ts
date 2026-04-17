@@ -6,8 +6,8 @@ import { cookies } from 'next/headers'
  * Supabase Server Client
  * Used in Server Components, Server Actions, and API Routes
  */
-export function createClient() {
-    const cookieStore = cookies()
+export async function createClient() {
+    const cookieStore = await cookies()
 
     return createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,

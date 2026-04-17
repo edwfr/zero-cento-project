@@ -28,11 +28,11 @@ const normalizeOptionalText = (value: string | null | undefined): string | null 
  */
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id: programId } = await params
     try {
         const session = await requireRole(['admin', 'trainer', 'trainee'])
-        const programId = params.id
 
         const program = await prisma.trainingProgram.findUnique({
             where: { id: programId },
@@ -196,7 +196,7 @@ export async function GET(
         })
     } catch (error: any) {
         if (error instanceof Response) return error
-        logger.error({ error, programId: params.id }, 'Error fetching program test results')
+        logger.error({ error, programId }, 'Error fetching program test results')
         return apiError('INTERNAL_ERROR', 'Failed to fetch program test results', 500, undefined, 'internal.default')
     }
 }

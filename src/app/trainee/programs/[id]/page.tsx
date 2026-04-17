@@ -4,12 +4,11 @@ import DashboardLayout from '@/components/DashboardLayout'
 import ProgramDetailByIdContent from './_content'
 
 interface ProgramDetailByIdPageProps {
-    params: {
-        id: string
-    }
+    params: Promise<{ id: string }>
 }
 
 export default async function ProgramDetailByIdPage({ params }: ProgramDetailByIdPageProps) {
+    const { id } = await params
     const session = await getSession()
 
     if (!session) {
@@ -22,7 +21,7 @@ export default async function ProgramDetailByIdPage({ params }: ProgramDetailByI
 
     return (
         <DashboardLayout user={session.user}>
-            <ProgramDetailByIdContent programId={params.id} />
+            <ProgramDetailByIdContent programId={id} />
         </DashboardLayout>
     )
 }

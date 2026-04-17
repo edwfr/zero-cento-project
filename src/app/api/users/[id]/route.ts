@@ -6,9 +6,7 @@ import { updateUserSchema } from '@/schemas/user'
 import { logger } from '@/lib/logger'
 
 type Params = {
-    params: {
-        id: string
-    }
+    params: Promise<{ id: string }>
 }
 
 /**
@@ -16,9 +14,9 @@ type Params = {
  * Get user details
  */
 export async function GET(request: NextRequest, { params }: Params) {
+    const { id } = await params
     try {
         const session = await requireAuth()
-        const { id } = params
 
         // Fetch user
         const user = await prisma.user.findUnique({
@@ -67,9 +65,9 @@ export async function GET(request: NextRequest, { params }: Params) {
  * Update user
  */
 export async function PUT(request: NextRequest, { params }: Params) {
+    const { id } = await params
     try {
         const session = await requireAuth()
-        const { id } = params
         const body = await request.json()
 
         // Validate input
@@ -136,9 +134,9 @@ export async function PUT(request: NextRequest, { params }: Params) {
  * Delete user (physical delete with cleanup)
  */
 export async function DELETE(request: NextRequest, { params }: Params) {
+    const { id } = await params
     try {
         const session = await requireAuth()
-        const { id } = params
 
         // Check user exists
         const existingUser = await prisma.user.findUnique({

@@ -12,11 +12,11 @@ import { logger } from '@/lib/logger'
  */
 export async function POST(
     request: NextRequest,
-    { params }: { params: { traineeId: string } }
+    { params }: { params: Promise<{ traineeId: string }> }
 ) {
+    const { traineeId } = await params
     try {
         const session = await requireRole(['admin'])
-        const { traineeId } = params
         const body = await request.json()
         const { newTrainerId } = body
 
@@ -75,7 +75,7 @@ export async function POST(
         })
     } catch (error: any) {
         if (error instanceof Response) return error
-        logger.error({ error, traineeId: params.traineeId }, 'Error reassigning trainee')
+        logger.error({ error, traineeId }, 'Error reassigning trainee')
         return apiError('INTERNAL_ERROR', 'Failed to reassign trainee', 500, undefined, 'internal.default')
     }
 }

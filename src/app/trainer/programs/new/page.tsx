@@ -5,9 +5,7 @@ import DashboardLayout from '@/components/DashboardLayout'
 import NewProgramContent from './NewProgramContent'
 
 interface NewProgramPageProps {
-    searchParams?: {
-        traineeId?: string
-    }
+    searchParams?: Promise<{ traineeId?: string }>
 }
 
 interface TraineeOption {
@@ -82,6 +80,7 @@ async function getAvailableTrainees(userId: string, role: string): Promise<Train
 }
 
 export default async function NewProgramPage({ searchParams }: NewProgramPageProps) {
+    const resolvedSearchParams = await searchParams
     const session = await getSession()
 
     if (!session) {
@@ -93,7 +92,7 @@ export default async function NewProgramPage({ searchParams }: NewProgramPagePro
     }
 
     const trainees = await getAvailableTrainees(session.user.id, session.user.role)
-    const requestedTraineeId = searchParams?.traineeId
+    const requestedTraineeId = resolvedSearchParams?.traineeId
     const hasRequestedTrainee = trainees.some((trainee) => trainee.id === requestedTraineeId)
     const initialTraineeId = hasRequestedTrainee
         ? requestedTraineeId!
