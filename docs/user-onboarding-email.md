@@ -480,33 +480,25 @@ Le email di Supabase sono personalizzabili dal **Dashboard**:
 
 ---
 
-### 2. SMTP Custom + React Email (Soluzione Produzione)
+### 2. Resend + React Email (Soluzione Produzione) ⭐ Scelta
 
-Per maggiore controllo, configura un provider SMTP esterno (SendGrid, Resend, AWS SES).
+Provider scelto: **Resend**. Gestisce l'invio delle email; Supabase genera solo i token di autenticazione.
 
-#### Configura Supabase con SMTP Custom
+#### Setup Resend
 
-Nel Dashboard Supabase → **Settings** → **Authentication** → **SMTP Settings**:
-
-```
-SMTP Host: smtp.sendgrid.net
-SMTP Port: 587
-SMTP User: apikey
-SMTP Password: <your-sendgrid-api-key>
-Sender Email: noreply@zerocento.app
-Sender Name: ZeroCento
-```
-
-#### (Opzionale) Gestione Email Custom con React Email
-
-Per controllo totale, puoi bypassare Supabase e gestire le email con un servizio esterno:
-
-1. Installa React Email:
+1. Installa le dipendenze:
 ```bash
-npm install @react-email/components resend
+npm install resend @react-email/components
 ```
 
-2. Crea template in `emails/InviteUser.tsx`:
+2. Crea `src/lib/resend.ts`:
+```typescript
+import { Resend } from 'resend'
+export const resend = new Resend(process.env.RESEND_API_KEY)
+export const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? 'onboarding@resend.dev'
+```
+
+3. Crea template in `emails/InviteUser.tsx`:
 ```typescript
 import {
   Body,
@@ -631,7 +623,7 @@ const footerText = {
 }
 ```
 
-3. Nel backend, invia email custom invece di usare Supabase:
+4. Nel backend, invia email con Resend invece di usare Supabase:
 ```typescript
 import { Resend } from 'resend'
 import { InviteUserEmail } from '@/emails/InviteUser'
@@ -677,12 +669,18 @@ await resend.emails.send({
 - [x] Personalizza template email in Supabase Dashboard (HTML basic)
 - [x] Test con utente reale
 
-### Fase 2: Produzione (2-3 ore)
-- [ ] Configura SMTP custom (SendGrid/Resend)
-- [ ] Implementa React Email templates
+### Fase 2: Produzione (2-3 ore) — Provider scelto: **Resend** ⭐
+
+- [ ] Installa `resend` e `@react-email/components`
+- [ ] Crea `src/lib/resend.ts` (client Resend)
+- [ ] Crea template `emails/InviteUser.tsx` (React Email)
+- [ ] Aggiorna `/api/users` per usare Resend al posto dell'email Supabase
+- [ ] Configura dominio `zerocento.app` su Resend Dashboard
 - [ ] Localizzazione email (IT/EN)
 - [ ] Email tracking (apertura, click)
 - [ ] Reinvio link scaduto
+
+> Guida completa: `docs/resend-email.md`
 
 ### Fase 3: Advanced (opzionale)
 - [ ] Email di benvenuto post-registrazione
@@ -698,10 +696,9 @@ await resend.emails.send({
 # App URL per redirect
 NEXT_PUBLIC_APP_URL=https://zerocento.app
 
-# Se usi SMTP esterno (opzionale)
+# Resend (provider email scelto)
 RESEND_API_KEY=re_xxxxxxxxxxxxx
-# oppure
-SENDGRID_API_KEY=SG.xxxxxxxxxxxxx
+RESEND_FROM_EMAIL=noreply@zerocento.app
 
 # Supabase (già presenti)
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
