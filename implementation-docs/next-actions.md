@@ -8,6 +8,20 @@
 
 ## Active Backlog
 
+### Priority 0 — Email con Resend
+
+- [ ] **E.1** `npm install resend @react-email/components`
+- [ ] **E.2** Crea `src/lib/resend.ts` (client Resend singleton)
+- [ ] **E.3** Crea template `emails/InviteUser.tsx` (React Email)
+- [ ] **E.4** Aggiorna `POST /api/users` per usare Resend (genera magic link Supabase + invia email Resend)
+- [ ] **E.5** Aggiungi `RESEND_API_KEY` e `RESEND_FROM_EMAIL` alle Vercel Environment Variables
+- [ ] **E.6** Verifica dominio `zerocento.app` in Resend Dashboard (DNS: SPF, DKIM, DMARC)
+- [ ] **E.7** Test end-to-end: crea utente → email arriva → link funziona → onboarding completato
+
+> Riferimento: `docs/resend-email.md`
+
+---
+
 ### Priority 1 — Sprint 6: CI/CD & Deploy
 
 - [ ] **6.1** Add `prisma:migrate:prod` script to `package.json`
