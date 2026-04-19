@@ -120,39 +120,48 @@ export default function NewProgramContent({
     }
 
     return (
-        <div className="max-w-3xl mx-auto">
+        <div className="min-h-screen bg-gray-50">
+            <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="mb-8">
-                <div className="flex items-center justify-center space-x-4 mb-4">
+                <div className="flex items-center justify-center gap-4 mb-4">
                     <div className="flex items-center">
                         <div className="w-10 h-10 bg-brand-primary text-white rounded-full flex items-center justify-center font-bold">
                             1
                         </div>
                         <span className="ml-2 font-semibold text-gray-900">{t('editProgram.stepSetup')}</span>
                     </div>
-                    <div className="w-16 h-1 bg-gray-300"></div>
+                    <div className="w-16 h-1 bg-brand-primary"></div>
                     <div className="flex items-center">
                         <div className="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">
                             2
                         </div>
-                        <span className="ml-2 text-gray-500">{t('editProgram.stepExercises')}</span>
+                        <span className="ml-2 text-gray-500">{t('editProgram.stepStructure')}</span>
                     </div>
                     <div className="w-16 h-1 bg-gray-300"></div>
                     <div className="flex items-center">
                         <div className="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">
                             3
                         </div>
-                        <span className="ml-2 text-gray-500">{t('editProgram.stepReview')}</span>
+                        <span className="ml-2 text-gray-500">{t('editProgram.stepExercises')}</span>
                     </div>
                     <div className="w-16 h-1 bg-gray-300"></div>
                     <div className="flex items-center">
                         <div className="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">
                             4
                         </div>
+                        <span className="ml-2 text-gray-500">{t('editProgram.stepReview')}</span>
+                    </div>
+                    <div className="w-16 h-1 bg-gray-300"></div>
+                    <div className="flex items-center">
+                        <div className="w-10 h-10 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-bold">
+                            5
+                        </div>
                         <span className="ml-2 text-gray-500">{t('editProgram.stepPublish')}</span>
                     </div>
                 </div>
             </div>
 
+            <div className="max-w-3xl mx-auto">
             <div className="mb-8">
                 <Link
                     href={backHref}
@@ -343,6 +352,8 @@ export default function NewProgramContent({
                     </Link>
                 </div>
             </form>
+            </div>
+            </div>
         </div>
     )
 }
