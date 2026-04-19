@@ -34,11 +34,11 @@ Benvenuto su ZeroCento - Completa la tua registrazione
                     <tr>
                         <td style="padding: 40px 40px 20px; text-align: center;">
                             <!-- Opzione 1: Logo da URL pubblico (consigliata) -->
-                            <img src="{{ .SiteURL }}/images/logo/logo.png" 
-                                 alt="ZeroCento Logo" 
-                                 width="80" 
-                                 height="80" 
-                                 style="display: block; margin: 0 auto 20px; max-width: 80px; height: auto;" />
+                            <img src="https://zero-cento-project.vercel.app/images/logo/logo.png"
+     alt="ZeroCento Logo"
+     width="80"
+     height="80"
+     style="display: block; margin: 0 auto 20px; max-width: 80px; height: auto;" />
                             
                             <!-- Opzione 2 alternativa: Fallback con gradiente se logo non carica
                             <div style="width: 80px; height: 80px; margin: 0 auto 20px; background: linear-gradient(135deg, #FFA700 0%, #FF8C00 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
@@ -148,7 +148,7 @@ Recupero password - ZeroCento
                     <!-- Header con Logo -->
                     <tr>
                         <td style="padding: 40px 40px 20px; text-align: center;">
-                            <img src="{{ .SiteURL }}/images/logo/logo.png" 
+                            <img src="https://zero-cento-project.vercel.app/images/logo/logo.png"
                                  alt="ZeroCento Logo" 
                                  width="80" 
                                  height="80" 
