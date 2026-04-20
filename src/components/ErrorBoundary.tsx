@@ -1,6 +1,7 @@
 'use client'
 
 import { Component, ReactNode, ErrorInfo } from 'react'
+import * as Sentry from '@sentry/nextjs'
 import i18n from '@/lib/i18n/client'
 import { Button } from '@/components/Button'
 
@@ -87,10 +88,14 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
     }
 
     componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-        console.error('ErrorBoundary caught an error:', error, errorInfo)
-
-        // TODO: Log to error reporting service (Sentry, LogRocket, etc.)
-        // Example: logErrorToService(error, errorInfo)
+        Sentry.captureException(error, {
+            mechanism: { type: 'generic', handled: false },
+            contexts: {
+                react: {
+                    componentStack: errorInfo.componentStack ?? undefined,
+                },
+            },
+        })
     }
 
     resetError = () => {
