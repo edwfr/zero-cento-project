@@ -21,6 +21,14 @@ Per stato corrente usare sempre [checklist.md](./checklist.md).
 
 ## Storico
 
+### [20 Aprile 2026] — Fix tipo `contexts` in ErrorBoundary per Sentry v10 (Build Fix)
+
+**Task checklist:** —  
+**File modificati:** `src/components/ErrorBoundary.tsx`  
+**Note:** Fix errore TypeScript a compile-time: `contexts` non è un campo valido in `ExceptionHint` su `@sentry/nextjs` v10. Refactoring da `captureException(..., { contexts: { react: ... } })` a `Sentry.withScope(scope => { scope.setContext('react', ...); Sentry.captureException(...) })`. Comportamento runtime identico (componentStack catturato), build `npm run build` torna a exit 0.
+
+---
+
 ### [20 Aprile 2026] — Migrazione ESLint v8 → v9 + fix vulnerabilità (Dev Tooling)
 
 **Task checklist:** —  

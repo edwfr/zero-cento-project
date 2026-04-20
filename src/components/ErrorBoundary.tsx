@@ -88,13 +88,13 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
     }
 
     componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-        Sentry.captureException(error, {
-            mechanism: { type: 'generic', handled: false },
-            contexts: {
-                react: {
-                    componentStack: errorInfo.componentStack ?? undefined,
-                },
-            },
+        Sentry.withScope((scope) => {
+            scope.setContext('react', {
+                componentStack: errorInfo.componentStack ?? undefined,
+            })
+            Sentry.captureException(error, {
+                mechanism: { type: 'generic', handled: false },
+            })
         })
     }
 
