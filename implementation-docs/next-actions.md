@@ -29,7 +29,7 @@
 - [ ] **6.3** Create `vercel.json` with build config and route rewrites
 - [ ] **6.4** Configure GitHub secrets: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, `STAGING_URL`, `PRODUCTION_DATABASE_URL`
 - [ ] **6.5** Connect GitHub repo to Vercel for auto-deploy + PR previews
-- [ ] **6.6** Complete Sentry integration
+- [x] **6.6** Complete Sentry integration — `src/instrumentation.ts` + `src/instrumentation-client.ts` creati, config server/edge aggiornati (20/04/2026)
 - [ ] **6.7** Configure UptimeRobot on `/api/health`
 
 ### Priority 2 — Sprint 8: PWA & Final Polish

@@ -1,10 +1,10 @@
 # Pre-Deployment Review — ZeroCento su Vercel
 
-**Data analisi**: 19 aprile 2026
-**Stato progetto**: 142/160 task (~89% completato)
+**Data analisi**: 19 aprile 2026 — **Aggiornato**: 20 aprile 2026
+**Stato progetto**: 143/160 task (~89% completato)
 **Target deploy**: Vercel Pro + Supabase Pro (EU Frankfurt)
 **Branch corrente**: `master`
-**Verdetto**: **CONDITIONAL READY** — 3 blocker da risolvere prima del go-live
+**Verdetto**: **CONDITIONAL READY** — 4 blocker da risolvere prima del go-live (B1 risolto)
 
 ---
 
@@ -12,7 +12,7 @@
 
 ZeroCento è una piattaforma SaaS trainer-led per la gestione di programmi di allenamento (admin/trainer/trainee, i18n it/en, PWA). L'implementazione è matura e ben strutturata: Next.js 15 App Router, Prisma + Supabase Postgres, Supabase Auth, rate limiting Upstash Redis, Pino logging, Vitest+Playwright (80% coverage enforcement), CI/CD GitHub Actions + Vercel.
 
-**Punteggio di readiness**: **85/100**
+**Punteggio di readiness**: **87/100**
 
 | Area | Score | Note |
 |------|-------|------|
@@ -20,7 +20,7 @@ ZeroCento è una piattaforma SaaS trainer-led per la gestione di programmi di al
 | Database (Prisma) | 80 | Schema completo ma migrations non committate |
 | Auth & Security | 80 | Supabase Auth + RBAC solido; rate limit parziale |
 | Testing | 85 | 18 file test, 80% coverage enforced in CI |
-| Osservabilità | 60 | Sentry installato ma **non inizializzato** |
+| Osservabilità | 85 | Sentry inizializzato (instrumentation.ts + client/server/edge config) |
 | CI/CD | 85 | Workflow completo; mancano GitHub Secrets |
 | PWA & Performance | 90 | Serwist + manifest + icon set completo |
 | GDPR & Privacy | 55 | Nessun soft-delete attivo, nessun data export |
@@ -30,20 +30,9 @@ ZeroCento è una piattaforma SaaS trainer-led per la gestione di programmi di al
 
 ## 2. Blocker (da risolvere PRIMA del deploy)
 
-### 🔴 B1. Sentry non inizializzato
-- **Stato**: `@sentry/nextjs@10.49.0` installato, configurato in `next.config.js`, ma **manca `src/instrumentation.ts`** e l'`ErrorBoundary` ha ancora un `TODO` a riga 64.
-- **Impatto**: zero visibilità errori in produzione.
-- **Fix**:
-  ```ts
-  // src/instrumentation.ts
-  export async function register() {
-    if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
-      const Sentry = await import('@sentry/nextjs')
-      Sentry.init({ dsn: process.env.NEXT_PUBLIC_SENTRY_DSN, tracesSampleRate: 0.1 })
-    }
-  }
-  ```
-- **Wire ErrorBoundary**: sostituire il TODO con `Sentry.captureException(error)`.
+### ✅ B1. Sentry inizializzato — RISOLTO (20 aprile 2026)
+- **Stato**: `src/instrumentation.ts` e `src/instrumentation-client.ts` creati. `sentry.server.config.ts` e `sentry.edge.config.ts` aggiornati con DSN/env/sample rate da variabili d'ambiente, `enableLogs: true`, `sendDefaultPii: false`, `beforeSend` con scrubbing cookie. `onRequestError = Sentry.captureRequestError` attivo per errori server-side.
+- **Pendente (nice-to-have)**: wire `Sentry.captureException` in `src/components/ErrorBoundary.tsx` riga 92.
 
 ### 🔴 B2. Resend non implementato (E.1–E.7)
 - **Stato**: documentazione completa (`docs/resend-email.md`), env vars in `.env.example`, ma **zero codice**: manca `src/lib/resend.ts`, `emails/InviteUser.tsx`, e `/api/users` non invia email.
@@ -277,7 +266,7 @@ E2E full suite su staging (4 shard paralleli)
 ### Settimana -1 (Fix codice — Blocker)
 - [ ] **B3** Commit initial Prisma migration
 - [ ] **B4** Upgrade `eslint-config-next` + `@typescript-eslint/*`, rieseguire test
-- [ ] **B1** Creare `src/instrumentation.ts` + wire Sentry in `ErrorBoundary`
+- [x] **B1** ~~Creare `src/instrumentation.ts` + wire Sentry in `ErrorBoundary`~~ → `instrumentation.ts` + `instrumentation-client.ts` creati (20/04)
 - [ ] **B2** Implementare E.1–E.7 (Resend + template InviteUser)
 - [ ] **B5** Configurare GitHub Secrets (Vercel + Sentry + DB)
 - [ ] Creare `vercel.json` (§5.4)

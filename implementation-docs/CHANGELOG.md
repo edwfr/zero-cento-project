@@ -21,6 +21,15 @@ Per stato corrente usare sempre [checklist.md](./checklist.md).
 
 ## Storico
 
+### [20 Aprile 2026] — Integrazione Sentry (Osservabilità — Blocker B1)
+
+**Task checklist:** #6.6 (next-actions.md), Blocker B1 (pre-deployment-review.md)  
+**File creati:** `src/instrumentation.ts`, `src/instrumentation-client.ts`  
+**File modificati:** `sentry.server.config.ts`, `sentry.edge.config.ts`, `.env`  
+**Note:** Integrazione manuale completa di Sentry su tutti e tre i runtime Next.js. `src/instrumentation.ts` registra il server config (Node.js runtime) e l'edge config (Edge runtime) tramite `register()`, ed esporta `onRequestError = Sentry.captureRequestError` per catturare errori server-side automaticamente. `src/instrumentation-client.ts` inizializza Sentry lato browser con `Sentry.init()` e `tracesSampleRate: 1` (dev), ed esporta `onRouterTransitionStart = Sentry.captureRouterTransitionStart`. `sentry.server.config.ts` e `sentry.edge.config.ts` aggiornati: DSN da `NEXT_PUBLIC_SENTRY_DSN`, environment da `NEXT_PUBLIC_APP_ENV`, sample rate da `NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE` (default `0.1`), `enableLogs: true`, `sendDefaultPii: false`, `beforeSend` con rimozione cookie per privacy. `next.config.js` aveva già `withSentryConfig` e source maps upload. Aggiunta env var `NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE=0.1` in `.env`. **Pendente:** wire `Sentry.captureException` in `src/components/ErrorBoundary.tsx` (TODO riga 92) da fare come miglioramento post-deploy.
+
+---
+
 ### [31 Marzo 2026] — DashboardLayout su Pagina Dettaglio Atleta con i18n (Sprint 9.16)
 
 **Task checklist:** #9.16  
