@@ -21,6 +21,16 @@ Per stato corrente usare sempre [checklist.md](./checklist.md).
 
 ## Storico
 
+### [20 Aprile 2026] — Migrazione ESLint v8 → v9 + fix vulnerabilità (Dev Tooling)
+
+**Task checklist:** —  
+**File eliminati:** `.eslintrc.json`  
+**File creati:** `eslint.config.mjs`  
+**File modificati:** `package.json`, `package-lock.json`  
+**Note:** Aggiornamento tooling ESLint da v8 (EOL) a v9.39.4. `eslint-config-next` aggiornato da 14.2.5 a 16.2.4 (risolve HIGH vuln CVSS 7.5 — glob command injection CWE-78). `@typescript-eslint/parser` e `@typescript-eslint/eslint-plugin` aggiornati da v7.x a v8.59.0 (risolve HIGH vuln CVSS 7.5 — minimatch ReDoS CWE-1333). Migrazione config da formato legacy `.eslintrc.json` a flat config ESLint v9 (`eslint.config.mjs`) usando l'export nativo flat di `eslint-config-next` v16 (no FlatCompat necessario). Nuove regole introdotte da eslint-config-next v16 (`react-hooks/set-state-in-effect`, `react-hooks/refs`, `react-hooks/purity`, `react-hooks/immutability`) disabilitate nel flat config per preservare comportamento lint precedente senza modificare sorgenti. `npm audit`: 0 vulnerabilità. `npx eslint . --max-warnings=0`: exit 0.
+
+---
+
 ### [20 Aprile 2026] — Sentry.captureException in ErrorBoundary (Osservabilità — B1 completato)
 
 **Task checklist:** B1 pendente (pre-deployment-review.md)  
