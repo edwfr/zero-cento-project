@@ -30,9 +30,8 @@ ZeroCento è una piattaforma SaaS trainer-led per la gestione di programmi di al
 
 ## 2. Blocker (da risolvere PRIMA del deploy)
 
-### ✅ B1. Sentry inizializzato — RISOLTO (20 aprile 2026)
-- **Stato**: `src/instrumentation.ts` e `src/instrumentation-client.ts` creati. `sentry.server.config.ts` e `sentry.edge.config.ts` aggiornati con DSN/env/sample rate da variabili d'ambiente, `enableLogs: true`, `sendDefaultPii: false`, `beforeSend` con scrubbing cookie. `onRequestError = Sentry.captureRequestError` attivo per errori server-side.
-- **Pendente (nice-to-have)**: wire `Sentry.captureException` in `src/components/ErrorBoundary.tsx` riga 92.
+### ✅ B1. Sentry inizializzato — COMPLETATO (20 aprile 2026)
+- **Stato**: `src/instrumentation.ts` e `src/instrumentation-client.ts` creati. `sentry.server.config.ts` e `sentry.edge.config.ts` aggiornati con DSN/env/sample rate da variabili d'ambiente, `enableLogs: true`, `sendDefaultPii: false`, `beforeSend` con scrubbing cookie. `onRequestError = Sentry.captureRequestError` attivo per errori server-side. `Sentry.captureException` attivo in `ErrorBoundary.componentDidCatch` con `componentStack` context e `mechanism: { type: 'generic', handled: false }`.
 
 ### 🔴 B2. Resend non implementato (E.1–E.7)
 - **Stato**: documentazione completa (`docs/resend-email.md`), env vars in `.env.example`, ma **zero codice**: manca `src/lib/resend.ts`, `emails/InviteUser.tsx`, e `/api/users` non invia email.
@@ -266,7 +265,7 @@ E2E full suite su staging (4 shard paralleli)
 ### Settimana -1 (Fix codice — Blocker)
 - [ ] **B3** Commit initial Prisma migration
 - [ ] **B4** Upgrade `eslint-config-next` + `@typescript-eslint/*`, rieseguire test
-- [x] **B1** ~~Creare `src/instrumentation.ts` + wire Sentry in `ErrorBoundary`~~ → `instrumentation.ts` + `instrumentation-client.ts` creati (20/04)
+- [x] **B1** ~~Creare `src/instrumentation.ts` + wire Sentry in `ErrorBoundary`~~ → completato (20/04): `instrumentation.ts` + `instrumentation-client.ts` creati; `Sentry.captureException` attivo in `ErrorBoundary`
 - [ ] **B2** Implementare E.1–E.7 (Resend + template InviteUser)
 - [ ] **B5** Configurare GitHub Secrets (Vercel + Sentry + DB)
 - [ ] Creare `vercel.json` (§5.4)

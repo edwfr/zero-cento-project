@@ -21,6 +21,15 @@ Per stato corrente usare sempre [checklist.md](./checklist.md).
 
 ## Storico
 
+### [20 Aprile 2026] — Sentry.captureException in ErrorBoundary (Osservabilità — B1 completato)
+
+**Task checklist:** B1 pendente (pre-deployment-review.md)  
+**File modificati:** `src/components/ErrorBoundary.tsx`  
+**File creati:** `tests/unit/components/ErrorBoundary.test.tsx`  
+**Note:** Wired `Sentry.captureException` in `componentDidCatch`, passando `errorInfo.componentStack` come context React (con guard `?? undefined`) e `mechanism: { type: 'generic', handled: false }` per classificare gli errori come non gestiti in Sentry. Sostituisce il TODO placeholder e il `console.error` con una vera chiamata Sentry. Aggiunti 2 unit test (Vitest + RTL): verifica che `captureException` venga chiamato con l'errore corretto e il `componentStack`, e che non venga chiamato quando nessun figlio lancia errori. B1 completamente risolto.
+
+---
+
 ### [20 Aprile 2026] — Integrazione Sentry (Osservabilità — Blocker B1)
 
 **Task checklist:** #6.6 (next-actions.md), Blocker B1 (pre-deployment-review.md)  
