@@ -55,10 +55,6 @@ export default function TraineeDashboardContent() {
     const [nextWorkout, setNextWorkout] = useState<NextWorkout | null>(null)
     const [error, setError] = useState<string | null>(null)
 
-    useEffect(() => {
-        void fetchDashboardData()
-    }, [fetchDashboardData])
-
     const fetchDashboardData = useCallback(async () => {
         try {
             setLoading(true)
@@ -97,6 +93,10 @@ export default function TraineeDashboardContent() {
             setLoading(false)
         }
     }, [t])
+
+    useEffect(() => {
+        void fetchDashboardData()
+    }, [fetchDashboardData])
 
     if (loading) {
         return (
