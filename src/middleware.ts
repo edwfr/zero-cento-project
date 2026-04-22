@@ -104,6 +104,20 @@ function getRateLimitConfig(pathname: string): { limit: number; windowMs: number
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl
 
+    // Skip auth and rate limiting for public routes and public static files required before login.
+    if (PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) {
+        return NextResponse.next()
+    }
+
+    if (PUBLIC_FILES.includes(pathname)) {
+        return NextResponse.next()
+    }
+
+    // Skip auth for API health check
+    if (API_PUBLIC_ROUTES.includes(pathname)) {
+        return NextResponse.next()
+    }
+
     // Rate limiting - skip in development
     if (process.env.NODE_ENV !== 'development') {
         const clientIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
@@ -132,20 +146,6 @@ export async function middleware(request: NextRequest) {
                 }
             )
         }
-    }
-
-    // Skip auth for public routes and public static files required before login.
-    if (PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) {
-        return NextResponse.next()
-    }
-
-    if (PUBLIC_FILES.includes(pathname)) {
-        return NextResponse.next()
-    }
-
-    // Skip auth for API health check
-    if (API_PUBLIC_ROUTES.includes(pathname)) {
-        return NextResponse.next()
     }
 
     // Create Supabase client

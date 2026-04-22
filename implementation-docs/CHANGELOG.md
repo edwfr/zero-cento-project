@@ -8,6 +8,15 @@ Per stato corrente usare sempre [checklist.md](./checklist.md).
 
 ---
 
+## 2026-04-22 — Middleware: Fix rate limiting on public login route
+
+- Fixed auth middleware ordering in `src/middleware.ts` so public routes like `'/login'`, `'/forgot-password'`, `'/reset-password'`, `'/force-change-password'`, and `'/onboarding/set-password'` bypass rate limiting before auth/security checks
+- Resolved the production symptom where repeated anonymous visits could return raw HTTP `429` JSON with `RATE_LIMIT_EXCEEDED` instead of rendering the login page
+- Added regression coverage in `tests/integration/rate-limit-read.test.ts` to verify repeated `GET /login` requests do not get throttled
+- Verified focused middleware validation passes after the change: `npx vitest run tests/integration/rate-limit-read.test.ts`
+
+---
+
 ## 2026-04-22 — PWA: Fix service worker registration on Vercel login
 
 - Fixed PWA asset delivery on Vercel login flow by excluding `'/sw.js'`, `'/manifest.json'`, `'/robots.txt'`, and `'/sitemap.xml'` from auth middleware in `src/middleware.ts`

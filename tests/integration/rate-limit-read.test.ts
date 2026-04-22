@@ -98,4 +98,14 @@ describe('Rate limiting — read endpoints (I3)', () => {
         const res = await middleware(buildRequest(ip, path))
         expect(res.status).not.toBe(429)
     })
+
+    it('does not rate limit repeated requests to the public login page', async () => {
+        const ip = '10.0.1.5'
+        const path = '/login'
+
+        for (let i = 0; i < 10; i++) {
+            const res = await middleware(buildRequest(ip, path))
+            expect(res.status).not.toBe(429)
+        }
+    })
 })
