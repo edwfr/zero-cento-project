@@ -113,8 +113,8 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                 if (mpResponse.ok) {
                     setMovementPatterns(mpData.data.items)
                 }
-            } catch (err) {
-                console.error('Error loading data:', err)
+            } catch {
+                // data fetch failed silently; dropdowns remain empty
             }
         }
 

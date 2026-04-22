@@ -61,9 +61,8 @@ ZeroCento è una piattaforma SaaS trainer-led per la gestione di programmi di al
 
 ## 3. Important (risolvere entro sprint deploy)
 
-### 🟠 I1. 25 `console.log` in codice di produzione
-Hotspot: `src/app/onboarding/set-password/page.tsx` (8 occorrenze, loggano session/metadata), `src/lib/date-format.ts` (5), `src/components/ExerciseCreateModal.tsx`, `src/components/ErrorBoundary.tsx`.
-Fix: sostituire con `logger.debug()` o rimuovere.
+### ✅ I1. console.log rimossi — COMPLETATO (22 aprile 2026)
+9 `console.log` e 8 `console.error` rimossi da 6 file di produzione. I `console.log` in `set-password/page.tsx` esponevano token di sessione e metadati utente (fix sicurezza). `error.tsx` aggiornato per usare `Sentry.captureException`. Catch blocks silenti con commenti esplicativi.
 
 ### 🟠 I2. Soft-delete / GDPR incompleto
 Lo schema ha `isActive` su `User`, `MuscleGroup`, `MovementPattern`, ma le query non filtrano. Nessun endpoint di export dati o cancellazione account. Richiesto dal design GDPR (`design/08-decisions.md`).
@@ -275,7 +274,7 @@ E2E full suite su staging (4 shard paralleli)
 - [ ] Creare `vercel.json` (§5.4)
 
 ### Settimana -1 (Fix Important)
-- [ ] **I1** Rimuovere `console.log` (soprattutto `onboarding/set-password`)
+- [x] **I1** ~~Rimuovere `console.log` (soprattutto `onboarding/set-password`)~~ → completato (22/04): 9 `console.log` + 8 `console.error` rimossi; `error.tsx` usa Sentry
 - [ ] **I2** Aggiungere filtro `isActive: true` alle query liste
 - [ ] **I3** Rate limit default 100/min su `/api/*`
 - [ ] **I5** Completare 4 i18n error keys

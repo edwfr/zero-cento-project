@@ -63,8 +63,7 @@ export function formatDate(
         }
 
         return dateObj.toLocaleDateString(locale, options)
-    } catch (error) {
-        console.error('Error formatting date:', error)
+    } catch {
         return '-'
     }
 }
@@ -116,8 +115,7 @@ export function formatDateTime(
         }
 
         return dateObj.toLocaleString(locale, options)
-    } catch (error) {
-        console.error('Error formatting datetime:', error)
+    } catch {
         return '-'
     }
 }
@@ -145,8 +143,7 @@ export function formatNumber(
             minimumFractionDigits: decimals,
             maximumFractionDigits: decimals
         })
-    } catch (error) {
-        console.error('Error formatting number:', error)
+    } catch {
         return String(value)
     }
 }
@@ -171,8 +168,7 @@ export function formatDateForInput(date: string | Date | number | null | undefin
         if (isNaN(dateObj.getTime())) return ''
 
         return dateObj.toISOString().split('T')[0]
-    } catch (error) {
-        console.error('Error formatting date for input:', error)
+    } catch {
         return ''
     }
 }
@@ -245,8 +241,7 @@ export function formatRelativeTime(date: string | Date | number | null | undefin
                 ? `${Math.abs(diffYear)} ${Math.abs(diffYear) === 1 ? 'anno' : 'anni'} fa`
                 : `${Math.abs(diffYear)} ${Math.abs(diffYear) === 1 ? 'year' : 'years'} ago`
         }
-    } catch (error) {
-        console.error('Error formatting relative time:', error)
+    } catch {
         return '-'
     }
 }

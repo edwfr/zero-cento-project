@@ -40,9 +40,8 @@ export default function LoginPage() {
                         return
                     }
                 }
-            } catch (err) {
+            } catch {
                 // Ignore errors, just show login form
-                console.error('Session check error:', err)
             } finally {
                 setChecking(false)
             }

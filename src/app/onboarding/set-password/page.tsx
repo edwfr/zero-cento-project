@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase-client'
 import { useTranslation } from 'react-i18next'
 import Link from 'next/link'
+import * as Sentry from '@sentry/nextjs'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
 import { FormLabel } from '@/components/FormLabel'
@@ -30,31 +31,18 @@ export default function SetPasswordPage() {
                 const accessToken = hashParams.get('access_token')
                 const refreshToken = hashParams.get('refresh_token')
 
-                console.log('Hash params:', {
-                    hasAccessToken: !!accessToken,
-                    hasRefreshToken: !!refreshToken,
-                    hash: window.location.hash.substring(0, 50) + '...'
-                })
-
                 if (accessToken && refreshToken) {
                     // Manually set the session with tokens from URL
-                    console.log('Setting session manually...')
                     const { data, error: sessionError } = await supabase.auth.setSession({
                         access_token: accessToken,
                         refresh_token: refreshToken,
                     })
 
                     if (sessionError) {
-                        console.error('Session error:', sessionError)
                         setError(t('auth:setPassword.invalidInvite'))
                         setVerifying(false)
                         return
                     }
-
-                    console.log('Session set successfully, user:', data.user?.email)
-                    console.log('User metadata:', data.user?.user_metadata)
-                    console.log('Email confirmed:', data.user?.email_confirmed_at)
-                    console.log('Confirmed at:', data.user?.confirmed_at)
 
                     // Clean up the URL hash
                     window.history.replaceState(null, '', window.location.pathname)
@@ -65,12 +53,10 @@ export default function SetPasswordPage() {
                     const isOnboardingComplete = data.user?.user_metadata?.isActive === true
 
                     if (isOnboardingComplete) {
-                        console.log('User already completed onboarding, redirecting to login')
                         router.push('/login')
                         return
                     }
 
-                    console.log('Showing password setup form')
                     // Show the password form
                     setUserData(data.user)
                     setVerifying(false)
@@ -79,7 +65,6 @@ export default function SetPasswordPage() {
                     const { data: { user }, error } = await supabase.auth.getUser()
 
                     if (error || !user) {
-                        console.log('No session found')
                         setError(t('auth:setPassword.invalidInvite'))
                         setVerifying(false)
                         return
@@ -97,7 +82,7 @@ export default function SetPasswordPage() {
                     setVerifying(false)
                 }
             } catch (err) {
-                console.error('Setup error:', err)
+                Sentry.captureException(err)
                 setError(t('auth:setPassword.verifyError'))
                 setVerifying(false)
             }
@@ -146,8 +131,8 @@ export default function SetPasswordPage() {
             const role = userData.user_metadata.role
             router.push(`/${role}/dashboard`)
         } catch (err: any) {
+            Sentry.captureException(err)
             setError(err.message || t('auth:setPassword.errorGeneric'))
-            console.error('Error setting password:', err)
         } finally {
             setLoading(false)
         }

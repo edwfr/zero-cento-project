@@ -11,6 +11,7 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 import { ArrowLeft, Check, ChevronDown, ChevronUp, Clock3, FileText, Gauge, PlayCircle } from 'lucide-react'
 import YoutubeEmbed from '@/components/YoutubeEmbed'
 import { useSwipe } from '@/lib/useSwipe'
+import * as Sentry from '@sentry/nextjs'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import { Input } from '@/components/Input'
@@ -255,8 +256,8 @@ export default function WorkoutDetailContent() {
                 setExerciseRPE(parsed.exerciseRPE || {})
                 setGlobalNotes(parsed.globalNotes || '')
             }
-        } catch (err) {
-            console.error('Error loading local data:', err)
+        } catch {
+            // localStorage read failed; start with empty state
         }
     }, [STORAGE_KEY])
 
@@ -271,16 +272,16 @@ export default function WorkoutDetailContent() {
                     savedAt: new Date().toISOString(),
                 })
             )
-        } catch (err) {
-            console.error('Error saving local data:', err)
+        } catch {
+            // localStorage write failed; in-memory state is still valid
         }
     }, [STORAGE_KEY, exerciseRPE, feedbackData, globalNotes])
 
     const clearLocalData = () => {
         try {
             localStorage.removeItem(STORAGE_KEY)
-        } catch (err) {
-            console.error('Error clearing local data:', err)
+        } catch {
+            // localStorage removal failed; non-critical
         }
     }
 
@@ -333,7 +334,8 @@ export default function WorkoutDetailContent() {
                     })
                 )
             } catch (err) {
-                console.error('Error syncing workout draft:', err)
+                Sentry.captureException(err)
+                // Draft sync failed; will retry on next interval
             }
         }
 

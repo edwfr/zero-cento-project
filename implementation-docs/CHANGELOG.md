@@ -8,6 +8,18 @@ Per stato corrente usare sempre [checklist.md](./checklist.md).
 
 ---
 
+## 2026-04-22 — I1: Remove console.log / console.error from production code
+
+- Removed 9 `console.log` from `src/app/onboarding/set-password/page.tsx` — some were logging sensitive session tokens and user metadata (security fix)
+- Removed 3 `console.error` from `src/app/onboarding/set-password/page.tsx` — UI already surfaces errors via `setError()`
+- Removed 5 `console.error` from `src/lib/date-format.ts` catch blocks — functions return safe fallback values; narrowed `catch (error)` to bare `catch`
+- Removed `console.error` from `src/components/ExerciseCreateModal.tsx` catch block
+- Removed `console.error` from `src/app/login/page.tsx` catch block (already marked "Ignore errors")
+- Removed 4 `console.error` from `src/app/trainee/workouts/[id]/_content.tsx` localStorage/sync catch blocks; replaced with explanatory comments
+- Replaced `console.error(error)` in `src/app/error.tsx` with `Sentry.captureException(error)` (Sentry B1 already configured)
+
+---
+
 ## 2026-04-22 — B4: npm CVE Remediation
 
 - Verified `eslint-config-next@16.2.4` resolves CWE-78 glob CLI injection (CVSS 7.5)
