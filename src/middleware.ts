@@ -84,6 +84,18 @@ function getRateLimitConfig(pathname: string): { limit: number; windowMs: number
         return { limit: 20, windowMs: 60 * 60 * 1000, useRedis: false } // 20 per hour
     }
 
+    // Read endpoints — explicit 100/min, Redis-backed for cross-instance consistency on Vercel
+    if (
+        pathname === '/api/exercises' ||
+        pathname.startsWith('/api/exercises/') ||
+        pathname === '/api/programs' ||
+        pathname.startsWith('/api/programs/') ||
+        pathname === '/api/personal-records' ||
+        pathname.startsWith('/api/personal-records/')
+    ) {
+        return { limit: 100, windowMs: 60 * 1000, useRedis: true } // 100 per minute
+    }
+
     // Default API limits
     return { limit: 100, windowMs: 60 * 1000, useRedis: false } // 100 per minute
 }
@@ -113,7 +125,10 @@ export async function middleware(request: NextRequest) {
                         message: 'Too many requests. Please try again later.',
                     },
                 },
-                { status: 429 }
+                {
+                    status: 429,
+                    headers: { 'Retry-After': String(Math.ceil(rateLimitConfig.windowMs / 1000)) },
+                }
             )
         }
     }

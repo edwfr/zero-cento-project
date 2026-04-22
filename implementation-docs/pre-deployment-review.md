@@ -70,9 +70,8 @@ Lo schema ha `isActive` su `User`, `MuscleGroup`, `MovementPattern`. Fix applica
 - `GET /api/admin/reports/global`: contatori `user.count()` filtrano `isActive: true` per metriche accurate.
 - `GET /api/muscle-groups` e `GET /api/movement-patterns`: già filtravano correttamente con `includeInactive` param.
 
-### 🟠 I3. Rate limit mancante su endpoint read
-Middleware protegge solo auth/feedback/user-create. Endpoint `/api/exercises`, `/api/programs`, `/api/personal-records` (GET) sono senza limite.
-Fix: aggiungere default bucket 100 req/min per IP+endpoint.
+### ✅ I3. Rate limit su endpoint read — COMPLETATO (22 aprile 2026)
+Endpoint `/api/exercises`, `/api/programs`, `/api/personal-records` (GET) hanno ora limite esplicito 100 req/min per IP, Redis-backed (`useRedis: true`) per consistenza cross-istanza in Vercel serverless. Le risposte 429 includono header `Retry-After: 60` (RFC 6585). Test di integrazione aggiunto in `tests/integration/rate-limit-read.test.ts`.
 
 ### 🟠 I4. Sprint 6 CI/CD — 7 task aperti
 Tutti i task `6.1–6.7` di `next-actions.md` sono da completare:
@@ -280,7 +279,7 @@ E2E full suite su staging (4 shard paralleli)
 ### Settimana -1 (Fix Important)
 - [x] **I1** ~~Rimuovere `console.log` (soprattutto `onboarding/set-password`)~~ → completato (22/04): 9 `console.log` + 8 `console.error` rimossi; `error.tsx` usa Sentry
 - [x] **I2** ~~Aggiungere `where: { isActive: true }` alle query lista (`User`, `MuscleGroup`, `MovementPattern`)~~ → completato (22/04): `/api/users` filtra isActive per default (admin + trainer path); admin reports count solo utenti attivi; MuscleGroup e MovementPattern già corretti
-- [ ] **I3** Rate limit default 100/min su `/api/*`
+- [x] **I3** ~~Rate limit default 100/min su `/api/*`~~ → completato (22/04): 100 req/min Redis-backed su /api/exercises, /api/programs, /api/personal-records; header `Retry-After: 60` aggiunto alle risposte 429
 - [ ] **I5** Completare 4 i18n error keys
 
 ### Giorno -1 (Validation)
