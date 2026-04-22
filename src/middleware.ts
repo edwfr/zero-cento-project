@@ -15,6 +15,7 @@ const redis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_RE
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = ['/login', '/forgot-password', '/reset-password', '/force-change-password', '/onboarding/set-password']
 const API_PUBLIC_ROUTES = ['/api/health']
+const PUBLIC_FILES = ['/sw.js', '/manifest.json', '/robots.txt', '/sitemap.xml']
 
 /**
  * Rate limiting check
@@ -133,8 +134,12 @@ export async function middleware(request: NextRequest) {
         }
     }
 
-    // Skip auth for public routes
+    // Skip auth for public routes and public static files required before login.
     if (PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) {
+        return NextResponse.next()
+    }
+
+    if (PUBLIC_FILES.includes(pathname)) {
         return NextResponse.next()
     }
 
@@ -225,8 +230,8 @@ export const config = {
          * - _next/static (static files)
          * - _next/image (image optimization files)
          * - favicon.ico (favicon file)
-         * - public folder
+         * - public assets and common metadata files
          */
-        '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+        '/((?!_next/static|_next/image|favicon.ico|manifest.json|robots.txt|sitemap.xml|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map|txt|xml|webmanifest)$).*)',
     ],
 }

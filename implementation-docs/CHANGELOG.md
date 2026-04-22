@@ -8,6 +8,15 @@ Per stato corrente usare sempre [checklist.md](./checklist.md).
 
 ---
 
+## 2026-04-22 — PWA: Fix service worker registration on Vercel login
+
+- Fixed PWA asset delivery on Vercel login flow by excluding `'/sw.js'`, `'/manifest.json'`, `'/robots.txt'`, and `'/sitemap.xml'` from auth middleware in `src/middleware.ts`
+- Tightened the middleware matcher so public static assets and metadata files are no longer redirected through `/login`, preventing browser `SecurityError` during service worker registration
+- Confirmed the pre-fix production symptom on Vercel: both `/sw.js` and `/manifest.json` were returning HTTP `307` instead of `200`
+- Verified local build passes after the middleware change: `npm run build`
+
+---
+
 ## 2026-04-22 — I5: i18n Error Key Migration Completed
 
 - Migrated remaining page-level error handling in `src/app/trainee/dashboard/_content.tsx` to use `getApiErrorMessage(..., t('common:errors.loadingError'), t)` and explicitly surface failed `/api/programs` and `/progress` responses instead of silently ignoring them
