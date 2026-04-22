@@ -8,6 +8,18 @@ Per stato corrente usare sempre [checklist.md](./checklist.md).
 
 ---
 
+## 2026-04-22 — B4: npm CVE Remediation
+
+- Verified `eslint-config-next@16.2.4` resolves CWE-78 glob CLI injection (CVSS 7.5)
+- Verified `@typescript-eslint/*@8.59.0` resolves minimatch ReDoS (CVSS 7.5, CWE-1333)
+- `npm audit` reports 0 vulnerabilities
+- Migrated `npm run lint` from deprecated `next lint` to `eslint src/` (ESLint CLI)
+- Converted `next.config.js` → `next.config.mjs` (ESM) to fix `@serwist/next@9.5.7` incompatibility; fixed duplicate `module.exports` bug in original config
+- Build verified passing; lint clean
+- Known pre-existing issues (not introduced by B4): TS type errors in test files (Next.js 15 async params migration gap); Node 18.19 below required >=20 (unit tests must run in CI)
+
+---
+
 ## Formato entry
 
 ```

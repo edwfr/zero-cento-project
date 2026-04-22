@@ -46,14 +46,8 @@ ZeroCento è una piattaforma SaaS trainer-led per la gestione di programmi di al
   ```
   Aggiungere anche `PRODUCTION_DIRECT_URL` ai GitHub Secrets (vedi B5).
 
-### 🔴 B4. 2 CVE npm non risolte
-- **Packages**: `eslint-config-next` (CWE-78, CVSS 7.5), `@typescript-eslint/*` (ReDoS minimatch, CVSS 7.5).
-- **Tracking**: `implementation-docs/vulnerability-todos.md` righe 33–41.
-- **Fix**:
-  ```bash
-  npm i eslint-config-next@latest @typescript-eslint/parser@latest @typescript-eslint/eslint-plugin@latest
-  npm run lint && npm run test:unit && npm run build
-  ```
+### ✅ B4. 2 CVE npm — COMPLETATO (22 aprile 2026)
+- **Stato**: `eslint-config-next@16.2.4` e `@typescript-eslint/*@8.59.0` installati. `npm audit` pulito (0 vulnerabilità). `eslint.config.mjs` aggiornato per le nuove regole v16. `npm run lint` migrato da `next lint` (deprecato) a `eslint src/`. `next.config.js` convertito in `next.config.mjs` (ESM) per compatibilità con `@serwist/next@9.5.7`. Build verificato e passante.
 
 ### 🔴 B5. GitHub Secrets non configurati
 - **Richiesti dal workflow `.github/workflows/ci.yml`**:
@@ -263,7 +257,7 @@ E2E full suite su staging (4 shard paralleli)
 
 ### Settimana -1 (Fix codice — Blocker)
 - [x] **B3** ~~Commit initial Prisma migration~~ → completato (22/04): migration SQL generato e committato; CI workflow aggiornato con DIRECT_URL; **baseline prod DB manualmente prima del primo deploy** (vedi B3 note)
-- [ ] **B4** Upgrade `eslint-config-next` + `@typescript-eslint/*`, rieseguire test
+- [x] **B4** ~~Upgrade `eslint-config-next` + `@typescript-eslint/*`, rieseguire test~~ → completato (22/04): packages a `16.2.4` / `8.59.0`; lint migrato a ESLint CLI; `next.config.mjs` (ESM); build verificato
 - [x] **B1** ~~Creare `src/instrumentation.ts` + wire Sentry in `ErrorBoundary`~~ → completato (20/04): `instrumentation.ts` + `instrumentation-client.ts` creati; `Sentry.captureException` attivo in `ErrorBoundary`
 - [ ] **B2** Implementare E.1–E.7 (Resend + template InviteUser)
 - [ ] **B5** Configurare GitHub Secrets (Vercel + Sentry + DB)
