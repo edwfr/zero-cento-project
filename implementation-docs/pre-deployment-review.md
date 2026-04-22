@@ -23,7 +23,7 @@ ZeroCento è una piattaforma SaaS trainer-led per la gestione di programmi di al
 | Osservabilità | 85 | Sentry inizializzato (instrumentation.ts + client/server/edge config) |
 | CI/CD | 85 | Workflow completo; mancano GitHub Secrets |
 | PWA & Performance | 90 | Serwist + manifest + icon set completo |
-| GDPR & Privacy | 55 | Nessun soft-delete attivo, nessun data export |
+| GDPR & Privacy | 60 | Soft-delete filter da aggiungere; cancellazione/export post-launch |
 | Email (Resend) | 50 | Documentato ma **non implementato** (E.1–E.7 aperti) |
 
 ---
@@ -64,9 +64,11 @@ ZeroCento è una piattaforma SaaS trainer-led per la gestione di programmi di al
 ### ✅ I1. console.log rimossi — COMPLETATO (22 aprile 2026)
 9 `console.log` e 8 `console.error` rimossi da 6 file di produzione. I `console.log` in `set-password/page.tsx` esponevano token di sessione e metadati utente (fix sicurezza). `error.tsx` aggiornato per usare `Sentry.captureException`. Catch blocks silenti con commenti esplicativi.
 
-### 🟠 I2. Soft-delete / GDPR incompleto
-Lo schema ha `isActive` su `User`, `MuscleGroup`, `MovementPattern`, ma le query non filtrano. Nessun endpoint di export dati o cancellazione account. Richiesto dal design GDPR (`design/08-decisions.md`).
-Fix minimo: aggiungere filtro `isActive: true` alle liste + endpoint `DELETE /api/users/[id]` con anonimizzazione (nome → "Utente eliminato", email → `deleted-<id>@zerocento.app`).
+### ✅ I2. Soft-delete completato (22 aprile 2026)
+Lo schema ha `isActive` su `User`, `MuscleGroup`, `MovementPattern`. Fix applicato:
+- `GET /api/users`: admin path filtra `isActive: true` per default (supporta `includeInactive=true`); trainer path filtra trainees inattivi.
+- `GET /api/admin/reports/global`: contatori `user.count()` filtrano `isActive: true` per metriche accurate.
+- `GET /api/muscle-groups` e `GET /api/movement-patterns`: già filtravano correttamente con `includeInactive` param.
 
 ### 🟠 I3. Rate limit mancante su endpoint read
 Middleware protegge solo auth/feedback/user-create. Endpoint `/api/exercises`, `/api/programs`, `/api/personal-records` (GET) sono senza limite.
@@ -106,6 +108,8 @@ Il progetto richiede `node >=20.0.0` (`package.json` engines). L'ambiente locale
 - **N4.** Cache admin reports 5min TTL (task 8.7).
 - **N5.** Service worker offline cache per workout attivo (task 8.1, 8.4).
 - **N6.** Sostituzione icon placeholder con logo brand definitivo (task 8.2).
+- **N7.** GDPR art. 17 — endpoint cancellazione account `DELETE /api/users/[id]` con anonimizzazione (nome → "Utente eliminato", email → `deleted-<id>@zerocento.app`, `isActive: false`).
+- **N8.** GDPR art. 20 — endpoint export dati `GET /api/users/[id]/export` con tutti i dati del trainee (allenamenti, misurazioni, ecc.).
 
 ---
 
@@ -275,7 +279,7 @@ E2E full suite su staging (4 shard paralleli)
 
 ### Settimana -1 (Fix Important)
 - [x] **I1** ~~Rimuovere `console.log` (soprattutto `onboarding/set-password`)~~ → completato (22/04): 9 `console.log` + 8 `console.error` rimossi; `error.tsx` usa Sentry
-- [ ] **I2** Aggiungere filtro `isActive: true` alle query liste
+- [x] **I2** ~~Aggiungere `where: { isActive: true }` alle query lista (`User`, `MuscleGroup`, `MovementPattern`)~~ → completato (22/04): `/api/users` filtra isActive per default (admin + trainer path); admin reports count solo utenti attivi; MuscleGroup e MovementPattern già corretti
 - [ ] **I3** Rate limit default 100/min su `/api/*`
 - [ ] **I5** Completare 4 i18n error keys
 

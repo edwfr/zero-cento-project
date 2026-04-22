@@ -26,9 +26,9 @@ export async function GET(request: NextRequest) {
             recentUsers,
             recentPrograms,
         ] = await Promise.all([
-            prisma.user.count(),
-            prisma.user.count({ where: { role: 'trainer' } }),
-            prisma.user.count({ where: { role: 'trainee' } }),
+            prisma.user.count({ where: { isActive: true } }),
+            prisma.user.count({ where: { role: 'trainer', isActive: true } }),
+            prisma.user.count({ where: { role: 'trainee', isActive: true } }),
             prisma.trainingProgram.count({ where: { status: 'active' } }),
             prisma.trainingProgram.count({ where: { status: 'completed' } }),
             prisma.trainingProgram.count({ where: { status: 'draft' } }),

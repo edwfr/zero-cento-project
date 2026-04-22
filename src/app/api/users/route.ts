@@ -17,13 +17,16 @@ export async function GET(request: NextRequest) {
         const session = await requireAuth()
         const { searchParams } = new URL(request.url)
         const role = searchParams.get('role')
+        const includeInactive = searchParams.get('includeInactive') === 'true'
 
         let users
 
         if (session.user.role === 'admin') {
-            // Admin sees all users
+            // Admin sees all users (active only by default; pass includeInactive=true for full list)
+            const where: any = includeInactive ? {} : { isActive: true }
+            if (role) where.role = role
             users = await prisma.user.findMany({
-                where: role ? { role: role as any } : undefined,
+                where,
                 select: {
                     id: true,
                     email: true,
@@ -38,7 +41,7 @@ export async function GET(request: NextRequest) {
                 },
             })
         } else if (session.user.role === 'trainer') {
-            // Trainer sees only own trainees
+            // Trainer sees only own active trainees
             const traineeAssociations = await prisma.trainerTrainee.findMany({
                 where: {
                     trainerId: session.user.id,
@@ -58,7 +61,9 @@ export async function GET(request: NextRequest) {
                 },
             })
 
-            users = traineeAssociations.map((assoc) => assoc.trainee)
+            users = traineeAssociations
+                .map((assoc) => assoc.trainee)
+                .filter((trainee) => includeInactive || trainee.isActive)
         } else {
             return apiError('FORBIDDEN', 'Access denied', 403, undefined, 'auth.accessDenied')
         }
