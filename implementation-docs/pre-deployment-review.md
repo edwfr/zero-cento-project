@@ -86,6 +86,17 @@ Tutti i task `6.1–6.7` di `next-actions.md` sono da completare:
 ### 🟠 I5. i18n error key migration (4 pagine rimaste)
 `trainee/dashboard/_content.tsx`, `admin/dashboard/_content.tsx`, `profile/change-password/_content.tsx`, e test integration. Task 11.51, 11.52, 11.55, 11.64.
 
+### 🟠 I6. TypeScript type errors in test files (Next.js 15 async params)
+Emerso durante verifica B4 (22/04). `tsc --noEmit` fallisce con 50+ errori in `tests/integration/` e `tests/e2e/` perché Next.js 15 ha reso `params` asincrono (`Promise<{ id: string }>` invece di `{ id: string }`). I file di test non sono stati aggiornati quando Next è stato upgradato da 14 → 15.
+- **File colpiti**: `exercises.test.ts`, `feedback.test.ts`, `personal-records.test.ts`, `rbac.test.ts`, `trainer-create-program.spec.ts` (e altri)
+- **Pattern da correggere**: `{ params: { id: EX_ID } }` → `{ params: Promise.resolve({ id: EX_ID }) }`
+- **Impatto**: `npm run type-check` fallisce; i test runtime passano lo stesso (Vitest non usa tsc). Non blocca deploy ma nasconde regressioni di tipo.
+
+### 🟠 I7. Ambiente locale Node.js < 20 (sviluppo/CI locale)
+Il progetto richiede `node >=20.0.0` (`package.json` engines). L'ambiente locale ha Node 18.19.1. Conseguenze: `npm run test:unit` fallisce (`rolldown`/`vitest 4` richiedono Node ≥20), `npm run build` richiedeva install manuale di `@rollup/rollup-linux-x64-gnu`.
+- **Fix**: installare Node 20 via nvm — `nvm install 20 && nvm use 20` — o aggiornare versione di sistema.
+- **CI non è colpita**: il workflow usa `node-version: '20'`.
+
 ---
 
 ## 4. Nice to have (post-deploy)
