@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Users, Dumbbell, BarChart2, TrendingUp, GraduationCap, PersonStanding, ClipboardList, Info, Settings } from 'lucide-react'
 import { StatCard, NavigationCard, SkeletonDashboard } from '@/components'
+import { getApiErrorMessage } from '@/lib/api-error'
 
 interface DashboardStats {
     totalUsers: number
@@ -15,7 +16,7 @@ interface DashboardStats {
 }
 
 export default function AdminDashboardContent() {
-    const { t } = useTranslation('admin')
+    const { t } = useTranslation(['admin', 'common'])
     const [loading, setLoading] = useState(true)
     const [stats, setStats] = useState<DashboardStats | null>(null)
     const [error, setError] = useState<string | null>(null)
@@ -38,8 +39,15 @@ export default function AdminDashboardContent() {
                 feedbackRes.json(),
             ])
 
-            if (!usersRes.ok || !programsRes.ok || !exercisesRes.ok || !feedbackRes.ok) {
-                throw new Error(t('dashboard.errorLoadStats'))
+            const failedResponse = [
+                { response: usersRes, data: usersData },
+                { response: programsRes, data: programsData },
+                { response: exercisesRes, data: exercisesData },
+                { response: feedbackRes, data: feedbackData },
+            ].find(({ response }) => !response.ok)
+
+            if (failedResponse) {
+                throw new Error(getApiErrorMessage(failedResponse.data, t('common:errors.loadingError'), t))
             }
 
             const users = usersData.data.items
@@ -56,7 +64,7 @@ export default function AdminDashboardContent() {
                 totalFeedback: feedback.length,
             })
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : t('dashboard.errorLoadDashboard'))
+            setError(err instanceof Error ? err.message : t('common:errors.loadingError'))
         } finally {
             setLoading(false)
         }

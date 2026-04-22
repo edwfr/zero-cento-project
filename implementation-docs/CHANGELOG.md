@@ -8,6 +8,17 @@ Per stato corrente usare sempre [checklist.md](./checklist.md).
 
 ---
 
+## 2026-04-22 — I5: i18n Error Key Migration Completed
+
+- Migrated remaining page-level error handling in `src/app/trainee/dashboard/_content.tsx` to use `getApiErrorMessage(..., t('common:errors.loadingError'), t)` and explicitly surface failed `/api/programs` and `/progress` responses instead of silently ignoring them
+- Migrated `src/app/admin/dashboard/_content.tsx` to shared `common:errors.loadingError` fallback with support for semantic `error.key` responses from APIs
+- Migrated `src/app/profile/change-password/_content.tsx` so invalid session uses shared `errors:unauthorized` and generic fallback aligns to `common:errors.updateError`
+- Updated `implementation-docs/pre-deployment-review.md` marking I5 as completed on 2026-04-22
+- Verified focused lint on the touched components passes: `npm run lint -- src/app/trainee/dashboard/_content.tsx src/app/admin/dashboard/_content.tsx src/app/profile/change-password/_content.tsx`
+- Checked `tests/integration/` for residual hardcoded UI error message assertions in this slice and found none
+
+---
+
 ## 2026-04-22 — I1: Remove console.log / console.error from production code
 
 - Removed 9 `console.log` from `src/app/onboarding/set-password/page.tsx` — some were logging sensitive session tokens and user metadata (security fix)

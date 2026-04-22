@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { NavigationCard, ProgressBar, SkeletonDashboard } from '@/components'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { Dumbbell, Trophy, BarChart2, User, ClipboardList, Play } from 'lucide-react'
 
 type ProgramStatus = 'draft' | 'active' | 'completed'
@@ -47,7 +48,7 @@ const getProgramSortTime = (program: ProgramSummary): number => {
 const isPublishedProgram = (program: ProgramSummary): boolean => program.status !== 'draft'
 
 export default function TraineeDashboardContent() {
-    const { t } = useTranslation(['trainee', 'navigation'])
+    const { t } = useTranslation(['trainee', 'navigation', 'common'])
     const [loading, setLoading] = useState(true)
     const [activeProgram, setActiveProgram] = useState<ProgramSummary | null>(null)
     const [programProgress, setProgramProgress] = useState<ProgramProgress | null>(null)
@@ -55,43 +56,47 @@ export default function TraineeDashboardContent() {
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
-        fetchDashboardData()
-    }, [])
+        void fetchDashboardData()
+    }, [fetchDashboardData])
 
-    const fetchDashboardData = async () => {
+    const fetchDashboardData = useCallback(async () => {
         try {
             setLoading(true)
 
             const programsRes = await fetch('/api/programs?limit=10')
             const programsData = await programsRes.json()
 
-            if (programsRes.ok) {
-                const programs = (programsData.data.items ?? []) as ProgramSummary[]
-                const publishedPrograms = programs.filter(isPublishedProgram)
-                const sortedPrograms = [...publishedPrograms].sort((a, b) => getProgramSortTime(b) - getProgramSortTime(a))
-                const program = sortedPrograms.find((item) => item.status === 'active') ?? null
-
-                setActiveProgram(program)
-
-                if (program) {
-                    const progressRes = await fetch(`/api/programs/${program.id}/progress`)
-                    const progressData = await progressRes.json()
-
-                    if (progressRes.ok) {
-                        setProgramProgress({
-                            completedWorkouts: progressData.data.completedWorkouts ?? 0,
-                            totalWorkouts: progressData.data.totalWorkouts ?? 0,
-                        })
-                        setNextWorkout(progressData.data.nextWorkout ?? null)
-                    }
-                }
+            if (!programsRes.ok) {
+                throw new Error(getApiErrorMessage(programsData, t('common:errors.loadingError'), t))
             }
-        } catch (err: any) {
-            setError(err.message)
+
+            const programs = (programsData.data.items ?? []) as ProgramSummary[]
+            const publishedPrograms = programs.filter(isPublishedProgram)
+            const sortedPrograms = [...publishedPrograms].sort((a, b) => getProgramSortTime(b) - getProgramSortTime(a))
+            const program = sortedPrograms.find((item) => item.status === 'active') ?? null
+
+            setActiveProgram(program)
+
+            if (program) {
+                const progressRes = await fetch(`/api/programs/${program.id}/progress`)
+                const progressData = await progressRes.json()
+
+                if (!progressRes.ok) {
+                    throw new Error(getApiErrorMessage(progressData, t('common:errors.loadingError'), t))
+                }
+
+                setProgramProgress({
+                    completedWorkouts: progressData.data.completedWorkouts ?? 0,
+                    totalWorkouts: progressData.data.totalWorkouts ?? 0,
+                })
+                setNextWorkout(progressData.data.nextWorkout ?? null)
+            }
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : t('common:errors.loadingError'))
         } finally {
             setLoading(false)
         }
-    }
+    }, [t])
 
     if (loading) {
         return (

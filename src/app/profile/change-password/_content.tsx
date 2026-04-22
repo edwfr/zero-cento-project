@@ -10,7 +10,7 @@ import { Input } from '@/components/Input'
 import { FormLabel } from '@/components/FormLabel'
 
 export default function ChangePasswordContent() {
-    const { t } = useTranslation(['auth', 'common', 'profile'])
+    const { t } = useTranslation(['auth', 'common', 'profile', 'errors'])
     const router = useRouter()
     const [currentPassword, setCurrentPassword] = useState('')
     const [newPassword, setNewPassword] = useState('')
@@ -47,7 +47,7 @@ export default function ChangePasswordContent() {
             } = await supabase.auth.getUser()
 
             if (getUserError || !user?.email) {
-                throw new Error(t('auth:changePassword.errorSessionInvalid'))
+                throw new Error(t('errors:unauthorized'))
             }
 
             const email = user.email
@@ -67,8 +67,8 @@ export default function ChangePasswordContent() {
 
             setSuccess(true)
             setTimeout(() => router.push('/profile'), 2000)
-        } catch (err: any) {
-            setError(err.message || t('auth:changePassword.errorGeneric'))
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : t('common:errors.updateError'))
         } finally {
             setLoading(false)
         }

@@ -83,8 +83,12 @@ Tutti i task `6.1–6.7` di `next-actions.md` sono da completare:
 - 6.6 Sentry (vedi B1)
 - 6.7 UptimeRobot su `/api/health`
 
-### 🟠 I5. i18n error key migration (4 pagine rimaste)
-`trainee/dashboard/_content.tsx`, `admin/dashboard/_content.tsx`, `profile/change-password/_content.tsx`, e test integration. Task 11.51, 11.52, 11.55, 11.64.
+### ✅ I5. i18n error key migration — COMPLETATO (22 aprile 2026)
+Migrazione completata su `trainee/dashboard/_content.tsx`, `admin/dashboard/_content.tsx` e `profile/change-password/_content.tsx`.
+- `trainee/dashboard`: ora gestisce esplicitamente i fetch `!ok` e usa `getApiErrorMessage(..., t('common:errors.loadingError'), t)`.
+- `admin/dashboard`: fallback errori allineato a `common:errors.loadingError`, con supporto a `error.key` API.
+- `profile/change-password`: sessione invalida migrata a `errors:unauthorized`; fallback generico allineato a `common:errors.updateError`.
+- Verifica test: nessun assert residuo trovato in `tests/integration/` su messaggi UI hardcoded per questo slice.
 
 ### 🟠 I6. TypeScript type errors in test files (Next.js 15 async params)
 Emerso durante verifica B4 (22/04). `tsc --noEmit` fallisce con 50+ errori in `tests/integration/` e `tests/e2e/` perché Next.js 15 ha reso `params` asincrono (`Promise<{ id: string }>` invece di `{ id: string }`). I file di test non sono stati aggiornati quando Next è stato upgradato da 14 → 15.
@@ -280,7 +284,7 @@ E2E full suite su staging (4 shard paralleli)
 - [x] **I1** ~~Rimuovere `console.log` (soprattutto `onboarding/set-password`)~~ → completato (22/04): 9 `console.log` + 8 `console.error` rimossi; `error.tsx` usa Sentry
 - [x] **I2** ~~Aggiungere `where: { isActive: true }` alle query lista (`User`, `MuscleGroup`, `MovementPattern`)~~ → completato (22/04): `/api/users` filtra isActive per default (admin + trainer path); admin reports count solo utenti attivi; MuscleGroup e MovementPattern già corretti
 - [x] **I3** ~~Rate limit default 100/min su `/api/*`~~ → completato (22/04): 100 req/min Redis-backed su /api/exercises, /api/programs, /api/personal-records; header `Retry-After: 60` aggiunto alle risposte 429
-- [ ] **I5** Completare 4 i18n error keys
+- [x] **I5** ~~Completare 4 i18n error keys~~ → completato (22/04): dashboard trainee/admin e pagina cambio password migrati a chiavi condivise `errors.*` / `common:errors.*`; nessun assert integration residuo trovato su stringhe hardcoded in questo perimetro
 
 ### Giorno -1 (Validation)
 - [ ] `npm run lint` pulito
