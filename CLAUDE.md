@@ -70,6 +70,10 @@ Unit/integration tests: `tests/unit/` + `tests/integration/`, run with Vitest (j
 
 E2E tests: `tests/e2e/`, Playwright.
 
+## Workflow Rules
+
+After every modification or new implementation, update `implementation-docs/CHANGELOG.md` with a brief entry describing what changed and why.
+
 ### Key env vars
 
 ```
