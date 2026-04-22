@@ -4,7 +4,7 @@
 **Stato progetto**: 143/160 task (~89% completato)
 **Target deploy**: Vercel Pro + Supabase Pro (EU Frankfurt)
 **Branch corrente**: `master`
-**Verdetto**: **CONDITIONAL READY** — 4 blocker da risolvere prima del go-live (B1 risolto)
+**Verdetto**: **CONDITIONAL READY** — 4 blocker da risolvere prima del go-live (B1, B3 risolti)
 
 ---
 
@@ -38,14 +38,13 @@ ZeroCento è una piattaforma SaaS trainer-led per la gestione di programmi di al
 - **Impatto**: nuovi utenti non ricevono invito → onboarding bloccato.
 - **Fix**: eseguire i 7 task `E.1–E.7` di `next-actions.md` (vedi §6).
 
-### 🔴 B3. Prisma migrations non committate
-- **Stato**: in `prisma/migrations/` esiste solo `migration_lock.toml`. Nessuna migration SQL tracciata in git.
-- **Impatto**: primo deploy su Vercel farà partire `prisma:migrate:prod` senza migrations → fallimento.
-- **Fix**:
+### ✅ B3. Prisma migrations committate — COMPLETATO (22 aprile 2026)
+- **Stato**: `prisma/migrations/20260328000000_init/migration.sql` generato via `prisma migrate diff --from-empty` e committato. `.gitignore` corretto (rimossa regola `prisma/migrations/**/*.sql` che bloccava il tracking). CI workflow aggiornato con `DIRECT_URL` nel migration step.
+- **⚠️ AZIONE MANUALE RICHIESTA prima del primo deploy**: Il DB di produzione Supabase deve essere baselinato manualmente PRIMA che CI esegua `prisma migrate deploy`, altrimenti fallisce su tabelle già esistenti:
   ```bash
-  npx prisma migrate dev --name init
-  git add prisma/migrations && git commit -m "chore: commit initial prisma migration"
+  DIRECT_URL=<prod-direct-url> npx prisma migrate resolve --applied 20260328000000_init
   ```
+  Aggiungere anche `PRODUCTION_DIRECT_URL` ai GitHub Secrets (vedi B5).
 
 ### 🔴 B4. 2 CVE npm non risolte
 - **Packages**: `eslint-config-next` (CWE-78, CVSS 7.5), `@typescript-eslint/*` (ReDoS minimatch, CVSS 7.5).
@@ -263,7 +262,7 @@ E2E full suite su staging (4 shard paralleli)
 - [ ] Verificare dominio in Resend (attendere propagazione DNS)
 
 ### Settimana -1 (Fix codice — Blocker)
-- [ ] **B3** Commit initial Prisma migration
+- [x] **B3** ~~Commit initial Prisma migration~~ → completato (22/04): migration SQL generato e committato; CI workflow aggiornato con DIRECT_URL; **baseline prod DB manualmente prima del primo deploy** (vedi B3 note)
 - [ ] **B4** Upgrade `eslint-config-next` + `@typescript-eslint/*`, rieseguire test
 - [x] **B1** ~~Creare `src/instrumentation.ts` + wire Sentry in `ErrorBoundary`~~ → completato (20/04): `instrumentation.ts` + `instrumentation-client.ts` creati; `Sentry.captureException` attivo in `ErrorBoundary`
 - [ ] **B2** Implementare E.1–E.7 (Resend + template InviteUser)
