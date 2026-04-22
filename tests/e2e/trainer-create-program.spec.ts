@@ -83,8 +83,8 @@ test.describe('Trainer: Create program flow', () => {
     })
 
     test('trainer dashboard shows stats cards', async ({ page }) => {
-        await expect(page.locator('[data-testid="stat-card"], .bg-white.rounded-lg.shadow')).toHaveCount(
-            { minimum: 1 }
-        )
+        const statsCards = page.locator('[data-testid="stat-card"], .bg-white.rounded-lg.shadow')
+
+        await expect.poll(async () => await statsCards.count()).toBeGreaterThan(0)
     })
 })

@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
+const withIdParam = (id: string) => ({ params: Promise.resolve({ id }) })
+
 // ─── Mock sessions ─────────────────────────────────────────────────────────
 
 const mockTrainerSession = {
@@ -518,7 +520,7 @@ describe('PATCH /api/personal-records/[id]', () => {
             body: JSON.stringify({ weight: 105 }),
         })
 
-        const res = await PATCH(req, { params: { id: 'record-uuid-1' } })
+        const res = await PATCH(req, withIdParam('record-uuid-1'))
         const body = await res.json()
 
         expect(res.status).toBe(200)
@@ -542,7 +544,7 @@ describe('PATCH /api/personal-records/[id]', () => {
             body: JSON.stringify({ notes: 'Updated by admin' }),
         })
 
-        const res = await PATCH(req, { params: { id: 'record-uuid-1' } })
+        const res = await PATCH(req, withIdParam('record-uuid-1'))
 
         expect(res.status).toBe(200)
         // Admin skips trainer-trainee check
@@ -563,7 +565,7 @@ describe('PATCH /api/personal-records/[id]', () => {
             body: JSON.stringify({ weight: 105 }),
         })
 
-        const res = await PATCH(req, { params: { id: 'record-uuid-1' } })
+        const res = await PATCH(req, withIdParam('record-uuid-1'))
         const body = await res.json()
 
         expect(res.status).toBe(403)
@@ -580,7 +582,7 @@ describe('PATCH /api/personal-records/[id]', () => {
             body: JSON.stringify({ weight: 105 }),
         })
 
-        const res = await PATCH(req, { params: { id: 'non-existent-id' } })
+        const res = await PATCH(req, withIdParam('non-existent-id'))
         const body = await res.json()
 
         expect(res.status).toBe(404)
@@ -604,7 +606,7 @@ describe('PATCH /api/personal-records/[id]', () => {
             body: JSON.stringify({ weight: 9999 }),
         })
 
-        const res = await PATCH(req, { params: { id: 'record-uuid-1' } })
+        const res = await PATCH(req, withIdParam('record-uuid-1'))
         const body = await res.json()
 
         expect(res.status).toBe(400)
@@ -634,7 +636,7 @@ describe('DELETE /api/personal-records/[id]', () => {
         vi.mocked(prisma.personalRecord.delete).mockResolvedValue(mockRecord as any)
 
         const req = makeIdRequest('record-uuid-1', undefined, { method: 'DELETE' })
-        const res = await DELETE(req, { params: { id: 'record-uuid-1' } })
+        const res = await DELETE(req, withIdParam('record-uuid-1'))
 
         expect(res.status).toBe(200)
         expect(prisma.personalRecord.delete).toHaveBeenCalledWith(
@@ -651,7 +653,7 @@ describe('DELETE /api/personal-records/[id]', () => {
         vi.mocked(prisma.personalRecord.delete).mockResolvedValue(mockRecord as any)
 
         const req = makeIdRequest('record-uuid-1', undefined, { method: 'DELETE' })
-        const res = await DELETE(req, { params: { id: 'record-uuid-1' } })
+        const res = await DELETE(req, withIdParam('record-uuid-1'))
 
         expect(res.status).toBe(200)
         expect(prisma.trainerTrainee.findUnique).not.toHaveBeenCalled()
@@ -666,7 +668,7 @@ describe('DELETE /api/personal-records/[id]', () => {
         vi.mocked(prisma.trainerTrainee.findUnique).mockResolvedValue(null)
 
         const req = makeIdRequest('record-uuid-1', undefined, { method: 'DELETE' })
-        const res = await DELETE(req, { params: { id: 'record-uuid-1' } })
+        const res = await DELETE(req, withIdParam('record-uuid-1'))
         const body = await res.json()
 
         expect(res.status).toBe(403)
@@ -678,7 +680,7 @@ describe('DELETE /api/personal-records/[id]', () => {
         vi.mocked(prisma.personalRecord.findUnique).mockResolvedValue(null)
 
         const req = makeIdRequest('non-existent-id', undefined, { method: 'DELETE' })
-        const res = await DELETE(req, { params: { id: 'non-existent-id' } })
+        const res = await DELETE(req, withIdParam('non-existent-id'))
         const body = await res.json()
 
         expect(res.status).toBe(404)
@@ -691,7 +693,7 @@ describe('DELETE /api/personal-records/[id]', () => {
         )
 
         const req = makeIdRequest('record-uuid-1', undefined, { method: 'DELETE' })
-        const res = await DELETE(req, { params: { id: 'record-uuid-1' } })
+        const res = await DELETE(req, withIdParam('record-uuid-1'))
 
         expect(res.status).toBe(401)
     })

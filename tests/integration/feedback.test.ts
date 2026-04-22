@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
+const withIdParam = (id: string) => ({ params: Promise.resolve({ id }) })
+
 // ─── Mock sessions ────────────────────────────────────────────────────────────
 
 const mockTraineeSession = {
@@ -611,7 +613,7 @@ describe('GET /api/feedback/[id]', () => {
         vi.mocked(prisma.exerciseFeedback.findUnique).mockResolvedValue(mockFeedback as any)
 
         const req = makeRequest(`http://localhost:3000/api/feedback/${UUIDS.feedback}`);
-        const res = await GET_ID(req, { params: { id: UUIDS.feedback } })
+        const res = await GET_ID(req, withIdParam(UUIDS.feedback))
         const body = await res.json()
 
         expect(res.status).toBe(200)
@@ -624,7 +626,7 @@ describe('GET /api/feedback/[id]', () => {
         vi.mocked(prisma.exerciseFeedback.findUnique).mockResolvedValue(mockFeedback as any)
 
         const req = makeRequest(`http://localhost:3000/api/feedback/${UUIDS.feedback}`)
-        const res = await GET_ID(req, { params: { id: UUIDS.feedback } })
+        const res = await GET_ID(req, withIdParam(UUIDS.feedback))
 
         expect(res.status).toBe(200)
     })
@@ -634,7 +636,7 @@ describe('GET /api/feedback/[id]', () => {
         vi.mocked(prisma.exerciseFeedback.findUnique).mockResolvedValue(mockFeedback as any)
 
         const req = makeRequest(`http://localhost:3000/api/feedback/${UUIDS.feedback}`)
-        const res = await GET_ID(req, { params: { id: UUIDS.feedback } })
+        const res = await GET_ID(req, withIdParam(UUIDS.feedback))
 
         expect(res.status).toBe(200)
     })
@@ -644,7 +646,7 @@ describe('GET /api/feedback/[id]', () => {
         vi.mocked(prisma.exerciseFeedback.findUnique).mockResolvedValue(mockFeedback as any) // belongs to trainee-uuid-1
 
         const req = makeRequest(`http://localhost:3000/api/feedback/${UUIDS.feedback}`)
-        const res = await GET_ID(req, { params: { id: UUIDS.feedback } })
+        const res = await GET_ID(req, withIdParam(UUIDS.feedback))
 
         expect(res.status).toBe(403)
     })
@@ -665,7 +667,7 @@ describe('GET /api/feedback/[id]', () => {
         vi.mocked(prisma.exerciseFeedback.findUnique).mockResolvedValue(mockFeedback as any) // trainer-uuid-1 owns this
 
         const req = makeRequest(`http://localhost:3000/api/feedback/${UUIDS.feedback}`)
-        const res = await GET_ID(req, { params: { id: UUIDS.feedback } })
+        const res = await GET_ID(req, withIdParam(UUIDS.feedback))
 
         expect(res.status).toBe(403)
     })
@@ -675,7 +677,7 @@ describe('GET /api/feedback/[id]', () => {
         vi.mocked(prisma.exerciseFeedback.findUnique).mockResolvedValue(null)
 
         const req = makeRequest(`http://localhost:3000/api/feedback/aaaaaaaa-0000-0000-0000-000000000000`)
-        const res = await GET_ID(req, { params: { id: 'aaaaaaaa-0000-0000-0000-000000000000' } })
+        const res = await GET_ID(req, withIdParam('aaaaaaaa-0000-0000-0000-000000000000'))
 
         expect(res.status).toBe(404)
     })
@@ -686,7 +688,7 @@ describe('GET /api/feedback/[id]', () => {
         )
 
         const req = makeRequest(`http://localhost:3000/api/feedback/${UUIDS.feedback}`)
-        const res = await GET_ID(req, { params: { id: UUIDS.feedback } })
+        const res = await GET_ID(req, withIdParam(UUIDS.feedback))
 
         expect(res.status).toBe(401)
     })
@@ -734,7 +736,7 @@ describe('PUT /api/feedback/[id]', () => {
             body: JSON.stringify(validUpdatePayload),
         })
 
-        const res = await PUT(req, { params: { id: UUIDS.feedback } })
+        const res = await PUT(req, withIdParam(UUIDS.feedback))
         const body = await res.json()
 
         expect(res.status).toBe(200)
@@ -768,7 +770,7 @@ describe('PUT /api/feedback/[id]', () => {
             body: JSON.stringify(validUpdatePayload),
         })
 
-        const res = await PUT(req, { params: { id: UUIDS.feedback } })
+        const res = await PUT(req, withIdParam(UUIDS.feedback))
 
         expect(res.status).toBe(403)
         const body = await res.json()
@@ -790,7 +792,7 @@ describe('PUT /api/feedback/[id]', () => {
             body: JSON.stringify(validUpdatePayload),
         })
 
-        const res = await PUT(req, { params: { id: UUIDS.feedback } })
+        const res = await PUT(req, withIdParam(UUIDS.feedback))
 
         expect(res.status).toBe(403)
     })
@@ -805,7 +807,7 @@ describe('PUT /api/feedback/[id]', () => {
             body: JSON.stringify(validUpdatePayload),
         })
 
-        const res = await PUT(req, { params: { id: 'aaaaaaaa-0000-0000-0000-000000000000' } })
+        const res = await PUT(req, withIdParam('aaaaaaaa-0000-0000-0000-000000000000'))
 
         expect(res.status).toBe(404)
     })
@@ -822,7 +824,7 @@ describe('PUT /api/feedback/[id]', () => {
             }),
         })
 
-        const res = await PUT(req, { params: { id: UUIDS.feedback } })
+        const res = await PUT(req, withIdParam(UUIDS.feedback))
 
         expect(res.status).toBe(400)
     })
@@ -838,7 +840,7 @@ describe('PUT /api/feedback/[id]', () => {
             body: JSON.stringify(validUpdatePayload),
         })
 
-        const res = await PUT(req, { params: { id: UUIDS.feedback } })
+        const res = await PUT(req, withIdParam(UUIDS.feedback))
 
         expect(res.status).toBe(401)
     })
@@ -854,7 +856,7 @@ describe('PUT /api/feedback/[id]', () => {
             body: JSON.stringify(validUpdatePayload),
         })
 
-        const res = await PUT(req, { params: { id: UUIDS.feedback } })
+        const res = await PUT(req, withIdParam(UUIDS.feedback))
 
         expect(res.status).toBe(403)
     })
@@ -876,7 +878,7 @@ describe('PUT /api/feedback/[id]', () => {
             body: JSON.stringify(validUpdatePayload),
         })
 
-        await PUT(req, { params: { id: UUIDS.feedback } })
+        await PUT(req, withIdParam(UUIDS.feedback))
 
         // Both delete-then-create operations must be called
         expect(prisma.setPerformed.deleteMany).toHaveBeenCalledWith({

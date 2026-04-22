@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
+const withIdParam = (id: string) => ({ params: Promise.resolve({ id }) })
+
 // ────────────────────────────────────────────────────────────────────────────
 // Session fixtures
 // ────────────────────────────────────────────────────────────────────────────
@@ -384,7 +386,7 @@ describe('GET /api/exercises/[id]', () => {
         vi.mocked(prisma.exercise.findUnique).mockResolvedValue(mockExerciseWithRelations as any)
 
         const req = makeDetailRequest(EX_ID_1)
-        const res = await getExercise(req, { params: { id: EX_ID_1 } })
+        const res = await getExercise(req, withIdParam(EX_ID_1))
         const body = await res.json()
 
         expect(res.status).toBe(200)
@@ -411,7 +413,7 @@ describe('GET /api/exercises/[id]', () => {
         vi.mocked(prisma.exercise.findUnique).mockResolvedValue(null)
 
         const req = makeDetailRequest(EX_ID_1)
-        const res = await getExercise(req, { params: { id: EX_ID_1 } })
+        const res = await getExercise(req, withIdParam(EX_ID_1))
 
         expect(res.status).toBe(404)
     })
@@ -421,7 +423,7 @@ describe('GET /api/exercises/[id]', () => {
         vi.mocked(prisma.exercise.findUnique).mockResolvedValue(mockExerciseWithRelations as any)
 
         const req = makeDetailRequest(EX_ID_1)
-        const res = await getExercise(req, { params: { id: EX_ID_1 } })
+        const res = await getExercise(req, withIdParam(EX_ID_1))
 
         expect(res.status).toBe(200)
     })
@@ -678,7 +680,7 @@ describe('PUT /api/exercises/[id]', () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updatePayload),
         })
-        const res = await updateExercise(req, { params: { id: EX_ID_1 } })
+        const res = await updateExercise(req, withIdParam(EX_ID_1))
         const body = await res.json()
 
         expect(res.status).toBe(200)
@@ -711,7 +713,7 @@ describe('PUT /api/exercises/[id]', () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updatePayload),
         })
-        const res = await updateExercise(req, { params: { id: EX_ID_1 } })
+        const res = await updateExercise(req, withIdParam(EX_ID_1))
 
         expect(res.status).toBe(403)
     })
@@ -736,7 +738,7 @@ describe('PUT /api/exercises/[id]', () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updatePayload),
         })
-        const res = await updateExercise(req, { params: { id: EX_ID_1 } })
+        const res = await updateExercise(req, withIdParam(EX_ID_1))
 
         expect(res.status).toBe(200)
     })
@@ -753,7 +755,7 @@ describe('PUT /api/exercises/[id]', () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ...updatePayload, name: 'Leg Press' }),
         })
-        const res = await updateExercise(req, { params: { id: EX_ID_1 } })
+        const res = await updateExercise(req, withIdParam(EX_ID_1))
 
         expect(res.status).toBe(409)
     })
@@ -767,7 +769,7 @@ describe('PUT /api/exercises/[id]', () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updatePayload),
         })
-        const res = await updateExercise(req, { params: { id: EX_ID_1 } })
+        const res = await updateExercise(req, withIdParam(EX_ID_1))
 
         expect(res.status).toBe(404)
     })
@@ -791,7 +793,7 @@ describe('DELETE /api/exercises/[id]', () => {
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
             method: 'DELETE',
         })
-        const res = await deleteExercise(req, { params: { id: EX_ID_1 } })
+        const res = await deleteExercise(req, withIdParam(EX_ID_1))
 
         expect(res.status).toBe(200)
         expect(prisma.exercise.delete).toHaveBeenCalledWith({ where: { id: EX_ID_1 } })
@@ -820,7 +822,7 @@ describe('DELETE /api/exercises/[id]', () => {
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
             method: 'DELETE',
         })
-        const res = await deleteExercise(req, { params: { id: EX_ID_1 } })
+        const res = await deleteExercise(req, withIdParam(EX_ID_1))
 
         expect(res.status).toBe(409)
     })
@@ -849,7 +851,7 @@ describe('DELETE /api/exercises/[id]', () => {
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
             method: 'DELETE',
         })
-        const res = await deleteExercise(req, { params: { id: EX_ID_1 } })
+        const res = await deleteExercise(req, withIdParam(EX_ID_1))
 
         expect(res.status).toBe(200)
     })
@@ -865,7 +867,7 @@ describe('DELETE /api/exercises/[id]', () => {
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
             method: 'DELETE',
         })
-        const res = await deleteExercise(req, { params: { id: EX_ID_1 } })
+        const res = await deleteExercise(req, withIdParam(EX_ID_1))
 
         expect(res.status).toBe(403)
     })
@@ -877,7 +879,7 @@ describe('DELETE /api/exercises/[id]', () => {
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
             method: 'DELETE',
         })
-        const res = await deleteExercise(req, { params: { id: EX_ID_1 } })
+        const res = await deleteExercise(req, withIdParam(EX_ID_1))
 
         expect(res.status).toBe(404)
     })
@@ -895,7 +897,7 @@ describe('DELETE /api/exercises/[id]', () => {
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
             method: 'DELETE',
         })
-        const res = await deleteExercise(req, { params: { id: EX_ID_1 } })
+        const res = await deleteExercise(req, withIdParam(EX_ID_1))
 
         expect(res.status).toBe(200)
     })

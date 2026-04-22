@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
+const withIdParam = (id: string) => ({ params: Promise.resolve({ id }) })
+
 // Mock sessions for different users
 const mockTrainerASession = {
     user: {
@@ -242,7 +244,7 @@ describe('RBAC Violations - Training Programs', () => {
 
         const req = makeRequest('http://localhost:3000/api/programs/prog-b-1')
 
-        const res = await getProgram(req, { params: { id: 'prog-b-1' } })
+        const res = await getProgram(req, withIdParam('prog-b-1'))
         const body = await res.json()
 
         expect(res.status).toBe(403)
@@ -263,7 +265,7 @@ describe('RBAC Violations - Training Programs', () => {
 
         const req = makeRequest('http://localhost:3000/api/programs/prog-b-1')
 
-        const res = await getProgram(req, { params: { id: 'prog-b-1' } })
+        const res = await getProgram(req, withIdParam('prog-b-1'))
         const body = await res.json()
 
         expect(res.status).toBe(403)
@@ -288,7 +290,7 @@ describe('RBAC Violations - Training Programs', () => {
             body: JSON.stringify({ title: 'Modified Program B' }),
         })
 
-        const res = await updateProgram(req, { params: { id: 'prog-b-1' } })
+        const res = await updateProgram(req, withIdParam('prog-b-1'))
         const body = await res.json()
 
         expect(res.status).toBe(403)
@@ -312,7 +314,7 @@ describe('RBAC Violations - Training Programs', () => {
 
         const req = makeRequest('http://localhost:3000/api/programs/prog-a-1')
 
-        const res = await getProgram(req, { params: { id: 'prog-a-1' } })
+        const res = await getProgram(req, withIdParam('prog-a-1'))
 
         expect(res.status).toBe(200)
     })
@@ -334,7 +336,7 @@ describe('RBAC Violations - Training Programs', () => {
 
         const req = makeRequest('http://localhost:3000/api/programs/prog-a-1')
 
-        const res = await getProgram(req, { params: { id: 'prog-a-1' } })
+        const res = await getProgram(req, withIdParam('prog-a-1'))
 
         expect(res.status).toBe(200)
     })
@@ -355,7 +357,7 @@ describe('RBAC Violations - Training Programs', () => {
 
         const req = makeRequest('http://localhost:3000/api/programs/prog-b-1')
 
-        const res = await getProgram(req, { params: { id: 'prog-b-1' } })
+        const res = await getProgram(req, withIdParam('prog-b-1'))
 
         expect(res.status).toBe(200)
     })
@@ -424,7 +426,7 @@ describe('RBAC Violations - Users', () => {
 
         const req = makeRequest('http://localhost:3000/api/users/trainee-b-uuid')
 
-        const res = await getUser(req, { params: { id: 'trainee-b-uuid' } })
+        const res = await getUser(req, withIdParam('trainee-b-uuid'))
         const body = await res.json()
 
         expect(res.status).toBe(403)
@@ -452,7 +454,7 @@ describe('RBAC Violations - Users', () => {
             body: JSON.stringify({ firstName: 'Modified' }),
         })
 
-        const res = await updateUser(req, { params: { id: 'trainee-b-uuid' } })
+        const res = await updateUser(req, withIdParam('trainee-b-uuid'))
         const body = await res.json()
 
         expect(res.status).toBe(403)
@@ -478,7 +480,7 @@ describe('RBAC Violations - Users', () => {
             method: 'PATCH',
         })
 
-        const res = await deactivateUser(req, { params: { id: 'trainee-b-uuid' } })
+        const res = await deactivateUser(req, withIdParam('trainee-b-uuid'))
         const body = await res.json()
 
         expect(res.status).toBe(403)
@@ -507,7 +509,7 @@ describe('RBAC Violations - Users', () => {
 
         const req = makeRequest('http://localhost:3000/api/users/trainee-a-uuid')
 
-        const res = await getUser(req, { params: { id: 'trainee-a-uuid' } })
+        const res = await getUser(req, withIdParam('trainee-a-uuid'))
 
         expect(res.status).toBe(200)
     })
@@ -527,7 +529,7 @@ describe('RBAC Violations - Users', () => {
 
         const req = makeRequest('http://localhost:3000/api/users/trainee-b-uuid')
 
-        const res = await getUser(req, { params: { id: 'trainee-b-uuid' } })
+        const res = await getUser(req, withIdParam('trainee-b-uuid'))
 
         expect(res.status).toBe(200)
     })
