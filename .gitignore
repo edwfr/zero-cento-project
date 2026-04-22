@@ -35,7 +35,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Prisma
+# Prisma - migration SQL files are intentionally tracked (do not add *.sql rules here)
 
 # Sentry
 .sentryclirc
