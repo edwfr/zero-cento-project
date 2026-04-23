@@ -28,7 +28,17 @@ export default function LoginPage() {
                 } = await supabase.auth.getUser()
 
                 if (user) {
-                    const role = user.user_metadata?.role as string | undefined
+                    let role = user.user_metadata?.role as string | undefined
+
+                    if (!role) {
+                        // Fallback for users created before role was stored in JWT metadata
+                        const response = await fetch('/api/auth/me', { credentials: 'include' })
+                        if (response.ok) {
+                            const userData = await response.json()
+                            role = userData.data.role
+                        }
+                    }
+
                     if (role) {
                         router.push(`/${role}/dashboard`)
                         return
@@ -66,10 +76,14 @@ export default function LoginPage() {
                     return
                 }
 
-                const role = data.user.user_metadata?.role as string | undefined
+                let role = data.user.user_metadata?.role as string | undefined
 
                 if (!role) {
-                    throw new Error('User role not found')
+                    // Fallback for users created before role was stored in JWT metadata
+                    const response = await fetch('/api/auth/me', { credentials: 'include' })
+                    if (!response.ok) throw new Error('Failed to fetch user data')
+                    const userData = await response.json()
+                    role = userData.data.role
                 }
 
                 router.push(`/${role}/dashboard`)
