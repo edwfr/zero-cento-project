@@ -25,6 +25,8 @@ import {
     NavigationCard,
     DatePicker,
     AutocompleteSearch,
+    ActionIconButton,
+    InlineActions,
 } from '@/components'
 import type { AutocompleteOption } from '@/components'
 
@@ -166,6 +168,107 @@ function ComponentShowcase() {
                             <Button variant="primary" fullWidth icon={<Save />}>
                                 Save Full Width
                             </Button>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Action Icon Buttons */}
+                <section className="rounded-lg bg-white p-6 shadow">
+                    <h2 className="mb-4 text-2xl font-bold text-gray-900">Action Icon Buttons</h2>
+                    <p className="mb-6 text-sm text-gray-600">
+                        Standard per i bottoni azione inline nelle righe di tabella. Usare sempre{' '}
+                        <code className="rounded bg-gray-100 px-1 text-xs">ActionIconButton</code> +{' '}
+                        <code className="rounded bg-gray-100 px-1 text-xs">InlineActions</code> al posto di markup ad-hoc.
+                    </p>
+                    <div className="space-y-6">
+                        {/* Variants */}
+                        <div>
+                            <h3 className="mb-3 text-sm font-semibold text-gray-700">Varianti</h3>
+                            <InlineActions>
+                                <ActionIconButton variant="edit" label="Modifica" onClick={() => {}} />
+                                <ActionIconButton variant="view" label="Visualizza" onClick={() => {}} />
+                                <ActionIconButton variant="view-test" label="Visualizza test" onClick={() => {}} />
+                                <ActionIconButton variant="delete" label="Elimina" onClick={() => {}} />
+                            </InlineActions>
+                            <p className="mt-2 text-xs text-gray-500">
+                                edit (verde) · view (brand) · view-test (brand) · delete (rosso)
+                            </p>
+                        </div>
+
+                        {/* Disabled */}
+                        <div>
+                            <h3 className="mb-3 text-sm font-semibold text-gray-700">Disabled</h3>
+                            <InlineActions>
+                                <ActionIconButton variant="edit" label="Modifica" onClick={() => {}} disabled />
+                                <ActionIconButton variant="view" label="Visualizza" onClick={() => {}} disabled />
+                                <ActionIconButton variant="view-test" label="Visualizza test" onClick={() => {}} disabled />
+                                <ActionIconButton variant="delete" label="Elimina" onClick={() => {}} disabled />
+                            </InlineActions>
+                        </div>
+
+                        {/* As Link */}
+                        <div>
+                            <h3 className="mb-3 text-sm font-semibold text-gray-700">Come Link (href)</h3>
+                            <InlineActions>
+                                <ActionIconButton variant="edit" label="Modifica" href="#" />
+                                <ActionIconButton variant="view" label="Visualizza" href="#" />
+                                <ActionIconButton variant="view-test" label="Visualizza test" href="#" />
+                            </InlineActions>
+                            <p className="mt-2 text-xs text-gray-500">
+                                Quando si passa <code className="rounded bg-gray-100 px-1">href</code> il componente
+                                renderizza come <code className="rounded bg-gray-100 px-1">&lt;Link&gt;</code>.
+                                Con <code className="rounded bg-gray-100 px-1">disabled</code> torna sempre{' '}
+                                <code className="rounded bg-gray-100 px-1">&lt;button disabled&gt;</code>.
+                            </p>
+                        </div>
+
+                        {/* Usage example */}
+                        <div>
+                            <h3 className="mb-3 text-sm font-semibold text-gray-700">Esempio — riga tabella (draft program)</h3>
+                            <div className="overflow-hidden rounded-lg border border-gray-200">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Programma</th>
+                                            <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Stato</th>
+                                            <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Azioni</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200 bg-white">
+                                        <tr>
+                                            <td className="px-6 py-4 text-sm font-medium text-gray-900">Forza Base - Mario</td>
+                                            <td className="px-6 py-4 text-sm text-gray-500">Bozza</td>
+                                            <td className="px-6 py-4">
+                                                <InlineActions>
+                                                    <ActionIconButton variant="edit" label="Modifica" href="#" />
+                                                    <ActionIconButton variant="view" label="Visualizza" href="#" />
+                                                    <ActionIconButton variant="delete" label="Elimina" onClick={() => {}} />
+                                                </InlineActions>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td className="px-6 py-4 text-sm font-medium text-gray-900">Ipertrofia - Luca</td>
+                                            <td className="px-6 py-4 text-sm text-gray-500">Attivo</td>
+                                            <td className="px-6 py-4">
+                                                <InlineActions>
+                                                    <ActionIconButton variant="view" label="Visualizza" href="#" />
+                                                    <ActionIconButton variant="view-test" label="Visualizza test" href="#" />
+                                                </InlineActions>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td className="px-6 py-4 text-sm font-medium text-gray-900">Potenza - Sara</td>
+                                            <td className="px-6 py-4 text-sm text-gray-500">Completato</td>
+                                            <td className="px-6 py-4">
+                                                <InlineActions>
+                                                    <ActionIconButton variant="view" label="Visualizza" href="#" />
+                                                    <ActionIconButton variant="view-test" label="Visualizza test" disabled />
+                                                </InlineActions>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </section>

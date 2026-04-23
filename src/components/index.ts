@@ -15,6 +15,10 @@ export type { FormLabelProps } from './FormLabel'
 export { Card } from './Card'
 export type { CardProps, CardVariant } from './Card'
 
+// Action Buttons
+export { ActionIconButton, InlineActions } from './ActionIconButton'
+export type { ActionIconButtonProps, ActionVariant } from './ActionIconButton'
+
 // Form Components
 export { default as RPESelector } from './RPESelector'
 export { default as FeedbackForm } from './FeedbackForm'

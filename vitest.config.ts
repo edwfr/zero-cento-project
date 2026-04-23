@@ -24,6 +24,7 @@ export default defineConfig({
                 'src/components/LoadingSpinner.tsx',
                 'src/components/MovementPatternTag.tsx',
                 'src/components/RoleGuard.tsx',
+                'src/components/ActionIconButton.tsx',
                 'src/app/api/exercises/route.ts',
                 'src/app/api/exercises/[id]/route.ts',
                 'src/app/api/feedback/route.ts',
