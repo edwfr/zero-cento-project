@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { Plus, FileEdit, CheckCircle2, Trash2, FlagTriangleRight, ArrowLeft, Eye, FlaskConical } from 'lucide-react'
 import { Input } from '@/components/Input'
+import { ActionIconButton, InlineActions } from '@/components'
 
 interface Program {
     id: string
@@ -386,65 +387,39 @@ export default function TrainerProgramsContent() {
                                                 <td className="px-6 py-4 align-top">
                                                     <div className="flex flex-wrap items-center justify-end gap-2">
                                                         {program.status === 'draft' ? (
-                                                            <>
-                                                                <Link
+                                                            <InlineActions>
+                                                                <ActionIconButton
+                                                                    variant="edit"
+                                                                    label={t('programs.editProgramAction')}
                                                                     href={`/trainer/programs/${program.id}/edit`}
-                                                                    title={t('programs.editProgramAction')}
-                                                                    aria-label={t('programs.editProgramAction')}
-                                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
-                                                                >
-                                                                    <FileEdit className="w-4 h-4" />
-                                                                </Link>
-                                                                <Link
+                                                                />
+                                                                <ActionIconButton
+                                                                    variant="view"
+                                                                    label={t('programs.viewProgram')}
                                                                     href={`/trainer/programs/${program.id}`}
-                                                                    title={t('programs.viewProgram')}
-                                                                    aria-label={t('programs.viewProgram')}
-                                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-primary text-white hover:bg-brand-primary-hover transition-colors"
-                                                                >
-                                                                    <Eye className="w-4 h-4" />
-                                                                </Link>
-                                                                <button
+                                                                />
+                                                                <ActionIconButton
+                                                                    variant="delete"
+                                                                    label={t('programs.delete')}
                                                                     onClick={() =>
                                                                         handleDelete(program.id, program.title)
                                                                     }
-                                                                    title={t('programs.delete')}
-                                                                    aria-label={t('programs.delete')}
-                                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
-                                                                >
-                                                                    <Trash2 className="w-4 h-4" />
-                                                                </button>
-                                                            </>
+                                                                />
+                                                            </InlineActions>
                                                         ) : (
-                                                            <>
-                                                                <Link
+                                                            <InlineActions>
+                                                                <ActionIconButton
+                                                                    variant="view"
+                                                                    label={t('programs.viewProgram')}
                                                                     href={`/trainer/programs/${program.id}`}
-                                                                    title={t('programs.viewProgram')}
-                                                                    aria-label={t('programs.viewProgram')}
-                                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-primary text-white hover:bg-brand-primary-hover transition-colors"
-                                                                >
-                                                                    <Eye className="w-4 h-4" />
-                                                                </Link>
-                                                                {testsCompleted ? (
-                                                                    <Link
-                                                                        href={`/trainer/programs/${program.id}/tests?backContext=programs`}
-                                                                        title={t('programs.viewTests')}
-                                                                        aria-label={t('programs.viewTests')}
-                                                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-primary text-white hover:bg-brand-primary-hover transition-colors"
-                                                                    >
-                                                                        <FlaskConical className="w-4 h-4" />
-                                                                    </Link>
-                                                                ) : (
-                                                                    <button
-                                                                        type="button"
-                                                                        disabled
-                                                                        title={t('programs.testsButtonDisabledTooltip')}
-                                                                        aria-label={t('programs.viewTests')}
-                                                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-gray-200 text-gray-500 cursor-not-allowed"
-                                                                    >
-                                                                        <FlaskConical className="w-4 h-4" />
-                                                                    </button>
-                                                                )}
-                                                            </>
+                                                                />
+                                                                <ActionIconButton
+                                                                    variant="view-test"
+                                                                    label={testsCompleted ? t('programs.viewTests') : t('programs.testsButtonDisabledTooltip')}
+                                                                    href={testsCompleted ? `/trainer/programs/${program.id}/tests?backContext=programs` : undefined}
+                                                                    disabled={!testsCompleted}
+                                                                />
+                                                            </InlineActions>
                                                         )}
                                                     </div>
                                                 </td>

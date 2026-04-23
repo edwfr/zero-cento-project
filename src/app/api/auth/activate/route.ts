@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireAuthDuringOnboarding } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { syncUserMetadata } from '@/lib/sync-user-metadata'
 
 /**
  * POST /api/auth/activate
@@ -13,10 +14,13 @@ export async function POST(request: NextRequest) {
         const session = await requireAuthDuringOnboarding()
 
         // Activate the user
-        await prisma.user.update({
+        const updatedUser = await prisma.user.update({
             where: { id: session.user.id },
             data: { isActive: true },
+            select: { id: true },
         })
+
+        await syncUserMetadata(updatedUser.id, { isActive: true })
 
         logger.info({ userId: session.user.id }, 'User activated after onboarding')
 

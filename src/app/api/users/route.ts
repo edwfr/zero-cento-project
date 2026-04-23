@@ -5,6 +5,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole, requireAuth } from '@/lib/auth'
 import { createUserSchema } from '@/schemas/user'
 import { logger } from '@/lib/logger'
+import { syncUserMetadata } from '@/lib/sync-user-metadata'
 
 /**
  * GET /api/users
@@ -150,6 +151,8 @@ export async function POST(request: NextRequest) {
                 isActive: false, // Will be activated after password setup
             },
         })
+
+        await syncUserMetadata(user.id, { isActive: false })
 
         // If trainee and created by trainer, create trainer-trainee association
         if (role === 'trainee' && session.user.role === 'trainer') {
