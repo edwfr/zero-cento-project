@@ -10,6 +10,15 @@ Per stato corrente usare sempre [checklist.md](./checklist.md).
 
 ## [Unreleased] - 2026-04-23
 
+### Changed
+- Service worker no longer caches HTML documents or API responses (both are now NetworkOnly).
+- Immutable assets (`_next/static/`, fonts, app images) use CacheFirst with ExpirationPlugin.
+- YouTube thumbnails use StaleWhileRevalidate with 7-day expiry and 100-entry limit.
+- Removed `...defaultCache` (Workbox defaults were silently caching HTML navigation responses).
+- `__SW_MANIFEST` precache filtered to exclude HTML pages; now includes only `_next/static/` and known static file extensions.
+- Fixed: `/images/` cache matcher now anchored to same-origin to prevent cross-origin cache pollution.
+- Added `maxEntries` limits to `next-static` (200) and `google-fonts-stylesheets` (5) caches.
+
 ### Added
 - Structure step (wizard step 2) now pre-fills 4 empty exercise rows per workout for new programs, removing the need to click "Add row" 4 times manually.
 
