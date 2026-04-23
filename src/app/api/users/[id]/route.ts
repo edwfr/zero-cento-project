@@ -4,6 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireAuth } from '@/lib/auth'
 import { updateUserSchema } from '@/schemas/user'
 import { logger } from '@/lib/logger'
+import { syncUserMetadata } from '@/lib/sync-user-metadata'
 
 type Params = {
     params: Promise<{ id: string }>
@@ -118,6 +119,14 @@ export async function PUT(request: NextRequest, { params }: Params) {
                 isActive: true,
             },
         })
+
+        // Sync name changes to metadata cache
+        const metaUpdates: { firstName?: string; lastName?: string } = {}
+        if (validation.data.firstName !== undefined) metaUpdates.firstName = user.firstName
+        if (validation.data.lastName !== undefined) metaUpdates.lastName = user.lastName
+        if (Object.keys(metaUpdates).length > 0) {
+            await syncUserMetadata(id, metaUpdates)
+        }
 
         logger.info({ userId: id }, 'User updated')
 
