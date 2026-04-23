@@ -28,14 +28,8 @@ export default function LoginPage() {
                 } = await supabase.auth.getUser()
 
                 if (user) {
-                    // User is already logged in, get their role and redirect
-                    const response = await fetch('/api/auth/me', {
-                        credentials: 'include'
-                    })
-
-                    if (response.ok) {
-                        const userData = await response.json()
-                        const role = userData.data.role
+                    const role = user.user_metadata?.role as string | undefined
+                    if (role) {
                         router.push(`/${role}/dashboard`)
                         return
                     }
@@ -65,30 +59,20 @@ export default function LoginPage() {
             if (signInError) throw signInError
 
             if (data.session) {
-                // Check if user must change password
                 const mustChangePassword = data.user.user_metadata?.mustChangePassword
 
                 if (mustChangePassword) {
-                    // Redirect to force change password page
                     router.push('/force-change-password')
                     return
                 }
 
-                // Get user role from database via API
-                const response = await fetch('/api/auth/me', {
-                    credentials: 'include'
-                })
+                const role = data.user.user_metadata?.role as string | undefined
 
-                if (!response.ok) {
-                    throw new Error('Failed to fetch user data')
+                if (!role) {
+                    throw new Error('User role not found')
                 }
 
-                const userData = await response.json()
-                const role = userData.data.role
-
-                // Redirect to role-based dashboard
                 router.push(`/${role}/dashboard`)
-                router.refresh()
             }
         } catch (err: any) {
             setError(err.message || t('auth:login.error'))

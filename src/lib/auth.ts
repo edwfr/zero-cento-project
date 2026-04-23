@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { createClient } from './supabase-server'
 import { prisma } from './prisma'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
@@ -29,7 +30,7 @@ export interface AuthSession {
  * Returns null if not authenticated
  * Uses getUser() instead of getSession() for security (authenticates against Supabase Auth server)
  */
-export async function getSession(): Promise<AuthSession | null> {
+export const getSession = cache(async (): Promise<AuthSession | null> => {
     const supabase = await createClient()
 
     // Use getUser() instead of getSession() for security
@@ -69,7 +70,7 @@ export async function getSession(): Promise<AuthSession | null> {
         user,
         supabaseUser,
     }
-}
+})
 
 /**
  * Require authentication during onboarding - returns session without checking isActive
