@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireAuth } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { syncUserMetadata } from '@/lib/sync-user-metadata'
 
 type Params = {
     params: Promise<{ id: string }>
@@ -57,6 +58,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
                 isActive: true,
             },
         })
+
+        await syncUserMetadata(id, { isActive: false })
 
         logger.info({ userId: id }, 'User deactivated')
 

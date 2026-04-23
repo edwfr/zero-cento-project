@@ -51,11 +51,16 @@ async function deleteAllSupabaseUsers() {
     console.log(`✅ Deleted ${data.users.length} Supabase auth users`)
 }
 
-async function createSupabaseUser(email: string, password: string) {
+async function createSupabaseUser(
+    email: string,
+    password: string,
+    metadata: { role: string; firstName: string; lastName: string; isActive: boolean }
+) {
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
         email,
         password,
         email_confirm: true,
+        user_metadata: metadata,
     })
     if (error) throw new Error(`Failed to create Supabase user ${email}: ${error.message}`)
     return data.user
@@ -100,11 +105,21 @@ async function main() {
 
     // Step 4: recreate admin in Supabase + update Prisma record
     console.log('👤 Creating users...')
-    await createSupabaseUser(anchorAdmin.email, process.env.SEED_ADMIN_PASSWORD ?? 'Admin1234!')
+    await createSupabaseUser(anchorAdmin.email, process.env.SEED_ADMIN_PASSWORD ?? 'Admin1234!', {
+        role: 'admin',
+        firstName: 'Admin',
+        lastName: 'ZeroCento',
+        isActive: true,
+    })
     console.log(`  ✅ admin@zerocento.app / ${process.env.SEED_ADMIN_PASSWORD ?? 'Admin1234!'}`)
 
     // Step 5: create trainer in Supabase + Prisma
-    await createSupabaseUser('trainer@zerocento.app', process.env.SEED_TRAINER_PASSWORD ?? 'Trainer1234!')
+    await createSupabaseUser('trainer@zerocento.app', process.env.SEED_TRAINER_PASSWORD ?? 'Trainer1234!', {
+        role: 'trainer',
+        firstName: 'Marco',
+        lastName: 'Rossi',
+        isActive: true,
+    })
     const trainer = await prisma.user.create({
         data: {
             email: 'trainer@zerocento.app',
@@ -120,7 +135,12 @@ async function main() {
     const traineePassword = process.env.SEED_TRAINEE_PASSWORD ?? 'Trainee1234!'
     for (let i = 1; i <= 4; i++) {
         const email = `trainee${i}@zerocento.app`
-        await createSupabaseUser(email, traineePassword)
+        await createSupabaseUser(email, traineePassword, {
+            role: 'trainee',
+            firstName: `Trainee${i}`,
+            lastName: 'Rossi',
+            isActive: true,
+        })
         const trainee = await prisma.user.create({
             data: {
                 email,

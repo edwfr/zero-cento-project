@@ -16,7 +16,7 @@ const supabase = createClient(
 
 async function main() {
     const users = await prisma.user.findMany({
-        select: { id: true, email: true, role: true },
+        select: { id: true, email: true, role: true, firstName: true, lastName: true, isActive: true },
     })
 
     console.log(`Found ${users.length} users to backfill`)
@@ -25,15 +25,24 @@ async function main() {
     let failed = 0
 
     for (const user of users) {
+        const { data: existing } = await supabase.auth.admin.getUserById(user.id)
+        const currentMeta = existing.user?.user_metadata ?? {}
+
         const { error } = await supabase.auth.admin.updateUserById(user.id, {
-            user_metadata: { role: user.role },
+            user_metadata: {
+                ...currentMeta,
+                role: user.role,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                isActive: user.isActive,
+            },
         })
 
         if (error) {
             console.error(`FAIL  ${user.email}: ${error.message}`)
             failed++
         } else {
-            console.log(`OK    ${user.email} → ${user.role}`)
+            console.log(`OK    ${user.email} → role=${user.role} isActive=${user.isActive}`)
             ok++
         }
     }

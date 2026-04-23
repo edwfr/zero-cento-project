@@ -28,7 +28,7 @@ export interface AuthSession {
 /**
  * Get current session from Supabase and enrich with Prisma user data
  * Returns null if not authenticated
- * Uses getUser() instead of getSession() for security (authenticates against Supabase Auth server)
+ * Optimized: fast path reads from JWT metadata if complete; fallback to Prisma for legacy users
  */
 export const getSession = cache(async (): Promise<AuthSession | null> => {
     const supabase = await createClient()
@@ -44,7 +44,29 @@ export const getSession = cache(async (): Promise<AuthSession | null> => {
         return null
     }
 
-    // Fetch user data from Prisma using email
+    // Fast path: all fields in JWT metadata — skip Prisma call
+    const meta = supabaseUser.user_metadata
+    if (
+        meta?.role &&
+        meta?.firstName &&
+        meta?.lastName &&
+        meta?.isActive !== undefined
+    ) {
+        if (!meta.isActive) return null
+        return {
+            user: {
+                id: supabaseUser.id,
+                email: supabaseUser.email!,
+                firstName: meta.firstName as string,
+                lastName: meta.lastName as string,
+                role: meta.role as Role,
+                isActive: meta.isActive as boolean,
+            },
+            supabaseUser,
+        }
+    }
+
+    // Fallback: legacy users without complete metadata — hit Prisma
     const user = await prisma.user.findUnique({
         where: { email: supabaseUser.email },
         select: {
@@ -57,12 +79,7 @@ export const getSession = cache(async (): Promise<AuthSession | null> => {
         },
     })
 
-    if (!user) {
-        return null
-    }
-
-    // Check if user is active
-    if (!user.isActive) {
+    if (!user || !user.isActive) {
         return null
     }
 
