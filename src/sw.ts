@@ -25,7 +25,7 @@ const serwist = new Serwist({
     precacheEntries: staticEntries,
     skipWaiting: true,
     clientsClaim: true,
-    navigationPreload: true,
+    navigationPreload: false,
     runtimeCaching: [
         // HTML navigation → NetworkOnly: always fetch fresh, never serve stale HTML.
         // Stale HTML references old JS chunk hashes → broken app after deploy.
@@ -41,7 +41,7 @@ const serwist = new Serwist({
         // Next.js static chunks → CacheFirst: content-hashed URLs are immutable.
         // Already precached above; this runtime rule covers any cache misses.
         {
-            matcher: /^\/_next\/static\//,
+            matcher: /\/_next\/static\//,
             handler: new CacheFirst({
                 cacheName: 'next-static',
                 plugins: [
@@ -86,6 +86,7 @@ const serwist = new Serwist({
                 cacheName: 'google-fonts-webfonts',
                 plugins: [
                     new ExpirationPlugin({
+                        maxEntries: 30,
                         maxAgeSeconds: 365 * 24 * 60 * 60,
                     }),
                 ],
