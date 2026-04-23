@@ -30,6 +30,10 @@ import {
     Save,
     Trash2,
 } from 'lucide-react'
+import {
+    buildStructureRowsForWorkout,
+    type WorkoutStructureTemplateRow,
+} from './structure-utils'
 
 const PRIMARY_COLOR = 'rgb(var(--brand-primary))'
 const RPE_OPTIONS = [5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10]
@@ -141,11 +145,6 @@ interface EditableWorkoutExerciseRow {
     restTime: RestTime
     notes: string | null
     isDraft: boolean
-}
-
-interface WorkoutStructureTemplateRow {
-    id: string
-    exerciseId: string
 }
 
 interface EditProgramContentProps {
@@ -772,11 +771,9 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 const sourceRows = sourceWorkout?.workoutExercises ?? []
                 hasChanges = true
 
-                nextStructureRowsByWorkoutIndex[workoutIndex] = sourceRows.map(
-                    (workoutExercise, rowIndex) => ({
-                        id: `structure-${workoutIndex}-${workoutExercise.id}-${rowIndex}`,
-                        exerciseId: workoutExercise.exercise.id,
-                    })
+                nextStructureRowsByWorkoutIndex[workoutIndex] = buildStructureRowsForWorkout(
+                    workoutIndex,
+                    sourceRows
                 )
             }
 
