@@ -8,6 +8,13 @@ Per stato corrente usare sempre [checklist.md](./checklist.md).
 
 ---
 
+## [Unreleased] - 2026-04-23
+
+### Added
+- Structure step (wizard step 2) now pre-fills 4 empty exercise rows per workout for new programs, removing the need to click "Add row" 4 times manually.
+
+---
+
 ## 2026-04-22 — Middleware: Fix rate limiting on public login route
 
 - Fixed auth middleware ordering in `src/middleware.ts` so public routes like `'/login'`, `'/forgot-password'`, `'/reset-password'`, `'/force-change-password'`, and `'/onboarding/set-password'` bypass rate limiting before auth/security checks
