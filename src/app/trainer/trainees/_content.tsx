@@ -34,7 +34,7 @@ export default function TrainerTraineesContent() {
     const fetchTrainees = useCallback(async () => {
         try {
             setLoading(true)
-            const res = await fetch('/api/users?role=trainee')
+            const res = await fetch('/api/users?role=trainee&includeInactive=true')
             const data = await res.json()
 
             if (!res.ok) {

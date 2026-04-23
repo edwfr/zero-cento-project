@@ -10,6 +10,9 @@ Per stato corrente usare sempre [checklist.md](./checklist.md).
 
 ## [Unreleased] - 2026-04-23
 
+### Fixed
+- `/trainer/trainees`: inactive trainees now visible when filter set to "Disattivati". Fetch was missing `includeInactive=true`, so API stripped inactive users before client-side filter ran.
+
 ### Changed
 - Service worker no longer caches HTML documents or API responses (both are now NetworkOnly).
 - Immutable assets (`_next/static/`, fonts, app images) use CacheFirst with ExpirationPlugin.
