@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
-import { SkeletonTable } from '@/components'
+import { SkeletonTable, ActionIconButton, InlineActions } from '@/components'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import MovementPatternTag from '@/components/MovementPatternTag'
@@ -295,24 +295,18 @@ export default function TrainerExercisesContent() {
                                             {formatMuscleGroups(exercise.exerciseMuscleGroups)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <Link
+                                            <InlineActions>
+                                                <ActionIconButton
+                                                    variant="edit"
+                                                    label={t('common:common.edit')}
                                                     href={`/trainer/exercises/${exercise.id}/edit`}
-                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
-                                                    title={t('common:common.edit')}
-                                                    aria-label={t('common:common.edit')}
-                                                >
-                                                    <FileEdit className="w-4 h-4" />
-                                                </Link>
-                                                <button
+                                                />
+                                                <ActionIconButton
+                                                    variant="delete"
+                                                    label={t('common:common.delete')}
                                                     onClick={() => handleDelete(exercise.id, exercise.name)}
-                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
-                                                    title={t('common:common.delete')}
-                                                    aria-label={t('common:common.delete')}
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
+                                                />
+                                            </InlineActions>
                                         </td>
                                     </tr>
                                 ))}
@@ -388,24 +382,18 @@ export default function TrainerExercisesContent() {
                                     </div>
 
                                     {/* Actions */}
-                                    <div className="flex items-center justify-end gap-2">
-                                        <Link
+                                    <InlineActions>
+                                        <ActionIconButton
+                                            variant="edit"
+                                            label={t('common:common.edit')}
                                             href={`/trainer/exercises/${exercise.id}/edit`}
-                                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
-                                            title={t('common:common.edit')}
-                                            aria-label={t('common:common.edit')}
-                                        >
-                                            <FileEdit className="w-4 h-4" />
-                                        </Link>
-                                        <button
+                                        />
+                                        <ActionIconButton
+                                            variant="delete"
+                                            label={t('common:common.delete')}
                                             onClick={() => handleDelete(exercise.id, exercise.name)}
-                                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
-                                            title={t('common:common.delete')}
-                                            aria-label={t('common:common.delete')}
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
+                                        />
+                                    </InlineActions>
                                 </div>
                             </div>
                         ))}
