@@ -46,6 +46,7 @@ const serwist = new Serwist({
                 cacheName: 'next-static',
                 plugins: [
                     new ExpirationPlugin({
+                        maxEntries: 200,
                         maxAgeSeconds: 365 * 24 * 60 * 60,
                     }),
                 ],
@@ -53,7 +54,8 @@ const serwist = new Serwist({
         },
         // App images (/images/*) → CacheFirst: static files, change only on deploy.
         {
-            matcher: /\/images\//,
+            matcher: ({ url }) =>
+                url.origin === self.location.origin && url.pathname.startsWith('/images/'),
             handler: new CacheFirst({
                 cacheName: 'app-images',
                 plugins: [
@@ -71,6 +73,7 @@ const serwist = new Serwist({
                 cacheName: 'google-fonts-stylesheets',
                 plugins: [
                     new ExpirationPlugin({
+                        maxEntries: 5,
                         maxAgeSeconds: 365 * 24 * 60 * 60,
                     }),
                 ],
