@@ -18,7 +18,7 @@ const VARIANT_CONFIG: Record<ActionVariant, { Icon: LucideIcon; activeClass: str
     'view-test': { Icon: FlaskConical, activeClass: 'bg-brand-primary hover:bg-brand-primary-hover' },
     delete: { Icon: Trash2, activeClass: 'bg-red-600 hover:bg-red-700' },
     activate: { Icon: UserCheck, activeClass: 'bg-green-600 hover:bg-green-700' },
-    deactivate: { Icon: UserX, activeClass: 'bg-amber-500 hover:bg-amber-600' },
+    deactivate: { Icon: UserX, activeClass: 'bg-red-600 hover:bg-red-700' },
 }
 
 const BASE =
