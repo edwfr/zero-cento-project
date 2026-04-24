@@ -21,13 +21,36 @@ describe('buildStructureRowsForWorkout', () => {
 
     it('maps from sourceExercises when non-empty', () => {
         const source = [
-            { id: 'we-1', exercise: { id: 'ex-1' } },
-            { id: 'we-2', exercise: { id: 'ex-2' } },
+            { id: 'we-1', exercise: { id: 'ex-1' }, isSkeletonExercise: false },
+            { id: 'we-2', exercise: { id: 'ex-2' }, isSkeletonExercise: false },
         ]
         const rows = buildStructureRowsForWorkout(1, source)
         expect(rows).toHaveLength(2)
         expect(rows[0]).toEqual({ id: 'structure-1-we-1-0', exerciseId: 'ex-1' })
         expect(rows[1]).toEqual({ id: 'structure-1-we-2-1', exerciseId: 'ex-2' })
+    })
+
+    it('filters to skeleton-only exercises when at least one has isSkeletonExercise=true', () => {
+        const source = [
+            { id: 'we-1', exercise: { id: 'ex-1' }, isSkeletonExercise: true },
+            { id: 'we-2', exercise: { id: 'ex-2' }, isSkeletonExercise: false },
+            { id: 'we-3', exercise: { id: 'ex-3' }, isSkeletonExercise: true },
+        ]
+        const rows = buildStructureRowsForWorkout(1, source)
+        expect(rows).toHaveLength(2)
+        expect(rows[0].exerciseId).toBe('ex-1')
+        expect(rows[1].exerciseId).toBe('ex-3')
+    })
+
+    it('uses all exercises as fallback when none have isSkeletonExercise=true (backwards compat)', () => {
+        const source = [
+            { id: 'we-1', exercise: { id: 'ex-1' }, isSkeletonExercise: false },
+            { id: 'we-2', exercise: { id: 'ex-2' }, isSkeletonExercise: false },
+        ]
+        const rows = buildStructureRowsForWorkout(0, source)
+        expect(rows).toHaveLength(2)
+        expect(rows[0].exerciseId).toBe('ex-1')
+        expect(rows[1].exerciseId).toBe('ex-2')
     })
 
     it('returns unique ids across rows', () => {

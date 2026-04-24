@@ -189,9 +189,11 @@ function ComponentShowcase() {
                                 <ActionIconButton variant="view" label="Visualizza" onClick={() => {}} />
                                 <ActionIconButton variant="view-test" label="Visualizza test" onClick={() => {}} />
                                 <ActionIconButton variant="delete" label="Elimina" onClick={() => {}} />
+                                <ActionIconButton variant="activate" label="Attiva" onClick={() => {}} />
+                                <ActionIconButton variant="deactivate" label="Disattiva" onClick={() => {}} />
                             </InlineActions>
                             <p className="mt-2 text-xs text-gray-500">
-                                edit (verde) · view (brand) · view-test (brand) · delete (rosso)
+                                edit (verde) · view (brand) · view-test (brand) · delete (rosso) · activate (verde) · deactivate (ambra)
                             </p>
                         </div>
 
@@ -270,10 +272,45 @@ function ComponentShowcase() {
                                 </table>
                             </div>
                         </div>
+                        {/* Usage example trainees */}
+                        <div>
+                            <h3 className="mb-3 text-sm font-semibold text-gray-700">Esempio — riga tabella (trainees)</h3>
+                            <div className="overflow-hidden rounded-lg border border-gray-200">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Atleta</th>
+                                            <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Stato</th>
+                                            <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Azioni</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200 bg-white">
+                                        <tr>
+                                            <td className="px-6 py-4 text-sm font-medium text-gray-900">Mario Rossi</td>
+                                            <td className="px-6 py-4"><span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">Attivo</span></td>
+                                            <td className="px-6 py-4">
+                                                <InlineActions>
+                                                    <ActionIconButton variant="view" label="Dettaglio" href="#" />
+                                                    <ActionIconButton variant="deactivate" label="Disattiva" onClick={() => {}} />
+                                                </InlineActions>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td className="px-6 py-4 text-sm font-medium text-gray-900">Luca Bianchi</td>
+                                            <td className="px-6 py-4"><span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-800">Inattivo</span></td>
+                                            <td className="px-6 py-4">
+                                                <InlineActions>
+                                                    <ActionIconButton variant="view" label="Dettaglio" href="#" />
+                                                    <ActionIconButton variant="activate" label="Attiva" onClick={() => {}} />
+                                                </InlineActions>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </section>
-
-                {/* Inputs & Textareas */}
                 <section className="rounded-lg bg-white p-6 shadow">
                     <h2 className="mb-4 text-2xl font-bold text-gray-900">Inputs & Textareas</h2>
                     <p className="text-sm text-gray-600 mb-6">

@@ -535,6 +535,24 @@ describe('workoutExerciseSchema', () => {
         const result = workoutExerciseSchema.safeParse({ ...validWorkoutExercise, targetRpe: 8.5 })
         expect(result.success).toBe(true)
     })
+
+    it('accepts isSkeletonExercise true', () => {
+        const result = workoutExerciseSchema.safeParse({ ...validWorkoutExercise, isSkeletonExercise: true })
+        expect(result.success).toBe(true)
+        expect(result.data?.isSkeletonExercise).toBe(true)
+    })
+
+    it('accepts isSkeletonExercise false', () => {
+        const result = workoutExerciseSchema.safeParse({ ...validWorkoutExercise, isSkeletonExercise: false })
+        expect(result.success).toBe(true)
+        expect(result.data?.isSkeletonExercise).toBe(false)
+    })
+
+    it('defaults isSkeletonExercise to false when omitted', () => {
+        const result = workoutExerciseSchema.safeParse(validWorkoutExercise)
+        expect(result.success).toBe(true)
+        expect(result.data?.isSkeletonExercise).toBe(false)
+    })
 })
 
 describe('updateWorkoutExerciseSchema', () => {

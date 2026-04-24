@@ -114,7 +114,7 @@ async function main() {
     console.log(`  ✅ admin@zerocento.app / ${process.env.SEED_ADMIN_PASSWORD ?? 'Admin1234!'}`)
 
     // Step 5: create trainer in Supabase + Prisma
-    await createSupabaseUser('trainer@zerocento.app', process.env.SEED_TRAINER_PASSWORD ?? 'Trainer1234!', {
+    const trainerSupabase = await createSupabaseUser('trainer@zerocento.app', process.env.SEED_TRAINER_PASSWORD ?? 'Trainer1234!', {
         role: 'trainer',
         firstName: 'Marco',
         lastName: 'Rossi',
@@ -122,6 +122,7 @@ async function main() {
     })
     const trainer = await prisma.user.create({
         data: {
+            id: trainerSupabase.id,
             email: 'trainer@zerocento.app',
             firstName: 'Marco',
             lastName: 'Rossi',
@@ -135,7 +136,7 @@ async function main() {
     const traineePassword = process.env.SEED_TRAINEE_PASSWORD ?? 'Trainee1234!'
     for (let i = 1; i <= 4; i++) {
         const email = `trainee${i}@zerocento.app`
-        await createSupabaseUser(email, traineePassword, {
+        const traineeSupabase = await createSupabaseUser(email, traineePassword, {
             role: 'trainee',
             firstName: `Trainee${i}`,
             lastName: 'Rossi',
@@ -143,6 +144,7 @@ async function main() {
         })
         const trainee = await prisma.user.create({
             data: {
+                id: traineeSupabase.id,
                 email,
                 firstName: `Trainee${i}`,
                 lastName: 'Rossi',

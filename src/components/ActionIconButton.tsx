@@ -1,7 +1,7 @@
 import Link from 'next/link'
-import { FileEdit, Eye, FlaskConical, Trash2, type LucideIcon } from 'lucide-react'
+import { FileEdit, Eye, FlaskConical, Trash2, Loader2, UserCheck, UserX, type LucideIcon } from 'lucide-react'
 
-export type ActionVariant = 'edit' | 'view' | 'view-test' | 'delete'
+export type ActionVariant = 'edit' | 'view' | 'view-test' | 'delete' | 'activate' | 'deactivate'
 
 export interface ActionIconButtonProps {
     variant: ActionVariant
@@ -9,6 +9,7 @@ export interface ActionIconButtonProps {
     href?: string
     onClick?: () => void
     disabled?: boolean
+    isLoading?: boolean
 }
 
 const VARIANT_CONFIG: Record<ActionVariant, { Icon: LucideIcon; activeClass: string }> = {
@@ -16,10 +17,12 @@ const VARIANT_CONFIG: Record<ActionVariant, { Icon: LucideIcon; activeClass: str
     view: { Icon: Eye, activeClass: 'bg-brand-primary hover:bg-brand-primary-hover' },
     'view-test': { Icon: FlaskConical, activeClass: 'bg-brand-primary hover:bg-brand-primary-hover' },
     delete: { Icon: Trash2, activeClass: 'bg-red-600 hover:bg-red-700' },
+    activate: { Icon: UserCheck, activeClass: 'bg-green-600 hover:bg-green-700' },
+    deactivate: { Icon: UserX, activeClass: 'bg-red-600 hover:bg-red-700' },
 }
 
 const BASE =
-    'inline-flex h-8 w-8 items-center justify-center rounded-lg text-white transition-colors'
+    'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white transition-colors'
 const DISABLED_CLASS = 'bg-gray-200 text-gray-500 cursor-not-allowed'
 
 export function ActionIconButton({
@@ -28,12 +31,16 @@ export function ActionIconButton({
     href,
     onClick,
     disabled = false,
+    isLoading = false,
 }: ActionIconButtonProps) {
     const { Icon, activeClass } = VARIANT_CONFIG[variant]
-    const className = `${BASE} ${disabled ? DISABLED_CLASS : activeClass}`
-    const icon = <Icon className="w-4 h-4" />
+    const isDisabled = disabled || isLoading
+    const className = `${BASE} ${isDisabled ? DISABLED_CLASS : activeClass}`
+    const icon = isLoading
+        ? <Loader2 className="w-4 h-4 animate-spin" />
+        : <Icon className="w-4 h-4" />
 
-    if (href && !disabled) {
+    if (href && !isDisabled) {
         return (
             <Link href={href} className={className} title={label} aria-label={label}>
                 {icon}
@@ -45,7 +52,7 @@ export function ActionIconButton({
         <button
             type="button"
             onClick={onClick}
-            disabled={disabled}
+            disabled={isDisabled}
             className={className}
             title={label}
             aria-label={label}
