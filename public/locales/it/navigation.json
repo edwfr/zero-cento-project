@@ -19,7 +19,8 @@
         "activeProgram": "Programma Attivo",
         "globalPrograms": "Programmi Globali",
         "myRecords": "I Miei Massimali",
-        "trainingHistory": "Storico Programmi"
+        "trainingHistory": "Storico Programmi",
+        "goBack": "Torna indietro"
     },
     "roles": {
         "admin": "admin",

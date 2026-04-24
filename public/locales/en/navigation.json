@@ -19,7 +19,8 @@
         "activeProgram": "Active Program",
         "globalPrograms": "Global Programs",
         "myRecords": "My Personal Records",
-        "trainingHistory": "Training History"
+        "trainingHistory": "Training History",
+        "goBack": "Go back"
     },
     "roles": {
         "admin": "admin",
