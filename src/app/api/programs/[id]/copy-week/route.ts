@@ -22,33 +22,28 @@ export async function POST(
             return apiError('VALIDATION_ERROR', 'Source week is required', 400, undefined, 'validation.sourceWeekRequired')
         }
 
-        const program = await prisma.trainingProgram.findUnique({
-            where: { id: programId },
-            include: {
-                weeks: {
-                    include: {
-                        workouts: {
-                            include: {
-                                workoutExercises: {
-                                    orderBy: {
-                                        order: 'asc',
-                                    },
-                                },
-                            },
-                            orderBy: {
-                                dayIndex: 'asc',
-                            },
-                        },
-                    },
-                    orderBy: {
-                        weekNumber: 'asc',
+        const [program, sourceWeek] = await Promise.all([
+            prisma.trainingProgram.findUnique({
+                where: { id: programId },
+                select: { id: true, trainerId: true, status: true },
+            }),
+            prisma.week.findUnique({
+                where: { id: sourceWeekId },
+                include: {
+                    workouts: {
+                        include: { workoutExercises: { orderBy: { order: 'asc' } } },
+                        orderBy: { dayIndex: 'asc' },
                     },
                 },
-            },
-        })
+            }),
+        ])
 
         if (!program) {
             return apiError('NOT_FOUND', 'Program not found', 404, undefined, 'program.notFound')
+        }
+
+        if (!sourceWeek || sourceWeek.programId !== programId) {
+            return apiError('NOT_FOUND', 'Source week not found', 404, undefined, 'week.sourceNotFound')
         }
 
         if (session.user.role === 'trainer' && program.trainerId !== session.user.id) {
@@ -65,22 +60,6 @@ export async function POST(
             )
         }
 
-        const sourceWeekIndex = program.weeks.findIndex((week) => week.id === sourceWeekId)
-
-        if (sourceWeekIndex === -1) {
-            return apiError('NOT_FOUND', 'Source week not found', 404, undefined, 'week.sourceNotFound')
-        }
-
-        if (sourceWeekIndex >= program.weeks.length - 1) {
-            return apiError('VALIDATION_ERROR', 'Source week has no following week to copy into', 400, undefined, 'program.noFollowingWeek')
-        }
-
-        const sourceWeek = program.weeks[sourceWeekIndex]
-        const targetWeek = program.weeks[sourceWeekIndex + 1]
-        const sourceWorkoutMap = new Map(
-            sourceWeek.workouts.map((workout) => [workout.dayIndex, workout])
-        )
-
         const hasSourceExercises = sourceWeek.workouts.some(
             (workout) => workout.workoutExercises.length > 0
         )
@@ -92,6 +71,20 @@ export async function POST(
                 400
             )
         }
+
+        const targetWeek = await prisma.week.findFirst({
+            where: { programId, weekNumber: { gt: sourceWeek.weekNumber } },
+            orderBy: { weekNumber: 'asc' },
+            include: { workouts: { orderBy: { dayIndex: 'asc' } } },
+        })
+
+        if (!targetWeek) {
+            return apiError('VALIDATION_ERROR', 'Source week has no following week to copy into', 400, undefined, 'program.noFollowingWeek')
+        }
+
+        const sourceWorkoutMap = new Map(
+            sourceWeek.workouts.map((workout) => [workout.dayIndex, workout])
+        )
 
         await prisma.$transaction(async (tx) => {
             for (const targetWorkout of targetWeek.workouts) {
@@ -139,10 +132,51 @@ export async function POST(
             'Copied workouts from a week to the next week'
         )
 
+        // Fetch updated target week with full exercise data for client local state update
+        const updatedWeek = await prisma.week.findUnique({
+            where: { id: targetWeek.id },
+            include: {
+                workouts: {
+                    include: {
+                        workoutExercises: {
+                            orderBy: { order: 'asc' },
+                            include: {
+                                exercise: {
+                                    select: {
+                                        id: true,
+                                        name: true,
+                                        type: true,
+                                        notes: true,
+                                        movementPattern: {
+                                            select: {
+                                                id: true,
+                                                name: true,
+                                                movementPatternColors: {
+                                                    select: { trainerId: true, color: true },
+                                                },
+                                            },
+                                        },
+                                        exerciseMuscleGroups: {
+                                            select: {
+                                                coefficient: true,
+                                                muscleGroup: { select: { id: true, name: true } },
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    orderBy: { dayIndex: 'asc' },
+                },
+            },
+        })
+
         return apiSuccess({
             sourceWeek: sourceWeek.weekNumber,
             targetWeek: targetWeek.weekNumber,
             updatedWorkouts: targetWeek.workouts.length,
+            updatedWeek,
         })
     } catch (error: any) {
         if (error instanceof Response) return error

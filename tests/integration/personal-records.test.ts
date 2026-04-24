@@ -33,6 +33,7 @@ vi.mock('@/lib/prisma', () => ({
         trainerTrainee: {
             findMany: vi.fn(),
             findUnique: vi.fn(),
+            findFirst: vi.fn(),
         },
         user: {
             findUnique: vi.fn(),
@@ -209,10 +210,7 @@ describe('GET /api/personal-records', () => {
 
     it('trainer can filter by own traineeId', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.trainerTrainee.findMany).mockResolvedValue([
-            { traineeId: 'trainee-uuid-1' },
-        ] as any)
-        vi.mocked(prisma.trainerTrainee.findUnique).mockResolvedValue({
+        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue({
             trainerId: 'trainer-uuid-1',
             traineeId: 'trainee-uuid-1',
             assignedAt: new Date(),
@@ -229,8 +227,7 @@ describe('GET /api/personal-records', () => {
 
     it('returns 403 when trainer requests records of another trainer\'s trainee', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockOtherTrainerSession)
-        vi.mocked(prisma.trainerTrainee.findMany).mockResolvedValue([] as any)
-        vi.mocked(prisma.trainerTrainee.findUnique).mockResolvedValue(null)
+        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue(null)
 
         const req = makeRequest(
             'http://localhost:3000/api/personal-records?traineeId=trainee-uuid-1'
@@ -240,6 +237,34 @@ describe('GET /api/personal-records', () => {
 
         expect(res.status).toBe(403)
         expect(body.error.code).toBe('FORBIDDEN')
+    })
+
+    it('trainer with traineeId: uses single findFirst ownership check (not findMany + findUnique)', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue({
+            trainerId: mockTrainerSession.user.id,
+            traineeId: TRAINEE_ID,
+        } as any)
+        vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([])
+
+        const req = makeRequest(`http://localhost:3000/api/personal-records?traineeId=${TRAINEE_ID}`)
+        const res = await GET(req)
+
+        expect(res.status).toBe(200)
+        expect(prisma.trainerTrainee.findFirst).toHaveBeenCalledWith({
+            where: { trainerId: mockTrainerSession.user.id, traineeId: TRAINEE_ID },
+        })
+        expect(prisma.trainerTrainee.findMany).not.toHaveBeenCalled()
+    })
+
+    it('trainer with traineeId: returns 403 when trainee not managed', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue(null)
+
+        const req = makeRequest('http://localhost:3000/api/personal-records?traineeId=trainee-uuid-999')
+        const res = await GET(req)
+
+        expect(res.status).toBe(403)
     })
 
     it('returns 401 when not authenticated', async () => {
@@ -289,7 +314,7 @@ describe('POST /api/personal-records', () => {
 
     it('trainer creates record for own trainee', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.trainerTrainee.findUnique).mockResolvedValue({
+        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue({
             trainerId: 'trainer-uuid-1',
             traineeId: 'trainee-uuid-1',
         } as any)
@@ -308,6 +333,30 @@ describe('POST /api/personal-records', () => {
         expect(res.status).toBe(201)
     })
 
+    it('POST: trainer ownership check uses findFirst with trainerId + traineeId', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue({
+            trainerId: mockTrainerSession.user.id,
+            traineeId: TRAINEE_ID,
+        } as any)
+        vi.mocked(prisma.user.findUnique).mockResolvedValue(mockTraineeUser as any)
+        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(mockExercise as any)
+        vi.mocked(prisma.personalRecord.create).mockResolvedValue(mockRecord as any)
+
+        const req = makeRequest('http://localhost:3000/api/personal-records', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...validPayload, traineeId: TRAINEE_ID }),
+        })
+        const res = await POST(req)
+
+        expect(res.status).toBe(201)
+        expect(prisma.trainerTrainee.findFirst).toHaveBeenCalledWith({
+            where: { trainerId: mockTrainerSession.user.id, traineeId: TRAINEE_ID },
+        })
+        expect(prisma.trainerTrainee.findUnique).not.toHaveBeenCalled()
+    })
+
     it('admin creates record specifying any traineeId', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockAdminSession)
         vi.mocked(prisma.user.findUnique).mockResolvedValue(mockTraineeUser as any)
@@ -324,12 +373,13 @@ describe('POST /api/personal-records', () => {
 
         expect(res.status).toBe(201)
         // Admin skips trainer–trainee ownership check
+        expect(prisma.trainerTrainee.findFirst).not.toHaveBeenCalled()
         expect(prisma.trainerTrainee.findUnique).not.toHaveBeenCalled()
     })
 
     it('returns 403 when trainer creates record for another trainer\'s trainee', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockOtherTrainerSession)
-        vi.mocked(prisma.trainerTrainee.findUnique).mockResolvedValue(null) // no relation
+        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue(null)
 
         const req = makeRequest('http://localhost:3000/api/personal-records', {
             method: 'POST',
@@ -362,7 +412,7 @@ describe('POST /api/personal-records', () => {
 
     it('returns 404 when exercise does not exist', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.trainerTrainee.findUnique).mockResolvedValue({
+        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue({
             trainerId: 'trainer-uuid-1',
             traineeId: 'trainee-uuid-1',
         } as any)

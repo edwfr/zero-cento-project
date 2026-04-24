@@ -35,6 +35,24 @@ vi.mock('@/lib/prisma', () => ({
             findFirst: vi.fn(),
             findUnique: vi.fn(),
         },
+        week: {
+            findUnique: vi.fn(),
+            findFirst: vi.fn(),
+            findMany: vi.fn(),
+        },
+        workoutExercise: {
+            deleteMany: vi.fn(),
+            createMany: vi.fn(),
+        },
+        $transaction: vi.fn(async (fn: (tx: any) => Promise<any>) => {
+            const tx = {
+                workoutExercise: {
+                    deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+                    createMany: vi.fn().mockResolvedValue({ count: 1 }),
+                },
+            }
+            return fn(tx)
+        }),
     },
 }))
 
@@ -48,6 +66,8 @@ vi.mock('@/lib/logger', () => ({
 }))
 
 import { GET, POST } from '@/app/api/programs/route'
+import { POST as copyWeekPOST } from '@/app/api/programs/[id]/copy-week/route'
+import { POST as copyFirstWeekPOST } from '@/app/api/programs/[id]/copy-first-week/route'
 import { requireRole } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import type { User } from '@prisma/client'
@@ -328,5 +348,299 @@ describe('POST /api/programs', () => {
 
         const res = await POST(req)
         expect(res.status).toBe(400)
+    })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Fixtures for copy-week / copy-first-week
+// ═══════════════════════════════════════════════════════════════════════════
+
+const mockProgramMeta = {
+    id: 'prog-1',
+    trainerId: 'trainer-uuid-1',
+    status: 'draft',
+}
+
+const mockSourceWeek = {
+    id: 'week-1',
+    programId: 'prog-1',
+    weekNumber: 1,
+    weekType: 'normal',
+    workouts: [
+        {
+            id: 'workout-src-1',
+            dayIndex: 1,
+            workoutExercises: [
+                {
+                    id: 'we-src-1',
+                    exerciseId: 'ex-1',
+                    variant: null,
+                    sets: 5,
+                    reps: '5',
+                    targetRpe: 8,
+                    weightType: 'absolute',
+                    weight: 100,
+                    effectiveWeight: 100,
+                    restTime: 'm3',
+                    isWarmup: false,
+                    notes: null,
+                    order: 0,
+                },
+            ],
+        },
+    ],
+}
+
+const mockTargetWeek = {
+    id: 'week-2',
+    programId: 'prog-1',
+    weekNumber: 2,
+    weekType: 'normal',
+    workouts: [{ id: 'workout-tgt-1', dayIndex: 1 }],
+}
+
+const mockUpdatedWeek = {
+    id: 'week-2',
+    programId: 'prog-1',
+    weekNumber: 2,
+    weekType: 'normal',
+    workouts: [
+        {
+            id: 'workout-tgt-1',
+            dayIndex: 1,
+            workoutExercises: [
+                {
+                    id: 'we-new-1',
+                    exerciseId: 'ex-1',
+                    variant: null,
+                    sets: 5,
+                    reps: '5',
+                    targetRpe: 8,
+                    weightType: 'absolute',
+                    weight: 100,
+                    effectiveWeight: 100,
+                    restTime: 'm3',
+                    isWarmup: false,
+                    notes: null,
+                    order: 0,
+                    exercise: {
+                        id: 'ex-1',
+                        name: 'Squat',
+                        type: 'fundamental',
+                        notes: [],
+                        movementPattern: null,
+                        exerciseMuscleGroups: [],
+                    },
+                },
+            ],
+        },
+    ],
+}
+
+function makeCopyWeekRequest(programId: string, sourceWeekId: string): NextRequest {
+    return new NextRequest(`http://localhost/api/programs/${programId}/copy-week`, {
+        method: 'POST',
+        body: JSON.stringify({ sourceWeekId }),
+        headers: { 'Content-Type': 'application/json' },
+    })
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// POST /api/programs/[id]/copy-week
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('POST /api/programs/[id]/copy-week', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+    })
+
+    it('returns 400 when sourceWeekId is missing', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        const req = new NextRequest('http://localhost/api/programs/prog-1/copy-week', {
+            method: 'POST',
+            body: JSON.stringify({}),
+            headers: { 'Content-Type': 'application/json' },
+        })
+        const res = await copyWeekPOST(req, { params: Promise.resolve({ id: 'prog-1' }) })
+        expect(res.status).toBe(400)
+    })
+
+    it('returns 404 when program not found', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue(null)
+        vi.mocked(prisma.week.findUnique).mockResolvedValue(mockSourceWeek as any)
+
+        const res = await copyWeekPOST(
+            makeCopyWeekRequest('prog-missing', 'week-1'),
+            { params: Promise.resolve({ id: 'prog-missing' }) }
+        )
+        expect(res.status).toBe(404)
+    })
+
+    it('returns 404 when source week not found', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue(mockProgramMeta as any)
+        vi.mocked(prisma.week.findUnique).mockResolvedValue(null)
+
+        const res = await copyWeekPOST(
+            makeCopyWeekRequest('prog-1', 'week-missing'),
+            { params: Promise.resolve({ id: 'prog-1' }) }
+        )
+        expect(res.status).toBe(404)
+    })
+
+    it('returns 403 when trainer does not own the program', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+            ...mockProgramMeta,
+            trainerId: 'other-trainer',
+        } as any)
+        vi.mocked(prisma.week.findUnique).mockResolvedValue(mockSourceWeek as any)
+
+        const res = await copyWeekPOST(
+            makeCopyWeekRequest('prog-1', 'week-1'),
+            { params: Promise.resolve({ id: 'prog-1' }) }
+        )
+        expect(res.status).toBe(403)
+    })
+
+    it('returns 403 when program is not draft', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+            ...mockProgramMeta,
+            status: 'active',
+        } as any)
+        vi.mocked(prisma.week.findUnique).mockResolvedValue(mockSourceWeek as any)
+
+        const res = await copyWeekPOST(
+            makeCopyWeekRequest('prog-1', 'week-1'),
+            { params: Promise.resolve({ id: 'prog-1' }) }
+        )
+        expect(res.status).toBe(403)
+    })
+
+    it('returns 400 when source week has no exercises', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue(mockProgramMeta as any)
+        vi.mocked(prisma.week.findUnique).mockResolvedValue({
+            ...mockSourceWeek,
+            workouts: [{ id: 'w1', dayIndex: 1, workoutExercises: [] }],
+        } as any)
+
+        const res = await copyWeekPOST(
+            makeCopyWeekRequest('prog-1', 'week-1'),
+            { params: Promise.resolve({ id: 'prog-1' }) }
+        )
+        expect(res.status).toBe(400)
+    })
+
+    it('returns 400 when no following week exists', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue(mockProgramMeta as any)
+        vi.mocked(prisma.week.findUnique).mockResolvedValue(mockSourceWeek as any)
+        vi.mocked(prisma.week.findFirst).mockResolvedValue(null)
+
+        const res = await copyWeekPOST(
+            makeCopyWeekRequest('prog-1', 'week-1'),
+            { params: Promise.resolve({ id: 'prog-1' }) }
+        )
+        expect(res.status).toBe(400)
+    })
+
+    it('returns 200 with updatedWeek on success', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue(mockProgramMeta as any)
+        vi.mocked(prisma.week.findUnique)
+            .mockResolvedValueOnce(mockSourceWeek as any)   // source week
+            .mockResolvedValueOnce(mockUpdatedWeek as any)  // updatedWeek after transaction
+        vi.mocked(prisma.week.findFirst).mockResolvedValue(mockTargetWeek as any)
+
+        const res = await copyWeekPOST(
+            makeCopyWeekRequest('prog-1', 'week-1'),
+            { params: Promise.resolve({ id: 'prog-1' }) }
+        )
+
+        expect(res.status).toBe(200)
+        const body = (await res.json()) as any
+        expect(body.data.updatedWeek).toBeDefined()
+        expect(body.data.updatedWeek.id).toBe('week-2')
+    })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+// POST /api/programs/[id]/copy-first-week
+// ═══════════════════════════════════════════════════════════════════════════
+
+function makeCopyFirstWeekRequest(programId: string): NextRequest {
+    return new NextRequest(`http://localhost/api/programs/${programId}/copy-first-week`, {
+        method: 'POST',
+        body: JSON.stringify({}),
+        headers: { 'Content-Type': 'application/json' },
+    })
+}
+
+describe('POST /api/programs/[id]/copy-first-week', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+    })
+
+    it('returns 404 when program not found', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue(null)
+        vi.mocked(prisma.week.findFirst).mockResolvedValue(mockSourceWeek as any)
+
+        const res = await copyFirstWeekPOST(
+            makeCopyFirstWeekRequest('prog-missing'),
+            { params: Promise.resolve({ id: 'prog-missing' }) }
+        )
+        expect(res.status).toBe(404)
+    })
+
+    it('returns 200 with 0 when program has only one week (no target weeks)', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue(mockProgramMeta as any)
+        vi.mocked(prisma.week.findFirst).mockResolvedValue(mockSourceWeek as any)
+        vi.mocked(prisma.week.findMany).mockResolvedValue([])
+
+        const res = await copyFirstWeekPOST(
+            makeCopyFirstWeekRequest('prog-1'),
+            { params: Promise.resolve({ id: 'prog-1' }) }
+        )
+        const body = (await res.json()) as any
+        expect(res.status).toBe(200)
+        expect(body.data.updatedWeeks).toBe(0)
+    })
+
+    it('returns 403 when trainer does not own the program', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+            ...mockProgramMeta,
+            trainerId: 'other-trainer',
+        } as any)
+        vi.mocked(prisma.week.findFirst).mockResolvedValue(mockSourceWeek as any)
+
+        const res = await copyFirstWeekPOST(
+            makeCopyFirstWeekRequest('prog-1'),
+            { params: Promise.resolve({ id: 'prog-1' }) }
+        )
+        expect(res.status).toBe(403)
+    })
+
+    it('returns 200 with updatedWeeks count on success', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue(mockProgramMeta as any)
+        vi.mocked(prisma.week.findFirst).mockResolvedValue(mockSourceWeek as any)
+        vi.mocked(prisma.week.findMany).mockResolvedValue([
+            { id: 'week-2', weekNumber: 2, workouts: [{ id: 'wo-2', dayIndex: 1 }] },
+            { id: 'week-3', weekNumber: 3, workouts: [{ id: 'wo-3', dayIndex: 1 }] },
+        ] as any)
+
+        const res = await copyFirstWeekPOST(
+            makeCopyFirstWeekRequest('prog-1'),
+            { params: Promise.resolve({ id: 'prog-1' }) }
+        )
+        const body = (await res.json()) as any
+        expect(res.status).toBe(200)
+        expect(body.data.updatedWeeks).toBe(2)
     })
 })
