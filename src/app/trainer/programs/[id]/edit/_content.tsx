@@ -14,6 +14,7 @@ import MovementPatternTag from '@/components/MovementPatternTag'
 import WeekTypeBadge from '@/components/WeekTypeBadge'
 import AutocompleteSearch from '@/components/AutocompleteSearch'
 import { Input } from '@/components/Input'
+import { ActionIconButton } from '@/components'
 import {
     ArrowLeft,
     BarChart3,
@@ -2094,19 +2095,16 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                     className="min-w-0 flex-1"
                                                                 />
 
-                                                                <button
-                                                                    type="button"
+                                                                <ActionIconButton
+                                                                    variant="delete"
+                                                                    label={t('editProgram.deleteRowTitle')}
                                                                     onClick={() =>
                                                                         removeStructureRow(
                                                                             workoutIndex,
                                                                             structureRow.id
                                                                         )
                                                                     }
-                                                                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
-                                                                    title={t('editProgram.deleteRowTitle')}
-                                                                >
-                                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                                </button>
+                                                                />
                                                             </div>
 
                                                             <div className="mt-2 flex items-center gap-1.5">
@@ -3078,8 +3076,9 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
                                                                                             {!readOnly && (
                                                                                                 <div>
-                                                                                                    <button
-                                                                                                        type="button"
+                                                                                                    <ActionIconButton
+                                                                                                        variant="delete"
+                                                                                                        label={t('editProgram.deleteRowTitle')}
                                                                                                         onClick={() =>
                                                                                                             setConfirmDeleteRow({
                                                                                                                 rowId: row.id,
@@ -3088,18 +3087,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                             })
                                                                                                         }
                                                                                                         disabled={rowBusy}
-                                                                                                        className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-1.5 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
-                                                                                                        title={t('editProgram.deleteRowTitle')}
-                                                                                                    >
-                                                                                                        {deletingRowId === row.id ? (
-                                                                                                            <LoadingSpinner
-                                                                                                                size="sm"
-                                                                                                                color="primary"
-                                                                                                            />
-                                                                                                        ) : (
-                                                                                                            <Trash2 className="w-3.5 h-3.5" />
-                                                                                                        )}
-                                                                                                    </button>
+                                                                                                        isLoading={deletingRowId === row.id}
+                                                                                                    />
                                                                                                 </div>
                                                                                             )}
                                                                                         </div>
