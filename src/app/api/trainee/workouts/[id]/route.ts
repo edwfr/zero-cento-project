@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
-import { calculateEffectiveWeight } from '@/lib/calculations'
+import { loadTraineePrMap, resolveEffectiveWeight } from '@/lib/calculations'
 import { logger } from '@/lib/logger'
 
 /**
@@ -69,8 +69,8 @@ export async function GET(
         const tomorrow = new Date(today)
         tomorrow.setDate(tomorrow.getDate() + 1)
 
-        // Parallelize: fetch feedback and calculate effective weights concurrently
-        const [existingFeedback, exercisesWithWeights] = await Promise.all([
+        // Parallelize: fetch feedback and trainee PR map concurrently
+        const [existingFeedback, prMap] = await Promise.all([
             prisma.exerciseFeedback.findMany({
                 where: {
                     workoutExerciseId: {
@@ -93,54 +93,50 @@ export async function GET(
                     updatedAt: 'desc',
                 },
             }),
-            // Calculate effective weight for each exercise in parallel
-            Promise.all(
-                workout.workoutExercises.map(async (we) => {
-                    let effectiveWeight: number | null =
-                        typeof we.effectiveWeight === 'number'
-                            ? we.effectiveWeight
-                            : we.weightType === 'absolute'
-                                ? we.weight
-                                : null
-
-                    if (effectiveWeight === null) {
-                        try {
-                            effectiveWeight = await calculateEffectiveWeight(
-                                we,
-                                session.user.id
-                            )
-                        } catch (error) {
-                            // If calculation fails (e.g., missing 1RM), effectiveWeight remains null
-                            logger.warn(
-                                {
-                                    workoutExerciseId: we.id,
-                                    exerciseId: we.exerciseId,
-                                    weightType: we.weightType,
-                                    error: error instanceof Error ? error.message : String(error),
-                                },
-                                'Failed to calculate effective weight'
-                            )
-                        }
-                    }
-
-                    return {
-                        id: we.id,
-                        exercise: we.exercise,
-                        variant: we.variant,
-                        sets: we.sets,
-                        reps: we.reps,
-                        targetRpe: we.targetRpe,
-                        weightType: we.weightType,
-                        weight: we.weight,
-                        effectiveWeight, // Calculated server-side
-                        restTime: we.restTime,
-                        isWarmup: we.isWarmup,
-                        notes: we.notes,
-                        order: we.order,
-                    }
-                })
-            ),
+            loadTraineePrMap(session.user.id),
         ])
+
+        const siblings = workout.workoutExercises
+        const exercisesWithWeights = workout.workoutExercises.map((we) => {
+            let effectiveWeight: number | null =
+                typeof we.effectiveWeight === 'number'
+                    ? we.effectiveWeight
+                    : we.weightType === 'absolute'
+                        ? we.weight
+                        : null
+
+            if (effectiveWeight === null) {
+                try {
+                    effectiveWeight = resolveEffectiveWeight(we, prMap, siblings)
+                } catch (error) {
+                    logger.warn(
+                        {
+                            workoutExerciseId: we.id,
+                            exerciseId: we.exerciseId,
+                            weightType: we.weightType,
+                            error: error instanceof Error ? error.message : String(error),
+                        },
+                        'Failed to calculate effective weight'
+                    )
+                }
+            }
+
+            return {
+                id: we.id,
+                exercise: we.exercise,
+                variant: we.variant,
+                sets: we.sets,
+                reps: we.reps,
+                targetRpe: we.targetRpe,
+                weightType: we.weightType,
+                weight: we.weight,
+                effectiveWeight,
+                restTime: we.restTime,
+                isWarmup: we.isWarmup,
+                notes: we.notes,
+                order: we.order,
+            }
+        })
 
         // Create a map for quick lookup of feedback
         const feedbackMap = new Map<string, any>()
