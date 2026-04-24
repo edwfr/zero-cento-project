@@ -44,6 +44,7 @@ interface WorkoutExercise {
     effectiveWeight: number | null
     restTime: RestTime
     isWarmup: boolean
+    isSkeletonExercise: boolean
     notes: string | null
     exercise: {
         id: string

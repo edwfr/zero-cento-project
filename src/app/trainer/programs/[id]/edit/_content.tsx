@@ -80,6 +80,7 @@ interface WorkoutExercise {
     effectiveWeight: number | null
     restTime: RestTime
     isWarmup: boolean
+    isSkeletonExercise: boolean
     notes: string | null
     exercise: ExerciseReference
 }
@@ -1484,6 +1485,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             effectiveWeight: parsedWeight.effectiveWeight,
             restTime: row.restTime,
             isWarmup: row.isWarmup,
+            isSkeletonExercise: row.isDraft,
             notes: row.notes,
         }
     }
