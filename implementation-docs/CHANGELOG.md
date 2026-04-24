@@ -8,6 +8,31 @@ Per stato corrente usare sempre [checklist.md](./checklist.md).
 
 ---
 
+## 2026-04-24 — isSkeletonExercise Flag on WorkoutExercise
+
+**Goal:** Persist `isSkeletonExercise` flag so that exercises added manually in step 3 do not corrupt the step 2 skeleton view.
+
+**Changes:**
+- **Database:** Added `isSkeletonExercise Boolean @default(false)` column to `workout_exercises` table via migration `20260424120000_add_skeleton_exercise_flag`
+- **Schema:** Added `isSkeletonExercise: z.boolean().default(false).optional()` to `workoutExerciseSchema` in `src/schemas/workout-exercise.ts`
+- **API Routes:**
+  - POST `/api/programs/[id]/workouts/[workoutId]/exercises`: Destructure and persist `isSkeletonExercise` flag
+  - POST `/api/programs/[id]/copy-first-week`: Propagate flag in `createMany` mapping
+  - POST `/api/programs/[id]/copy-week`: Propagate flag in `createMany` mapping
+- **Structure Utils:** `buildStructureRowsForWorkout()` now filters by `isSkeletonExercise` when at least one exercise has the flag set to `true`; falls back to all exercises when none have the flag (backwards compatibility for programs created before this change)
+- **Frontend (`_content.tsx`):**
+  - Updated `WorkoutExercise` interface to include `isSkeletonExercise: boolean`
+  - Updated `EditableWorkoutExerciseRow` interface to include `isSkeletonExercise: boolean`
+  - `buildEditableRow()` now maps `isSkeletonExercise` from WorkoutExercise
+  - `buildWorkoutExercisePayload()` includes `isSkeletonExercise` in API payload
+  - `addDraftRow()`: Sets `isSkeletonExercise: false` for manually added rows (step 3)
+  - `applyStructureToAllWeeks()`: Sets `isSkeletonExercise: true` for skeleton-applied rows (step 2)
+- **Tests:** Updated `structure-utils.test.ts` with new filter/fallback tests; added `isSkeletonExercise` field to test fixtures in `calculations.test.ts`
+
+**Backwards Compatibility:** Existing programs (all rows with `isSkeletonExercise: false`) will use fallback logic "use all exercises", avoiding regressions. New programs created after this change correctly distinguish skeleton-applied vs. manually-added exercises.
+
+---
+
 ## [Unreleased] - 2026-04-23
 
 ### Fixed

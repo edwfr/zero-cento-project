@@ -79,6 +79,7 @@ interface WorkoutExercise {
     effectiveWeight: number | null
     restTime: RestTime
     isWarmup: boolean
+    isSkeletonExercise: boolean
     notes: string | null
     exercise: ExerciseReference
 }
@@ -142,6 +143,7 @@ interface EditableWorkoutExerciseRow {
     targetRpe: string
     weight: string
     isWarmup: boolean
+    isSkeletonExercise: boolean
     order: number
     restTime: RestTime
     notes: string | null
@@ -345,6 +347,7 @@ function buildEditableRow(
             workoutExercise.weight
         ),
         isWarmup: workoutExercise.isWarmup,
+        isSkeletonExercise: workoutExercise.isSkeletonExercise,
         order: workoutExercise.order,
         restTime: workoutExercise.restTime,
         notes: workoutExercise.notes,
@@ -1317,6 +1320,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 targetRpe: '',
                 weight: '',
                 isWarmup: false,
+                isSkeletonExercise: false,
                 order: nextOrder,
                 restTime: 'm2',
                 notes: null,
@@ -1515,6 +1519,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             effectiveWeight: parsedWeight.effectiveWeight,
             restTime: row.restTime,
             isWarmup: row.isWarmup,
+            isSkeletonExercise: row.isSkeletonExercise,
             notes: row.notes,
         }
     }
@@ -1827,6 +1832,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             targetRpe: '',
                             weight: '',
                             isWarmup: false,
+                            isSkeletonExercise: true,
                             order: nextOrder,
                             restTime: 'm2',
                             notes: null,

@@ -122,6 +122,7 @@ export async function POST(
                         effectiveWeight: exercise.effectiveWeight,
                         restTime: exercise.restTime,
                         isWarmup: exercise.isWarmup,
+                        isSkeletonExercise: exercise.isSkeletonExercise,
                         notes: exercise.notes,
                         order: exercise.order,
                     })),
