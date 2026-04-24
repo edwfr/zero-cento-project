@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { createClient } from '@/lib/supabase-client'
 import {
+    ArrowLeft,
     Home,
     Users,
     ClipboardList,
@@ -29,6 +30,7 @@ interface User {
 interface DashboardLayoutProps {
     user: User
     children: ReactNode
+    backHref?: string
 }
 
 const NAV_ITEMS: Record<string, { href: string; icon: ReactNode; titleKey: string }[]> = {
@@ -56,7 +58,7 @@ const NAV_ITEMS: Record<string, { href: string; icon: ReactNode; titleKey: strin
     ],
 }
 
-export default function DashboardLayout({ user, children }: DashboardLayoutProps) {
+export default function DashboardLayout({ user, children, backHref }: DashboardLayoutProps) {
     const router = useRouter()
     const { t } = useTranslation('navigation')
     const [menuOpen, setMenuOpen] = useState(false)
@@ -88,6 +90,17 @@ export default function DashboardLayout({ user, children }: DashboardLayoutProps
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                                 </svg>
                             </button>
+
+                            {backHref && (
+                                <Link
+                                    href={backHref}
+                                    className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors text-gray-700 hover:text-brand-primary"
+                                    title={t('goBack')}
+                                    aria-label={t('goBack')}
+                                >
+                                    <ArrowLeft className="w-5 h-5" />
+                                </Link>
+                            )}
 
                             {/* Logo and App Name */}
                             <Link href={`/${user.role}/dashboard`} className="flex items-center space-x-3 flex-shrink-0">
