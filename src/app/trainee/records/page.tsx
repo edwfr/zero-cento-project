@@ -15,7 +15,7 @@ export default async function PersonalRecordsPage() {
     }
 
     return (
-        <DashboardLayout user={session.user}>
+        <DashboardLayout user={session.user} backHref="/trainee/dashboard">
             <PersonalRecordsContent />
         </DashboardLayout>
     )

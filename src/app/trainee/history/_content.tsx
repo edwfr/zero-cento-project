@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { SkeletonList } from '@/components'
-import { ArrowLeft, ClipboardList } from 'lucide-react'
+import { ClipboardList } from 'lucide-react'
 import { formatDate } from '@/lib/date-format'
 
 type ProgramStatus = 'draft' | 'active' | 'completed'
@@ -170,13 +170,6 @@ export default function HistoryContent() {
         <div className="max-w-6xl mx-auto">
             {/* Header */}
             <div className="mb-8">
-                <Link
-                    href="/trainee/dashboard"
-                    className="inline-flex items-center gap-2 text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    {t('history.backToDashboard')}
-                </Link>
                 <h1 className="text-3xl font-bold text-gray-900">{t('history.title')}</h1>
                 <p className="text-gray-600 mt-2">
                     {t('history.description')}

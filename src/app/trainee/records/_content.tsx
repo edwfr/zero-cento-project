@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { SkeletonTable } from '@/components'
-import { BarChart2, ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react'
+import { BarChart2, ChevronDown, ChevronUp } from 'lucide-react'
 import { formatDate } from '@/lib/date-format'
 import MovementPatternTag from '@/components/MovementPatternTag'
 import { Input } from '@/components/Input'
@@ -123,13 +123,6 @@ export default function PersonalRecordsContent() {
         <div className="max-w-6xl mx-auto">
             {/* Header */}
             <div className="mb-8">
-                <Link
-                    href="/trainee/dashboard"
-                    className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-flex items-center gap-2"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    {t('records.backToDashboard')}
-                </Link>
                 <h1 className="text-3xl font-bold text-gray-900">{t('records.title')}</h1>
                 <p className="text-gray-600 mt-2">
                     {t('records.description')}
