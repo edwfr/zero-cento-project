@@ -192,12 +192,16 @@ export async function DELETE(
             orderBy: { order: 'asc' },
         })
 
-        // Update order to be sequential (1, 2, 3, ...)
-        for (let i = 0; i < remainingExercises.length; i++) {
-            await prisma.workoutExercise.update({
-                where: { id: remainingExercises[i].id },
-                data: { order: i + 1 },
-            })
+        // Update order to be sequential (1, 2, 3, ...) in a single transaction
+        if (remainingExercises.length > 0) {
+            await prisma.$transaction(
+                remainingExercises.map((exercise, i) =>
+                    prisma.workoutExercise.update({
+                        where: { id: exercise.id },
+                        data: { order: i + 1 },
+                    })
+                )
+            )
         }
 
         logger.info(

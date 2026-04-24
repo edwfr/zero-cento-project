@@ -8,6 +8,17 @@ Per stato corrente usare sempre [checklist.md](./checklist.md).
 
 ---
 
+## 2026-04-24 — Trainer edit program: 5 UX/performance fixes
+
+- **perf** DELETE exercise: batch order recalculation into single `$transaction` (was N sequential queries)
+- **fix** Save workout: rows no longer disappear one-by-one; draft rows batch-removed after full save completes
+- **fix** Copy week: target week draft rows cleared after copy so orphan rows no longer appear
+- **feat** Max reps: exercises can now have an optional max rep value (stored as `min-max` e.g. `8-12`)
+- **feat** Drag-and-drop: workout exercises now reorderable via drag handle using `@dnd-kit/core` + `@dnd-kit/sortable`
+- **test** Added integration tests for copy-week API route and unit tests for reps parsing utilities
+
+---
+
 ## 2026-04-24 — Test Suite Review & Consistency
 
 - Added `.nvmrc` (Node 20) to unblock Vitest 4.x startup error on Node 18
