@@ -15,7 +15,7 @@ export default async function NewExercisePage() {
     }
 
     return (
-        <DashboardLayout user={session.user}>
+        <DashboardLayout user={session.user} backHref="/trainer/exercises">
             <NewExerciseContent />
         </DashboardLayout>
     )
