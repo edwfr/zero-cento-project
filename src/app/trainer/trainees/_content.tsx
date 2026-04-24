@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { SkeletonTable } from '@/components'
+import { SkeletonTable, ActionIconButton, InlineActions } from '@/components'
 import { useToast } from '@/components/ToastNotification'
 import { formatDate } from '@/lib/date-format'
 import { useTranslation } from 'react-i18next'
@@ -215,30 +215,18 @@ export default function TrainerTraineesContent() {
                                             {formatDate(trainee.createdAt)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div className="flex justify-end space-x-2">
-                                                <Link
+                                            <InlineActions>
+                                                <ActionIconButton
+                                                    variant="view"
+                                                    label={t('athletes.details')}
                                                     href={`/trainer/trainees/${trainee.id}`}
-                                                    className="text-brand-primary hover:text-brand-primary/80 p-1 rounded"
-                                                    title={t('athletes.details')}
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                </Link>
-                                                <button
-                                                    onClick={() =>
-                                                        handleToggleStatus(
-                                                            trainee.id,
-                                                            trainee.isActive
-                                                        )
-                                                    }
-                                                    className={`p-1 rounded ${trainee.isActive
-                                                        ? 'text-red-600 hover:text-red-700'
-                                                        : 'text-green-600 hover:text-green-700'
-                                                        }`}
-                                                    title={trainee.isActive ? t('athletes.deactivate') : t('athletes.activate')}
-                                                >
-                                                    {trainee.isActive ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
-                                                </button>
-                                            </div>
+                                                />
+                                                <ActionIconButton
+                                                    variant={trainee.isActive ? 'deactivate' : 'activate'}
+                                                    label={trainee.isActive ? t('athletes.deactivate') : t('athletes.activate')}
+                                                    onClick={() => handleToggleStatus(trainee.id, trainee.isActive)}
+                                                />
+                                            </InlineActions>
                                         </td>
                                     </tr>
                                 ))}

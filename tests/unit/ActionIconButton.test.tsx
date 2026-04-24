@@ -49,6 +49,16 @@ describe('ActionIconButton', () => {
         render(<ActionIconButton variant="delete" label="Elimina" onClick={vi.fn()} isLoading />)
         expect(screen.getByRole('button', { name: 'Elimina' })).toBeDisabled()
     })
+
+    it('renders activate variant as a button', () => {
+        render(<ActionIconButton variant="activate" label="Attiva" onClick={vi.fn()} />)
+        expect(screen.getByRole('button', { name: 'Attiva' })).toBeInTheDocument()
+    })
+
+    it('renders deactivate variant as a button', () => {
+        render(<ActionIconButton variant="deactivate" label="Disattiva" onClick={vi.fn()} />)
+        expect(screen.getByRole('button', { name: 'Disattiva' })).toBeInTheDocument()
+    })
 })
 
 describe('InlineActions', () => {
