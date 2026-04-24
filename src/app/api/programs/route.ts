@@ -196,43 +196,56 @@ export async function GET(request: NextRequest) {
         const testsSummaryByProgramId = new Map<string, ProgramTestsSummary>()
 
         if (programIds.length > 0) {
-            const programsWithTestWeeks = await prisma.trainingProgram.findMany({
-                where: {
-                    id: {
-                        in: programIds,
-                    },
-                },
-                select: {
-                    id: true,
-                    weeks: {
-                        where: {
-                            weekType: 'test',
-                        },
-                        select: {
-                            weekNumber: true,
-                            workouts: {
-                                select: {
-                                    workoutExercises: {
-                                        select: {
-                                            exerciseFeedbacks: {
-                                                where: {
-                                                    completed: true,
-                                                },
-                                                select: {
-                                                    id: true,
+            const [programsWithTestWeeks, completedFeedbacks] = await Promise.all([
+                prisma.trainingProgram.findMany({
+                    where: { id: { in: programIds } },
+                    select: {
+                        id: true,
+                        weeks: {
+                            where: { weekType: 'test' },
+                            select: {
+                                weekNumber: true,
+                                workouts: {
+                                    select: {
+                                        workoutExercises: {
+                                            select: {
+                                                exerciseFeedbacks: {
+                                                    where: { completed: true },
+                                                    select: { id: true },
                                                 },
                                             },
                                         },
                                     },
                                 },
                             },
-                        },
-                        orderBy: {
-                            weekNumber: 'asc',
+                            orderBy: { weekNumber: 'asc' },
                         },
                     },
-                },
-            })
+                }),
+                prisma.exerciseFeedback.findMany({
+                    where: {
+                        completed: true,
+                        workoutExercise: {
+                            workout: {
+                                week: { programId: { in: programIds } },
+                            },
+                        },
+                    },
+                    select: {
+                        date: true,
+                        workoutExercise: {
+                            select: {
+                                workout: {
+                                    select: {
+                                        week: { select: { programId: true } },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    orderBy: { date: 'desc' },
+                }),
+            ])
 
             for (const program of programsWithTestWeeks) {
                 const testWeekSummaries = program.weeks.map((week) => {
@@ -280,42 +293,6 @@ export async function GET(request: NextRequest) {
                     completedTestsCount,
                 })
             }
-        }
-
-        if (programIds.length > 0) {
-            const completedFeedbacks = await prisma.exerciseFeedback.findMany({
-                where: {
-                    completed: true,
-                    workoutExercise: {
-                        workout: {
-                            week: {
-                                programId: {
-                                    in: programIds,
-                                },
-                            },
-                        },
-                    },
-                },
-                select: {
-                    date: true,
-                    workoutExercise: {
-                        select: {
-                            workout: {
-                                select: {
-                                    week: {
-                                        select: {
-                                            programId: true,
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                    },
-                },
-                orderBy: {
-                    date: 'desc',
-                },
-            })
 
             for (const feedback of completedFeedbacks) {
                 const programId = feedback.workoutExercise.workout.week.programId

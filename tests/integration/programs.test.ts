@@ -39,6 +39,7 @@ vi.mock('@/lib/prisma', () => ({
             findUnique: vi.fn(),
             findFirst: vi.fn(),
             findMany: vi.fn(),
+            update: vi.fn(),
         },
         workoutExercise: {
             deleteMany: vi.fn(),
@@ -68,6 +69,7 @@ vi.mock('@/lib/logger', () => ({
 import { GET, POST } from '@/app/api/programs/route'
 import { POST as copyWeekPOST } from '@/app/api/programs/[id]/copy-week/route'
 import { POST as copyFirstWeekPOST } from '@/app/api/programs/[id]/copy-first-week/route'
+import { POST as publishPOST } from '@/app/api/programs/[id]/publish/route'
 import { requireRole } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import type { User } from '@prisma/client'
@@ -642,5 +644,148 @@ describe('POST /api/programs/[id]/copy-first-week', () => {
         const body = (await res.json()) as any
         expect(res.status).toBe(200)
         expect(body.data.updatedWeeks).toBe(2)
+    })
+})
+
+// ── Fixtures for publish ──────────────────────────────────────────────────────
+
+const mockPublishProgram = {
+    id: 'prog-1',
+    trainerId: 'trainer-uuid-1',
+    traineeId: 'trainee-uuid-1',
+    status: 'draft',
+    durationWeeks: 2,
+    workoutsPerWeek: 3,
+    weeks: [
+        {
+            id: 'week-1',
+            weekNumber: 1,
+            workouts: [
+                { id: 'wo-1', workoutExercises: [{ id: 'we-1' }] },
+            ],
+        },
+        {
+            id: 'week-2',
+            weekNumber: 2,
+            workouts: [
+                { id: 'wo-2', workoutExercises: [{ id: 'we-2' }] },
+            ],
+        },
+    ],
+}
+
+const mockUpdatedPublishedProgram = {
+    ...mockPublishProgram,
+    status: 'active',
+    startDate: new Date('2026-05-01'),
+    trainer: { id: 'trainer-uuid-1', firstName: 'Marco', lastName: 'Trainer' },
+    trainee: { id: 'trainee-uuid-1', firstName: 'Mario', lastName: 'Atleta' },
+}
+
+function makePublishRequest(programId: string, startDate = '2026-05-01'): NextRequest {
+    return new NextRequest(`http://localhost/api/programs/${programId}/publish`, {
+        method: 'POST',
+        body: JSON.stringify({ startDate }),
+        headers: { 'Content-Type': 'application/json' },
+    })
+}
+
+describe('POST /api/programs/[id]/publish', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+    })
+
+    it('returns 400 when startDate is missing', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        const req = new NextRequest('http://localhost/api/programs/prog-1/publish', {
+            method: 'POST',
+            body: JSON.stringify({}),
+            headers: { 'Content-Type': 'application/json' },
+        })
+        const res = await publishPOST(req, { params: Promise.resolve({ id: 'prog-1' }) })
+        expect(res.status).toBe(400)
+    })
+
+    it('returns 404 when program not found', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue(null)
+        const res = await publishPOST(
+            makePublishRequest('prog-missing'),
+            { params: Promise.resolve({ id: 'prog-missing' }) }
+        )
+        expect(res.status).toBe(404)
+    })
+
+    it('returns 403 when trainer does not own program', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+            ...mockPublishProgram,
+            trainerId: 'other-trainer',
+        } as any)
+        const res = await publishPOST(
+            makePublishRequest('prog-1'),
+            { params: Promise.resolve({ id: 'prog-1' }) }
+        )
+        expect(res.status).toBe(403)
+    })
+
+    it('returns 400 when program is not draft', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+            ...mockPublishProgram,
+            status: 'active',
+        } as any)
+        const res = await publishPOST(
+            makePublishRequest('prog-1'),
+            { params: Promise.resolve({ id: 'prog-1' }) }
+        )
+        expect(res.status).toBe(400)
+    })
+
+    it('returns 400 when a workout has no exercises', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+            ...mockPublishProgram,
+            weeks: [
+                {
+                    id: 'week-1',
+                    weekNumber: 1,
+                    workouts: [{ id: 'wo-empty', workoutExercises: [] }],
+                },
+            ],
+        } as any)
+        const res = await publishPOST(
+            makePublishRequest('prog-1'),
+            { params: Promise.resolve({ id: 'prog-1' }) }
+        )
+        expect(res.status).toBe(400)
+    })
+
+    it('parallelizes week.update calls and returns 200 on success', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainingProgram.findUnique)
+            .mockResolvedValueOnce(mockPublishProgram as any)
+            .mockResolvedValueOnce(mockUpdatedPublishedProgram as any)
+        vi.mocked(prisma.trainingProgram.update).mockResolvedValue(mockUpdatedPublishedProgram as any)
+        vi.mocked(prisma.week.update).mockResolvedValue({} as any)
+
+        const res = await publishPOST(
+            makePublishRequest('prog-1'),
+            { params: Promise.resolve({ id: 'prog-1' }) }
+        )
+
+        expect(res.status).toBe(200)
+        // Both weeks updated (2 week.update calls, one per week)
+        expect(prisma.week.update).toHaveBeenCalledTimes(2)
+        // Correct startDate assigned to week 1 (weekNumber 1 → offset 0 days)
+        expect(vi.mocked(prisma.week.update).mock.calls[0][0]).toMatchObject({
+            where: { id: 'week-1' },
+            data: { startDate: new Date('2026-05-01') },
+        })
+        // Week 2 → offset 7 days
+        expect(vi.mocked(prisma.week.update).mock.calls[1][0]).toMatchObject({
+            where: { id: 'week-2' },
+            data: { startDate: new Date('2026-05-08') },
+        })
     })
 })

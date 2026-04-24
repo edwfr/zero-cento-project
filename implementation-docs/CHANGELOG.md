@@ -8,6 +8,15 @@ Per stato corrente usare sempre [checklist.md](./checklist.md).
 
 ---
 
+## 2026-04-24 — API performance fixes: 3 additional bottlenecks eliminated
+
+- **perf** `publish/route.ts`: sequential `week.update` for-loop replaced with `Promise.all` — eliminates N serial DB writes (was 12 writes sequential for a 12-week program)
+- **perf** `admin/reports/global/route.ts`: removed dead `setPerformed.aggregate` query (result was unused); replaced `setPerformed.findMany` full table scan with single `$queryRaw SELECT SUM(reps * weight)` — eliminates full table scan
+- **perf** `programs/route.ts`: merged two sequential `prisma` queries (`programsWithTestWeeks` + `completedFeedbacks`) into one `Promise.all` — removes one DB round-trip from every program list request
+- **test** Added publish tests to `programs.test.ts` (6 cases); created `admin-reports.test.ts` with 5 cases
+
+---
+
 ## 2026-04-24 — Trainer edit program: 5 UX/performance fixes
 
 - **perf** DELETE exercise: batch order recalculation into single `$transaction` (was N sequential queries)
