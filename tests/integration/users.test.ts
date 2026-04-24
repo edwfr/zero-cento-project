@@ -45,6 +45,10 @@ vi.mock('@/lib/supabase-server', () => ({
                     data: { user: { id: 'supabase-uid' } },
                     error: null,
                 }),
+                getUserById: vi.fn().mockResolvedValue({
+                    data: { user: null },
+                    error: null,
+                }),
             },
         },
     })),
@@ -116,10 +120,10 @@ describe('GET /api/users', () => {
         const body = await res.json()
 
         expect(res.status).toBe(200)
-        // Prisma should have been called with role filter
+        // Prisma should have been called with role filter (isActive may also be present)
         expect(prisma.user.findMany).toHaveBeenCalledWith(
             expect.objectContaining({
-                where: { role: 'trainer' },
+                where: expect.objectContaining({ role: 'trainer' }),
             })
         )
     })

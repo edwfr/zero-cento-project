@@ -1,5 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+// React's `cache` is a Server Components API unavailable in jsdom — stub it as passthrough
+vi.mock('react', async (importOriginal) => {
+    const actual = await importOriginal() as Record<string, unknown>
+    return {
+        ...actual,
+        cache: (fn: (...args: any[]) => any) => fn,
+    }
+})
+
 vi.mock('@/lib/prisma', () => ({
     prisma: {
         user: {
