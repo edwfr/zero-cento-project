@@ -9,7 +9,7 @@ export default async function ViewProgramPage() {
     if (session.user.role !== 'trainer') redirect(`/${session.user.role}/dashboard`)
 
     return (
-        <DashboardLayout user={session.user}>
+        <DashboardLayout user={session.user} backHref="/trainer/programs">
             <ReviewProgramContent viewOnly={true} />
         </DashboardLayout>
     )

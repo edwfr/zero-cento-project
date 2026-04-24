@@ -6,7 +6,7 @@ import { Trans, useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
-import { ArrowLeft, BarChart3 } from 'lucide-react'
+import { BarChart3 } from 'lucide-react'
 import { Input } from '@/components/Input'
 import { FormLabel } from '@/components/FormLabel'
 
@@ -19,13 +19,11 @@ interface Trainee {
 interface NewProgramContentProps {
     trainees: Trainee[]
     initialTraineeId: string
-    backContext: 'programs' | 'trainee'
 }
 
 export default function NewProgramContent({
     trainees,
     initialTraineeId,
-    backContext,
 }: NewProgramContentProps) {
     const router = useRouter()
     const { t } = useTranslation(['trainer', 'common', 'navigation'])

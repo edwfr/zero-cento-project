@@ -97,14 +97,16 @@ export default async function NewProgramPage({ searchParams }: NewProgramPagePro
     const initialTraineeId = hasRequestedTrainee
         ? requestedTraineeId!
         : trainees[0]?.id || ''
+    const backHref = hasRequestedTrainee
+        ? `/trainer/trainees/${requestedTraineeId}`
+        : '/trainer/programs'
 
     return (
-        <DashboardLayout user={session.user}>
+        <DashboardLayout user={session.user} backHref={backHref}>
             <div className="py-6">
                 <NewProgramContent
                     trainees={trainees}
                     initialTraineeId={initialTraineeId}
-                    backContext={hasRequestedTrainee ? 'trainee' : 'programs'}
                 />
             </div>
         </DashboardLayout>
