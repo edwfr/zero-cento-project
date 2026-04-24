@@ -25,6 +25,7 @@ export default defineConfig({
                 'src/components/MovementPatternTag.tsx',
                 'src/components/RoleGuard.tsx',
                 'src/components/ActionIconButton.tsx',
+                'src/components/DashboardLayout.tsx',
                 'src/app/api/exercises/route.ts',
                 'src/app/api/exercises/[id]/route.ts',
                 'src/app/api/feedback/route.ts',
