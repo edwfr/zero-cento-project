@@ -23,14 +23,15 @@ Actionable checklist. Tick items when implemented. Grouped by impact.
 
 ---
 
-### [ ] 2. `GET /api/programs` — remove writes + collapse aggregates
+### [x] 2. `GET /api/programs` — remove writes + collapse aggregates
 
 - **File:** `src/app/api/programs/route.ts:84-304`
-- [ ] Remove L179-192 `Promise.all(programsToComplete.map(prisma.trainingProgram.update))` from GET handler. Move auto-complete logic to a cron job or to the feedback/workout-completion endpoint.
-- [ ] Replace L132-164 nested `weeks → workouts → workoutExercises → exerciseFeedbacks` fetch with `exerciseFeedback.groupBy({ by: ['workoutExerciseId'], where: { completed: true } })` or single raw aggregate.
-- [ ] Replace L199-248 `programsWithTestWeeks` nested fetch + `completedFeedbacks.findMany` with `groupBy({ by: ['programId'], _max: { date: true } })` via `$queryRaw`.
-- [ ] Narrow top-level `findMany` includes — drop `weeks` entirely if aggregates cover needs.
-- [ ] Tests: confirm list handler runs ≤3 queries regardless of `items.length`.
+- [x] Remove `Promise.all(programsToComplete.map(prisma.trainingProgram.update))` from GET handler. Effective status now computed in-memory only; auto-complete persistence deferred (candidate for a cron job or feedback/workout-completion endpoint — out of scope for this item).
+- [x] Replace nested `weeks → workouts → workoutExercises → exerciseFeedbacks` fetch with single `$queryRaw` CTE aggregate returning `{ totalWorkouts, completedWorkouts, lastCompletedWorkoutAt, lastFeedbackAt }` per program.
+- [x] Replace `programsWithTestWeeks` nested fetch + `completedFeedbacks.findMany` with single `$queryRaw` CTE aggregate returning `{ weekNumber, plannedTestsCount, completedTestsCount }` per test week.
+- [x] Top-level `findMany` unchanged (still needs `weeks { id, weekNumber, weekType }` — used by clients).
+- [x] Tests: `tests/integration/programs.test.ts` updated — added `$queryRaw` mock, removed auto-complete persistence assertion (now asserts `prisma.trainingProgram.update` not called), mocked aggregate rows. Type-check clean.
+- **Query count after fix:** 1 `findMany` + up to 2 `$queryRaw` aggregates (completion + test weeks). Previously 1 + up to 3 (active progress + test weeks + completed feedbacks) + N updates.
 
 ---
 
