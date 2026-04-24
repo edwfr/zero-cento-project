@@ -1,30 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-
-// Mock auth before importing the route
-const mockAdminSession = {
-    user: {
-        id: 'admin-uuid-1',
-        email: 'admin@zerocento.it',
-        firstName: 'Admin',
-        lastName: 'User',
-        role: 'admin' as const,
-        isActive: true,
-    },
-    supabaseUser: {} as any,
-}
-
-const mockTrainerSession = {
-    user: {
-        id: 'trainer-uuid-1',
-        email: 'trainer@zerocento.it',
-        firstName: 'Trainer',
-        lastName: 'Test',
-        role: 'trainer' as const,
-        isActive: true,
-    },
-    supabaseUser: {} as any,
-}
+import { mockAdminSession, mockTrainerSession } from './fixtures'
 
 vi.mock('@/lib/auth', () => ({
     requireAuth: vi.fn(),
@@ -67,6 +43,10 @@ vi.mock('@/lib/supabase-server', () => ({
             admin: {
                 inviteUserByEmail: vi.fn().mockResolvedValue({
                     data: { user: { id: 'supabase-uid' } },
+                    error: null,
+                }),
+                getUserById: vi.fn().mockResolvedValue({
+                    data: { user: null },
                     error: null,
                 }),
             },
@@ -140,10 +120,10 @@ describe('GET /api/users', () => {
         const body = await res.json()
 
         expect(res.status).toBe(200)
-        // Prisma should have been called with role filter
+        // Prisma should have been called with role filter (isActive may also be present)
         expect(prisma.user.findMany).toHaveBeenCalledWith(
             expect.objectContaining({
-                where: { role: 'trainer' },
+                where: expect.objectContaining({ role: 'trainer' }),
             })
         )
     })

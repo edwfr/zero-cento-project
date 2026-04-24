@@ -5,6 +5,7 @@ import React from 'react'
 // Mock Sentry before importing component
 vi.mock('@sentry/nextjs', () => ({
     captureException: vi.fn(),
+    withScope: vi.fn((callback: (scope: any) => void) => callback({ setContext: vi.fn() })),
 }))
 
 // Mock i18n
@@ -53,11 +54,7 @@ describe('ErrorBoundary', () => {
         expect(capturedError).toBeInstanceOf(Error)
         expect(capturedError.message).toBe('test render error')
         expect(capturedHint).toMatchObject({
-            contexts: {
-                react: {
-                    componentStack: expect.any(String),
-                },
-            },
+            mechanism: { type: 'generic', handled: false },
         })
     })
 

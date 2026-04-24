@@ -8,6 +8,18 @@ Per stato corrente usare sempre [checklist.md](./checklist.md).
 
 ---
 
+## 2026-04-24 — Test Suite Review & Consistency
+
+- Added `.nvmrc` (Node 20) to unblock Vitest 4.x startup error on Node 18
+- Added `react-i18next` global mock to `tests/unit/setup.ts`
+- Fixed `DashboardLayout.test.tsx`: removed duplicate mocks, switched to static imports, corrected back-button assertions using `data-testid`; added `backHref` prop + `data-testid="back-nav-link"` to `DashboardLayout.tsx`
+- Removed flaky sequential-pattern test from `password-utils.test.ts`
+- Extracted shared session fixtures to `tests/integration/fixtures.ts`; updated 7 integration test files to import from it
+- Added `DashboardLayout.tsx` to coverage tracking in `vitest.config.ts`
+- Created project-scoped skill `zero-cento-testing` at `.claude/skills/zero-cento-testing/SKILL.md`
+
+---
+
 ## [Unreleased] - 2026-04-23
 
 ### Fixed

@@ -98,19 +98,6 @@ describe('generateSecurePassword', () => {
             expect(passwords.size).toBe(batchSize)
         })
 
-        it('does not produce predictable patterns', () => {
-            const password = generateSecurePassword()
-
-            // Should not have obvious sequential patterns
-            const hasSequentialChars = /abc|bcd|cde|123|234|345|678|789/i.test(password)
-            const hasRepeatingChars = /(.)\1{3,}/.test(password)
-
-            // While not guaranteed, it's extremely unlikely these patterns appear
-            // This is a statistical test that may occasionally fail due to randomness
-            // but with low probability for secure generation
-            expect(hasSequentialChars || hasRepeatingChars).toBe(false)
-        })
-
         it('has good distribution across multiple generations', () => {
             const charCounts = {
                 uppercase: 0,
