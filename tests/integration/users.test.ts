@@ -1,30 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-
-// Mock auth before importing the route
-const mockAdminSession = {
-    user: {
-        id: 'admin-uuid-1',
-        email: 'admin@zerocento.it',
-        firstName: 'Admin',
-        lastName: 'User',
-        role: 'admin' as const,
-        isActive: true,
-    },
-    supabaseUser: {} as any,
-}
-
-const mockTrainerSession = {
-    user: {
-        id: 'trainer-uuid-1',
-        email: 'trainer@zerocento.it',
-        firstName: 'Trainer',
-        lastName: 'Test',
-        role: 'trainer' as const,
-        isActive: true,
-    },
-    supabaseUser: {} as any,
-}
+import { mockAdminSession, mockTrainerSession } from './fixtures'
 
 vi.mock('@/lib/auth', () => ({
     requireAuth: vi.fn(),

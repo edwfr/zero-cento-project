@@ -1,57 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
+import { mockTrainerSession, mockAdminSession, mockTraineeSession, makeTrainerSession } from './fixtures'
 
 const withIdParam = (id: string) => ({ params: Promise.resolve({ id }) })
 
-// ─── Mock sessions ─────────────────────────────────────────────────────────
+// ─── File-specific fixtures ─────────────────────────────────────────────────
 
-const mockTrainerSession = {
-    user: {
-        id: 'trainer-uuid-1',
-        email: 'trainer@zerocento.it',
-        firstName: 'Marco',
-        lastName: 'Trainer',
-        role: 'trainer' as const,
-        isActive: true,
-    },
-    supabaseUser: {} as any,
-}
-
-const mockTraineeSession = {
-    user: {
-        id: 'trainee-uuid-1',
-        email: 'trainee@zerocento.it',
-        firstName: 'Mario',
-        lastName: 'Atleta',
-        role: 'trainee' as const,
-        isActive: true,
-    },
-    supabaseUser: {} as any,
-}
-
-const mockAdminSession = {
-    user: {
-        id: 'admin-uuid-1',
-        email: 'admin@zerocento.it',
-        firstName: 'Admin',
-        lastName: 'User',
-        role: 'admin' as const,
-        isActive: true,
-    },
-    supabaseUser: {} as any,
-}
-
-const mockOtherTrainerSession = {
-    user: {
-        id: 'trainer-uuid-2',
-        email: 'other.trainer@zerocento.it',
-        firstName: 'Luigi',
-        lastName: 'OtherTrainer',
-        role: 'trainer' as const,
-        isActive: true,
-    },
-    supabaseUser: {} as any,
-}
+const mockOtherTrainerSession = makeTrainerSession({
+    id: 'trainer-uuid-2',
+    email: 'other.trainer@zerocento.it',
+    firstName: 'Luigi',
+    lastName: 'OtherTrainer',
+})
 
 // ─── Mocks ─────────────────────────────────────────────────────────────────
 

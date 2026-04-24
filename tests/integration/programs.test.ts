@@ -1,29 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-
-const mockTrainerSession = {
-    user: {
-        id: 'trainer-uuid-1',
-        email: 'trainer@zerocento.it',
-        firstName: 'Marco',
-        lastName: 'Trainer',
-        role: 'trainer' as const,
-        isActive: true,
-    },
-    supabaseUser: {} as any,
-}
-
-const mockAdminSession = {
-    user: {
-        id: 'admin-uuid-1',
-        email: 'admin@zerocento.it',
-        firstName: 'Admin',
-        lastName: 'User',
-        role: 'admin' as const,
-        isActive: true,
-    },
-    supabaseUser: {} as any,
-}
+import { mockTrainerSession, mockAdminSession } from './fixtures'
 
 vi.mock('@/lib/auth', () => ({
     requireAuth: vi.fn(),

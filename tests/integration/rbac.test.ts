@@ -1,32 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
+import { mockAdminSession, makeTrainerSession } from './fixtures'
 
 const withIdParam = (id: string) => ({ params: Promise.resolve({ id }) })
 
-// Mock sessions for different users
-const mockTrainerASession = {
-    user: {
-        id: 'trainer-a-uuid',
-        email: 'trainer.a@zerocento.it',
-        firstName: 'Trainer',
-        lastName: 'A',
-        role: 'trainer' as const,
-        isActive: true,
-    },
-    supabaseUser: {} as any,
-}
+// File-specific sessions (distinct named trainers/trainees for RBAC isolation tests)
+const mockTrainerASession = makeTrainerSession({
+    id: 'trainer-a-uuid',
+    email: 'trainer.a@zerocento.it',
+    firstName: 'Trainer',
+    lastName: 'A',
+})
 
-const mockTrainerBSession = {
-    user: {
-        id: 'trainer-b-uuid',
-        email: 'trainer.b@zerocento.it',
-        firstName: 'Trainer',
-        lastName: 'B',
-        role: 'trainer' as const,
-        isActive: true,
-    },
-    supabaseUser: {} as any,
-}
+const mockTrainerBSession = makeTrainerSession({
+    id: 'trainer-b-uuid',
+    email: 'trainer.b@zerocento.it',
+    firstName: 'Trainer',
+    lastName: 'B',
+})
 
 const mockTraineeASession = {
     user: {
@@ -47,18 +38,6 @@ const mockTraineeBSession = {
         firstName: 'Trainee',
         lastName: 'B',
         role: 'trainee' as const,
-        isActive: true,
-    },
-    supabaseUser: {} as any,
-}
-
-const mockAdminSession = {
-    user: {
-        id: 'admin-uuid',
-        email: 'admin@zerocento.it',
-        firstName: 'Admin',
-        lastName: 'User',
-        role: 'admin' as const,
         isActive: true,
     },
     supabaseUser: {} as any,
