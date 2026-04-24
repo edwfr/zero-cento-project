@@ -2948,6 +2948,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
                                                                             return (
                                                                                 <SortableExerciseRow
+                                                                                    key={row.id}
                                                                                     id={row.id}
                                                                                     isDraft={row.isDraft}
                                                                                     readOnly={readOnly}
