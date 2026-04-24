@@ -8,7 +8,7 @@ import { useToast } from '@/components/ToastNotification'
 import { formatDate } from '@/lib/date-format'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { Plus, Eye, UserX, UserCheck, ArrowLeft } from 'lucide-react'
+import { Plus, Eye, UserX, UserCheck } from 'lucide-react'
 import { Input } from '@/components/Input'
 
 interface Trainee {
