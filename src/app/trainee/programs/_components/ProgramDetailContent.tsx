@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { SkeletonDashboard } from '@/components'
 import {
-    ArrowLeft,
     CheckCircle2,
     ChevronDown,
     ChevronUp,
@@ -233,10 +232,6 @@ export default function ProgramDetailContent({
     const [expandedWeeks, setExpandedWeeks] = useState<Record<number, boolean>>({})
     const [expandedWorkouts, setExpandedWorkouts] = useState<Record<string, boolean>>({})
     const isHistoryMode = mode === 'history'
-    const backHref = isHistoryMode ? '/trainee/history' : '/trainee/dashboard'
-    const backLabel = isHistoryMode
-        ? t('currentProgram.backToHistory')
-        : t('currentProgram.backToDashboard')
 
     useEffect(() => {
         if (!program) {
@@ -592,14 +587,6 @@ export default function ProgramDetailContent({
         <div>
             {/* Header */}
             <div className="mb-8">
-                <Link
-                    href={backHref}
-                    className="inline-flex items-center gap-2 text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    {backLabel}
-                </Link>
-
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900">{program.title}</h1>
