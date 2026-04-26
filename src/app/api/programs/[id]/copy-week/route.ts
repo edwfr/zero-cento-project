@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { randomUUID } from 'crypto'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
@@ -31,7 +32,36 @@ export async function POST(
                 where: { id: sourceWeekId },
                 include: {
                     workouts: {
-                        include: { workoutExercises: { orderBy: { order: 'asc' } } },
+                        include: {
+                            workoutExercises: {
+                                orderBy: { order: 'asc' },
+                                include: {
+                                    exercise: {
+                                        select: {
+                                            id: true,
+                                            name: true,
+                                            type: true,
+                                            notes: true,
+                                            movementPattern: {
+                                                select: {
+                                                    id: true,
+                                                    name: true,
+                                                    movementPatternColors: {
+                                                        select: { trainerId: true, color: true },
+                                                    },
+                                                },
+                                            },
+                                            exerciseMuscleGroups: {
+                                                select: {
+                                                    coefficient: true,
+                                                    muscleGroup: { select: { id: true, name: true } },
+                                                },
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
                         orderBy: { dayIndex: 'asc' },
                     },
                 },
@@ -86,37 +116,56 @@ export async function POST(
             sourceWeek.workouts.map((workout) => [workout.dayIndex, workout])
         )
 
+        // Pre-compute new WorkoutExercise rows per target workout with explicit
+        // ids so the response can be built in-memory without re-querying the DB.
+        const plannedRowsByWorkout = new Map<
+            string,
+            Array<{ id: string; sourceExercise: (typeof sourceWeek.workouts)[number]['workoutExercises'][number] }>
+        >()
+
+        for (const targetWorkout of targetWeek.workouts) {
+            const sourceWorkout = sourceWorkoutMap.get(targetWorkout.dayIndex)
+            if (!sourceWorkout || sourceWorkout.workoutExercises.length === 0) {
+                plannedRowsByWorkout.set(targetWorkout.id, [])
+                continue
+            }
+            plannedRowsByWorkout.set(
+                targetWorkout.id,
+                sourceWorkout.workoutExercises.map((sourceExercise) => ({
+                    id: randomUUID(),
+                    sourceExercise,
+                }))
+            )
+        }
+
         await prisma.$transaction(async (tx) => {
             for (const targetWorkout of targetWeek.workouts) {
-                const sourceWorkout = sourceWorkoutMap.get(targetWorkout.dayIndex)
-
-                if (!sourceWorkout) {
-                    continue
-                }
+                const planned = plannedRowsByWorkout.get(targetWorkout.id) ?? []
 
                 await tx.workoutExercise.deleteMany({
                     where: { workoutId: targetWorkout.id },
                 })
 
-                if (sourceWorkout.workoutExercises.length === 0) {
+                if (planned.length === 0) {
                     continue
                 }
 
                 await tx.workoutExercise.createMany({
-                    data: sourceWorkout.workoutExercises.map((exercise) => ({
+                    data: planned.map(({ id, sourceExercise }) => ({
+                        id,
                         workoutId: targetWorkout.id,
-                        exerciseId: exercise.exerciseId,
-                        variant: exercise.variant,
-                        sets: exercise.sets,
-                        reps: exercise.reps,
-                        targetRpe: exercise.targetRpe,
-                        weightType: exercise.weightType,
-                        weight: exercise.weight,
-                        effectiveWeight: exercise.effectiveWeight,
-                        restTime: exercise.restTime,
-                        isWarmup: exercise.isWarmup,
-                        notes: exercise.notes,
-                        order: exercise.order,
+                        exerciseId: sourceExercise.exerciseId,
+                        variant: sourceExercise.variant,
+                        sets: sourceExercise.sets,
+                        reps: sourceExercise.reps,
+                        targetRpe: sourceExercise.targetRpe,
+                        weightType: sourceExercise.weightType,
+                        weight: sourceExercise.weight,
+                        effectiveWeight: sourceExercise.effectiveWeight,
+                        restTime: sourceExercise.restTime,
+                        isWarmup: sourceExercise.isWarmup,
+                        notes: sourceExercise.notes,
+                        order: sourceExercise.order,
                     })),
                 })
             }
@@ -132,45 +181,47 @@ export async function POST(
             'Copied workouts from a week to the next week'
         )
 
-        // Fetch updated target week with full exercise data for client local state update
-        const updatedWeek = await prisma.week.findUnique({
-            where: { id: targetWeek.id },
-            include: {
-                workouts: {
-                    include: {
-                        workoutExercises: {
-                            orderBy: { order: 'asc' },
-                            include: {
-                                exercise: {
-                                    select: {
-                                        id: true,
-                                        name: true,
-                                        type: true,
-                                        notes: true,
-                                        movementPattern: {
-                                            select: {
-                                                id: true,
-                                                name: true,
-                                                movementPatternColors: {
-                                                    select: { trainerId: true, color: true },
-                                                },
-                                            },
-                                        },
-                                        exerciseMuscleGroups: {
-                                            select: {
-                                                coefficient: true,
-                                                muscleGroup: { select: { id: true, name: true } },
-                                            },
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                    },
-                    orderBy: { dayIndex: 'asc' },
-                },
-            },
-        })
+        // Build updated week in-memory from the enriched source data and the
+        // freshly-inserted ids — no extra DB roundtrip needed.
+        const updatedWeek = {
+            id: targetWeek.id,
+            programId: targetWeek.programId,
+            weekNumber: targetWeek.weekNumber,
+            startDate: targetWeek.startDate,
+            weekType: targetWeek.weekType,
+            feedbackRequested: targetWeek.feedbackRequested,
+            generalFeedback: targetWeek.generalFeedback,
+            workouts: targetWeek.workouts
+                .slice()
+                .sort((a, b) => a.dayIndex - b.dayIndex)
+                .map((targetWorkout) => {
+                    const planned = plannedRowsByWorkout.get(targetWorkout.id) ?? []
+                    return {
+                        id: targetWorkout.id,
+                        weekId: targetWorkout.weekId,
+                        dayIndex: targetWorkout.dayIndex,
+                        notes: targetWorkout.notes,
+                        workoutExercises: planned.map(({ id, sourceExercise }) => ({
+                            id,
+                            workoutId: targetWorkout.id,
+                            exerciseId: sourceExercise.exerciseId,
+                            variant: sourceExercise.variant,
+                            sets: sourceExercise.sets,
+                            reps: sourceExercise.reps,
+                            targetRpe: sourceExercise.targetRpe,
+                            weightType: sourceExercise.weightType,
+                            weight: sourceExercise.weight,
+                            effectiveWeight: sourceExercise.effectiveWeight,
+                            restTime: sourceExercise.restTime,
+                            isWarmup: sourceExercise.isWarmup,
+                            isSkeletonExercise: false,
+                            notes: sourceExercise.notes,
+                            order: sourceExercise.order,
+                            exercise: sourceExercise.exercise,
+                        })),
+                    }
+                }),
+        }
 
         return apiSuccess({
             sourceWeek: sourceWeek.weekNumber,
