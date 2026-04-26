@@ -26,18 +26,5 @@
         "admin": "admin",
         "trainer": "trainer",
         "trainee": "trainee"
-    },
-    "breadcrumbs": {
-        "backToLibrary": "Torna alla libreria",
-        "backToAthletes": "Torna agli atleti",
-        "backToAthleteProfile": "Torna al profilo atleta",
-        "backToPrograms": "Torna ai programmi",
-        "backToProgram": "Torna al Programma",
-        "backToHome": "Torna alla Home",
-        "backToWeeks": "Torna alla panoramica settimane",
-        "goToAthletesList": "Vai alla Lista Atleti",
-        "nextPublish": "Avanti: Pubblica Programma",
-        "saveContinuePublish": "Salva e Continua alla Pubblicazione",
-        "backToEdit": "Torna alla modifica"
     }
 }

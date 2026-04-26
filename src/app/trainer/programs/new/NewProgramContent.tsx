@@ -6,7 +6,7 @@ import { Trans, useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
-import { ArrowLeft, BarChart3 } from 'lucide-react'
+import { BarChart3 } from 'lucide-react'
 import { Input } from '@/components/Input'
 import { FormLabel } from '@/components/FormLabel'
 
@@ -19,16 +19,14 @@ interface Trainee {
 interface NewProgramContentProps {
     trainees: Trainee[]
     initialTraineeId: string
-    backContext: 'programs' | 'trainee'
 }
 
 export default function NewProgramContent({
     trainees,
     initialTraineeId,
-    backContext,
 }: NewProgramContentProps) {
     const router = useRouter()
-    const { t } = useTranslation(['trainer', 'common', 'navigation'])
+    const { t } = useTranslation(['trainer', 'common'])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
@@ -38,13 +36,6 @@ export default function NewProgramContent({
     const [isSbdProgram, setIsSbdProgram] = useState(false)
     const [durationWeeks, setDurationWeeks] = useState(4)
     const [workoutsPerWeek, setWorkoutsPerWeek] = useState(3)
-    const backHref = backContext === 'trainee' && traineeId
-        ? `/trainer/trainees/${traineeId}`
-        : '/trainer/programs'
-    const backLabel = backContext === 'trainee'
-        ? t('navigation:breadcrumbs.backToAthleteProfile')
-        : t('navigation:breadcrumbs.backToPrograms')
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError(null)
@@ -163,13 +154,6 @@ export default function NewProgramContent({
 
             <div className="max-w-3xl mx-auto">
             <div className="mb-8">
-                <Link
-                    href={backHref}
-                    className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-flex items-center gap-1"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    {backLabel}
-                </Link>
                 <h1 className="text-3xl font-bold text-gray-900">{t('programs.newProgramSetupTitle')}</h1>
                 <p className="text-gray-600 mt-2">
                     {t('programs.newProgramSetupDescription')}
@@ -365,7 +349,7 @@ export default function NewProgramContent({
                         )}
                     </button>
                     <Link
-                        href={backHref}
+                        href="/trainer/programs"
                         className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-lg text-center transition-colors"
                     >
                         {t('common:common.cancel')}

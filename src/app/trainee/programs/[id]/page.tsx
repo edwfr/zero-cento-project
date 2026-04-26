@@ -20,7 +20,7 @@ export default async function ProgramDetailByIdPage({ params }: ProgramDetailByI
     }
 
     return (
-        <DashboardLayout user={session.user}>
+        <DashboardLayout user={session.user} backHref="/trainee/history">
             <ProgramDetailByIdContent programId={id} />
         </DashboardLayout>
     )

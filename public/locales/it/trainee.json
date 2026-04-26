@@ -43,7 +43,6 @@
     },
     "history": {
         "title": "📊 Storico Programmi",
-        "backToDashboard": "Torna alla Dashboard",
         "description": "Consulta lo storico dei tuoi programmi con stato, data di inizio e data di fine quando disponibile",
         "loadingError": "Errore caricamento storico",
         "noPrograms": "Nessun Programma",
@@ -70,8 +69,6 @@
         "statsActive": "Programmi Attivi"
     },
     "currentProgram": {
-        "backToDashboard": "Torna alla Dashboard",
-        "backToHistory": "Torna allo Storico",
         "programProgress": "Progressione Programma",
         "workoutsCompleted": "{{completed}} / {{total}} workout completati",
         "completion": "completamento",
@@ -133,7 +130,6 @@
     "workouts": {
         "nextExercise": "Prossimo esercizio",
         "confirmContinue": "I seguenti esercizi non hanno dati: {{exercises}}. Vuoi continuare comunque?",
-        "backToProgram": "Torna al Programma",
         "weekLabel": "Settimana {{number}}",
         "weekDeload": "Settimana Deload - Recupero",
         "weekTest": "💪 Settimana Test - Massimali",
@@ -190,7 +186,6 @@
         "errorFeedback": "Errore invio feedback"
     },
     "records": {
-        "backToDashboard": "Torna alla Dashboard",
         "title": "I Tuoi Massimali",
         "description": "Visualizza i tuoi PR",
         "noRecords": "Nessun Massimale Registrato",

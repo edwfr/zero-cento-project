@@ -104,7 +104,6 @@ export default async function NewProgramPage({ searchParams }: NewProgramPagePro
                 <NewProgramContent
                     trainees={trainees}
                     initialTraineeId={initialTraineeId}
-                    backContext={hasRequestedTrainee ? 'trainee' : 'programs'}
                 />
             </div>
         </DashboardLayout>

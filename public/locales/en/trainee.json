@@ -43,7 +43,6 @@
     },
     "history": {
         "title": "📊 Program History",
-        "backToDashboard": "Back to Dashboard",
         "description": "Review your program history with status, start date, and end date when available",
         "loadingError": "Error loading history",
         "noPrograms": "No Programs",
@@ -70,8 +69,6 @@
         "statsActive": "Active Programs"
     },
     "currentProgram": {
-        "backToDashboard": "Back to Dashboard",
-        "backToHistory": "Back to History",
         "programProgress": "Program Progress",
         "workoutsCompleted": "{{completed}} / {{total}} workouts completed",
         "completion": "completion",
@@ -133,7 +130,6 @@
     "workouts": {
         "nextExercise": "Next exercise",
         "confirmContinue": "The following exercises have no data: {{exercises}}. Continue anyway?",
-        "backToProgram": "Back to Program",
         "weekLabel": "Week {{number}}",
         "weekDeload": "Deload Week - Recovery",
         "weekTest": "💪 Test Week - Max Lifts",
@@ -190,7 +186,6 @@
         "errorFeedback": "Error sending feedback"
     },
     "records": {
-        "backToDashboard": "Back to Dashboard",
         "title": "Your Personal Records",
         "description": "View the max records entered by your trainer and the related 1RM calculations",
         "noRecords": "No Personal Records Yet",
