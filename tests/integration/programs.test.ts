@@ -127,9 +127,7 @@ describe('GET /api/programs', () => {
 
     it('filters by status when query param provided', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.trainingProgram.findMany)
-            .mockResolvedValueOnce(mockPrograms as any)
-            .mockResolvedValueOnce([] as any)
+        vi.mocked(prisma.trainingProgram.findMany).mockResolvedValue(mockPrograms as any)
         vi.mocked(prisma.trainingProgram.count).mockResolvedValue(1)
 
         const req = makeRequest('http://localhost:3000/api/programs?status=active')
