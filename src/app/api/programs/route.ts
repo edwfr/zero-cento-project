@@ -135,7 +135,7 @@ export async function GET(request: NextRequest) {
         const testsSummaryByProgramId = new Map<string, ProgramTestsSummary>()
 
         if (programIds.length > 0) {
-            const programIdSql = Prisma.join(programIds.map((id) => Prisma.sql`${id}::uuid`))
+            const programIdSql = Prisma.join(programIds.map((id) => Prisma.sql`${id}`))
 
             // Single aggregate: per-program workout completion stats + last feedback timestamp.
             const completionRows = await prisma.$queryRaw<
@@ -149,26 +149,26 @@ export async function GET(request: NextRequest) {
             >`
                 WITH workout_completion AS (
                     SELECT
-                        wk.id AS workout_id,
-                        w.program_id,
-                        COUNT(we.id) AS exercise_count,
-                        COUNT(DISTINCT CASE WHEN ef.completed THEN we.id END) AS completed_exercise_count,
-                        MAX(ef.date) FILTER (WHERE ef.completed) AS workout_last_feedback
-                    FROM workouts wk
-                    JOIN weeks w ON w.id = wk.week_id
-                    LEFT JOIN workout_exercises we ON we.workout_id = wk.id
-                    LEFT JOIN exercise_feedbacks ef ON ef.workout_exercise_id = we.id
-                    WHERE w.program_id IN (${programIdSql})
-                    GROUP BY wk.id, w.program_id
+                        wk."id" AS workout_id,
+                        w."programId",
+                        COUNT(we."id") AS exercise_count,
+                        COUNT(DISTINCT CASE WHEN ef."completed" THEN we."id" END) AS completed_exercise_count,
+                        MAX(ef."date") FILTER (WHERE ef."completed") AS workout_last_feedback
+                    FROM "workouts" wk
+                    JOIN "weeks" w ON w."id" = wk."weekId"
+                    LEFT JOIN "workout_exercises" we ON we."workoutId" = wk."id"
+                    LEFT JOIN "exercise_feedbacks" ef ON ef."workoutExerciseId" = we."id"
+                    WHERE w."programId" IN (${programIdSql})
+                    GROUP BY wk."id", w."programId"
                 )
                 SELECT
-                    program_id AS "programId",
+                    "programId",
                     COUNT(*) FILTER (WHERE exercise_count > 0)::int AS "totalWorkouts",
                     COUNT(*) FILTER (WHERE exercise_count > 0 AND exercise_count = completed_exercise_count)::int AS "completedWorkouts",
                     MAX(workout_last_feedback) FILTER (WHERE exercise_count > 0 AND exercise_count = completed_exercise_count) AS "lastCompletedWorkoutAt",
                     MAX(workout_last_feedback) AS "lastFeedbackAt"
                 FROM workout_completion
-                GROUP BY program_id
+                GROUP BY "programId"
             `
 
             for (const row of completionRows) {
@@ -193,32 +193,32 @@ export async function GET(request: NextRequest) {
             >`
                 WITH test_week_workout_stats AS (
                     SELECT
-                        w.program_id,
-                        w.week_number,
-                        wk.id AS workout_id,
-                        COUNT(we.id) AS exercise_count,
+                        w."programId",
+                        w."weekNumber",
+                        wk."id" AS workout_id,
+                        COUNT(we."id") AS exercise_count,
                         CASE
-                            WHEN COUNT(we.id) > 0
-                                AND COUNT(we.id) = COUNT(DISTINCT CASE WHEN ef.completed THEN we.id END)
+                            WHEN COUNT(we."id") > 0
+                                AND COUNT(we."id") = COUNT(DISTINCT CASE WHEN ef."completed" THEN we."id" END)
                             THEN 1
                             ELSE 0
                         END AS is_complete
-                    FROM weeks w
-                    LEFT JOIN workouts wk ON wk.week_id = w.id
-                    LEFT JOIN workout_exercises we ON we.workout_id = wk.id
-                    LEFT JOIN exercise_feedbacks ef ON ef.workout_exercise_id = we.id
-                    WHERE w.program_id IN (${programIdSql})
-                        AND w.week_type = 'test'
-                    GROUP BY w.program_id, w.week_number, wk.id
+                    FROM "weeks" w
+                    LEFT JOIN "workouts" wk ON wk."weekId" = w."id"
+                    LEFT JOIN "workout_exercises" we ON we."workoutId" = wk."id"
+                    LEFT JOIN "exercise_feedbacks" ef ON ef."workoutExerciseId" = we."id"
+                    WHERE w."programId" IN (${programIdSql})
+                        AND w."weekType" = 'test'
+                    GROUP BY w."programId", w."weekNumber", wk."id"
                 )
                 SELECT
-                    program_id AS "programId",
-                    week_number AS "weekNumber",
+                    "programId",
+                    "weekNumber",
                     COUNT(workout_id) FILTER (WHERE exercise_count > 0)::int AS "plannedTestsCount",
                     COALESCE(SUM(is_complete), 0)::int AS "completedTestsCount"
                 FROM test_week_workout_stats
-                GROUP BY program_id, week_number
-                ORDER BY program_id, week_number
+                GROUP BY "programId", "weekNumber"
+                ORDER BY "programId", "weekNumber"
             `
 
             for (const row of testRows) {
