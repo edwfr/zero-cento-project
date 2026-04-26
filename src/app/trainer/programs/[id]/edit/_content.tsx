@@ -676,7 +676,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     useEffect(() => {
         void fetchProgram()
         void fetchExerciseCatalog()
-    }, [fetchExerciseCatalog, fetchProgram])
+    }, [programId])
 
     useEffect(() => {
         const handleVisibilityChange = () => {
