@@ -8,7 +8,27 @@ Per stato corrente usare sempre [checklist.md](./checklist.md).
 
 ---
 
+## 2026-04-26 — Bulk Workout Exercise Save Optimization
+
+- Added `bulkSaveWorkoutExercisesSchema` to `src/schemas/workout-exercise.ts` with optional `id` per row to support mixed creates/updates
+- Implemented bulk PUT endpoint `/api/programs/[id]/workouts/[workoutId]/exercises/bulk` that accepts an array of exercise rows (with optional IDs) and performs all creates/updates in a single Prisma transaction
+- Refactored `saveWorkoutRows` in trainer workout edit page to call the bulk endpoint once per "Salva workout" instead of one HTTP request per row (reduces N requests → 1)
+- Added comprehensive integration tests: 11 test cases covering happy path (creates, updates, mixed batches) and guard conditions (auth, ownership, status, not-found scenarios)
+- Performance improvement: eliminates per-row network round-trips and Prisma connection overhead
+
+---
+
 ## 2026-04-24 — Test Suite Review & Consistency
+
+- Added `.nvmrc` (Node 20) to unblock Vitest 4.x startup error on Node 18
+- Added `react-i18next` global mock to `tests/unit/setup.ts`
+- Fixed `DashboardLayout.test.tsx`: removed duplicate mocks, switched to static imports, corrected back-button assertions using `data-testid`; added `backHref` prop + `data-testid="back-nav-link"` to `DashboardLayout.tsx`
+- Removed flaky sequential-pattern test from `password-utils.test.ts`
+- Extracted shared session fixtures to `tests/integration/fixtures.ts`; updated 7 integration test files to import from it
+- Added `DashboardLayout.tsx` to coverage tracking in `vitest.config.ts`
+- Created project-scoped skill `zero-cento-testing` at `.claude/skills/zero-cento-testing/SKILL.md`
+
+---
 
 - Added `.nvmrc` (Node 20) to unblock Vitest 4.x startup error on Node 18
 - Added `react-i18next` global mock to `tests/unit/setup.ts`
