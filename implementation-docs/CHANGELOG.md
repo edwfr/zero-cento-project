@@ -8,6 +8,12 @@ Per stato corrente usare sempre [checklist.md](./checklist.md).
 
 ---
 
+## 2026-04-26 — Fix `isSkeletonExercise` flag su esercizi aggiunti allo step dettagli
+
+- **fix** `src/app/trainer/programs/[id]/edit/_content.tsx`: il payload di `POST /api/programs/[id]/workouts/[workoutId]/exercises` impostava `isSkeletonExercise: row.isDraft`, accoppiando erroneamente il flag scheletro al concetto "riga non ancora salvata". Conseguenza: gli esercizi aggiunti allo step 3 (dettagli) venivano salvati con `isSkeletonExercise: true`. Aggiunto campo dedicato `isSkeletonExercise` su `EditableWorkoutExerciseRow`: `applyStructureToAllWeeks` (step structure) crea draft con `true`, `addDraftRow` (step dettagli) con `false`, `buildEditableRow` propaga il valore esistente da DB.
+
+---
+
 ## 2026-04-24 — API performance fixes: 3 additional bottlenecks eliminated
 
 - **perf** `publish/route.ts`: sequential `week.update` for-loop replaced with `Promise.all` — eliminates N serial DB writes (was 12 writes sequential for a 12-week program)

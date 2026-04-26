@@ -165,6 +165,7 @@ interface EditableWorkoutExerciseRow {
     restTime: RestTime
     notes: string | null
     isDraft: boolean
+    isSkeletonExercise: boolean
 }
 
 interface EditProgramContentProps {
@@ -368,6 +369,7 @@ function buildEditableRow(
         restTime: workoutExercise.restTime,
         notes: workoutExercise.notes,
         isDraft,
+        isSkeletonExercise: workoutExercise.isSkeletonExercise,
     }
 }
 
@@ -1502,6 +1504,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 restTime: 'm2',
                 notes: null,
                 isDraft: true,
+                isSkeletonExercise: false,
             },
         }))
 
@@ -1666,7 +1669,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             effectiveWeight: parsedWeight.effectiveWeight,
             restTime: row.restTime,
             isWarmup: row.isWarmup,
-            isSkeletonExercise: row.isDraft,
+            isSkeletonExercise: row.isSkeletonExercise,
             notes: row.notes,
         }
     }
@@ -1982,6 +1985,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             restTime: 'm2',
                             notes: null,
                             isDraft: true,
+                            isSkeletonExercise: true,
                         }
 
                         nextRowsById[draftRowId] = draftRow
