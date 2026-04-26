@@ -125,4 +125,67 @@ describe('PUT /api/programs/[id]/workouts/[workoutId]/exercises/bulk', () => {
         const body = await res.json()
         expect(body.data.workoutExercises).toHaveLength(2)
     })
+
+    it('rejects empty array with 400', async () => {
+        const res = await bulkPut(makePutRequest({ exercises: [] }), params(PROG, WK))
+        expect(res.status).toBe(400)
+    })
+
+    it('returns 404 when program does not exist', async () => {
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue(null as any)
+        const res = await bulkPut(makePutRequest({ exercises: [baseRow] }), params(PROG, WK))
+        expect(res.status).toBe(404)
+    })
+
+    it('returns 403 when trainer does not own the program', async () => {
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+            ...draftProgramOwned,
+            trainerId: 'other-trainer',
+        } as any)
+        const res = await bulkPut(makePutRequest({ exercises: [baseRow] }), params(PROG, WK))
+        expect(res.status).toBe(403)
+    })
+
+    it('returns 403 when program is not draft (non-admin)', async () => {
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+            ...draftProgramOwned,
+            status: 'active',
+        } as any)
+        const res = await bulkPut(makePutRequest({ exercises: [baseRow] }), params(PROG, WK))
+        expect(res.status).toBe(403)
+    })
+
+    it('allows admin to save against a non-draft program', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockAdminSession as any)
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+            ...draftProgramOwned,
+            status: 'active',
+        } as any)
+        const res = await bulkPut(makePutRequest({ exercises: [baseRow] }), params(PROG, WK))
+        expect(res.status).toBe(200)
+    })
+
+    it('returns 404 when workout does not belong to program', async () => {
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+            ...draftProgramOwned,
+            weeks: [{ workouts: [] }],
+        } as any)
+        const res = await bulkPut(makePutRequest({ exercises: [baseRow] }), params(PROG, WK))
+        expect(res.status).toBe(404)
+    })
+
+    it('returns 404 when an update id is not in the workout', async () => {
+        vi.mocked(prisma.workoutExercise.findMany).mockResolvedValueOnce([] as any)
+        const res = await bulkPut(
+            makePutRequest({ exercises: [{ ...baseRow, id: WE_EXISTING }] }),
+            params(PROG, WK)
+        )
+        expect(res.status).toBe(404)
+    })
+
+    it('returns 404 when a referenced exerciseId does not exist', async () => {
+        vi.mocked(prisma.exercise.findMany).mockResolvedValue([] as any)
+        const res = await bulkPut(makePutRequest({ exercises: [baseRow] }), params(PROG, WK))
+        expect(res.status).toBe(404)
+    })
 })
