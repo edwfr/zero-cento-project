@@ -2729,7 +2729,10 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                         </div>
 
                                                         {isWorkoutExpanded && (
-                                                            <div className="overflow-x-auto">
+                                                            <div className="relative overflow-x-auto">
+                                                                {savingWorkoutId === workout.id && (
+                                                                    <div className="absolute inset-0 z-10 bg-white/70" />
+                                                                )}
                                                                 <DndContext
                                                                     sensors={dndSensors}
                                                                     collisionDetection={closestCenter}
