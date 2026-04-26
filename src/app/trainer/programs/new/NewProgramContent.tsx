@@ -249,7 +249,17 @@ export default function NewProgramContent({
                                 min="1"
                                 max="52"
                                 value={durationWeeks}
-                                onChange={(e) => setDurationWeeks(parseInt(e.target.value))}
+                                onChange={(e) => {
+                                    const val = e.target.value.trim()
+                                    if (val === '') {
+                                        setDurationWeeks(4)
+                                    } else {
+                                        const parsed = parseInt(val, 10)
+                                        if (!isNaN(parsed)) {
+                                            setDurationWeeks(parsed)
+                                        }
+                                    }
+                                }}
                                 disabled={loading}
                                 inputSize="md"
                                 required
@@ -285,7 +295,17 @@ export default function NewProgramContent({
                                 min="1"
                                 max="7"
                                 value={workoutsPerWeek}
-                                onChange={(e) => setWorkoutsPerWeek(parseInt(e.target.value))}
+                                onChange={(e) => {
+                                    const val = e.target.value.trim()
+                                    if (val === '') {
+                                        setWorkoutsPerWeek(3)
+                                    } else {
+                                        const parsed = parseInt(val, 10)
+                                        if (!isNaN(parsed)) {
+                                            setWorkoutsPerWeek(parsed)
+                                        }
+                                    }
+                                }}
                                 disabled={loading}
                                 inputSize="md"
                                 required
