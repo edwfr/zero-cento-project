@@ -8,6 +8,32 @@ Per stato corrente usare sempre [checklist.md](./checklist.md).
 
 ---
 
+## 2026-04-26 — Review page: unified queries and DB-side PR aggregation
+
+**File modificati:** `src/app/api/programs/[id]/review/route.ts` (nuovo), `src/app/trainer/programs/[id]/review/_content.tsx`
+
+**Problema:** La pagina `/trainer/programs/[id]/review` eseguiva due chiamate HTTP sequenziali (waterfall):
+1. `GET /api/programs/{id}` → risposta con il `traineeId`
+2. `GET /api/personal-records?traineeId={traineeId}` → tutti i PR del trainee
+
+Il client poi eseguiva tre catene `useMemo` per raggruppare i PR per esercizio, trovare il best PR e calcolare l'1RM stimato.
+
+**Ottimizzazioni applicate:**
+- Creato endpoint dedicato `GET /api/programs/[id]/review/route.ts` che:
+  - Esegue un check ownership leggero (`findFirst` con `select` minimo)
+  - Recupera il programma completo e i PR in **parallelo** via `Promise.all`
+  - Usa una singola query SQL con `GROUP BY ("exerciseId", reps)` per ottenere il peso massimo per combinazione esercizio×ripetizioni — aggregazione lato DB invece che lato client
+  - Calcola `estimatedOneRMByExercise` e `bestWeightByExerciseAndReps` server-side (una passata O(n) sui risultati) e li restituisce già pronti
+- Aggiornato `_content.tsx`:
+  - Una sola chiamata `/api/programs/${programId}/review` invece di due sequenziali
+  - Rimossi `personalRecords` state e le tre catene `useMemo` (`recordsByExercise`, `bestPRs`, `estimatedOneRMByExercise`)
+  - `resolveEffectiveWeightFallback` semplificata: usa `bestWeightByExerciseAndReps[exerciseId][reps]` invece di filter+reduce su array di record
+  - Rimossa la funzione `estimateOneRMValue` (non più usata nel client)
+
+**Risultato:** Da 2 chiamate HTTP sequenziali + ~11 query DB + 3 useMemo a 1 chiamata HTTP + query parallele (≈9 query programma + 1 query SQL aggregata per i PR).
+
+---
+
 ## 2026-04-26 — Bulk Workout Exercise Save Optimization
 
 - Added `bulkSaveWorkoutExercisesSchema` to `src/schemas/workout-exercise.ts` with optional `id` per row to support mixed creates/updates

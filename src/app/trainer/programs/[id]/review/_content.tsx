@@ -88,12 +88,6 @@ interface ProgramSummary {
     weeks: WeekSummary[]
 }
 
-interface PersonalRecord {
-    exerciseId: string
-    reps: number
-    weight: number
-}
-
 interface ReviewProgramContentProps {
     viewOnly?: boolean
 }
@@ -103,11 +97,6 @@ type ViewWizardStep = 'structure' | 'exercises' | 'report'
 function parseRepsValue(repsValue: string): number {
     const match = repsValue.match(/^\d+/)
     return match ? parseInt(match[0], 10) : 0
-}
-
-function estimateOneRMValue(weight: number, reps: number): number {
-    if (reps <= 1) return weight
-    return weight * (1 + reps / 30)
 }
 
 function roundWeightValue(value: number): number {
@@ -207,12 +196,12 @@ function resolveEffectiveWeightFallback({
     workoutExercise,
     previousEffectiveWeightByExerciseId,
     estimatedOneRMByExercise,
-    recordsByExercise,
+    bestWeightByExerciseAndReps,
 }: {
     workoutExercise: WorkoutExerciseSummary
     previousEffectiveWeightByExerciseId: Record<string, number | null>
     estimatedOneRMByExercise: Record<string, number>
-    recordsByExercise: Record<string, PersonalRecord[]>
+    bestWeightByExerciseAndReps: Record<string, Record<number, number>>
 }): number | null {
     if (typeof workoutExercise.weight !== 'number') {
         return null
@@ -237,19 +226,13 @@ function resolveEffectiveWeightFallback({
             return null
         }
 
-        const matchingRecords = (recordsByExercise[workoutExercise.exercise.id] || []).filter(
-            (record) => record.reps === targetReps
-        )
-
-        if (matchingRecords.length === 0) {
+        const bestWeight =
+            bestWeightByExerciseAndReps[workoutExercise.exercise.id]?.[targetReps]
+        if (typeof bestWeight !== 'number') {
             return null
         }
 
-        const bestRecord = matchingRecords.reduce((best, current) =>
-            current.weight > best.weight ? current : best
-        )
-
-        return roundWeightValue((bestRecord.weight * workoutExercise.weight) / 100)
+        return roundWeightValue((bestWeight * workoutExercise.weight) / 100)
     }
 
     const previousEffectiveWeight = previousEffectiveWeightByExerciseId[workoutExercise.exercise.id]
@@ -268,7 +251,8 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
 
     const [loading, setLoading] = useState(true)
     const [program, setProgram] = useState<ProgramSummary | null>(null)
-    const [personalRecords, setPersonalRecords] = useState<PersonalRecord[]>([])
+    const [estimatedOneRMByExercise, setEstimatedOneRMByExercise] = useState<Record<string, number>>({})
+    const [bestWeightByExerciseAndReps, setBestWeightByExerciseAndReps] = useState<Record<string, Record<number, number>>>({})
     const [error, setError] = useState<string | null>(null)
     const [isSbdSummaryCollapsed, setIsSbdSummaryCollapsed] = useState(false)
     const [activeViewStep, setActiveViewStep] = useState<ViewWizardStep>('report')
@@ -286,7 +270,7 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
         const fetchProgram = async () => {
             try {
                 setLoading(true)
-                const res = await fetch(`/api/programs/${programId}`, {
+                const res = await fetch(`/api/programs/${programId}/review`, {
                     cache: 'no-store',
                 })
                 const data = await res.json()
@@ -296,16 +280,8 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                 }
 
                 setProgram(data.data.program)
-
-                const traineeId = data.data.program.trainee.id
-                const recordsRes = await fetch(`/api/personal-records?traineeId=${traineeId}`)
-
-                if (recordsRes.ok) {
-                    const recordsData = await recordsRes.json()
-                    setPersonalRecords(recordsData.data.items || [])
-                } else {
-                    setPersonalRecords([])
-                }
+                setEstimatedOneRMByExercise(data.data.estimatedOneRMByExercise ?? {})
+                setBestWeightByExerciseAndReps(data.data.bestWeightByExerciseAndReps ?? {})
             } catch (err: unknown) {
                 setError(err instanceof Error ? err.message : t('reviewProgram.errorLoading'))
             } finally {
@@ -327,40 +303,6 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
         ) ?? 0
 
     const shouldShowSbdReporting = program?.isSbdProgram ?? false
-
-    const recordsByExercise = useMemo(
-        () =>
-            personalRecords.reduce((acc, record) => {
-                const key = record.exerciseId
-                if (!acc[key]) {
-                    acc[key] = []
-                }
-                acc[key].push(record)
-                return acc
-            }, {} as Record<string, PersonalRecord[]>),
-        [personalRecords]
-    )
-
-    const bestPRs = useMemo(
-        () =>
-            Object.values(recordsByExercise).map((records) =>
-                records.reduce((best, current) => {
-                    const currentEstimatedOneRM = estimateOneRMValue(current.weight, current.reps)
-                    const bestEstimatedOneRM = estimateOneRMValue(best.weight, best.reps)
-                    return currentEstimatedOneRM > bestEstimatedOneRM ? current : best
-                })
-            ),
-        [recordsByExercise]
-    )
-
-    const estimatedOneRMByExercise = useMemo(
-        () =>
-            bestPRs.reduce((acc, record) => {
-                acc[record.exerciseId] = estimateOneRMValue(record.weight, record.reps)
-                return acc
-            }, {} as Record<string, number>),
-        [bestPRs]
-    )
 
     const weekSbdMetrics = useMemo(
         () =>
@@ -979,7 +921,7 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                                                                             previousEffectiveWeightByExerciseId:
                                                                                                 effectiveWeightByExerciseId,
                                                                                             estimatedOneRMByExercise,
-                                                                                            recordsByExercise,
+                                                                                            bestWeightByExerciseAndReps,
                                                                                         })
                                                                                     const effectiveWeightValue =
                                                                                         typeof workoutExercise.effectiveWeight ===
