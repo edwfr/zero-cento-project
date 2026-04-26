@@ -7,15 +7,8 @@ vi.mock('@upstash/redis/cloudflare', () => ({
     Redis: vi.fn(),
 }))
 
-// Prevents real Supabase network calls for the first N requests that pass the
-// rate limit check and reach the auth layer (they will return 401 — correct).
-vi.mock('@supabase/ssr', () => ({
-    createServerClient: vi.fn(() => ({
-        auth: {
-            getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
-        },
-    })),
-}))
+// Note: @supabase/ssr mock is NOT needed here.
+// API routes now return NextResponse.next() before Supabase is ever called.
 
 import { middleware } from '@/middleware'
 
@@ -42,10 +35,8 @@ describe('Rate limiting — read endpoints (I3)', () => {
         const ip = '10.0.1.1'
         const path = '/api/exercises'
 
-        // Requests 1-100: pass rate limit, reach auth layer → 401 (expected)
         await exhaustLimit(ip, path, 100)
 
-        // Request 101: blocked by rate limiter before auth layer → 429
         const res = await middleware(buildRequest(ip, path))
 
         expect(res.status).toBe(429)
@@ -92,7 +83,6 @@ describe('Rate limiting — read endpoints (I3)', () => {
         const ip = '10.0.1.4'
         const path = '/api/exercises'
 
-        // 99 requests should NOT trigger rate limiting (returns 401, not 429)
         await exhaustLimit(ip, path, 99)
 
         const res = await middleware(buildRequest(ip, path))
@@ -107,5 +97,33 @@ describe('Rate limiting — read endpoints (I3)', () => {
             const res = await middleware(buildRequest(ip, path))
             expect(res.status).not.toBe(429)
         }
+    })
+
+    it('passes API requests through to route handlers without calling getUser', async () => {
+        const ip = '10.0.1.99'
+        const path = '/api/programs'
+        // Should return 200 (NextResponse.next()), NOT 401
+        const res = await middleware(buildRequest(ip, path))
+        expect(res.status).toBe(200)
+    })
+
+    it('rate limits POST mutations via in-memory store, returns 429 after 100', async () => {
+        const ip = '10.0.2.1'
+        const path = '/api/programs/prog-test-id/copy-week'
+
+        function buildPostRequest(ipAddr: string, pathname: string): NextRequest {
+            return new NextRequest(`http://localhost${pathname}`, {
+                method: 'POST',
+                headers: { 'x-forwarded-for': ipAddr },
+            })
+        }
+
+        for (let i = 0; i < 100; i++) {
+            await middleware(buildPostRequest(ip, path))
+        }
+
+        const res = await middleware(buildPostRequest(ip, path))
+        expect(res.status).toBe(429)
+        expect(res.headers.get('Retry-After')).toBe('60')
     })
 })

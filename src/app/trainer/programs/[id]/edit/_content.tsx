@@ -24,6 +24,7 @@ import {
     Dumbbell,
     FileEdit,
     Flame,
+    GripVertical,
     Info,
     Lock,
     LockOpen,
@@ -35,6 +36,23 @@ import {
     buildStructureRowsForWorkout,
     type WorkoutStructureTemplateRow,
 } from './structure-utils'
+import { transformApiWeek } from './transform-utils'
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+    SortableContext,
+    sortableKeyboardCoordinates,
+    useSortable,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 const PRIMARY_COLOR = 'rgb(var(--brand-primary))'
 const RPE_OPTIONS = [5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10]
@@ -79,6 +97,7 @@ interface WorkoutExercise {
     effectiveWeight: number | null
     restTime: RestTime
     isWarmup: boolean
+    isSkeletonExercise: boolean
     notes: string | null
     exercise: ExerciseReference
 }
@@ -146,6 +165,7 @@ interface EditableWorkoutExerciseRow {
     restTime: RestTime
     notes: string | null
     isDraft: boolean
+    isSkeletonExercise: boolean
 }
 
 interface EditProgramContentProps {
@@ -349,6 +369,7 @@ function buildEditableRow(
         restTime: workoutExercise.restTime,
         notes: workoutExercise.notes,
         isDraft,
+        isSkeletonExercise: workoutExercise.isSkeletonExercise,
     }
 }
 
@@ -372,6 +393,37 @@ function areEditableRowsEquivalent(
         left.order === right.order &&
         left.restTime === right.restTime &&
         normalizeOptionalText(left.notes) === normalizeOptionalText(right.notes)
+    )
+}
+
+function SortableExerciseRow({
+    id,
+    isDraft,
+    readOnly,
+    children,
+}: {
+    id: string
+    isDraft: boolean
+    readOnly: boolean
+    children: (dragHandleProps: React.HTMLAttributes<HTMLElement> | null) => React.ReactNode
+}) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+        id,
+        disabled: isDraft || readOnly,
+    })
+
+    const style: React.CSSProperties = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        position: 'relative',
+        zIndex: isDragging ? 1 : 'auto',
+    }
+
+    return (
+        <tr ref={setNodeRef} style={style}>
+            {children(isDraft || readOnly ? null : { ...attributes, ...listeners })}
+        </tr>
     )
 }
 
@@ -409,6 +461,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const loadingRef = useRef(false)
     const requestIdRef = useRef(0)
     const lastVisibilityRefreshRef = useRef(0)
+    const trainerIdRef = useRef('')
+    const loadedPersonalRecordsTraineeIdRef = useRef<string | null>(null)
 
     const [activeWeekId, setActiveWeekId] = useState<string | null>(null)
     const [expandedWeekIds, setExpandedWeekIds] = useState<Record<string, boolean>>({})
@@ -427,6 +481,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const [savingRowId, setSavingRowId] = useState<string | null>(null)
     const [savingWorkoutId, setSavingWorkoutId] = useState<string | null>(null)
     const [deletingRowId, setDeletingRowId] = useState<string | null>(null)
+    const [reorderingWorkoutId, setReorderingWorkoutId] = useState<string | null>(null)
 
     const [confirmCopyNextWeek, setConfirmCopyNextWeek] = useState<Week | null>(null)
     const [confirmDeleteRow, setConfirmDeleteRow] = useState<{
@@ -445,6 +500,11 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
     const [isPrHelperCollapsed, setIsPrHelperCollapsed] = useState(false)
     const [isSbdHelperCollapsed, setIsSbdHelperCollapsed] = useState(false)
+
+    const dndSensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    )
 
     const fetchExerciseCatalog = useCallback(async () => {
         try {
@@ -545,6 +605,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             }
 
             setPersonalRecords(recordsData.data.items || [])
+            loadedPersonalRecordsTraineeIdRef.current = traineeId
         } catch {
             if (requestId === requestIdRef.current) {
                 setPersonalRecords([])
@@ -574,6 +635,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
             const traineeId = data.data.program.trainee.id
             const trainerId = data.data.program.trainerId
+            trainerIdRef.current = trainerId
 
             const transformedProgram: Program = {
                 id: data.data.program.id,
@@ -583,57 +645,9 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 trainee: data.data.program.trainee,
                 durationWeeks: data.data.program.durationWeeks,
                 workoutsPerWeek: data.data.program.workoutsPerWeek,
-                weeks: (data.data.program.weeks || []).map((week: any) => ({
-                    id: week.id,
-                    weekNumber: week.weekNumber,
-                    weekType: week.weekType,
-                    workouts: (week.workouts || [])
-                        .map((workout: any) => ({
-                            id: workout.id,
-                            dayIndex:
-                                typeof workout.dayIndex === 'number'
-                                    ? workout.dayIndex
-                                    : Number(workout.dayOfWeek ?? 0),
-                            workoutExercises: (workout.workoutExercises || []).map((we: any) => {
-                                const movementPattern = we.exercise?.movementPattern
-                                    ? {
-                                        id: we.exercise.movementPattern.id,
-                                        name: we.exercise.movementPattern.name,
-                                        color:
-                                            we.exercise.movementPattern.movementPatternColors?.find(
-                                                (color: any) => color.trainerId === trainerId
-                                            )?.color || PRIMARY_COLOR,
-                                    }
-                                    : null
-
-                                return {
-                                    id: we.id,
-                                    order: we.order,
-                                    variant: we.variant,
-                                    sets: we.sets,
-                                    reps: String(we.reps),
-                                    targetRpe: we.targetRpe,
-                                    weightType: we.weightType,
-                                    weight: we.weight,
-                                    effectiveWeight: we.effectiveWeight,
-                                    restTime: we.restTime,
-                                    isWarmup: we.isWarmup,
-                                    notes: we.notes,
-                                    exercise: {
-                                        id: we.exercise.id,
-                                        name: we.exercise.name,
-                                        type: we.exercise.type,
-                                        notes: Array.isArray(we.exercise.notes)
-                                            ? we.exercise.notes.filter((note: unknown) => typeof note === 'string')
-                                            : [],
-                                        movementPattern,
-                                        exerciseMuscleGroups: we.exercise.exerciseMuscleGroups || [],
-                                    },
-                                }
-                            }),
-                        }))
-                        .sort((left: Workout, right: Workout) => left.dayIndex - right.dayIndex),
-                })),
+                weeks: (data.data.program.weeks || []).map((week: any) =>
+                    transformApiWeek(week, trainerId) as Week
+                ),
             }
 
             if (requestId !== requestIdRef.current) {
@@ -642,7 +656,9 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
             setProgram(transformedProgram)
             setError(null)
-            void fetchPersonalRecords(traineeId, requestId)
+            if (loadedPersonalRecordsTraineeIdRef.current !== traineeId) {
+                void fetchPersonalRecords(traineeId, requestId)
+            }
         } catch (err: unknown) {
             if (requestId === requestIdRef.current) {
                 setError(err instanceof Error ? err.message : t('editProgram.errorLoading'))
@@ -660,7 +676,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     useEffect(() => {
         void fetchProgram()
         void fetchExerciseCatalog()
-    }, [fetchExerciseCatalog, fetchProgram])
+    }, [programId])
 
     useEffect(() => {
         const handleVisibilityChange = () => {
@@ -1135,6 +1151,13 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const handleCopyWeekToNext = async () => {
         if (!confirmCopyNextWeek) return
 
+        // Identify target week workout IDs before re-fetching
+        const sourceWeek = confirmCopyNextWeek
+        const targetWeek = program?.weeks.find(
+            (w) => w.weekNumber === sourceWeek.weekNumber + 1
+        )
+        const targetWorkoutIds = targetWeek?.workouts.map((w) => w.id) ?? []
+
         try {
             setCopyingWeekId(confirmCopyNextWeek.id)
 
@@ -1149,7 +1172,43 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 throw new Error(getApiErrorMessage(data, t('editProgram.copyWeekError'), t))
             }
 
-            await fetchProgram({ showLoading: false })
+            // Clear any draft rows for the target week's workouts
+            if (targetWorkoutIds.length > 0) {
+                setDraftRowIdsByWorkout((current) => {
+                    const next = { ...current }
+                    targetWorkoutIds.forEach((workoutId) => {
+                        if (next[workoutId]) {
+                            // Remove draft row entries from rowStateById too
+                            const draftIds = next[workoutId]
+                            setRowStateById((rows) => {
+                                const nextRows = { ...rows }
+                                draftIds.forEach((id) => {
+                                    delete nextRows[id]
+                                })
+                                return nextRows
+                            })
+                            delete next[workoutId]
+                        }
+                    })
+                    return next
+                })
+            }
+
+            if (data.data?.updatedWeek) {
+                const transformedWeek = transformApiWeek(data.data.updatedWeek, trainerIdRef.current) as Week
+                setProgram((currentProgram) => {
+                    if (!currentProgram) return currentProgram
+                    return {
+                        ...currentProgram,
+                        weeks: currentProgram.weeks.map((week) =>
+                            week.id === transformedWeek.id ? transformedWeek : week
+                        ),
+                    }
+                })
+            } else {
+                await fetchProgram({ showLoading: false })
+            }
+
             showToast(
                 t('editProgram.copyWeekSuccess', {
                     sourceWeek: confirmCopyNextWeek.weekNumber,
@@ -1164,6 +1223,130 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             setCopyingWeekId(null)
         }
     }
+
+    const getWorkoutRows = useCallback(
+        (workout: Workout) => {
+            const persistedRows = workout.workoutExercises
+                .map((workoutExercise) =>
+                    rowStateById[workoutExercise.id] || buildEditableRow(workout.id, workoutExercise)
+                )
+                .sort((left, right) => left.order - right.order)
+
+            const draftRows = (draftRowIdsByWorkout[workout.id] || [])
+                .map((draftRowId) => rowStateById[draftRowId])
+                .filter((row): row is EditableWorkoutExerciseRow => Boolean(row))
+                .sort((left, right) => left.order - right.order)
+
+            return [...persistedRows, ...draftRows]
+        },
+        [draftRowIdsByWorkout, rowStateById]
+    )
+
+    const handleDragEnd = useCallback(
+        async (event: DragEndEvent, workout: Workout) => {
+            const { active, over } = event
+            if (!over || active.id === over.id) return
+
+            const workoutRows = getWorkoutRows(workout).filter((row) => !row.isDraft)
+            const oldIndex = workoutRows.findIndex((r) => r.id === active.id)
+            const newIndex = workoutRows.findIndex((r) => r.id === over.id)
+            if (oldIndex === -1 || newIndex === -1) return
+
+            // Build new ordered array
+            const reordered = [...workoutRows]
+            const [moved] = reordered.splice(oldIndex, 1)
+            reordered.splice(newIndex, 0, moved)
+
+            // Optimistic update
+            const previousOrders = Object.fromEntries(
+                workoutRows.map((r) => [r.id, r.order])
+            )
+            setRowStateById((current) => {
+                const next = { ...current }
+                reordered.forEach((row, i) => {
+                    if (next[row.id]) {
+                        next[row.id] = { ...next[row.id], order: i + 1 }
+                    }
+                })
+                return next
+            })
+
+            try {
+                setReorderingWorkoutId(workout.id)
+                const res = await fetch(
+                    `/api/programs/${programId}/workouts/${workout.id}/exercises/reorder`,
+                    {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            exercises: reordered.map((row, i) => ({
+                                id: row.id,
+                                order: i + 1,
+                            })),
+                        }),
+                    }
+                )
+
+                if (!res.ok) {
+                    const data = await res.json()
+                    throw new Error(getApiErrorMessage(data, t('editProgram.rowReorderError'), t))
+                }
+            } catch (err) {
+                // Revert optimistic update
+                setRowStateById((current) => {
+                    const next = { ...current }
+                    workoutRows.forEach((row) => {
+                        if (next[row.id]) {
+                            next[row.id] = { ...next[row.id], order: previousOrders[row.id] }
+                        }
+                    })
+                    return next
+                })
+                showToast(
+                    err instanceof Error ? err.message : t('editProgram.rowReorderError'),
+                    'error'
+                )
+            } finally {
+                setReorderingWorkoutId(null)
+            }
+        },
+        [getWorkoutRows, programId, showToast, t]
+    )
+
+    const hasWorkoutUnsavedChanges = useCallback(
+        (workout: Workout): boolean => {
+            const persistedRows = workout.workoutExercises
+                .map((workoutExercise) => buildEditableRow(workout.id, workoutExercise))
+                .sort((left, right) => left.order - right.order)
+
+            const currentRows = [...getWorkoutRows(workout)].sort(
+                (left, right) => left.order - right.order
+            )
+
+            if (currentRows.some((row) => row.isDraft)) {
+                return true
+            }
+
+            if (currentRows.length !== persistedRows.length) {
+                return true
+            }
+
+            const persistedRowsById = new Map(
+                persistedRows.map((row) => [row.id, row] as const)
+            )
+
+            return currentRows.some((row) => {
+                const persistedRow = persistedRowsById.get(row.id)
+
+                if (!persistedRow) {
+                    return true
+                }
+
+                return !areEditableRowsEquivalent(row, persistedRow)
+            })
+        },
+        [getWorkoutRows]
+    )
 
     const toggleWeekExpansion = (weekId: string) => {
         setExpandedWeekIds((currentExpandedWeekIds) => ({
@@ -1321,6 +1504,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 restTime: 'm2',
                 notes: null,
                 isDraft: true,
+                isSkeletonExercise: false,
             },
         }))
 
@@ -1350,36 +1534,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             const { [rowId]: _removed, ...nextRows } = currentRows
             return nextRows
         })
-    }
-
-    const getBaseValidationError = (row: EditableWorkoutExerciseRow): string | null => {
-        const repsPattern = /^(\d+|\d+-\d+|\d+\/\d+)$/
-        const parsedSets = Number.parseInt(row.sets, 10)
-        const parsedRpe = row.targetRpe.trim() === '' ? null : Number(row.targetRpe)
-
-        if (!row.exerciseId) {
-            return t('editProgram.rowValidationExercise')
-        }
-
-        if (!Number.isInteger(parsedSets) || parsedSets < 1 || parsedSets > 20) {
-            return t('editProgram.rowValidationSets')
-        }
-
-        if (!repsPattern.test(row.reps.trim())) {
-            return t('editProgram.rowValidationReps')
-        }
-
-        if (
-            parsedRpe !== null &&
-            (!Number.isFinite(parsedRpe) ||
-                parsedRpe < 5 ||
-                parsedRpe > 10 ||
-                Math.abs(parsedRpe * 2 - Math.round(parsedRpe * 2)) > Number.EPSILON)
-        ) {
-            return t('editProgram.rowValidationRpe')
-        }
-
-        return null
     }
 
     const resolveWeightInputForRow = ({
@@ -1515,8 +1669,40 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             effectiveWeight: parsedWeight.effectiveWeight,
             restTime: row.restTime,
             isWarmup: row.isWarmup,
+            isSkeletonExercise: row.isSkeletonExercise,
             notes: row.notes,
         }
+    }
+
+    const getBaseValidationError = (row: EditableWorkoutExerciseRow): string | null => {
+        // Allow: number (8), range (8-10), drop-set (6/8), or keyword "max"
+        const repsPattern = /^(\d+|\d+-\d+|\d+\/\d+|max)$/
+        const parsedSets = Number.parseInt(row.sets, 10)
+        const parsedRpe = row.targetRpe.trim() === '' ? null : Number(row.targetRpe)
+
+        if (!row.exerciseId) {
+            return t('editProgram.rowValidationExercise')
+        }
+
+        if (!Number.isInteger(parsedSets) || parsedSets < 1 || parsedSets > 20) {
+            return t('editProgram.rowValidationSets')
+        }
+
+        if (!repsPattern.test(row.reps.trim())) {
+            return t('editProgram.rowValidationReps')
+        }
+
+        if (
+            parsedRpe !== null &&
+            (!Number.isFinite(parsedRpe) ||
+                parsedRpe < 5 ||
+                parsedRpe > 10 ||
+                (parsedRpe * 2) % 1 !== 0)
+        ) {
+            return t('editProgram.rowValidationRpe')
+        }
+
+        return null
     }
 
     const saveWorkoutRows = async (workout: Workout) => {
@@ -1605,6 +1791,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
         try {
             setSavingWorkoutId(workout.id)
+            const savedDraftRowIds: string[] = []
 
             for (const row of workoutRows) {
                 setSavingRowId(row.id)
@@ -1635,8 +1822,28 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 }
 
                 if (row.isDraft) {
-                    removeDraftRow(row.id, workout.id)
+                    savedDraftRowIds.push(row.id)
                 }
+            }
+
+            // Batch-remove all saved draft rows in one state update BEFORE refetch
+            if (savedDraftRowIds.length > 0) {
+                setDraftRowIdsByWorkout((current) => {
+                    const workoutDrafts = current[workout.id] ?? []
+                    const remaining = workoutDrafts.filter((id) => !savedDraftRowIds.includes(id))
+                    if (remaining.length === 0) {
+                        const { [workout.id]: _removed, ...rest } = current
+                        return rest
+                    }
+                    return { ...current, [workout.id]: remaining }
+                })
+                setRowStateById((current) => {
+                    const next = { ...current }
+                    savedDraftRowIds.forEach((id) => {
+                        delete next[id]
+                    })
+                    return next
+                })
             }
 
             await fetchProgram({ showLoading: false })
@@ -1692,59 +1899,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             setDeletingRowId(null)
         }
     }
-
-    const getWorkoutRows = useCallback(
-        (workout: Workout) => {
-            const persistedRows = workout.workoutExercises
-                .map((workoutExercise) =>
-                    rowStateById[workoutExercise.id] || buildEditableRow(workout.id, workoutExercise)
-                )
-                .sort((left, right) => left.order - right.order)
-
-            const draftRows = (draftRowIdsByWorkout[workout.id] || [])
-                .map((draftRowId) => rowStateById[draftRowId])
-                .filter((row): row is EditableWorkoutExerciseRow => Boolean(row))
-                .sort((left, right) => left.order - right.order)
-
-            return [...persistedRows, ...draftRows]
-        },
-        [draftRowIdsByWorkout, rowStateById]
-    )
-
-    const hasWorkoutUnsavedChanges = useCallback(
-        (workout: Workout): boolean => {
-            const persistedRows = workout.workoutExercises
-                .map((workoutExercise) => buildEditableRow(workout.id, workoutExercise))
-                .sort((left, right) => left.order - right.order)
-
-            const currentRows = [...getWorkoutRows(workout)].sort(
-                (left, right) => left.order - right.order
-            )
-
-            if (currentRows.some((row) => row.isDraft)) {
-                return true
-            }
-
-            if (currentRows.length !== persistedRows.length) {
-                return true
-            }
-
-            const persistedRowsById = new Map(
-                persistedRows.map((row) => [row.id, row] as const)
-            )
-
-            return currentRows.some((row) => {
-                const persistedRow = persistedRowsById.get(row.id)
-
-                if (!persistedRow) {
-                    return true
-                }
-
-                return !areEditableRowsEquivalent(row, persistedRow)
-            })
-        },
-        [getWorkoutRows]
-    )
 
     const hasUnsavedWorkoutChanges = useMemo(() => {
         if (!program) {
@@ -1831,6 +1985,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             restTime: 'm2',
                             notes: null,
                             isDraft: true,
+                            isSkeletonExercise: true,
                         }
 
                         nextRowsById[draftRowId] = draftRow
@@ -2592,8 +2747,26 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
                                                         {isWorkoutExpanded && (
                                                             <div className="overflow-x-auto">
-                                                                <table className="w-full table-fixed divide-y divide-gray-200 text-sm">
+                                                                <DndContext
+                                                                    sensors={dndSensors}
+                                                                    collisionDetection={closestCenter}
+                                                                    onDragEnd={(event) =>
+                                                                        void handleDragEnd(event, workout)
+                                                                    }
+                                                                >
+                                                                    <SortableContext
+                                                                        items={workoutRows
+                                                                            .filter((r) => !r.isDraft)
+                                                                            .map((r) => r.id)}
+                                                                        strategy={verticalListSortingStrategy}
+                                                                        disabled={
+                                                                            readOnly ||
+                                                                            reorderingWorkoutId !== null
+                                                                        }
+                                                                    >
+                                                                        <table className="w-full table-fixed divide-y divide-gray-200 text-sm">
                                                                     <colgroup>
+                                                                        <col className="w-[1%]" />
                                                                         <col className="w-[4%]" />
                                                                         <col className="w-[24%]" />
                                                                         <col className="w-[24%]" />
@@ -2602,10 +2775,13 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                         <col className="w-[8%]" />
                                                                         <col className="w-[8%]" />
                                                                         <col className="w-[8%]" />
-                                                                        <col className="w-[8%]" />
+                                                                        <col className="w-[7%]" />
                                                                     </colgroup>
                                                                     <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
                                                                         <tr>
+                                                                            <th className="w-6 px-0.5 py-3">
+                                                                                <span className="sr-only">{t('editProgram.dragHandleLabel')}</span>
+                                                                            </th>
                                                                             <th className="px-1 py-3 text-center">
                                                                                 <span
                                                                                     className="inline-flex items-center justify-center w-full"
@@ -2780,8 +2956,31 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                 'number'
 
                                                                             return (
-                                                                                <tr key={row.id} className="align-top">
-                                                                                    <td className="px-1 py-3 align-middle">
+                                                                                <SortableExerciseRow
+                                                                                    key={row.id}
+                                                                                    id={row.id}
+                                                                                    isDraft={row.isDraft}
+                                                                                    readOnly={readOnly}
+                                                                                >
+                                                                                    {(dragHandleProps) => (
+                                                                                        <>
+                                                                                            <td className="w-6 px-0.5 py-3 align-middle">
+                                                                                                {dragHandleProps ? (
+                                                                                                    <button
+                                                                                                        type="button"
+                                                                                                        className="flex h-full w-6 cursor-grab items-center justify-center text-gray-300 hover:text-gray-500 active:cursor-grabbing disabled:cursor-not-allowed"
+                                                                                                        disabled={Boolean(rowBusy)}
+                                                                                                        {...dragHandleProps}
+                                                                                                        aria-label={t('editProgram.dragHandleLabel')}
+                                                                                                    >
+                                                                                                        <GripVertical className="h-4 w-4" />
+                                                                                                    </button>
+                                                                                                ) : (
+                                                                                                    <span className="block w-6" />
+                                                                                                )}
+                                                                                            </td>
+
+                                                                                            <td className="px-1 py-3 align-middle">
                                                                                         <label className="flex h-full w-full items-center justify-center">
                                                                                             <input
                                                                                                 type="checkbox"
@@ -2898,12 +3097,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                 )}
                                                                                             </button>
                                                                                         </div>
-
-                                                                                        {selectedExercise && variantOptions.length === 0 && (
-                                                                                            <p className="mt-1 text-[11px] text-gray-400">
-                                                                                                {t('editProgram.noVariantAvailable')}
-                                                                                            </p>
-                                                                                        )}
                                                                                     </td>
 
                                                                                     <td className="px-1 py-3">
@@ -2928,12 +3121,12 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                             type="text"
                                                                                             value={row.reps}
                                                                                             onChange={(event) =>
-                                                                                                updateRowFields(row.id, {
-                                                                                                    reps: event.target.value,
-                                                                                                })
+                                                                                                updateRowFields(row.id, { reps: event.target.value })
                                                                                             }
                                                                                             disabled={rowBusy || readOnly}
-                                                                                            className={metricFieldClassName}
+                                                                                            className="h-9 w-16 rounded-lg border border-gray-300 px-1.5 text-center text-sm leading-5 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-400"
+                                                                                            placeholder="8"
+                                                                                            aria-label={t('editProgram.tableReps')}
                                                                                         />
                                                                                     </td>
 
@@ -3093,11 +3286,15 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                             )}
                                                                                         </div>
                                                                                     </td>
-                                                                                </tr>
+                                                                                        </>
+                                                                                    )}
+                                                                                </SortableExerciseRow>
                                                                             )
                                                                         })}
                                                                     </tbody>
                                                                 </table>
+                                                                    </SortableContext>
+                                                                </DndContext>
                                                             </div>
                                                         )}
                                                     </div>

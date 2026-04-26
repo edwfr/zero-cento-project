@@ -18,6 +18,7 @@ const workoutExerciseBaseSchema = z.object({
         z.string().regex(/^\d+$/, 'Numero singolo: "8"'),
         z.string().regex(/^\d+-\d+$/, 'Formato range: "8-10"'),
         z.string().regex(/^\d+\/\d+$/, 'Formato drop: "6/8"'),
+        z.literal('max'),
     ]),
     targetRpe: z
         .number()
@@ -38,6 +39,7 @@ const workoutExerciseBaseSchema = z.object({
         errorMap: () => ({ message: 'Tempo recupero non valido' }),
     }),
     isWarmup: z.boolean().default(false),
+    isSkeletonExercise: z.boolean().default(false),
     notes: z.string().max(500).nullable().optional(),
     order: z.number().int().min(1),
 })

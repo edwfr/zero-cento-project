@@ -49,7 +49,9 @@ interface WorkoutExercise {
     targetRpe: number | null
     weightType: WeightType
     weight: number | null
+    effectiveWeight: number | null
     isWarmup: boolean
+    isSkeletonExercise: boolean
     notes: string | null
     exercise: Exercise
 }

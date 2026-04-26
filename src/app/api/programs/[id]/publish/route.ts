@@ -97,22 +97,17 @@ export async function POST(
             },
         })
 
-        // Assign dates to weeks
-        for (let i = 0; i < program.weeks.length; i++) {
-            const week = program.weeks[i]
-            const weekStartDate = new Date(startDateObj)
-            weekStartDate.setDate(weekStartDate.getDate() + (week.weekNumber - 1) * 7)
-
-            const weekEndDate = new Date(weekStartDate)
-            weekEndDate.setDate(weekEndDate.getDate() + 6)
-
-            await prisma.week.update({
-                where: { id: week.id },
-                data: {
-                    startDate: weekStartDate,
-                },
+        // Assign dates to weeks in parallel
+        await Promise.all(
+            program.weeks.map((week) => {
+                const weekStartDate = new Date(startDateObj)
+                weekStartDate.setDate(weekStartDate.getDate() + (week.weekNumber - 1) * 7)
+                return prisma.week.update({
+                    where: { id: week.id },
+                    data: { startDate: weekStartDate },
+                })
             })
-        }
+        )
 
         // Fetch updated program
         const updatedProgram = await prisma.trainingProgram.findUnique({

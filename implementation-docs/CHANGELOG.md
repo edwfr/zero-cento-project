@@ -8,6 +8,32 @@ Per stato corrente usare sempre [checklist.md](./checklist.md).
 
 ---
 
+## 2026-04-26 — Fix `isSkeletonExercise` flag su esercizi aggiunti allo step dettagli
+
+- **fix** `src/app/trainer/programs/[id]/edit/_content.tsx`: il payload di `POST /api/programs/[id]/workouts/[workoutId]/exercises` impostava `isSkeletonExercise: row.isDraft`, accoppiando erroneamente il flag scheletro al concetto "riga non ancora salvata". Conseguenza: gli esercizi aggiunti allo step 3 (dettagli) venivano salvati con `isSkeletonExercise: true`. Aggiunto campo dedicato `isSkeletonExercise` su `EditableWorkoutExerciseRow`: `applyStructureToAllWeeks` (step structure) crea draft con `true`, `addDraftRow` (step dettagli) con `false`, `buildEditableRow` propaga il valore esistente da DB.
+
+---
+
+## 2026-04-24 — API performance fixes: 3 additional bottlenecks eliminated
+
+- **perf** `publish/route.ts`: sequential `week.update` for-loop replaced with `Promise.all` — eliminates N serial DB writes (was 12 writes sequential for a 12-week program)
+- **perf** `admin/reports/global/route.ts`: removed dead `setPerformed.aggregate` query (result was unused); replaced `setPerformed.findMany` full table scan with single `$queryRaw SELECT SUM(reps * weight)` — eliminates full table scan
+- **perf** `programs/route.ts`: merged two sequential `prisma` queries (`programsWithTestWeeks` + `completedFeedbacks`) into one `Promise.all` — removes one DB round-trip from every program list request
+- **test** Added publish tests to `programs.test.ts` (6 cases); created `admin-reports.test.ts` with 5 cases
+
+---
+
+## 2026-04-24 — Trainer edit program: 5 UX/performance fixes
+
+- **perf** DELETE exercise: batch order recalculation into single `$transaction` (was N sequential queries)
+- **fix** Save workout: rows no longer disappear one-by-one; draft rows batch-removed after full save completes
+- **fix** Copy week: target week draft rows cleared after copy so orphan rows no longer appear
+- **feat** Max reps: exercises can now have an optional max rep value (stored as `min-max` e.g. `8-12`)
+- **feat** Drag-and-drop: workout exercises now reorderable via drag handle using `@dnd-kit/core` + `@dnd-kit/sortable`
+- **test** Added integration tests for copy-week API route and unit tests for reps parsing utilities
+
+---
+
 ## 2026-04-24 — Test Suite Review & Consistency
 
 - Added `.nvmrc` (Node 20) to unblock Vitest 4.x startup error on Node 18

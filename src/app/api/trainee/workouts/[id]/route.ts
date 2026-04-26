@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
-import { calculateEffectiveWeight } from '@/lib/calculations'
+import { loadTraineePrMap, resolveEffectiveWeight } from '@/lib/calculations'
 import { logger } from '@/lib/logger'
 
 /**
@@ -63,96 +63,94 @@ export async function GET(
             return apiError('FORBIDDEN', 'You can only access your own workouts', 403, undefined, 'workout.accessDenied')
         }
 
-        // Fetch existing feedback for all exercises in this workout
-        // The feedback is scoped to today's date for idempotency
+        // Prepare date range for feedback query
         const today = new Date()
         today.setHours(0, 0, 0, 0)
         const tomorrow = new Date(today)
         tomorrow.setDate(tomorrow.getDate() + 1)
 
-        const feedbackMap = new Map<string, any>()
-
-        const existingFeedback = await prisma.exerciseFeedback.findMany({
-            where: {
-                workoutExerciseId: {
-                    in: workout.workoutExercises.map((we) => we.id),
-                },
-                traineeId: session.user.id,
-                date: {
-                    gte: today,
-                    lt: tomorrow,
-                },
-            },
-            include: {
-                setsPerformed: {
-                    orderBy: {
-                        setNumber: 'asc',
+        // Parallelize: fetch feedback and trainee PR map concurrently
+        const [existingFeedback, prMap] = await Promise.all([
+            prisma.exerciseFeedback.findMany({
+                where: {
+                    workoutExerciseId: {
+                        in: workout.workoutExercises.map((we) => we.id),
+                    },
+                    traineeId: session.user.id,
+                    date: {
+                        gte: today,
+                        lt: tomorrow,
                     },
                 },
-            },
-            orderBy: {
-                updatedAt: 'desc',
-            },
+                include: {
+                    setsPerformed: {
+                        orderBy: {
+                            setNumber: 'asc',
+                        },
+                    },
+                },
+                orderBy: {
+                    updatedAt: 'desc',
+                },
+            }),
+            loadTraineePrMap(session.user.id),
+        ])
+
+        const siblings = workout.workoutExercises
+        const exercisesWithWeights = workout.workoutExercises.map((we) => {
+            let effectiveWeight: number | null =
+                typeof we.effectiveWeight === 'number'
+                    ? we.effectiveWeight
+                    : we.weightType === 'absolute'
+                        ? we.weight
+                        : null
+
+            if (effectiveWeight === null) {
+                try {
+                    effectiveWeight = resolveEffectiveWeight(we, prMap, siblings)
+                } catch (error) {
+                    logger.warn(
+                        {
+                            workoutExerciseId: we.id,
+                            exerciseId: we.exerciseId,
+                            weightType: we.weightType,
+                            error: error instanceof Error ? error.message : String(error),
+                        },
+                        'Failed to calculate effective weight'
+                    )
+                }
+            }
+
+            return {
+                id: we.id,
+                exercise: we.exercise,
+                variant: we.variant,
+                sets: we.sets,
+                reps: we.reps,
+                targetRpe: we.targetRpe,
+                weightType: we.weightType,
+                weight: we.weight,
+                effectiveWeight,
+                restTime: we.restTime,
+                isWarmup: we.isWarmup,
+                notes: we.notes,
+                order: we.order,
+            }
         })
 
-        // Create a map for quick lookup
+        // Create a map for quick lookup of feedback
+        const feedbackMap = new Map<string, any>()
         existingFeedback.forEach((fb) => {
             if (!feedbackMap.has(fb.workoutExerciseId)) {
                 feedbackMap.set(fb.workoutExerciseId, fb)
             }
         })
 
-        // Calculate effective weight for each exercise
-        const exercisesWithWeights = await Promise.all(
-            workout.workoutExercises.map(async (we) => {
-                let effectiveWeight: number | null =
-                    typeof we.effectiveWeight === 'number'
-                        ? we.effectiveWeight
-                        : we.weightType === 'absolute'
-                            ? we.weight
-                            : null
-
-                if (effectiveWeight === null) {
-                    try {
-                        effectiveWeight = await calculateEffectiveWeight(
-                            we,
-                            session.user.id
-                        )
-                    } catch (error) {
-                        // If calculation fails (e.g., missing 1RM), effectiveWeight remains null
-                        logger.warn(
-                            {
-                                workoutExerciseId: we.id,
-                                exerciseId: we.exerciseId,
-                                weightType: we.weightType,
-                                error: error instanceof Error ? error.message : String(error),
-                            },
-                            'Failed to calculate effective weight'
-                        )
-                    }
-                }
-
-                // Get feedback for this exercise if exists
-                const feedback = feedbackMap.get(we.id) || null
-
-                return {
-                    id: we.id,
-                    exercise: we.exercise,
-                    variant: we.variant,
-                    sets: we.sets,
-                    reps: we.reps,
-                    targetRpe: we.targetRpe,
-                    weightType: we.weightType,
-                    weight: we.weight,
-                    effectiveWeight, // Calculated server-side
-                    restTime: we.restTime,
-                    isWarmup: we.isWarmup,
-                    notes: we.notes,
-                    order: we.order,
-                    feedback, // Include existing feedback if present
-                }
-            })
-        )
+        // Attach feedback to exercises
+        const exercisesWithFeedback = exercisesWithWeights.map((ex) => ({
+            ...ex,
+            feedback: feedbackMap.get(ex.id) || null,
+        }))
 
         logger.info(
             { workoutId, traineeId: session.user.id },
@@ -170,7 +168,7 @@ export async function GET(
                     id: workout.week.program.id,
                     title: workout.week.program.title,
                 },
-                exercises: exercisesWithWeights,
+                exercises: exercisesWithFeedback,
             },
         })
     } catch (error: any) {

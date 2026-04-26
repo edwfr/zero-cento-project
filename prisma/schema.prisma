@@ -263,6 +263,7 @@ model WorkoutExercise {
   effectiveWeight Float? // kg effettivi calcolati dal trainer
   restTime   RestTime
   isWarmup   Boolean    @default(false)
+  isSkeletonExercise Boolean @default(false) // True se esercizio è uno schema vuoto/template non completamente configurato
   notes      String?
   order      Int
 

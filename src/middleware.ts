@@ -63,9 +63,11 @@ async function checkRateLimit(
 }
 
 /**
- * Get rate limit config based on route
+ * Get rate limit config based on route and HTTP method.
+ * Redis is used only for GET requests on resource endpoints (cross-instance
+ * consistency matters for reads; mutations are low-frequency user actions).
  */
-function getRateLimitConfig(pathname: string): { limit: number; windowMs: number; useRedis: boolean } {
+function getRateLimitConfig(pathname: string, method: string): { limit: number; windowMs: number; useRedis: boolean } {
     // Auth endpoints - strict limits with Redis
     if (pathname.includes('/login') || pathname.includes('/signup')) {
         return { limit: 5, windowMs: 15 * 60 * 1000, useRedis: true } // 5 per 15 min
@@ -85,7 +87,7 @@ function getRateLimitConfig(pathname: string): { limit: number; windowMs: number
         return { limit: 20, windowMs: 60 * 60 * 1000, useRedis: false } // 20 per hour
     }
 
-    // Read endpoints — explicit 100/min, Redis-backed for cross-instance consistency on Vercel
+    // Read endpoints — Redis-backed only for GET; mutations use in-memory
     if (
         pathname === '/api/exercises' ||
         pathname.startsWith('/api/exercises/') ||
@@ -94,7 +96,7 @@ function getRateLimitConfig(pathname: string): { limit: number; windowMs: number
         pathname === '/api/personal-records' ||
         pathname.startsWith('/api/personal-records/')
     ) {
-        return { limit: 100, windowMs: 60 * 1000, useRedis: true } // 100 per minute
+        return { limit: 100, windowMs: 60 * 1000, useRedis: method === 'GET' }
     }
 
     // Default API limits
@@ -122,7 +124,7 @@ export async function middleware(request: NextRequest) {
     if (process.env.NODE_ENV !== 'development') {
         const clientIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
         const rateLimitKey = `${clientIp}:${pathname}`
-        const rateLimitConfig = getRateLimitConfig(pathname)
+        const rateLimitConfig = getRateLimitConfig(pathname, request.method)
 
         const allowed = await checkRateLimit(
             rateLimitKey,
@@ -148,7 +150,14 @@ export async function middleware(request: NextRequest) {
         }
     }
 
-    // Create Supabase client
+    // API routes: route handlers enforce their own auth — skip session validation here
+    if (pathname.startsWith('/api')) {
+        return NextResponse.next({
+            request: { headers: request.headers },
+        })
+    }
+
+    // Page routes: validate session, refresh cookies, enforce redirects
     let response = NextResponse.next({
         request: {
             headers: request.headers,
@@ -190,28 +199,15 @@ export async function middleware(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser()
 
-    // Redirect to login if not authenticated (except for API routes)
-    if (!user && !pathname.startsWith('/api')) {
+    // Redirect to login if not authenticated
+    if (!user) {
         const url = request.nextUrl.clone()
         url.pathname = '/login'
         return NextResponse.redirect(url)
     }
 
-    // For API routes, return 401 if not authenticated
-    if (!user && pathname.startsWith('/api') && !API_PUBLIC_ROUTES.includes(pathname)) {
-        return NextResponse.json(
-            {
-                error: {
-                    code: 'UNAUTHORIZED',
-                    message: 'Authentication required',
-                },
-            },
-            { status: 401 }
-        )
-    }
-
-    // Check if user must change password (except for force-change-password page and API)
-    if (user && !pathname.startsWith('/force-change-password') && !pathname.startsWith('/api')) {
+    // Check if user must change password (except for force-change-password page)
+    if (!pathname.startsWith('/force-change-password')) {
         const mustChangePassword = user.user_metadata?.mustChangePassword
         if (mustChangePassword) {
             const url = request.nextUrl.clone()

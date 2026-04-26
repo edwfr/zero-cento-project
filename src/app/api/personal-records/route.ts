@@ -29,30 +29,27 @@ export async function GET(request: NextRequest) {
             // Trainees see only their own records
             where.traineeId = session.user.id
         } else if (session.user.role === 'trainer') {
-            // Trainers see only records from their trainees
-            // Use TrainerTrainee junction table
-            const traineeRelations = await prisma.trainerTrainee.findMany({
-                where: { trainerId: session.user.id },
-                select: { traineeId: true },
-            })
-            const traineeIds = traineeRelations.map((t) => t.traineeId)
-            where.traineeId = { in: traineeIds }
+            if (traineeId) {
+                // Single query: verify ownership and filter in one shot
+                const relation = await prisma.trainerTrainee.findFirst({
+                    where: { trainerId: session.user.id, traineeId },
+                })
+                if (!relation) {
+                    return apiError('FORBIDDEN', 'Access denied', 403, undefined, 'auth.accessDenied')
+                }
+                where.traineeId = traineeId
+            } else {
+                // Trainer sees all their trainees' records
+                const traineeRelations = await prisma.trainerTrainee.findMany({
+                    where: { trainerId: session.user.id },
+                    select: { traineeId: true },
+                })
+                where.traineeId = { in: traineeRelations.map((t) => t.traineeId) }
+            }
         }
         // Admin sees all records
 
-        // Apply additional filters
-        if (traineeId) {
-            // For trainers, verify ownership before applying filter
-            if (session.user.role === 'trainer') {
-                const isManaged = await prisma.trainerTrainee.findUnique({
-                    where: {
-                        traineeId: traineeId,
-                    },
-                })
-                if (!isManaged || isManaged.trainerId !== session.user.id) {
-                    return apiError('FORBIDDEN', 'Access denied', 403, undefined, 'auth.accessDenied')
-                }
-            }
+        if (session.user.role === 'admin' && traineeId) {
             where.traineeId = traineeId
         }
 
@@ -126,10 +123,10 @@ export async function POST(request: NextRequest) {
 
         // For trainers, verify they manage this trainee
         if (session.user.role === 'trainer') {
-            const isManaged = await prisma.trainerTrainee.findUnique({
-                where: { traineeId: traineeId },
+            const relation = await prisma.trainerTrainee.findFirst({
+                where: { trainerId: session.user.id, traineeId },
             })
-            if (!isManaged || isManaged.trainerId !== session.user.id) {
+            if (!relation) {
                 return apiError('FORBIDDEN', 'You can only create records for your own trainees', 403, undefined, 'personalRecord.createDenied')
             }
         }

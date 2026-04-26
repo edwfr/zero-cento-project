@@ -4,7 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { createProgramSchema } from '@/schemas/program'
 import { logger } from '@/lib/logger'
-import { calculateEffectiveWeight } from '@/lib/calculations'
+import { loadTraineePrMap, resolveEffectiveWeight } from '@/lib/calculations'
 
 /**
  * GET /api/programs/[id]
@@ -99,63 +99,53 @@ export async function GET(
         let resolvedProgram = program
 
         if (session.user.role === 'trainee') {
-            const weeksWithResolvedWeights = await Promise.all(
-                program.weeks.map(async (week) => ({
-                    ...week,
-                    workouts: await Promise.all(
-                        week.workouts.map(async (workout) => ({
-                            ...workout,
-                            workoutExercises: await Promise.all(
-                                workout.workoutExercises.map(async (workoutExercise) => {
-                                    if (typeof workoutExercise.effectiveWeight === 'number') {
-                                        return workoutExercise
-                                    }
+            const prMap = await loadTraineePrMap(session.user.id)
 
-                                    if (workoutExercise.weightType === 'absolute') {
-                                        return {
-                                            ...workoutExercise,
-                                            effectiveWeight: workoutExercise.weight,
-                                        }
-                                    }
+            const resolvedWeeks = program.weeks.map((week) => ({
+                ...week,
+                workouts: week.workouts.map((workout) => {
+                    const siblings = workout.workoutExercises
+                    return {
+                        ...workout,
+                        workoutExercises: workout.workoutExercises.map((workoutExercise) => {
+                            if (typeof workoutExercise.effectiveWeight === 'number') {
+                                return workoutExercise
+                            }
 
-                                    try {
-                                        const effectiveWeight = await calculateEffectiveWeight(
-                                            workoutExercise,
-                                            session.user.id
-                                        )
+                            if (workoutExercise.weightType === 'absolute') {
+                                return {
+                                    ...workoutExercise,
+                                    effectiveWeight: workoutExercise.weight,
+                                }
+                            }
 
-                                        return {
-                                            ...workoutExercise,
-                                            effectiveWeight,
-                                        }
-                                    } catch (calculationError: unknown) {
-                                        logger.warn(
-                                            {
-                                                programId,
-                                                workoutExerciseId: workoutExercise.id,
-                                                error: calculationError instanceof Error
-                                                    ? calculationError.message
-                                                    : String(calculationError),
-                                            },
-                                            'Failed to resolve effective weight while fetching program details'
-                                        )
+                            try {
+                                const effectiveWeight = resolveEffectiveWeight(
+                                    workoutExercise,
+                                    prMap,
+                                    siblings
+                                )
+                                return { ...workoutExercise, effectiveWeight }
+                            } catch (calculationError: unknown) {
+                                logger.warn(
+                                    {
+                                        programId,
+                                        workoutExerciseId: workoutExercise.id,
+                                        error:
+                                            calculationError instanceof Error
+                                                ? calculationError.message
+                                                : String(calculationError),
+                                    },
+                                    'Failed to resolve effective weight while fetching program details'
+                                )
+                                return { ...workoutExercise, effectiveWeight: null }
+                            }
+                        }),
+                    }
+                }),
+            }))
 
-                                        return {
-                                            ...workoutExercise,
-                                            effectiveWeight: null,
-                                        }
-                                    }
-                                })
-                            ),
-                        }))
-                    ),
-                }))
-            )
-
-            resolvedProgram = {
-                ...program,
-                weeks: weeksWithResolvedWeights,
-            }
+            resolvedProgram = { ...program, weeks: resolvedWeeks }
         }
 
         return apiSuccess({ program: resolvedProgram })
