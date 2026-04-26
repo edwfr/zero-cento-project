@@ -65,7 +65,7 @@ export default function TrainerExercisesContent() {
     const fetchExercises = useCallback(async () => {
         try {
             setLoading(true)
-            const res = await fetch('/api/exercises?limit=100')
+            const res = await fetch('/api/exercises?limit=500')
             const data = await res.json()
 
             if (!res.ok) {

@@ -52,7 +52,7 @@ export default function ExercisesTable() {
                 params.append('search', searchQuery)
             }
 
-            params.append('limit', '100') // Fetch more for simplicity
+            params.append('limit', '500')
 
             const response = await fetch(`/api/exercises?${params.toString()}`)
             const data = await response.json()

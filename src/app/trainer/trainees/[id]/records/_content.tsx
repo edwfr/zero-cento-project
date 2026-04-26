@@ -82,7 +82,7 @@ export default function TraineeRecordsContent() {
             const [traineeRes, recordsRes, exercisesRes] = await Promise.all([
                 fetch(`/api/users/${traineeId}`),
                 fetch(`/api/personal-records?traineeId=${traineeId}`),
-                fetch('/api/exercises?limit=100'),
+                fetch('/api/exercises?limit=500'),
             ])
 
             const [traineeData, recordsData, exercisesData] = await Promise.all([

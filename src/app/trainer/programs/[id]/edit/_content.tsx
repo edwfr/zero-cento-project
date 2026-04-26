@@ -509,7 +509,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
             while (true) {
                 const searchParams = new URLSearchParams({
-                    limit: '100',
+                    limit: '500',
                 })
 
                 if (cursor) {

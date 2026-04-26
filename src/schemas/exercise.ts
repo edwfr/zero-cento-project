@@ -42,7 +42,9 @@ export const exerciseFilterSchema = z.object({
     muscleGroupId: z.string().uuid().optional(),
     search: z.string().optional(),
     cursor: z.string().uuid().optional(),
-    limit: z.number().int().min(1).max(100).default(20),
+    limit: z.number().int().min(1).max(500).default(20),
+    sortBy: z.enum(['name', 'type', 'createdAt']).optional(),
+    order: z.enum(['asc', 'desc']).optional(),
 })
 
 export type ExerciseInput = z.infer<typeof exerciseSchema>

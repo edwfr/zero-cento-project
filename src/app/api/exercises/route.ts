@@ -23,6 +23,8 @@ export async function GET(request: NextRequest) {
             search: searchParams.get('search') || undefined,
             cursor: searchParams.get('cursor') || undefined,
             limit: parseInt(searchParams.get('limit') || '20'),
+            sortBy: searchParams.get('sortBy') || undefined,
+            order: searchParams.get('order') || undefined,
         }
 
         const validation = exerciseFilterSchema.safeParse(filterParams)
@@ -30,7 +32,7 @@ export async function GET(request: NextRequest) {
             return apiError('VALIDATION_ERROR', 'Invalid filter parameters', 400, validation.error.errors, 'validation.invalidFilterParams')
         }
 
-        const { type, movementPatternId, muscleGroupId, search, cursor, limit } = validation.data
+        const { type, movementPatternId, muscleGroupId, search, cursor, limit, sortBy, order } = validation.data
 
         // Validate search parameter length
         if (search && (search.length < 2 || search.length > 100)) {
@@ -114,10 +116,7 @@ export async function GET(request: NextRequest) {
                     id: cursor,
                 },
             }),
-            orderBy: [
-                { type: 'asc' }, // Fundamental first
-                { name: 'asc' },
-            ],
+            orderBy: [{ [sortBy ?? 'name']: order ?? 'asc' }],
         })
 
         const hasMore = exercises.length > limit

@@ -113,7 +113,7 @@ export default function ProgramTestResultsContent() {
             return exercises
         }
 
-        const res = await fetch('/api/exercises?limit=100')
+        const res = await fetch('/api/exercises?limit=500')
         const payload = await res.json()
 
         if (!res.ok) {
