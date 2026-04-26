@@ -10,6 +10,10 @@ vi.mock('@/lib/prisma', () => ({
         trainingProgram: {
             findUnique: vi.fn(),
         },
+        week: {
+            findUnique: vi.fn(),
+            findFirst: vi.fn(),
+        },
         workoutExercise: {
             deleteMany: vi.fn(),
             createMany: vi.fn(),
@@ -80,7 +84,7 @@ const baseProgram = {
 }
 
 const mockTrainerSession = {
-    user: { id: 'trainer-1', role: 'TRAINER' },
+    user: { id: 'trainer-1', role: 'trainer' },
 }
 
 describe('POST /api/programs/[id]/copy-week', () => {
@@ -88,6 +92,14 @@ describe('POST /api/programs/[id]/copy-week', () => {
         vi.clearAllMocks()
         vi.mocked(requireRole).mockResolvedValue(mockTrainerSession as any)
         vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue(baseProgram as any)
+        vi.mocked(prisma.week.findUnique).mockResolvedValue({
+            ...baseProgram.weeks[0],
+            programId: 'prog-1',
+        } as any)
+        vi.mocked(prisma.week.findFirst).mockResolvedValue({
+            ...baseProgram.weeks[1],
+            programId: 'prog-1',
+        } as any)
         vi.mocked(prisma.$transaction).mockImplementation(async (ops: any) => {
             if (typeof ops === 'function') return ops(prisma)
             return Promise.all(ops)
@@ -110,6 +122,7 @@ describe('POST /api/programs/[id]/copy-week', () => {
     })
 
     it('returns 404 when sourceWeekId does not exist in program', async () => {
+        vi.mocked(prisma.week.findUnique).mockResolvedValue(null)
         const req = makeRequest({ sourceWeekId: 'week-nonexistent' })
         const res = await POST(req, { params: Promise.resolve({ id: 'prog-1' }) })
         expect(res.status).toBe(404)
@@ -118,6 +131,11 @@ describe('POST /api/programs/[id]/copy-week', () => {
     })
 
     it('returns 400 when source is the last week (no following week)', async () => {
+        vi.mocked(prisma.week.findUnique).mockResolvedValue({
+            ...baseProgram.weeks[1],
+            programId: 'prog-1',
+        } as any)
+        vi.mocked(prisma.week.findFirst).mockResolvedValue(null)
         const req = makeRequest({ sourceWeekId: 'week-2' }) // week-2 is last
         const res = await POST(req, { params: Promise.resolve({ id: 'prog-1' }) })
         expect(res.status).toBe(400)
@@ -142,6 +160,10 @@ describe('POST /api/programs/[id]/copy-week', () => {
             ],
         }
         vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue(emptySourceProgram as any)
+        vi.mocked(prisma.week.findUnique).mockResolvedValue({
+            ...emptySourceProgram.weeks[0],
+            programId: 'prog-1',
+        } as any)
         const req = makeRequest({ sourceWeekId: 'week-1' })
         const res = await POST(req, { params: Promise.resolve({ id: 'prog-1' }) })
         expect(res.status).toBe(400)
@@ -150,6 +172,13 @@ describe('POST /api/programs/[id]/copy-week', () => {
     it('returns 403 when trainer tries to copy another trainer\'s program', async () => {
         const otherProgram = { ...baseProgram, trainerId: 'other-trainer' }
         vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue(otherProgram as any)
+        vi.mocked(prisma.week.findUnique).mockResolvedValue({
+            ...otherProgram.weeks[0],
+            programId: 'prog-1',
+        } as any)
+        // Reset to default mock so it doesn't interfere with ownership check
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession as any)
+        
         const req = makeRequest({ sourceWeekId: 'week-1' })
         const res = await POST(req, { params: Promise.resolve({ id: 'prog-1' }) })
         expect(res.status).toBe(403)
@@ -158,6 +187,15 @@ describe('POST /api/programs/[id]/copy-week', () => {
     it('returns 200 and copies exercises from source to target week matching by dayIndex', async () => {
         const deleteManyMock = vi.fn().mockResolvedValue({ count: 0 })
         const createManyMock = vi.fn().mockResolvedValue({ count: 1 })
+
+        vi.mocked(prisma.week.findUnique).mockResolvedValue({
+            ...baseProgram.weeks[0],
+            programId: 'prog-1',
+        } as any)
+        vi.mocked(prisma.week.findFirst).mockResolvedValue({
+            ...baseProgram.weeks[1],
+            programId: 'prog-1',
+        } as any)
 
         vi.mocked(prisma.$transaction).mockImplementation(async (ops: any) => {
             if (typeof ops === 'function') {
@@ -224,6 +262,14 @@ describe('POST /api/programs/[id]/copy-week', () => {
             ],
         }
         vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue(mismatchProgram as any)
+        vi.mocked(prisma.week.findUnique).mockResolvedValue({
+            ...mismatchProgram.weeks[0],
+            programId: 'prog-1',
+        } as any)
+        vi.mocked(prisma.week.findFirst).mockResolvedValue({
+            ...mismatchProgram.weeks[1],
+            programId: 'prog-1',
+        } as any)
 
         const deleteManyMock = vi.fn().mockResolvedValue({ count: 0 })
         const createManyMock = vi.fn().mockResolvedValue({ count: 0 })
