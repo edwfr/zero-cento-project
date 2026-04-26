@@ -460,6 +460,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const requestIdRef = useRef(0)
     const lastVisibilityRefreshRef = useRef(0)
     const trainerIdRef = useRef('')
+    const loadedPersonalRecordsTraineeIdRef = useRef<string | null>(null)
 
     const [activeWeekId, setActiveWeekId] = useState<string | null>(null)
     const [expandedWeekIds, setExpandedWeekIds] = useState<Record<string, boolean>>({})
@@ -602,6 +603,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             }
 
             setPersonalRecords(recordsData.data.items || [])
+            loadedPersonalRecordsTraineeIdRef.current = traineeId
         } catch {
             if (requestId === requestIdRef.current) {
                 setPersonalRecords([])
@@ -652,7 +654,9 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
             setProgram(transformedProgram)
             setError(null)
-            void fetchPersonalRecords(traineeId, requestId)
+            if (loadedPersonalRecordsTraineeIdRef.current !== traineeId) {
+                void fetchPersonalRecords(traineeId, requestId)
+            }
         } catch (err: unknown) {
             if (requestId === requestIdRef.current) {
                 setError(err instanceof Error ? err.message : t('editProgram.errorLoading'))
