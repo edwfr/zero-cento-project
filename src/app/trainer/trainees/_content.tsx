@@ -97,14 +97,14 @@ export default function TrainerTraineesContent() {
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Back to Home Link */}
-                <Link
-                    href="/trainer/dashboard"
+                {/* Back Button */}
+                <button
+                    onClick={() => router.back()}
                     className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-flex items-center gap-1"
                 >
                     <ArrowLeft className="w-4 h-4" />
-                    {tNav('breadcrumbs.backToHome')}
-                </Link>
+                    {tNav('navigation.back')}
+                </button>
 
                 {/* Header */}
                 <div className="mb-8">
