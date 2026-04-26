@@ -3089,12 +3089,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                 )}
                                                                                             </button>
                                                                                         </div>
-
-                                                                                        {selectedExercise && variantOptions.length === 0 && (
-                                                                                            <p className="mt-1 text-[11px] text-gray-400">
-                                                                                                {t('editProgram.noVariantAvailable')}
-                                                                                            </p>
-                                                                                        )}
                                                                                     </td>
 
                                                                                     <td className="px-1 py-3">
