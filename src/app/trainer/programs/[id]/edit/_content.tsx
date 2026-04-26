@@ -1606,38 +1606,35 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         try {
             setSavingWorkoutId(workout.id)
 
-            for (const row of workoutRows) {
-                setSavingRowId(row.id)
+            const bulkPayload = {
+                exercises: workoutRows.map((row) => {
+                    const payload = payloadByRowId[row.id]
+                    return row.isDraft ? payload : { ...payload, id: row.id }
+                }),
+            }
 
-                const payload = payloadByRowId[row.id]
-                const endpoint = row.isDraft
-                    ? `/api/programs/${programId}/workouts/${workout.id}/exercises`
-                    : `/api/programs/${programId}/workouts/${workout.id}/exercises/${row.id}`
-
-                const method = row.isDraft ? 'POST' : 'PUT'
-
-                const res = await fetch(endpoint, {
-                    method,
+            const res = await fetch(
+                `/api/programs/${programId}/workouts/${workout.id}/exercises/bulk`,
+                {
+                    method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                })
-
-                const data = await res.json()
-
-                if (!res.ok) {
-                    throw new Error(
-                        getApiErrorMessage(
-                            data,
-                            row.isDraft ? t('editProgram.rowSaveError') : t('editProgram.rowUpdateError'),
-                            t
-                        )
-                    )
+                    body: JSON.stringify(bulkPayload),
                 }
+            )
 
+            const data = await res.json()
+
+            if (!res.ok) {
+                throw new Error(
+                    getApiErrorMessage(data, t('editProgram.rowSaveError'), t)
+                )
+            }
+
+            workoutRows.forEach((row) => {
                 if (row.isDraft) {
                     removeDraftRow(row.id, workout.id)
                 }
-            }
+            })
 
             await fetchProgram({ showLoading: false })
             showToast(t('editProgram.workoutRowsSavedSuccess'), 'success')
