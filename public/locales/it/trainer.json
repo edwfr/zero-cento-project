@@ -461,7 +461,7 @@
         "tableNoWorkoutExercises": "Nessun esercizio configurato per questo workout.",
         "selectExercise": "Seleziona esercizio",
         "noVariantOption": "Nessuna variante",
-        "variantPlaceholder": "Seleziona o scrivi variante",
+        "variantPlaceholder": "Scrivi variante",
         "noVariantAvailable": "Nessuna variante suggerita, puoi scriverla manualmente",
         "unlockVariantInputTitle": "Sblocca input variante",
         "lockVariantInputTitle": "Blocca e torna al menu varianti",

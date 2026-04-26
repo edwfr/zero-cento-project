@@ -2758,15 +2758,15 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                     >
                                                                         <table className="w-full table-fixed divide-y divide-gray-200 text-sm">
                                                                     <colgroup>
-                                                                        <col className="w-[3%]" />
+                                                                        <col className="w-[1%]" />
                                                                         <col className="w-[4%]" />
-                                                                        <col className="w-[22%]" />
-                                                                        <col className="w-[22%]" />
-                                                                        <col className="w-[7%]" />
-                                                                        <col className="w-[7%]" />
-                                                                        <col className="w-[7%]" />
-                                                                        <col className="w-[7%]" />
-                                                                        <col className="w-[7%]" />
+                                                                        <col className="w-[24%]" />
+                                                                        <col className="w-[24%]" />
+                                                                        <col className="w-[8%]" />
+                                                                        <col className="w-[8%]" />
+                                                                        <col className="w-[8%]" />
+                                                                        <col className="w-[8%]" />
+                                                                        <col className="w-[8%]" />
                                                                         <col className="w-[7%]" />
                                                                     </colgroup>
                                                                     <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
