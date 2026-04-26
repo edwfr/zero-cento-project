@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
-import Link from 'next/link'
 import { PersonalRecordsExplorer, RPEOneRMTable, SkeletonTable } from '@/components'
 import { Plus, Dumbbell } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
