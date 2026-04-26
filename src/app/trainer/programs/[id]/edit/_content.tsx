@@ -2729,7 +2729,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                         </div>
 
                                                         {isWorkoutExpanded && (
-                                                            <div className="relative overflow-x-auto">
+                                                            <div className="relative">
                                                                 {savingWorkoutId === workout.id && (
                                                                     <div className="absolute inset-0 z-10 bg-white/70" />
                                                                 )}
@@ -2754,14 +2754,14 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                     <colgroup>
                                                                         <col className="w-[1%]" />
                                                                         <col className="w-[4%]" />
-                                                                        <col className="w-[24%]" />
-                                                                        <col className="w-[24%]" />
-                                                                        <col className="w-[8%]" />
-                                                                        <col className="w-[8%]" />
-                                                                        <col className="w-[8%]" />
-                                                                        <col className="w-[8%]" />
-                                                                        <col className="w-[8%]" />
-                                                                        <col className="w-[7%]" />
+                                                                        <col className="w-[18%]" />
+                                                                        <col className="w-[18%]" />
+                                                                        <col className="w-[6%]" />
+                                                                        <col className="w-[6%]" />
+                                                                        <col className="w-[6%]" />
+                                                                        <col className="w-[6%]" />
+                                                                        <col className="w-[6%]" />
+                                                                        <col className="w-[9%]" />
                                                                     </colgroup>
                                                                     <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
                                                                         <tr>
