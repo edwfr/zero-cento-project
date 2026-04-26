@@ -4,7 +4,7 @@ import { MouseEvent, useEffect, useMemo, useState, type CSSProperties } from 're
 import { useParams, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, ChevronDown, ChevronUp, FileEdit } from 'lucide-react'
+import { ChevronDown, ChevronUp, FileEdit } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import MovementPatternTag from '@/components/MovementPatternTag'
 import WeekTypeBadge from '@/components/WeekTypeBadge'
@@ -281,16 +281,6 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
         ? `?backContext=trainee&traineeId=${encodeURIComponent(resolvedTraineeId)}`
         : ''
     const editProgramHref = `/trainer/programs/${programId}/edit${navigationContextQuery}`
-    const backHref = viewOnly
-        ? hasTraineeBackContext
-            ? `/trainer/trainees/${resolvedTraineeId}`
-            : '/trainer/programs'
-        : editProgramHref
-    const backLabel = viewOnly
-        ? hasTraineeBackContext
-            ? t('navigation:breadcrumbs.backToAthleteProfile')
-            : t('editProgram.backToPrograms')
-        : t('reviewProgram.backToEdit')
 
     useEffect(() => {
         const fetchProgram = async () => {
@@ -723,13 +713,6 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
 
                 <div className="mb-8 flex items-start justify-between gap-4">
                     <div>
-                        <Link
-                            href={backHref}
-                            className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-brand-primary hover:text-brand-primary/80"
-                        >
-                            <ArrowLeft className="h-4 w-4" />
-                            {backLabel}
-                        </Link>
                         <h1 className="text-3xl font-bold text-gray-900">{t('reviewProgram.title')}</h1>
                         <p className="mt-2 text-gray-600">
                             {t('reviewProgram.description', {

@@ -3,7 +3,12 @@ import { getSession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import TraineeRecordsContent from './_content'
 
-export default async function TraineeRecordsManagementPage() {
+interface TraineeRecordsManagementPageProps {
+    params?: Promise<{ id: string }>
+}
+
+export default async function TraineeRecordsManagementPage({ params }: TraineeRecordsManagementPageProps) {
+    const resolvedParams = await params
     const session = await getSession()
 
     if (!session) {
@@ -14,8 +19,10 @@ export default async function TraineeRecordsManagementPage() {
         redirect(`/${session.user.role}/dashboard`)
     }
 
+    const backHref = resolvedParams?.id ? `/trainer/trainees/${resolvedParams.id}` : '/trainer/trainees'
+
     return (
-        <DashboardLayout user={session.user}>
+        <DashboardLayout user={session.user} backHref={backHref}>
             <TraineeRecordsContent />
         </DashboardLayout>
     )

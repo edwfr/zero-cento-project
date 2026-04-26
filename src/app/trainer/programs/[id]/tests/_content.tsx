@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useParams, useSearchParams } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { SkeletonTable } from '@/components'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/components/ToastNotification'
@@ -59,25 +59,9 @@ interface TestResultsData {
 
 export default function ProgramTestResultsContent() {
     const { t, i18n } = useTranslation('trainer')
-    const { t: tNav } = useTranslation('navigation')
     const params = useParams<{ id: string }>()
-    const searchParams = useSearchParams()
     const { showToast } = useToast()
     const programId = params.id
-    const backContext = searchParams.get('backContext')
-    const traineeId = searchParams.get('traineeId')
-    const backHref =
-        backContext === 'dashboard'
-            ? '/trainer/dashboard'
-            : backContext === 'trainee' && traineeId
-                ? `/trainer/trainees/${traineeId}`
-                : '/trainer/programs'
-    const backLabel =
-        backContext === 'dashboard'
-            ? tNav('breadcrumbs.backToHome')
-            : backContext === 'trainee'
-                ? t('testResults.backToTrainee')
-                : t('testResults.backToPrograms')
 
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -261,13 +245,6 @@ export default function ProgramTestResultsContent() {
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <Link
-                href={backHref}
-                className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-flex items-center gap-1"
-            >
-                <ArrowLeft className="w-4 h-4" />
-                {backLabel}
-            </Link>
 
             <div className="mb-8">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">

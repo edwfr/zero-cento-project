@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { SkeletonTable } from '@/components'
 import { useToast } from '@/components/ToastNotification'
@@ -9,7 +8,7 @@ import ConfirmationModal from '@/components/ConfirmationModal'
 import { formatDate } from '@/lib/date-format'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { Plus, FileEdit, CheckCircle2, Trash2, FlagTriangleRight, ArrowLeft, Eye, FlaskConical } from 'lucide-react'
+import { Plus, FileEdit, CheckCircle2, Trash2, FlagTriangleRight, Eye, FlaskConical } from 'lucide-react'
 import { Input } from '@/components/Input'
 import { ActionIconButton, InlineActions } from '@/components'
 
@@ -39,9 +38,7 @@ interface Program {
 }
 
 export default function TrainerProgramsContent() {
-    const router = useRouter()
     const { t } = useTranslation('trainer')
-    const { t: tNav } = useTranslation('navigation')
     const { showToast } = useToast()
     const [programs, setPrograms] = useState<Program[]>([])
     const [loading, setLoading] = useState(true)
@@ -192,14 +189,6 @@ export default function TrainerProgramsContent() {
                 />
             )}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Back Button */}
-                <button
-                    onClick={() => router.back()}
-                    className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-flex items-center gap-1"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    {tNav('navigation.back')}
-                </button>
 
                 {/* Header */}
                 <div className="mb-8">

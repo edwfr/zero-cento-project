@@ -8,7 +8,8 @@ import Link from 'next/link'
 import { SkeletonDetail } from '@/components'
 import { formatDate } from '@/lib/date-format'
 import TraineePlannedMuscleGroupReport from '@/components/TraineePlannedMuscleGroupReport'
-import { Plus, Eye, Pencil, ArrowLeft, Trophy, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Trophy, ChevronDown, ChevronUp } from 'lucide-react'
+import { ActionIconButton, InlineActions } from '@/components'
 import {
     CartesianGrid,
     Legend,
@@ -598,13 +599,6 @@ export default function TraineeDetailContent() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">
-                    <Link
-                        href="/trainer/trainees"
-                        className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-flex items-center gap-1"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        {t('athletes.backToAthletes')}
-                    </Link>
                     <div className="flex items-center justify-between">
                         <div>
                             <h1 className="text-3xl font-bold text-gray-900">
@@ -738,26 +732,20 @@ export default function TraineeDetailContent() {
                                                     {formatDate(program.startDate)}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                    <div className="flex items-center justify-end gap-3">
-                                                        <Link
+                                                    <InlineActions>
+                                                        <ActionIconButton
+                                                            variant="view"
+                                                            label={t('athletes.viewProgram')}
                                                             href={`/trainer/programs/${program.id}?backContext=trainee&traineeId=${traineeId}`}
-                                                            className="text-brand-primary hover:text-brand-primary/80"
-                                                            title={t('athletes.viewProgram')}
-                                                            aria-label={t('athletes.viewProgram')}
-                                                        >
-                                                            <Eye size={18} />
-                                                        </Link>
+                                                        />
                                                         {program.status === 'draft' && (
-                                                            <Link
+                                                            <ActionIconButton
+                                                                variant="edit"
+                                                                label={t('common:common.edit')}
                                                                 href={`/trainer/programs/${program.id}/edit?backContext=trainee&traineeId=${traineeId}`}
-                                                                className="text-green-600 hover:text-green-800"
-                                                                title={t('common:common.edit')}
-                                                                aria-label={t('common:common.edit')}
-                                                            >
-                                                                <Pencil size={18} />
-                                                            </Link>
+                                                            />
                                                         )}
-                                                    </div>
+                                                    </InlineActions>
                                                 </td>
                                             </tr>
                                         ))}

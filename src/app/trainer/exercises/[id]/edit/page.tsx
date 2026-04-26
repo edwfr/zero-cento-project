@@ -9,7 +9,7 @@ export default async function EditExercisePage() {
     if (session.user.role !== 'trainer') redirect(`/${session.user.role}/dashboard`)
 
     return (
-        <DashboardLayout user={session.user}>
+        <DashboardLayout user={session.user} backHref="/trainer/exercises">
             <EditExerciseContent />
         </DashboardLayout>
     )

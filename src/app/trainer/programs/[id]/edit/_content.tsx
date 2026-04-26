@@ -16,7 +16,6 @@ import AutocompleteSearch from '@/components/AutocompleteSearch'
 import { Input } from '@/components/Input'
 import { ActionIconButton } from '@/components'
 import {
-    ArrowLeft,
     BarChart3,
     ChevronDown,
     ChevronUp,
@@ -451,12 +450,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         : ''
     const editProgramHref = `/trainer/programs/${programId}/edit${navigationContextQuery}`
     const reviewProgramHref = `/trainer/programs/${programId}/review${navigationContextQuery}`
-    const backHref = hasTraineeBackContext
-        ? `/trainer/trainees/${resolvedTraineeId}`
-        : '/trainer/programs'
-    const backLabel = hasTraineeBackContext
-        ? t('navigation:breadcrumbs.backToAthleteProfile')
-        : t('editProgram.backToPrograms')
 
     const loadingRef = useRef(false)
     const requestIdRef = useRef(0)
@@ -2111,13 +2104,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 )}
 
                 <div className="mb-8">
-                    <Link
-                        href={backHref}
-                        className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-flex items-center gap-1"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        {backLabel}
-                    </Link>
                     <div className="flex items-start justify-between gap-4">
                         <div>
                             <h1 className="text-3xl font-bold text-gray-900">{program.title}</h1>

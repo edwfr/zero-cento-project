@@ -15,7 +15,7 @@ export default async function HistoryPage() {
     }
 
     return (
-        <DashboardLayout user={session.user}>
+        <DashboardLayout user={session.user} backHref="/trainee/dashboard">
             <HistoryContent />
         </DashboardLayout>
     )

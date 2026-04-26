@@ -15,7 +15,7 @@ export default async function NewTraineePage() {
     }
 
     return (
-        <DashboardLayout user={session.user}>
+        <DashboardLayout user={session.user} backHref="/trainer/trainees">
             <NewTraineePageContent />
         </DashboardLayout>
     )

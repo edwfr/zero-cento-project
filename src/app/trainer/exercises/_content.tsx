@@ -1,14 +1,13 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { SkeletonTable, ActionIconButton, InlineActions } from '@/components'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import MovementPatternTag from '@/components/MovementPatternTag'
 import Link from 'next/link'
-import { Plus, ArrowLeft, FileEdit, Trash2 } from 'lucide-react'
+import { Plus, FileEdit, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import '@/lib/i18n/client'
 import { getApiErrorMessage } from '@/lib/api-error'
@@ -47,10 +46,8 @@ const getYoutubeThumbnailUrl = (youtubeUrl: string | null): string | null => {
 }
 
 export default function TrainerExercisesContent() {
-    const router = useRouter()
     const { showToast } = useToast()
     const { t } = useTranslation(['trainer', 'common'])
-    const { t: tNav } = useTranslation('navigation')
     const [exercises, setExercises] = useState<Exercise[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -156,14 +153,6 @@ export default function TrainerExercisesContent() {
                 />
             )}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Back Button */}
-                <button
-                    onClick={() => router.back()}
-                    className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-flex items-center gap-1"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    {tNav('navigation.back')}
-                </button>
 
                 {/* Header */}
                 <div className="mb-8">

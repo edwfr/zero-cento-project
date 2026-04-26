@@ -4,11 +4,11 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import type { RestTime } from '@prisma/client'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { useRouter, useParams, useSearchParams } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { RPESelector, SkeletonDetail, WeekTypeBanner } from '@/components'
 import LoadingSpinner from '@/components/LoadingSpinner'
-import { ArrowLeft, Check, ChevronDown, ChevronUp, Clock3, FileText, Gauge, PlayCircle } from 'lucide-react'
+import { Check, ChevronDown, ChevronUp, Clock3, FileText, Gauge, PlayCircle } from 'lucide-react'
 import YoutubeEmbed from '@/components/YoutubeEmbed'
 import { useSwipe } from '@/lib/useSwipe'
 import * as Sentry from '@sentry/nextjs'
@@ -130,13 +130,7 @@ export default function WorkoutDetailContent() {
     const { t } = useTranslation('trainee')
     const router = useRouter()
     const params = useParams()
-    const searchParams = useSearchParams()
     const workoutId = params.id as string
-    const source = searchParams.get('from')
-    const sourceProgramId = searchParams.get('programId')
-    const backToProgramHref = source === 'history' && sourceProgramId
-        ? `/trainee/programs/${sourceProgramId}`
-        : '/trainee/programs/current'
 
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
@@ -607,13 +601,6 @@ export default function WorkoutDetailContent() {
             <div className="max-w-5xl mx-auto px-4 pb-8 pt-8 sm:px-6 lg:px-8">
                 {/* Header */}
                 <div className="mb-8">
-                    <Link
-                        href={backToProgramHref}
-                        className="inline-flex items-center gap-2 text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        {t('workouts.backToProgram')}
-                    </Link>
                     <h1 className="text-3xl font-bold text-gray-900">
                         {`Giorno ${workout.dayIndex}`} - {t('workouts.weekLabel', { number: workout.weekNumber })}
                     </h1>

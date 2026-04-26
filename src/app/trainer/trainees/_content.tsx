@@ -1,14 +1,13 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { SkeletonTable, ActionIconButton, InlineActions } from '@/components'
 import { useToast } from '@/components/ToastNotification'
 import { formatDate } from '@/lib/date-format'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { Plus, Eye, UserX, UserCheck, ArrowLeft } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { Input } from '@/components/Input'
 
 interface Trainee {
@@ -21,9 +20,7 @@ interface Trainee {
 }
 
 export default function TrainerTraineesContent() {
-    const router = useRouter()
     const { t } = useTranslation('trainer')
-    const { t: tNav } = useTranslation('navigation')
     const { showToast } = useToast()
     const [trainees, setTrainees] = useState<Trainee[]>([])
     const [loading, setLoading] = useState(true)
@@ -97,15 +94,6 @@ export default function TrainerTraineesContent() {
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Back Button */}
-                <button
-                    onClick={() => router.back()}
-                    className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-flex items-center gap-1"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    {tNav('navigation.back')}
-                </button>
-
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-gray-900">{t('athletes.title')}</h1>
