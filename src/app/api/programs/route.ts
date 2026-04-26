@@ -1,10 +1,11 @@
 import { NextRequest } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { createProgramSchema } from '@/schemas/program'
 import { logger } from '@/lib/logger'
-import { getEffectiveProgramStatus, getProgramCompletionSnapshot } from '@/lib/program-status'
+import { getEffectiveProgramStatus } from '@/lib/program-status'
 
 interface ProgramTestsSummary {
     testWeeks: number[]
@@ -125,210 +126,141 @@ export async function GET(request: NextRequest) {
         const items = hasMore ? programs.slice(0, -1) : programs
         const nextCursor = hasMore ? items[items.length - 1].id : null
 
-        const activeProgramIds = items
-            .filter((program) => program.status === 'active')
-            .map((program) => program.id)
-
-        const activeProgramsWithProgress = activeProgramIds.length > 0
-            ? await prisma.trainingProgram.findMany({
-                where: {
-                    id: {
-                        in: activeProgramIds,
-                    },
-                },
-                select: {
-                    id: true,
-                    status: true,
-                    weeks: {
-                        select: {
-                            workouts: {
-                                select: {
-                                    workoutExercises: {
-                                        select: {
-                                            exerciseFeedbacks: {
-                                                where: {
-                                                    completed: true,
-                                                },
-                                                select: {
-                                                    completed: true,
-                                                    date: true,
-                                                },
-                                            },
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                    },
-                },
-            })
-            : []
-
-        const completionByProgramId = new Map(
-            activeProgramsWithProgress.map((program) => [
-                program.id,
-                getProgramCompletionSnapshot(program),
-            ])
-        )
-
-        const programsToComplete = activeProgramsWithProgress.filter((program) => {
-            const completionSnapshot = completionByProgramId.get(program.id)
-            return getEffectiveProgramStatus(program, completionSnapshot) === 'completed'
-        })
-
-        await Promise.all(
-            programsToComplete.map((program) => {
-                const completionSnapshot = completionByProgramId.get(program.id)
-
-                return prisma.trainingProgram.update({
-                    where: { id: program.id },
-                    data: {
-                        status: 'completed',
-                        completedAt: completionSnapshot?.lastCompletedWorkoutAt ?? new Date(),
-                        completionReason: null,
-                    },
-                })
-            })
-        )
-
         const programIds = items.map((program) => program.id)
-        const lastCompletedWorkoutDateByProgramId: Record<string, string> = {}
+        const completionByProgramId = new Map<
+            string,
+            { totalWorkouts: number; completedWorkouts: number; lastCompletedWorkoutAt: Date | null }
+        >()
+        const lastFeedbackByProgramId = new Map<string, Date>()
         const testsSummaryByProgramId = new Map<string, ProgramTestsSummary>()
 
         if (programIds.length > 0) {
-            const programsWithTestWeeks = await prisma.trainingProgram.findMany({
-                where: {
-                    id: {
-                        in: programIds,
-                    },
-                },
-                select: {
-                    id: true,
-                    weeks: {
-                        where: {
-                            weekType: 'test',
-                        },
-                        select: {
-                            weekNumber: true,
-                            workouts: {
-                                select: {
-                                    workoutExercises: {
-                                        select: {
-                                            exerciseFeedbacks: {
-                                                where: {
-                                                    completed: true,
-                                                },
-                                                select: {
-                                                    id: true,
-                                                },
-                                            },
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                        orderBy: {
-                            weekNumber: 'asc',
-                        },
-                    },
-                },
-            })
+            const programIdSql = Prisma.join(programIds.map((id) => Prisma.sql`${id}`))
 
-            for (const program of programsWithTestWeeks) {
-                const testWeekSummaries = program.weeks.map((week) => {
-                    const plannedTestsCount = week.workouts.filter(
-                        (workout) => workout.workoutExercises.length > 0
-                    ).length
-
-                    const completedTestsCount = week.workouts.filter((workout) => {
-                        if (workout.workoutExercises.length === 0) {
-                            return false
-                        }
-
-                        return workout.workoutExercises.every(
-                            (exercise) => exercise.exerciseFeedbacks.length > 0
-                        )
-                    }).length
-
-                    return {
-                        weekNumber: week.weekNumber,
-                        plannedTestsCount,
-                        completedTestsCount,
-                        completed:
-                            plannedTestsCount > 0 &&
-                            completedTestsCount === plannedTestsCount,
-                    }
-                })
-
-                const plannedTestsCount = testWeekSummaries.reduce(
-                    (sum, week) => sum + week.plannedTestsCount,
-                    0
+            // Single aggregate: per-program workout completion stats + last feedback timestamp.
+            const completionRows = await prisma.$queryRaw<
+                Array<{
+                    programId: string
+                    totalWorkouts: number
+                    completedWorkouts: number
+                    lastCompletedWorkoutAt: Date | null
+                    lastFeedbackAt: Date | null
+                }>
+            >`
+                WITH workout_completion AS (
+                    SELECT
+                        wk."id" AS workout_id,
+                        w."programId",
+                        COUNT(we."id") AS exercise_count,
+                        COUNT(DISTINCT CASE WHEN ef."completed" THEN we."id" END) AS completed_exercise_count,
+                        MAX(ef."date") FILTER (WHERE ef."completed") AS workout_last_feedback
+                    FROM "workouts" wk
+                    JOIN "weeks" w ON w."id" = wk."weekId"
+                    LEFT JOIN "workout_exercises" we ON we."workoutId" = wk."id"
+                    LEFT JOIN "exercise_feedbacks" ef ON ef."workoutExerciseId" = we."id"
+                    WHERE w."programId" IN (${programIdSql})
+                    GROUP BY wk."id", w."programId"
                 )
-                const completedTestsCount = testWeekSummaries.reduce(
-                    (sum, week) => sum + week.completedTestsCount,
-                    0
-                )
+                SELECT
+                    "programId",
+                    COUNT(*) FILTER (WHERE exercise_count > 0)::int AS "totalWorkouts",
+                    COUNT(*) FILTER (WHERE exercise_count > 0 AND exercise_count = completed_exercise_count)::int AS "completedWorkouts",
+                    MAX(workout_last_feedback) FILTER (WHERE exercise_count > 0 AND exercise_count = completed_exercise_count) AS "lastCompletedWorkoutAt",
+                    MAX(workout_last_feedback) AS "lastFeedbackAt"
+                FROM workout_completion
+                GROUP BY "programId"
+            `
 
-                testsSummaryByProgramId.set(program.id, {
-                    testWeeks: program.weeks.map((week) => week.weekNumber),
-                    testWeekSummaries,
-                    hasTestWeeks: program.weeks.length > 0,
-                    testsCompleted:
-                        testWeekSummaries.length > 0 &&
-                        testWeekSummaries.every((week) => week.completed),
-                    plannedTestsCount,
-                    completedTestsCount,
+            for (const row of completionRows) {
+                completionByProgramId.set(row.programId, {
+                    totalWorkouts: row.totalWorkouts,
+                    completedWorkouts: row.completedWorkouts,
+                    lastCompletedWorkoutAt: row.lastCompletedWorkoutAt,
                 })
-            }
-        }
-
-        if (programIds.length > 0) {
-            const completedFeedbacks = await prisma.exerciseFeedback.findMany({
-                where: {
-                    completed: true,
-                    workoutExercise: {
-                        workout: {
-                            week: {
-                                programId: {
-                                    in: programIds,
-                                },
-                            },
-                        },
-                    },
-                },
-                select: {
-                    date: true,
-                    workoutExercise: {
-                        select: {
-                            workout: {
-                                select: {
-                                    week: {
-                                        select: {
-                                            programId: true,
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                    },
-                },
-                orderBy: {
-                    date: 'desc',
-                },
-            })
-
-            for (const feedback of completedFeedbacks) {
-                const programId = feedback.workoutExercise.workout.week.programId
-
-                if (!lastCompletedWorkoutDateByProgramId[programId]) {
-                    lastCompletedWorkoutDateByProgramId[programId] = feedback.date.toISOString()
+                if (row.lastFeedbackAt) {
+                    lastFeedbackByProgramId.set(row.programId, row.lastFeedbackAt)
                 }
+            }
+
+            // Single aggregate: per-week test-week stats. LEFT JOINs keep empty test weeks visible.
+            const testRows = await prisma.$queryRaw<
+                Array<{
+                    programId: string
+                    weekNumber: number
+                    plannedTestsCount: number
+                    completedTestsCount: number
+                }>
+            >`
+                WITH test_week_workout_stats AS (
+                    SELECT
+                        w."programId",
+                        w."weekNumber",
+                        wk."id" AS workout_id,
+                        COUNT(we."id") AS exercise_count,
+                        CASE
+                            WHEN COUNT(we."id") > 0
+                                AND COUNT(we."id") = COUNT(DISTINCT CASE WHEN ef."completed" THEN we."id" END)
+                            THEN 1
+                            ELSE 0
+                        END AS is_complete
+                    FROM "weeks" w
+                    LEFT JOIN "workouts" wk ON wk."weekId" = w."id"
+                    LEFT JOIN "workout_exercises" we ON we."workoutId" = wk."id"
+                    LEFT JOIN "exercise_feedbacks" ef ON ef."workoutExerciseId" = we."id"
+                    WHERE w."programId" IN (${programIdSql})
+                        AND w."weekType" = 'test'
+                    GROUP BY w."programId", w."weekNumber", wk."id"
+                )
+                SELECT
+                    "programId",
+                    "weekNumber",
+                    COUNT(workout_id) FILTER (WHERE exercise_count > 0)::int AS "plannedTestsCount",
+                    COALESCE(SUM(is_complete), 0)::int AS "completedTestsCount"
+                FROM test_week_workout_stats
+                GROUP BY "programId", "weekNumber"
+                ORDER BY "programId", "weekNumber"
+            `
+
+            for (const row of testRows) {
+                let summary = testsSummaryByProgramId.get(row.programId)
+                if (!summary) {
+                    summary = {
+                        testWeeks: [],
+                        testWeekSummaries: [],
+                        hasTestWeeks: false,
+                        testsCompleted: false,
+                        plannedTestsCount: 0,
+                        completedTestsCount: 0,
+                    }
+                    testsSummaryByProgramId.set(row.programId, summary)
+                }
+                summary.testWeeks.push(row.weekNumber)
+                summary.testWeekSummaries.push({
+                    weekNumber: row.weekNumber,
+                    plannedTestsCount: row.plannedTestsCount,
+                    completedTestsCount: row.completedTestsCount,
+                    completed:
+                        row.plannedTestsCount > 0 &&
+                        row.completedTestsCount === row.plannedTestsCount,
+                })
+                summary.plannedTestsCount += row.plannedTestsCount
+                summary.completedTestsCount += row.completedTestsCount
+                summary.hasTestWeeks = true
+            }
+
+            for (const summary of testsSummaryByProgramId.values()) {
+                summary.testsCompleted =
+                    summary.testWeekSummaries.length > 0 &&
+                    summary.testWeekSummaries.every((week) => week.completed)
             }
         }
 
         const enrichedItems = items
             .map((program) => {
-                const completionSnapshot = completionByProgramId.get(program.id)
+                const completionSnapshot =
+                    program.status === 'active'
+                        ? completionByProgramId.get(program.id)
+                        : undefined
                 const effectiveStatus = getEffectiveProgramStatus(program, completionSnapshot)
                 const testsSummary = testsSummaryByProgramId.get(program.id)
 
@@ -341,7 +273,7 @@ export async function GET(request: NextRequest) {
                             ? completionSnapshot?.lastCompletedWorkoutAt ?? null
                             : null),
                     lastWorkoutCompletedAt:
-                        lastCompletedWorkoutDateByProgramId[program.id] ??
+                        lastFeedbackByProgramId.get(program.id)?.toISOString() ??
                         completionSnapshot?.lastCompletedWorkoutAt?.toISOString() ??
                         null,
                     testWeeks: testsSummary?.testWeeks ?? [],

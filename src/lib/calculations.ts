@@ -6,6 +6,97 @@ export const CALCULATION_ERROR_KEYS = {
     noPreviousOccurrenceFound: 'calculation.noPreviousOccurrenceFound',
 } as const
 
+export type TraineePrMap = Map<string, number>
+
+const prKey = (exerciseId: string, reps: number) => `${exerciseId}:${reps}`
+
+/**
+ * Load all personal records for a trainee into a (exerciseId:reps → weight) map.
+ * Most recent record per (exerciseId, reps) wins.
+ * One query replaces N `personalRecord.findFirst` calls.
+ */
+export async function loadTraineePrMap(traineeId: string): Promise<TraineePrMap> {
+    const records = await prisma.personalRecord.findMany({
+        where: { traineeId },
+        select: { exerciseId: true, reps: true, weight: true, recordDate: true },
+        orderBy: { recordDate: 'desc' },
+    })
+
+    const map: TraineePrMap = new Map()
+    for (const record of records) {
+        const key = prKey(record.exerciseId, record.reps)
+        if (!map.has(key)) {
+            map.set(key, record.weight)
+        }
+    }
+    return map
+}
+
+/**
+ * Sync resolver used when caller has pre-fetched the trainee PR map and the
+ * relevant workout siblings (exercises of the same workout, any order).
+ * Replaces `calculateEffectiveWeight` when batching to avoid N+1.
+ */
+export function resolveEffectiveWeight(
+    workoutExercise: WorkoutExercise,
+    prMap: TraineePrMap,
+    workoutSiblings: WorkoutExercise[],
+    depth = 0
+): number | null {
+    if (depth > 10) {
+        throw new Error(CALCULATION_ERROR_KEYS.maxRecursionDepthExceeded)
+    }
+
+    switch (workoutExercise.weightType) {
+        case 'absolute':
+            return workoutExercise.weight
+
+        case 'percentage_1rm': {
+            const oneRm = prMap.get(prKey(workoutExercise.exerciseId, 1))
+            if (oneRm === undefined) return null
+            return (oneRm * (workoutExercise.weight || 0)) / 100
+        }
+
+        case 'percentage_rm': {
+            const repsMatch = workoutExercise.reps.match(/^\d+/)
+            if (!repsMatch) return null
+            const targetReps = parseInt(repsMatch[0], 10)
+            const rm = prMap.get(prKey(workoutExercise.exerciseId, targetReps))
+            if (rm === undefined) return null
+            return (rm * (workoutExercise.weight || 0)) / 100
+        }
+
+        case 'percentage_previous': {
+            const previousExercise = workoutSiblings
+                .filter(
+                    (sibling) =>
+                        sibling.workoutId === workoutExercise.workoutId &&
+                        sibling.exerciseId === workoutExercise.exerciseId &&
+                        sibling.order < workoutExercise.order
+                )
+                .sort((a, b) => a.order - b.order)[0]
+
+            if (!previousExercise) {
+                throw new Error(CALCULATION_ERROR_KEYS.noPreviousOccurrenceFound)
+            }
+
+            const baseWeight = resolveEffectiveWeight(
+                previousExercise,
+                prMap,
+                workoutSiblings,
+                depth + 1
+            )
+            if (baseWeight === null) return null
+
+            const percentage = workoutExercise.weight || 0
+            return baseWeight * (1 + percentage / 100)
+        }
+
+        default:
+            return null
+    }
+}
+
 /**
  * Calculate effective weight for a workout exercise
  * Resolves percentage_previous recursively

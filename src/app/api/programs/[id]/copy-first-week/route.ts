@@ -16,33 +16,29 @@ export async function POST(
     try {
         const session = await requireRole(['admin', 'trainer'])
 
-        const program = await prisma.trainingProgram.findUnique({
-            where: { id: programId },
-            include: {
-                weeks: {
-                    include: {
-                        workouts: {
-                            include: {
-                                workoutExercises: {
-                                    orderBy: {
-                                        order: 'asc',
-                                    },
-                                },
-                            },
-                            orderBy: {
-                                dayIndex: 'asc',
-                            },
-                        },
-                    },
-                    orderBy: {
-                        weekNumber: 'asc',
+        const [program, sourceWeek] = await Promise.all([
+            prisma.trainingProgram.findUnique({
+                where: { id: programId },
+                select: { id: true, trainerId: true, status: true },
+            }),
+            prisma.week.findFirst({
+                where: { programId },
+                orderBy: { weekNumber: 'asc' },
+                include: {
+                    workouts: {
+                        include: { workoutExercises: { orderBy: { order: 'asc' } } },
+                        orderBy: { dayIndex: 'asc' },
                     },
                 },
-            },
-        })
+            }),
+        ])
 
         if (!program) {
             return apiError('NOT_FOUND', 'Program not found', 404, undefined, 'program.notFound')
+        }
+
+        if (!sourceWeek) {
+            return apiSuccess({ updatedWeeks: 0, updatedWorkouts: 0 })
         }
 
         if (session.user.role === 'trainer' && program.trainerId !== session.user.id) {
@@ -59,15 +55,6 @@ export async function POST(
             )
         }
 
-        if (program.weeks.length <= 1) {
-            return apiSuccess({ updatedWeeks: 0, updatedWorkouts: 0 })
-        }
-
-        const sourceWeek = program.weeks[0]
-        const sourceWorkoutMap = new Map(
-            sourceWeek.workouts.map((workout) => [workout.dayIndex, workout])
-        )
-
         const hasSourceExercises = sourceWeek.workouts.some(
             (workout) => workout.workoutExercises.length > 0
         )
@@ -82,7 +69,25 @@ export async function POST(
             )
         }
 
-        const targetWeeks = program.weeks.slice(1)
+        // Load target weeks without exercise data — we delete and replace all exercises
+        const targetWeeks = await prisma.week.findMany({
+            where: { programId, weekNumber: { gt: sourceWeek.weekNumber } },
+            include: {
+                workouts: {
+                    select: { id: true, dayIndex: true },
+                    orderBy: { dayIndex: 'asc' },
+                },
+            },
+            orderBy: { weekNumber: 'asc' },
+        })
+
+        if (targetWeeks.length === 0) {
+            return apiSuccess({ updatedWeeks: 0, updatedWorkouts: 0 })
+        }
+
+        const sourceWorkoutMap = new Map(
+            sourceWeek.workouts.map((workout) => [workout.dayIndex, workout])
+        )
 
         await prisma.$transaction(async (tx) => {
             for (const targetWeek of targetWeeks) {

@@ -180,7 +180,11 @@ export async function POST(request: NextRequest) {
                     include: {
                         week: {
                             include: {
-                                program: true,
+                                program: {
+                                    select: {
+                                        traineeId: true,
+                                    },
+                                },
                             },
                         },
                     },

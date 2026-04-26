@@ -66,14 +66,11 @@ export async function GET(request: NextRequest) {
             }),
         ])
 
-        // Volume totale da setsPerformed
-        const volumeAgg = await prisma.setPerformed.aggregate({
-            _sum: { weight: true, reps: true },
-        })
-        const allSets = await prisma.setPerformed.findMany({
-            select: { reps: true, weight: true },
-        })
-        const totalVolume = allSets.reduce((sum, s) => sum + s.reps * s.weight, 0)
+        // Total volume: SUM(reps * weight) computed in DB to avoid full table scan
+        const [{ total: totalVolumeRaw }] = await prisma.$queryRaw<[{ total: bigint }]>`
+            SELECT COALESCE(SUM(reps * weight), 0) AS total FROM "SetPerformed"
+        `
+        const totalVolume = Number(totalVolumeRaw)
 
         logger.info({ userId: 'admin' }, 'Global admin report fetched')
 

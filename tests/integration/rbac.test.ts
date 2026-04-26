@@ -106,13 +106,8 @@ describe('RBAC Violations - Personal Records', () => {
     it('denies trainer A access to personal records of trainer B trainee', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerASession)
 
-        // Mock findMany for initial query to get trainer's trainees
-        vi.mocked(prisma.trainerTrainee.findMany).mockResolvedValue([
-            { traineeId: 'trainee-a-uuid' },
-        ] as any)
-
-        // Trainer A tries to access trainee B's records (who belongs to trainer B)
-        vi.mocked(prisma.trainerTrainee.findUnique).mockResolvedValue(null)
+        // findFirst returns null: trainer A does not manage trainee B
+        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue(null)
 
         const req = makeRequest(
             'http://localhost:3000/api/personal-records?traineeId=trainee-b-uuid'
@@ -128,13 +123,8 @@ describe('RBAC Violations - Personal Records', () => {
     it('denies trainer B access to personal records of trainer A trainee', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerBSession)
 
-        // Mock findMany for initial query to get trainer's trainees
-        vi.mocked(prisma.trainerTrainee.findMany).mockResolvedValue([
-            { traineeId: 'trainee-b-uuid' },
-        ] as any)
-
-        // Trainer B tries to access trainee A's records (who belongs to trainer A)
-        vi.mocked(prisma.trainerTrainee.findUnique).mockResolvedValue(null)
+        // findFirst returns null: trainer B does not manage trainee A
+        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue(null)
 
         const req = makeRequest(
             'http://localhost:3000/api/personal-records?traineeId=trainee-a-uuid'
@@ -150,13 +140,8 @@ describe('RBAC Violations - Personal Records', () => {
     it('allows trainer A to access own trainee personal records', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerASession)
 
-        // Mock findMany for initial query to get trainer's trainees
-        vi.mocked(prisma.trainerTrainee.findMany).mockResolvedValue([
-            { traineeId: 'trainee-a-uuid' },
-        ] as any)
-
-        // Trainer A owns trainee A
-        vi.mocked(prisma.trainerTrainee.findUnique).mockResolvedValue({
+        // findFirst returns the relationship: trainer A manages trainee A
+        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue({
             trainerId: 'trainer-a-uuid',
             traineeId: 'trainee-a-uuid',
             assignedAt: new Date(),
