@@ -465,7 +465,7 @@
         "repsPlaceholder": "e.g. 8, 8-10, 6/8, max",
         "weightPlaceholder": "e.g. 100, -10%, %80",
         "assignedWeightPreview": "Set: {{weight}}",
-        "effectiveWeightPreview": "Effective: {{weight}}",
+        "effectiveWeightPreview": "{{weight}}",
         "effectiveWeightPreviewUnavailable": "Effective: -",
         "saveRowTitle": "Save workout",
         "deleteRowTitle": "Remove row",
