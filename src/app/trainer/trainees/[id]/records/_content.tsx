@@ -264,12 +264,6 @@ export default function TraineeRecordsContent() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">
-                    <Link
-                        href={`/trainer/trainees/${traineeId}`}
-                        className="text-brand-primary hover:text-brand-primary/80 text-sm font-semibold mb-4 inline-block"
-                    >
-                        ← Torna al profilo atleta
-                    </Link>
                     <div className="flex items-center justify-between">
                         <div>
                             <h1 className="text-3xl font-bold text-gray-900">
