@@ -86,4 +86,43 @@ describe('PUT /api/programs/[id]/workouts/[workoutId]/exercises/bulk', () => {
         expect(body.data.workoutExercises).toHaveLength(2)
         expect(prisma.$transaction).toHaveBeenCalledTimes(1)
     })
+
+    it('updates an existing row when id is supplied', async () => {
+        vi.mocked(prisma.workoutExercise.findMany)
+            .mockResolvedValueOnce([{ id: WE_EXISTING }] as any) // ownership check
+            .mockResolvedValueOnce([{ id: WE_EXISTING, order: 1 }] as any) // final fetch
+
+        const res = await bulkPut(
+            makePutRequest({
+                exercises: [{ ...baseRow, id: WE_EXISTING, sets: 5 }],
+            }),
+            params(PROG, WK)
+        )
+
+        expect(res.status).toBe(200)
+        expect(prisma.$transaction).toHaveBeenCalledTimes(1)
+    })
+
+    it('handles mixed creates and updates in one call', async () => {
+        vi.mocked(prisma.workoutExercise.findMany)
+            .mockResolvedValueOnce([{ id: WE_EXISTING }] as any)
+            .mockResolvedValueOnce([
+                { id: WE_EXISTING, order: 1 },
+                { id: 'new-1', order: 2 },
+            ] as any)
+
+        const res = await bulkPut(
+            makePutRequest({
+                exercises: [
+                    { ...baseRow, id: WE_EXISTING, order: 1 },
+                    { ...baseRow, order: 2 },
+                ],
+            }),
+            params(PROG, WK)
+        )
+
+        expect(res.status).toBe(200)
+        const body = await res.json()
+        expect(body.data.workoutExercises).toHaveLength(2)
+    })
 })
