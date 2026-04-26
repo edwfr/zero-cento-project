@@ -3108,7 +3108,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                             }
                                                                                             disabled={rowBusy || readOnly}
                                                                                             className="h-9 w-16 rounded-lg border border-gray-300 px-1.5 text-center text-sm leading-5 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-400"
-                                                                                            placeholder="8"
                                                                                             aria-label={t('editProgram.tableReps')}
                                                                                         />
                                                                                     </td>
