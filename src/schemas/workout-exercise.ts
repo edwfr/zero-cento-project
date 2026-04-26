@@ -95,6 +95,53 @@ export const bulkWorkoutExercisesSchema = z.object({
     exercises: z.array(workoutExerciseSchema).min(1, 'validation.atLeastOneExercise'),
 })
 
+export const bulkSaveWorkoutExercisesSchema = z.object({
+    exercises: z
+        .array(
+            workoutExerciseBaseSchema
+                .extend({ id: z.string().uuid().optional() })
+                .superRefine((data, ctx) => {
+                    if (data.weightType.startsWith('percentage') && data.weight === undefined) {
+                        ctx.addIssue({
+                            code: z.ZodIssueCode.custom,
+                            message: 'validation.weightRequiredForPercentage',
+                            path: ['weight'],
+                        })
+                    }
+                    if (
+                        data.weight !== undefined &&
+                        data.weightType !== 'percentage_previous' &&
+                        data.weight < 0
+                    ) {
+                        ctx.addIssue({
+                            code: z.ZodIssueCode.too_small,
+                            minimum: 0,
+                            type: 'number',
+                            inclusive: true,
+                            message: 'validation.weightMinZero',
+                            path: ['weight'],
+                        })
+                    }
+                    if (
+                        data.effectiveWeight !== undefined &&
+                        data.effectiveWeight !== null &&
+                        data.effectiveWeight < 0
+                    ) {
+                        ctx.addIssue({
+                            code: z.ZodIssueCode.too_small,
+                            minimum: 0,
+                            type: 'number',
+                            inclusive: true,
+                            message: 'validation.effectiveWeightMinZero',
+                            path: ['effectiveWeight'],
+                        })
+                    }
+                })
+        )
+        .min(1, 'validation.atLeastOneExercise'),
+})
+
 export type WorkoutExerciseInput = z.infer<typeof workoutExerciseSchema>
 export type UpdateWorkoutExerciseInput = z.infer<typeof updateWorkoutExerciseSchema>
 export type BulkWorkoutExercisesInput = z.infer<typeof bulkWorkoutExercisesSchema>
+export type BulkSaveWorkoutExercisesInput = z.infer<typeof bulkSaveWorkoutExercisesSchema>

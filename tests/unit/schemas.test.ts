@@ -461,6 +461,7 @@ import {
     workoutExerciseSchema,
     updateWorkoutExerciseSchema,
     bulkWorkoutExercisesSchema,
+    bulkSaveWorkoutExercisesSchema,
 } from '@/schemas/workout-exercise'
 
 const validWorkoutExercise = {
@@ -561,6 +562,42 @@ describe('bulkWorkoutExercisesSchema', () => {
             workoutId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
             exercises: [],
         })
+        expect(result.success).toBe(false)
+    })
+})
+
+describe('bulkSaveWorkoutExercisesSchema', () => {
+    const validRow = {
+        exerciseId: '33333333-3333-3333-3333-333333333331',
+        sets: 3,
+        reps: '8',
+        weightType: 'absolute' as const,
+        restTime: 'm2' as const,
+        isWarmup: false,
+        order: 1,
+    }
+
+    it('accepts rows without id (create) and with id (update) mixed', () => {
+        const parsed = bulkSaveWorkoutExercisesSchema.parse({
+            exercises: [
+                validRow,
+                { ...validRow, id: '44444444-4444-4444-4444-444444444444', order: 2 },
+            ],
+        })
+        expect(parsed.exercises).toHaveLength(2)
+        expect(parsed.exercises[0].id).toBeUndefined()
+        expect(parsed.exercises[1].id).toBe('44444444-4444-4444-4444-444444444444')
+    })
+
+    it('rejects when id is not a uuid', () => {
+        const result = bulkSaveWorkoutExercisesSchema.safeParse({
+            exercises: [{ ...validRow, id: 'not-a-uuid' }],
+        })
+        expect(result.success).toBe(false)
+    })
+
+    it('rejects empty exercises array', () => {
+        const result = bulkSaveWorkoutExercisesSchema.safeParse({ exercises: [] })
         expect(result.success).toBe(false)
     })
 })
