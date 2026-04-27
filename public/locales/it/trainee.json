@@ -39,7 +39,15 @@
             "Venerdì",
             "Sabato",
             "Domenica"
-        ]
+        ],
+        "dayLabel": "Giorno",
+        "weekLabel": "Settimana",
+        "startWorkoutAria": "Inizia workout giorno {{day}} settimana {{week}}"
+    },
+    "weekType": {
+        "normal": "Standard",
+        "test": "Test",
+        "deload": "Deload"
     },
     "history": {
         "title": "📊 Storico Programmi",
