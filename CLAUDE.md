@@ -60,6 +60,10 @@ Two DB URLs required: `DATABASE_URL` (pooled PgBouncer port 6543) for runtime, `
 - **Forms**: react-hook-form + Zod schemas from `src/schemas/`
 - **Data fetching**: TanStack Query (React Query v5) for client components
 - **Components**: flat in `src/components/`, exported via `index.ts`
+- **Loaders** — two patterns only:
+  1. **Click-triggered async**: use `<Button isLoading={...} loadingText={t('common.saving')}>` (or `<ActionIconButton isLoading={...}>` for icon-only). Never a raw `<button disabled={loading}>`.
+  2. **Page navigation**: handled automatically by `loading.tsx` segments (Next.js renders `NavigationLoadingOverlay`). For client-driven post-submit redirects, call `useNavigationLoader().start()` before `router.push()` and `.stop()` on error.
+  - `FullPageLoader` (with logo + branding) is reserved for cold-start / app-bootstrap, not in-app navigation.
 - **i18n**: react-i18next, locale files in `public/locales/{en,it}/`. Translation keys used in API errors (`key` field) map to these files.
 - **PWA**: Serwist (`src/sw.ts`), manifest at `public/manifest.json`
 - **Error tracking**: Sentry (`sentry.server.config.ts`, `sentry.edge.config.ts`)

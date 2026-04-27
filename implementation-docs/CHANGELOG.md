@@ -8,6 +8,53 @@ Per stato corrente usare sempre [checklist.md](./checklist.md).
 
 ---
 
+## 2026-04-27 — Loader standardization (Phase 1 + partial Phase 2)
+
+**File modificati:** 
+- `src/components/NavigationLoadingOverlay.tsx` (new)
+- `src/components/NavigationLoadingProvider.tsx` (new)
+- `src/app/layout.tsx`
+- `src/app/loading.tsx`, `src/app/trainer/programs/new/loading.tsx`, + 26 other route loading.tsx files (new)
+- `src/app/admin/users/_content.tsx`
+- `src/app/trainer/programs/new/NewProgramContent.tsx`
+- `CLAUDE.md`
+
+**Goal:** Standardize loading indicators across the application into two patterns:
+1. **Click-triggered async:** inline button-level spinner via `<Button isLoading={...}>` or `<ActionIconButton isLoading={...}>`
+2. **Page navigation:** semitransparent overlay with primary-color spinner via `NavigationLoadingOverlay` (auto-rendered by `loading.tsx` or via `useNavigationLoader()` for client-driven redirects)
+
+**Implementation:**
+- **Phase 1 — Infrastructure (COMPLETE):**
+  - Created `NavigationLoadingOverlay` component — lightweight fullscreen overlay (no logo, no branding)
+  - Created `NavigationLoadingProvider` + `useNavigationLoader()` hook for client-driven overlay control
+  - Wired provider into root layout (`src/app/layout.tsx`)
+  - Added `loading.tsx` to all 28 route segments (admin, trainer, trainee at every level)
+  
+- **Phase 2 — Button Migration (PARTIAL):**
+  - Migrated `src/app/admin/users/_content.tsx`: added `pendingUserId` state, converted bulk activate/deactivate buttons to `<Button isLoading={bulkLoading}>`, converted per-row status toggle to `<ActionIconButton isLoading={pendingUserId === user.id}>`
+  - Migrated `src/app/trainer/programs/new/NewProgramContent.tsx`: replaced inline `<LoadingSpinner>` button with `<Button isLoading={loading}>`, added `useNavigationLoader().start()` before `router.push()` for smooth overlay transition
+  - Removed import of deprecated `LoadingSpinner` from new program creation
+  
+**Remaining Phase 2 tasks (20+ files):** Trainer list/detail pages, program editor flows, trainee pages, auth/onboarding. Follow migration pattern in `CLAUDE.md` loader section.
+
+**Notes:**
+- `FullPageLoader` (with logo + branding) is now reserved for cold-start / app-bootstrap only. In-app navigation uses `NavigationLoadingOverlay` exclusively.
+- Per-row pending state pattern: add `const [pendingId, setPendingId] = useState(null)`, then `isLoading={pendingId === item.id}` on action buttons.
+- i18n keys reused: `common.saving`, `common.creating`, `common.deleting`, `common.submitting`, `common.loadingPageTransition`.
+
+**Tests added:**
+- `tests/unit/components/NavigationLoadingOverlay.test.tsx` (3 tests)
+- `tests/unit/components/NavigationLoadingProvider.test.tsx` (2 tests)
+
+**Commits:**
+1. feat(components): add NavigationLoadingOverlay for routing transitions
+2. feat(components): add NavigationLoadingProvider with useNavigationLoader hook
+3. feat(layout): mount NavigationLoadingProvider in root layout
+4. feat(loading): add loading.tsx to all route segments
+5. refactor(trainer,admin): standardize button loading state in new program + users pages
+
+---
+
 ## 2026-04-27 — Trainee workout navigation: fix back button behavior
 
 **File modificati:** `src/app/trainee/workouts/[id]/_content.tsx`
