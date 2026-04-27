@@ -39,7 +39,15 @@
             "Friday",
             "Saturday",
             "Sunday"
-        ]
+        ],
+        "dayLabel": "Day",
+        "weekLabel": "Week",
+        "startWorkoutAria": "Start workout day {{day}} week {{week}}"
+    },
+    "weekType": {
+        "normal": "Standard",
+        "test": "Test",
+        "deload": "Deload"
     },
     "history": {
         "title": "📊 Program History",
