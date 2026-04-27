@@ -8,6 +8,25 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## 2026-04-27 — Trainee dashboard: Next workout card redesign
+
+**File modificati:** 
+- `src/app/api/programs/[id]/progress/route.ts`
+- `src/app/trainee/dashboard/_content.tsx`
+- `src/components/index.ts`
+- `public/locales/en/trainee.json`
+- `public/locales/it/trainee.json`
+
+**Cambio:** Redesign della carta "Prossimo allenamento" con layout premium-minimal:
+- Nuovo layout con numerali grandi (day in brand-primary, week in neutral gray, separatore puntato)
+- Badge opzionale `WeekTypeBadge` per settimane non-standard (test/deload)
+- Aggiunte chiavi di traduzione: `dashboard.dayLabel`, `dashboard.weekLabel`, `dashboard.startWorkoutAria`, `weekType.{normal,test,deload}` in entrambe le lingue (en, it)
+- Backend: aggiunto campo `weekType` nel payload di `GET /api/programs/[id]/progress` per fornire al frontend il dato necessario per il badge
+
+**Note:** Nessun test unitario aggiunto (il file non è coperto da `vitest.config.ts`). La verifica è manuale via `npm run dev` e type-check/lint passano correttamente.
+
+---
+
 ## 2026-04-27 — Trainee dashboard UI refinements
 
 **File modificati:** 
