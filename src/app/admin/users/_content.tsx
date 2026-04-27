@@ -48,6 +48,7 @@ export default function AdminUsersContent() {
     // Bulk selection
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
     const [bulkLoading, setBulkLoading] = useState(false)
+    const [pendingUserId, setPendingUserId] = useState<string | null>(null)
     const { showToast } = useToast()
     const [confirmModal, setConfirmModal] = useState<{
         title: string
@@ -168,8 +169,13 @@ export default function AdminUsersContent() {
         const endpoint = user.isActive
             ? `/api/users/${user.id}/deactivate`
             : `/api/users/${user.id}/activate`
-        const res = await fetch(endpoint, { method: 'PATCH' })
-        if (res.ok) fetchUsers()
+        setPendingUserId(user.id)
+        try {
+            const res = await fetch(endpoint, { method: 'PATCH' })
+            if (res.ok) await fetchUsers()
+        } finally {
+            setPendingUserId(null)
+        }
     }
 
     if (loading) {
@@ -255,20 +261,26 @@ export default function AdminUsersContent() {
                         <span className="text-sm font-semibold text-blue-800">
                             {t('admin:users.selectedCount', { count: selectedIds.size })}
                         </span>
-                        <button
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            isLoading={bulkLoading}
+                            loadingText={t('common:saving')}
                             onClick={() => handleBulkStatus(true)}
-                            disabled={bulkLoading}
-                            className="bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold px-4 py-1 rounded-lg transition-colors"
+                            className="bg-green-600 hover:bg-green-700 text-white"
                         >
                             + {t('admin:users.activateAll')}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                            variant="danger"
+                            size="sm"
+                            isLoading={bulkLoading}
+                            loadingText={t('common:saving')}
                             onClick={() => handleBulkStatus(false)}
-                            disabled={bulkLoading}
-                            className="bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold px-4 py-1 rounded-lg transition-colors"
+                            className="bg-red-600 hover:bg-red-700 text-white"
                         >
                             - {t('admin:users.deactivateAll')}
-                        </button>
+                        </Button>
                         <button
                             onClick={() => setSelectedIds(new Set())}
                             className="ml-auto text-brand-primary hover:text-brand-primary/80 text-sm font-semibold"
@@ -362,15 +374,12 @@ export default function AdminUsersContent() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <button
+                                            <ActionIconButton
+                                                variant={user.isActive ? 'deactivate' : 'activate'}
+                                                label={user.isActive ? t('admin:users.statusActive') : t('admin:users.statusInactive')}
+                                                isLoading={pendingUserId === user.id}
                                                 onClick={() => handleToggleStatus(user)}
-                                                className={`px-2 py-1 text-xs font-semibold rounded-full cursor-pointer transition-colors ${user.isActive
-                                                    ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                                    : 'bg-red-100 text-red-800 hover:bg-red-200'
-                                                    }`}
-                                            >
-                                                {user.isActive ? t('admin:users.statusActive') : t('admin:users.statusInactive')}
-                                            </button>
+                                            />
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             {formatDate(user.createdAt)}
