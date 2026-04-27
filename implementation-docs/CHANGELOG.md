@@ -8,6 +8,22 @@ Per stato corrente usare sempre [checklist.md](./checklist.md).
 
 ---
 
+## 2026-04-27 — Trainee dashboard: compact active program card
+
+**File modificati:** `src/app/trainee/dashboard/_content.tsx`
+
+**Cambio:** Redesign della carta "Active Program" per ridurre ingombro visivo e focus su stato di avanzamento:
+
+- Rimosso CTA "View Full Program" / "Programma Completo" (già presente sulla carta "Next Workout" sopra)
+- Collassati tre tile di stat (`duration`, `progression`, `completion`) in un'unica riga `flex flex-wrap` inline con label + value compatti
+- Ridotti padding container `p-8` → `p-5`, heading `text-3xl` → `text-xl`, label `text-sm` → `text-xs`
+- Progress bar slimmed `h-3` → `h-2` con ARIA attributes aggiunti (role, aria-valuenow, aria-valuemin, aria-valuemax, aria-label) per accessibilità
+- Nessun cambio a API, schema, o locale keys (tutte le stringhe `trainee:dashboard.{duration,weeks,progression,workoutsProgress,completion,trainerWith}` già presenti)
+
+UX migliorata: card compatta, visibilità chiarissima dello stato (inline meta row), ridondanza CTA eliminata.
+
+---
+
 ## 2026-04-27 — Reseed trainer/trainee users with real names
 
 **File modificati:** `prisma/seed.ts`

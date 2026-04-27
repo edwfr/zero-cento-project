@@ -222,55 +222,51 @@ export default function TraineeDashboardContent() {
             )}
 
             {/* Active Program Card */}
-            <div className="bg-white border border-gray-200 border-l-4 border-l-brand-primary rounded-lg shadow-md p-8 mb-8">
-                <div className="flex flex-col items-start justify-between mb-6 gap-4 sm:flex-row">
-                    <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.12em] text-brand-primary mb-2">
-                            {t('navigation:navigation.activeProgram')}
-                        </p>
-                        <h2 className="text-3xl font-bold text-gray-900 mb-2">{activeProgram.title}</h2>
-                        <p className="text-gray-600">
-                            {t('trainee:dashboard.trainerWith', {
-                                firstName: activeProgram.trainer.firstName,
-                                lastName: activeProgram.trainer.lastName,
-                            })}
-                        </p>
-                    </div>
-                    <Link
-                        href="/trainee/programs/current"
-                        className="inline-flex w-full items-center justify-center gap-2 border border-brand-primary text-brand-primary hover:bg-[#FFF7E5] font-semibold px-6 py-3 rounded-lg transition-colors sm:w-auto"
-                    >
-                        <ClipboardList className="w-4 h-4" />
-                        {t('trainee:dashboard.viewFullProgram')}
-                    </Link>
+            <div className="bg-white border border-gray-200 border-l-4 border-l-brand-primary rounded-lg shadow-md p-5 mb-8">
+                <div className="mb-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-primary mb-1">
+                        {t('navigation:navigation.activeProgram')}
+                    </p>
+                    <h2 className="text-xl font-bold text-gray-900">{activeProgram.title}</h2>
+                    <p className="text-sm text-gray-600">
+                        {t('trainee:dashboard.trainerWith', {
+                            firstName: activeProgram.trainer.firstName,
+                            lastName: activeProgram.trainer.lastName,
+                        })}
+                    </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                        <p className="text-gray-600 text-sm mb-1">{t('trainee:dashboard.duration')}</p>
-                        <p className="text-2xl font-bold text-brand-primary">
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm mb-2">
+                    <div>
+                        <span className="text-gray-500">{t('trainee:dashboard.duration')}: </span>
+                        <span className="font-semibold text-gray-900">
                             {t('trainee:dashboard.weeks', { count: activeProgram.durationWeeks })}
-                        </p>
+                        </span>
                     </div>
-                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                        <p className="text-gray-600 text-sm mb-1">{t('trainee:dashboard.progression')}</p>
-                        <p className="text-2xl font-bold text-brand-primary">
+                    <div>
+                        <span className="text-gray-500">{t('trainee:dashboard.progression')}: </span>
+                        <span className="font-semibold text-gray-900">
                             {t('trainee:dashboard.workoutsProgress', {
                                 completed: completedWorkouts,
                                 total: totalWorkouts,
                             })}
-                        </p>
+                        </span>
                     </div>
-                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                        <p className="text-gray-600 text-sm mb-1">{t('trainee:dashboard.completion')}</p>
-                        <p className="text-2xl font-bold text-brand-primary">{progressPercent}%</p>
+                    <div>
+                        <span className="text-gray-500">{t('trainee:dashboard.completion')}: </span>
+                        <span className="font-semibold text-brand-primary">{progressPercent}%</span>
                     </div>
                 </div>
 
-                <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                     <div
-                        className="bg-brand-primary h-3 rounded-full transition-all duration-500"
+                        className="bg-brand-primary h-2 rounded-full transition-all duration-500"
                         style={{ width: `${progressPercent}%` }}
+                        role="progressbar"
+                        aria-valuenow={progressPercent}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label={t('trainee:dashboard.completion')}
                     />
                 </div>
             </div>
