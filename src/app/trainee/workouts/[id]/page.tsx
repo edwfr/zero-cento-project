@@ -21,9 +21,14 @@ export default async function WorkoutDetailPage({ searchParams }: WorkoutDetailP
 
     const source = resolvedSearchParams?.from
     const sourceProgramId = resolvedSearchParams?.programId
-    const backHref = source === 'history' && sourceProgramId
-        ? `/trainee/programs/${sourceProgramId}`
-        : '/trainee/programs/current'
+    
+    // Determine back navigation based on source
+    let backHref = '/trainee/dashboard' // default
+    if (source === 'current') {
+        backHref = '/trainee/programs/current'
+    } else if (source === 'history' && sourceProgramId) {
+        backHref = `/trainee/programs/${sourceProgramId}`
+    }
 
     return (
         <DashboardLayout user={session.user} backHref={backHref}>

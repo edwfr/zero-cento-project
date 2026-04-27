@@ -84,7 +84,7 @@
         "reviewFeedback": "Rivedi Feedback",
         "resumeWorkout": "Riprendi Workout",
         "startWorkout": "Inizia Workout",
-        "day": "Giorno {{number}}",
+        "day": "Workout {{number}}",
         "openWeek": "Apri pannello settimana",
         "closeWeek": "Chiudi pannello settimana",
         "openWorkoutDetails": "Mostra dettagli workout",

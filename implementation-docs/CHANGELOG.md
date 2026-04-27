@@ -8,6 +8,22 @@ Per stato corrente usare sempre [checklist.md](./checklist.md).
 
 ---
 
+## 2026-04-27 — Trainee workout navigation: fix back button behavior
+
+**File modificati:** `src/app/trainee/workouts/[id]/_content.tsx`
+
+**Problema:** Quando l'utente accede a un workout dalla dashboard tramite `/trainee/programs/current`, il back button (sia nativo del browser che tramite submit) lo riporta a `/trainee/programs/current` invece che alla dashboard.
+
+**Soluzione implementata:**
+- Aggiunto `useSearchParams()` per leggere il parametro di query `from` passato dal link `ProgramDetailContent.tsx` (riga 728: `?from=${mode}`)
+- Modificato `doSubmit()` per navigare intelligentemente: se `from='current'` naviga a `/trainee/programs/current`, altrimenti a `/trainee/dashboard`
+- Aggiunto back button visibile (icona `ChevronLeft`) nell'intestazione del workout che usa `router.back()` per mantenere la storia del browser naturale
+- Importato `useSearchParams` da `next/navigation` e `ChevronLeft` da `lucide-react`
+
+UX migliorata: l'utente è sempre portato alla pagina giusta dopo il submit, indipendentemente da dove ha iniziato il workout. Il back button è visibile e intuitivo.
+
+---
+
 ## 2026-04-27 — Trainee dashboard: compact active program card
 
 **File modificati:** `src/app/trainee/dashboard/_content.tsx`
