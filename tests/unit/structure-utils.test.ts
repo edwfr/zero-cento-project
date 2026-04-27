@@ -21,8 +21,8 @@ describe('buildStructureRowsForWorkout', () => {
 
     it('maps from sourceExercises when non-empty', () => {
         const source = [
-            { id: 'we-1', exercise: { id: 'ex-1' } },
-            { id: 'we-2', exercise: { id: 'ex-2' } },
+            { id: 'we-1', exercise: { id: 'ex-1' }, isSkeletonExercise: false },
+            { id: 'we-2', exercise: { id: 'ex-2' }, isSkeletonExercise: false },
         ]
         const rows = buildStructureRowsForWorkout(1, source)
         expect(rows).toHaveLength(2)
