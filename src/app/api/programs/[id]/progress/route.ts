@@ -130,6 +130,7 @@ export async function GET(
                     id: workout.id,
                     name: `Giorno ${workout.dayIndex}`,
                     weekNumber: week.weekNumber,
+                    weekType: week.weekType,
                     dayOfWeek: workout.dayIndex,
                     exerciseCount: workout.workoutExercises.length,
                     completed: hasAllFeedback,
