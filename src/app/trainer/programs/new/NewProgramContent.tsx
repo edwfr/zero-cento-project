@@ -5,10 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Trans, useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import Link from 'next/link'
-import LoadingSpinner from '@/components/LoadingSpinner'
 import { BarChart3 } from 'lucide-react'
-import { Input } from '@/components/Input'
-import { FormLabel } from '@/components/FormLabel'
+import { Input, FormLabel, Button, useNavigationLoader } from '@/components'
 
 interface Trainee {
     id: string
@@ -26,6 +24,7 @@ export default function NewProgramContent({
     initialTraineeId,
 }: NewProgramContentProps) {
     const router = useRouter()
+    const navLoader = useNavigationLoader()
     const { t } = useTranslation(['trainer', 'common'])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -81,8 +80,10 @@ export default function NewProgramContent({
                 throw new Error(getApiErrorMessage(data, t('programs.createError'), t))
             }
 
+            navLoader.start(t('common:loadingPageTransition'))
             router.push(`/trainer/programs/${data.data.program.id}/edit`)
         } catch (err: unknown) {
+            navLoader.stop()
             setError(err instanceof Error ? err.message : t('programs.createError'))
             setLoading(false)
         }
@@ -337,17 +338,16 @@ export default function NewProgramContent({
                 </div>
 
                 <div className="flex space-x-4 pt-4">
-                    <button
+                    <Button
                         type="submit"
-                        disabled={loading}
-                        className="flex-1 bg-brand-primary hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
+                        variant="primary"
+                        size="lg"
+                        isLoading={loading}
+                        loadingText={t('common:creating')}
+                        className="flex-1"
                     >
-                        {loading ? (
-                            <LoadingSpinner size="sm" color="white" />
-                        ) : (
-                            t('programs.nextConfigureExercises')
-                        )}
-                    </button>
+                        {t('programs.nextConfigureExercises')}
+                    </Button>
                     <Link
                         href="/trainer/programs"
                         className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-lg text-center transition-colors"
