@@ -204,7 +204,7 @@ export default function TraineeDashboardContent() {
                         )}
                     </div>
 
-                    <div className="flex items-end gap-6">
+                    <div className="flex items-end justify-center gap-6">
                         <div className="flex flex-col">
                             <span className="text-6xl sm:text-7xl font-black leading-none text-brand-primary">
                                 {nextWorkout.dayOfWeek}
