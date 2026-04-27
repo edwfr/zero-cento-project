@@ -1,8 +1,8 @@
 # System Review — ZeroCento Training Platform
 
-**Date**: 30 March – 1 April 2026
-**Status**: ~89% complete (142/160 tasks)
-**Source of truth**: [checklist.md](./checklist.md)
+**Date**: 30 March – 1 April 2026 (status updated April 2026)
+**Status**: ~92% complete (152/165 sprint tasks)
+**Source of truth**: [CHECKLIST.md](./CHECKLIST.md)
 
 ---
 
@@ -27,7 +27,7 @@
 ### Strengths
 
 - Well-designed architecture with comprehensive design docs
-- Modern, coherent stack (Next.js 14 + Supabase + Prisma + Zod)
+- Modern, coherent stack (Next.js 15 + Supabase + Prisma + Zod)
 - Complete data schema with correct relationships
 - Critical business logic implemented (`calculateEffectiveWeight` with recursive resolution)
 - RBAC implemented uniformly across existing endpoints
@@ -35,9 +35,10 @@
 
 ### Remaining Risks
 
-- CI/CD and monitoring not fully operational (Sprint 6)
-- PWA offline caching incomplete (Sprint 8)
-- Some i18n error keys still hardcoded (Sprint 11)
+- CI/CD and monitoring not fully operational (Sprint 6 — 5 tasks open)
+- PWA offline caching incomplete (Sprint 8 — 7 tasks open)
+- Integration tests still assert hardcoded error strings (Sprint 11 — 1 task open)
+- Resend email integration not implemented (B2 in [pre-deployment-review.md](./pre-deployment-review.md), tasks E.1–E.7 in [next-actions.md](./next-actions.md))
 
 ---
 
@@ -56,14 +57,12 @@
 
 ## 3. Remaining Task Backlog
 
-### Sprint 6 — CI/CD & Deploy (7 tasks)
+### Sprint 6 — CI/CD & Deploy (5 tasks open)
 
-- 6.1 Add `prisma:migrate:prod` script
 - 6.2 Add `npm run build` step in CI
 - 6.3 Create `vercel.json`
 - 6.4 Configure GitHub secrets
 - 6.5 Connect GitHub to Vercel for auto-deploy
-- 6.6 Complete Sentry integration
 - 6.7 Configure UptimeRobot on `/api/health`
 
 ### Sprint 8 — PWA & Final Polish (7 tasks)
@@ -76,12 +75,13 @@
 - 8.6 Add composite index on `SetPerformed(feedbackId, setNumber)`
 - 8.7 Cache admin reports with 5min TTL
 
-### Sprint 11 — i18n Error Keys (4 tasks)
+### Sprint 11 — i18n Error Keys (1 task open)
 
-- 11.51 `trainee/dashboard/_content.tsx`
-- 11.52 `admin/dashboard/_content.tsx`
-- 11.55 `profile/change-password/_content.tsx`
 - 11.64 Update integration tests asserting hardcoded error messages
+
+### Out-of-sprint — Email (Resend) — 7 tasks open
+
+- E.1–E.7 — see [next-actions.md](./next-actions.md). Blocker B2 in [pre-deployment-review.md](./pre-deployment-review.md).
 
 ---
 
@@ -109,7 +109,7 @@
 ### Actionable Items
 
 - [x] Define official positioning (trainer-led) — Done
-- [x] Consolidate single source of truth for progress — Done (checklist.md)
+- [x] Consolidate single source of truth for progress — Done (CHECKLIST.md)
 - [x] Normalize API contracts — Done (api-contracts.md)
 - [ ] Formalize fitness safety policy (red flags, escalation, disclaimer)
 - [ ] Close CI/CD and observability gaps (Sprint 6)

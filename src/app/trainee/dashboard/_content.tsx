@@ -194,27 +194,19 @@ export default function TraineeDashboardContent() {
                             </p>
                             <h2 className="text-3xl font-bold text-gray-900 mb-2">
                                 {t('trainee:dashboard.workoutDay', {
-                                    day: nextWorkout.name,
+                                    day: nextWorkout.dayOfWeek,
                                     week: nextWorkout.weekNumber,
                                 })}
                             </h2>
                             <p className="text-gray-600">{t('trainee:dashboard.exercisesToComplete', { count: nextWorkout.exerciseCount })}</p>
                         </div>
-                        <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">
+                        <div className="w-full sm:w-auto">
                             <Link
                                 href={`/trainee/workouts/${nextWorkout.id}`}
-                                className="inline-flex w-full items-center justify-center gap-2 border border-brand-primary text-brand-primary hover:bg-[#FFF7E5] font-semibold px-6 py-3 rounded-lg transition-colors sm:w-auto"
+                                className="inline-flex w-full items-center justify-center gap-2 border border-brand-primary text-brand-primary hover:bg-[#FFF7E5] font-semibold px-6 py-3 rounded-lg transition-colors"
                             >
                                 <Play className="w-4 h-4" />
                                 {nextWorkoutActionLabel}
-                            </Link>
-
-                            <Link
-                                href="/trainee/programs/current"
-                                className="inline-flex w-full items-center justify-center gap-2 border border-brand-primary text-brand-primary hover:bg-[#FFF7E5] font-semibold px-6 py-3 rounded-lg transition-colors sm:w-auto"
-                            >
-                                <ClipboardList className="w-4 h-4" />
-                                {t('trainee:dashboard.viewFullProgram')}
                             </Link>
                         </div>
                     </div>
@@ -222,7 +214,7 @@ export default function TraineeDashboardContent() {
             )}
 
             {/* Active Program Card */}
-            <div className="bg-white border border-gray-200 border-l-4 border-l-brand-primary rounded-lg shadow-md p-5 mb-8">
+            <div className="bg-white border border-gray-200 border-l-4 border-l-brand-primary rounded-lg shadow-md p-8 mb-8">
                 <div className="mb-3">
                     <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-primary mb-1">
                         {t('navigation:navigation.activeProgram')}
@@ -258,7 +250,7 @@ export default function TraineeDashboardContent() {
                     </div>
                 </div>
 
-                <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden mb-4">
                     <div
                         className="bg-brand-primary h-2 rounded-full transition-all duration-500"
                         style={{ width: `${progressPercent}%` }}
@@ -268,6 +260,16 @@ export default function TraineeDashboardContent() {
                         aria-valuemax={100}
                         aria-label={t('trainee:dashboard.completion')}
                     />
+                </div>
+
+                <div className="mt-2">
+                    <Link
+                        href="/trainee/programs/current"
+                        className="inline-flex w-full items-center justify-center gap-2 border border-brand-primary text-brand-primary hover:bg-[#FFF7E5] font-semibold px-6 py-3 rounded-lg transition-colors"
+                    >
+                        <ClipboardList className="w-4 h-4" />
+                        {t('trainee:dashboard.viewFullProgram')}
+                    </Link>
                 </div>
             </div>
 

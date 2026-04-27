@@ -2,9 +2,30 @@
 
 Registro cronologico degli sviluppi effettuati.  
 Le metriche percentuali nelle entry sono snapshot storici della data dell'entry.  
-Per stato corrente usare sempre [checklist.md](./checklist.md).  
-**Checklist task pendenti:** [checklist.md](./checklist.md)  
+Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).  
+**Checklist task pendenti:** [CHECKLIST.md](./CHECKLIST.md)  
 **Review sistema:** [system-review.md](./system-review.md)
+
+---
+
+## 2026-04-27 — Trainee dashboard UI refinements
+
+**File modificati:** 
+- `src/app/trainee/dashboard/_content.tsx` (layout uniforme, button alignment)
+- `public/locales/it/trainee.json` (traduzione workoutDay)
+
+**Note:** 
+1. Uniformato il padding delle card "Prossimo allenamento" e "Programma attivo" (entrambe `p-8`)
+2. Reso i bottoni `w-full` per garantire larghezza identica tra le due card
+3. Modificato template di traduzione: da "{{day}} - Settimana {{week}}" a "Workout {{day}} - Settimana {{week}}"
+
+---
+
+## 2026-04-27 — Move "View Full Program" button to Active Program card
+
+**File modificati:** `src/app/trainee/dashboard/_content.tsx`
+
+**Note:** Spostato il tasto "Programma completo" (viewFullProgram) dalla card "Prossimo allenamento" (nextWorkout) alla card "Programma attivo" (Active Program Card), posizionato dopo la barra di progresso per migliorare l'organizzazione logica della schermata dashboard trainee.
 
 ---
 
@@ -137,6 +158,9 @@ Il client poi eseguiva tre catene `useMemo` per raggruppare i PR per esercizio, 
 - Refactored `saveWorkoutRows` in trainer workout edit page to call the bulk endpoint once per "Salva workout" instead of one HTTP request per row (reduces N requests → 1)
 - Added comprehensive integration tests: 11 test cases covering happy path (creates, updates, mixed batches) and guard conditions (auth, ownership, status, not-found scenarios)
 - Performance improvement: eliminates per-row network round-trips and Prisma connection overhead
+
+---
+
 ## 2026-04-26 — Fix `isSkeletonExercise` flag su esercizi aggiunti allo step dettagli
 
 - **fix** `src/app/trainer/programs/[id]/edit/_content.tsx`: il payload di `POST /api/programs/[id]/workouts/[workoutId]/exercises` impostava `isSkeletonExercise: row.isDraft`, accoppiando erroneamente il flag scheletro al concetto "riga non ancora salvata". Conseguenza: gli esercizi aggiunti allo step 3 (dettagli) venivano salvati con `isSkeletonExercise: true`. Aggiunto campo dedicato `isSkeletonExercise` su `EditableWorkoutExerciseRow`: `applyStructureToAllWeeks` (step structure) crea draft con `true`, `addDraftRow` (step dettagli) con `false`, `buildEditableRow` propaga il valore esistente da DB.
@@ -164,16 +188,6 @@ Il client poi eseguiva tre catene `useMemo` per raggruppare i PR per esercizio, 
 ---
 
 ## 2026-04-24 — Test Suite Review & Consistency
-
-- Added `.nvmrc` (Node 20) to unblock Vitest 4.x startup error on Node 18
-- Added `react-i18next` global mock to `tests/unit/setup.ts`
-- Fixed `DashboardLayout.test.tsx`: removed duplicate mocks, switched to static imports, corrected back-button assertions using `data-testid`; added `backHref` prop + `data-testid="back-nav-link"` to `DashboardLayout.tsx`
-- Removed flaky sequential-pattern test from `password-utils.test.ts`
-- Extracted shared session fixtures to `tests/integration/fixtures.ts`; updated 7 integration test files to import from it
-- Added `DashboardLayout.tsx` to coverage tracking in `vitest.config.ts`
-- Created project-scoped skill `zero-cento-testing` at `.claude/skills/zero-cento-testing/SKILL.md`
-
----
 
 - Added `.nvmrc` (Node 20) to unblock Vitest 4.x startup error on Node 18
 - Added `react-i18next` global mock to `tests/unit/setup.ts`
@@ -339,22 +353,6 @@ Il client poi eseguiva tre catene `useMemo` per raggruppare i PR per esercizio, 
 
 ---
 
-### [30 Marzo 2026] — Integration Test Esercizi con Relazioni (Sprint 5.6)
-
-**Task checklist:** #5.6  
-**File creato:** `tests/integration/exercises.test.ts`  
-**Note:** Implementata suite di integration test per l'API degli esercizi, con focus sulle relazioni con `MuscleGroup` e `MovementPattern`. Test implementati per `GET /api/exercises` (filtri, RBAC trainer/admin, paginazione cursor) e `POST /api/exercises` (creazione con relazioni, validazione coefficiente > 3.0 → 400, validazione input Zod). Tutti i test passati con successo.
-
----
-
-### [30 Marzo 2026] — Integration Test Personal Records CRUD (Sprint 5.5)
-
-**Task checklist:** #5.5  
-**File creato:** `tests/integration/personal-records.test.ts`  
-**Note:** Implementata suite di integration test per il CRUD completo dei personal records. Test implementati per `GET /api/personal-records` (RBAC trainee/trainer/admin, filtri traineeId/exerciseId), `POST /api/personal-records` (creazione, idempotenza, validazioni: peso ≤ 1000, reps intero ≤ 100, date non future), `GET /api/personal-records/[id]` (accesso per ruolo, 403 cross-trainee, 404), `PUT /api/personal-records/[id]` (aggiornamento, ownership check, validazioni). Tutti i test passati con successo.
-
----
-
 ### [30 Marzo 2026] — Integration Test Feedback CRUD Completo (Sprint 5.4)
 
 **Task checklist:** #5.4  
@@ -375,15 +373,7 @@ Il client poi eseguiva tre catene `useMemo` per raggruppare i PR per esercizio, 
 
 **Task checklist:** #5.5  
 **File creato:** `tests/integration/personal-records.test.ts`  
-**Note:** Implementata suite completa di integration test per gli endpoint CRUD dei personal records (massimali), con verifica RBAC ownership trainer-trainee. **Test implementati:** GET lista con filtro traineeId, verifica ownership check (trainer può accedere solo ai trainee assegnati), POST creazione con validazione schema (peso, reps, date non future), GET dettaglio singolo record, PATCH aggiornamento parziale, DELETE eliminazione, 403 per accesso cross-trainer, 404 per record inesistente, 401 per richieste non autenticate. **Risultato:** tutti i test passati.
-
----
-
-### [30 Marzo 2026] — Integration Test Feedback CRUD Completo (Sprint 5.4)
-
-**Task checklist:** #5.4  
-**File creato:** `tests/integration/feedback.test.ts`  
-**Note:** Implementata suite completa di integration test per gli endpoint CRUD del feedback trainee, incluse le operazioni con nested SetPerformed. **Test implementati:** POST creazione feedback con nested sets (verifica struttura dati complessa), GET lista feedback con filtri (traineeId, workoutId, dateRange), verifica RBAC (trainee può creare solo per sé, trainer vede solo feedback dei propri trainee), validazione schema (reps, weight, RPE range), 401/403 per accessi non autorizzati. **Risultato:** tutti i test passati.
+**Note:** Implementata suite completa di integration test per gli endpoint CRUD dei personal records (massimali), con verifica RBAC ownership trainer-trainee. **Test implementati:** GET lista con filtro `traineeId`, verifica ownership check (trainer può accedere solo ai trainee assegnati), POST creazione con validazione schema (peso ≤ 1000, reps intero ≤ 100, date non future), GET dettaglio singolo record, PATCH aggiornamento parziale, DELETE eliminazione, 403 per accesso cross-trainer, 404 per record inesistente, 401 per richieste non autenticate. **Risultato:** tutti i test passati.
 
 ---
 
@@ -624,10 +614,10 @@ Il client poi eseguiva tre catene `useMemo` per raggruppare i PR per esercizio, 
 - Aggiornato IMPLEMENTATION_SUMMARY.md (ora incluso in README.md) — percentuali corrette (da ~40% dichiarato a ~58% reale)
 - Riscritto [next-actions.md](./next-actions.md) — rimossi task già completati, aggiunto backlog reale con effort
 - Aggiornato [README.md](../README.md) — indice file aggiornato, stato corretto
-- Creato [checklist.md](./checklist.md) — checklist sviluppo con 49 task in 8 sprint
-- Creato questo file [changelog.md](./changelog.md)
+- Creato [CHECKLIST.md](./CHECKLIST.md) — checklist sviluppo con 49 task in 8 sprint
+- Creato questo file [CHANGELOG.md](./CHANGELOG.md)
 
-**Note:** La documentazione precedente dichiarava ~40% di completamento; l'analisi reale del codice ha rilevato ~58% in quello snapshot. Lo stato corrente e canonico e mantenuto in [checklist.md](./checklist.md).
+**Note:** La documentazione precedente dichiarava ~40% di completamento; l'analisi reale del codice ha rilevato ~58% in quello snapshot. Lo stato corrente e canonico e mantenuto in [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 

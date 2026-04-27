@@ -1,10 +1,10 @@
 # Pre-Deployment Review — ZeroCento su Vercel
 
-**Data analisi**: 19 aprile 2026 — **Aggiornato**: 20 aprile 2026
-**Stato progetto**: 143/160 task (~89% completato)
+**Data analisi**: 19 aprile 2026 — **Aggiornato**: 27 aprile 2026
+**Stato progetto**: 152/165 sprint task (~92% completato)
 **Target deploy**: Vercel Pro + Supabase Pro (EU Frankfurt)
 **Branch corrente**: `master`
-**Verdetto**: **CONDITIONAL READY** — 4 blocker da risolvere prima del go-live (B1, B3 risolti)
+**Verdetto**: **CONDITIONAL READY** — blocker B1, B3, B4 risolti; B2 (Resend) e B5 (GitHub Secrets) ancora aperti
 
 ---
 
@@ -73,14 +73,14 @@ Lo schema ha `isActive` su `User`, `MuscleGroup`, `MovementPattern`. Fix applica
 ### ✅ I3. Rate limit su endpoint read — COMPLETATO (22 aprile 2026)
 Endpoint `/api/exercises`, `/api/programs`, `/api/personal-records` (GET) hanno ora limite esplicito 100 req/min per IP, Redis-backed (`useRedis: true`) per consistenza cross-istanza in Vercel serverless. Le risposte 429 includono header `Retry-After: 60` (RFC 6585). Test di integrazione aggiunto in `tests/integration/rate-limit-read.test.ts`.
 
-### 🟠 I4. Sprint 6 CI/CD — 7 task aperti
-Tutti i task `6.1–6.7` di `next-actions.md` sono da completare:
+### 🟠 I4. Sprint 6 CI/CD — 5 task aperti
+Stato dei task `6.1–6.7` di `next-actions.md`:
 - 6.1 `prisma:migrate:prod` ✅ già presente in `package.json`
-- 6.2 step `npm run build` ✅ già in workflow
+- 6.2 step `npm run build` 🔴 **mancante in `.github/workflows/ci.yml`** (verificato 27/04)
 - 6.3 **`vercel.json` da creare** (vedi §5)
 - 6.4 Secrets (vedi B5)
 - 6.5 **Connessione Vercel ↔ GitHub** (da fare in dashboard)
-- 6.6 Sentry (vedi B1)
+- 6.6 Sentry ✅ completato (vedi B1, 20/04/2026)
 - 6.7 UptimeRobot su `/api/health`
 
 ### ✅ I5. i18n error key migration — COMPLETATO (22 aprile 2026)

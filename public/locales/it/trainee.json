@@ -19,7 +19,7 @@
         "workoutsProgress": "{{completed}} / {{total}} workout",
         "completion": "Completamento",
         "nextWorkout": "Prossimo Allenamento",
-        "workoutDay": "{{day}} - Settimana {{week}}",
+        "workoutDay": "Workout {{day}} - Settimana {{week}}",
         "exercisesToComplete": "{{count}} esercizi da completare",
         "startWorkout": "Inizia Workout",
         "sections": "Sezioni",

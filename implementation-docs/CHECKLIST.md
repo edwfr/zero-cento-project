@@ -1,17 +1,17 @@
 # ✅ CHECKLIST SVILUPPO - ZeroCento Training Platform
 
 **Posizionamento prodotto:** training management platform trainer-led  
-**Stato attuale:** 142/160 task completati (~89%)  
-**Task rimanenti:** 18 (Sprint 6: 7 task, Sprint 8: 7 task, Sprint 11: 4 task)  
-**Riferimenti:** [system-review.md](./system-review.md) · [changelog.md](./changelog.md)
+**Stato attuale:** 152/165 task completati (~92%)  
+**Task rimanenti:** 13 (Sprint 6: 5 task, Sprint 8: 7 task, Sprint 11: 1 task)  
+**Riferimenti:** [system-review.md](./system-review.md) · [CHANGELOG.md](./CHANGELOG.md)
 
 ---
 
 ## Come usare questa checklist
 
 - Spunta `[x]` quando un task è completato
-- Annota la data e un breve commento nel [changelog.md](./changelog.md)
-- Le priorità seguono il backlog del [system-review.md § 9](./system-review.md#9-task-backlog-completo)
+- Annota la data e un breve commento nel [CHANGELOG.md](./CHANGELOG.md)
+- Le priorità seguono il backlog del [system-review.md](./system-review.md)
 
 ---
 
@@ -37,25 +37,25 @@
 ### API Endpoints
 
 - [x] **2.1** `POST /api/feedback` — creazione feedback trainee con nested SetPerformed (3h)  
-      Spec: [NEXT_ACTIONS.md § 7](./NEXT_ACTIONS.md#7-post-apifeedback---creazione-feedback-trainee-3h) · Design: [design/03-backend-api.md](../design/03-backend-api.md)
+      Spec: [next-actions.md § 7](./next-actions.md#7-post-apifeedback---creazione-feedback-trainee-3h) · Design: [design/03-backend-api.md](../design/03-backend-api.md)
 - [x] **2.2** `GET /api/trainee/workouts/[id]` — vista workout con peso effettivo pre-calcolato (4h)  
-      Spec: [NEXT_ACTIONS.md § 8](./NEXT_ACTIONS.md#8-get-apitraineeworkoutsid---vista-workout-4h)
+      Spec: [next-actions.md § 8](./next-actions.md#8-get-apitraineeworkoutsid---vista-workout-4h)
 - [x] **2.3** `POST /api/programs/[id]/complete` — completamento manuale programma (2h)  
-      Spec: [NEXT_ACTIONS.md § 9](./NEXT_ACTIONS.md#9-post-apiprogramsidcomplete---completamento-manuale-2h)
+      Spec: [next-actions.md § 9](./next-actions.md#9-post-apiprogramsidcomplete---completamento-manuale-2h)
 - [x] **2.4** `PATCH /api/weeks/[id]` — config tipo settimana post-pubblicazione (2h)  
-      Spec: [NEXT_ACTIONS.md § 10](./NEXT_ACTIONS.md#10-patch-apiweeksid---config-tipo-settimana-2h)
+      Spec: [next-actions.md § 10](./next-actions.md#10-patch-apiweeksid---config-tipo-settimana-2h)
 
 ### Frontend — Program Builder Wizard (Trainer)
 
 - [x] **2.5** Workout Detail Editor — step 3 wizard (8h)  
       File: `src/app/trainer/programs/[id]/workouts/[wId]/page.tsx`  
-      Spec: [NEXT_ACTIONS.md § 11](./NEXT_ACTIONS.md#11-workout-detail-editor---step-3-wizard-8h)
+      Spec: [next-actions.md § 11](./next-actions.md#11-workout-detail-editor---step-3-wizard-8h)
 - [x] **2.6** Publish Programma — step 4 wizard (4h)  
       File: `src/app/trainer/programs/[id]/publish/page.tsx`  
-      Spec: [NEXT_ACTIONS.md § 12](./NEXT_ACTIONS.md#12-publish-programma---step-4-wizard-4h)
+      Spec: [next-actions.md § 12](./next-actions.md#12-publish-programma---step-4-wizard-4h)
 - [x] **2.7** Edit Programma (4h)  
       File: `src/app/trainer/programs/[id]/edit/page.tsx`  
-      Spec: [NEXT_ACTIONS.md § 14](./NEXT_ACTIONS.md#14-edit-programma-4h)
+      Spec: [next-actions.md § 14](./next-actions.md#14-edit-programma-4h)
 
 ---
 
@@ -64,7 +64,7 @@
 - [x] **3.1** Workout View con card navigation — mobile-first, swipeable cards, input serie (8h)  
       File: `src/app/trainee/workouts/[id]/page.tsx`  
       Include: integrazione `FeedbackForm`, auto-save localStorage, YouTube embed  
-      Spec: [NEXT_ACTIONS.md § 19](./NEXT_ACTIONS.md#19-workout-view-con-card-navigation-8h) · Dipende da: **2.1**, **2.2**
+      Spec: [next-actions.md § 19](./next-actions.md#19-workout-view-con-card-navigation-8h) · Dipende da: **2.1**, **2.2**
 
 ---
 
@@ -100,13 +100,13 @@
 
 ## Sprint 6 — CI/CD & Deploy (~5h)
 
-- [ ] **6.1** Aggiungere script `prisma:migrate:prod` a `package.json` (oppure usare `npx prisma migrate deploy` nel workflow)
+- [x] **6.1** Aggiungere script `prisma:migrate:prod` a `package.json` (oppure usare `npx prisma migrate deploy` nel workflow) ✅ _presente in package.json_
 - [ ] **6.2** Aggiungere step `npm run build` nel job test CI  
       File: `.github/workflows/ci.yml`
 - [ ] **6.3** Creare `vercel.json` con build config e route rewrites
 - [ ] **6.4** Configurare secrets GitHub: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, `STAGING_URL`, `PRODUCTION_DATABASE_URL`
 - [ ] **6.5** Collegare repo GitHub a Vercel per auto-deploy + preview su PR
-- [ ] **6.6** Completare integrazione Sentry (2h)
+- [x] **6.6** Completare integrazione Sentry (2h) ✅ _20 Apr 2026_
 - [ ] **6.7** Configurare UptimeRobot su `/api/health`
 
 ---
@@ -588,11 +588,11 @@
 - [x] **11.48** `src/app/trainee/history/_content.tsx`
 - [x] **11.49** `src/app/trainee/records/_content.tsx`
 - [x] **11.50** `src/app/trainee/programs/current/_content.tsx`
-- [ ] **11.51** `src/app/trainee/dashboard/_content.tsx`
-- [ ] **11.52** `src/app/admin/dashboard/_content.tsx`
+- [x] **11.51** `src/app/trainee/dashboard/_content.tsx` ✅ _22 Apr 2026_
+- [x] **11.52** `src/app/admin/dashboard/_content.tsx` ✅ _22 Apr 2026_
 - [x] **11.53** `src/app/admin/users/_content.tsx`
 - [x] **11.54** `src/app/admin/programs/_content.tsx`
-- [ ] **11.55** `src/app/profile/change-password/_content.tsx`
+- [x] **11.55** `src/app/profile/change-password/_content.tsx` ✅ _22 Apr 2026_
 
 ### Phase 4 — Componenti condivisi (sostituire `data.error?.message`)
 
@@ -627,8 +627,8 @@
 | Alto       | Sprint 9  | 9.1–9.23     | ~9h            |
 | Medio      | Sprint 10 | 10.1–10.29   | ~5h            |
 | Medio      | Sprint 11 | 11.1–11.64   | ~15h           |
-| **Totale** |           | **160 task** | **~157h**      |
+| **Totale** |           | **165 task** | **~157h**      |
 
 ---
 
-*Ultimo aggiornamento: 1 Aprile 2026*
+*Ultimo aggiornamento: 27 Aprile 2026*
