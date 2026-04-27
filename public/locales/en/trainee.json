@@ -18,6 +18,7 @@
         "progression": "Progress",
         "workoutsProgress": "{{completed}} / {{total}} workouts",
         "completion": "Completion",
+        "completedLabel": "completed",
         "nextWorkout": "Next Workout",
         "workoutDay": "{{day}} - Week {{week}}",
         "exercisesToComplete": "{{count}} exercises to complete",

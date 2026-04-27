@@ -187,20 +187,22 @@ export default function TraineeDashboardContent() {
             </div>
 
             {nextWorkout && (
-                <div className="bg-white border border-gray-200 rounded-2xl shadow-md p-8 mb-8">
-                    <div className="flex items-center justify-between mb-6">
+                <div className="bg-white border border-gray-200 rounded-2xl shadow-md p-8 mb-8 flex flex-col items-center">
+                    <div className="text-center mb-6">
                         <p className="text-sm font-semibold uppercase tracking-[0.12em] text-brand-primary">
                             {t('trainee:dashboard.nextWorkout')}
                         </p>
                         {nextWorkout.weekType !== 'normal' && (
-                            <WeekTypeBadge
-                                weekType={nextWorkout.weekType}
-                                labels={{
-                                    normal: t('trainee:weekType.normal'),
-                                    test: t('trainee:weekType.test'),
-                                    deload: t('trainee:weekType.deload'),
-                                }}
-                            />
+                            <div className="flex items-center justify-center mt-2">
+                                <WeekTypeBadge
+                                    weekType={nextWorkout.weekType}
+                                    labels={{
+                                        normal: t('trainee:weekType.normal'),
+                                        test: t('trainee:weekType.test'),
+                                        deload: t('trainee:weekType.deload'),
+                                    }}
+                                />
+                            </div>
                         )}
                     </div>
 
@@ -233,7 +235,7 @@ export default function TraineeDashboardContent() {
                                 day: nextWorkout.dayOfWeek,
                                 week: nextWorkout.weekNumber,
                             })}
-                            className="inline-flex w-full sm:w-auto items-center justify-center gap-2 border border-brand-primary text-brand-primary hover:bg-[#FFF7E5] font-semibold px-6 py-3 rounded-lg transition-colors"
+                            className="inline-flex w-full items-center justify-center gap-2 border border-brand-primary text-brand-primary hover:bg-[#FFF7E5] font-semibold px-6 py-3 rounded-lg transition-colors"
                         >
                             <Play className="w-4 h-4" />
                             {nextWorkoutActionLabel}
@@ -243,43 +245,21 @@ export default function TraineeDashboardContent() {
             )}
 
             {/* Active Program Card */}
-            <div className="bg-white border border-gray-200 border-l-4 border-l-brand-primary rounded-lg shadow-md p-8 mb-8">
-                <div className="mb-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-primary mb-1">
-                        {t('navigation:navigation.activeProgram')}
-                    </p>
-                    <h2 className="text-xl font-bold text-gray-900">{activeProgram.title}</h2>
-                    <p className="text-sm text-gray-600">
-                        {t('trainee:dashboard.trainerWith', {
-                            firstName: activeProgram.trainer.firstName,
-                            lastName: activeProgram.trainer.lastName,
-                        })}
-                    </p>
+            <div className="bg-white border border-gray-200 rounded-2xl shadow-md p-8 mb-8 flex flex-col items-center">
+                <p className="text-sm font-semibold uppercase tracking-[0.12em] text-brand-primary mb-6">
+                    {t('navigation:navigation.activeProgram')}
+                </p>
+
+                <div className="flex flex-col items-center">
+                    <span className="text-6xl sm:text-7xl font-black leading-none text-brand-primary">
+                        {progressPercent}%
+                    </span>
+                    <span className="text-xs uppercase tracking-[0.12em] text-gray-500 mt-1">
+                        {t('trainee:dashboard.completedLabel')}
+                    </span>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm mb-2">
-                    <div>
-                        <span className="text-gray-500">{t('trainee:dashboard.duration')}: </span>
-                        <span className="font-semibold text-gray-900">
-                            {t('trainee:dashboard.weeks', { count: activeProgram.durationWeeks })}
-                        </span>
-                    </div>
-                    <div>
-                        <span className="text-gray-500">{t('trainee:dashboard.progression')}: </span>
-                        <span className="font-semibold text-gray-900">
-                            {t('trainee:dashboard.workoutsProgress', {
-                                completed: completedWorkouts,
-                                total: totalWorkouts,
-                            })}
-                        </span>
-                    </div>
-                    <div>
-                        <span className="text-gray-500">{t('trainee:dashboard.completion')}: </span>
-                        <span className="font-semibold text-brand-primary">{progressPercent}%</span>
-                    </div>
-                </div>
-
-                <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden mb-4">
+                <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden mt-4">
                     <div
                         className="bg-brand-primary h-2 rounded-full transition-all duration-500"
                         style={{ width: `${progressPercent}%` }}
@@ -291,7 +271,17 @@ export default function TraineeDashboardContent() {
                     />
                 </div>
 
-                <div className="mt-2">
+                <p className="text-sm text-gray-500 text-center mt-2">
+                    {t('trainee:dashboard.workoutsProgress', {
+                        completed: completedWorkouts,
+                        total: totalWorkouts,
+                    })}
+                </p>
+                <p className="text-sm text-gray-600 text-center mt-1">
+                    {activeProgram.title} · {t('trainee:dashboard.weeks', { count: activeProgram.durationWeeks })}
+                </p>
+
+                <div className="mt-6">
                     <Link
                         href="/trainee/programs/current"
                         className="inline-flex w-full items-center justify-center gap-2 border border-brand-primary text-brand-primary hover:bg-[#FFF7E5] font-semibold px-6 py-3 rounded-lg transition-colors"

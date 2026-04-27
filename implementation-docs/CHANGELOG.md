@@ -8,6 +8,27 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## 2026-04-27 — Active Program Card Redesign
+
+**File modificati:** 
+- `src/app/trainee/dashboard/_content.tsx`
+- `public/locales/it/trainee.json`
+- `public/locales/en/trainee.json`
+
+**Cambio:** Redesign della card "Programma Attivo" nella trainee dashboard per allinearla visivamente alla card "Prossimo Allenamento":
+- Container: da `rounded-lg border-l-4 border-l-brand-primary` a `rounded-2xl` (no left border)
+- Nuovo layout con hero `%` completamento (`text-6xl sm:text-7xl font-black` centrato) e sub-label "completato"
+- Rimosso nome del trainer
+- Barra di progresso mantenuta sotto l'hero
+- Contatore allenamenti (completed/total) in riga secondaria sotto la barra
+- Titolo programma + durata collassati in unica riga secondaria
+- CTA "Vai al programma completo" mantenuto in fondo
+- Aggiunta chiave di traduzione: `dashboard.completedLabel` ("completato" / "completed") in it/en
+
+**Note:** Nessun test unitario aggiunto (il file non è coperto da `vitest.config.ts`). La verifica è manuale via `npm run dev` e type-check/lint passano correttamente.
+
+---
+
 ## 2026-04-27 — Trainee dashboard: Next workout card redesign
 
 **File modificati:** 
