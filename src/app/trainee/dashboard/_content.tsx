@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
-import { NavigationCard, ProgressBar, SkeletonDashboard } from '@/components'
+import { NavigationCard, ProgressBar, SkeletonDashboard, WeekTypeBadge } from '@/components'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { Dumbbell, Trophy, BarChart2, User, ClipboardList, Play } from 'lucide-react'
 
@@ -35,6 +35,7 @@ interface NextWorkout {
     name: string
     dayOfWeek: number
     weekNumber: number
+    weekType: 'normal' | 'test' | 'deload'
     exerciseCount: number
     completed: boolean
     started: boolean
@@ -186,29 +187,61 @@ export default function TraineeDashboardContent() {
             </div>
 
             {nextWorkout && (
-                <div className="bg-white border border-gray-200 border-l-4 border-l-brand-primary rounded-lg shadow-md p-8 mb-8">
-                    <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-                        <div>
-                            <p className="text-sm font-semibold uppercase tracking-[0.12em] text-brand-primary mb-2">
-                                {t('trainee:dashboard.nextWorkout')}
-                            </p>
-                            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                                {t('trainee:dashboard.workoutDay', {
-                                    day: nextWorkout.dayOfWeek,
-                                    week: nextWorkout.weekNumber,
-                                })}
-                            </h2>
-                            <p className="text-gray-600">{t('trainee:dashboard.exercisesToComplete', { count: nextWorkout.exerciseCount })}</p>
+                <div className="bg-white border border-gray-200 rounded-2xl shadow-md p-8 mb-8">
+                    <div className="flex items-center justify-between mb-6">
+                        <p className="text-sm font-semibold uppercase tracking-[0.12em] text-brand-primary">
+                            {t('trainee:dashboard.nextWorkout')}
+                        </p>
+                        {nextWorkout.weekType !== 'normal' && (
+                            <WeekTypeBadge
+                                weekType={nextWorkout.weekType}
+                                labels={{
+                                    normal: t('trainee:weekType.normal'),
+                                    test: t('trainee:weekType.test'),
+                                    deload: t('trainee:weekType.deload'),
+                                }}
+                            />
+                        )}
+                    </div>
+
+                    <div className="flex items-end gap-6">
+                        <div className="flex flex-col">
+                            <span className="text-6xl sm:text-7xl font-black leading-none text-brand-primary">
+                                {nextWorkout.dayOfWeek}
+                            </span>
+                            <span className="text-xs uppercase tracking-[0.12em] text-gray-500 mt-1">
+                                {t('trainee:dashboard.dayLabel')}
+                            </span>
                         </div>
-                        <div className="w-full sm:w-auto">
-                            <Link
-                                href={`/trainee/workouts/${nextWorkout.id}`}
-                                className="inline-flex w-full items-center justify-center gap-2 border border-brand-primary text-brand-primary hover:bg-[#FFF7E5] font-semibold px-6 py-3 rounded-lg transition-colors"
-                            >
-                                <Play className="w-4 h-4" />
-                                {nextWorkoutActionLabel}
-                            </Link>
+                        <span className="text-4xl sm:text-5xl text-gray-300 self-center pb-2" aria-hidden="true">
+                            ·
+                        </span>
+                        <div className="flex flex-col">
+                            <span className="text-6xl sm:text-7xl font-black leading-none text-gray-900">
+                                {nextWorkout.weekNumber}
+                            </span>
+                            <span className="text-xs uppercase tracking-[0.12em] text-gray-500 mt-1">
+                                {t('trainee:dashboard.weekLabel')}
+                            </span>
                         </div>
+                    </div>
+
+                    <p className="text-base text-gray-600 mt-4">
+                        {t('trainee:dashboard.exercisesToComplete', { count: nextWorkout.exerciseCount })}
+                    </p>
+
+                    <div className="mt-6">
+                        <Link
+                            href={`/trainee/workouts/${nextWorkout.id}`}
+                            aria-label={t('trainee:dashboard.startWorkoutAria', {
+                                day: nextWorkout.dayOfWeek,
+                                week: nextWorkout.weekNumber,
+                            })}
+                            className="inline-flex w-full sm:w-auto items-center justify-center gap-2 border border-brand-primary text-brand-primary hover:bg-[#FFF7E5] font-semibold px-6 py-3 rounded-lg transition-colors"
+                        >
+                            <Play className="w-4 h-4" />
+                            {nextWorkoutActionLabel}
+                        </Link>
                     </div>
                 </div>
             )}
