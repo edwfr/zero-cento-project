@@ -8,6 +8,23 @@ Per stato corrente usare sempre [checklist.md](./checklist.md).
 
 ---
 
+## 2026-04-27 — Reseed trainer/trainee users with real names
+
+**File modificati:** `prisma/seed.ts`
+
+**Cambio:** Sostituito set utenti seed (`Marco Rossi` + `Trainee1-4`) con utenti reali strutturati per trainer:
+
+- Trainer `filippo.bittoni@zerocento.app` (Filippo Bittoni) → trainees: Nicoletta Ciriachi, Luca Cormano, Luca Casagrande
+- Trainer `edoardo.frati.coach@zerocento.app` (Edoardo Frati Coach) → trainee: Edoardo Frati Trainee (`edoardo.frati.trainee@zerocento.app`)
+
+Convenzione email: `<firstname>.<lastname>@zerocento.app`. Per omonimia Edoardo Frati, suffisso ruolo (`coach`/`trainee`) per disambiguare.
+
+Supabase `user_metadata` popolato con `{ role, firstName, lastName, isActive }` per ogni utente. Password riusano env `SEED_TRAINER_PASSWORD` / `SEED_TRAINEE_PASSWORD` (default `Trainer1234!` / `Trainee1234!`).
+
+`TrainerTrainee` join creato per ciascun mapping. Admin anchor invariato.
+
+---
+
 ## 2026-04-26 — Review page: unified queries and DB-side PR aggregation
 
 **File modificati:** `src/app/api/programs/[id]/review/route.ts` (nuovo), `src/app/trainer/programs/[id]/review/_content.tsx`

@@ -4,7 +4,9 @@ import { createClient } from '@supabase/supabase-js'
 
 config()
 
-const databaseUrl = process.env.DIRECT_URL || process.env.DATABASE_URL
+// Use DATABASE_URL (pooled, port 6543) for seeding since DIRECT_URL (port 5432) 
+// may be blocked on restricted networks like mobile hotspots
+const databaseUrl = process.env.DATABASE_URL || process.env.DIRECT_URL
 
 const prisma = new PrismaClient({
     datasources: { db: { url: databaseUrl } },
@@ -16,28 +18,32 @@ const supabaseAdmin = createClient(
     { auth: { autoRefreshToken: false, persistSession: false } }
 )
 
-const SEED_USERS = [
+type SeedTrainer = {
+    email: string
+    firstName: string
+    lastName: string
+    trainees: Array<{ email: string; firstName: string; lastName: string }>
+}
+
+const TRAINERS: SeedTrainer[] = [
     {
-        email: 'admin@zerocento.app',
-        password: process.env.SEED_ADMIN_PASSWORD ?? 'Admin1234!',
-        firstName: 'Admin',
-        lastName: 'ZeroCento',
-        role: 'admin' as const,
+        email: 'filippo.bittoni@zerocento.app',
+        firstName: 'Filippo',
+        lastName: 'Bittoni',
+        trainees: [
+            { email: 'nicoletta.ciriachi@zerocento.app', firstName: 'Nicoletta', lastName: 'Ciriachi' },
+            { email: 'luca.cormano@zerocento.app', firstName: 'Luca', lastName: 'Cormano' },
+            { email: 'luca.casagrande@zerocento.app', firstName: 'Luca', lastName: 'Casagrande' },
+        ],
     },
     {
-        email: 'trainer@zerocento.app',
-        password: process.env.SEED_TRAINER_PASSWORD ?? 'Trainer1234!',
-        firstName: 'Marco',
-        lastName: 'Rossi',
-        role: 'trainer' as const,
+        email: 'edoardo.frati.coach@zerocento.app',
+        firstName: 'Edoardo',
+        lastName: 'Frati Coach',
+        trainees: [
+            { email: 'edoardo.frati.trainee@zerocento.app', firstName: 'Edoardo', lastName: 'Frati Trainee' },
+        ],
     },
-    ...Array.from({ length: 4 }, (_, i) => ({
-        email: `trainee${i + 1}@zerocento.app`,
-        password: process.env.SEED_TRAINEE_PASSWORD ?? 'Trainee1234!',
-        firstName: `Trainee${i + 1}`,
-        lastName: 'Rossi',
-        role: 'trainee' as const,
-    })),
 ]
 
 async function deleteAllSupabaseUsers() {
@@ -113,56 +119,58 @@ async function main() {
     })
     console.log(`  ✅ admin@zerocento.app / ${process.env.SEED_ADMIN_PASSWORD ?? 'Admin1234!'}`)
 
-    // Step 5: create trainer in Supabase + Prisma
-    const trainerSupabase = await createSupabaseUser('trainer@zerocento.app', process.env.SEED_TRAINER_PASSWORD ?? 'Trainer1234!', {
-        role: 'trainer',
-        firstName: 'Marco',
-        lastName: 'Rossi',
-        isActive: true,
-    })
-    const trainer = await prisma.user.create({
-        data: {
-            id: trainerSupabase.id,
-            email: 'trainer@zerocento.app',
-            firstName: 'Marco',
-            lastName: 'Rossi',
-            role: 'trainer',
-            isActive: true,
-        },
-    })
-    console.log(`  ✅ trainer@zerocento.app / ${process.env.SEED_TRAINER_PASSWORD ?? 'Trainer1234!'}`)
-
-    // Step 6: create trainees in Supabase + Prisma
+    // Step 5: create trainers + their trainees in Supabase + Prisma
+    const trainerPassword = process.env.SEED_TRAINER_PASSWORD ?? 'Trainer1234!'
     const traineePassword = process.env.SEED_TRAINEE_PASSWORD ?? 'Trainee1234!'
-    for (let i = 1; i <= 4; i++) {
-        const email = `trainee${i}@zerocento.app`
-        const traineeSupabase = await createSupabaseUser(email, traineePassword, {
-            role: 'trainee',
-            firstName: `Trainee${i}`,
-            lastName: 'Rossi',
+
+    for (const trainerSpec of TRAINERS) {
+        const trainerSupabase = await createSupabaseUser(trainerSpec.email, trainerPassword, {
+            role: 'trainer',
+            firstName: trainerSpec.firstName,
+            lastName: trainerSpec.lastName,
             isActive: true,
         })
-        const trainee = await prisma.user.create({
+        const trainer = await prisma.user.create({
             data: {
-                id: traineeSupabase.id,
-                email,
-                firstName: `Trainee${i}`,
-                lastName: 'Rossi',
-                role: 'trainee',
+                id: trainerSupabase.id,
+                email: trainerSpec.email,
+                firstName: trainerSpec.firstName,
+                lastName: trainerSpec.lastName,
+                role: 'trainer',
                 isActive: true,
             },
         })
-        await prisma.trainerTrainee.create({
-            data: { trainerId: trainer.id, traineeId: trainee.id },
-        })
-        console.log(`  ✅ ${email} / ${traineePassword}`)
+        console.log(`  ✅ ${trainerSpec.email} / ${trainerPassword}`)
+
+        for (const traineeSpec of trainerSpec.trainees) {
+            const traineeSupabase = await createSupabaseUser(traineeSpec.email, traineePassword, {
+                role: 'trainee',
+                firstName: traineeSpec.firstName,
+                lastName: traineeSpec.lastName,
+                isActive: true,
+            })
+            const trainee = await prisma.user.create({
+                data: {
+                    id: traineeSupabase.id,
+                    email: traineeSpec.email,
+                    firstName: traineeSpec.firstName,
+                    lastName: traineeSpec.lastName,
+                    role: 'trainee',
+                    isActive: true,
+                },
+            })
+            await prisma.trainerTrainee.create({
+                data: { trainerId: trainer.id, traineeId: trainee.id },
+            })
+            console.log(`  ✅ ${traineeSpec.email} / ${traineePassword}`)
+        }
     }
 
     console.log('\n🎉 Seeding completed!')
     console.log('\n📋 Credentials summary:')
-    console.log(`  admin     → admin@zerocento.app       / ${process.env.SEED_ADMIN_PASSWORD ?? 'Admin1234!'}`)
-    console.log(`  trainer   → trainer@zerocento.app     / ${process.env.SEED_TRAINER_PASSWORD ?? 'Trainer1234!'}`)
-    console.log(`  trainees  → trainee1-4@zerocento.app  / ${traineePassword}`)
+    console.log(`  admin     → admin@zerocento.app  / ${process.env.SEED_ADMIN_PASSWORD ?? 'Admin1234!'}`)
+    console.log(`  trainers  → <firstname>.<lastname>@zerocento.app  / ${trainerPassword}`)
+    console.log(`  trainees  → <firstname>.<lastname>@zerocento.app  / ${traineePassword}`)
 }
 
 main()
