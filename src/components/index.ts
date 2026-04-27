@@ -41,6 +41,10 @@ export { default as PersonalRecordsExplorer } from './PersonalRecordsExplorer'
 export { default as LoadingSpinner, FullPageLoader, InlineLoader } from './LoadingSpinner'
 export { default as NavigationLoadingOverlay } from './NavigationLoadingOverlay'
 export {
+    NavigationLoadingProvider,
+    useNavigationLoader,
+} from './NavigationLoadingProvider'
+export {
     default as Skeleton,
     SkeletonText,
     SkeletonCard,
