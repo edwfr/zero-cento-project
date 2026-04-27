@@ -41,7 +41,7 @@
             "Domenica"
         ],
         "dayLabel": "Giorno",
-        "weekLabel": "Settimana",
+        "weekLabel": "Week",
         "startWorkoutAria": "Inizia workout giorno {{day}} settimana {{week}}"
     },
     "weekType": {

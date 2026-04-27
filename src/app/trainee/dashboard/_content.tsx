@@ -205,7 +205,7 @@ export default function TraineeDashboardContent() {
                     </div>
 
                     <div className="flex items-end justify-center gap-6">
-                        <div className="flex flex-col">
+                        <div className="flex flex-col items-center">
                             <span className="text-6xl sm:text-7xl font-black leading-none text-brand-primary">
                                 {nextWorkout.dayOfWeek}
                             </span>
@@ -216,7 +216,7 @@ export default function TraineeDashboardContent() {
                         <span className="text-4xl sm:text-5xl text-gray-300 self-center pb-2" aria-hidden="true">
                             ·
                         </span>
-                        <div className="flex flex-col">
+                        <div className="flex flex-col items-center">
                             <span className="text-6xl sm:text-7xl font-black leading-none text-gray-900">
                                 {nextWorkout.weekNumber}
                             </span>
@@ -225,10 +225,6 @@ export default function TraineeDashboardContent() {
                             </span>
                         </div>
                     </div>
-
-                    <p className="text-base text-gray-600 mt-4">
-                        {t('trainee:dashboard.exercisesToComplete', { count: nextWorkout.exerciseCount })}
-                    </p>
 
                     <div className="mt-6">
                         <Link
