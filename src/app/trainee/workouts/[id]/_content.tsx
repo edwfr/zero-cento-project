@@ -1,19 +1,30 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import type { RestTime } from '@prisma/client'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
-import { RPESelector, SkeletonDetail, WeekTypeBanner } from '@/components'
+import { RPESelector, SkeletonDetail } from '@/components'
 import LoadingSpinner from '@/components/LoadingSpinner'
-import { Check, ChevronDown, ChevronUp, Clock3, FileText, Gauge, PlayCircle } from 'lucide-react'
+import {
+    AlertTriangle,
+    Check,
+    ChevronDown,
+    ChevronUp,
+    Clock3,
+    FileText,
+    Gauge,
+    Info,
+    PlayCircle,
+    ChevronLeft,
+    ChevronRight,
+    X,
+} from 'lucide-react'
 import YoutubeEmbed from '@/components/YoutubeEmbed'
 import { useSwipe } from '@/lib/useSwipe'
 import * as Sentry from '@sentry/nextjs'
 import { useToast } from '@/components/ToastNotification'
-import ConfirmationModal from '@/components/ConfirmationModal'
 import { Input } from '@/components/Input'
 
 interface Exercise {
@@ -92,7 +103,6 @@ const formatRestTime = (restTime: RestTime): string => {
         m3: '3:00',
         m5: '5:00',
     }
-
     return labels[restTime] ?? '-'
 }
 
@@ -100,7 +110,6 @@ const formatWeightValue = (value: number): string => {
     if (!Number.isFinite(value)) {
         return '-'
     }
-
     return Number.isInteger(value) ? String(value) : value.toFixed(1)
 }
 
@@ -108,7 +117,6 @@ const formatWeightKg = (value: number | null | undefined): string => {
     if (typeof value !== 'number' || !Number.isFinite(value)) {
         return '-'
     }
-
     return `${formatWeightValue(value)} kg`
 }
 
@@ -134,27 +142,20 @@ export default function WorkoutDetailContent() {
     const workoutId = params.id as string
     const fromParam = searchParams.get('from') ?? 'dashboard'
 
+    // State
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
     const [workout, setWorkout] = useState<Workout | null>(null)
     const [error, setError] = useState<string | null>(null)
 
-    // Feedback state
     const [feedbackData, setFeedbackData] = useState<Record<string, SetPerformed[]>>({})
     const [exerciseRPE, setExerciseRPE] = useState<Record<string, number | null>>({})
     const [globalNotes, setGlobalNotes] = useState('')
-    const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>({})
     const [expandedVideos, setExpandedVideos] = useState<Record<string, boolean>>({})
-    const [activeExerciseIndex, setActiveExerciseIndex] = useState(0)
-    const exerciseRefs = useRef<Record<string, HTMLDivElement | null>>({})
+    const [currentStep, setCurrentStep] = useState(0)
+    const [infoSheetOpen, setInfoSheetOpen] = useState(false)
+
     const { showToast } = useToast()
-    const [confirmModal, setConfirmModal] = useState<{
-        title: string
-        message: string
-        onConfirm: () => void
-        confirmText?: string
-        variant?: 'danger' | 'warning' | 'info' | 'success'
-    } | null>(null)
     const draftSyncEnabledRef = useRef(false)
     const persistedExerciseIdsRef = useRef<Set<string>>(new Set())
     const touchedExerciseIdsRef = useRef<Set<string>>(new Set())
@@ -177,17 +178,14 @@ export default function WorkoutDetailContent() {
 
             setWorkout(data.data.workout)
 
-            // Initialize feedback data structure
             const initialFeedback: Record<string, SetPerformed[]> = {}
             const initialRPE: Record<string, number | null> = {}
 
-            const initialExpanded: Record<string, boolean> = {}
             const orderedExercises = [...data.data.workout.exercises].sort(
                 (left: WorkoutExerciseWithWeight, right: WorkoutExerciseWithWeight) => left.order - right.order
             )
 
-            orderedExercises.forEach((we: WorkoutExerciseWithWeight, index: number) => {
-                // If feedback exists, load it
+            orderedExercises.forEach((we: WorkoutExerciseWithWeight) => {
                 if (we.feedback) {
                     persistedExerciseIdsRef.current.add(we.id)
                     initialFeedback[we.id] = we.feedback.setsPerformed.map(sp => ({
@@ -202,8 +200,6 @@ export default function WorkoutDetailContent() {
                     }
                 } else {
                     const plannedReps = parsePlannedReps(we.reps)
-
-                    // Initialize empty sets with planned reps and effective weight as defaults
                     initialFeedback[we.id] = Array.from({ length: we.sets }, (_, i) => ({
                         setNumber: i + 1,
                         weight: we.effectiveWeight || 0,
@@ -212,15 +208,11 @@ export default function WorkoutDetailContent() {
                     }))
                     initialRPE[we.id] = we.targetRpe
                 }
-
-                // Open first exercise by default for quicker mobile usage
-                initialExpanded[we.id] = index === 0
             })
 
             setFeedbackData(initialFeedback)
             setExerciseRPE(initialRPE)
-            setExpandedExercises(initialExpanded)
-            setActiveExerciseIndex(0)
+            setCurrentStep(0)
             draftSyncEnabledRef.current = false
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : t('workouts.errorLoading'))
@@ -239,7 +231,6 @@ export default function WorkoutDetailContent() {
                         workoutExerciseId,
                         (sets as SetPerformed[]).map((set) => {
                             const legacyStatus = (set as SetPerformed & { status?: 'done' | 'not-done' | null }).status
-
                             return {
                                 ...set,
                                 completed: set.completed ?? (legacyStatus === 'done'),
@@ -247,7 +238,6 @@ export default function WorkoutDetailContent() {
                         }),
                     ])
                 )
-
                 setFeedbackData(normalizedFeedback)
                 setExerciseRPE(parsed.exerciseRPE || {})
                 setGlobalNotes(parsed.globalNotes || '')
@@ -291,7 +281,6 @@ export default function WorkoutDetailContent() {
                 const sets = feedbackData[exercise.id] || []
                 const hasCompletedSets = sets.some((set) => !!set.completed)
                 const hasTouchedDraft = touchedExerciseIdsRef.current.has(exercise.id)
-
                 return hasCompletedSets || hasTouchedDraft || persistedExerciseIdsRef.current.has(exercise.id)
             })
 
@@ -303,7 +292,6 @@ export default function WorkoutDetailContent() {
                 await Promise.all(
                     exercisesToSync.map(async (exercise) => {
                         const sets = feedbackData[exercise.id] || []
-
                         const payload = {
                             workoutExerciseId: exercise.id,
                             sets: sets.map((set) => ({
@@ -331,7 +319,6 @@ export default function WorkoutDetailContent() {
                 )
             } catch (err) {
                 Sentry.captureException(err)
-                // Draft sync failed; will retry on next interval
             }
         }
 
@@ -353,7 +340,6 @@ export default function WorkoutDetailContent() {
     }, [fetchWorkout, loadLocalData])
 
     useEffect(() => {
-        // Auto-save to localStorage every time feedbackData changes
         if (Object.keys(feedbackData).length > 0) {
             saveLocalData()
         }
@@ -392,7 +378,6 @@ export default function WorkoutDetailContent() {
         value: number
     ) => {
         touchedExerciseIdsRef.current.add(workoutExerciseId)
-
         setFeedbackData((prev) => {
             const updated = { ...prev }
             updated[workoutExerciseId] = [...(prev[workoutExerciseId] || [])]
@@ -404,10 +389,11 @@ export default function WorkoutDetailContent() {
         })
     }
 
-    const toggleSetCompleted = (
-        workoutExerciseId: string,
-        setIndex: number
-    ) => {
+    const toggleSetCompleted = (workoutExerciseId: string, setIndex: number) => {
+        if (!workout) return
+        const we = workout.exercises.find((e) => e.id === workoutExerciseId)
+        if (!we) return
+
         touchedExerciseIdsRef.current.add(workoutExerciseId)
 
         setFeedbackData((prev) => {
@@ -415,9 +401,22 @@ export default function WorkoutDetailContent() {
             updated[workoutExerciseId] = [...(prev[workoutExerciseId] || [])]
 
             const currentSet = updated[workoutExerciseId][setIndex]
-            updated[workoutExerciseId][setIndex] = {
-                ...currentSet,
-                completed: !currentSet.completed,
+            const isCompleting = !currentSet.completed
+
+            // If completing with empty inputs, populate planned defaults
+            if (isCompleting && currentSet.reps === 0 && currentSet.weight === 0) {
+                const plannedReps = parsePlannedReps(we.reps)
+                updated[workoutExerciseId][setIndex] = {
+                    ...currentSet,
+                    completed: true,
+                    reps: plannedReps,
+                    weight: we.effectiveWeight ?? we.weight ?? 0,
+                }
+            } else {
+                updated[workoutExerciseId][setIndex] = {
+                    ...currentSet,
+                    completed: !currentSet.completed,
+                }
             }
 
             return updated
@@ -438,13 +437,7 @@ export default function WorkoutDetailContent() {
         }))
     }
 
-    const calculateExerciseVolume = (workoutExerciseId: string): number => {
-        const sets = feedbackData[workoutExerciseId] || []
-        return sets.reduce((total, set) => total + set.weight * set.reps, 0)
-    }
-
     const doSubmit = async () => {
-        setConfirmModal(null)
         try {
             setSubmitting(true)
             draftSyncPausedRef.current = true
@@ -456,10 +449,8 @@ export default function WorkoutDetailContent() {
 
             await draftSyncPromiseRef.current
 
-            // Submit feedback for each exercise
             const feedbackPromises = workout!.exercises.map(async (we) => {
                 const sets = feedbackData[we.id] || []
-
                 const payload = {
                     workoutExerciseId: we.id,
                     notes: globalNotes.trim() || null,
@@ -489,12 +480,9 @@ export default function WorkoutDetailContent() {
 
             await Promise.all(feedbackPromises)
 
-            // Clear local storage
             clearLocalData()
-
             showToast(t('workouts.feedbackSuccess'), 'success')
-            
-            // Navigate to the correct page based on where the user came from
+
             const navigateTo = fromParam === 'current' ? '/trainee/programs/current' : '/trainee/dashboard'
             router.push(navigateTo)
         } catch (err: unknown) {
@@ -506,65 +494,55 @@ export default function WorkoutDetailContent() {
 
     const handleSubmit = () => {
         if (!workout) return
-
-        // Validate all sets have data
-        const emptyExercises: string[] = []
-        workout.exercises.forEach((we) => {
-            const sets = feedbackData[we.id] || []
-            const hasData = sets.some((s) => s.completed && s.weight > 0 && s.reps > 0)
-            if (!hasData) {
-                emptyExercises.push(we.exercise.name)
-            }
-        })
-
-        if (emptyExercises.length > 0) {
-            setConfirmModal({
-                title: t('workouts.missingDataTitle'),
-                message: t('workouts.confirmContinue', { exercises: emptyExercises.join(', ') }),
-                confirmText: t('workouts.continueBtn'),
-                variant: 'warning',
-                onConfirm: doSubmit,
-            })
-            return
-        }
-
-        doSubmit()
+        void doSubmit()
     }
 
-    const toggleExercise = (workoutExerciseId: string) => {
-        setExpandedExercises((prev) => ({
-            ...prev,
-            [workoutExerciseId]: !prev[workoutExerciseId],
-        }))
-    }
-
-    const navigateToExercise = useCallback(
-        (index: number) => {
-            if (!workout) return
-            const sorted = [...workout.exercises].sort((a, b) => a.order - b.order)
-            const clamped = Math.max(0, Math.min(index, sorted.length - 1))
-            setActiveExerciseIndex(clamped)
-            const target = sorted[clamped]
-            if (target) {
-                // Expand the target exercise and scroll to it
-                setExpandedExercises((prev) => ({ ...prev, [target.id]: true }))
-                setTimeout(() => {
-                    exerciseRefs.current[target.id]?.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start',
-                    })
-                }, 50)
-            }
-        },
+    // New focus mode helpers
+    const sortedExercises = useMemo(
+        () => (workout ? [...workout.exercises].sort((a, b) => a.order - b.order) : []),
         [workout]
     )
 
-    // Page-level swipe: left = next exercise, right = previous exercise
-    const { handlers: pageSwipeHandlers } = useSwipe({
-        onSwipeLeft: () => navigateToExercise(activeExerciseIndex + 1),
-        onSwipeRight: () => navigateToExercise(activeExerciseIndex - 1),
-        threshold: 80,
-    })
+    const totalSteps = sortedExercises.length + 1
+    const isFinalStep = currentStep === sortedExercises.length
+
+    const goToStep = useCallback(
+        (next: number) => {
+            const clamped = Math.max(0, Math.min(next, sortedExercises.length))
+            setCurrentStep(clamped)
+        },
+        [sortedExercises.length]
+    )
+
+    const completedExerciseCount = useMemo(
+        () =>
+            sortedExercises.reduce((acc, we) => {
+                const sets = feedbackData[we.id] || []
+                const hasData = sets.some((s) => s.completed && s.weight > 0 && s.reps > 0)
+                return acc + (hasData ? 1 : 0)
+            }, 0),
+        [feedbackData, sortedExercises]
+    )
+
+    const totalCompletedSets = useMemo(
+        () =>
+            sortedExercises.reduce((acc, we) => {
+                const sets = feedbackData[we.id] || []
+                return acc + sets.filter((s) => s.completed).length
+            }, 0),
+        [feedbackData, sortedExercises]
+    )
+
+    const emptyExerciseNames = useMemo(
+        () =>
+            sortedExercises
+                .filter((we) => {
+                    const sets = feedbackData[we.id] || []
+                    return !sets.some((s) => s.completed && s.weight > 0 && s.reps > 0)
+                })
+                .map((we) => we.exercise.name),
+        [feedbackData, sortedExercises]
+    )
 
     if (loading) {
         return (
@@ -584,435 +562,465 @@ export default function WorkoutDetailContent() {
         )
     }
 
-    const sortedExercises = [...workout.exercises].sort((a, b) => a.order - b.order)
-    const rpeDescriptions = RPE_OPTIONS.reduce<Record<number, string>>((accumulator, option) => {
-        accumulator[option.value] = t(`workouts.rpeOptions.${option.labelKey}`)
-        return accumulator
+    const rpeDescriptions = RPE_OPTIONS.reduce<Record<number, string>>((acc, option) => {
+        acc[option.value] = t(`workouts.rpeOptions.${option.labelKey}`)
+        return acc
     }, {})
 
-    return (
-        <div className="min-h-screen bg-gray-50" {...pageSwipeHandlers}>
-            {confirmModal && (
-                <ConfirmationModal
-                    isOpen={true}
-                    onClose={() => setConfirmModal(null)}
-                    onConfirm={confirmModal.onConfirm}
-                    title={confirmModal.title}
-                    message={confirmModal.message}
-                    confirmText={confirmModal.confirmText ?? t('workouts.confirmBtn')}
-                    variant={confirmModal.variant ?? 'danger'}
-                />
-            )}
-            <div className="max-w-5xl mx-auto px-4 pb-8 pt-8 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">
-                        {`Giorno ${workout.dayIndex}`} - {t('workouts.weekLabel', { number: workout.weekNumber })}
-                    </h1>
-                    <p className="text-gray-600 mt-2">
-                        {workout.program.title}
-                    </p>
-                    <WeekTypeBanner
-                        weekType={workout.weekType}
-                        weekNumber={workout.weekNumber}
-                        className="mt-4"
-                    />
-                </div>
+    const currentExercise = !isFinalStep ? sortedExercises[currentStep] : null
 
-                {/* Mobile swipe hint — shown only on touch devices */}
-                {sortedExercises.length > 1 && (
-                    <div className="flex items-center justify-center gap-2 mb-4 md:hidden">
-                        <button
-                            onClick={() => navigateToExercise(activeExerciseIndex - 1)}
-                            disabled={activeExerciseIndex === 0}
-                            className="p-2 rounded-full bg-white shadow disabled:opacity-30 text-gray-600"
-                            aria-label={t('workouts.prevExercise')}
+    const { handlers: pageSwipeHandlers } = useSwipe({
+        onSwipeLeft: () => goToStep(currentStep + 1),
+        onSwipeRight: () => goToStep(currentStep - 1),
+        threshold: 80,
+    })
+
+    return (
+        <div className="flex min-h-screen flex-col bg-gray-50" {...pageSwipeHandlers}>
+            {/* Sticky top bar */}
+            <nav className="sticky top-0 z-20 bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between h-12">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                    <span>
+                        {t('workouts.dayWeekShort', {
+                            day: workout.dayIndex,
+                            week: workout.weekNumber,
+                        })}
+                    </span>
+                    {workout.weekType !== 'normal' && (
+                        <span
+                            className={`px-2 py-1 rounded text-xs font-medium ${
+                                workout.weekType === 'test'
+                                    ? 'bg-amber-100 text-amber-800'
+                                    : 'bg-blue-100 text-blue-800'
+                            }`}
                         >
-                            ‹
-                        </button>
-                        <span className="text-xs text-gray-500 select-none">
-                            {t('workouts.swipeHint', { current: activeExerciseIndex + 1, total: sortedExercises.length })}
+                            {t(`workouts.week${workout.weekType.charAt(0).toUpperCase() + workout.weekType.slice(1)}`)}
                         </span>
-                        <button
-                            onClick={() => navigateToExercise(activeExerciseIndex + 1)}
-                            disabled={activeExerciseIndex === sortedExercises.length - 1}
-                            className="p-2 rounded-full bg-white shadow disabled:opacity-30 text-gray-600"
-                            aria-label={t('workouts.nextExercise')}
-                        >
-                            ›
-                        </button>
+                    )}
+                </div>
+                <button
+                    onClick={() => setInfoSheetOpen(!infoSheetOpen)}
+                    className="p-2 hover:bg-gray-100 rounded-full"
+                    aria-label={t('workouts.workoutInfo')}
+                >
+                    <Info className="w-5 h-5 text-gray-600" />
+                </button>
+            </nav>
+
+            {/* Info sheet */}
+            {infoSheetOpen && (
+                <div
+                    className="fixed inset-0 bg-black bg-opacity-50 z-40"
+                    onClick={() => setInfoSheetOpen(false)}
+                >
+                    <div
+                        className="absolute bottom-0 left-0 right-0 bg-white rounded-t-lg p-6 max-h-[70vh] overflow-y-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-bold">{t('workouts.workoutInfoTitle')}</h2>
+                            <button
+                                onClick={() => setInfoSheetOpen(false)}
+                                className="p-1 hover:bg-gray-100 rounded"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="space-y-3 text-sm">
+                            <div>
+                                <span className="font-semibold">{t('workouts.workoutInfoDay')}:</span>
+                                <span className="ml-2">{workout.dayIndex}</span>
+                            </div>
+                            <div>
+                                <span className="font-semibold">{t('workouts.workoutInfoWeek')}:</span>
+                                <span className="ml-2">{workout.weekNumber}</span>
+                            </div>
+                            <div>
+                                <span className="font-semibold">{t('workouts.workoutInfoProgram')}:</span>
+                                <span className="ml-2">{workout.program.title}</span>
+                            </div>
+                        </div>
                     </div>
+                </div>
+            )}
+
+            {/* Scrollable body */}
+            <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6">
+                <div className="max-w-2xl mx-auto">
+                    {!isFinalStep && currentExercise ? (
+                        <ExerciseFocusCard
+                            we={currentExercise}
+                            sets={feedbackData[currentExercise.id] || []}
+                            rpe={exerciseRPE[currentExercise.id] ?? null}
+                            videoExpanded={expandedVideos[currentExercise.id] ?? false}
+                            onToggleVideo={() => toggleVideo(currentExercise.id)}
+                            onUpdateSet={(id, idx, field, value) => updateSet(id, idx, field, value)}
+                            onToggleSet={(id, idx) => toggleSetCompleted(id, idx)}
+                            onUpdateRpe={(rpe) => updateExerciseRPE(currentExercise.id, rpe)}
+                            rpeDescriptions={rpeDescriptions}
+                            t={t}
+                        />
+                    ) : (
+                        <FinalStep
+                            completed={completedExerciseCount}
+                            total={sortedExercises.length}
+                            totalSets={totalCompletedSets}
+                            emptyExercises={emptyExerciseNames}
+                            globalNotes={globalNotes}
+                            onNotesChange={setGlobalNotes}
+                            t={t}
+                        />
+                    )}
+                </div>
+            </div>
+
+            {/* Sticky bottom nav */}
+            <nav className="sticky bottom-0 z-20 bg-white border-t border-gray-200 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between h-16">
+                <button
+                    onClick={() => goToStep(currentStep - 1)}
+                    disabled={currentStep === 0}
+                    className="p-2 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                    aria-label={t('workouts.prev')}
+                >
+                    <ChevronLeft className="w-5 h-5" />
+                </button>
+
+                {!isFinalStep && (
+                    <span className="text-sm font-semibold text-gray-600">
+                        {t('workouts.stepCounter', {
+                            current: currentStep + 1,
+                            total: sortedExercises.length,
+                        })}
+                    </span>
                 )}
 
-                {/* Exercises List */}
-                <div className="space-y-4 mb-8">
-                    {sortedExercises.map((we, idx) => {
-                        const isExpanded = expandedExercises[we.id]
-                        const isVideoExpanded = expandedVideos[we.id] ?? false
-                        const trainerSettingValue = (() => {
-                            if (typeof we.weight !== 'number' || !Number.isFinite(we.weight)) {
-                                return '-'
-                            }
+                {!isFinalStep ? (
+                    <button
+                        onClick={() => goToStep(currentStep + 1)}
+                        className="p-2 rounded hover:bg-gray-100"
+                        aria-label={t('workouts.next')}
+                    >
+                        <ChevronRight className="w-5 h-5" />
+                    </button>
+                ) : (
+                    <button
+                        onClick={handleSubmit}
+                        disabled={submitting}
+                        className="px-6 py-2 bg-brand-primary text-white rounded font-semibold hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                        {submitting && <LoadingSpinner size="sm" color="white" />}
+                        {t('workouts.completeShort')}
+                    </button>
+                )}
+            </nav>
+        </div>
+    )
+}
 
-                            const formattedWeight = formatWeightValue(we.weight)
+interface ExerciseFocusCardProps {
+    we: WorkoutExerciseWithWeight
+    sets: SetPerformed[]
+    rpe: number | null
+    videoExpanded: boolean
+    onToggleVideo: () => void
+    onUpdateSet: (id: string, idx: number, field: 'weight' | 'reps', value: number) => void
+    onToggleSet: (id: string, idx: number) => void
+    onUpdateRpe: (rpe: number | null) => void
+    rpeDescriptions: Record<number, string>
+    t: (key: string, vars?: Record<string, unknown>) => string
+}
 
-                            switch (we.weightType) {
-                                case 'absolute':
-                                    return `${formattedWeight} kg`
-                                case 'percentage_1rm':
-                                    return `${formattedWeight}% 1RM`
-                                case 'percentage_rm':
-                                    return `${formattedWeight}% RM`
-                                case 'percentage_previous': {
-                                    const sign = we.weight > 0 ? '+' : ''
-                                    return `${sign}${formattedWeight}%`
-                                }
-                                default:
-                                    return formattedWeight
-                            }
-                        })()
+function ExerciseFocusCard({
+    we,
+    sets,
+    rpe,
+    videoExpanded,
+    onToggleVideo,
+    onUpdateSet,
+    onToggleSet,
+    onUpdateRpe,
+    rpeDescriptions,
+    t,
+}: ExerciseFocusCardProps) {
+    const trainerSettingValue = (() => {
+        if (typeof we.weight !== 'number' || !Number.isFinite(we.weight)) {
+            return '-'
+        }
+        const formattedWeight = formatWeightValue(we.weight)
+        switch (we.weightType) {
+            case 'absolute':
+                return `${formattedWeight} kg`
+            case 'percentage_1rm':
+                return `${formattedWeight}% 1RM`
+            case 'percentage_rm':
+                return `${formattedWeight}% RM`
+            case 'percentage_previous':
+                return `${we.weight > 0 ? '+' : ''}${formattedWeight}%`
+            default:
+                return formattedWeight
+        }
+    })()
 
-                        const calculatedWeightValue =
-                            we.weightType === 'absolute'
-                                ? formatWeightKg(we.effectiveWeight ?? we.weight)
-                                : formatWeightKg(we.effectiveWeight)
-                        const calculatedWeightMissing = calculatedWeightValue === '-'
-                        const compactWeightValue =
-                            we.weightType !== 'absolute'
-                                ? `${calculatedWeightMissing ? t('workouts.calculatedWeightMissing') : calculatedWeightValue} (${trainerSettingValue})`
-                                : calculatedWeightValue
+    const calculatedWeightValue =
+        we.weightType === 'absolute'
+            ? formatWeightKg(we.effectiveWeight ?? we.weight)
+            : formatWeightKg(we.effectiveWeight)
+    const calculatedWeightMissing = calculatedWeightValue === '-'
+    const compactWeightValue =
+        we.weightType !== 'absolute'
+            ? `${calculatedWeightMissing ? t('workouts.calculatedWeightMissing') : calculatedWeightValue} (${trainerSettingValue})`
+            : calculatedWeightValue
 
-                        return (
-                            <div
-                                key={we.id}
-                                ref={(el) => { exerciseRefs.current[we.id] = el }}
-                                className={`bg-white rounded-lg shadow-md overflow-hidden transition-shadow ${idx === activeExerciseIndex ? 'ring-2 ring-brand-primary' : ''
-                                    }`}
-                            >
-                                {/* Exercise Header */}
-                                <div
-                                    className="relative cursor-pointer p-4 transition-colors hover:bg-gray-50 sm:p-6"
-                                    onClick={() => toggleExercise(we.id)}
-                                >
-                                    <div className="mb-3 flex items-start gap-3 pr-8 sm:pr-10">
-                                        <span className="text-xl font-bold text-gray-400 sm:text-2xl">
-                                            {idx + 1}
-                                        </span>
-                                        <div className="min-w-0 flex-1">
-                                            <div className="flex flex-wrap items-center gap-2">
-                                                <span
-                                                    className={`inline-flex rounded-full border px-1.5 py-0.5 text-[10px] font-semibold leading-none ${we.exercise.type === 'fundamental'
-                                                        ? 'border-red-300 bg-white text-red-700'
-                                                        : 'border-blue-300 bg-white text-blue-700'
-                                                        }`}
-                                                >
-                                                    {we.exercise.type === 'fundamental'
-                                                        ? t('workouts.tagFundamentalShort')
-                                                        : t('workouts.tagAccessoryShort')}
-                                                </span>
-                                                <h3 className="text-lg font-bold text-gray-900 sm:text-xl">
-                                                    {we.exercise.name}
-                                                </h3>
-                                            </div>
-                                            {we.variant && (
-                                                <p className="mt-1 text-sm font-medium text-gray-600">
-                                                    {we.variant}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-2 flex justify-center">
-                                        <div className="flex flex-wrap items-center justify-center gap-2">
-                                            <div className="rounded-lg bg-gray-100 px-3 py-2 text-center">
-                                                <span className="block text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-                                                    {t('workouts.sets')}
-                                                </span>
-                                                <span className="mt-1 block text-lg font-bold text-gray-900">
-                                                    {we.sets}
-                                                </span>
-                                            </div>
-                                            <div className="rounded-lg bg-gray-100 px-3 py-2 text-center">
-                                                <span className="block text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-                                                    {t('workouts.reps')}
-                                                </span>
-                                                <span className="mt-1 block text-lg font-bold text-gray-900">
-                                                    {we.reps}
-                                                </span>
-                                            </div>
-                                            <div className="min-w-0 rounded-lg bg-gray-100 px-3 py-2 text-center">
-                                                <span className="block text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-                                                    KG
-                                                </span>
-                                                <span className={`mt-1 block text-sm font-bold leading-snug ${calculatedWeightMissing ? 'text-gray-500' : 'text-gray-900'}`}>
-                                                    {compactWeightValue}
-                                                </span>
-                                            </div>
-
-                                            <div className="flex flex-col gap-1">
-                                                <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-                                                    <Clock3 className="h-3.5 w-3.5" />
-                                                    {formatRestTime(we.restTime)}
-                                                </span>
-                                                {we.targetRpe !== null && we.targetRpe !== undefined && (
-                                                    <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700">
-                                                        <Gauge className="h-3.5 w-3.5" />
-                                                        {we.targetRpe}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {we.notes && (
-                                        <p className="mt-3 text-sm italic text-gray-600">
-                                            <FileText className="mr-1 inline h-4 w-4" />{we.notes}
-                                        </p>
-                                    )}
-
-                                    <button className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 sm:right-6 sm:top-6">
-                                        {isExpanded ? '▲' : '▼'}
-                                    </button>
-                                </div>
-
-                                {/* Exercise Details (Expandable) */}
-                                {isExpanded && (
-                                    <div className="border-t border-gray-200 bg-gray-50 p-4 sm:p-6">
-                                        {/* YouTube Video */}
-                                        {we.exercise.youtubeUrl && (
-                                            <div className="mb-6" data-swipe-ignore="true">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => toggleVideo(we.id)}
-                                                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:border-brand-primary hover:text-brand-primary sm:w-auto"
-                                                >
-                                                    <PlayCircle className="h-4 w-4" />
-                                                    {isVideoExpanded
-                                                        ? t('workouts.hideVideo')
-                                                        : t('workouts.showVideo')}
-                                                    {isVideoExpanded
-                                                        ? <ChevronUp className="h-4 w-4" />
-                                                        : <ChevronDown className="h-4 w-4" />}
-                                                </button>
-
-                                                {isVideoExpanded && (
-                                                    <div className="mt-4">
-                                                        <YoutubeEmbed videoUrl={we.exercise.youtubeUrl} />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-
-                                        {/* Sets Input Table */}
-                                        <div className="mb-4 space-y-2 md:hidden">
-                                            <div className="grid grid-cols-[52px_minmax(0,1fr)_minmax(0,1fr)_44px] items-center gap-2 px-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-                                                <span className="text-center">{t('workouts.sets')}</span>
-                                                <span className="text-center">{t('workouts.reps')}</span>
-                                                <span className="text-center">KG</span>
-                                                <span className="sr-only">{t('workouts.markSetDone')}</span>
-                                            </div>
-                                            {feedbackData[we.id]?.map((set, setIdx) => (
-                                                <div
-                                                    key={setIdx}
-                                                    className="grid grid-cols-[52px_minmax(0,1fr)_minmax(0,1fr)_44px] items-center gap-2 rounded-lg border border-gray-200 bg-white p-2"
-                                                >
-                                                    <p className="text-center text-sm font-semibold text-gray-900">
-                                                        #{set.setNumber}
-                                                    </p>
-
-                                                    <Input
-                                                        type="number"
-                                                        min="0"
-                                                        value={set.reps || ''}
-                                                        onChange={(e) =>
-                                                            updateSet(
-                                                                we.id,
-                                                                setIdx,
-                                                                'reps',
-                                                                parseInt(e.target.value) || 0
-                                                            )
-                                                        }
-                                                        disabled={!!set.completed}
-                                                        aria-label={`${t('workouts.reps')} ${set.setNumber}`}
-                                                        inputSize="md"
-                                                        className="h-10 px-2 text-center focus:ring-brand-primary"
-                                                    />
-
-                                                    <Input
-                                                        type="number"
-                                                        min="0"
-                                                        step="0.5"
-                                                        value={set.weight || ''}
-                                                        onChange={(e) =>
-                                                            updateSet(
-                                                                we.id,
-                                                                setIdx,
-                                                                'weight',
-                                                                parseFloat(e.target.value) || 0
-                                                            )
-                                                        }
-                                                        disabled={!!set.completed}
-                                                        aria-label={`${t('workouts.weightKg')} ${set.setNumber}`}
-                                                        inputSize="md"
-                                                        className="h-10 px-2 text-center focus:ring-brand-primary"
-                                                    />
-
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => toggleSetCompleted(we.id, setIdx)}
-                                                        className={`mx-auto flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${set.completed
-                                                            ? 'border-green-300 bg-green-100 text-green-700'
-                                                            : 'border-gray-300 bg-white text-gray-400 hover:border-green-300 hover:text-green-600'
-                                                            }`}
-                                                        aria-label={set.completed ? t('workouts.markSetUndone') : t('workouts.markSetDone')}
-                                                        title={set.completed ? t('workouts.markSetUndone') : t('workouts.markSetDone')}
-                                                    >
-                                                        <Check className="h-4 w-4" />
-                                                    </button>
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        <div className="mb-4 hidden overflow-x-auto md:block">
-                                            <table className="w-full">
-                                                <thead>
-                                                    <tr className="border-b border-gray-300">
-                                                        <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700">
-                                                            {t('workouts.sets')}
-                                                        </th>
-                                                        <th className="text-center py-2 px-3 text-sm font-semibold text-gray-700">
-                                                            {t('workouts.reps')}
-                                                        </th>
-                                                        <th className="text-center py-2 px-3 text-sm font-semibold text-gray-700">
-                                                            {t('workouts.weightKg')}
-                                                        </th>
-                                                        <th className="text-center py-2 px-3 text-sm font-semibold text-gray-700">
-                                                            <Check className="mx-auto h-4 w-4 text-gray-500" />
-                                                        </th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {feedbackData[we.id]?.map((set, setIdx) => (
-                                                        <tr
-                                                            key={setIdx}
-                                                            className="border-b border-gray-200"
-                                                        >
-                                                            <td className="py-3 px-3 font-semibold text-gray-900">
-                                                                #{set.setNumber}
-                                                            </td>
-                                                            <td className="py-3 px-3">
-                                                                <Input
-                                                                    type="number"
-                                                                    min="0"
-                                                                    value={set.reps || ''}
-                                                                    onChange={(e) =>
-                                                                        updateSet(
-                                                                            we.id,
-                                                                            setIdx,
-                                                                            'reps',
-                                                                            parseInt(
-                                                                                e.target.value
-                                                                            ) || 0
-                                                                        )
-                                                                    }
-                                                                    disabled={!!set.completed}
-                                                                    inputSize="md"
-                                                                    className="px-3 py-2 text-center"
-                                                                />
-                                                            </td>
-                                                            <td className="py-3 px-3">
-                                                                <Input
-                                                                    type="number"
-                                                                    min="0"
-                                                                    step="0.5"
-                                                                    value={set.weight || ''}
-                                                                    onChange={(e) =>
-                                                                        updateSet(
-                                                                            we.id,
-                                                                            setIdx,
-                                                                            'weight',
-                                                                            parseFloat(
-                                                                                e.target.value
-                                                                            ) || 0
-                                                                        )
-                                                                    }
-                                                                    disabled={!!set.completed}
-                                                                    inputSize="md"
-                                                                    className="px-3 py-2 text-center"
-                                                                />
-                                                            </td>
-                                                            <td className="py-3 px-3">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => toggleSetCompleted(we.id, setIdx)}
-                                                                    className={`mx-auto flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${set.completed
-                                                                        ? 'border-green-300 bg-green-100 text-green-700'
-                                                                        : 'border-gray-300 bg-white text-gray-400 hover:border-green-300 hover:text-green-600'
-                                                                        }`}
-                                                                    aria-label={set.completed ? t('workouts.markSetUndone') : t('workouts.markSetDone')}
-                                                                    title={set.completed ? t('workouts.markSetUndone') : t('workouts.markSetDone')}
-                                                                >
-                                                                    <Check className="h-4 w-4" />
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-
-                                        {/* Overall Exercise RPE */}
-                                        <div className="rounded-lg bg-gray-100 p-4">
-                                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                                <label className="text-sm font-semibold text-gray-700">
-                                                    {t('workouts.overallRpe')}
-                                                </label>
-                                                <RPESelector
-                                                    value={exerciseRPE[we.id] ?? null}
-                                                    onChange={(value) => updateExerciseRPE(we.id, value)}
-                                                    showLabel={false}
-                                                    centeredMenu={true}
-                                                    title={t('workouts.overallRpe')}
-                                                    placeholder={t('workouts.selectRpe')}
-                                                    descriptions={rpeDescriptions}
-                                                    className="min-w-0 w-full sm:w-auto sm:min-w-[240px]"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )
-                    })}
+    return (
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            {/* Header */}
+            <div className="p-4 sm:p-6">
+                <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                        <span
+                            className={`inline-flex rounded-full border px-1.5 py-0.5 text-[10px] font-semibold leading-none ${
+                                we.exercise.type === 'fundamental'
+                                    ? 'border-red-300 bg-white text-red-700'
+                                    : 'border-blue-300 bg-white text-blue-700'
+                            }`}
+                        >
+                            {we.exercise.type === 'fundamental'
+                                ? t('workouts.tagFundamentalShort')
+                                : t('workouts.tagAccessoryShort')}
+                        </span>
+                        <h2 className="text-2xl font-bold text-gray-900">{we.exercise.name}</h2>
+                    </div>
+                    {we.variant && (
+                        <p className="text-sm text-gray-600">{we.variant}</p>
+                    )}
                 </div>
 
-                {/* Global Notes */}
-                <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-                    <label className="block text-lg font-bold text-gray-900 mb-3">
+                {/* Big targets row */}
+                <div className="flex gap-2 mb-4">
+                    <div className="flex-1 bg-gray-100 rounded-lg px-3 py-3 text-center">
+                        <span className="block text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                            {t('workouts.sets')}
+                        </span>
+                        <span className="block text-2xl font-bold text-gray-900 mt-1">
+                            {we.sets}
+                        </span>
+                    </div>
+                    <div className="flex-1 bg-gray-100 rounded-lg px-3 py-3 text-center">
+                        <span className="block text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                            {t('workouts.reps')}
+                        </span>
+                        <span className="block text-2xl font-bold text-gray-900 mt-1">
+                            {we.reps}
+                        </span>
+                    </div>
+                    <div className="flex-1 bg-gray-100 rounded-lg px-3 py-3 text-center">
+                        <span className="block text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                            KG
+                        </span>
+                        <span
+                            className={`block text-sm font-bold mt-1 leading-snug ${
+                                calculatedWeightMissing ? 'text-gray-500' : 'text-gray-900'
+                            }`}
+                        >
+                            {compactWeightValue}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Secondary row - rest and RPE */}
+                <div className="flex gap-2 mb-4">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">
+                        <Clock3 className="w-3.5 h-3.5" />
+                        {formatRestTime(we.restTime)}
+                    </span>
+                    {we.targetRpe !== null && (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-1 text-xs font-medium text-violet-700">
+                            <Gauge className="w-3.5 h-3.5" />
+                            RPE {we.targetRpe}
+                        </span>
+                    )}
+                </div>
+
+                {we.notes && (
+                    <p className="text-sm text-gray-600 mb-4">
+                        <FileText className="inline w-4 h-4 mr-1" />
+                        {we.notes}
+                    </p>
+                )}
+            </div>
+
+            {/* Video */}
+            {we.exercise.youtubeUrl && (
+                <div className="border-t border-gray-200 p-4 sm:p-6" data-swipe-ignore="true">
+                    <button
+                        onClick={onToggleVideo}
+                        className="inline-flex gap-2 items-center px-4 py-2 border border-gray-300 rounded-lg hover:border-brand-primary hover:text-brand-primary text-sm font-semibold transition-colors"
+                    >
+                        <PlayCircle className="w-4 h-4" />
+                        {videoExpanded ? t('workouts.hideVideo') : t('workouts.showVideo')}
+                        {videoExpanded ? (
+                            <ChevronUp className="w-4 h-4" />
+                        ) : (
+                            <ChevronDown className="w-4 h-4" />
+                        )}
+                    </button>
+                    {videoExpanded && (
+                        <div className="mt-4">
+                            <YoutubeEmbed videoUrl={we.exercise.youtubeUrl} />
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Sets input */}
+            <div className="border-t border-gray-200 p-4 sm:p-6">
+                <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase">
+                    {t('workouts.setsHeading')}
+                </h3>
+                <div className="space-y-2 mb-4">
+                    {sets.map((set, setIdx) => (
+                        <div
+                            key={setIdx}
+                            className="grid grid-cols-[40px_1fr_1fr_48px] gap-2 items-center min-h-[56px] border-b border-gray-200 last:border-b-0 px-2"
+                        >
+                            <span className="text-center text-sm font-semibold text-gray-600">
+                                #{set.setNumber}
+                            </span>
+                            <Input
+                                type="number"
+                                inputMode="numeric"
+                                min="0"
+                                placeholder={String(parsePlannedReps(we.reps))}
+                                value={set.reps || ''}
+                                onChange={(e) =>
+                                    onUpdateSet(we.id, setIdx, 'reps', parseInt(e.target.value) || 0)
+                                }
+                                aria-label={`${t('workouts.reps')} ${set.setNumber}`}
+                                inputSize="md"
+                                className="text-center"
+                            />
+                            <Input
+                                type="number"
+                                inputMode="decimal"
+                                min="0"
+                                step="0.5"
+                                placeholder={String(we.effectiveWeight ?? we.weight ?? 0)}
+                                value={set.weight || ''}
+                                onChange={(e) =>
+                                    onUpdateSet(we.id, setIdx, 'weight', parseFloat(e.target.value) || 0)
+                                }
+                                aria-label={`${t('workouts.weightKg')} ${set.setNumber}`}
+                                inputSize="md"
+                                className="text-center"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => onToggleSet(we.id, setIdx)}
+                                className={`mx-auto flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${
+                                    set.completed
+                                        ? 'border-green-300 bg-green-100 text-green-700'
+                                        : 'border-gray-300 bg-white text-gray-400 hover:border-green-300 hover:text-green-600'
+                                }`}
+                                aria-label={t('workouts.markSetDone')}
+                            >
+                                <Check className="w-4 h-4" />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Overall RPE */}
+            <div className="border-t border-gray-200 bg-gray-50 p-4 sm:p-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <label className="text-sm font-semibold text-gray-700">
+                        {t('workouts.overallRpe')}
+                    </label>
+                    <RPESelector
+                        value={rpe}
+                        onChange={onUpdateRpe}
+                        showLabel={false}
+                        centeredMenu={true}
+                        title={t('workouts.overallRpe')}
+                        placeholder={t('workouts.selectRpe')}
+                        descriptions={rpeDescriptions}
+                        className="w-full sm:w-auto"
+                    />
+                </div>
+            </div>
+        </div>
+    )
+}
+
+interface FinalStepProps {
+    completed: number
+    total: number
+    totalSets: number
+    emptyExercises: string[]
+    globalNotes: string
+    onNotesChange: (notes: string) => void
+    t: (key: string, vars?: Record<string, unknown>) => string
+}
+
+function FinalStep({
+    completed,
+    total,
+    totalSets,
+    emptyExercises,
+    globalNotes,
+    onNotesChange,
+    t,
+}: FinalStepProps) {
+    return (
+        <div className="space-y-6">
+            {/* Summary */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                    {t('workouts.summaryTitle')}
+                </h2>
+                <p className="text-gray-600 mb-6">
+                    {t('workouts.summaryStats', {
+                        done: completed,
+                        total,
+                        sets: totalSets,
+                    })}
+                </p>
+
+                {/* Notes */}
+                <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
                         {t('workouts.notesLabel')}
                     </label>
                     <textarea
                         value={globalNotes}
-                        onChange={(e) => setGlobalNotes(e.target.value)}
+                        onChange={(e) => onNotesChange(e.target.value)}
                         placeholder={t('workouts.notesPlaceholder')}
                         rows={4}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                     />
                 </div>
-
-                {/* Submit Button */}
-                <button
-                    onClick={handleSubmit}
-                    disabled={submitting}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-brand-primary bg-white px-6 py-4 text-lg font-semibold text-brand-primary transition-colors hover:bg-[#FFF7E5] disabled:border-gray-300 disabled:bg-gray-100 disabled:text-gray-400"
-                >
-                    {submitting ? (
-                        <LoadingSpinner size="sm" color="primary" />
-                    ) : (
-                        t('workouts.completeWorkout')
-                    )}
-                </button>
             </div>
+
+            {/* Missing data warning */}
+            {emptyExercises.length > 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div className="flex gap-3">
+                        <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                            <p className="font-semibold text-amber-800 text-sm">
+                                {t('workouts.missingDataInline')}
+                            </p>
+                            <ul className="mt-2 space-y-1">
+                                {emptyExercises.map((name) => (
+                                    <li key={name} className="text-sm text-amber-700">
+                                        • {name}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
