@@ -437,9 +437,10 @@ export default function ProgramDetailContent({
         }
     }, [mergedProgram])
 
-    useEffect(() => {
+    // Compute default expand state based on program completion
+    const defaultExpandState = useMemo(() => {
         if (!mergedProgram || mergedProgram.weeks.length === 0) {
-            return
+            return { weeks: {}, workouts: {} }
         }
 
         const firstIncompleteWeek = mergedProgram.weeks.find(
@@ -449,26 +450,33 @@ export default function ProgramDetailContent({
         const defaultWeekNumber =
             firstIncompleteWeek?.weekNumber ?? mergedProgram.weeks[0].weekNumber
 
-        setExpandedWeeks(
-            Object.fromEntries(
-                mergedProgram.weeks.map((week) => [
-                    week.weekNumber,
+        const weeks = Object.fromEntries(
+            mergedProgram.weeks.map((week) => [
+                week.weekNumber,
+                week.weekNumber === defaultWeekNumber,
+            ])
+        ) as Record<number, boolean>
+
+        const workouts = Object.fromEntries(
+            mergedProgram.weeks.flatMap((week) =>
+                week.workouts.map((workout) => [
+                    workout.id,
                     week.weekNumber === defaultWeekNumber,
                 ])
-            ) as Record<number, boolean>
-        )
+            )
+        ) as Record<string, boolean>
 
-        setExpandedWorkouts(
-            Object.fromEntries(
-                mergedProgram.weeks.flatMap((week) =>
-                    week.workouts.map((workout) => [
-                        workout.id,
-                        week.weekNumber === defaultWeekNumber,
-                    ])
-                )
-            ) as Record<string, boolean>
-        )
+        return { weeks, workouts }
     }, [mergedProgram])
+
+    // Initialize expand state with defaults when program loads
+    useEffect(() => {
+        if (!mergedProgram) {
+            return
+        }
+        setExpandedWeeks(defaultExpandState.weeks)
+        setExpandedWorkouts(defaultExpandState.workouts)
+    }, [mergedProgram, defaultExpandState.weeks, defaultExpandState.workouts])
 
     const dayNames = useMemo(() => {
         const value = t('currentProgram.dayNames', { returnObjects: true })
