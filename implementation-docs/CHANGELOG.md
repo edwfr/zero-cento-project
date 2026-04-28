@@ -17,6 +17,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 - `src/app/api/programs/[id]/progress/route.ts` (refactored to use shared helper)
 - `src/app/api/trainee/active-program/route.ts` (created)
 - `src/lib/trainee-program-data.ts` (created, shared server helper)
+- `src/app/trainee/programs/[id]/page.tsx` (server-side data fetch)
+- `src/app/trainee/programs/[id]/_content.tsx` (accept initialData prop)
+- `src/app/trainee/programs/current/page.tsx` (server-side data fetch)
+- `src/app/trainee/programs/current/_content.tsx` (accept initialData prop)
+- `src/app/trainee/programs/_components/ProgramDetailContent.tsx` (TanStack Query integration)
 - `tests/integration/program-detail.test.ts` (created, 4 test cases)
 - `tests/integration/program-progress.test.ts` (created, 4 test cases)
 - `tests/integration/trainee-active-program.test.ts` (created, 3 test cases)
@@ -28,6 +33,8 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 - Task 3: Replace tree-load with SQL aggregates in `GET /api/programs/[id]/progress`. Workout completion, weekly volume, and avg RPE now come from `$queryRaw` + `exerciseFeedback.aggregate`; latest performed sets via targeted `setPerformed.findMany`.
 - Task 4: Add lightweight `GET /api/trainee/active-program` endpoint. Returns the active program id (or 404), replacing the heavier listing call previously used by /trainee/programs/current.
 - Task 5: Create shared server helper `loadTraineeProgramView` and `loadActiveProgramId` in `src/lib/trainee-program-data.ts`. Consolidates program tree loading + progress aggregation for use by server components.
+- Task 6: Server-component data fetching. Page components now call `loadTraineeProgramView` directly and pass `initialData` to client, eliminating client→API waterfall on first paint.
+- Task 7: TanStack Query integration. `ProgramDetailContent` now uses `useQuery` for both program and progress with `staleTime: 60_000`, `refetchOnWindowFocus: true`, and initialData support. Removes manual fetch logic and replaces with React Query lifecycle management.
 
 ---
 

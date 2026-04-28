@@ -1,8 +1,9 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
+import { useQuery } from '@tanstack/react-query'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { SkeletonDashboard } from '@/components'
 import {
@@ -274,33 +275,153 @@ const mapTraineeProgramViewToProgram = (view: TraineeProgramView): Program => {
     }
 }
 
+const mapProgramDetailToProgramInterface = (programDetail: ProgramDetail): Program => {
+    // This is for API response mapping, where workoutProgress is in the data
+    return {
+        id: programDetail.id,
+        title: programDetail.title,
+        startDate: programDetail.startDate,
+        durationWeeks: programDetail.durationWeeks,
+        trainee: programDetail.trainee,
+        trainer: programDetail.trainer,
+        weeks: programDetail.weeks.map((week) => ({
+            weekNumber: week.weekNumber,
+            weekType: week.weekType,
+            workouts: week.workouts.map((workout) => ({
+                id: workout.id,
+                dayOfWeek: workout.dayIndex,
+                completed: false, // This will be set from progress query
+                exerciseCount: workout.workoutExercises.length,
+                feedbackSubmitted: false, // This will be set from progress query
+                feedbackCount: 0, // This will be set from progress query
+                exercises: workout.workoutExercises,
+                exercisesPerformed: [],
+            })),
+        })),
+    }
+}
+
 export default function ProgramDetailContent({
     mode = 'current',
     programId,
     initialData,
 }: ProgramDetailContentProps) {
     const { t, i18n } = useTranslation('trainee')
-    const [loading, setLoading] = useState(!initialData)
-    const [program, setProgram] = useState<Program | null>(initialData ? mapTraineeProgramViewToProgram(initialData) : null)
-    const [programProgress, setProgramProgress] = useState<ProgramProgress | null>(initialData ? {
-        completedWorkouts: initialData.progress.completedWorkouts,
-        totalWorkouts: initialData.progress.totalWorkouts,
-        workouts: initialData.progress.workouts,
-    } : null)
     const [localWorkoutProgress, setLocalWorkoutProgress] = useState<Record<string, boolean>>({})
-    const [error, setError] = useState<string | null>(null)
     const [expandedWeeks, setExpandedWeeks] = useState<Record<number, boolean>>({})
     const [expandedWorkouts, setExpandedWorkouts] = useState<Record<string, boolean>>({})
+
+    // Initialize program and progress from initialData if available
+    const initialProgram = useMemo(() => {
+        return initialData ? mapTraineeProgramViewToProgram(initialData) : null
+    }, [initialData])
+
+    const initialProgress = useMemo(() => {
+        return initialData
+            ? {
+                  completedWorkouts: initialData.progress.completedWorkouts,
+                  totalWorkouts: initialData.progress.totalWorkouts,
+                  workouts: initialData.progress.workouts,
+              }
+            : null
+    }, [initialData])
+
+    // Query for program details
+    const {
+        data: programData,
+        isLoading: programLoading,
+        error: programError,
+    } = useQuery({
+        queryKey: ['program', programId],
+        queryFn: async () => {
+            if (!programId) return null
+            const res = await fetch(`/api/programs/${programId}`)
+            if (!res.ok) {
+                const errorData = await res.json()
+                throw new Error(
+                    getApiErrorMessage(errorData, t('currentProgram.errorNotFound'), t)
+                )
+            }
+            const data = await res.json()
+            return mapProgramDetailToProgramInterface(data.data.program)
+        },
+        initialData: initialProgram,
+        staleTime: 60_000,
+        refetchOnWindowFocus: true,
+        enabled: !!programId,
+    })
+
+    // Query for program progress
+    const {
+        data: progressData,
+        isLoading: progressLoading,
+        error: progressError,
+    } = useQuery({
+        queryKey: ['programProgress', programId],
+        queryFn: async () => {
+            if (!programId) return null
+            const res = await fetch(`/api/programs/${programId}/progress`)
+            if (!res.ok) {
+                const errorData = await res.json()
+                throw new Error(
+                    getApiErrorMessage(errorData, t('currentProgram.errorNotFound'), t)
+                )
+            }
+            const data = await res.json()
+            return {
+                completedWorkouts: data.data.completedWorkouts ?? 0,
+                totalWorkouts: data.data.totalWorkouts ?? 0,
+                workouts: data.data.workouts ?? [],
+            } as ProgramProgress
+        },
+        initialData: initialProgress,
+        staleTime: 60_000,
+        refetchOnWindowFocus: true,
+        enabled: !!programId,
+    })
+
+    const program = programData
+    const programProgress = progressData
+    const loading = programLoading || progressLoading
+    const error = programError?.message || progressError?.message || null
     const isHistoryMode = mode === 'history'
 
+    // Merge program and progress data when both are available
+    const mergedProgram = useMemo(() => {
+        if (!program || !progressData) {
+            return program
+        }
+
+        const workoutProgressById = new Map<string, WorkoutProgress>(
+            (progressData.workouts || []).map((workout: WorkoutProgress) => [workout.id, workout])
+        )
+
+        return {
+            ...program,
+            weeks: program.weeks.map((week) => ({
+                ...week,
+                workouts: week.workouts.map((workout) => {
+                    const workoutProgress = workoutProgressById.get(workout.id)
+                    return {
+                        ...workout,
+                        completed: workoutProgress?.completed ?? false,
+                        feedbackSubmitted: (workoutProgress?.feedbackCount ?? 0) > 0,
+                        feedbackCount: workoutProgress?.feedbackCount ?? 0,
+                        exercisesPerformed: workoutProgress?.exercisesPerformed ?? [],
+                    }
+                }),
+            })),
+        }
+    }, [program, progressData])
+
     useEffect(() => {
-        if (!program) {
+        if (!mergedProgram) {
             return
         }
 
         const refreshLocalWorkoutProgress = () => {
             const progressByWorkoutId = Object.fromEntries(
-                program.weeks
+                mergedProgram.weeks
                     .flatMap((week) => week.workouts)
                     .map((workout) => [workout.id, hasLocalWorkoutProgress(workout.id)])
             )
@@ -309,30 +430,28 @@ export default function ProgramDetailContent({
         }
 
         refreshLocalWorkoutProgress()
-        window.addEventListener('focus', refreshLocalWorkoutProgress)
         document.addEventListener('visibilitychange', refreshLocalWorkoutProgress)
 
         return () => {
-            window.removeEventListener('focus', refreshLocalWorkoutProgress)
             document.removeEventListener('visibilitychange', refreshLocalWorkoutProgress)
         }
-    }, [program])
+    }, [mergedProgram])
 
     useEffect(() => {
-        if (!program || program.weeks.length === 0) {
+        if (!mergedProgram || mergedProgram.weeks.length === 0) {
             return
         }
 
-        const firstIncompleteWeek = program.weeks.find(
+        const firstIncompleteWeek = mergedProgram.weeks.find(
             (week) => !week.workouts.every((workout) => workout.completed)
         )
 
         const defaultWeekNumber =
-            firstIncompleteWeek?.weekNumber ?? program.weeks[0].weekNumber
+            firstIncompleteWeek?.weekNumber ?? mergedProgram.weeks[0].weekNumber
 
         setExpandedWeeks(
             Object.fromEntries(
-                program.weeks.map((week) => [
+                mergedProgram.weeks.map((week) => [
                     week.weekNumber,
                     week.weekNumber === defaultWeekNumber,
                 ])
@@ -341,7 +460,7 @@ export default function ProgramDetailContent({
 
         setExpandedWorkouts(
             Object.fromEntries(
-                program.weeks.flatMap((week) =>
+                mergedProgram.weeks.flatMap((week) =>
                     week.workouts.map((workout) => [
                         workout.id,
                         week.weekNumber === defaultWeekNumber,
@@ -349,7 +468,7 @@ export default function ProgramDetailContent({
                 )
             ) as Record<string, boolean>
         )
-    }, [program])
+    }, [mergedProgram])
 
     const dayNames = useMemo(() => {
         const value = t('currentProgram.dayNames', { returnObjects: true })
@@ -399,18 +518,18 @@ export default function ProgramDetailContent({
     )
 
     const pdfProgramData = useMemo<ProgramPdfData | null>(() => {
-        if (!program) {
+        if (!mergedProgram) {
             return null
         }
 
         return {
-            title: program.title,
-            traineeName: program.trainee
-                ? `${program.trainee.firstName} ${program.trainee.lastName}`
+            title: mergedProgram.title,
+            traineeName: mergedProgram.trainee
+                ? `${mergedProgram.trainee.firstName} ${mergedProgram.trainee.lastName}`
                 : t('currentProgram.pdfUnknownTrainee'),
-            trainerName: `${program.trainer.firstName} ${program.trainer.lastName}`,
-            startDate: program.startDate,
-            weeks: program.weeks.map((week) => ({
+            trainerName: `${mergedProgram.trainer.firstName} ${mergedProgram.trainer.lastName}`,
+            startDate: mergedProgram.startDate,
+            weeks: mergedProgram.weeks.map((week) => ({
                 weekNumber: week.weekNumber,
                 weekType: week.weekType,
                 workouts: week.workouts.map((workout) => ({
@@ -433,7 +552,7 @@ export default function ProgramDetailContent({
                 })),
             })),
         }
-    }, [program, t])
+    }, [mergedProgram, t])
 
     const toggleWeek = (weekNumber: number) => {
         setExpandedWeeks((previous) => ({
@@ -544,101 +663,6 @@ export default function ProgramDetailContent({
         return `${exercise.sets} x ${exercise.reps}`
     }
 
-    const fetchProgram = useCallback(async () => {
-        try {
-            setLoading(true)
-            setError(null)
-
-            let targetProgramId = programId
-
-            if (!targetProgramId) {
-                const activeProgramRes = await fetch('/api/programs?status=active&limit=1')
-                const activeProgramData = await activeProgramRes.json()
-
-                if (!activeProgramRes.ok) {
-                    throw new Error(
-                        getApiErrorMessage(activeProgramData, t('currentProgram.errorNotFound'), t)
-                    )
-                }
-
-                if ((activeProgramData.data.items?.length ?? 0) === 0) {
-                    throw new Error(t('currentProgram.errorNotFound'))
-                }
-
-                targetProgramId = activeProgramData.data.items[0].id as string
-            }
-
-            const [programRes, progressRes] = await Promise.all([
-                fetch(`/api/programs/${targetProgramId}`),
-                fetch(`/api/programs/${targetProgramId}/progress`),
-            ])
-
-            const [programData, progressData] = await Promise.all([
-                programRes.json(),
-                progressRes.json(),
-            ])
-
-            if (!programRes.ok) {
-                throw new Error(getApiErrorMessage(programData, t('currentProgram.errorNotFound'), t))
-            }
-
-            if (!progressRes.ok) {
-                throw new Error(getApiErrorMessage(progressData, t('currentProgram.errorNotFound'), t))
-            }
-
-            const workoutProgressById = new Map<string, WorkoutProgress>(
-                (progressData.data.workouts || []).map((workout: WorkoutProgress) => [workout.id, workout])
-            )
-
-            const programDetail = programData.data.program as ProgramDetail
-            const mappedProgram: Program = {
-                id: programDetail.id,
-                title: programDetail.title,
-                startDate: programDetail.startDate,
-                durationWeeks: programDetail.durationWeeks,
-                trainee: programDetail.trainee,
-                trainer: programDetail.trainer,
-                weeks: programDetail.weeks.map((week) => ({
-                    weekNumber: week.weekNumber,
-                    weekType: week.weekType,
-                    workouts: week.workouts.map((workout) => {
-                        const workoutProgress = workoutProgressById.get(workout.id)
-
-                        return {
-                            id: workout.id,
-                            dayOfWeek: workout.dayIndex,
-                            completed: workoutProgress?.completed ?? false,
-                            exerciseCount: workout.workoutExercises.length,
-                            feedbackSubmitted: (workoutProgress?.feedbackCount ?? 0) > 0,
-                            feedbackCount: workoutProgress?.feedbackCount ?? 0,
-                            exercises: workout.workoutExercises,
-                            exercisesPerformed: workoutProgress?.exercisesPerformed ?? [],
-                        }
-                    }),
-                })),
-            }
-
-            setProgram(mappedProgram)
-            setProgramProgress({
-                completedWorkouts: progressData.data.completedWorkouts ?? 0,
-                totalWorkouts: progressData.data.totalWorkouts ?? 0,
-                workouts: progressData.data.workouts ?? [],
-            })
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : t('currentProgram.errorNotFound'))
-        } finally {
-            setLoading(false)
-        }
-    }, [programId, t])
-
-    useEffect(() => {
-        if (initialData) {
-            // Data already loaded from server, no fetch needed
-            return
-        }
-        void fetchProgram()
-    }, [initialData, fetchProgram])
-
     if (loading) {
         return (
             <div className="py-8">
@@ -647,7 +671,7 @@ export default function ProgramDetailContent({
         )
     }
 
-    if (error || !program) {
+    if (error || !mergedProgram) {
         return (
             <div className="flex items-center justify-center py-16">
                 <div className="bg-red-50 border border-red-200 text-red-800 px-6 py-4 rounded-lg">
@@ -671,13 +695,13 @@ export default function ProgramDetailContent({
             <div className="mb-8">
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">{program.title}</h1>
+                        <h1 className="text-3xl font-bold text-gray-900">{mergedProgram.title}</h1>
                         <p className="text-gray-600 mt-2">
                             {t('currentProgram.trainerWith', {
-                                firstName: program.trainer.firstName,
-                                lastName: program.trainer.lastName,
+                                firstName: mergedProgram.trainer.firstName,
+                                lastName: mergedProgram.trainer.lastName,
                             })}{' '}
-                            - {t('currentProgram.startedOn')} {formatDate(program.startDate)}
+                            - {t('currentProgram.startedOn')} {formatDate(mergedProgram.startDate)}
                         </p>
                     </div>
 
@@ -720,7 +744,7 @@ export default function ProgramDetailContent({
 
             {/* Weeks List */}
             <div className="space-y-6">
-                {program.weeks.map((week) => {
+                {mergedProgram.weeks.map((week) => {
                     const weekCompleted = week.workouts.every((w) => w.completed)
                     const weekInProgress = week.workouts.some(
                         (w) => w.completed && !weekCompleted
@@ -813,7 +837,7 @@ export default function ProgramDetailContent({
                                                                 </span>
                                                             ) : (
                                                                 <Link
-                                                                    href={`/trainee/workouts/${workout.id}?programId=${encodeURIComponent(program.id)}&from=${mode}`}
+                                                                    href={`/trainee/workouts/${workout.id}?programId=${encodeURIComponent(mergedProgram.id)}&from=${mode}`}
                                                                     className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${workoutStatus.buttonClassName}`}
                                                                 >
                                                                     {workoutStatus.helperText}
