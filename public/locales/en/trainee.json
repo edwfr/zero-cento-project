@@ -190,6 +190,7 @@
         "continueBtn": "Continue",
         "confirmBtn": "Confirm",
         "dayWeekShort": "D{{day}} · W{{week}}",
+        "dayWeekLong": "Day {{day}} · Week {{week}}",
         "workoutInfo": "Workout info",
         "workoutInfoTitle": "Workout details",
         "workoutInfoDay": "Day",

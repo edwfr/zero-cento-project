@@ -5,7 +5,7 @@ import type { RestTime } from '@prisma/client'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
-import { RPESelector, SkeletonDetail } from '@/components'
+import { RPESelector, SkeletonDetail, WeekTypeBadge } from '@/components'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import {
     AlertTriangle,
@@ -15,11 +15,9 @@ import {
     Clock3,
     FileText,
     Gauge,
-    Info,
     PlayCircle,
     ChevronLeft,
     ChevronRight,
-    X,
 } from 'lucide-react'
 import YoutubeEmbed from '@/components/YoutubeEmbed'
 import { useSwipe } from '@/lib/useSwipe'
@@ -153,7 +151,7 @@ export default function WorkoutDetailContent() {
     const [globalNotes, setGlobalNotes] = useState('')
     const [expandedVideos, setExpandedVideos] = useState<Record<string, boolean>>({})
     const [currentStep, setCurrentStep] = useState(0)
-    const [infoSheetOpen, setInfoSheetOpen] = useState(false)
+
 
     const { showToast } = useToast()
     const draftSyncEnabledRef = useRef(false)
@@ -533,6 +531,15 @@ export default function WorkoutDetailContent() {
         [feedbackData, sortedExercises]
     )
 
+    const totalPlannedSets = useMemo(
+        () => sortedExercises.reduce((acc, we) => acc + we.sets, 0),
+        [sortedExercises]
+    )
+
+    const workoutProgressPercent = totalPlannedSets > 0
+        ? Math.round((totalCompletedSets / totalPlannedSets) * 100)
+        : 0
+
     const emptyExerciseNames = useMemo(
         () =>
             sortedExercises
@@ -543,6 +550,12 @@ export default function WorkoutDetailContent() {
                 .map((we) => we.exercise.name),
         [feedbackData, sortedExercises]
     )
+
+    const { handlers: pageSwipeHandlers } = useSwipe({
+        onSwipeLeft: () => goToStep(currentStep + 1),
+        onSwipeRight: () => goToStep(currentStep - 1),
+        threshold: 80,
+    })
 
     if (loading) {
         return (
@@ -569,80 +582,47 @@ export default function WorkoutDetailContent() {
 
     const currentExercise = !isFinalStep ? sortedExercises[currentStep] : null
 
-    const { handlers: pageSwipeHandlers } = useSwipe({
-        onSwipeLeft: () => goToStep(currentStep + 1),
-        onSwipeRight: () => goToStep(currentStep - 1),
-        threshold: 80,
-    })
-
     return (
         <div className="flex min-h-screen flex-col bg-gray-50" {...pageSwipeHandlers}>
             {/* Sticky top bar */}
-            <nav className="sticky top-0 z-20 bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between h-12">
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                    <span>
-                        {t('workouts.dayWeekShort', {
-                            day: workout.dayIndex,
-                            week: workout.weekNumber,
-                        })}
-                    </span>
-                    {workout.weekType !== 'normal' && (
-                        <span
-                            className={`px-2 py-1 rounded text-xs font-medium ${
-                                workout.weekType === 'test'
-                                    ? 'bg-amber-100 text-amber-800'
-                                    : 'bg-blue-100 text-blue-800'
-                            }`}
-                        >
-                            {t(`workouts.week${workout.weekType.charAt(0).toUpperCase() + workout.weekType.slice(1)}`)}
-                        </span>
-                    )}
-                </div>
-                <button
-                    onClick={() => setInfoSheetOpen(!infoSheetOpen)}
-                    className="p-2 hover:bg-gray-100 rounded-full"
-                    aria-label={t('workouts.workoutInfo')}
-                >
-                    <Info className="w-5 h-5 text-gray-600" />
-                </button>
-            </nav>
-
-            {/* Info sheet */}
-            {infoSheetOpen && (
-                <div
-                    className="fixed inset-0 bg-black bg-opacity-50 z-40"
-                    onClick={() => setInfoSheetOpen(false)}
-                >
-                    <div
-                        className="absolute bottom-0 left-0 right-0 bg-white rounded-t-lg p-6 max-h-[70vh] overflow-y-auto"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-lg font-bold">{t('workouts.workoutInfoTitle')}</h2>
-                            <button
-                                onClick={() => setInfoSheetOpen(false)}
-                                className="p-1 hover:bg-gray-100 rounded"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <div className="space-y-3 text-sm">
-                            <div>
-                                <span className="font-semibold">{t('workouts.workoutInfoDay')}:</span>
-                                <span className="ml-2">{workout.dayIndex}</span>
-                            </div>
-                            <div>
-                                <span className="font-semibold">{t('workouts.workoutInfoWeek')}:</span>
-                                <span className="ml-2">{workout.weekNumber}</span>
-                            </div>
-                            <div>
-                                <span className="font-semibold">{t('workouts.workoutInfoProgram')}:</span>
-                                <span className="ml-2">{workout.program.title}</span>
-                            </div>
+            <nav data-testid="focus-mode-header" className="sticky top-0 z-20 bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-14">
+                    <div className="flex items-center gap-3">
+                        <div className="w-1 h-6 bg-brand-primary rounded-full" />
+                        <div>
+                            <p className="text-xs font-medium text-gray-400 uppercase tracking-widest leading-none mb-0.5">
+                                {workout.program.title}
+                            </p>
+                            <p className="text-sm font-bold text-gray-900 leading-none">
+                                {t('workouts.dayWeekLong', {
+                                    day: workout.dayIndex,
+                                    week: workout.weekNumber,
+                                })}
+                            </p>
                         </div>
                     </div>
+                    <div className="flex items-center gap-2">
+                        <WeekTypeBadge
+                            weekType={workout.weekType}
+                            labels={{
+                                normal: t('weekType.normal'),
+                                test: t('weekType.test'),
+                                deload: t('weekType.deload'),
+                            }}
+                        />
+                        <span className="text-xs text-gray-400 font-semibold tabular-nums w-9 text-right">
+                            {workoutProgressPercent}%
+                        </span>
+                    </div>
                 </div>
-            )}
+                {/* Progress bar */}
+                <div className="h-1 bg-gray-100 -mx-4 sm:-mx-6 lg:-mx-8">
+                    <div
+                        className="h-1 bg-brand-primary transition-all duration-300 rounded-r-full"
+                        style={{ width: `${workoutProgressPercent}%` }}
+                    />
+                </div>
+            </nav>
 
             {/* Scrollable body */}
             <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -797,33 +777,40 @@ function ExerciseFocusCard({
 
                 {/* Big targets row */}
                 <div className="flex gap-2 mb-4">
-                    <div className="flex-1 bg-gray-100 rounded-lg px-3 py-3 text-center">
-                        <span className="block text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                    <div className="flex-1 rounded-xl border border-brand-primary/30 bg-brand-primary/5 px-3 py-3 text-center">
+                        <span className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary">
                             {t('workouts.sets')}
                         </span>
-                        <span className="block text-2xl font-bold text-gray-900 mt-1">
+                        <span className="block text-2xl font-black text-gray-900 mt-1">
                             {we.sets}
                         </span>
                     </div>
-                    <div className="flex-1 bg-gray-100 rounded-lg px-3 py-3 text-center">
-                        <span className="block text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                    <div className="flex-1 rounded-xl border border-brand-primary/30 bg-brand-primary/5 px-3 py-3 text-center">
+                        <span className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary">
                             {t('workouts.reps')}
                         </span>
-                        <span className="block text-2xl font-bold text-gray-900 mt-1">
+                        <span className="block text-2xl font-black text-gray-900 mt-1">
                             {we.reps}
                         </span>
                     </div>
-                    <div className="flex-1 bg-gray-100 rounded-lg px-3 py-3 text-center">
-                        <span className="block text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                    <div className="flex-1 rounded-xl border border-brand-primary/30 bg-brand-primary/5 px-3 py-3 text-center">
+                        <span className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary">
                             KG
                         </span>
                         <span
-                            className={`block text-sm font-bold mt-1 leading-snug ${
-                                calculatedWeightMissing ? 'text-gray-500' : 'text-gray-900'
+                            className={`block text-2xl font-black mt-1 leading-none whitespace-nowrap ${
+                                calculatedWeightMissing ? 'text-gray-400' : 'text-gray-900'
                             }`}
                         >
-                            {compactWeightValue}
+                            {calculatedWeightMissing
+                                ? '-'
+                                : calculatedWeightValue}
                         </span>
+                        {we.weightType !== 'absolute' && (
+                            <span className="block text-[10px] text-gray-400 mt-1.5 leading-none">
+                                {trainerSettingValue}
+                            </span>
+                        )}
                     </div>
                 </div>
 
@@ -851,7 +838,7 @@ function ExerciseFocusCard({
 
             {/* Video */}
             {we.exercise.youtubeUrl && (
-                <div className="border-t border-gray-200 p-4 sm:p-6" data-swipe-ignore="true">
+                <div className="border-t border-gray-200 p-4 sm:p-6 flex flex-col items-center" data-swipe-ignore="true">
                     <button
                         onClick={onToggleVideo}
                         className="inline-flex gap-2 items-center px-4 py-2 border border-gray-300 rounded-lg hover:border-brand-primary hover:text-brand-primary text-sm font-semibold transition-colors"
@@ -865,7 +852,7 @@ function ExerciseFocusCard({
                         )}
                     </button>
                     {videoExpanded && (
-                        <div className="mt-4">
+                        <div className="mt-4 w-full">
                             <YoutubeEmbed videoUrl={we.exercise.youtubeUrl} />
                         </div>
                     )}
