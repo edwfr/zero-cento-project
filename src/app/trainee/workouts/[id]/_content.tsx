@@ -397,7 +397,8 @@ export default function WorkoutDetailContent() {
         const we = workout.exercises.find((e) => e.id === workoutExerciseId)
         if (!we) return
 
-        const currentSet = (feedbackData[workoutExerciseId] ?? [])[setIndex]
+        const currentSets = feedbackData[workoutExerciseId] ?? []
+        const currentSet = currentSets[setIndex]
         if (!currentSet) return
 
         const isCompleting = !currentSet.completed
@@ -415,31 +416,38 @@ export default function WorkoutDetailContent() {
 
         touchedExerciseIdsRef.current.add(workoutExerciseId)
 
+        // Compute new set state before updating React state
+        let newSet: SetPerformed
+        if (isCompleting && !(currentSet.reps > 0) && isPreciseReps) {
+            // Auto-fill with planned value for precise-rep exercises only
+            const plannedReps = parseInt(we.reps.trim(), 10)
+            newSet = {
+                ...currentSet,
+                completed: true,
+                reps: plannedReps,
+                weight: we.effectiveWeight ?? we.weight ?? 0,
+            }
+        } else {
+            newSet = { ...currentSet, completed: isCompleting }
+        }
+
+        const newSets = currentSets.map((s, i) => (i === setIndex ? newSet : s))
+        const allSetsCompleted = newSets.every((s) => s.completed)
+
         setFeedbackData((prev) => {
             const updated = { ...prev }
-            updated[workoutExerciseId] = [...(prev[workoutExerciseId] ?? [])]
-
-            const set = updated[workoutExerciseId][setIndex]
-            const completing = !set.completed
-
-            if (completing && !(set.reps > 0) && isPreciseReps) {
-                // Auto-fill with planned value for precise-rep exercises only
-                const plannedReps = parseInt(we.reps.trim(), 10)
-                updated[workoutExerciseId][setIndex] = {
-                    ...set,
-                    completed: true,
-                    reps: plannedReps,
-                    weight: we.effectiveWeight ?? we.weight ?? 0,
-                }
-            } else {
-                updated[workoutExerciseId][setIndex] = {
-                    ...set,
-                    completed: !set.completed,
-                }
-            }
-
+            updated[workoutExerciseId] = newSets
             return updated
         })
+
+        // Auto-mark exercise as completed when last set is checked,
+        // or as incomplete when any set is unchecked while exercise was complete
+        const wasExerciseCompleted = exerciseCompleted[workoutExerciseId] ?? false
+        if (isCompleting && allSetsCompleted) {
+            markExerciseCompleted(workoutExerciseId, true)
+        } else if (!isCompleting && wasExerciseCompleted) {
+            markExerciseCompleted(workoutExerciseId, false)
+        }
     }
 
     const updateExerciseRPE = (workoutExerciseId: string, rpe: number | null) => {
@@ -449,20 +457,18 @@ export default function WorkoutDetailContent() {
         }))
     }
 
-    const toggleExerciseCompleted = (workoutExerciseId: string) => {
-        const next = !exerciseCompleted[workoutExerciseId]
-        
-        // 1. Optimistic update: respond immediately to user
+    const markExerciseCompleted = (workoutExerciseId: string, isCompleted: boolean) => {
+        // Optimistic update
         setExerciseCompleted((prev) => ({
             ...prev,
-            [workoutExerciseId]: next,
+            [workoutExerciseId]: isCompleted,
         }))
 
-        // 2. Fire-and-forget PATCH to server in background
+        // Fire-and-forget PATCH to server in background
         fetch(`/api/trainee/workout-exercises/${workoutExerciseId}/complete`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ isCompleted: next }),
+            body: JSON.stringify({ isCompleted }),
         })
             .then((res) => {
                 if (!res.ok) {
@@ -471,19 +477,18 @@ export default function WorkoutDetailContent() {
                 return res.json()
             })
             .then((data) => {
-                // On success, show celebration toasts for parent completions
+                if (!isCompleted) return
+                // On completion, show celebration toasts for parent completions
                 const result = data.data
-                
-                // Toast sequence with delays to avoid overlap
                 let toastDelay = 0
-                
+
                 if (result.workout.isCompleted) {
                     setTimeout(() => {
                         showToast(t('workouts.workoutCompletedToast'), 'success')
                     }, toastDelay)
                     toastDelay += 200
                 }
-                
+
                 if (result.week.isCompleted) {
                     setTimeout(() => {
                         showToast(
@@ -493,18 +498,18 @@ export default function WorkoutDetailContent() {
                     }, toastDelay)
                     toastDelay += 200
                 }
-                
+
                 if (result.program.status === 'completed') {
                     setTimeout(() => {
                         showToast(t('workouts.programCompletedToast'), 'success')
                     }, toastDelay)
                 }
             })
-            .catch((err) => {
-                // On error: revert optimistic state
+            .catch(() => {
+                // Revert optimistic state on error
                 setExerciseCompleted((prev) => ({
                     ...prev,
-                    [workoutExerciseId]: !next,
+                    [workoutExerciseId]: !isCompleted,
                 }))
                 showToast(t('workouts.errorMarkComplete'), 'error')
             })
@@ -730,8 +735,6 @@ export default function WorkoutDetailContent() {
                             onUpdateSet={(id, idx, field, value) => updateSet(id, idx, field, value)}
                             onToggleSet={(id, idx) => toggleSetCompleted(id, idx)}
                             onUpdateRpe={(rpe) => updateExerciseRPE(currentExercise.id, rpe)}
-                            isCompleted={exerciseCompleted[currentExercise.id] ?? false}
-                            onToggleCompleted={() => toggleExerciseCompleted(currentExercise.id)}
                             rpeDescriptions={rpeDescriptions}
                             t={t}
                         />
@@ -801,8 +804,6 @@ interface ExerciseFocusCardProps {
     onUpdateSet: (id: string, idx: number, field: 'weight' | 'reps', value: number) => void
     onToggleSet: (id: string, idx: number) => void
     onUpdateRpe: (rpe: number | null) => void
-    isCompleted: boolean
-    onToggleCompleted: () => void
     rpeDescriptions: Record<number, string>
     t: (key: string, vars?: Record<string, unknown>) => string
 }
@@ -816,8 +817,6 @@ function ExerciseFocusCard({
     onUpdateSet,
     onToggleSet,
     onUpdateRpe,
-    isCompleted,
-    onToggleCompleted,
     rpeDescriptions,
     t,
 }: ExerciseFocusCardProps) {
@@ -1014,21 +1013,6 @@ function ExerciseFocusCard({
                         </div>
                     ))}
                 </div>
-            </div>
-
-            {/* Exercise completion button */}
-            <div className="border-t border-gray-200 p-4 sm:p-6">
-                <button
-                    onClick={onToggleCompleted}
-                    className={`w-full px-4 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 ${
-                        isCompleted
-                            ? 'bg-state-success text-white hover:bg-opacity-90'
-                            : 'bg-brand-primary text-white hover:bg-brand-primary-hover'
-                    }`}
-                >
-                    <Check className="w-5 h-5" />
-                    {isCompleted ? t('workouts.markExerciseIncomplete') : t('workouts.markExerciseComplete')}
-                </button>
             </div>
 
             {/* Overall RPE */}

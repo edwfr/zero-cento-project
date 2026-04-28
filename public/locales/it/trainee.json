@@ -198,7 +198,7 @@
         "workoutInfoProgram": "Programma",
         "next": "Avanti",
         "prev": "Indietro",
-        "completeShort": "Completa allenamento",
+        "completeShort": "Invia feedback",
         "summaryTitle": "Riepilogo",
         "summaryStats": "{{done}} / {{total}} esercizi · {{sets}} set",
         "missingDataInline": "Esercizi senza dati:",
