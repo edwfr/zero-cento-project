@@ -397,13 +397,9 @@ export default function WorkoutDetailContent() {
 
         const isCompleting = !currentSet.completed
 
-        // "8" → can auto-fill; "max", "6-8", "6/8", "8+" → user must enter a value
+        // "8" → can auto-fill with planned value on first tap
+        // "max", "6-8", "6/8" → can complete freely (reps entered by user or left as 0)
         const isPreciseReps = /^\d+$/.test(we.reps.trim())
-
-        if (isCompleting && !(currentSet.reps > 0) && !isPreciseReps) {
-            showToast(t('workouts.errorRepsRequired'), 'error')
-            return
-        }
 
         touchedExerciseIdsRef.current.add(workoutExerciseId)
 
@@ -414,8 +410,8 @@ export default function WorkoutDetailContent() {
             const set = updated[workoutExerciseId][setIndex]
             const completing = !set.completed
 
-            if (completing && !(set.reps > 0)) {
-                // Only reach here for isPreciseReps — auto-fill with planned value
+            if (completing && !(set.reps > 0) && isPreciseReps) {
+                // Auto-fill with planned value for precise-rep exercises only
                 const plannedReps = parseInt(we.reps.trim(), 10)
                 updated[workoutExerciseId][setIndex] = {
                     ...set,
@@ -529,7 +525,11 @@ export default function WorkoutDetailContent() {
         () =>
             sortedExercises.reduce((acc, we) => {
                 const sets = feedbackData[we.id] || []
-                const hasData = sets.some((s) => s.completed && s.weight > 0 && s.reps > 0)
+                const isPreciseReps = /^\d+$/.test(we.reps.trim())
+                // For non-numeric reps (max, ranges) only require the set to be checked + weight entered
+                const hasData = isPreciseReps
+                    ? sets.some((s) => s.completed && s.weight > 0 && s.reps > 0)
+                    : sets.some((s) => s.completed)
                 return acc + (hasData ? 1 : 0)
             }, 0),
         [feedbackData, sortedExercises]
@@ -558,7 +558,12 @@ export default function WorkoutDetailContent() {
             sortedExercises
                 .filter((we) => {
                     const sets = feedbackData[we.id] || []
-                    return !sets.some((s) => s.completed && s.weight > 0 && s.reps > 0)
+                    const isPreciseReps = /^\d+$/.test(we.reps.trim())
+                    // For non-numeric reps (max, ranges) only require the set to be checked
+                    const hasDoneSet = isPreciseReps
+                        ? sets.some((s) => s.completed && s.weight > 0 && s.reps > 0)
+                        : sets.some((s) => s.completed)
+                    return !hasDoneSet
                 })
                 .map((we) => we.exercise.name),
         [feedbackData, sortedExercises]
@@ -890,7 +895,7 @@ function ExerciseFocusCard({
                                 type="number"
                                 inputMode="numeric"
                                 min="0"
-                                placeholder={String(parsePlannedReps(we.reps))}
+                                placeholder={/^\d+$/.test(we.reps.trim()) ? String(parsePlannedReps(we.reps)) : we.reps}
                                 value={set.reps || ''}
                                 onChange={(e) =>
                                     onUpdateSet(we.id, setIdx, 'reps', parseInt(e.target.value) || 0)

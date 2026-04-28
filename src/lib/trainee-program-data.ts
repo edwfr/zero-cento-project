@@ -265,7 +265,7 @@ export async function loadProgressAggregates(programId: string): Promise<Trainee
         SELECT
             wk."id" AS "workoutId",
             w."weekNumber" AS "weekNumber",
-            COUNT(we."id")::int AS "exerciseCount",
+            COUNT(DISTINCT we."id")::int AS "exerciseCount",
             COUNT(DISTINCT CASE WHEN ef."completed" THEN we."id" END)::int AS "completedExerciseCount",
             COUNT(DISTINCT CASE
                 WHEN EXISTS (

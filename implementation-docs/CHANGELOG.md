@@ -8,11 +8,26 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
-## 2026-04-28 — Trainee Program Performance Optimization (Phase 1)
+## 28 Aprile 2026 — Bugfix: workout con reps "max" mostrato come non completato
 
-**Task:** Improve load time of `/trainee/programs/[id]` and `/trainee/programs/current` from multi-second to sub-second.  
+**File modificati:** `src/lib/trainee-program-data.ts`, `src/app/trainee/workouts/[id]/_content.tsx`, `tests/unit/lib/trainee-program-data.test.ts`
 
-**Files modificati:**
+**Bug 1 – SQL `COUNT` non usa `DISTINCT` (root cause principale)**
+Il calcolo `exerciseCount` nella query SQL di `loadProgressAggregates` usava `COUNT(we."id")` senza `DISTINCT`. Quando un esercizio aveva più record `ExerciseFeedback` (es. draft sync il giorno 1 + submit finale il giorno 2 con idempotency per data), l'esercizio veniva conteggiato N volte → `exerciseCount > completedExerciseCount` → workout mostrato come non completato anche con tutti i feedback `completed = true`.  
+**Fix:** `COUNT(DISTINCT we."id")::int AS "exerciseCount"`.
+
+**Bug 2 – UX: toggle su serie "max" bloccato senza reps inserite**
+`toggleSetCompleted` bloccava il completamento di serie con `reps = "max"` se l'utente non aveva inserito un valore numerico. `parsePlannedReps("max") = 0`, quindi la serie non veniva mai marcata come `completed`, il contatore `completedExerciseCount` sul workout page mostrava "0/N esercizi completati" e `emptyExerciseNames` avvertiva di dati mancanti, impedendo di fatto la comprensione che il workout era completabile.  
+**Fix:**
+- `toggleSetCompleted`: rimosso il blocco per esercizi non-numerici ("max", range). Il blocco rimane solo per esercizi a reps precisa (`/^\d+$/`) dove si vuole auto-fill.
+- `completedExerciseCount` e `emptyExerciseNames`: per esercizi non-numerici basta `s.completed = true` (senza richiedere `s.reps > 0`).
+- Placeholder input reps: mostra il valore numerico per reps precise, altrimenti mostra `we.reps` (es. "max", "8-10") come hint.
+
+**Test aggiunti:** 2 nuovi test unit in `tests/unit/lib/trainee-program-data.test.ts`
+- Verifica che la SQL usi `COUNT(DISTINCT we."id")`
+- Verifica che il workout risulti `completed: true` quando `exerciseCount === completedExerciseCount`
+
+
 - `src/app/api/programs/[id]/route.ts` (conditional PR map, role-aware exercise select)
 - `src/app/api/programs/[id]/progress/route.ts` (refactored to use shared helper)
 - `src/app/api/trainee/active-program/route.ts` (created)
