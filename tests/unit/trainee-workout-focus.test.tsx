@@ -8,21 +8,6 @@ vi.mock('next/navigation', () => ({
     useSearchParams: () => new URLSearchParams(''),
 }))
 
-vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
-        t: (key: string, vars?: Record<string, unknown>) => {
-            if (vars) {
-                let result = key
-                Object.entries(vars).forEach(([k, v]) => {
-                    result = result.replace(`{{${k}}}`, String(v))
-                })
-                return result
-            }
-            return key
-        },
-    }),
-}))
-
 vi.mock('@/components/ToastNotification', () => ({
     useToast: () => ({ showToast: vi.fn() }),
 }))
@@ -115,11 +100,75 @@ const renderContent = async () => {
 }
 
 describe('Trainee workout focus mode', () => {
-    it.todo('shows only the current exercise card')
-    it.todo('advances to the next exercise via the bottom-nav Next button')
-    it.todo('returns to the previous exercise via the bottom-nav Back button')
-    it.todo('reaches the final summary step after the last exercise')
-    it.todo('tapping the set-complete button on a set with empty inputs records the planned reps and effective weight')
-    it.todo('keeps inputs editable after a set is marked completed')
-    it.todo('shows missing-data warning inline on the final step when no sets are completed')
+    it('shows only the current exercise card', async () => {
+        await renderContent()
+        expect(screen.getByText('Bench Press')).toBeInTheDocument()
+        expect(screen.queryByText('Tricep Extension')).not.toBeInTheDocument()
+    })
+
+    it('advances to the next exercise via the bottom-nav Next button', async () => {
+        const user = userEvent.setup()
+        await renderContent()
+        const nextBtn = screen.getByRole('button', { name: /next|avanti/i })
+        await user.click(nextBtn)
+        expect(screen.getByText('Tricep Extension')).toBeInTheDocument()
+        expect(screen.queryByText('Bench Press')).not.toBeInTheDocument()
+    })
+
+    it('returns to the previous exercise via the bottom-nav Back button', async () => {
+        const user = userEvent.setup()
+        await renderContent()
+        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+        expect(screen.getByText('Tricep Extension')).toBeInTheDocument()
+        await user.click(screen.getByRole('button', { name: /back|indietro/i }))
+        expect(screen.getByText('Bench Press')).toBeInTheDocument()
+    })
+
+    it('reaches the final summary step after the last exercise', async () => {
+        const user = userEvent.setup()
+        await renderContent()
+        // step 0 -> 1 (Tricep Extension)
+        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+        // step 1 -> 2 (final)
+        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+        expect(screen.getByText(/summary|riepilogo/i)).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /complete workout|completa allenamento/i })).toBeInTheDocument()
+    })
+
+    it('tapping the set-complete button on a set with empty inputs records the planned reps and effective weight', async () => {
+        const user = userEvent.setup()
+        await renderContent()
+        const checkButtons = screen.getAllByRole('button', { name: /mark set/i })
+        expect(checkButtons.length).toBeGreaterThanOrEqual(3)
+        await user.click(checkButtons[0])
+
+        const repsInputs = screen.getAllByRole('spinbutton') as HTMLInputElement[]
+        // First reps input (set #1, col reps) — should now hold planned 8
+        expect(repsInputs[0].value).toBe('8')
+        // First kg input (set #1, col kg) — should now hold planned effectiveWeight 80
+        expect(repsInputs[1].value).toBe('80')
+    })
+
+    it('keeps inputs editable after a set is marked completed', async () => {
+        const user = userEvent.setup()
+        await renderContent()
+        const checkButtons = screen.getAllByRole('button', { name: /mark set/i })
+        await user.click(checkButtons[0])
+        const repsInput = screen.getAllByRole('spinbutton')[0] as HTMLInputElement
+        expect(repsInput).not.toBeDisabled()
+        await user.clear(repsInput)
+        await user.type(repsInput, '7')
+        expect(repsInput.value).toBe('7')
+    })
+
+    it('shows missing-data warning inline on the final step when no sets are completed', async () => {
+        const user = userEvent.setup()
+        await renderContent()
+        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+        // On final step. No sets done in either exercise.
+        expect(screen.getByText(/exercises with no data|esercizi senza dati/i)).toBeInTheDocument()
+        expect(screen.getByText('Bench Press')).toBeInTheDocument()
+        expect(screen.getByText('Tricep Extension')).toBeInTheDocument()
+    })
 })
