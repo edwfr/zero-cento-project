@@ -1,11 +1,12 @@
 'use client'
 
 import ProgramDetailContent from '../_components/ProgramDetailContent'
+import type { TraineeProgramView } from '@/lib/trainee-program-data'
 
 interface ProgramDetailByIdContentProps {
-    programId: string
+    initialData: TraineeProgramView
 }
 
-export default function ProgramDetailByIdContent({ programId }: ProgramDetailByIdContentProps) {
-    return <ProgramDetailContent mode="history" programId={programId} />
+export default function ProgramDetailByIdContent({ initialData }: ProgramDetailByIdContentProps) {
+    return <ProgramDetailContent mode="history" initialData={initialData} />
 }

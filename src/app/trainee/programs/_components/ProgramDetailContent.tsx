@@ -21,6 +21,7 @@ import {
     ProgramPdfData,
     ProgramPdfLabels,
 } from '@/lib/program-pdf-export'
+import type { TraineeProgramView } from '@/lib/trainee-program-data'
 
 type WeekType = 'normal' | 'test' | 'deload'
 type WeightType = 'absolute' | 'percentage_1rm' | 'percentage_rm' | 'percentage_previous'
@@ -30,6 +31,7 @@ type ProgramContentMode = 'current' | 'history'
 interface ProgramDetailContentProps {
     mode?: ProgramContentMode
     programId?: string
+    initialData?: TraineeProgramView
 }
 
 interface WorkoutExercise {
@@ -233,14 +235,58 @@ const hasLocalWorkoutProgress = (workoutId: string): boolean => {
     }
 }
 
+const mapTraineeProgramViewToProgram = (view: TraineeProgramView): Program => {
+    const workoutProgressById = new Map<string, WorkoutProgress>(
+        (view.progress.workouts || []).map((workout) => [workout.id, workout])
+    )
+
+    const startDate = view.program.startDate
+        ? typeof view.program.startDate === 'string'
+            ? view.program.startDate
+            : view.program.startDate.toISOString().split('T')[0]
+        : new Date().toISOString().split('T')[0]
+
+    return {
+        id: view.program.id,
+        title: view.program.title,
+        startDate,
+        durationWeeks: view.program.durationWeeks,
+        trainee: view.program.trainee,
+        trainer: view.program.trainer,
+        weeks: view.program.weeks.map((week) => ({
+            weekNumber: week.weekNumber,
+            weekType: week.weekType,
+            workouts: week.workouts.map((workout) => {
+                const workoutProgress = workoutProgressById.get(workout.id)
+
+                return {
+                    id: workout.id,
+                    dayOfWeek: workout.dayIndex,
+                    completed: workoutProgress?.completed ?? false,
+                    exerciseCount: workout.workoutExercises.length,
+                    feedbackSubmitted: (workoutProgress?.feedbackCount ?? 0) > 0,
+                    feedbackCount: workoutProgress?.feedbackCount ?? 0,
+                    exercises: workout.workoutExercises,
+                    exercisesPerformed: workoutProgress?.exercisesPerformed ?? [],
+                }
+            }),
+        })),
+    }
+}
+
 export default function ProgramDetailContent({
     mode = 'current',
     programId,
+    initialData,
 }: ProgramDetailContentProps) {
     const { t, i18n } = useTranslation('trainee')
-    const [loading, setLoading] = useState(true)
-    const [program, setProgram] = useState<Program | null>(null)
-    const [programProgress, setProgramProgress] = useState<ProgramProgress | null>(null)
+    const [loading, setLoading] = useState(!initialData)
+    const [program, setProgram] = useState<Program | null>(initialData ? mapTraineeProgramViewToProgram(initialData) : null)
+    const [programProgress, setProgramProgress] = useState<ProgramProgress | null>(initialData ? {
+        completedWorkouts: initialData.progress.completedWorkouts,
+        totalWorkouts: initialData.progress.totalWorkouts,
+        workouts: initialData.progress.workouts,
+    } : null)
     const [localWorkoutProgress, setLocalWorkoutProgress] = useState<Record<string, boolean>>({})
     const [error, setError] = useState<string | null>(null)
     const [expandedWeeks, setExpandedWeeks] = useState<Record<number, boolean>>({})
@@ -586,8 +632,12 @@ export default function ProgramDetailContent({
     }, [programId, t])
 
     useEffect(() => {
+        if (initialData) {
+            // Data already loaded from server, no fetch needed
+            return
+        }
         void fetchProgram()
-    }, [fetchProgram])
+    }, [initialData, fetchProgram])
 
     if (loading) {
         return (
