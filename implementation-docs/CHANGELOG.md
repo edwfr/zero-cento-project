@@ -14,11 +14,14 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 **Files modificati:**
 - `src/app/api/programs/[id]/route.ts` (conditional PR map, role-aware exercise select)
+- `src/app/api/programs/[id]/progress/route.ts` (replaced tree-load with SQL aggregates)
 - `tests/integration/program-detail.test.ts` (created, 4 test cases)
+- `tests/integration/program-progress.test.ts` (created, 4 test cases)
 
 **Note:** 
 - Task 1: Skip PR map fetch in `GET /api/programs/[id]` when all exercises use weightType=absolute (saves one Prisma round-trip).
 - Task 2: Role-aware exercise include in `GET /api/programs/[id]`. Trainees now get slim `{id, name, type}` select instead of full movementPattern + muscleGroup tree.
+- Task 3: Replace tree-load with SQL aggregates in `GET /api/programs/[id]/progress`. Workout completion, weekly volume, and avg RPE now come from `$queryRaw` + `exerciseFeedback.aggregate`; latest performed sets via targeted `setPerformed.findMany`.
 
 ---
 
