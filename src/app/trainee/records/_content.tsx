@@ -7,7 +7,6 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import { SkeletonTable } from '@/components'
 import { BarChart2, ChevronDown, ChevronUp } from 'lucide-react'
 import { formatDate } from '@/lib/date-format'
-import MovementPatternTag from '@/components/MovementPatternTag'
 import { Input } from '@/components/Input'
 import { FormLabel } from '@/components/FormLabel'
 
@@ -20,11 +19,6 @@ interface PersonalRecord {
         id: string
         name: string
         type: 'fundamental' | 'accessory'
-        movementPattern?: {
-            id: string
-            name: string
-            color?: string
-        }
     }
 }
 
@@ -209,24 +203,26 @@ export default function PersonalRecordsContent() {
                                                 <h3 className="text-lg font-bold text-gray-900">
                                                     {pr.exercise.name}
                                                 </h3>
-                                                <div className="flex gap-2">
-                                                    <span
-                                                        className={`px-2 py-1 text-xs font-semibold rounded ${pr.exercise.type === 'fundamental'
-                                                            ? 'bg-purple-100 text-purple-800'
-                                                            : 'bg-gray-100 text-gray-800'
-                                                            }`}
-                                                    >
-                                                        {pr.exercise.type === 'fundamental'
+                                                <span
+                                                    className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${pr.exercise.type === 'fundamental'
+                                                        ? 'bg-red-100 text-red-800'
+                                                        : 'bg-blue-100 text-blue-800'
+                                                        }`}
+                                                    title={
+                                                        pr.exercise.type === 'fundamental'
+                                                            ? t('workouts.tagFundamental')
+                                                            : t('workouts.tagAccessory')
+                                                    }
+                                                    aria-label={
+                                                        pr.exercise.type === 'fundamental'
                                                             ? t('records.tagFundamental')
-                                                            : t('records.tagAccessory')}
-                                                    </span>
-                                                    {pr.exercise.movementPattern && (
-                                                        <MovementPatternTag
-                                                            name={pr.exercise.movementPattern.name}
-                                                            color={pr.exercise.movementPattern.color}
-                                                        />
-                                                    )}
-                                                </div>
+                                                            : t('records.tagAccessory')
+                                                    }
+                                                >
+                                                    {pr.exercise.type === 'fundamental'
+                                                        ? t('workouts.tagFundamentalShort')
+                                                        : t('workouts.tagAccessoryShort')}
+                                                </span>
                                             </div>
 
                                             <div className="space-y-3 mb-4">
