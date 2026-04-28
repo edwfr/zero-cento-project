@@ -52,6 +52,17 @@ interface WorkoutExercise {
     }
 }
 
+interface PerformedSet {
+    setNumber: number
+    reps: number
+    weight: number
+}
+
+interface ExercisePerformed {
+    workoutExerciseId: string
+    performedSets: PerformedSet[]
+}
+
 interface Workout {
     id: string
     dayOfWeek: number
@@ -60,6 +71,7 @@ interface Workout {
     feedbackSubmitted: boolean
     feedbackCount: number
     exercises: WorkoutExercise[]
+    exercisesPerformed: ExercisePerformed[]
 }
 
 interface Week {
@@ -116,6 +128,7 @@ interface WorkoutProgress {
     id: string
     completed: boolean
     feedbackCount: number
+    exercisesPerformed?: ExercisePerformed[]
 }
 
 interface ProgramProgress {
@@ -468,6 +481,23 @@ export default function ProgramDetailContent({
         return REST_TIME_LABELS[restTime] ?? t('currentProgram.tableMissingValue')
     }
 
+    const getDisplayScheme = (workout: Workout, exercise: WorkoutExercise): string => {
+        if (workout.completed) {
+            const performed = workout.exercisesPerformed.find(
+                (entry) => entry.workoutExerciseId === exercise.id
+            )
+
+            if (performed && performed.performedSets.length > 0) {
+                const repsList = performed.performedSets.map((set) => set.reps)
+                const allEqual = repsList.every((reps) => reps === repsList[0])
+                const repsLabel = allEqual ? String(repsList[0]) : repsList.join(', ')
+                return `${performed.performedSets.length} x ${repsLabel}`
+            }
+        }
+
+        return `${exercise.sets} x ${exercise.reps}`
+    }
+
     const fetchProgram = useCallback(async () => {
         try {
             setLoading(true)
@@ -536,6 +566,7 @@ export default function ProgramDetailContent({
                             feedbackSubmitted: (workoutProgress?.feedbackCount ?? 0) > 0,
                             feedbackCount: workoutProgress?.feedbackCount ?? 0,
                             exercises: workout.workoutExercises,
+                            exercisesPerformed: workoutProgress?.exercisesPerformed ?? [],
                         }
                     }),
                 })),
@@ -724,12 +755,20 @@ export default function ProgramDetailContent({
                                                         </div>
 
                                                         <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">
-                                                            <Link
-                                                                href={`/trainee/workouts/${workout.id}?programId=${encodeURIComponent(program.id)}&from=${mode}`}
-                                                                className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${workoutStatus.buttonClassName}`}
-                                                            >
-                                                                {workoutStatus.helperText}
-                                                            </Link>
+                                                            {workout.completed ? (
+                                                                <span
+                                                                    className={`inline-flex cursor-default items-center justify-center rounded-lg border px-3 py-2 text-sm font-semibold ${workoutStatus.buttonClassName}`}
+                                                                >
+                                                                    {workoutStatus.helperText}
+                                                                </span>
+                                                            ) : (
+                                                                <Link
+                                                                    href={`/trainee/workouts/${workout.id}?programId=${encodeURIComponent(program.id)}&from=${mode}`}
+                                                                    className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${workoutStatus.buttonClassName}`}
+                                                                >
+                                                                    {workoutStatus.helperText}
+                                                                </Link>
+                                                            )}
 
                                                             <button
                                                                 type="button"
@@ -788,7 +827,7 @@ export default function ProgramDetailContent({
                                                                                     <div className="mt-3 flex flex-wrap justify-center gap-2">
                                                                                         <div className="inline-flex min-w-0 items-center rounded-lg bg-gray-100 px-3 py-1.5">
                                                                                             <span className="text-base font-bold text-gray-900">
-                                                                                                {exercise.sets} x {exercise.reps}
+                                                                                                {getDisplayScheme(workout, exercise)}
                                                                                             </span>
                                                                                         </div>
                                                                                         <div className="inline-flex min-w-0 items-center rounded-lg bg-gray-100 px-3 py-1.5">
@@ -881,7 +920,7 @@ export default function ProgramDetailContent({
                                                                                                 )}
                                                                                             </td>
                                                                                             <td className="px-3 py-3 align-top text-gray-700">
-                                                                                                {exercise.sets} x {exercise.reps}
+                                                                                                {getDisplayScheme(workout, exercise)}
                                                                                             </td>
                                                                                             <td className="px-3 py-3 align-top text-gray-700">
                                                                                                 <p className="text-xs font-semibold text-emerald-700">

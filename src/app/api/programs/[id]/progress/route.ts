@@ -126,6 +126,28 @@ export async function GET(
                     hasStartedFeedback(ex.exerciseFeedbacks)
                 )
 
+                const exercisesPerformed = workout.workoutExercises.map((ex) => {
+                    const latestCompletedFeedback = ex.exerciseFeedbacks
+                        .filter((feedback) => feedback.completed)
+                        .sort((a, b) => b.date.getTime() - a.date.getTime())[0]
+
+                    const performedSets = latestCompletedFeedback
+                        ? latestCompletedFeedback.setsPerformed
+                            .filter((set) => set.completed)
+                            .sort((a, b) => a.setNumber - b.setNumber)
+                            .map((set) => ({
+                                setNumber: set.setNumber,
+                                reps: set.reps,
+                                weight: set.weight,
+                            }))
+                        : []
+
+                    return {
+                        workoutExerciseId: ex.id,
+                        performedSets,
+                    }
+                })
+
                 return {
                     id: workout.id,
                     name: `Giorno ${workout.dayIndex}`,
@@ -138,6 +160,7 @@ export async function GET(
                     feedbackCount: workout.workoutExercises.flatMap((ex) =>
                         ex.exerciseFeedbacks.filter((feedback) => hasStartedFeedback([feedback]))
                     ).length,
+                    exercisesPerformed,
                 }
             })
         )
