@@ -35,6 +35,8 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 - Task 5: Create shared server helper `loadTraineeProgramView` and `loadActiveProgramId` in `src/lib/trainee-program-data.ts`. Consolidates program tree loading + progress aggregation for use by server components.
 - Task 6: Server-component data fetching. Page components now call `loadTraineeProgramView` directly and pass `initialData` to client, eliminating client→API waterfall on first paint.
 - Task 7: TanStack Query integration. `ProgramDetailContent` now uses `useQuery` for both program and progress with `staleTime: 60_000`, `refetchOnWindowFocus: true`, and initialData support. Removes manual fetch logic and replaces with React Query lifecycle management.
+- Task 8: Consolidate expand-state effects. Extract expand state computation to useMemo (`defaultExpandState`), reducing side-effect complexity and improving clarity.
+- Task 9: Update audit documentation. Mark item #4 in `docs/api-efficiency-audit.md` as complete. Add Section 6 to `docs/performance-analysis.md` with before/after summary of performance gains.
 
 ---
 

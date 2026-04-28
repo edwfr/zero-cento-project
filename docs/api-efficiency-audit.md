@@ -48,15 +48,15 @@ Actionable checklist. Tick items when implemented. Grouped by impact.
 
 ---
 
-### [ ] 4. `GET /api/programs/[id]/progress` — aggregate counts
+### [x] 4. `GET /api/programs/[id]/progress` — aggregate counts
 
-- **File:** `src/app/api/programs/[id]/progress/route.ts:31-53`
-- [ ] Keep program metadata fetch slim (no nested `weeks`).
-- [ ] Replace per-week reduce with `week.findMany({ select: { weekNumber, weekType } })` + one `exerciseFeedback.groupBy({ by: ['workoutId'], where: { completed: true }, _count })` aggregate.
-- [ ] Compute `totalVolume` via `$queryRaw SUM(reps*weight)` scoped to program.
-- [ ] Compute `avgRPE` via `exerciseFeedback.aggregate({ _avg: { actualRpe } })`.
-- [ ] Compute `completedWorkouts` via raw SQL with `HAVING COUNT(all required feedbacks)`.
-- [ ] Tests: match current JSON shape.
+- **File:** `src/app/api/programs/[id]/progress/route.ts`
+- [x] Removed program metadata fetch entirely; input is only `programId`.
+- [x] Replaced per-week reduce with three `$queryRaw` CTE aggregates: one for workout completion counts, one for weekly volume (`SUM(sets * weight * reps)`), one for weekly avg RPE.
+- [x] Workout completion computed via `COUNT(DISTINCT exerciseId) == exerciseCount` per workout, de-duplicating latest feedback only.
+- [x] Latest performed sets fetched via targeted `setPerformed.findMany({ where: { feedback: { completed: true } } })` + de-duplication by `(workoutExerciseId, setNumber)`.
+- [x] Tests: response shape validated, aggregation counts verified, no tree load.
+- **Query count after fix:** 3 `$queryRaw` CTEs + 1 `setPerformed.findMany`. Previously full tree load (weeks → workouts → exercises → feedbacks → performedSets), N queries.
 
 ---
 
