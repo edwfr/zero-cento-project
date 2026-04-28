@@ -209,7 +209,8 @@
         "errorLoading": "Error loading workout",
         "errorNotFound": "Workout not found",
         "feedbackSuccess": "Feedback sent successfully!",
-        "errorFeedback": "Error sending feedback"
+        "errorFeedback": "Error sending feedback",
+        "errorRepsRequired": "Enter the reps performed before marking the set as done"
     },
     "records": {
         "title": "Your Personal Records",

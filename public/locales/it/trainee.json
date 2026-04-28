@@ -209,7 +209,8 @@
         "errorLoading": "Errore caricamento workout",
         "errorNotFound": "Workout non trovato",
         "feedbackSuccess": "Feedback inviato con successo!",
-        "errorFeedback": "Errore invio feedback"
+        "errorFeedback": "Errore invio feedback",
+        "errorRepsRequired": "Inserisci le ripetizioni eseguite prima di spuntare la serie"
     },
     "records": {
         "title": "I Tuoi Massimali",

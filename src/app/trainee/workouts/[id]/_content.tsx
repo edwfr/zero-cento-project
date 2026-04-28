@@ -392,28 +392,41 @@ export default function WorkoutDetailContent() {
         const we = workout.exercises.find((e) => e.id === workoutExerciseId)
         if (!we) return
 
+        const currentSet = (feedbackData[workoutExerciseId] ?? [])[setIndex]
+        if (!currentSet) return
+
+        const isCompleting = !currentSet.completed
+
+        // "8" → can auto-fill; "max", "6-8", "6/8", "8+" → user must enter a value
+        const isPreciseReps = /^\d+$/.test(we.reps.trim())
+
+        if (isCompleting && !(currentSet.reps > 0) && !isPreciseReps) {
+            showToast(t('workouts.errorRepsRequired'), 'error')
+            return
+        }
+
         touchedExerciseIdsRef.current.add(workoutExerciseId)
 
         setFeedbackData((prev) => {
             const updated = { ...prev }
-            updated[workoutExerciseId] = [...(prev[workoutExerciseId] || [])]
+            updated[workoutExerciseId] = [...(prev[workoutExerciseId] ?? [])]
 
-            const currentSet = updated[workoutExerciseId][setIndex]
-            const isCompleting = !currentSet.completed
+            const set = updated[workoutExerciseId][setIndex]
+            const completing = !set.completed
 
-            // If completing with empty inputs, populate planned defaults
-            if (isCompleting && currentSet.reps === 0 && currentSet.weight === 0) {
-                const plannedReps = parsePlannedReps(we.reps)
+            if (completing && !(set.reps > 0)) {
+                // Only reach here for isPreciseReps — auto-fill with planned value
+                const plannedReps = parseInt(we.reps.trim(), 10)
                 updated[workoutExerciseId][setIndex] = {
-                    ...currentSet,
+                    ...set,
                     completed: true,
                     reps: plannedReps,
                     weight: we.effectiveWeight ?? we.weight ?? 0,
                 }
             } else {
                 updated[workoutExerciseId][setIndex] = {
-                    ...currentSet,
-                    completed: !currentSet.completed,
+                    ...set,
+                    completed: !set.completed,
                 }
             }
 
