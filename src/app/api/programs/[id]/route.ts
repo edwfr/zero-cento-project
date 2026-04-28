@@ -19,6 +19,28 @@ export async function GET(
     try {
         const session = await requireRole(['admin', 'trainer', 'trainee'])
 
+        const exerciseSelector =
+            session.user.role === 'trainee'
+                ? { select: { id: true, name: true, type: true } }
+                : {
+                      include: {
+                          movementPattern: {
+                              select: {
+                                  id: true,
+                                  name: true,
+                                  movementPatternColors: {
+                                      select: { color: true, trainerId: true },
+                                  },
+                              },
+                          },
+                          exerciseMuscleGroups: {
+                              include: {
+                                  muscleGroup: { select: { id: true, name: true } },
+                              },
+                          },
+                      },
+                  }
+
         const program = await prisma.trainingProgram.findUnique({
             where: { id: programId },
             include: {
@@ -42,32 +64,7 @@ export async function GET(
                             include: {
                                 workoutExercises: {
                                     include: {
-                                        exercise: {
-                                            include: {
-                                                movementPattern: {
-                                                    select: {
-                                                        id: true,
-                                                        name: true,
-                                                        movementPatternColors: {
-                                                            select: {
-                                                                color: true,
-                                                                trainerId: true,
-                                                            },
-                                                        },
-                                                    },
-                                                },
-                                                exerciseMuscleGroups: {
-                                                    include: {
-                                                        muscleGroup: {
-                                                            select: {
-                                                                id: true,
-                                                                name: true,
-                                                            },
-                                                        },
-                                                    },
-                                                },
-                                            },
-                                        },
+                                        exercise: exerciseSelector as any,
                                     },
                                     orderBy: {
                                         order: 'asc',
@@ -99,7 +96,13 @@ export async function GET(
         let resolvedProgram = program
 
         if (session.user.role === 'trainee') {
-            const prMap = await loadTraineePrMap(session.user.id)
+            const needsPrMap = program.weeks.some((week) =>
+                week.workouts.some((workout) =>
+                    workout.workoutExercises.some((we) => we.weightType !== 'absolute')
+                )
+            )
+
+            const prMap = needsPrMap ? await loadTraineePrMap(session.user.id) : new Map<string, number>()
 
             const resolvedWeeks = program.weeks.map((week) => ({
                 ...week,

@@ -8,6 +8,20 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## 2026-04-28 — Trainee Program Performance Optimization (Phase 1)
+
+**Task:** Improve load time of `/trainee/programs/[id]` and `/trainee/programs/current` from multi-second to sub-second.  
+
+**Files modificati:**
+- `src/app/api/programs/[id]/route.ts` (conditional PR map, role-aware exercise select)
+- `tests/integration/program-detail.test.ts` (created, 4 test cases)
+
+**Note:** 
+- Task 1: Skip PR map fetch in `GET /api/programs/[id]` when all exercises use weightType=absolute (saves one Prisma round-trip).
+- Task 2: Role-aware exercise include in `GET /api/programs/[id]`. Trainees now get slim `{id, name, type}` select instead of full movementPattern + muscleGroup tree.
+
+---
+
 ## 2026-04-28 — Trainee Workout Mobile Focus Mode Redesign
 
 **Task:** Implement single-exercise focus mode for trainee workout detail page  
