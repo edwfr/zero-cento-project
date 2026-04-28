@@ -398,8 +398,15 @@ export default function WorkoutDetailContent() {
         const isCompleting = !currentSet.completed
 
         // "8" → can auto-fill with planned value on first tap
-        // "max", "6-8", "6/8" → can complete freely (reps entered by user or left as 0)
+        // "max" → user must enter actual reps (how many they achieved)
+        // "6-8", "6/8" → can complete freely (no strict block)
         const isPreciseReps = /^\d+$/.test(we.reps.trim())
+        const isMaxReps = we.reps.trim() === 'max'
+
+        if (isCompleting && isMaxReps && !(currentSet.reps > 0)) {
+            showToast(t('workouts.errorRepsRequired'), 'error')
+            return
+        }
 
         touchedExerciseIdsRef.current.add(workoutExerciseId)
 
@@ -526,9 +533,10 @@ export default function WorkoutDetailContent() {
             sortedExercises.reduce((acc, we) => {
                 const sets = feedbackData[we.id] || []
                 const isPreciseReps = /^\d+$/.test(we.reps.trim())
-                // For non-numeric reps (max, ranges) only require the set to be checked + weight entered
-                const hasData = isPreciseReps
-                    ? sets.some((s) => s.completed && s.weight > 0 && s.reps > 0)
+                const isMaxReps = we.reps.trim() === 'max'
+                // precise or max: require reps > 0 to count; ranges: just require checked
+                const hasData = (isPreciseReps || isMaxReps)
+                    ? sets.some((s) => s.completed && s.reps > 0)
                     : sets.some((s) => s.completed)
                 return acc + (hasData ? 1 : 0)
             }, 0),
@@ -559,9 +567,10 @@ export default function WorkoutDetailContent() {
                 .filter((we) => {
                     const sets = feedbackData[we.id] || []
                     const isPreciseReps = /^\d+$/.test(we.reps.trim())
-                    // For non-numeric reps (max, ranges) only require the set to be checked
-                    const hasDoneSet = isPreciseReps
-                        ? sets.some((s) => s.completed && s.weight > 0 && s.reps > 0)
+                    const isMaxReps = we.reps.trim() === 'max'
+                    // precise or max: require reps > 0; ranges: just require checked
+                    const hasDoneSet = (isPreciseReps || isMaxReps)
+                        ? sets.some((s) => s.completed && s.reps > 0)
                         : sets.some((s) => s.completed)
                     return !hasDoneSet
                 })
