@@ -665,7 +665,7 @@ export default function WorkoutDetailContent() {
                                     return `${formattedWeight}% RM`
                                 case 'percentage_previous': {
                                     const sign = we.weight > 0 ? '+' : ''
-                                    return `${sign}${formattedWeight}% ${t('workouts.previousExerciseShort')}`
+                                    return `${sign}${formattedWeight}%`
                                 }
                                 default:
                                     return formattedWeight

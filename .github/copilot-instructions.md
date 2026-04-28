@@ -1,17 +1,30 @@
 # GitHub Copilot Instructions — ZeroCento Training Platform
 
 > Place this file at `.github/copilot-instructions.md` in the repository root.
-> Copilot will automatically use these instructions for every suggestion in this repo.
+> Copilot uses these instructions for every suggestion in this repo.
+> **Detailed rules live in skill files under `.github/skills/`** — Copilot loads them on demand. This document is the index + non-negotiable rules.
+
+---
+
+## 0. Skills Index
+
+| Skill | When it applies |
+|---|---|
+| `.github/skills/zero-cento-frontend/SKILL.md` | Any frontend work: pages, components, UI, forms, i18n |
+| `.github/skills/zero-cento-backend/SKILL.md` | API route handlers, middleware, Prisma queries, auth guards, rate limiting (enforces perf rules from `docs/performance-analysis.md`) |
+| `.github/skills/zero-cento-testing/SKILL.md` | Any test (unit / integration / E2E) or change to source that requires test updates |
+| `.github/skills/git-pr-workflow/SKILL.md` | Branching, PRs, releases, hotfixes (two-branch `development` / `master` model) |
+
+When working on a relevant area, follow the matching skill exactly. Sections below are the cross-cutting non-negotiables.
 
 ---
 
 ## 1. Project Identity
 
-ZeroCento is a **trainer-led training management platform** (Next.js 15 + Supabase + Prisma + Vercel).
-Single-repo, full-stack. No separate backend service — Next.js App Router is the BFF.
+ZeroCento — **trainer-led training management platform** (Next.js 15 + Supabase + Prisma + Vercel). Single-repo, full-stack. Next.js App Router is the BFF; no separate backend service.
 
-**Roles:** Admin · Trainer · Trainee  
-**UX split:** Admin/Trainer → desktop-first · Trainee → mobile portrait-first (used in-gym)
+**Roles:** `admin` · `trainer` · `trainee` (lowercase, matches `enum Role` in Prisma)
+**UX split:** admin/trainer → desktop-first · trainee → mobile portrait-first (used in-gym)
 
 ---
 
@@ -21,168 +34,209 @@ Single-repo, full-stack. No separate backend service — Next.js App Router is t
 |---|---|
 | Framework | Next.js 15 (App Router, RSC by default) |
 | Language | TypeScript (strict) |
-| Styling | Tailwind CSS — use brand tokens, never raw hex |
-| UI Components | Custom design system in `src/components/` — **see §4** |
-| State (server) | TanStack Query |
-| State (global) | React Context API |
-| Forms | React Hook Form + Zod |
-| ORM | Prisma |
-| Auth | Supabase Auth (JWT sessions) |
+| Styling | Tailwind CSS — brand tokens, never raw hex. MUI only for data-heavy widgets (DataGrid). |
+| UI Components | Custom design system in `src/components/`, barrel-exported via `src/components/index.ts` |
+| Server state | TanStack Query v5 |
+| Forms | React Hook Form + Zod (Zod schemas in `src/schemas/`) |
+| ORM | Prisma. Two URLs: `DATABASE_URL` (pooled, 6543) for runtime · `DIRECT_URL` (5432) for migrations |
+| Auth | Supabase Auth (JWT). Server validates via `supabase.auth.getUser()` (never `getSession()` from Supabase). |
 | Email | Resend |
-| Testing | Vitest (unit/integration) + Playwright (E2E) |
-| i18n | next-i18next — IT default, EN supported |
+| Rate limiting | Upstash Redis for auth routes; in-memory `Map` for others (see backend skill Rule 2) |
+| i18n | `react-i18next`, locale files `public/locales/{en,it}/` |
+| PWA | Serwist (`src/sw.ts`), `public/manifest.json` |
+| Errors | Sentry (`sentry.server.config.ts`, `sentry.edge.config.ts`) |
+| Testing | Vitest (jsdom) for unit + integration; Playwright for E2E |
 
 ---
 
 ## 3. Non-Negotiable Rules
 
-### 3.1 — Always use custom components (CRITICAL)
+### 3.1 — Custom components only (CRITICAL)
 
-**Never use raw HTML elements or generic Next.js components when a custom component exists.**
-
-All custom components are exported from `src/components/index.ts`. Always import from there.
+Never use raw HTML when a custom component exists. All exported from `src/components/index.ts`.
 
 ```typescript
-// ✅ CORRECT
-import { Button, Input, FormLabel, Card } from '@/components'
+// CORRECT
+import { Button, Input, FormLabel, Card, ActionIconButton } from '@/components'
 
-// ❌ WRONG — never write raw elements when a custom component exists
-<button className="bg-brand-primary ...">Save</button>
-<input className="border rounded ..." />
-<label className="font-medium ...">Name</label>
+// WRONG
+<button className="..."><input className="..." /><label className="...">
 ```
 
-**Available base components and when to use them:**
-
-| Component | Use instead of |
+| Component | Replaces |
 |---|---|
-| `<Button>` | Any `<button>` element |
-| `<Input>` | Any `<input>` element (text, number, email, etc.) |
-| `<Textarea>` | Any `<textarea>` element |
-| `<FormLabel>` | Any `<label>` element in forms |
-| `<Card>` | Any `<div>` acting as a card/panel |
-| `<LoadingSpinner>` / `<FullPageLoader>` / `<InlineLoader>` | Any loading state |
-| `<Skeleton>` / `<SkeletonCard>` / `<SkeletonForm>` etc. | Any skeleton loading |
-| `<ToastNotification>` + `useToast()` | Any alert/notification |
-| `<ConfirmationModal>` | Any confirm dialog |
-| `<ErrorBoundary>` | Any error boundary wrapper |
-| `<RoleGuard>` | Any role-based rendering |
-| `<DashboardLayout>` | Any page layout in authenticated area |
+| `<Button>` | any `<button>` |
+| `<ActionIconButton>` / `<InlineActions>` | icon-only action buttons |
+| `<Input>` | any `<input>` |
+| `<Textarea>` | any `<textarea>` |
+| `<FormLabel>` | any `<label>` in forms |
+| `<Card>` | any panel `<div>` |
+| `<LoadingSpinner>` / `<FullPageLoader>` / `<InlineLoader>` | loading states |
+| `<Skeleton*>` (`SkeletonCard`, `SkeletonForm`, `SkeletonDashboard`, `SkeletonTable`, `SkeletonList`, `SkeletonDetail`, `SkeletonNavigation`, `SkeletonText`) | skeleton placeholders |
+| `<ToastNotification>` + `useToast()` | alerts/notifications |
+| `<ConfirmationModal>` | confirm dialogs |
+| `<ErrorBoundary>` | error boundary wrapper |
+| `<RoleGuard>` | role-based rendering |
+| `<DashboardLayout>` | authenticated page layout |
+| `<NavigationLoadingOverlay>` + `useNavigationLoader()` | client-driven post-submit redirect spinner |
 
-**Button variants:** `primary` (default) · `secondary` · `danger`  
-**Button sizes:** `sm` · `md` (default) · `lg`  
-**Input states:** `default` · `error` · `success`
+`<Button>` variants: `primary` (default) · `secondary` · `danger`. Sizes: `sm` · `md` · `lg`.
+`<Input>` states: `default` · `error` · `success`.
 
 ### 3.2 — Brand tokens, never hardcoded hex
 
 ```typescript
-// ✅ CORRECT
-className="bg-brand-primary hover:bg-brand-primary-hover text-brand-secondary"
+// CORRECT
+className="bg-brand-primary hover:bg-brand-primary-hover text-brand-secondary focus:ring-brand-primary"
 
-// ❌ WRONG
-className="bg-[#FFA700] hover:bg-[#E69500]"
-style={{ color: '#FFA700' }}
+// WRONG
+className="bg-[#FFA700]"  style={{ color: '#FFA700' }}
 ```
 
-Brand tokens defined in `tailwind.config.ts`:
-- `brand-primary` → #FFA700 (orange)
-- `brand-primary-hover` → #E69500
-- `brand-secondary` → #000000
-- `brand-accent` → #FFFFFF
-
-Focus rings must use `focus:ring-brand-primary`, never `focus:ring-blue-500`.
+Tokens in `tailwind.config.ts`:
+- `brand-primary` #FFA700 · `brand-primary-hover` #E69500 · `brand-secondary` #000000 · `brand-accent` #FFFFFF
+- State: `state-error`, `state-success`, `state-warning`, `state-info`
+- Week: `week-test`, `week-deload`
 
 ### 3.3 — i18n: no hardcoded strings
 
-Every user-visible string must use i18n. Never hardcode Italian or English text.
+Every user-visible string goes through `useTranslation()` from `react-i18next`. Add keys to **both** `public/locales/en/` and `public/locales/it/`.
 
 ```typescript
-// ✅ CORRECT
-const { t } = useTranslation('common')
-return <h1>{t('dashboard.title')}</h1>
-
-// ❌ WRONG
-return <h1>Dashboard</h1>
+const { t } = useTranslation(['trainer', 'common'])
+return <h1>{t('trainer:dashboard.title')}</h1>
 ```
+
+API errors carry an i18n `key` field that maps to `public/locales/{en,it}/errors.json`.
 
 ### 3.4 — API response format
 
-All API routes must use the wrappers from `src/lib/api-response.ts`:
+Use the helpers from `src/lib/api-response.ts`:
 
 ```typescript
-// ✅ Success
-return ApiResponse.success(data)            // { data: ..., meta: { timestamp } }
-return ApiResponse.created(data)
+import { apiSuccess, apiError } from '@/lib/api-response'
 
-// ✅ Error
-return ApiResponse.error('NOT_FOUND', 'Resource not found', 404)
-return ApiResponse.validationError(zodError)
+// Success
+return apiSuccess(data)              // 200, shape: { data, meta: { timestamp } }
+return apiSuccess(data, 201)         // Created
 
-// ❌ WRONG — never return raw JSON
-return NextResponse.json({ result: data })
+// Error — args: (code, message, status, details?, key?)
+return apiError('NOT_FOUND', 'Program not found', 404, undefined, 'program.notFound')
+return apiError('FORBIDDEN', 'Access denied', 403, undefined, 'auth.accessDenied')
+return apiError('VALIDATION_ERROR', 'Source week is required', 400, parsed.error.flatten(), 'validation.sourceWeekRequired')
+return apiError('UNAUTHORIZED', 'Authentication required', 401, undefined, 'auth.unauthorized')
+return apiError('INTERNAL_ERROR', 'Unexpected error', 500, undefined, 'internal.default')
 ```
 
-### 3.5 — Every API route must follow this exact pattern
+Codes: `VALIDATION_ERROR | UNAUTHORIZED | FORBIDDEN | NOT_FOUND | CONFLICT | RATE_LIMIT_EXCEEDED | INTERNAL_ERROR`. i18n `key` is dot-notation: `domain.camelCaseKey`.
+
+Never return raw `NextResponse.json({...})` from API routes.
+
+### 3.5 — API route pattern (exact)
 
 ```typescript
-export async function GET(request: Request) {
-  // 1. Auth check
-  const session = await getSession(request)
-  if (!session) return ApiResponse.unauthorized()
+import { NextRequest } from 'next/server'
+import { requireRole } from '@/lib/auth'
+import { apiSuccess, apiError } from '@/lib/api-response'
+import { prisma } from '@/lib/prisma'
 
-  // 2. Role guard
-  if (session.role !== 'trainer') return ApiResponse.forbidden()
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  try {
+    // 1. Auth + role guard (throws Response on failure)
+    const session = await requireRole(['admin', 'trainer'])
 
-  // 3. Input validation (Zod)
-  const parsed = schema.safeParse(input)
-  if (!parsed.success) return ApiResponse.validationError(parsed.error)
+    // 2. Input validation (Zod)
+    const parsed = schema.safeParse(input)
+    if (!parsed.success) {
+      return apiError('VALIDATION_ERROR', 'Invalid input', 400, parsed.error.flatten(), 'validation.invalid')
+    }
 
-  // 4. Business logic
-  const result = await prisma.something.findMany(...)
+    // 3. Ownership (trainer only) — single findFirst, never split queries
+    if (session.user.role === 'trainer') {
+      const owns = await prisma.trainingProgram.findFirst({
+        where: { id, trainerId: session.user.id },
+        select: { id: true },
+      })
+      if (!owns) return apiError('FORBIDDEN', 'Access denied', 403, undefined, 'auth.accessDenied')
+    }
 
-  // 5. Return
-  return ApiResponse.success(result)
+    // 4. Business logic — scope select/include to minimum
+    const result = await prisma.trainingProgram.findUnique({ where: { id }, select: { id: true, title: true } })
+
+    return apiSuccess(result)
+  } catch (error) {
+    if (error instanceof Response) return error
+    return apiError('INTERNAL_ERROR', 'Unexpected error', 500, undefined, 'internal.default')
+  }
 }
 ```
 
-### 3.6 — Server vs Client components
+**Auth helpers** (from `src/lib/auth.ts`): `getSession()` (cached, returns `AuthSession | null`), `requireAuth()`, `requireRole(roles)`, `requireTrainerOwnership(traineeId)`, `requireTrainerProgramOwnership(programId)`. The `require*` variants throw a `Response` on failure — catch with `instanceof Response`.
 
-- **Default to Server Components** (RSC) — no `'use client'` unless strictly needed
-- **Split pattern** for pages with mixed needs:
-  - `page.tsx` → Server Component (auth check, DashboardLayout, data fetching)
-  - `_content.tsx` → Client Component (interactivity, hooks, forms)
+`getSession()` calls `supabase.auth.getUser()` (server-validated), then enriches with Prisma user data. Dual identity: Supabase Auth owns JWT sessions; Prisma `User` table owns app data — linked via email.
+
+### 3.6 — Performance rules (from backend skill)
+
+Each one has measured latency impact — see `.github/skills/zero-cento-backend/SKILL.md` for full detail.
+
+1. Middleware must NOT call `getUser()` for `/api/*` routes — early return for API paths (−200–400 ms/req).
+2. `getRateLimitConfig(pathname, method)` enables Redis only for `GET` on resource endpoints (`exercises`, `programs`, `personal-records`); mutations use in-memory.
+3. Ownership check = single `findFirst({ trainerId, resourceId })` — never `findMany` + `findUnique`.
+4. Route handlers load only what they need. Prefer `select` over `include`. Use `Promise.all` for independent reads. No full program-tree fetches when a slice suffices.
+5. Mutations return the updated resource (matching the `GET` shape) so the client skips a follow-up fetch.
+
+### 3.7 — Server vs Client components
+
+- Default to Server Components. No `'use client'` unless needed.
+- Pages with mixed needs use the split:
+  - `page.tsx` → Server Component (auth, redirect, `DashboardLayout`)
+  - `_content.tsx` → Client Component (state, hooks, forms)
 
 ```typescript
-// page.tsx (server)
-export default async function SomePage() {
+// page.tsx
+import { getSession } from '@/lib/auth'
+import { redirect } from 'next/navigation'
+import DashboardLayout from '@/components/DashboardLayout'
+import FeatureContent from './_content'
+
+export default async function FeaturePage() {
   const session = await getSession()
-  if (!session || session.role !== 'trainer') redirect('/login')
+  if (!session) redirect('/login')
+  if (session.user.role !== 'trainer') redirect(`/${session.user.role}/dashboard`)
   return (
-    <DashboardLayout role="trainer">
-      <SomeContent />
+    <DashboardLayout user={session.user}>
+      <FeatureContent />
     </DashboardLayout>
   )
 }
 
-// _content.tsx (client)
+// _content.tsx
 'use client'
-export default function SomeContent() {
-  const { t } = useTranslation('trainer')
-  // ... hooks, forms, etc.
+export default function FeatureContent() {
+  const { t } = useTranslation(['trainer', 'common'])
+  // hooks, forms, fetch ...
 }
 ```
 
-### 3.7 — File naming conventions
+### 3.8 — Loaders (two patterns only)
+
+1. **Click-triggered async** → `<Button isLoading={...} loadingText={t('common.saving')}>` or `<ActionIconButton isLoading={...}>` for icon-only. Never a raw `<button disabled={loading}>`.
+2. **Page navigation** → handled automatically by `loading.tsx` segments (Next.js renders `NavigationLoadingOverlay`). For client-driven post-submit redirects, call `useNavigationLoader().start()` before `router.push()` and `.stop()` on error.
+
+`<FullPageLoader>` (logo + branding) is reserved for cold-start / app bootstrap, not in-app navigation.
+
+### 3.9 — File naming
 
 | Type | Convention | Example |
 |---|---|---|
-| Files/Folders | `kebab-case` | `user-profile.tsx` |
+| Files / folders | `kebab-case` | `user-profile.tsx` |
 | Components | `PascalCase` | `UserProfile` |
 | Functions | `camelCase` | `getUserById` |
 | Constants | `UPPER_SNAKE_CASE` | `MAX_RETRIES` |
-| API routes | `route.ts` in `app/api/` folder | `app/api/users/route.ts` |
+| API routes | `route.ts` in `app/api/...` | `app/api/users/route.ts` |
 
-### 3.8 — Form pattern (React Hook Form + Zod)
+### 3.10 — Forms
 
 ```typescript
 const schema = z.object({
@@ -194,7 +248,6 @@ const { register, handleSubmit, formState: { errors } } = useForm<z.infer<typeof
   resolver: zodResolver(schema),
 })
 
-// In JSX — always use custom components
 <FormLabel required>{t('field.name')}</FormLabel>
 <Input
   {...register('name')}
@@ -211,35 +264,32 @@ const { register, handleSubmit, formState: { errors } } = useForm<z.infer<typeof
 ```typescript
 <Button
   variant="primary"        // 'primary' | 'secondary' | 'danger'
-  size="md"               // 'sm' | 'md' | 'lg'
-  isLoading={false}       // shows spinner, disables button
+  size="md"                // 'sm' | 'md' | 'lg'
+  isLoading={false}
   loadingText="Saving..."
-  icon={<IconComponent />}
-  iconPosition="left"     // 'left' | 'right'
+  leftIcon={<Icon />}
+  rightIcon={<Icon />}
   fullWidth={false}
   disabled={false}
   onClick={handleClick}
->
-  Label
-</Button>
+>Label</Button>
 ```
 
 ### `<Input>`
 ```typescript
 <Input
-  inputSize="md"          // 'md' | 'lg'
-  state="default"         // 'default' | 'error' | 'success'
+  inputSize="md"           // 'md' | 'lg'
+  state="default"          // 'default' | 'error' | 'success'
   helperText="Error msg"
-  icon={<SearchIcon />}
-  iconPosition="left"
+  leftIcon={<SearchIcon />}
   {...register('fieldName')}
 />
 ```
 
 ### `<Card>`
 ```typescript
-<Card variant="default">  // 'default' | 'elevated' | 'outlined'
-  content
+<Card variant="default">   {/* 'default' | 'elevated' | 'outlined' */}
+  ...
 </Card>
 ```
 
@@ -247,7 +297,6 @@ const { register, handleSubmit, formState: { errors } } = useForm<z.infer<typeof
 ```typescript
 const { showToast } = useToast()
 showToast({ type: 'success', message: t('saved') })
-showToast({ type: 'error', message: t('error') })
 ```
 
 ### `<ConfirmationModal>`
@@ -258,7 +307,7 @@ showToast({ type: 'error', message: t('error') })
   onConfirm={handleDelete}
   title={t('confirm.title')}
   message={t('confirm.message')}
-  confirmVariant="danger"
+  variant="danger"
 />
 ```
 
@@ -266,12 +315,18 @@ showToast({ type: 'error', message: t('error') })
 
 ## 5. Data Model Quick Reference
 
-Core entities: `User` · `Exercise` · `Program` · `Week` · `WorkoutExercise` · `ExerciseFeedback` · `SetPerformed` · `PersonalRecord` · `MuscleGroup` · `MovementPattern` · `TrainerTrainee`
+Core entities: `User` · `Exercise` · `TrainingProgram` · `Week` · `Workout` · `WorkoutExercise` · `ExerciseFeedback` · `SetPerformed` · `PersonalRecord` · `MuscleGroup` · `MovementPattern` · `TrainerTrainee`.
 
-Key rules:
-- `User.role` is an enum: `ADMIN` | `TRAINER` | `TRAINEE`  
-- Weight calculation uses `calculateEffectiveWeight()` in `src/lib/calculations.ts` — **always use this function, never re-implement the logic**
-- TrainerTrainee is a composite key relationship — always validate trainer owns the trainee before any operation
+Hierarchy: `TrainingProgram` → `Week` → `Workout` → `WorkoutExercise`.
+
+Key enums (all lowercase):
+- `Role`: `admin | trainer | trainee`
+- `WeekType`: `normal | test | deload` — drives trainee UI theming
+- `WeightType`: `absolute | percentage_1rm | percentage_rm | percentage_previous` — `percentage_previous` resolves recursively via `calculateEffectiveWeight()` in `src/lib/calculations.ts`. **Always** call this function — never re-implement.
+- `ProgramStatus`: `draft | active | completed`
+- `ExerciseType`: `fundamental | accessory`
+
+`TrainerTrainee` is a many-to-many join. Always verify trainer owns the trainee before any operation (single `findFirst` — see Rule 3 in the backend skill).
 
 ---
 
@@ -279,66 +334,90 @@ Key rules:
 
 | Route prefix | Allowed roles |
 |---|---|
-| `/admin/*` | ADMIN only |
-| `/trainer/*` | TRAINER only |
-| `/trainee/*` | TRAINEE only |
-| `/api/admin/*` | ADMIN only |
-| `/api/trainer/*` | TRAINER only |
-| `/api/trainee/*` | TRAINEE only |
+| `/admin/*` | `admin` only |
+| `/trainer/*` | `trainer` only |
+| `/trainee/*` | `trainee` only |
+| `/api/admin/*` | `admin` only |
+| `/api/trainer/*` | `trainer` only |
+| `/api/trainee/*` | `trainee` only |
 
-Always check ownership: a trainer must own the trainee they're operating on.
+Trainers must own the trainee/program/workout/exercise they operate on.
+
+**Public routes** (no middleware auth): `/login`, `/forgot-password`, `/reset-password`, `/force-change-password`, `/onboarding/set-password`.
 
 ---
 
 ## 7. Changelog — Mandatory Update
 
-**Every time you implement a change, add an entry to `implementation-docs/CHANGELOG.md`.**
+Every change adds an entry to `implementation-docs/CHANGELOG.md`:
 
-Format:
 ```markdown
 ### [GG Mese AAAA] — Short title
 
-**Task checklist:** #X.Y  
-**File modificati:** `path/to/file.ts`, `path/to/other.tsx`  
-**Note:** What was done, any decisions made, issues encountered.
+**Task checklist:** #X.Y
+**File modificati:** `path/to/file.ts`, `path/to/other.tsx`
+**Note:** What was done, decisions made, issues encountered.
 ```
 
-Also update `implementation-docs/CHECKLIST.md` — mark the task `[x]` when done.
+Also mark the corresponding task `[x]` in `implementation-docs/CHECKLIST.md`.
 
 ---
 
 ## 8. Testing Requirements
 
-- **Unit tests** (Vitest): every utility function and Zod schema
-- **Integration tests** (Vitest): every API route — happy path + auth failure + validation error
-- **E2E tests** (Playwright): critical user flows only
+Full protocol in `.github/skills/zero-cento-testing/SKILL.md`. Summary:
 
-Test file locations:
-- `tests/unit/` — unit tests
-- `tests/integration/` — API route tests
-- `tests/e2e/` — end-to-end flows
+- **Unit** (Vitest, jsdom) → `tests/unit/` — every utility, schema, component
+- **Integration** (Vitest, jsdom) → `tests/integration/` — every API route: 200/201, 400, 401, 403, 404
+- **E2E** (Playwright) → `tests/e2e/` — critical flows only
+- Coverage enforced at **80%** for files in `vitest.config.ts` `coverage.include`
+- Run: `npm run test:unit` · single file: `npx vitest run tests/unit/foo.test.ts` · E2E: `npm run test:e2e`
+- Node 20+ required (`.nvmrc`); Node 18 fails on `styleText`
 
----
-
-## 9. What NOT to Do
-
-- ❌ Do not install new UI libraries (MUI, shadcn, Radix, etc.) — use existing custom components
-- ❌ Do not use hardcoded hex colors — use Tailwind brand tokens
-- ❌ Do not write `<button>`, `<input>`, `<label>`, `<textarea>` directly — use custom components
-- ❌ Do not skip i18n for any visible string
-- ❌ Do not return raw `NextResponse.json()` from API routes — use `ApiResponse` wrappers
-- ❌ Do not add `'use client'` to page.tsx — split into `_content.tsx` instead
-- ❌ Do not bypass RBAC or ownership checks
-- ❌ Do not re-implement `calculateEffectiveWeight` — import from `src/lib/calculations.ts`
-- ❌ Do not forget to update `CHANGELOG.md` and `CHECKLIST.md`
+Shared mocks live in `tests/unit/setup.ts` (Next router/link, Supabase, Prisma, react-i18next). Do not redeclare locally. Shared session fixtures in `tests/integration/fixtures.ts`.
 
 ---
 
-## 10. Remaining Tasks (as of April 2026)
+## 9. Commands
 
-Open items tracked in `implementation-docs/CHECKLIST.md`:
+```bash
+# Dev
+npm run dev              # http://localhost:3000
+npm run build
+npm run lint
+npm run type-check       # tsc --noEmit
 
-**Sprint 6 — CI/CD (7 tasks):** `vercel.json`, GitHub secrets, Sentry, UptimeRobot  
-**Sprint 8 — PWA (7 tasks):** Service worker, offline cache, real icons, DB indexes, admin report cache  
-**Sprint 11 — i18n (4 tasks):** Remaining hardcoded error keys in 3 pages + integration test updates  
-**Vulnerabilities:** `eslint-config-next` → 16.2.4 · `minimatch` via `@typescript-eslint` upgrade
+# Database
+npm run prisma:generate
+npm run prisma:migrate
+npm run prisma:studio    # http://localhost:5555
+npm run prisma:seed
+
+# Tests
+npm run test:unit
+npm run test:e2e
+npm run test:e2e:ui
+```
+
+---
+
+## 10. Git Workflow
+
+Two branches: `development` (test/staging) and `master` (production). Features branch from `development`. Direct pushes forbidden. Hotfixes branch from `master` and backport to `development`. Full rules in `.github/skills/git-pr-workflow/SKILL.md`.
+
+---
+
+## 11. What NOT to Do
+
+- ❌ Install new UI libraries (shadcn, Radix, new MUI components for non-DataGrid use) — use existing custom components
+- ❌ Hardcoded hex colors — use brand tokens
+- ❌ Raw `<button>`, `<input>`, `<label>`, `<textarea>` — use custom components
+- ❌ Hardcoded user-facing strings — use `useTranslation`
+- ❌ Raw `NextResponse.json()` from API routes — use `apiSuccess` / `apiError`
+- ❌ `'use client'` in `page.tsx` — split into `_content.tsx`
+- ❌ Bypass RBAC or ownership checks
+- ❌ Re-implement `calculateEffectiveWeight` — import from `src/lib/calculations.ts`
+- ❌ Call `supabase.auth.getUser()` in middleware for `/api/*` routes
+- ❌ Split ownership checks into `findMany` + `findUnique`
+- ❌ Load full program tree when a slice suffices
+- ❌ Skip the `CHANGELOG.md` / `CHECKLIST.md` update
