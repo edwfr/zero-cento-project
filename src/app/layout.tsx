@@ -3,8 +3,7 @@ import { cookies } from 'next/headers'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import PWAInstallPrompt from '@/components/PWAInstallPrompt'
-import { ToastProvider, NavigationLoadingProvider } from '@/components'
-import { I18nProvider } from '@/lib/i18n/provider'
+import { Providers } from './providers'
 import commonIt from '../../public/locales/it/common.json'
 import commonEn from '../../public/locales/en/common.json'
 
@@ -53,14 +52,10 @@ export default function RootLayout({
     return (
         <html lang="it">
             <body className={inter.className}>
-                <I18nProvider>
-                    <ToastProvider>
-                        <NavigationLoadingProvider>
-                            {children}
-                            <PWAInstallPrompt />
-                        </NavigationLoadingProvider>
-                    </ToastProvider>
-                </I18nProvider>
+                <Providers>
+                    {children}
+                    <PWAInstallPrompt />
+                </Providers>
             </body>
         </html>
     )
