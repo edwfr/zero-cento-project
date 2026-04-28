@@ -41,16 +41,20 @@ vi.mock('@/lib/supabase-server', () => ({
     createServerClient: vi.fn(),
 }))
 
-// Mock Prisma
 // Mock react-i18next
-vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
-        t: (key: string) => key,
-        i18n: { language: 'en', changeLanguage: vi.fn() },
-    }),
-    Trans: ({ children }: { children: React.ReactNode }) => children,
-    initReactI18next: { type: '3rdParty', init: vi.fn() },
-}))
+// IMPORTANT: stableT must be created inside the factory to avoid hoisting issues,
+// but still be a stable reference across renders (not a new function per useTranslation() call).
+vi.mock('react-i18next', () => {
+    const stableT = (key: string) => key
+    return {
+        useTranslation: () => ({
+            t: stableT,
+            i18n: { language: 'en', changeLanguage: vi.fn() },
+        }),
+        Trans: ({ children }: { children: React.ReactNode }) => children,
+        initReactI18next: { type: '3rdParty', init: vi.fn() },
+    }
+})
 
 vi.mock('@/lib/prisma', () => ({
     prisma: {

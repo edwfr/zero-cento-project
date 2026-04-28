@@ -226,6 +226,7 @@ model Week {
   weekType          WeekType  @default(normal)
   feedbackRequested Boolean   @default(false)
   generalFeedback   String?
+  isCompleted       Boolean   @default(false)
 
   // Relations
   program  TrainingProgram @relation("ProgramWeeks", fields: [programId], references: [id], onDelete: Cascade)
@@ -233,6 +234,7 @@ model Week {
 
   @@index([programId, weekNumber])
   @@index([startDate])
+  @@index([programId, isCompleted])
   @@map("weeks")
 }
 
@@ -241,12 +243,14 @@ model Workout {
   weekId   String
   dayIndex Int
   notes    String?
+  isCompleted Boolean @default(false)
 
   // Relations
   week             Week              @relation("WeekWorkouts", fields: [weekId], references: [id], onDelete: Cascade)
   workoutExercises WorkoutExercise[] @relation("WorkoutExercises")
 
   @@index([weekId])
+  @@index([weekId, isCompleted])
   @@map("workouts")
 }
 
@@ -266,6 +270,7 @@ model WorkoutExercise {
   isSkeletonExercise Boolean @default(false) // True se esercizio è uno schema vuoto/template non completamente configurato
   notes      String?
   order      Int
+  isCompleted Boolean   @default(false)
 
   // Relations
   workout          Workout            @relation("WorkoutExercises", fields: [workoutId], references: [id], onDelete: Cascade)
@@ -274,6 +279,7 @@ model WorkoutExercise {
 
   @@index([workoutId, order])
   @@index([exerciseId])
+  @@index([workoutId, isCompleted])
   @@map("workout_exercises")
 }
 

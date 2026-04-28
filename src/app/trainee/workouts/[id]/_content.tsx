@@ -60,6 +60,7 @@ interface WorkoutExerciseWithWeight {
     isWarmup: boolean
     notes: string | null
     order: number
+    isCompleted: boolean
     feedback: ExerciseFeedback | null
 }
 
@@ -148,6 +149,7 @@ export default function WorkoutDetailContent() {
 
     const [feedbackData, setFeedbackData] = useState<Record<string, SetPerformed[]>>({})
     const [exerciseRPE, setExerciseRPE] = useState<Record<string, number | null>>({})
+    const [exerciseCompleted, setExerciseCompleted] = useState<Record<string, boolean>>({})
     const [globalNotes, setGlobalNotes] = useState('')
     const [expandedVideos, setExpandedVideos] = useState<Record<string, boolean>>({})
     const [currentStep, setCurrentStep] = useState(0)
@@ -178,12 +180,14 @@ export default function WorkoutDetailContent() {
 
             const initialFeedback: Record<string, SetPerformed[]> = {}
             const initialRPE: Record<string, number | null> = {}
+            const initialCompleted: Record<string, boolean> = {}
 
             const orderedExercises = [...data.data.workout.exercises].sort(
                 (left: WorkoutExerciseWithWeight, right: WorkoutExerciseWithWeight) => left.order - right.order
             )
 
             orderedExercises.forEach((we: WorkoutExerciseWithWeight) => {
+                initialCompleted[we.id] = we.isCompleted
                 if (we.feedback) {
                     persistedExerciseIdsRef.current.add(we.id)
                     initialFeedback[we.id] = we.feedback.setsPerformed.map(sp => ({
@@ -210,6 +214,7 @@ export default function WorkoutDetailContent() {
 
             setFeedbackData(initialFeedback)
             setExerciseRPE(initialRPE)
+            setExerciseCompleted(initialCompleted)
             setCurrentStep(0)
             draftSyncEnabledRef.current = false
         } catch (err: unknown) {
@@ -444,6 +449,67 @@ export default function WorkoutDetailContent() {
         }))
     }
 
+    const toggleExerciseCompleted = (workoutExerciseId: string) => {
+        const next = !exerciseCompleted[workoutExerciseId]
+        
+        // 1. Optimistic update: respond immediately to user
+        setExerciseCompleted((prev) => ({
+            ...prev,
+            [workoutExerciseId]: next,
+        }))
+
+        // 2. Fire-and-forget PATCH to server in background
+        fetch(`/api/trainee/workout-exercises/${workoutExerciseId}/complete`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isCompleted: next }),
+        })
+            .then((res) => {
+                if (!res.ok) {
+                    throw new Error('Failed to update completion')
+                }
+                return res.json()
+            })
+            .then((data) => {
+                // On success, show celebration toasts for parent completions
+                const result = data.data
+                
+                // Toast sequence with delays to avoid overlap
+                let toastDelay = 0
+                
+                if (result.workout.isCompleted) {
+                    setTimeout(() => {
+                        showToast(t('workouts.workoutCompletedToast'), 'success')
+                    }, toastDelay)
+                    toastDelay += 200
+                }
+                
+                if (result.week.isCompleted) {
+                    setTimeout(() => {
+                        showToast(
+                            t('workouts.weekCompletedToast', { week: result.week.weekNumber }),
+                            'success'
+                        )
+                    }, toastDelay)
+                    toastDelay += 200
+                }
+                
+                if (result.program.status === 'completed') {
+                    setTimeout(() => {
+                        showToast(t('workouts.programCompletedToast'), 'success')
+                    }, toastDelay)
+                }
+            })
+            .catch((err) => {
+                // On error: revert optimistic state
+                setExerciseCompleted((prev) => ({
+                    ...prev,
+                    [workoutExerciseId]: !next,
+                }))
+                showToast(t('workouts.errorMarkComplete'), 'error')
+            })
+    }
+
     const toggleVideo = (workoutExerciseId: string) => {
         setExpandedVideos((prev) => ({
             ...prev,
@@ -664,6 +730,8 @@ export default function WorkoutDetailContent() {
                             onUpdateSet={(id, idx, field, value) => updateSet(id, idx, field, value)}
                             onToggleSet={(id, idx) => toggleSetCompleted(id, idx)}
                             onUpdateRpe={(rpe) => updateExerciseRPE(currentExercise.id, rpe)}
+                            isCompleted={exerciseCompleted[currentExercise.id] ?? false}
+                            onToggleCompleted={() => toggleExerciseCompleted(currentExercise.id)}
                             rpeDescriptions={rpeDescriptions}
                             t={t}
                         />
@@ -733,6 +801,8 @@ interface ExerciseFocusCardProps {
     onUpdateSet: (id: string, idx: number, field: 'weight' | 'reps', value: number) => void
     onToggleSet: (id: string, idx: number) => void
     onUpdateRpe: (rpe: number | null) => void
+    isCompleted: boolean
+    onToggleCompleted: () => void
     rpeDescriptions: Record<number, string>
     t: (key: string, vars?: Record<string, unknown>) => string
 }
@@ -746,6 +816,8 @@ function ExerciseFocusCard({
     onUpdateSet,
     onToggleSet,
     onUpdateRpe,
+    isCompleted,
+    onToggleCompleted,
     rpeDescriptions,
     t,
 }: ExerciseFocusCardProps) {
@@ -942,6 +1014,21 @@ function ExerciseFocusCard({
                         </div>
                     ))}
                 </div>
+            </div>
+
+            {/* Exercise completion button */}
+            <div className="border-t border-gray-200 p-4 sm:p-6">
+                <button
+                    onClick={onToggleCompleted}
+                    className={`w-full px-4 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 ${
+                        isCompleted
+                            ? 'bg-state-success text-white hover:bg-opacity-90'
+                            : 'bg-brand-primary text-white hover:bg-brand-primary-hover'
+                    }`}
+                >
+                    <Check className="w-5 h-5" />
+                    {isCompleted ? t('workouts.markExerciseIncomplete') : t('workouts.markExerciseComplete')}
+                </button>
             </div>
 
             {/* Overall RPE */}

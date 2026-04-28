@@ -1,8 +1,8 @@
 # ✅ CHECKLIST SVILUPPO - ZeroCento Training Platform
 
 **Posizionamento prodotto:** training management platform trainer-led  
-**Stato attuale:** 152/165 task completati (~92%)  
-**Task rimanenti:** 13 (Sprint 6: 5 task, Sprint 8: 7 task, Sprint 11: 1 task)  
+**Stato attuale:** 165/175 task completati (~94%)  
+**Task rimanenti:** 10 (Sprint 6: 5 task, Sprint 8: 7 task, Sprint 11: 1 task, ma 3 già completati del TM)  
 **Riferimenti:** [system-review.md](./system-review.md) · [CHANGELOG.md](./CHANGELOG.md)
 
 ---
@@ -612,6 +612,35 @@
 
 ---
 
+## Trainer Management — Exercise Completion Tracking (~8h)
+
+> **Obiettivo:** Implementare tracciamento esplicito del completamento degli esercizi da parte del trainee con cascata automatica ai livelli superiori (workout → week → programma).
+
+### Phase 1-10 — Full Implementation
+
+- [x] **TM.1** Schema Prisma: aggiungere `isCompleted Boolean @default(false)` a WorkoutExercise, Workout, Week + 3 indici compositi (1h) ✅ _28 Apr 2026_
+- [x] **TM.2** Completion Service: creare `cascadeCompletion()` con transazione atomica, guard, conditional updates (2h) ✅ _28 Apr 2026_
+- [x] **TM.3** API Endpoint PATCH: `/api/trainee/workout-exercises/[id]/complete` con validation + ownership (1h) ✅ _28 Apr 2026_
+- [x] **TM.4** Update GET Workout: includere `isCompleted` nella response (0.5h) ✅ _28 Apr 2026_
+- [x] **TM.5** Frontend Widget: button toggle nell'ExerciseFocusCard con optimistic update + fire-and-forget (1.5h) ✅ _28 Apr 2026_
+- [x] **TM.6** i18n Keys: 7 chiavi nuove (EN + IT) per button labels, error, toasts (0.5h) ✅ _28 Apr 2026_
+- [x] **TM.7** Toast Cascade: celebrazione toasts sequenziali per workout/week/programma completati (0.5h) ✅ _28 Apr 2026_
+- [x] **TM.8** Unit Tests: 6 test case per `cascadeCompletion()` (1h) ✅ _28 Apr 2026_
+- [x] **TM.9** Integration Tests: 7 test case per PATCH endpoint (1h) ✅ _28 Apr 2026_
+- [x] **TM.10** Changelog & Documentation: entry CHANGELOG.md + update CHECKLIST (0.5h) ✅ _28 Apr 2026_
+
+**File modificati:**
+- `prisma/schema.prisma` (schema + indici)
+- `src/lib/completion-service.ts` (nuovo)
+- `src/app/api/trainee/workout-exercises/[id]/complete/route.ts` (nuovo)
+- `src/app/api/trainee/workouts/[id]/route.ts` (update response)
+- `src/app/trainee/workouts/[id]/_content.tsx` (state + UI + toast logic)
+- `public/locales/en/trainee.json`, `public/locales/it/trainee.json` (i18n keys)
+- `tests/unit/completion-service.test.ts` (nuovo)
+- `tests/integration/workout-exercise-complete.test.ts` (nuovo)
+
+---
+
 ## Riepilogo per priorità
 
 | Priorità   | Sprint    | Task         | Effort stimato |
@@ -627,8 +656,9 @@
 | Alto       | Sprint 9  | 9.1–9.23     | ~9h            |
 | Medio      | Sprint 10 | 10.1–10.29   | ~5h            |
 | Medio      | Sprint 11 | 11.1–11.64   | ~15h           |
-| **Totale** |           | **165 task** | **~157h**      |
+| Alto       | Trainer Mgmt | TM.1–TM.10 | ~8h            |
+| **Totale** |           | **175 task** | **~165h**      |
 
 ---
 
-*Ultimo aggiornamento: 27 Aprile 2026*
+*Ultimo aggiornamento: 28 Aprile 2026*

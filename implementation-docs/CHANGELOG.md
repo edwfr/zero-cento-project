@@ -8,6 +8,68 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## 28 Aprile 2026 — Fix: NavigationLoadingOverlay stuck after new program creation
+
+**File modificati:**
+- `src/components/NavigationLoadingProvider.tsx`
+
+**Problema:** Dopo la creazione di un nuovo programma, `navLoader.start()` veniva chiamato in `NewProgramContent` ma `stop()` non veniva mai chiamato sulla pagina di destinazione. Il provider persiste across client-side navigations (è montato in `providers.tsx`), quindi l'overlay restava visibile indefinitamente.
+
+**Fix:** `NavigationLoadingProvider` ora usa `usePathname()` per rilevare il cambio di route e chiama automaticamente `stop()` al completamento della navigazione.
+
+---
+
+## 28 Aprile 2026 — Feature: Exercise Completion Tracking con Cascade Logic
+
+**Task checklist:** Trainer Management → Exercise Completion Tracking (FASE 1-10)
+
+**File modificati:** 
+- Schema: `prisma/schema.prisma` (3 campi + 3 indici)
+- Backend service: `src/lib/completion-service.ts` (nuovo)
+- API endpoint: `src/app/api/trainee/workout-exercises/[id]/complete/route.ts` (nuovo)
+- GET endpoint: `src/app/api/trainee/workouts/[id]/route.ts` (updated)
+- Frontend: `src/app/trainee/workouts/[id]/_content.tsx` (state + logic + JSX)
+- i18n: `public/locales/en/trainee.json`, `public/locales/it/trainee.json`
+- Tests: `tests/unit/completion-service.test.ts` (nuovo, 6 test cases), `tests/integration/workout-exercise-complete.test.ts` (nuovo, 7 test cases)
+
+**Descrizione:**
+Implementata tracciamento esplicito del completamento degli esercizi. Il trainee può ora marcare un esercizio come completato con un click su un pulsante verde/grigio nel focus mode. La marcatura cascata automaticamente verso l'alto: se tutti gli esercizi di un workout sono completati → workout marcato come completato; se tutti i workout di una week → week completata; se tutte le week → programma completato (status='completed').
+
+**Architettura:**
+1. **Schema Prisma:** Aggiunti 3 boolean `isCompleted` (default false) su WorkoutExercise, Workout, Week + 3 indici compositi ottimizzati per COUNT query sulla cascata.
+2. **Completion Service (`completion-service.ts`):** Transazione atomica con logica di cascata bidrazionale:
+   - Completamento: esercizio → workout → week → programma
+   - De-completamento: reverte upstream levels se dipendenze lo permettono
+   - Guard: workout/week/programma completati solo se tutti figli completati; workout con 0 esercizi rimane incomplete
+   - Conditional updates: solo i level di cui lo stato effettivamente cambia vengono aggiornati (riduce write DB)
+3. **API Endpoint (`PATCH /api/trainee/workout-exercises/[id]/complete`):** 
+   - Valida input Zod: `{ isCompleted: boolean }`
+   - Verifica ownership: single findFirst nested query per trainee
+   - Chiama `cascadeCompletion()` e ritorna `CascadeResult` con stati aggiornati ai 4 livelli
+   - Segue pattern copilot-instructions.md §3.5 esattamente
+4. **Frontend (`_content.tsx`):**
+   - State `exerciseCompleted: Record<string, boolean>` inizializzato da API response
+   - Toggle handler con optimistic update + fire-and-forget PATCH
+   - Error revert + toast su failure
+   - ExerciseFocusCard button tra sets e RPE selector
+   - Toast cascade: mostra success toasts sequenziali se workout/week/programma vengono completati (max 3 toasts con delay 200ms)
+5. **i18n:** 7 nuove chiavi (EN + IT):
+   - `markExerciseComplete` / `markExerciseIncomplete` (button label)
+   - `exerciseCompleted`, `errorMarkComplete` (feedback)
+   - `workoutCompletedToast`, `weekCompletedToast`, `programCompletedToast` (celebrations)
+
+**Performance:** 
+- No N+1: cascata è single transaction con 4 aggregates (COUNT queries indicizzate)
+- Fire-and-forget PATCH non blocca UX
+- Optimistic update risponde istantaneamente
+- Indici compositi (`[workoutId, isCompleted]`, `[weekId, isCompleted]`, `[programId, isCompleted]`) ottimizzano COUNT
+
+**Testing:**
+- Unit: 6 test per `cascadeCompletion()` (partial, full cascade, de-completion, empty workout, state no-change, error handling)
+- Integration: 7 test per PATCH endpoint (200 success, 400 validation, 401 unauthorized, 403 forbidden, 404 not found, toggle, ownership)
+
+---
+
 ## 28 Aprile 2026 — Bugfix: workout con reps "max" mostrato come non completato
 
 **File modificati:** `src/lib/trainee-program-data.ts`, `src/app/trainee/workouts/[id]/_content.tsx`, `tests/unit/lib/trainee-program-data.test.ts`

@@ -6,7 +6,7 @@ import { Trans, useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import Link from 'next/link'
 import { BarChart3 } from 'lucide-react'
-import { Input, FormLabel, Button, useNavigationLoader } from '@/components'
+import { Input, FormLabel, Button } from '@/components'
 
 interface Trainee {
     id: string
@@ -24,7 +24,6 @@ export default function NewProgramContent({
     initialTraineeId,
 }: NewProgramContentProps) {
     const router = useRouter()
-    const navLoader = useNavigationLoader()
     const { t } = useTranslation(['trainer', 'common'])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -80,10 +79,8 @@ export default function NewProgramContent({
                 throw new Error(getApiErrorMessage(data, t('programs.createError'), t))
             }
 
-            navLoader.start(t('common:loadingPageTransition'))
             router.push(`/trainer/programs/${data.data.program.id}/edit`)
         } catch (err: unknown) {
-            navLoader.stop()
             setError(err instanceof Error ? err.message : t('programs.createError'))
             setLoading(false)
         }

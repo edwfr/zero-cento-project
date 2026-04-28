@@ -210,7 +210,14 @@
         "errorNotFound": "Workout not found",
         "feedbackSuccess": "Feedback sent successfully!",
         "errorFeedback": "Error sending feedback",
-        "errorRepsRequired": "Enter the reps performed before marking the set as done"
+        "errorRepsRequired": "Enter the reps performed before marking the set as done",
+        "markExerciseComplete": "Mark as done",
+        "markExerciseIncomplete": "Mark as not done",
+        "exerciseCompleted": "Exercise completed",
+        "errorMarkComplete": "Failed to update. Please try again.",
+        "workoutCompletedToast": "Workout completed!",
+        "weekCompletedToast": "Week {{week}} completed!",
+        "programCompletedToast": "Training program completed! 🎉"
     },
     "records": {
         "title": "Your Personal Records",

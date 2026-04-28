@@ -210,7 +210,14 @@
         "errorNotFound": "Workout non trovato",
         "feedbackSuccess": "Feedback inviato con successo!",
         "errorFeedback": "Errore invio feedback",
-        "errorRepsRequired": "Inserisci le ripetizioni eseguite prima di spuntare la serie"
+        "errorRepsRequired": "Inserisci le ripetizioni eseguite prima di spuntare la serie",
+        "markExerciseComplete": "Segna come completato",
+        "markExerciseIncomplete": "Segna come non completato",
+        "exerciseCompleted": "Esercizio completato",
+        "errorMarkComplete": "Errore aggiornamento. Riprova.",
+        "workoutCompletedToast": "Workout completato!",
+        "weekCompletedToast": "Settimana {{week}} completata!",
+        "programCompletedToast": "Programma di allenamento completato! 🎉"
     },
     "records": {
         "title": "I Tuoi Massimali",

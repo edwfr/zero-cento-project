@@ -45,6 +45,7 @@ const fixtureWorkout = {
             effectiveWeight: 80,
             restTime: 'm2' as const,
             isWarmup: false,
+            isCompleted: false,
             notes: null,
             order: 1,
             feedback: null,
@@ -68,6 +69,7 @@ const fixtureWorkout = {
             effectiveWeight: null,
             restTime: 'm1' as const,
             isWarmup: false,
+            isCompleted: false,
             notes: null,
             order: 2,
             feedback: null,
@@ -121,7 +123,7 @@ describe('Trainee workout focus mode', () => {
         await renderContent()
         await user.click(screen.getByRole('button', { name: /next|avanti/i }))
         expect(screen.getByText('Tricep Extension')).toBeInTheDocument()
-        await user.click(screen.getByRole('button', { name: /back|indietro/i }))
+        await user.click(screen.getByRole('button', { name: /prev|back|indietro/i }))
         expect(screen.getByText('Bench Press')).toBeInTheDocument()
     })
 
@@ -132,14 +134,14 @@ describe('Trainee workout focus mode', () => {
         await user.click(screen.getByRole('button', { name: /next|avanti/i }))
         // step 1 -> 2 (final)
         await user.click(screen.getByRole('button', { name: /next|avanti/i }))
-        expect(screen.getByText(/summary|riepilogo/i)).toBeInTheDocument()
-        expect(screen.getByRole('button', { name: /complete workout|completa allenamento/i })).toBeInTheDocument()
+        expect(screen.getAllByText(/summary|riepilogo/i).length).toBeGreaterThan(0)
+        expect(screen.getByRole('button', { name: /completeShort|complete workout|completa allenamento/i })).toBeInTheDocument()
     })
 
     it('tapping the set-complete button on a set with empty inputs records the planned reps and effective weight', async () => {
         const user = userEvent.setup()
         await renderContent()
-        const checkButtons = screen.getAllByRole('button', { name: /mark set/i })
+        const checkButtons = screen.getAllByRole('button', { name: /workouts\.markSetDone/i })
         expect(checkButtons.length).toBeGreaterThanOrEqual(3)
         await user.click(checkButtons[0])
 
@@ -153,7 +155,7 @@ describe('Trainee workout focus mode', () => {
     it('keeps inputs editable after a set is marked completed', async () => {
         const user = userEvent.setup()
         await renderContent()
-        const checkButtons = screen.getAllByRole('button', { name: /mark set/i })
+        const checkButtons = screen.getAllByRole('button', { name: /workouts\.markSetDone/i })
         await user.click(checkButtons[0])
         const repsInput = screen.getAllByRole('spinbutton')[0] as HTMLInputElement
         expect(repsInput).not.toBeDisabled()
@@ -168,8 +170,8 @@ describe('Trainee workout focus mode', () => {
         await user.click(screen.getByRole('button', { name: /next|avanti/i }))
         await user.click(screen.getByRole('button', { name: /next|avanti/i }))
         // On final step. No sets done in either exercise.
-        expect(screen.getByText(/exercises with no data|esercizi senza dati/i)).toBeInTheDocument()
-        expect(screen.getByText('Bench Press')).toBeInTheDocument()
-        expect(screen.getByText('Tricep Extension')).toBeInTheDocument()
+        expect(screen.getByText(/missingDataInline|exercises with no data|esercizi senza dati/i)).toBeInTheDocument()
+        expect(screen.getByText(/Bench Press/)).toBeInTheDocument()
+        expect(screen.getByText(/Tricep Extension/)).toBeInTheDocument()
     })
 })

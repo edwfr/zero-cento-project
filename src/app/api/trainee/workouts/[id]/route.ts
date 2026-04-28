@@ -135,6 +135,7 @@ export async function GET(
                 isWarmup: we.isWarmup,
                 notes: we.notes,
                 order: we.order,
+                isCompleted: we.isCompleted,
             }
         })
 
