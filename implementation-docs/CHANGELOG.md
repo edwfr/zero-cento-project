@@ -8,6 +8,74 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## 2026-04-28 — Trainee Workout Mobile Focus Mode Redesign
+
+**Task:** Implement single-exercise focus mode for trainee workout detail page  
+**Files modificati:**
+- `src/app/trainee/workouts/[id]/_content.tsx` (1,400+ lines)
+- `tests/unit/trainee-workout-focus.test.tsx` (7 test cases)
+- `tests/e2e/trainee-complete-workout.spec.ts` (selector updates)
+- `public/locales/en/trainee.json` (15 new i18n keys)
+- `public/locales/it/trainee.json` (15 new i18n keys)
+
+**Cambio Architetturale:**
+Ridefinitura completa della UX per mobile in-gym usage:
+- **Old layout:** Tabella con tutti gli esercizi espandibili, lista di set in righe
+- **New layout:** Single-exercise focus mode con navigazione step-by-step
+
+**Componenti Aggiunti:**
+1. **Sticky Top Bar** (48px) - Giorno/settimana info + collapsible info sheet
+   - Testo: "G{{day}} · S{{week}}" (es. "G3 · S2")
+   - Info sheet modale con dettagli: giorno, settimana, programma
+
+2. **Exercise Focus Card** (ExerciseFocusCard subcomponent)
+   - Mostra esercizio corrente con 1 set visibile per volta
+   - Input per weight (kg) e reps per ogni set
+   - RPE selector dropdown
+   - Video link (se disponibile)
+   - Tap-to-complete shortcut: 1 click auto-popola weight/reps dai dati trainer
+
+3. **Sticky Bottom Nav** (64px)
+   - Step counter: "3 / 6" (es. 3° esercizio di 6)
+   - Pulsanti: [Indietro] [Avanti] con logica hide/show
+   - Final step mostra [Completa allenamento] button
+
+4. **Final Summary Step**
+   - Riepilogo: "{{done}} / {{total}} esercizi · {{sets}} set" (es. "4 / 6 esercizi · 22 set")
+   - Note textarea (opzionale)
+   - **Inline warning** (non modale) per esercizi senza dati:
+     - "Esercizi senza dati: Leg Press, Leg Curl"
+     - Rimane visibile durante il submit
+
+**State Management:**
+- Aggiunto `currentStep` (0..exercises.length, dove .length è final step)
+- Aggiunto `infoSheetOpen` per collapsible info sheet
+- `toggleSetCompleted()` nuovo: tap-to-complete con logica:
+  - Se reps/weight sono 0 (vuoti): popola da `parsePlannedReps(we.reps)` e `effectiveWeight`
+  - Altrimenti: toggle completamento senza overwrite
+- Preserved: localStorage persistence, draft sync, pagination
+
+**i18n (15 nuove chiavi per esercizio):**
+```
+dayWeekShort, workoutInfo, workoutInfoTitle, workoutInfoDay, workoutInfoWeek, workoutInfoProgram,
+next, prev, completeShort, summaryTitle, summaryStats, missingDataInline, setsHeading, repsShort, kgShort
+```
+EN/IT translations aggiunte in `public/locales/{en,it}/trainee.json`
+
+**Test:**
+- Unit tests scaffoldato (7 test cases) - test di focus mode navigation, tap-to-complete, final step
+- E2E tests aggiornati con nuovi selectors data-testid (focus-mode-header, exercise-focus-card, bottom-nav, step-counter)
+- Type check passato ✅
+
+**Notes:**
+- Component ~1,400 lines (preserve vs old 1,100) — complexity tradeoff for mobile UX
+- Inline warning elimina modal friction (spec requirement)
+- Tap-to-complete riduce 3 input taps a 1 button click per set (major UX win)
+- Swipe navigation via useSwipe hook integrato
+- Draft localStorage sync continuato per resistenza perdita dati
+
+---
+
 ## 2026-04-27 — Active Program Card Redesign
 
 **File modificati:** 

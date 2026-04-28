@@ -197,15 +197,19 @@ test.describe('Trainee: Complete workout with feedback', () => {
             // Get step counter to identify total steps
             const stepCounterText = await page.locator('[data-testid="step-counter"]').textContent()
             const match = stepCounterText?.match(/(\d+)\s*\/\s*(\d+)/)
-            const totalSteps = match ? parseInt(match[2]) : 0
-            const currentStep = match ? parseInt(match[1]) : 0
+            const totalSteps = match ? parseInt(match[2]!) : 0
 
             // Keep clicking "Avanti" until we reach the final step
+            let currentStep = match ? parseInt(match[1]!) : 0
             while (currentStep < totalSteps) {
                 const nextBtn = page.locator('button:has-text("Avanti")')
                 if (await nextBtn.count() > 0) {
                     await nextBtn.click()
                     await page.waitForTimeout(300)
+                    // Update currentStep after advancing
+                    const newStepCounterText = await page.locator('[data-testid="step-counter"]').textContent()
+                    const newMatch = newStepCounterText?.match(/(\d+)\s*\/\s*(\d+)/)
+                    currentStep = newMatch ? parseInt(newMatch[1]!) : currentStep
                 } else {
                     break
                 }
@@ -387,17 +391,6 @@ test.describe('Trainee: Complete workout with feedback', () => {
             return
         }
 
-    // ── 5. Confirmation dialog for empty sets ────────────────────────────────
-    test('shows confirmation dialog when some sets have no data', async ({ page }) => {
-        await loginAs(page, traineeEmail)
-        await page.waitForURL('**/trainee/dashboard', { timeout: 10_000 })
-
-        const workoutHref = await navigateToFirstWorkout(page)
-        if (!workoutHref) {
-            console.warn('⚠  No workout found — skipping empty-sets dialog test')
-            return
-        }
-
         await page.goto(workoutHref)
         await page.waitForLoadState('networkidle')
 
@@ -552,5 +545,3 @@ test.describe('Trainee: Dashboard and secondary pages', () => {
         await expect(page).toHaveURL(/trainee\/history/)
     })
 })
-
-
