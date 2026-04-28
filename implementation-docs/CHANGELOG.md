@@ -14,17 +14,20 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 **Files modificati:**
 - `src/app/api/programs/[id]/route.ts` (conditional PR map, role-aware exercise select)
-- `src/app/api/programs/[id]/progress/route.ts` (replaced tree-load with SQL aggregates)
+- `src/app/api/programs/[id]/progress/route.ts` (refactored to use shared helper)
 - `src/app/api/trainee/active-program/route.ts` (created)
+- `src/lib/trainee-program-data.ts` (created, shared server helper)
 - `tests/integration/program-detail.test.ts` (created, 4 test cases)
 - `tests/integration/program-progress.test.ts` (created, 4 test cases)
 - `tests/integration/trainee-active-program.test.ts` (created, 3 test cases)
+- `tests/unit/lib/trainee-program-data.test.ts` (created, 5 test cases)
 
 **Note:** 
 - Task 1: Skip PR map fetch in `GET /api/programs/[id]` when all exercises use weightType=absolute (saves one Prisma round-trip).
 - Task 2: Role-aware exercise include in `GET /api/programs/[id]`. Trainees now get slim `{id, name, type}` select instead of full movementPattern + muscleGroup tree.
 - Task 3: Replace tree-load with SQL aggregates in `GET /api/programs/[id]/progress`. Workout completion, weekly volume, and avg RPE now come from `$queryRaw` + `exerciseFeedback.aggregate`; latest performed sets via targeted `setPerformed.findMany`.
 - Task 4: Add lightweight `GET /api/trainee/active-program` endpoint. Returns the active program id (or 404), replacing the heavier listing call previously used by /trainee/programs/current.
+- Task 5: Create shared server helper `loadTraineeProgramView` and `loadActiveProgramId` in `src/lib/trainee-program-data.ts`. Consolidates program tree loading + progress aggregation for use by server components.
 
 ---
 
