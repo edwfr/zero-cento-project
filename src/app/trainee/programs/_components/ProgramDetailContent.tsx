@@ -754,9 +754,25 @@ export default function ProgramDetailContent({
             <div className="space-y-6">
                 {mergedProgram.weeks.map((week) => {
                     const weekCompleted = week.workouts.every((w) => w.completed)
-                    const weekInProgress = week.workouts.some(
-                        (w) => w.completed && !weekCompleted
+                    const weekInProgress = !weekCompleted && week.workouts.some(
+                        (w) => w.completed || localWorkoutProgress[w.id]
                     )
+                    const WeekStatusIcon = weekCompleted ? CheckCircle2 : weekInProgress ? PlayCircle : Circle
+                    const weekBadgeClass = weekCompleted
+                        ? 'bg-green-100 text-green-700'
+                        : weekInProgress
+                        ? 'bg-amber-100 text-amber-700'
+                        : 'bg-gray-100 text-gray-600'
+                    const weekIconClass = weekCompleted
+                        ? 'text-green-600'
+                        : weekInProgress
+                        ? 'text-brand-primary'
+                        : 'text-gray-400'
+                    const weekStatusLabel = weekCompleted
+                        ? t('currentProgram.completed')
+                        : weekInProgress
+                        ? t('currentProgram.inProgress')
+                        : t('currentProgram.toDo')
 
                     return (
                         <div key={week.weekNumber} className="bg-white rounded-lg shadow-md p-6">
@@ -773,16 +789,10 @@ export default function ProgramDetailContent({
                                             deload: t('currentProgram.weekTypeDeload'),
                                         }}
                                     />
-                                    {weekCompleted && (
-                                        <span className="text-green-600 text-sm font-semibold">
-                                            {t('currentProgram.completed')}
-                                        </span>
-                                    )}
-                                    {weekInProgress && !weekCompleted && (
-                                        <span className="text-brand-primary text-sm font-semibold">
-                                            {t('currentProgram.inProgress')}
-                                        </span>
-                                    )}
+                                    <div className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${weekBadgeClass}`}>
+                                        <WeekStatusIcon className={`h-4 w-4 ${weekIconClass}`} />
+                                        <span>{weekStatusLabel}</span>
+                                    </div>
                                 </div>
                                 <p className="text-sm text-gray-600 sm:text-right">
                                     {t('currentProgram.weekCompleted', { completed: week.workouts.filter((w) => w.completed).length, total: week.workouts.length })}
@@ -808,7 +818,7 @@ export default function ProgramDetailContent({
                                     {week.workouts
                                         .slice()
                                         .sort((left, right) => left.dayOfWeek - right.dayOfWeek)
-                                        .map((workout) => {
+                                        .map((workout, workoutIndex) => {
                                             const workoutStatus = getWorkoutStatus(workout)
                                             const StatusIcon = workoutStatus.icon
 
@@ -821,7 +831,7 @@ export default function ProgramDetailContent({
                                                         <div className="min-w-0">
                                                             <div className="flex flex-wrap items-center gap-2">
                                                                 <h4 className="text-base font-bold text-gray-900">
-                                                                    {getWorkoutDayLabel(workout.dayOfWeek)}
+                                                                    {t('currentProgram.day', { number: workoutIndex + 1 })}
                                                                 </h4>
                                                                 <div className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${workoutStatus.badgeClassName}`}>
                                                                     <StatusIcon className={`h-4 w-4 ${workoutStatus.iconClassName}`} />

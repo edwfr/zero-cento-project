@@ -8,6 +8,15 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## 28 Aprile 2026 — Auto-complete workout_exercise al completamento serie
+
+**File modificati:**
+- `src/app/trainee/workouts/[id]/_content.tsx`
+
+**Note:** Rimosso il pulsante manuale "Segna come completato". Ora il record `workout_exercise.isCompleted` viene aggiornato automaticamente: si setta a `true` quando il trainee spunta l'ultima serie dell'esercizio (tutte le serie completate), e si setta a `false` se il trainee annulla la spunta su una qualsiasi serie mentre l'esercizio era già marcato come completato. La funzione `toggleExerciseCompleted` è stata sostituita da `markExerciseCompleted(id, bool)` con valore esplicito; `toggleSetCompleted` ora calcola il nuovo stato delle serie prima di `setFeedbackData` e invoca automaticamente `markExerciseCompleted`.
+
+---
+
 ## 28 Aprile 2026 — Fix: NavigationLoadingOverlay stuck after new program creation
 
 **File modificati:**

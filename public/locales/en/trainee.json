@@ -93,7 +93,7 @@
         "reviewFeedback": "Review Feedback",
         "resumeWorkout": "Resume Workout",
         "startWorkout": "Start Workout",
-        "day": "Day {{number}}",
+        "day": "Workout {{number}}",
         "openWeek": "Open week panel",
         "closeWeek": "Close week panel",
         "openWorkoutDetails": "Show workout details",
