@@ -962,6 +962,16 @@ function ExerciseFocusCard({
                 <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase">
                     {t('workouts.setsHeading')}
                 </h3>
+                <div className="grid grid-cols-[40px_1fr_1fr_48px] gap-2 px-2 mb-1">
+                    <span />
+                    <span className="text-center text-xs font-medium text-gray-400 uppercase tracking-wide">
+                        {t('workouts.repsShort')}
+                    </span>
+                    <span className="text-center text-xs font-medium text-gray-400 uppercase tracking-wide">
+                        {t('workouts.kgShort')}
+                    </span>
+                    <span />
+                </div>
                 <div className="space-y-2 mb-4">
                     {sets.map((set, setIdx) => (
                         <div

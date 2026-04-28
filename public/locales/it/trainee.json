@@ -203,7 +203,7 @@
         "summaryStats": "{{done}} / {{total}} esercizi · {{sets}} set",
         "missingDataInline": "Esercizi senza dati:",
         "setsHeading": "Serie",
-        "repsShort": "rip.",
+        "repsShort": "reps",
         "kgShort": "kg",
         "stepCounter": "{{current}} / {{total}}",
         "errorLoading": "Errore caricamento workout",
