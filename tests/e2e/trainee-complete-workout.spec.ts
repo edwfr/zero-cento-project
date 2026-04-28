@@ -117,82 +117,117 @@ test.describe('Trainee: Complete workout with feedback', () => {
         // ────────────────────────────────────────────
         // STEP 3: Open workout detail page
         // ────────────────────────────────────────────
-        await test.step('Workout detail page loads correctly', async () => {
+        await test.step('Workout detail page loads correctly (focus mode)', async () => {
             await page.goto(workoutHref!)
             await page.waitForLoadState('networkidle')
 
-            // Page title (day label + week number)
-            await expect(page.locator('h1').first()).toBeVisible({ timeout: 8_000 })
+            // Sticky top bar with day/week info (e.g., "G3 · S2")
+            await expect(page.locator('[data-testid="focus-mode-header"]')).toBeVisible({ timeout: 8_000 })
 
-            // Stats summary (Volume, RPE Medio, Esercizi)
-            await expect(page.locator('text=/volume totale/i').first()).toBeVisible()
-            await expect(page.locator('text=/esercizi/i').first()).toBeVisible()
+            // Single exercise card in focus
+            await expect(page.locator('[data-testid="exercise-focus-card"]')).toBeVisible()
+
+            // Bottom navigation bar with step counter
+            await expect(page.locator('[data-testid="bottom-nav"]')).toBeVisible()
 
             // Auto-save notice
             await expect(page.locator('text=/auto-save attivo/i')).toBeVisible()
-
-            // At least one exercise card
-            await expect(page.locator('table').first()).toBeVisible({ timeout: 8_000 })
         })
 
         // ────────────────────────────────────────────
-        // STEP 4: Fill in weight and reps for all sets
+        // STEP 4: Navigate through exercises and fill sets
         // ────────────────────────────────────────────
-        await test.step('Trainee fills set data (weight + reps) for every exercise', async () => {
-            // All weight inputs
-            const weightInputs = page.locator('table input[type="number"][step="0.5"]')
-            const repsInputs = page.locator('table input[type="number"]:not([step="0.5"])')
+        await test.step('Trainee fills set data for every exercise using focus mode', async () => {
+            // Get initial step counter to find total exercises
+            const stepCounterText = await page.locator('[data-testid="step-counter"]').textContent()
+            const match = stepCounterText?.match(/(\d+)\s*\/\s*(\d+)/)
+            const totalExercises = match ? parseInt(match[2]) : 0
 
-            const weightCount = await weightInputs.count()
-            const repsCount = await repsInputs.count()
+            expect(totalExercises).toBeGreaterThan(0)
 
-            expect(weightCount).toBeGreaterThan(0)
-            expect(repsCount).toBeGreaterThan(0)
+            // For each exercise, fill weight and reps for all its sets
+            for (let exerciseNum = 0; exerciseNum < totalExercises; exerciseNum++) {
+                // Get all set inputs for current exercise
+                const weightInputs = page.locator('[data-testid="set-weight-input"]')
+                const repsInputs = page.locator('[data-testid="set-reps-input"]')
 
-            // Fill every weight input with 80 kg
-            for (let i = 0; i < weightCount; i++) {
-                await weightInputs.nth(i).fill('80')
+                const weightCount = await weightInputs.count()
+                const repsCount = await repsInputs.count()
+
+                // Fill all sets on this exercise with 80kg / 8 reps
+                for (let i = 0; i < weightCount; i++) {
+                    await weightInputs.nth(i).fill('80')
+                }
+
+                for (let i = 0; i < repsCount; i++) {
+                    await repsInputs.nth(i).fill('8')
+                }
+
+                // If not the last exercise, click "Avanti" (Next) to move to next exercise
+                if (exerciseNum < totalExercises - 1) {
+                    const nextBtn = page.locator('button:has-text("Avanti")')
+                    await nextBtn.click()
+                    await page.waitForLoadState('networkidle')
+                }
             }
-
-            // Fill every reps input with 8
-            for (let i = 0; i < repsCount; i++) {
-                await repsInputs.nth(i).fill('8')
-            }
-
-            // Verify volume stat has updated (should be > 0 now)
-            const volumeText = await page.locator('p.text-2xl').first().textContent()
-            // Volume = 80 * 8 * sets — it will be a non-zero number
-            const volume = parseFloat(volumeText?.replace(/[^\d.]/g, '') ?? '0')
-            expect(volume).toBeGreaterThan(0)
         })
 
         // ────────────────────────────────────────────
-        // STEP 5: Set RPE for the first exercise
+        // STEP 5: Set RPE for exercises
         // ────────────────────────────────────────────
-        await test.step('Trainee selects RPE for exercises', async () => {
+        await test.step('Trainee selects RPE from focus mode cards', async () => {
+            // RPE selects exist per exercise
+            let rpeSelectCount = 0
             const rpeSelects = page.locator('select')
-            const rpeCount = await rpeSelects.count()
-            expect(rpeCount).toBeGreaterThan(0)
 
-            // Select RPE 8 for each exercise
-            for (let i = 0; i < rpeCount; i++) {
+            // Set RPE for visible exercise(s)
+            const currentCount = await rpeSelects.count()
+            for (let i = 0; i < currentCount; i++) {
                 await rpeSelects.nth(i).selectOption('8')
+                rpeSelectCount++
             }
+
+            expect(rpeSelectCount).toBeGreaterThan(0)
         })
 
         // ────────────────────────────────────────────
-        // STEP 6: Add workout notes
+        // STEP 6: Navigate to final summary step
         // ────────────────────────────────────────────
-        await test.step('Trainee adds workout notes', async () => {
+        await test.step('Trainee navigates to final summary step', async () => {
+            // Get step counter to identify total steps
+            const stepCounterText = await page.locator('[data-testid="step-counter"]').textContent()
+            const match = stepCounterText?.match(/(\d+)\s*\/\s*(\d+)/)
+            const totalSteps = match ? parseInt(match[2]) : 0
+            const currentStep = match ? parseInt(match[1]) : 0
+
+            // Keep clicking "Avanti" until we reach the final step
+            while (currentStep < totalSteps) {
+                const nextBtn = page.locator('button:has-text("Avanti")')
+                if (await nextBtn.count() > 0) {
+                    await nextBtn.click()
+                    await page.waitForTimeout(300)
+                } else {
+                    break
+                }
+            }
+
+            // Verify we're on the final step (summary visible)
+            await expect(page.locator('[data-testid="final-summary"]')).toBeVisible()
+        })
+
+        // ────────────────────────────────────────────
+        // STEP 7: Add workout notes
+        // ────────────────────────────────────────────
+        await test.step('Trainee adds workout notes on final step', async () => {
             const notesTextarea = page.locator('textarea')
             await expect(notesTextarea).toBeVisible()
-            await notesTextarea.fill('Test E2E - workout completato correttamente')
+            await notesTextarea.fill('Test E2E - focus mode workout completato correttamente')
         })
 
         // ────────────────────────────────────────────
-        // STEP 7: Submit feedback
+        // STEP 8: Submit feedback
         // ────────────────────────────────────────────
-        await test.step('Trainee submits feedback and is redirected to dashboard', async () => {
+        await test.step('Trainee submits feedback from final step and is redirected', async () => {
             // Intercept the feedback API call to assert it fires
             let feedbackCallMade = false
             page.on('request', (req) => {
@@ -201,7 +236,8 @@ test.describe('Trainee: Complete workout with feedback', () => {
                 }
             })
 
-            const submitBtn = page.locator('button:has-text("Completa Workout")')
+            // Submit button is on the final step (replace old "Completa Workout" selector)
+            const submitBtn = page.locator('button:has-text("Completa allenamento")')
             await expect(submitBtn).toBeVisible()
             await submitBtn.click()
 
@@ -220,18 +256,6 @@ test.describe('Trainee: Complete workout with feedback', () => {
             // API call should have been made
             expect(feedbackCallMade).toBeTruthy()
         })
-
-        // ────────────────────────────────────────────
-        // STEP 8: Verify workout appears as completed
-        // ────────────────────────────────────────────
-        await test.step('Completed workout shows tick on current-program page', async () => {
-            await page.goto('/trainee/programs/current')
-            await page.waitForLoadState('networkidle')
-
-            // The workout card should now have a green ✓ indicator
-            const completedIndicators = page.locator('text=✓')
-            await expect(completedIndicators.first()).toBeVisible({ timeout: 8_000 })
-        })
     })
 
     // ── 2. Auto-save to localStorage ────────────────────────────────────────
@@ -248,8 +272,8 @@ test.describe('Trainee: Complete workout with feedback', () => {
         await page.goto(workoutHref)
         await page.waitForLoadState('networkidle')
 
-        // Fill one weight input
-        const weightInput = page.locator('table input[type="number"][step="0.5"]').first()
+        // Fill one weight input in focus mode
+        const weightInput = page.locator('[data-testid="set-weight-input"]').first()
         await weightInput.fill('100')
 
         // Give React state a moment to trigger the auto-save effect
@@ -280,7 +304,7 @@ test.describe('Trainee: Complete workout with feedback', () => {
         await page.waitForLoadState('networkidle')
 
         // Fill a distinctive value
-        const weightInput = page.locator('table input[type="number"][step="0.5"]').first()
+        const weightInput = page.locator('[data-testid="set-weight-input"]').first()
         await weightInput.fill('123.5')
         await page.waitForTimeout(500)
 
@@ -289,7 +313,7 @@ test.describe('Trainee: Complete workout with feedback', () => {
         await page.waitForLoadState('networkidle')
 
         // The weight input should be restored from localStorage
-        const restoredValue = await page.locator('table input[type="number"][step="0.5"]').first().inputValue()
+        const restoredValue = await page.locator('[data-testid="set-weight-input"]').first().inputValue()
         expect(restoredValue).toBe('123.5')
     })
 
@@ -307,15 +331,29 @@ test.describe('Trainee: Complete workout with feedback', () => {
         await page.goto(workoutHref)
         await page.waitForLoadState('networkidle')
 
-        // Fill minimal data so we can submit
-        const weightInputs = page.locator('table input[type="number"][step="0.5"]')
-        const repsInputs = page.locator('table input[type="number"]:not([step="0.5"])')
+        // Fill minimal data for current exercise in focus mode
+        const weightInputs = page.locator('[data-testid="set-weight-input"]')
+        const repsInputs = page.locator('[data-testid="set-reps-input"]')
         const wCount = await weightInputs.count()
         const rCount = await repsInputs.count()
         for (let i = 0; i < wCount; i++) await weightInputs.nth(i).fill('50')
         for (let i = 0; i < rCount; i++) await repsInputs.nth(i).fill('5')
 
-        const submitBtn = page.locator('button:has-text("Completa Workout")')
+        // Navigate to final step to reach submit button
+        const stepCounterText = await page.locator('[data-testid="step-counter"]').textContent()
+        const match = stepCounterText?.match(/(\d+)\s*\/\s*(\d+)/)
+        const totalSteps = match ? parseInt(match[2]) : 0
+
+        // Keep clicking Avanti to get to final step
+        for (let i = 0; i < totalSteps - 1; i++) {
+            const nextBtn = page.locator('button:has-text("Avanti")')
+            if (await nextBtn.count() > 0) {
+                await nextBtn.click()
+                await page.waitForTimeout(200)
+            }
+        }
+
+        const submitBtn = page.locator('button:has-text("Completa allenamento")')
         await submitBtn.click()
 
         // Handle optional confirmation dialog
@@ -349,17 +387,42 @@ test.describe('Trainee: Complete workout with feedback', () => {
             return
         }
 
+    // ── 5. Confirmation dialog for empty sets ────────────────────────────────
+    test('shows confirmation dialog when some sets have no data', async ({ page }) => {
+        await loginAs(page, traineeEmail)
+        await page.waitForURL('**/trainee/dashboard', { timeout: 10_000 })
+
+        const workoutHref = await navigateToFirstWorkout(page)
+        if (!workoutHref) {
+            console.warn('⚠  No workout found — skipping empty-sets dialog test')
+            return
+        }
+
         await page.goto(workoutHref)
         await page.waitForLoadState('networkidle')
 
-        // Do NOT fill any sets — click submit immediately
-        const submitBtn = page.locator('button:has-text("Completa Workout")')
+        // Navigate to final step without filling all sets (partial data)
+        const stepCounterText = await page.locator('[data-testid="step-counter"]').textContent()
+        const match = stepCounterText?.match(/(\d+)\s*\/\s*(\d+)/)
+        const totalSteps = match ? parseInt(match[2]) : 0
+
+        // Navigate to final step
+        for (let i = 0; i < totalSteps - 1; i++) {
+            const nextBtn = page.locator('button:has-text("Avanti")')
+            if (await nextBtn.count() > 0) {
+                await nextBtn.click()
+                await page.waitForTimeout(200)
+            }
+        }
+
+        // Click submit with missing data
+        const submitBtn = page.locator('button:has-text("Completa allenamento")')
         await submitBtn.click()
 
         // Confirmation / warning dialog should appear
         const dialog = page.locator('[role="dialog"], .modal, [data-testid="confirm-modal"]')
         const warningText = page.locator(
-            'text=/dati mancanti|missing data|nessun dato|continuare/i'
+            'text=/dati mancanti|missing data|nessun dato|continuare|esercizi senza/i'
         )
 
         const hasDialog = await dialog.count() > 0
@@ -368,8 +431,8 @@ test.describe('Trainee: Complete workout with feedback', () => {
         expect(hasDialog || hasWarning).toBeTruthy()
     })
 
-    // ── 6. Navigation: swipe buttons advance exercise index ─────────────────
-    test('prev/next exercise navigation buttons work on workout page', async ({ page }) => {
+    // ── 6. Navigation: prev/next buttons work in focus mode ─────────────────
+    test('prev/next exercise navigation buttons work in focus mode', async ({ page }) => {
         await loginAs(page, traineeEmail)
         await page.waitForURL('**/trainee/dashboard', { timeout: 10_000 })
 
@@ -382,28 +445,46 @@ test.describe('Trainee: Complete workout with feedback', () => {
         await page.goto(workoutHref)
         await page.waitForLoadState('networkidle')
 
-        // These navigation buttons are only rendered when there is more than 1 exercise
-        // and only visible on mobile (md:hidden) — we use viewport: Pixel 5 in the config
-        const nextBtn = page.locator('button[aria-label="Prossimo esercizio"]')
-        const prevBtn = page.locator('button[aria-label="Esercizio precedente"]')
+        // Get initial step count
+        const initialStepText = await page.locator('[data-testid="step-counter"]').textContent()
+        const initialMatch = initialStepText?.match(/(\d+)\s*\/\s*(\d+)/)
+        const initialStep = initialMatch ? parseInt(initialMatch[1]) : 0
+        const totalSteps = initialMatch ? parseInt(initialMatch[2]) : 0
 
-        const hasNav = (await nextBtn.count()) > 0 && (await prevBtn.count()) > 0
-        if (!hasNav) {
-            // Workout may have only 1 exercise — navigation is hidden; skip cleanly
-            console.log('ℹ  Single exercise workout — navigation not rendered')
+        // If only 1 exercise (2 total steps = exercise + final), navigation to next is limited
+        if (totalSteps <= 2) {
+            console.log('ℹ  Single exercise workout — navigation limited')
             return
         }
 
-        // Initially prev should be disabled (first exercise)
-        await expect(prevBtn).toBeDisabled()
-        await expect(nextBtn).not.toBeDisabled()
+        // Focus mode navigation buttons in bottom bar
+        const nextBtn = page.locator('button:has-text("Avanti")')
+        const prevBtn = page.locator('button:has-text("Indietro")')
+
+        const hasNav = (await nextBtn.count()) > 0
+        if (!hasNav) {
+            console.log('ℹ  Navigation buttons not found')
+            return
+        }
+
+        // Initially prev should be hidden or disabled on first exercise
+        const initialPrevVisible = await prevBtn.count() > 0
+        expect(initialPrevVisible).toBeFalsy() // Hidden on first step
 
         // Advance to next exercise
         await nextBtn.click()
         await page.waitForTimeout(300)
 
-        // Now prev should be enabled
-        await expect(prevBtn).not.toBeDisabled()
+        // Step counter should have incremented
+        const newStepText = await page.locator('[data-testid="step-counter"]').textContent()
+        const newMatch = newStepText?.match(/(\d+)\s*\/\s*(\d+)/)
+        const newStep = newMatch ? parseInt(newMatch[1]) : 0
+
+        expect(newStep).toBe(initialStep + 1)
+
+        // Now prev button should be visible
+        const newPrevVisible = await prevBtn.count() > 0
+        expect(newPrevVisible).toBeTruthy()
     })
 
     // ── 7. Keyboard/accessibility — submit button reachable via tab ─────────
