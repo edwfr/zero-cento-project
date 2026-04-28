@@ -8,5 +8,5 @@ interface ProgramDetailByIdContentProps {
 }
 
 export default function ProgramDetailByIdContent({ initialData }: ProgramDetailByIdContentProps) {
-    return <ProgramDetailContent mode="history" initialData={initialData} />
+    return <ProgramDetailContent mode="history" programId={initialData.program.id} initialData={initialData} />
 }
