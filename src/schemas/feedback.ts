@@ -50,7 +50,30 @@ export const weekFeedbackSchema = z.object({
         .max(2000, 'validation.feedbackTooLong'),
 })
 
+export const workoutSubmitSchema = z.object({
+    notes: z.string().max(1000, 'validation.notesTooLong').nullish(),
+    exercises: z
+        .array(
+            z.object({
+                workoutExerciseId: z.string().uuid('validation.invalidWorkoutExerciseId'),
+                actualRpe: z
+                    .number()
+                    .min(5.0, 'validation.rpeMin')
+                    .max(10.0, 'validation.rpeMax')
+                    .multipleOf(0.5, 'validation.rpeStep')
+                    .nullish(),
+                sets: z
+                    .array(setPerformedSchema)
+                    .min(1, 'validation.minOneSeries')
+                    .max(50, 'validation.maxSeries'),
+            })
+        )
+        .min(1, 'validation.minOneExercise')
+        .max(100, 'validation.maxExercises'),
+})
+
 export type SetPerformedInput = z.infer<typeof setPerformedSchema>
 export type FeedbackInput = z.infer<typeof feedbackSchema>
 export type UpdateFeedbackInput = z.infer<typeof updateFeedbackSchema>
 export type WeekFeedbackInput = z.infer<typeof weekFeedbackSchema>
+export type WorkoutSubmitInput = z.infer<typeof workoutSubmitSchema>
