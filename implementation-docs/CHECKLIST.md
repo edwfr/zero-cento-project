@@ -144,7 +144,7 @@
       File: `src/app/trainee/dashboard/page.tsx`
 - [x] **9.2** `trainee/history` — Aggiungere `DashboardLayout` (0.5h)  
       File: `src/app/trainee/history/page.tsx`
-- [x] **9.3** `trainee/programs/current` — Aggiungere `DashboardLayout` (0.5h)  
+- [x] **9.3** `trainee/programs/current` — Aggiungere `DashboardLayout` (0.5h) + preservare `programId` esplicito dalla dashboard per evitare mismatch con più programmi attivi ✅ _29 Apr 2026_  
       File: `src/app/trainee/programs/current/page.tsx`
 - [x] **9.4** `trainee/records` — Aggiungere `DashboardLayout` (0.5h)  
       File: `src/app/trainee/records/page.tsx`

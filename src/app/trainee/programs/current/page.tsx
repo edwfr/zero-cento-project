@@ -4,7 +4,12 @@ import DashboardLayout from '@/components/DashboardLayout'
 import CurrentProgramContent from './_content'
 import { loadActiveProgramId, loadTraineeProgramView } from '@/lib/trainee-program-data'
 
-export default async function CurrentProgramPage() {
+interface CurrentProgramPageProps {
+    searchParams?: Promise<{ programId?: string }>
+}
+
+export default async function CurrentProgramPage({ searchParams }: CurrentProgramPageProps) {
+    const resolvedSearchParams = await searchParams
     const session = await getSession()
 
     if (!session) {
@@ -15,7 +20,8 @@ export default async function CurrentProgramPage() {
         redirect(`/${session.user.role}/dashboard`)
     }
 
-    const programId = await loadActiveProgramId(session.user.id)
+    const requestedProgramId = resolvedSearchParams?.programId
+    const programId = await loadActiveProgramId(session.user.id, requestedProgramId)
 
     if (!programId) {
         redirect('/trainee/programs')

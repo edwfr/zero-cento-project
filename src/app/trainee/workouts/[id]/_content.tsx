@@ -139,6 +139,7 @@ export default function WorkoutDetailContent() {
     const searchParams = useSearchParams()
     const workoutId = params.id as string
     const fromParam = searchParams.get('from') ?? 'dashboard'
+    const sourceProgramId = searchParams.get('programId')
 
     // State
     const [loading, setLoading] = useState(true)
@@ -457,7 +458,11 @@ export default function WorkoutDetailContent() {
             clearLocalData()
             showToast(t('workouts.feedbackSuccess'), 'success')
 
-            const navigateTo = fromParam === 'current' ? '/trainee/programs/current' : '/trainee/dashboard'
+            const navigateTo = fromParam === 'current'
+                ? sourceProgramId
+                    ? `/trainee/programs/current?programId=${encodeURIComponent(sourceProgramId)}`
+                    : '/trainee/programs/current'
+                : '/trainee/dashboard'
             router.push(navigateTo)
         } catch (err: unknown) {
             showToast(err instanceof Error ? err.message : t('workouts.errorFeedback'), 'error')

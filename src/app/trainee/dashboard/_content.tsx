@@ -283,7 +283,7 @@ export default function TraineeDashboardContent() {
 
                 <div className="mt-6">
                     <Link
-                        href="/trainee/programs/current"
+                        href={`/trainee/programs/current?programId=${encodeURIComponent(activeProgram.id)}`}
                         className="inline-flex w-full items-center justify-center gap-2 border border-brand-primary text-brand-primary hover:bg-[#FFF7E5] font-semibold px-6 py-3 rounded-lg transition-colors"
                     >
                         <ClipboardList className="w-4 h-4" />

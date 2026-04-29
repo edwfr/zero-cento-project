@@ -2,10 +2,13 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, within, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
+const routerPush = vi.fn()
+let searchParamsValue = ''
+
 vi.mock('next/navigation', () => ({
-    useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+    useRouter: () => ({ push: routerPush, replace: vi.fn() }),
     useParams: () => ({ id: 'workout-1' }),
-    useSearchParams: () => new URLSearchParams(''),
+    useSearchParams: () => new URLSearchParams(searchParamsValue),
 }))
 
 vi.mock('@/components/ToastNotification', () => ({
@@ -78,6 +81,8 @@ const fixtureWorkout = {
 }
 
 beforeEach(() => {
+    routerPush.mockReset()
+    searchParamsValue = ''
     global.fetch = vi.fn(async (url: string) => {
         if (typeof url === 'string' && url.includes('/api/trainee/workouts/')) {
             return {
@@ -173,5 +178,23 @@ describe('Trainee workout focus mode', () => {
         expect(screen.getByText(/missingDataInline|exercises with no data|esercizi senza dati/i)).toBeInTheDocument()
         expect(screen.getByText(/Bench Press/)).toBeInTheDocument()
         expect(screen.getByText(/Tricep Extension/)).toBeInTheDocument()
+    })
+
+    it('redirects back to the same current program after submit when programId is present', async () => {
+        const user = userEvent.setup()
+        searchParamsValue = 'from=current&programId=program-1'
+
+        await renderContent()
+        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+        await user.click(
+            screen.getByRole('button', {
+                name: /completeShort|complete workout|completa allenamento/i,
+            })
+        )
+
+        await waitFor(() => {
+            expect(routerPush).toHaveBeenCalledWith('/trainee/programs/current?programId=program-1')
+        })
     })
 })

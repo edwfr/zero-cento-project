@@ -106,12 +106,27 @@ interface PerformedSetRow {
     }
 }
 
-export async function loadActiveProgramId(traineeId: string): Promise<string | null> {
+export async function loadActiveProgramId(
+    traineeId: string,
+    preferredProgramId?: string | null
+): Promise<string | null> {
+    if (preferredProgramId) {
+        const preferredProgram = await prisma.trainingProgram.findFirst({
+            where: { id: preferredProgramId, traineeId, status: 'active' },
+            select: { id: true },
+        })
+
+        if (preferredProgram) {
+            return preferredProgram.id
+        }
+    }
+
     const program = await prisma.trainingProgram.findFirst({
         where: { traineeId, status: 'active' },
         select: { id: true },
         orderBy: { startDate: 'desc' },
     })
+
     return program?.id ?? null
 }
 

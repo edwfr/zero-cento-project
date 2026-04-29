@@ -91,6 +91,37 @@ describe('loadActiveProgramId', () => {
         await expect(loadActiveProgramId(traineeId)).resolves.toBe('p1')
     })
 
+    it('returns the preferred id when it is active for the trainee', async () => {
+        ;(prisma.trainingProgram.findFirst as any)
+            .mockResolvedValueOnce({ id: 'preferred-program' })
+
+        await expect(loadActiveProgramId(traineeId, 'preferred-program')).resolves.toBe('preferred-program')
+
+        expect(prisma.trainingProgram.findFirst).toHaveBeenCalledTimes(1)
+        expect(prisma.trainingProgram.findFirst).toHaveBeenCalledWith({
+            where: { id: 'preferred-program', traineeId, status: 'active' },
+            select: { id: true },
+        })
+    })
+
+    it('falls back to the default active lookup when preferred id is not active', async () => {
+        ;(prisma.trainingProgram.findFirst as any)
+            .mockResolvedValueOnce(null)
+            .mockResolvedValueOnce({ id: 'fallback-program' })
+
+        await expect(loadActiveProgramId(traineeId, 'stale-program')).resolves.toBe('fallback-program')
+
+        expect(prisma.trainingProgram.findFirst).toHaveBeenNthCalledWith(1, {
+            where: { id: 'stale-program', traineeId, status: 'active' },
+            select: { id: true },
+        })
+        expect(prisma.trainingProgram.findFirst).toHaveBeenNthCalledWith(2, {
+            where: { traineeId, status: 'active' },
+            select: { id: true },
+            orderBy: { startDate: 'desc' },
+        })
+    })
+
     it('returns null otherwise', async () => {
         ;(prisma.trainingProgram.findFirst as any).mockResolvedValue(null)
         await expect(loadActiveProgramId(traineeId)).resolves.toBeNull()

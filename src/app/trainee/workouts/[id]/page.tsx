@@ -25,7 +25,9 @@ export default async function WorkoutDetailPage({ searchParams }: WorkoutDetailP
     // Determine back navigation based on source
     let backHref = '/trainee/dashboard' // default
     if (source === 'current') {
-        backHref = '/trainee/programs/current'
+        backHref = sourceProgramId
+            ? `/trainee/programs/current?programId=${encodeURIComponent(sourceProgramId)}`
+            : '/trainee/programs/current'
     } else if (source === 'history' && sourceProgramId) {
         backHref = `/trainee/programs/${sourceProgramId}`
     }

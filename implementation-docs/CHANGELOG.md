@@ -8,6 +8,20 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [29 Aprile 2026] — Fix: current program coerente dalla trainee dashboard
+
+**Task checklist:** #9.3
+**File modificati:**
+`src/app/trainee/dashboard/_content.tsx`, `src/app/trainee/programs/current/page.tsx`, `src/app/trainee/workouts/[id]/page.tsx`, `src/app/trainee/workouts/[id]/_content.tsx`, `src/lib/trainee-program-data.ts`, `tests/unit/lib/trainee-program-data.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- La card "Programma attivo" nella dashboard trainee ora apre `/trainee/programs/current` con il `programId` del programma mostrato, evitando che la pagina current ricalcoli un programma diverso quando esistono più programmi attivi.
+- `loadActiveProgramId()` ora accetta un `preferredProgramId` opzionale e lo usa solo se appartiene al trainee ed è ancora `active`; in caso contrario fa fallback alla lookup standard.
+- Il flusso `current -> workout -> current` preserva lo stesso `programId` sia nel back link del layout sia nel redirect post-submit, così la navigazione resta coerente sull'intero percorso.
+- Aggiunti test unitari per il caso preferito valido e per il fallback quando l'id richiesto non è più attivo.
+
+---
+
 ## [29 Aprile 2026] — Atomic workout submit + drop ExerciseFeedback.completed
 
 **File modificati:**
