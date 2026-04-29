@@ -8,6 +8,20 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [29 Aprile 2026] — Warning inline nel riepilogo workout trainee per serie non completate
+
+**Task checklist:** #3.1
+**File modificati:**
+`src/app/trainee/workouts/[id]/_content.tsx`, `public/locales/it/trainee.json`, `public/locales/en/trainee.json`, `tests/unit/trainee-workout-focus.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Nel passo finale del workout trainee i warning sono ora mostrati subito sotto il campo note del riepilogo.
+- Aggiunto un warning dedicato per gli esercizi che hanno almeno una serie spuntata ma non tutte le serie segnate come completate.
+- Il warning esistente per gli esercizi senza dati resta separato, così il riepilogo distingue chiaramente tra esercizi mai compilati ed esercizi compilati solo in parte.
+- Aggiunto test unitario per il caso con serie parzialmente completate.
+
+---
+
 ## [29 Aprile 2026] — Fix: current program coerente dalla trainee dashboard
 
 **Task checklist:** #9.3

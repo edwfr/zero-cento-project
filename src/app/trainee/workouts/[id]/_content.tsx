@@ -542,6 +542,18 @@ export default function WorkoutDetailContent() {
         [feedbackData, sortedExercises]
     )
 
+    const incompleteSetExerciseNames = useMemo(
+        () =>
+            sortedExercises
+                .filter((we) => {
+                    const sets = feedbackData[we.id] || []
+                    const completedSets = sets.filter((set) => set.completed).length
+                    return completedSets > 0 && completedSets < sets.length
+                })
+                .map((we) => we.exercise.name),
+        [feedbackData, sortedExercises]
+    )
+
     const { handlers: pageSwipeHandlers } = useSwipe({
         onSwipeLeft: () => goToStep(currentStep + 1),
         onSwipeRight: () => goToStep(currentStep - 1),
@@ -637,6 +649,7 @@ export default function WorkoutDetailContent() {
                             total={sortedExercises.length}
                             totalSets={totalCompletedSets}
                             emptyExercises={emptyExerciseNames}
+                            incompleteSetExercises={incompleteSetExerciseNames}
                             globalNotes={globalNotes}
                             onNotesChange={setGlobalNotes}
                             t={t}
@@ -950,6 +963,7 @@ interface FinalStepProps {
     total: number
     totalSets: number
     emptyExercises: string[]
+    incompleteSetExercises: string[]
     globalNotes: string
     onNotesChange: (notes: string) => void
     t: (key: string, vars?: Record<string, unknown>) => string
@@ -960,6 +974,7 @@ function FinalStep({
     total,
     totalSets,
     emptyExercises,
+    incompleteSetExercises,
     globalNotes,
     onNotesChange,
     t,
@@ -991,29 +1006,50 @@ function FinalStep({
                         rows={4}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                     />
-                </div>
-            </div>
 
-            {/* Missing data warning */}
-            {emptyExercises.length > 0 && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                    <div className="flex gap-3">
-                        <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                        <div>
-                            <p className="font-semibold text-amber-800 text-sm">
-                                {t('workouts.missingDataInline')}
-                            </p>
-                            <ul className="mt-2 space-y-1">
-                                {emptyExercises.map((name) => (
-                                    <li key={name} className="text-sm text-amber-700">
-                                        • {name}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
+                    <div className="mt-4 space-y-3">
+                        {incompleteSetExercises.length > 0 && (
+                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                                <div className="flex gap-3">
+                                    <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="font-semibold text-amber-800 text-sm">
+                                            {t('workouts.incompleteSetsInline')}
+                                        </p>
+                                        <ul className="mt-2 space-y-1">
+                                            {incompleteSetExercises.map((name) => (
+                                                <li key={name} className="text-sm text-amber-700">
+                                                    - {name}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {emptyExercises.length > 0 && (
+                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                                <div className="flex gap-3">
+                                    <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="font-semibold text-amber-800 text-sm">
+                                            {t('workouts.missingDataInline')}
+                                        </p>
+                                        <ul className="mt-2 space-y-1">
+                                            {emptyExercises.map((name) => (
+                                                <li key={name} className="text-sm text-amber-700">
+                                                    - {name}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
-            )}
+            </div>
         </div>
     )
 }

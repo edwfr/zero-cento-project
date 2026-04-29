@@ -180,6 +180,20 @@ describe('Trainee workout focus mode', () => {
         expect(screen.getByText(/Tricep Extension/)).toBeInTheDocument()
     })
 
+    it('shows an incomplete-sets warning inline on the final step when an exercise has unchecked sets', async () => {
+        const user = userEvent.setup()
+        await renderContent()
+
+        const checkButtons = screen.getAllByRole('button', { name: /workouts\.markSetDone/i })
+        await user.click(checkButtons[0])
+
+        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+
+        expect(screen.getByText(/incompleteSetsInline|Exercises with incomplete sets|serie non completate/i)).toBeInTheDocument()
+        expect(screen.getByText(/Bench Press/)).toBeInTheDocument()
+    })
+
     it('redirects back to the same current program after submit when programId is present', async () => {
         const user = userEvent.setup()
         searchParamsValue = 'from=current&programId=program-1'

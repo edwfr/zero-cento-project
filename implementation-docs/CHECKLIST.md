@@ -63,7 +63,7 @@
 
 - [x] **3.1** Workout View con card navigation — mobile-first, swipeable cards, input serie (8h)  
       File: `src/app/trainee/workouts/[id]/page.tsx`  
-      Include: integrazione `FeedbackForm`, auto-save localStorage, YouTube embed  
+      Include: integrazione `FeedbackForm`, auto-save localStorage, YouTube embed, warning inline nel riepilogo per serie non completate ✅ _29 Apr 2026_  
       Spec: [next-actions.md § 19](./next-actions.md#19-workout-view-con-card-navigation-8h) · Dipende da: **2.1**, **2.2**
 
 ---
