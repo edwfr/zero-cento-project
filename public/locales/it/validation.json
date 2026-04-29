@@ -72,6 +72,8 @@
         "weightRequired": "Peso è obbligatorio per i tipi percentuale",
         "selectMuscleGroup": "Seleziona almeno un gruppo muscolare",
         "manualPasswordOrAuto": "Inserisci una password manuale o abilita la generazione automatica",
-        "enterPassword": "Inserisci password (min 8 caratteri)"
+        "enterPassword": "Inserisci password (min 8 caratteri)",
+        "minOneExercise": "Almeno un esercizio richiesto",
+        "maxExercises": "Troppi esercizi (max 50)"
     }
 }

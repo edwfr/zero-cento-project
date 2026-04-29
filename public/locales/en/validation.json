@@ -72,6 +72,8 @@
         "weightRequired": "Weight is required for percentage types",
         "selectMuscleGroup": "Select at least one muscle group",
         "manualPasswordOrAuto": "Enter a manual password or enable automatic generation",
-        "enterPassword": "Enter password (min 8 characters)"
+        "enterPassword": "Enter password (min 8 characters)",
+        "minOneExercise": "At least one exercise required",
+        "maxExercises": "Too many exercises (max 50)"
     }
 }
