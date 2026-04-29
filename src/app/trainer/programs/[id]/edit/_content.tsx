@@ -1838,6 +1838,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
             await fetchProgram({ showLoading: false })
             showToast(t('editProgram.workoutRowsSavedSuccess'), 'success')
+            setExpandedWorkoutIds((current) => ({ ...current, [workout.id]: false }))
         } catch (err: unknown) {
             showToast(
                 err instanceof Error ? err.message : t('editProgram.rowSaveGenericError'),

@@ -33,7 +33,7 @@ const workoutExerciseBaseSchema = z.object({
             errorMap: () => ({ message: 'Tipo peso non valido' }),
         }
     ),
-    weight: z.number().optional(),
+    weight: z.number().nullable().optional(),
     effectiveWeight: z.number().nullable().optional(),
     restTime: z.enum(['s30', 'm1', 'm2', 'm3', 'm5'], {
         errorMap: () => ({ message: 'Tempo recupero non valido' }),
@@ -48,7 +48,7 @@ const workoutExerciseBaseSchema = z.object({
 export const workoutExerciseSchema = workoutExerciseBaseSchema.superRefine(
     (data, ctx) => {
         // If weightType is percentage_*, weight is required
-        if (data.weightType.startsWith('percentage') && data.weight === undefined) {
+        if (data.weightType.startsWith('percentage') && data.weight == null) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 message: 'validation.weightRequiredForPercentage',
@@ -57,7 +57,7 @@ export const workoutExerciseSchema = workoutExerciseBaseSchema.superRefine(
         }
         // For absolute and percentage_1rm/percentage_rm, weight must be >= 0
         if (
-            data.weight !== undefined &&
+            data.weight != null &&
             data.weightType !== 'percentage_previous' &&
             data.weight < 0
         ) {
@@ -103,7 +103,7 @@ export const bulkSaveWorkoutExercisesSchema = z.object({
             workoutExerciseBaseSchema
                 .extend({ id: z.string().uuid().optional() })
                 .superRefine((data, ctx) => {
-                    if (data.weightType.startsWith('percentage') && data.weight === undefined) {
+                    if (data.weightType.startsWith('percentage') && data.weight == null) {
                         ctx.addIssue({
                             code: z.ZodIssueCode.custom,
                             message: 'validation.weightRequiredForPercentage',
@@ -111,7 +111,7 @@ export const bulkSaveWorkoutExercisesSchema = z.object({
                         })
                     }
                     if (
-                        data.weight !== undefined &&
+                        data.weight != null &&
                         data.weightType !== 'percentage_previous' &&
                         data.weight < 0
                     ) {
