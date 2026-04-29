@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo, Fragment } from 'react'
 import type { RestTime } from '@prisma/client'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
@@ -961,66 +961,70 @@ function ExerciseFocusCard({
                 <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase">
                     {t('workouts.setsHeading')}
                 </h3>
-                <div className="grid grid-cols-[40px_1fr_1fr_48px] gap-2 px-2 mb-1">
+                <div className="grid grid-cols-[40px_1fr_1fr_48px] gap-x-2 px-2 mb-4">
                     <span />
-                    <span className="text-center text-xs font-medium text-gray-400 uppercase tracking-wide">
+                    <span className="pb-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wide">
                         {t('workouts.repsShort')}
                     </span>
-                    <span className="text-center text-xs font-medium text-gray-400 uppercase tracking-wide">
+                    <span className="pb-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wide">
                         {t('workouts.kgShort')}
                     </span>
                     <span />
-                </div>
-                <div className="space-y-2 mb-4">
-                    {sets.map((set, setIdx) => (
-                        <div
-                            key={setIdx}
-                            className="grid grid-cols-[40px_1fr_1fr_48px] gap-2 items-center min-h-[56px] border-b border-gray-200 last:border-b-0 px-2"
-                        >
-                            <span className="text-center text-sm font-semibold text-gray-600">
-                                #{set.setNumber}
-                            </span>
-                            <Input
-                                type="number"
-                                inputMode="numeric"
-                                min="0"
-                                placeholder={/^\d+$/.test(we.reps.trim()) ? String(parsePlannedReps(we.reps)) : we.reps}
-                                value={set.reps || ''}
-                                onChange={(e) =>
-                                    onUpdateSet(we.id, setIdx, 'reps', parseInt(e.target.value) || 0)
-                                }
-                                aria-label={`${t('workouts.reps')} ${set.setNumber}`}
-                                inputSize="md"
-                                className="text-center"
-                            />
-                            <Input
-                                type="number"
-                                inputMode="decimal"
-                                min="0"
-                                step="0.5"
-                                placeholder={String(we.effectiveWeight ?? we.weight ?? 0)}
-                                value={set.weight || ''}
-                                onChange={(e) =>
-                                    onUpdateSet(we.id, setIdx, 'weight', parseFloat(e.target.value) || 0)
-                                }
-                                aria-label={`${t('workouts.weightKg')} ${set.setNumber}`}
-                                inputSize="md"
-                                className="text-center"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => onToggleSet(we.id, setIdx)}
-                                className={`mx-auto flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${
-                                    set.completed
-                                        ? 'border-green-300 bg-green-100 text-green-700'
-                                        : 'border-gray-300 bg-white text-gray-400 hover:border-green-300 hover:text-green-600'
-                                }`}
-                                aria-label={t('workouts.markSetDone')}
-                            >
-                                <Check className="w-4 h-4" />
-                            </button>
-                        </div>
-                    ))}
+                    {sets.map((set, setIdx) => {
+                        const border = setIdx < sets.length - 1 ? 'border-b border-gray-200' : ''
+                        return (
+                            <Fragment key={setIdx}>
+                                <div className={`flex items-center justify-center ${border}`}>
+                                    <span className="text-sm font-semibold text-gray-600">#{set.setNumber}</span>
+                                </div>
+                                <div className={`flex items-center py-2 ${border}`}>
+                                    <Input
+                                        type="number"
+                                        inputMode="numeric"
+                                        min="0"
+                                        placeholder={/^\d+$/.test(we.reps.trim()) ? String(parsePlannedReps(we.reps)) : we.reps}
+                                        value={set.reps || ''}
+                                        onChange={(e) =>
+                                            onUpdateSet(we.id, setIdx, 'reps', parseInt(e.target.value) || 0)
+                                        }
+                                        aria-label={`${t('workouts.reps')} ${set.setNumber}`}
+                                        inputSize="md"
+                                        className="text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    />
+                                </div>
+                                <div className={`flex items-center py-2 ${border}`}>
+                                    <Input
+                                        type="number"
+                                        inputMode="decimal"
+                                        min="0"
+                                        step="0.5"
+                                        placeholder={String(we.effectiveWeight ?? we.weight ?? 0)}
+                                        value={set.weight || ''}
+                                        onChange={(e) =>
+                                            onUpdateSet(we.id, setIdx, 'weight', parseFloat(e.target.value) || 0)
+                                        }
+                                        aria-label={`${t('workouts.weightKg')} ${set.setNumber}`}
+                                        inputSize="md"
+                                        className="text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    />
+                                </div>
+                                <div className={`flex items-center justify-center ${border}`}>
+                                    <button
+                                        type="button"
+                                        onClick={() => onToggleSet(we.id, setIdx)}
+                                        className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${
+                                            set.completed
+                                                ? 'border-green-300 bg-green-100 text-green-700'
+                                                : 'border-gray-300 bg-white text-gray-400 hover:border-green-300 hover:text-green-600'
+                                        }`}
+                                        aria-label={t('workouts.markSetDone')}
+                                    >
+                                        <Check className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </Fragment>
+                        )
+                    })}
                 </div>
             </div>
 
