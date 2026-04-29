@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback, useMemo, type CSSProperties } from 'react'
-import { useParams, useSearchParams } from 'next/navigation'
+import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { RestTime, WeightType } from '@prisma/client'
@@ -432,9 +432,11 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const programId = params.id as string
     const { showToast } = useToast()
     const { t } = useTranslation(['trainer', 'navigation'])
+    const router = useRouter()
 
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
+    const [savingDraftAndBack, setSavingDraftAndBack] = useState(false)
     const [copyingWeekId, setCopyingWeekId] = useState<string | null>(null)
     const [program, setProgram] = useState<Program | null>(null)
     const [exerciseCatalog, setExerciseCatalog] = useState<ExerciseCatalogItem[]>([])
@@ -1698,16 +1700,16 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         return null
     }
 
-    const saveWorkoutRows = async (workout: Workout) => {
+    const saveWorkoutRows = async (workout: Workout): Promise<boolean> => {
         if (readOnly) {
-            return
+            return false
         }
 
         const workoutRows = [...getWorkoutRows(workout)].sort((left, right) => left.order - right.order)
 
         if (workoutRows.length === 0) {
             showToast(t('editProgram.tableNoWorkoutExercises'), 'warning')
-            return
+            return false
         }
 
         const payloadByRowId: Record<string, ReturnType<typeof buildWorkoutExercisePayload>> = {}
@@ -1725,7 +1727,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     }),
                     'warning'
                 )
-                return
+                return false
             }
 
             const resolvedWeightInput = resolveWeightInputForRow({
@@ -1751,7 +1753,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             exercise: exerciseName,
                         }),
                     })
-                    return
+                    return false
                 }
 
                 if (resolvedWeightInput.errorCode === 'missing_1rm') {
@@ -1762,7 +1764,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             exercise: exerciseName,
                         }),
                     })
-                    return
+                    return false
                 }
 
                 showToast(
@@ -1772,7 +1774,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     }),
                     'warning'
                 )
-                return
+                return false
             }
 
             payloadByRowId[row.id] = buildWorkoutExercisePayload(
@@ -1839,15 +1841,43 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             await fetchProgram({ showLoading: false })
             showToast(t('editProgram.workoutRowsSavedSuccess'), 'success')
             setExpandedWorkoutIds((current) => ({ ...current, [workout.id]: false }))
+            return true
         } catch (err: unknown) {
             showToast(
                 err instanceof Error ? err.message : t('editProgram.rowSaveGenericError'),
                 'error'
             )
+            return false
         } finally {
             setSavingRowId(null)
             setSavingWorkoutId(null)
         }
+    }
+
+    const handleSaveDraftAndBack = async () => {
+        if (!program || savingDraftAndBack) {
+            return
+        }
+
+        const workoutsWithChanges = program.weeks
+            .flatMap((week) => week.workouts)
+            .filter((workout) => hasWorkoutUnsavedChanges(workout))
+
+        if (workoutsWithChanges.length > 0) {
+            setSavingDraftAndBack(true)
+            try {
+                for (const workout of workoutsWithChanges) {
+                    const success = await saveWorkoutRows(workout)
+                    if (!success) {
+                        return
+                    }
+                }
+            } finally {
+                setSavingDraftAndBack(false)
+            }
+        }
+
+        router.push('/trainer/programs')
     }
 
     const deleteRow = async () => {
@@ -3316,12 +3346,15 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             >
                                 {t('editProgram.nextReview')}
                             </Link>
-                            <Link
-                                href="/trainer/programs"
-                                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
+                            <button
+                                type="button"
+                                disabled={savingDraftAndBack || Boolean(savingWorkoutId) || Boolean(savingRowId)}
+                                onClick={() => { void handleSaveDraftAndBack() }}
+                                className="inline-flex items-center justify-center gap-2 bg-gray-300 hover:bg-gray-400 disabled:opacity-60 disabled:cursor-not-allowed text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
                             >
+                                {savingDraftAndBack && <LoadingSpinner size="sm" color="gray" />}
                                 {t('editProgram.saveDraft')}
-                            </Link>
+                            </button>
                         </div>
                     )}
 
