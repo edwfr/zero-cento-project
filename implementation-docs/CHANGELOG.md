@@ -8,6 +8,144 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [30 Aprile 2026] — Submit workout trainee chiude workout, settimana e programma anche con esercizi incompleti
+
+**Task checklist:** #3.1
+**File modificati:**
+`src/lib/completion-service.ts`, `src/app/api/trainee/workouts/[id]/submit/route.ts`, `tests/unit/completion-service.test.ts`, `tests/integration/trainee-workout-submit.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Il submit finale del workout trainee continua a salvare i flag esercizio dai set inviati, quindi gli esercizi senza esito restano `isCompleted = false`.
+- Dopo il submit viene pero marcato esplicitamente `workout.isCompleted = true`, cosi il workout risulta chiuso anche con dati mancanti e il trainer puo tracciare chi non ha completato tutti gli esiti.
+- La nuova cascata dal livello workout chiude comunque la settimana se quello inviato era l'ultimo workout utile, e chiude anche il programma se era l'ultimo workout dell'ultima settimana.
+- Aggiunti test mirati sia sul servizio di completion sia sulla route di submit.
+
+---
+
+## [30 Aprile 2026] — Warning serie incomplete cliccabili nel riepilogo workout trainee
+
+**Task checklist:** #3.1
+**File modificati:**
+`src/app/trainee/workouts/[id]/_content.tsx`, `tests/unit/trainee-workout-focus.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Il warning `Esercizi con serie non completate` nel riepilogo finale usa ora target espliciti con `stepIndex`, non solo il nome dell'esercizio.
+- Ogni warning incompleto e cliccabile e riporta direttamente allo step dell'esercizio corrispondente, come gia avveniva per gli esercizi senza dati.
+- Aggiunto test unitario per verificare sia la resa del warning come bottone sia il ritorno allo step corretto al click.
+
+---
+
+## [30 Aprile 2026] — Dashboard trainee riallineata al primo workout non completo
+
+**Task checklist:** #9.1
+**File modificati:**
+`src/lib/trainee-program-data.ts`, `tests/unit/lib/trainee-program-data.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Il `nextWorkout` usato dalla home trainee torna a essere il primo workout non completo in ordine del programma attivo.
+- Questo riallinea il bottone `Inizia workout` della dashboard alla proposta mostrata nella schermata programma completo, evitando che un workout piu avanti ma gia iniziato scavalchi il primo incompleto.
+- Aggiunto test unitario mirato per il caso con workout successivo gia iniziato ma workout precedente ancora da fare.
+
+---
+
+## [30 Aprile 2026] — Submit workout trainee riallineato con i set completati
+
+**Task checklist:** #3.1
+**File modificati:**
+`src/app/api/trainee/workouts/[id]/submit/route.ts`, `tests/integration/trainee-workout-submit.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- `POST /api/trainee/workouts/[id]/submit` non si limita piu a salvare `exercise_feedbacks` e `sets_performed`, ma riallinea subito anche la completion cascade per ogni `workoutExercise` in base ai set inviati.
+- Questo evita il mismatch visto in produzione tra `workoutExercise.isCompleted = true` e payload `feedback.setsPerformed` con serie tutte `completed = false` dopo un submit finale o un salvataggio parziale successivo.
+- Aggiunti test di integrazione che verificano sia il caso completo sia il caso parziale con reverse-sync a `false`.
+
+---
+
+## [30 Aprile 2026] — Merge corretto delle spunte serie tra snapshot storici del workout trainee
+
+**Task checklist:** #2.2
+**File modificati:**
+`src/app/api/trainee/workouts/[id]/route.ts`, `tests/integration/trainee-workout-detail.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Il reader del workout trainee non si limita piu a scegliere una singola riga `exercise_feedback` per esercizio quando esistono snapshot su giorni diversi.
+- Le `sets_performed` vengono ora mergeate per `setNumber`, preferendo l'ultimo valore `completed = true` disponibile invece di lasciare che uno snapshot piu recente ma incompleto nasconda una serie completata in precedenza.
+- Questo copre il caso generato dalla regressione precedente: un workout storico con serie completate a DB ma non piu visibili in UI perche oscurate da un feedback giornaliero successivo e parziale.
+- Aggiunto test di integrazione dedicato con due feedback storici sullo stesso `workoutExercise`, uno piu recente incompleto e uno piu vecchio completato.
+
+---
+
+## [30 Aprile 2026] — Spunte serie storiche ripristinate nel workout trainee
+
+**Task checklist:** #2.2
+**File modificati:**
+`src/app/api/trainee/workouts/[id]/route.ts`, `tests/integration/trainee-workout-detail.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Il reader `GET /api/trainee/workouts/[id]` non filtra piu i feedback del workout alla sola data odierna.
+- Il payload del workout trainee ora aggancia l'ultimo `exercise_feedback` disponibile per ciascun `workoutExercise`, cosi le spunte da `sets_performed.completed = true` tornano visibili anche aprendo workout storici o workout ripresi in un giorno diverso.
+- La regressione era stata introdotta quando la lettura del workout era stata limitata a `today..tomorrow`, mentre submit e autosave continuavano a salvare per data, creando mismatch tra write path e read path.
+- Aggiunto test di integrazione che copre esplicitamente il caso di feedback storico non odierno.
+
+---
+
+## [30 Aprile 2026] — Stato programmi trainee allineato a training_programs.status
+
+**Task checklist:** #9.1, #9.2
+**File modificati:**
+`src/app/api/programs/route.ts`, `src/app/trainee/history/_content.tsx`, `tests/integration/programs.test.ts`, `tests/unit/trainee-history.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- `GET /api/programs` non riscrive piu lo `status` dei programmi in base al completamento dei workout: il valore esposto resta quello persistito in `training_programs.status`.
+- Il filtro `status=completed` torna a usare solo il dato canonico del database, senza includere programmi `active` solo perche i workout risultano finiti.
+- La schermata trainee history non effettua piu fetch ai progress dei programmi per cambiare badge, hint o conteggi: usa esclusivamente lo `status` ricevuto dalla lista programmi.
+- Questo riallinea anche la dashboard trainee, che sceglie il programma attivo dalla stessa risposta `/api/programs`.
+
+---
+
+## [29 Aprile 2026] — Fix completamento settimana trainee con workout vuoti
+
+**Task checklist:** #3.1
+**File modificati:**
+`src/lib/completion-service.ts`, `src/lib/trainee-program-data.ts`, `tests/unit/completion-service.test.ts`, `tests/unit/lib/trainee-program-data.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- La cascata di completamento ora ignora i workout senza esercizi quando decide se una settimana puo essere marcata come completed.
+- Allo stesso modo il completamento del programma ignora settimane che contengono solo workout vuoti, cosi i placeholder non bloccano la chiusura reale della scheda.
+- La progress view trainee usa ora il flag canonico `workout.isCompleted` invece di dedurre il completamento dalla sola esistenza di feedback, evitando mismatch tra autosave puntuale e stato mostrato.
+- Il prossimo workout e i conteggi weekly/top-level escludono i workout vuoti, coerentemente con la logica di completamento.
+
+---
+
+## [29 Aprile 2026] — Warning separati e cliccabili per esercizi senza dati nel riepilogo workout
+
+**Task checklist:** #3.1
+**File modificati:**
+`src/app/trainee/workouts/[id]/_content.tsx`, `tests/unit/trainee-workout-focus.test.tsx`, `public/locales/it/trainee.json`, `public/locales/en/trainee.json`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Il riepilogo finale del workout trainee non mostra piu un solo warning aggregato per gli esercizi senza dati.
+- Ora viene renderizzato un warning separato per ogni esercizio senza dati, cosi il trainee vede subito quale esercizio manca.
+- Ogni warning e cliccabile e riporta direttamente allo step dell'esercizio corrispondente nel workout.
+- Aggiunto test unitario per verificare sia la presenza di warning distinti sia la navigazione al click.
+
+---
+
+## [29 Aprile 2026] — Autosave immediato della spunta serie nel workout trainee
+
+**Task checklist:** #3.1
+**File modificati:**
+`src/schemas/feedback.ts`, `src/app/api/trainee/workout-exercises/[id]/feedback/route.ts`, `src/app/trainee/workouts/[id]/_content.tsx`, `tests/integration/workout-exercise-feedback.test.ts`, `tests/unit/trainee-workout-focus.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Aggiunto endpoint dedicato `PATCH /api/trainee/workout-exercises/[id]/feedback` per salvare subito i `setsPerformed` del singolo esercizio quando il trainee preme la spunta di una serie.
+- L’endpoint aggiorna anche il completion flag del `WorkoutExercise` e la cascata `workout -> week -> program` usando la stessa logica di completion già esistente.
+- La pagina workout trainee ora chiama questo endpoint direttamente da `toggleSetCompleted`, invece di limitarsi al solo stato locale + `localStorage`.
+- In caso di errore l’interfaccia ripristina il set precedente e non lascia la UI in uno stato non persistito.
+- Aggiunti test mirati: integrazione per il nuovo endpoint e unit test per la chiamata immediata dalla UI.
+
+---
+
 ## [29 Aprile 2026] — Warning inline nel riepilogo workout trainee per serie non completate
 
 **Task checklist:** #3.1

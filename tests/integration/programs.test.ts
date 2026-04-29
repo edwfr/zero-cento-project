@@ -140,7 +140,7 @@ describe('GET /api/programs', () => {
         )
     })
 
-    it('marks fully completed active programs as completed in the response without persisting', async () => {
+    it('keeps the stored active status in the response even when all workouts are complete', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
         vi.mocked(prisma.trainingProgram.findMany).mockResolvedValue([
             {
@@ -177,13 +177,12 @@ describe('GET /api/programs', () => {
 
         expect(res.status).toBe(200)
         expect(body.data.items).toHaveLength(1)
-        expect(body.data.items[0].status).toBe('completed')
-        expect(body.data.items[0].completedAt).toBe('2026-03-20T10:00:00.000Z')
-        // GET handler must not write — auto-complete persistence moved out of read path.
+        expect(body.data.items[0].status).toBe('active')
+        expect(body.data.items[0].completedAt).toBeNull()
         expect(prisma.trainingProgram.update).not.toHaveBeenCalled()
     })
 
-    it('excludes fully completed programs from the active filter', async () => {
+    it('keeps active programs in the active filter even when workouts are all complete', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
         vi.mocked(prisma.trainingProgram.findMany).mockResolvedValue([
             {
@@ -218,6 +217,37 @@ describe('GET /api/programs', () => {
         const body = await res.json()
 
         expect(res.status).toBe(200)
+        expect(body.data.items).toHaveLength(1)
+        expect(body.data.items[0].status).toBe('active')
+    })
+
+    it('does not include active programs in the completed filter just because workouts are complete', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainingProgram.findMany).mockResolvedValue([] as any)
+        vi.mocked(prisma.$queryRaw)
+            .mockResolvedValueOnce([
+                {
+                    programId: 'prog-complete',
+                    totalWorkouts: 1,
+                    completedWorkouts: 1,
+                    lastCompletedWorkoutAt: new Date('2026-03-20T10:00:00.000Z'),
+                    lastFeedbackAt: new Date('2026-03-20T10:00:00.000Z'),
+                },
+            ] as any)
+            .mockResolvedValueOnce([] as any)
+
+        const res = await GET(makeRequest('http://localhost:3000/api/programs?status=completed'))
+        const body = await res.json()
+
+        expect(res.status).toBe(200)
+        expect(prisma.trainingProgram.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({
+                where: expect.objectContaining({
+                    trainerId: 'trainer-uuid-1',
+                    status: 'completed',
+                }),
+            })
+        )
         expect(body.data.items).toHaveLength(0)
     })
 

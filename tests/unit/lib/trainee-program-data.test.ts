@@ -155,7 +155,7 @@ describe('loadProgressAggregates – SQL uses DISTINCT for exerciseCount', () =>
         expect(sql).toContain('COUNT(DISTINCT we."id")')
     })
 
-    it('marks workout as completed when exerciseCount equals completedExerciseCount', async () => {
+    it('marks workout as completed when the workout completion flag is true', async () => {
         const workoutId = 'wk-1'
         ;(prisma.workout.findMany as any).mockResolvedValue([{
             id: workoutId,
@@ -167,7 +167,7 @@ describe('loadProgressAggregates – SQL uses DISTINCT for exerciseCount', () =>
                 workoutId,
                 weekNumber: 1,
                 exerciseCount: 1,
-                completedExerciseCount: 1,
+                workoutCompleted: true,
                 startedFeedbackCount: 0,
             }])
             .mockResolvedValueOnce([{ weekNumber: 1, totalVolume: 0 }])
@@ -177,5 +177,88 @@ describe('loadProgressAggregates – SQL uses DISTINCT for exerciseCount', () =>
 
         expect(result.workouts[0].completed).toBe(true)
         expect(result.completedWorkouts).toBe(1)
+    })
+
+    it('ignores empty workouts when calculating totals and next workout', async () => {
+        ;(prisma.workout.findMany as any).mockResolvedValue([
+            {
+                id: 'wk-empty',
+                dayIndex: 1,
+                week: { weekNumber: 1, weekType: 'normal' },
+            },
+            {
+                id: 'wk-real',
+                dayIndex: 2,
+                week: { weekNumber: 1, weekType: 'normal' },
+            },
+        ])
+        ;(prisma.$queryRaw as any)
+            .mockResolvedValueOnce([
+                {
+                    workoutId: 'wk-empty',
+                    weekNumber: 1,
+                    exerciseCount: 0,
+                    workoutCompleted: false,
+                    startedFeedbackCount: 0,
+                },
+                {
+                    workoutId: 'wk-real',
+                    weekNumber: 1,
+                    exerciseCount: 1,
+                    workoutCompleted: false,
+                    startedFeedbackCount: 0,
+                },
+            ])
+            .mockResolvedValueOnce([{ weekNumber: 1, totalVolume: 0 }])
+            .mockResolvedValueOnce([{ weekNumber: 1, avgRpe: null, feedbackCount: 0 }])
+
+        const result = await loadProgressAggregates('p1')
+
+        expect(result.totalWorkouts).toBe(1)
+        expect(result.completedWorkouts).toBe(0)
+        expect(result.nextWorkout?.id).toBe('wk-real')
+        expect(result.weeklyStats[0]).toMatchObject({
+            completedWorkouts: 0,
+            totalWorkouts: 1,
+        })
+    })
+
+    it('returns the first incomplete workout in order even if a later workout is already started', async () => {
+        ;(prisma.workout.findMany as any).mockResolvedValue([
+            {
+                id: 'wk-todo',
+                dayIndex: 1,
+                week: { weekNumber: 1, weekType: 'normal' },
+            },
+            {
+                id: 'wk-started',
+                dayIndex: 2,
+                week: { weekNumber: 1, weekType: 'normal' },
+            },
+        ])
+        ;(prisma.$queryRaw as any)
+            .mockResolvedValueOnce([
+                {
+                    workoutId: 'wk-todo',
+                    weekNumber: 1,
+                    exerciseCount: 1,
+                    workoutCompleted: false,
+                    startedFeedbackCount: 0,
+                },
+                {
+                    workoutId: 'wk-started',
+                    weekNumber: 1,
+                    exerciseCount: 1,
+                    workoutCompleted: false,
+                    startedFeedbackCount: 1,
+                },
+            ])
+            .mockResolvedValueOnce([{ weekNumber: 1, totalVolume: 0 }])
+            .mockResolvedValueOnce([{ weekNumber: 1, avgRpe: null, feedbackCount: 1 }])
+
+        const result = await loadProgressAggregates('p1')
+
+        expect(result.nextWorkout?.id).toBe('wk-todo')
+        expect(result.nextWorkout?.started).toBe(false)
     })
 })

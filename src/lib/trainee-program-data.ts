@@ -86,7 +86,7 @@ interface CompletionRow {
     workoutId: string
     weekNumber: number
     exerciseCount: number
-    completedExerciseCount: number
+    workoutCompleted: boolean
     startedFeedbackCount: number
 }
 
@@ -281,7 +281,7 @@ export async function loadProgressAggregates(programId: string): Promise<Trainee
             wk."id" AS "workoutId",
             w."weekNumber" AS "weekNumber",
             COUNT(DISTINCT we."id")::int AS "exerciseCount",
-            COUNT(DISTINCT CASE WHEN ef."id" IS NOT NULL THEN we."id" END)::int AS "completedExerciseCount",
+            wk."isCompleted" AS "workoutCompleted",
             COUNT(DISTINCT CASE
                 WHEN EXISTS (
                     SELECT 1 FROM "sets_performed" sp
@@ -373,9 +373,8 @@ export async function loadProgressAggregates(programId: string): Promise<Trainee
     const workoutsList = workouts.map((wk) => {
         const completion = completionByWorkout.get(wk.id)
         const exerciseCount = completion?.exerciseCount ?? 0
-        const completedExerciseCount = completion?.completedExerciseCount ?? 0
         const startedFeedbackCount = completion?.startedFeedbackCount ?? 0
-        const completed = exerciseCount > 0 && exerciseCount === completedExerciseCount
+        const completed = exerciseCount === 0 ? true : Boolean(completion?.workoutCompleted)
         const started = startedFeedbackCount > 0
 
         const exercisesPerformedForWorkout = exercisesPerformedMap.get(wk.id) ?? new Map()
@@ -398,14 +397,14 @@ export async function loadProgressAggregates(programId: string): Promise<Trainee
     })
 
     const totalWorkouts = workoutsList.filter((w) => w.exerciseCount > 0).length
-    const completedWorkouts = workoutsList.filter((w) => w.completed).length
+    const completedWorkouts = workoutsList.filter((w) => w.exerciseCount > 0 && w.completed).length
     const feedbackCount = workoutsList.reduce((sum, w) => sum + w.feedbackCount, 0)
     const totalVolume = weeklyVolumeRows.reduce((sum, r) => sum + r.totalVolume, 0)
     const avgRPE = programAgg._avg.actualRpe !== null
         ? Math.round(programAgg._avg.actualRpe * 10) / 10
         : null
 
-    const nextWorkout = workoutsList.find((w) => !w.completed) ?? null
+    const nextWorkout = workoutsList.find((w) => w.exerciseCount > 0 && !w.completed) ?? null
 
     // Per-week aggregates: combine workouts grouped by weekNumber + weekly volume + per-week avg RPE.
     const byWeek = new Map<number, { weekType: string; workouts: typeof workoutsList }>()
@@ -440,8 +439,8 @@ export async function loadProgressAggregates(programId: string): Promise<Trainee
             avgRPE: rpeByWeek.get(weekNumber)?.avgRpe != null
                 ? Math.round(rpeByWeek.get(weekNumber)!.avgRpe! * 10) / 10
                 : null,
-            completedWorkouts: info.workouts.filter((w) => w.completed).length,
-            totalWorkouts: info.workouts.length,
+            completedWorkouts: info.workouts.filter((w) => w.exerciseCount > 0 && w.completed).length,
+            totalWorkouts: info.workouts.filter((w) => w.exerciseCount > 0).length,
             feedbackCount: rpeByWeek.get(weekNumber)?.feedbackCount ?? 0,
         }))
 

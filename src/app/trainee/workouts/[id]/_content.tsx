@@ -70,6 +70,12 @@ interface SetPerformed {
     completed?: boolean | null
 }
 
+interface ExerciseWarningTarget {
+    id: string
+    name: string
+    stepIndex: number
+}
+
 interface ExerciseRPE {
     workoutExerciseId: string
     rpe: number | null
@@ -295,6 +301,83 @@ export default function WorkoutDetailContent() {
         })
     }
 
+    const persistExerciseFeedback = useCallback(async (input: {
+        workoutExerciseId: string
+        nextSets: SetPerformed[]
+        previousSets: SetPerformed[]
+        previousExerciseCompleted: boolean
+    }) => {
+        const { workoutExerciseId, nextSets, previousSets, previousExerciseCompleted } = input
+
+        try {
+            const res = await fetch(`/api/trainee/workout-exercises/${workoutExerciseId}/feedback`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    actualRpe: exerciseRPE[workoutExerciseId] ?? null,
+                    sets: nextSets.map((set) => ({
+                        setNumber: set.setNumber,
+                        completed: !!set.completed,
+                        reps: set.reps,
+                        weight: set.weight,
+                    })),
+                }),
+            })
+
+            const data = await res.json()
+
+            if (!res.ok) {
+                throw new Error(getApiErrorMessage(data, t('workouts.errorFeedback'), t))
+            }
+
+            const cascade = data.data.cascade
+
+            setExerciseCompleted((prev) => ({
+                ...prev,
+                [workoutExerciseId]: cascade.workoutExercise.isCompleted,
+            }))
+
+            if (!cascade.workoutExercise.isCompleted) {
+                return
+            }
+
+            let toastDelay = 0
+
+            if (cascade.workout.isCompleted) {
+                setTimeout(() => {
+                    showToast(t('workouts.workoutCompletedToast'), 'success')
+                }, toastDelay)
+                toastDelay += 200
+            }
+
+            if (cascade.week.isCompleted) {
+                setTimeout(() => {
+                    showToast(
+                        t('workouts.weekCompletedToast', { week: cascade.week.weekNumber }),
+                        'success'
+                    )
+                }, toastDelay)
+                toastDelay += 200
+            }
+
+            if (cascade.program.status === 'completed') {
+                setTimeout(() => {
+                    showToast(t('workouts.programCompletedToast'), 'success')
+                }, toastDelay)
+            }
+        } catch (err: unknown) {
+            setFeedbackData((prev) => ({
+                ...prev,
+                [workoutExerciseId]: previousSets,
+            }))
+            setExerciseCompleted((prev) => ({
+                ...prev,
+                [workoutExerciseId]: previousExerciseCompleted,
+            }))
+            showToast(err instanceof Error ? err.message : t('workouts.errorFeedback'), 'error')
+        }
+    }, [exerciseRPE, showToast, t])
+
     const toggleSetCompleted = (workoutExerciseId: string, setIndex: number) => {
         if (!workout) return
         const we = workout.exercises.find((e) => e.id === workoutExerciseId)
@@ -316,6 +399,9 @@ export default function WorkoutDetailContent() {
             showToast(t('workouts.errorRepsRequired'), 'error')
             return
         }
+
+        const previousSets = currentSets.map((set) => ({ ...set }))
+        const previousExerciseCompleted = exerciseCompleted[workoutExerciseId] ?? false
 
         // Compute new set state before updating React state
         let newSet: SetPerformed
@@ -341,14 +427,17 @@ export default function WorkoutDetailContent() {
             return updated
         })
 
-        // Auto-mark exercise as completed when last set is checked,
-        // or as incomplete when any set is unchecked while exercise was complete
-        const wasExerciseCompleted = exerciseCompleted[workoutExerciseId] ?? false
-        if (isCompleting && allSetsCompleted) {
-            markExerciseCompleted(workoutExerciseId, true)
-        } else if (!isCompleting && wasExerciseCompleted) {
-            markExerciseCompleted(workoutExerciseId, false)
-        }
+        setExerciseCompleted((prev) => ({
+            ...prev,
+            [workoutExerciseId]: allSetsCompleted,
+        }))
+
+        void persistExerciseFeedback({
+            workoutExerciseId,
+            nextSets: newSets,
+            previousSets,
+            previousExerciseCompleted,
+        })
     }
 
     const updateExerciseRPE = (workoutExerciseId: string, rpe: number | null) => {
@@ -356,64 +445,6 @@ export default function WorkoutDetailContent() {
             ...prev,
             [workoutExerciseId]: rpe,
         }))
-    }
-
-    const markExerciseCompleted = (workoutExerciseId: string, isCompleted: boolean) => {
-        // Optimistic update
-        setExerciseCompleted((prev) => ({
-            ...prev,
-            [workoutExerciseId]: isCompleted,
-        }))
-
-        // Fire-and-forget PATCH to server in background
-        fetch(`/api/trainee/workout-exercises/${workoutExerciseId}/complete`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ isCompleted }),
-        })
-            .then((res) => {
-                if (!res.ok) {
-                    throw new Error('Failed to update completion')
-                }
-                return res.json()
-            })
-            .then((data) => {
-                if (!isCompleted) return
-                // On completion, show celebration toasts for parent completions
-                const result = data.data
-                let toastDelay = 0
-
-                if (result.workout.isCompleted) {
-                    setTimeout(() => {
-                        showToast(t('workouts.workoutCompletedToast'), 'success')
-                    }, toastDelay)
-                    toastDelay += 200
-                }
-
-                if (result.week.isCompleted) {
-                    setTimeout(() => {
-                        showToast(
-                            t('workouts.weekCompletedToast', { week: result.week.weekNumber }),
-                            'success'
-                        )
-                    }, toastDelay)
-                    toastDelay += 200
-                }
-
-                if (result.program.status === 'completed') {
-                    setTimeout(() => {
-                        showToast(t('workouts.programCompletedToast'), 'success')
-                    }, toastDelay)
-                }
-            })
-            .catch(() => {
-                // Revert optimistic state on error
-                setExerciseCompleted((prev) => ({
-                    ...prev,
-                    [workoutExerciseId]: !isCompleted,
-                }))
-                showToast(t('workouts.errorMarkComplete'), 'error')
-            })
     }
 
     const toggleVideo = (workoutExerciseId: string) => {
@@ -525,10 +556,10 @@ export default function WorkoutDetailContent() {
         ? Math.round((totalCompletedSets / totalPlannedSets) * 100)
         : 0
 
-    const emptyExerciseNames = useMemo(
+    const emptyExerciseTargets = useMemo(
         () =>
             sortedExercises
-                .filter((we) => {
+                .flatMap((we, stepIndex) => {
                     const sets = feedbackData[we.id] || []
                     const isPreciseReps = /^\d+$/.test(we.reps.trim())
                     const isMaxReps = we.reps.trim() === 'max'
@@ -536,21 +567,31 @@ export default function WorkoutDetailContent() {
                     const hasDoneSet = (isPreciseReps || isMaxReps)
                         ? sets.some((s) => s.completed && s.reps > 0)
                         : sets.some((s) => s.completed)
-                    return !hasDoneSet
-                })
-                .map((we) => we.exercise.name),
+                    return hasDoneSet
+                        ? []
+                        : [{
+                              id: we.id,
+                              name: we.exercise.name,
+                              stepIndex,
+                          }]
+                }),
         [feedbackData, sortedExercises]
     )
 
-    const incompleteSetExerciseNames = useMemo(
+    const incompleteSetExerciseTargets = useMemo(
         () =>
             sortedExercises
-                .filter((we) => {
+                .flatMap((we, stepIndex) => {
                     const sets = feedbackData[we.id] || []
                     const completedSets = sets.filter((set) => set.completed).length
                     return completedSets > 0 && completedSets < sets.length
-                })
-                .map((we) => we.exercise.name),
+                        ? [{
+                              id: we.id,
+                              name: we.exercise.name,
+                              stepIndex,
+                          }]
+                        : []
+                                }),
         [feedbackData, sortedExercises]
     )
 
@@ -648,10 +689,11 @@ export default function WorkoutDetailContent() {
                             completed={completedExerciseCount}
                             total={sortedExercises.length}
                             totalSets={totalCompletedSets}
-                            emptyExercises={emptyExerciseNames}
-                            incompleteSetExercises={incompleteSetExerciseNames}
+                            emptyExercises={emptyExerciseTargets}
+                            incompleteSetExercises={incompleteSetExerciseTargets}
                             globalNotes={globalNotes}
                             onNotesChange={setGlobalNotes}
+                            onSelectExercise={goToStep}
                             t={t}
                         />
                     )}
@@ -962,10 +1004,11 @@ interface FinalStepProps {
     completed: number
     total: number
     totalSets: number
-    emptyExercises: string[]
-    incompleteSetExercises: string[]
+    emptyExercises: ExerciseWarningTarget[]
+    incompleteSetExercises: ExerciseWarningTarget[]
     globalNotes: string
     onNotesChange: (notes: string) => void
+    onSelectExercise: (stepIndex: number) => void
     t: (key: string, vars?: Record<string, unknown>) => string
 }
 
@@ -977,6 +1020,7 @@ function FinalStep({
     incompleteSetExercises,
     globalNotes,
     onNotesChange,
+    onSelectExercise,
     t,
 }: FinalStepProps) {
     return (
@@ -1009,42 +1053,60 @@ function FinalStep({
 
                     <div className="mt-4 space-y-3">
                         {incompleteSetExercises.length > 0 && (
-                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                                <div className="flex gap-3">
-                                    <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                                    <div>
-                                        <p className="font-semibold text-amber-800 text-sm">
-                                            {t('workouts.incompleteSetsInline')}
-                                        </p>
-                                        <ul className="mt-2 space-y-1">
-                                            {incompleteSetExercises.map((name) => (
-                                                <li key={name} className="text-sm text-amber-700">
-                                                    - {name}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                </div>
+                            <div className="space-y-3">
+                                {incompleteSetExercises.map((exercise) => (
+                                    <button
+                                        key={exercise.id}
+                                        type="button"
+                                        onClick={() => onSelectExercise(exercise.stepIndex)}
+                                        className="w-full rounded-lg border border-amber-200 bg-amber-50 p-4 text-left transition-colors hover:border-amber-300 hover:bg-amber-100"
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
+                                            <div className="min-w-0 flex-1">
+                                                <p className="font-semibold text-amber-800 text-sm">
+                                                    {t('workouts.incompleteSetsInline')}
+                                                </p>
+                                                <p className="mt-1 text-sm font-medium text-amber-700">
+                                                    {exercise.name}
+                                                </p>
+                                                <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-amber-700">
+                                                    {t('workouts.jumpToExercise')}
+                                                </p>
+                                            </div>
+                                            <ChevronRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-700" />
+                                        </div>
+                                    </button>
+                                ))}
                             </div>
                         )}
 
                         {emptyExercises.length > 0 && (
-                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                                <div className="flex gap-3">
-                                    <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                                    <div>
-                                        <p className="font-semibold text-amber-800 text-sm">
-                                            {t('workouts.missingDataInline')}
-                                        </p>
-                                        <ul className="mt-2 space-y-1">
-                                            {emptyExercises.map((name) => (
-                                                <li key={name} className="text-sm text-amber-700">
-                                                    - {name}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                </div>
+                            <div className="space-y-3">
+                                {emptyExercises.map((exercise) => (
+                                    <button
+                                        key={exercise.id}
+                                        type="button"
+                                        onClick={() => onSelectExercise(exercise.stepIndex)}
+                                        className="w-full rounded-lg border border-amber-200 bg-amber-50 p-4 text-left transition-colors hover:border-amber-300 hover:bg-amber-100"
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
+                                            <div className="min-w-0 flex-1">
+                                                <p className="font-semibold text-amber-800 text-sm">
+                                                    {t('workouts.missingDataInline')}
+                                                </p>
+                                                <p className="mt-1 text-sm font-medium text-amber-700">
+                                                    {exercise.name}
+                                                </p>
+                                                <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-amber-700">
+                                                    {t('workouts.jumpToExercise')}
+                                                </p>
+                                            </div>
+                                            <ChevronRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-700" />
+                                        </div>
+                                    </button>
+                                ))}
                             </div>
                         )}
                     </div>

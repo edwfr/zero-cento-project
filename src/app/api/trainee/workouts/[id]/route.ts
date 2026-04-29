@@ -5,6 +5,85 @@ import { requireRole } from '@/lib/auth'
 import { loadTraineePrMap, resolveEffectiveWeight } from '@/lib/calculations'
 import { logger } from '@/lib/logger'
 
+interface FeedbackSetSnapshot {
+    setNumber: number
+    completed: boolean
+    reps: number
+    weight: number
+}
+
+interface FeedbackSnapshot {
+    id: string
+    workoutExerciseId: string
+    traineeId: string
+    date: Date
+    updatedAt: Date
+    actualRpe: number | null
+    notes: string | null
+    setsPerformed: FeedbackSetSnapshot[]
+}
+
+const mergeFeedbackRows = (rows: FeedbackSnapshot[]) => {
+    const mergedByExerciseId = new Map<string, {
+        id: string
+        workoutExerciseId: string
+        traineeId: string
+        date: Date
+        updatedAt: Date
+        avgRPE: number | null
+        actualRpe: number | null
+        notes: string | null
+        setsPerformed: FeedbackSetSnapshot[]
+    }>()
+    const mergedSetsByExerciseId = new Map<string, Map<number, FeedbackSetSnapshot>>()
+
+    for (const row of rows) {
+        if (!mergedByExerciseId.has(row.workoutExerciseId)) {
+            mergedByExerciseId.set(row.workoutExerciseId, {
+                id: row.id,
+                workoutExerciseId: row.workoutExerciseId,
+                traineeId: row.traineeId,
+                date: row.date,
+                updatedAt: row.updatedAt,
+                avgRPE: row.actualRpe,
+                actualRpe: row.actualRpe,
+                notes: row.notes,
+                setsPerformed: [],
+            })
+            mergedSetsByExerciseId.set(row.workoutExerciseId, new Map())
+        } else {
+            const merged = mergedByExerciseId.get(row.workoutExerciseId)!
+            if (merged.notes === null && row.notes !== null) {
+                merged.notes = row.notes
+            }
+            if (merged.avgRPE === null && row.actualRpe !== null) {
+                merged.avgRPE = row.actualRpe
+                merged.actualRpe = row.actualRpe
+            }
+        }
+
+        const setsByNumber = mergedSetsByExerciseId.get(row.workoutExerciseId)!
+        for (const set of row.setsPerformed) {
+            const existing = setsByNumber.get(set.setNumber)
+            if (!existing || (!existing.completed && set.completed)) {
+                setsByNumber.set(set.setNumber, {
+                    setNumber: set.setNumber,
+                    completed: set.completed,
+                    reps: set.reps,
+                    weight: set.weight,
+                })
+            }
+        }
+    }
+
+    for (const [workoutExerciseId, merged] of mergedByExerciseId) {
+        merged.setsPerformed = Array.from(mergedSetsByExerciseId.get(workoutExerciseId)?.values() ?? [])
+            .sort((left, right) => left.setNumber - right.setNumber)
+    }
+
+    return mergedByExerciseId
+}
+
 /**
  * GET /api/trainee/workouts/[id]
  * Get workout details with pre-calculated effective weights
@@ -63,13 +142,9 @@ export async function GET(
             return apiError('FORBIDDEN', 'You can only access your own workouts', 403, undefined, 'workout.accessDenied')
         }
 
-        // Prepare date range for feedback query
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        const tomorrow = new Date(today)
-        tomorrow.setDate(tomorrow.getDate() + 1)
-
-        // Parallelize: fetch feedback and trainee PR map concurrently
+        // Parallelize: fetch the latest feedback rows and trainee PR map concurrently.
+        // Feedback is stored by calendar day, so the workout detail must hydrate the
+        // most recent row per exercise instead of restricting the read to "today".
         const [existingFeedback, prMap] = await Promise.all([
             prisma.exerciseFeedback.findMany({
                 where: {
@@ -77,10 +152,6 @@ export async function GET(
                         in: workout.workoutExercises.map((we) => we.id),
                     },
                     traineeId: session.user.id,
-                    date: {
-                        gte: today,
-                        lt: tomorrow,
-                    },
                 },
                 include: {
                     setsPerformed: {
@@ -140,12 +211,7 @@ export async function GET(
         })
 
         // Create a map for quick lookup of feedback
-        const feedbackMap = new Map<string, any>()
-        existingFeedback.forEach((fb) => {
-            if (!feedbackMap.has(fb.workoutExerciseId)) {
-                feedbackMap.set(fb.workoutExerciseId, fb)
-            }
-        })
+        const feedbackMap = mergeFeedbackRows(existingFeedback as FeedbackSnapshot[])
 
         // Attach feedback to exercises
         const exercisesWithFeedback = exercisesWithWeights.map((ex) => ({

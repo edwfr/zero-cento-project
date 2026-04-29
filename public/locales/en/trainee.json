@@ -203,6 +203,7 @@
         "summaryStats": "{{done}} / {{total}} exercises · {{sets}} sets",
         "incompleteSetsInline": "Exercises with incomplete sets:",
         "missingDataInline": "Exercises with no data:",
+        "jumpToExercise": "Go to exercise",
         "setsHeading": "Sets",
         "repsShort": "reps",
         "kgShort": "kg",

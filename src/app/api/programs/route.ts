@@ -5,7 +5,6 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { createProgramSchema } from '@/schemas/program'
 import { logger } from '@/lib/logger'
-import { getEffectiveProgramStatus } from '@/lib/program-status'
 
 interface ProgramTestsSummary {
     testWeeks: number[]
@@ -66,12 +65,8 @@ export async function GET(request: NextRequest) {
             where.traineeId = traineeId
         }
 
-        if (status === 'draft' || status === 'active') {
+        if (status === 'draft' || status === 'active' || status === 'completed') {
             where.status = status
-        } else if (status === 'completed') {
-            where.status = {
-                in: ['active', 'completed'],
-            }
         }
 
         if (search) {
@@ -257,19 +252,14 @@ export async function GET(request: NextRequest) {
 
         const enrichedItems = items
             .map((program) => {
-                const completionSnapshot =
-                    program.status === 'active'
-                        ? completionByProgramId.get(program.id)
-                        : undefined
-                const effectiveStatus = getEffectiveProgramStatus(program, completionSnapshot)
+                const completionSnapshot = completionByProgramId.get(program.id)
                 const testsSummary = testsSummaryByProgramId.get(program.id)
 
                 return {
                     ...program,
-                    status: effectiveStatus,
                     completedAt:
                         program.completedAt ??
-                        (effectiveStatus === 'completed'
+                        (program.status === 'completed'
                             ? completionSnapshot?.lastCompletedWorkoutAt ?? null
                             : null),
                     lastWorkoutCompletedAt:
@@ -284,13 +274,12 @@ export async function GET(request: NextRequest) {
                     completedTestsCount: testsSummary?.completedTestsCount ?? 0,
                 }
             })
-            .filter((program) => !status || program.status === status)
 
         return apiSuccess({
             items: enrichedItems,
             pagination: {
                 nextCursor,
-                hasMore: hasMore || programs.length !== enrichedItems.length,
+                hasMore,
             },
         })
     } catch (error: any) {

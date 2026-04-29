@@ -26,11 +26,6 @@ interface Program {
     }
 }
 
-interface ProgramProgressSummary {
-    completedWorkouts: number
-    totalWorkouts: number
-}
-
 const getProgramSortTime = (program: Program): number => {
     const relevantDate = program.lastWorkoutCompletedAt || program.completedAt || program.startDate || program.createdAt
     return new Date(relevantDate).getTime()
@@ -40,7 +35,6 @@ export default function HistoryContent() {
     const { t } = useTranslation('trainee')
     const [loading, setLoading] = useState(true)
     const [programs, setPrograms] = useState<Program[]>([])
-    const [progressByProgramId, setProgressByProgramId] = useState<Record<string, ProgramProgressSummary>>({})
     const [error, setError] = useState<string | null>(null)
 
     const isPublishedProgram = (program: Program): boolean => program.status !== 'draft'
@@ -58,38 +52,6 @@ export default function HistoryContent() {
 
             const publishedPrograms = (data.data.items ?? []).filter(isPublishedProgram) as Program[]
             setPrograms(publishedPrograms)
-
-            const activePrograms = publishedPrograms.filter((program) => program.status === 'active')
-
-            if (activePrograms.length > 0) {
-                const progressEntries = await Promise.all(
-                    activePrograms.map(async (program) => {
-                        try {
-                            const progressRes = await fetch(`/api/programs/${program.id}/progress`)
-
-                            if (!progressRes.ok) {
-                                return null
-                            }
-
-                            const progressData = await progressRes.json()
-
-                            return [
-                                program.id,
-                                {
-                                    completedWorkouts: progressData.data.completedWorkouts ?? 0,
-                                    totalWorkouts: progressData.data.totalWorkouts ?? 0,
-                                },
-                            ] as const
-                        } catch {
-                            return null
-                        }
-                    })
-                )
-
-                setProgressByProgramId(Object.fromEntries(progressEntries.filter((entry): entry is readonly [string, ProgramProgressSummary] => entry !== null)))
-            } else {
-                setProgressByProgramId({})
-            }
         } catch (err: unknown) {
             setError((err as Error).message)
         } finally {
@@ -101,22 +63,8 @@ export default function HistoryContent() {
         void fetchHistory()
     }, [fetchHistory])
 
-    const getDisplayStatus = (program: Program): ProgramStatus => {
-        if (program.status !== 'active') {
-            return program.status
-        }
-
-        const progress = progressByProgramId[program.id]
-
-        if (progress && progress.totalWorkouts > 0 && progress.completedWorkouts === progress.totalWorkouts) {
-            return 'completed'
-        }
-
-        return 'active'
-    }
-
-    const getProgramEndDate = (program: Program, displayStatus: ProgramStatus): string | null => {
-        if (displayStatus !== 'completed') {
+    const getProgramEndDate = (program: Program): string | null => {
+        if (program.status !== 'completed') {
             return null
         }
 
@@ -145,8 +93,8 @@ export default function HistoryContent() {
         }
     }
 
-    const activePrograms = programs.filter((program) => getDisplayStatus(program) === 'active').length
-    const completedPrograms = programs.filter((program) => getDisplayStatus(program) === 'completed').length
+    const activePrograms = programs.filter((program) => program.status === 'active').length
+    const completedPrograms = programs.filter((program) => program.status === 'completed').length
 
     if (loading) {
         return (
@@ -197,8 +145,8 @@ export default function HistoryContent() {
                     {programs
                         .sort((a, b) => getProgramSortTime(b) - getProgramSortTime(a))
                         .map((program) => {
-                            const displayStatus = getDisplayStatus(program)
-                            const endDate = getProgramEndDate(program, displayStatus)
+                            const programStatus = program.status
+                            const endDate = getProgramEndDate(program)
 
                             return (
                                 <div
@@ -211,8 +159,8 @@ export default function HistoryContent() {
                                                 <h3 className="text-2xl font-bold text-gray-900">
                                                     {program.title}
                                                 </h3>
-                                                <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClasses(displayStatus)}`}>
-                                                    {getStatusLabel(displayStatus)}
+                                                <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClasses(programStatus)}`}>
+                                                    {getStatusLabel(programStatus)}
                                                 </span>
                                             </div>
                                             <p className="text-gray-600">
@@ -225,7 +173,7 @@ export default function HistoryContent() {
                                         <div>
                                             <p className="text-sm text-gray-600 mb-1">{t('history.status')}</p>
                                             <p className="font-semibold text-gray-900">
-                                                {getStatusLabel(displayStatus)}
+                                                {getStatusLabel(programStatus)}
                                             </p>
                                         </div>
                                         <div>
@@ -254,22 +202,22 @@ export default function HistoryContent() {
                                         </div>
                                     </div>
 
-                                    {displayStatus === 'completed' && endDate && (
+                                    {programStatus === 'completed' && endDate && (
                                         <p className="text-sm text-gray-600">
                                             {t('history.completedOn', { date: formatDate(endDate) })}
                                         </p>
                                     )}
-                                    {displayStatus === 'completed' && !endDate && (
+                                    {programStatus === 'completed' && !endDate && (
                                         <p className="text-sm text-gray-600">
                                             {t('history.completedProgramHint')}
                                         </p>
                                     )}
-                                    {displayStatus === 'active' && (
+                                    {programStatus === 'active' && (
                                         <p className="text-sm text-gray-600">
                                             {t('history.activeProgramHint')}
                                         </p>
                                     )}
-                                    {displayStatus === 'draft' && (
+                                    {programStatus === 'draft' && (
                                         <p className="text-sm text-gray-600">
                                             {t('history.draftProgramHint')}
                                         </p>

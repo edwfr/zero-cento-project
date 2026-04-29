@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { cascadeCompletion } from '@/lib/completion-service'
+import { cascadeCompletion, cascadeWorkoutCompletion } from '@/lib/completion-service'
 import { prisma } from '@/lib/prisma'
 
 // Mock the prisma module
@@ -48,11 +48,13 @@ describe('cascadeCompletion', () => {
             week: {
                 findUnique: vi.fn().mockResolvedValue({
                     id: mockWeekId,
+                    weekNumber: 1,
                     programId: mockProgramId,
                     isCompleted: false,
                 }),
                 update: vi.fn().mockResolvedValue({
                     id: mockWeekId,
+                    weekNumber: 1,
                     programId: mockProgramId,
                     isCompleted: true,
                 }),
@@ -92,6 +94,7 @@ describe('cascadeCompletion', () => {
             },
             week: {
                 id: mockWeekId,
+                weekNumber: 1,
                 isCompleted: true,
             },
             program: {
@@ -132,6 +135,7 @@ describe('cascadeCompletion', () => {
             week: {
                 findUnique: vi.fn().mockResolvedValue({
                     id: mockWeekId,
+                    weekNumber: 1,
                     programId: mockProgramId,
                     isCompleted: false,
                 }),
@@ -193,11 +197,13 @@ describe('cascadeCompletion', () => {
             week: {
                 findUnique: vi.fn().mockResolvedValue({
                     id: mockWeekId,
+                    weekNumber: 1,
                     programId: mockProgramId,
                     isCompleted: true,
                 }),
                 update: vi.fn().mockResolvedValue({
                     id: mockWeekId,
+                    weekNumber: 1,
                     programId: mockProgramId,
                     isCompleted: false,
                 }),
@@ -282,6 +288,7 @@ describe('cascadeCompletion', () => {
             week: {
                 findUnique: vi.fn().mockResolvedValue({
                     id: mockWeekId,
+                    weekNumber: 1,
                     programId: mockProgramId,
                     isCompleted: true,
                 }),
@@ -340,6 +347,7 @@ describe('cascadeCompletion', () => {
             week: {
                 findUnique: vi.fn().mockResolvedValue({
                     id: mockWeekId,
+                    weekNumber: 1,
                     programId: mockProgramId,
                     isCompleted: false,
                 }),
@@ -367,5 +375,156 @@ describe('cascadeCompletion', () => {
         // Workout cannot be complete if it has no exercises (guard check)
         expect(result.workout.isCompleted).toBe(false)
         expect(mockTx.workout.update).not.toHaveBeenCalled()
+    })
+
+    it('should mark week as completed when only non-empty workouts are completed', async () => {
+        const mockTx = {
+            workoutExercise: {
+                update: vi.fn().mockResolvedValue({
+                    id: mockWorkoutExerciseId,
+                    workoutId: mockWorkoutId,
+                }),
+                count: vi.fn()
+                    .mockResolvedValueOnce(0)
+                    .mockResolvedValueOnce(1),
+            },
+            workout: {
+                findUnique: vi.fn().mockResolvedValue({
+                    id: mockWorkoutId,
+                    weekId: mockWeekId,
+                    isCompleted: false,
+                }),
+                update: vi.fn().mockResolvedValue({
+                    id: mockWorkoutId,
+                    weekId: mockWeekId,
+                    isCompleted: true,
+                }),
+                count: vi.fn()
+                    .mockResolvedValueOnce(0)
+                    .mockResolvedValueOnce(1),
+            },
+            week: {
+                findUnique: vi.fn().mockResolvedValue({
+                    id: mockWeekId,
+                    weekNumber: 2,
+                    programId: mockProgramId,
+                    isCompleted: false,
+                }),
+                update: vi.fn().mockResolvedValue({
+                    id: mockWeekId,
+                    weekNumber: 2,
+                    programId: mockProgramId,
+                    isCompleted: true,
+                }),
+                count: vi.fn()
+                    .mockResolvedValueOnce(0)
+                    .mockResolvedValueOnce(1),
+            },
+            trainingProgram: {
+                findUnique: vi.fn().mockResolvedValue({
+                    id: mockProgramId,
+                    status: 'active',
+                }),
+                update: vi.fn().mockResolvedValue({
+                    id: mockProgramId,
+                    status: 'completed',
+                }),
+            },
+        }
+
+        vi.mocked(prisma.$transaction).mockImplementation((fn: any) => fn(mockTx))
+
+        const result = await cascadeCompletion(mockWorkoutExerciseId, true)
+
+        expect(mockTx.workout.count).toHaveBeenNthCalledWith(1, {
+            where: {
+                weekId: mockWeekId,
+                isCompleted: false,
+                workoutExercises: { some: {} },
+            },
+        })
+        expect(mockTx.workout.count).toHaveBeenNthCalledWith(2, {
+            where: {
+                weekId: mockWeekId,
+                workoutExercises: { some: {} },
+            },
+        })
+        expect(result.week).toEqual({
+            id: mockWeekId,
+            weekNumber: 2,
+            isCompleted: true,
+        })
+    })
+
+    it('should mark a submitted workout as completed and cascade week and program without touching exercises', async () => {
+        const mockTx = {
+            workout: {
+                findUnique: vi.fn().mockResolvedValue({
+                    id: mockWorkoutId,
+                    weekId: mockWeekId,
+                    isCompleted: false,
+                }),
+                update: vi.fn().mockResolvedValue({
+                    id: mockWorkoutId,
+                    weekId: mockWeekId,
+                    isCompleted: true,
+                }),
+                count: vi.fn()
+                    .mockResolvedValueOnce(0)
+                    .mockResolvedValueOnce(1),
+            },
+            week: {
+                findUnique: vi.fn().mockResolvedValue({
+                    id: mockWeekId,
+                    weekNumber: 4,
+                    programId: mockProgramId,
+                    isCompleted: false,
+                }),
+                update: vi.fn().mockResolvedValue({
+                    id: mockWeekId,
+                    weekNumber: 4,
+                    programId: mockProgramId,
+                    isCompleted: true,
+                }),
+                count: vi.fn()
+                    .mockResolvedValueOnce(0)
+                    .mockResolvedValueOnce(1),
+            },
+            trainingProgram: {
+                findUnique: vi.fn().mockResolvedValue({
+                    id: mockProgramId,
+                    status: 'active',
+                }),
+                update: vi.fn().mockResolvedValue({
+                    id: mockProgramId,
+                    status: 'completed',
+                }),
+            },
+        }
+
+        vi.mocked(prisma.$transaction).mockImplementation((fn: any) => fn(mockTx))
+
+        const result = await cascadeWorkoutCompletion(mockWorkoutId, true)
+
+        expect(mockTx.workout.update).toHaveBeenCalledWith({
+            where: { id: mockWorkoutId },
+            data: { isCompleted: true },
+            select: { id: true, weekId: true, isCompleted: true },
+        })
+        expect(result).toEqual({
+            workout: {
+                id: mockWorkoutId,
+                isCompleted: true,
+            },
+            week: {
+                id: mockWeekId,
+                weekNumber: 4,
+                isCompleted: true,
+            },
+            program: {
+                id: mockProgramId,
+                status: 'completed',
+            },
+        })
     })
 })

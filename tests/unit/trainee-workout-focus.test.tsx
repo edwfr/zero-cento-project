@@ -92,6 +92,31 @@ beforeEach(() => {
                 }),
             } as Response
         }
+
+        if (typeof url === 'string' && url.includes('/api/trainee/workout-exercises/')) {
+            return {
+                ok: true,
+                json: async () => ({
+                    data: {
+                        feedback: {
+                            id: 'feedback-1',
+                            workoutExerciseId: 'ex-1',
+                            actualRpe: 8,
+                            date: '2026-04-29T00:00:00.000Z',
+                            updatedAt: '2026-04-29T12:00:00.000Z',
+                            setsPerformed: [{ setNumber: 1, completed: true, reps: 8, weight: 80 }],
+                        },
+                        cascade: {
+                            workoutExercise: { id: 'ex-1', isCompleted: false },
+                            workout: { id: 'workout-1', isCompleted: false },
+                            week: { id: 'week-1', isCompleted: false, weekNumber: 2 },
+                            program: { id: 'program-1', status: 'active' },
+                        },
+                    },
+                }),
+            } as Response
+        }
+
         return { ok: true, json: async () => ({}) } as Response
     }) as unknown as typeof fetch
     localStorage.clear()
@@ -169,15 +194,45 @@ describe('Trainee workout focus mode', () => {
         expect(repsInput.value).toBe('7')
     })
 
+    it('autosaves the exercise immediately when a set is marked completed', async () => {
+        const user = userEvent.setup()
+        await renderContent()
+
+        const checkButtons = screen.getAllByRole('button', { name: /workouts\.markSetDone/i })
+        await user.click(checkButtons[0])
+
+        await waitFor(() => {
+            expect(global.fetch).toHaveBeenCalledWith(
+                '/api/trainee/workout-exercises/ex-1/feedback',
+                expect.objectContaining({
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                })
+            )
+        })
+    })
+
     it('shows missing-data warning inline on the final step when no sets are completed', async () => {
         const user = userEvent.setup()
         await renderContent()
         await user.click(screen.getByRole('button', { name: /next|avanti/i }))
         await user.click(screen.getByRole('button', { name: /next|avanti/i }))
         // On final step. No sets done in either exercise.
-        expect(screen.getByText(/missingDataInline|exercises with no data|esercizi senza dati/i)).toBeInTheDocument()
-        expect(screen.getByText(/Bench Press/)).toBeInTheDocument()
-        expect(screen.getByText(/Tricep Extension/)).toBeInTheDocument()
+        expect(screen.getAllByText(/missingDataInline|exercises with no data|esercizi senza dati/i)).toHaveLength(2)
+        expect(screen.getByRole('button', { name: /Bench Press/i })).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /Tricep Extension/i })).toBeInTheDocument()
+    })
+
+    it('returns to the selected exercise when a missing-data warning is clicked', async () => {
+        const user = userEvent.setup()
+        await renderContent()
+        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+
+        await user.click(screen.getByRole('button', { name: /Tricep Extension/i }))
+
+        expect(screen.getByText('Tricep Extension')).toBeInTheDocument()
+        expect(screen.queryByRole('button', { name: /completeShort|complete workout|completa allenamento/i })).not.toBeInTheDocument()
     })
 
     it('shows an incomplete-sets warning inline on the final step when an exercise has unchecked sets', async () => {
@@ -191,7 +246,22 @@ describe('Trainee workout focus mode', () => {
         await user.click(screen.getByRole('button', { name: /next|avanti/i }))
 
         expect(screen.getByText(/incompleteSetsInline|Exercises with incomplete sets|serie non completate/i)).toBeInTheDocument()
-        expect(screen.getByText(/Bench Press/)).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /Bench Press/i })).toBeInTheDocument()
+    })
+
+    it('returns to the selected exercise when an incomplete-sets warning is clicked', async () => {
+        const user = userEvent.setup()
+        await renderContent()
+
+        const checkButtons = screen.getAllByRole('button', { name: /workouts\.markSetDone/i })
+        await user.click(checkButtons[0])
+
+        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+        await user.click(screen.getByRole('button', { name: /Bench Press/i }))
+
+        expect(screen.getByText('Bench Press')).toBeInTheDocument()
+        expect(screen.queryByRole('button', { name: /completeShort|complete workout|completa allenamento/i })).not.toBeInTheDocument()
     })
 
     it('redirects back to the same current program after submit when programId is present', async () => {

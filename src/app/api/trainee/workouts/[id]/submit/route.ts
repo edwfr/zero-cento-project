@@ -5,6 +5,7 @@ import { requireRole } from '@/lib/auth'
 import { workoutSubmitSchema } from '@/schemas/feedback'
 import { logger } from '@/lib/logger'
 import { getTodayDateKey } from '@/lib/date-format'
+import { cascadeCompletion, cascadeWorkoutCompletion } from '@/lib/completion-service'
 
 /**
  * POST /api/trainee/workouts/[id]/submit
@@ -123,12 +124,33 @@ export async function POST(
             )
         )
 
+        const cascades = []
+        for (const exercise of exercises) {
+            cascades.push(
+                await cascadeCompletion(
+                    exercise.workoutExerciseId,
+                    exercise.sets.length > 0 && exercise.sets.every((set) => set.completed)
+                )
+            )
+        }
+
+        // Final submit closes the workout even if some exercises still lack outcomes.
+        // Those exercise flags remain false, but the workout/week/program can advance.
+        const workoutCascade = await cascadeWorkoutCompletion(workoutId, true)
+
         logger.info(
-            { workoutId, traineeId: session.user.id, count: feedbacks.length },
+            {
+                workoutId,
+                traineeId: session.user.id,
+                count: feedbacks.length,
+                workoutCompleted: workoutCascade.workout.isCompleted,
+                weekCompleted: workoutCascade.week.isCompleted,
+                programStatus: workoutCascade.program.status,
+            },
             'Workout submitted'
         )
 
-        return apiSuccess({ feedbacks }, 200)
+        return apiSuccess({ feedbacks, cascades, workoutCascade }, 200)
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error, workoutId }, 'Error submitting workout')

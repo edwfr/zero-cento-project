@@ -38,7 +38,7 @@
 
 - [x] **2.1** `POST /api/feedback` — creazione feedback trainee con nested SetPerformed (3h)  
       Spec: [next-actions.md § 7](./next-actions.md#7-post-apifeedback---creazione-feedback-trainee-3h) · Design: [design/03-backend-api.md](../design/03-backend-api.md)
-- [x] **2.2** `GET /api/trainee/workouts/[id]` — vista workout con peso effettivo pre-calcolato (4h)  
+- [x] **2.2** `GET /api/trainee/workouts/[id]` — vista workout con peso effettivo pre-calcolato (4h) + reidratazione dei feedback storici per esercizio anche fuori dalla data odierna, con merge corretto di snapshot multi-giorno sulle serie completate ✅ _30 Apr 2026_  
       Spec: [next-actions.md § 8](./next-actions.md#8-get-apitraineeworkoutsid---vista-workout-4h)
 - [x] **2.3** `POST /api/programs/[id]/complete` — completamento manuale programma (2h)  
       Spec: [next-actions.md § 9](./next-actions.md#9-post-apiprogramsidcomplete---completamento-manuale-2h)
@@ -63,7 +63,7 @@
 
 - [x] **3.1** Workout View con card navigation — mobile-first, swipeable cards, input serie (8h)  
       File: `src/app/trainee/workouts/[id]/page.tsx`  
-      Include: integrazione `FeedbackForm`, auto-save localStorage, YouTube embed, warning inline nel riepilogo per serie non completate ✅ _29 Apr 2026_  
+      Include: integrazione `FeedbackForm`, auto-save localStorage, autosave immediato della singola spunta con update cascata completion, submit finale che chiude comunque il workout e propaga week/program senza forzare completi gli esercizi mancanti, chiusura corretta di settimana/scheda ignorando workout vuoti, YouTube embed, warning inline nel riepilogo per serie non completate con jump diretto all'esercizio, warning distinti e cliccabili per ogni esercizio senza dati ✅ _30 Apr 2026_  
       Spec: [next-actions.md § 19](./next-actions.md#19-workout-view-con-card-navigation-8h) · Dipende da: **2.1**, **2.2**
 
 ---
@@ -140,9 +140,9 @@
 
 ### Schermate Trainee (5)
 
-- [x] **9.1** `trainee/dashboard` — Aggiungere `DashboardLayout` (1h)  
+- [x] **9.1** `trainee/dashboard` — Aggiungere `DashboardLayout` (1h) + allineare il programma attivo allo `status` reale di `training_programs` senza deduzioni lato read path, con `nextWorkout` uguale al primo workout non completo in ordine del programma attivo ✅ _30 Apr 2026_  
       File: `src/app/trainee/dashboard/page.tsx`
-- [x] **9.2** `trainee/history` — Aggiungere `DashboardLayout` (0.5h)  
+- [x] **9.2** `trainee/history` — Aggiungere `DashboardLayout` (0.5h) + mostrare badge e conteggi solo da `training_programs.status` senza fetch progress aggiuntivi ✅ _30 Apr 2026_  
       File: `src/app/trainee/history/page.tsx`
 - [x] **9.3** `trainee/programs/current` — Aggiungere `DashboardLayout` (0.5h) + preservare `programId` esplicito dalla dashboard per evitare mismatch con più programmi attivi ✅ _29 Apr 2026_  
       File: `src/app/trainee/programs/current/page.tsx`
