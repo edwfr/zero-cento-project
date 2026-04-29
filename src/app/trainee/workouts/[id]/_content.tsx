@@ -201,11 +201,10 @@ export default function WorkoutDetailContent() {
                         setGlobalNotes(we.feedback.notes)
                     }
                 } else {
-                    const plannedReps = parsePlannedReps(we.reps)
                     initialFeedback[we.id] = Array.from({ length: we.sets }, (_, i) => ({
                         setNumber: i + 1,
                         weight: we.effectiveWeight || 0,
-                        reps: plannedReps,
+                        reps: 0,
                         completed: false,
                     }))
                     initialRPE[we.id] = we.targetRpe
