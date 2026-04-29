@@ -175,11 +175,32 @@ export function formatDateForInput(date: string | Date | number | null | undefin
 
 /**
  * Get today's date in YYYY-MM-DD format for input max/min values
- * 
+ *
  * @returns Today's date in YYYY-MM-DD format
  */
 export function getTodayForInput(): string {
     return new Date().toISOString().split('T')[0]
+}
+
+/**
+ * Get the calendar-day date key (midnight UTC) for idempotent operations.
+ *
+ * Use this consistently across the app for date-based unique constraints.
+ * Returns a Date object set to 00:00:00 UTC (not local timezone).
+ * This ensures the same calendar day is consistent across all timezones.
+ *
+ * Example: A trainee in Italy submitting a workout at 2:00 AM Italian time
+ * will have the same date key as if they submitted at 11:00 PM UTC the previous day.
+ * This guarantees idempotency regardless of server or client timezone.
+ *
+ * @returns Date object set to midnight UTC
+ * @example
+ * const dateKey = getTodayDateKey() // 2026-04-29 00:00:00 UTC
+ */
+export function getTodayDateKey(): Date {
+    const today = new Date()
+    today.setUTCHours(0, 0, 0, 0)
+    return today
 }
 
 /**

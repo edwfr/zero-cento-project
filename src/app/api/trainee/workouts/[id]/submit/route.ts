@@ -4,6 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { workoutSubmitSchema } from '@/schemas/feedback'
 import { logger } from '@/lib/logger'
+import { getTodayDateKey } from '@/lib/date-format'
 
 /**
  * POST /api/trainee/workouts/[id]/submit
@@ -69,9 +70,8 @@ export async function POST(
             )
         }
 
-        // 3. Calendar-day key for upsert idempotency.
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
+        // 3. Calendar-day key for upsert idempotency (UTC-consistent for multi-timezone safety).
+        const today = getTodayDateKey()
 
         // 4. Single transaction: one upsert per exercise with nested setsPerformed reset.
         const feedbacks = await prisma.$transaction(
