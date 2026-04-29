@@ -1,7 +1,6 @@
 export type ProgramStatus = 'draft' | 'active' | 'completed'
 
 interface ProgramCompletionFeedback {
-    completed: boolean
     date: Date
 }
 
@@ -40,23 +39,20 @@ export const getProgramCompletionSnapshot = (
             return false
         }
 
-        const completedFeedbackDates = workout.workoutExercises.map((exercise) => {
-            const completedFeedbacks = exercise.exerciseFeedbacks.filter((feedback) => feedback.completed)
-
-            if (completedFeedbacks.length === 0) {
+        const exerciseDates = workout.workoutExercises.map((exercise) => {
+            if (exercise.exerciseFeedbacks.length === 0) {
                 return null
             }
-
-            return completedFeedbacks.reduce((latestDate, feedback) => {
+            return exercise.exerciseFeedbacks.reduce((latestDate, feedback) => {
                 return feedback.date > latestDate ? feedback.date : latestDate
-            }, completedFeedbacks[0].date)
+            }, exercise.exerciseFeedbacks[0].date)
         })
 
-        if (completedFeedbackDates.some((date) => date === null)) {
+        if (exerciseDates.some((date) => date === null)) {
             return false
         }
 
-        const workoutCompletionDates = completedFeedbackDates.filter(
+        const workoutCompletionDates = exerciseDates.filter(
             (date): date is Date => date !== null
         )
 

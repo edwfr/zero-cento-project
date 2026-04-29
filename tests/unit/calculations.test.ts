@@ -13,7 +13,7 @@ import type { RestTime, WorkoutExercise as PrismaWorkoutExercise } from '@prisma
 
 type WorkoutExercise = Omit<
     PrismaWorkoutExercise,
-    'variant' | 'targetRpe' | 'restTime' | 'isWarmup' | 'effectiveWeight' | 'isSkeletonExercise'
+    'variant' | 'targetRpe' | 'restTime' | 'isWarmup' | 'effectiveWeight' | 'isSkeletonExercise' | 'isCompleted'
 > & {
     variant?: string | null
     targetRpe?: number | null
@@ -21,6 +21,7 @@ type WorkoutExercise = Omit<
     isWarmup?: boolean
     effectiveWeight?: number | null
     isSkeletonExercise?: boolean
+    isCompleted?: boolean
     rpe?: number | null
     restSeconds?: number
     createdAt?: Date
@@ -40,6 +41,7 @@ const normalizeWorkoutExercise = (exercise: WorkoutExercise): PrismaWorkoutExerc
     restTime: exercise.restTime ?? 'm2',
     isWarmup: exercise.isWarmup ?? false,
     isSkeletonExercise: exercise.isSkeletonExercise ?? false,
+    isCompleted: exercise.isCompleted ?? false,
     effectiveWeight: exercise.effectiveWeight ?? null,
     notes: exercise.notes,
     order: exercise.order,

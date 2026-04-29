@@ -8,6 +8,21 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [29 Aprile 2026] — Atomic workout submit + drop ExerciseFeedback.completed
+
+**File modificati:**
+`src/schemas/feedback.ts`, `src/app/api/trainee/workouts/[id]/submit/route.ts`, `tests/integration/trainee-workout-submit.test.ts`, `src/app/trainee/workouts/[id]/_content.tsx`, `src/app/api/programs/[id]/reports/route.ts`, `src/lib/program-status.ts`, `src/app/trainer/dashboard/page.tsx`, `src/app/api/feedback/route.ts`, `src/app/api/feedback/[id]/route.ts`, `src/schemas/feedback.ts`, `tests/integration/feedback.test.ts`, `prisma/schema.prisma`, `prisma/migrations/20260429000000_drop_feedback_completed/migration.sql`
+
+**Note:**
+- **Aggiunto** `POST /api/trainee/workouts/[id]/submit` — endpoint atomico che persiste note + per-exercise (actualRpe + sets[]) per un intero workout in una singola transazione. Sostituisce gli N `POST /api/feedback` paralleli (uno per esercizio) e il loop di auto-sync continuo.
+- **Rimosso** `POST /api/feedback` e `PUT /api/feedback/[id]` (non più usati dal client trainee; admin/trainer mantengono accesso `GET`).
+- **Rimosso** auto-sync continuo dalla pagina workout del trainee; localStorage continua a preservare le bozze sullo stesso dispositivo.
+- **Schema** Eliminata la colonna `ExerciseFeedback.completed` (sempre true dopo il refactor; ridondante con `WorkoutExercise.isCompleted`). Migrazione: `20260429000000_drop_feedback_completed`.
+- **Follow-up** Completata la pulizia dei residui post-refactor: rimosso l'ultimo filtro runtime su `ExerciseFeedback.completed` in `test-results` e riallineati i test (`api-contracts`, `completion-service`, `calculations`) alla shape Prisma aggiornata.
+- **Perché** Riduce il flusso di submit da ~5–8s (8 POST × doppia auth) a <1s (1 POST × 1 transazione); rimuove una colonna ridondante e i suoi siti di filtro.
+
+---
+
 ## 28 Aprile 2026 — Auto-complete workout_exercise al completamento serie
 
 **File modificati:**

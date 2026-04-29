@@ -266,7 +266,7 @@ export async function loadProgressAggregates(programId: string): Promise<Trainee
             wk."id" AS "workoutId",
             w."weekNumber" AS "weekNumber",
             COUNT(DISTINCT we."id")::int AS "exerciseCount",
-            COUNT(DISTINCT CASE WHEN ef."completed" THEN we."id" END)::int AS "completedExerciseCount",
+            COUNT(DISTINCT CASE WHEN ef."id" IS NOT NULL THEN we."id" END)::int AS "completedExerciseCount",
             COUNT(DISTINCT CASE
                 WHEN EXISTS (
                     SELECT 1 FROM "sets_performed" sp
@@ -288,7 +288,7 @@ export async function loadProgressAggregates(programId: string): Promise<Trainee
         FROM "weeks" w
         LEFT JOIN "workouts" wk ON wk."weekId" = w."id"
         LEFT JOIN "workout_exercises" we ON we."workoutId" = wk."id"
-        LEFT JOIN "exercise_feedbacks" ef ON ef."workoutExerciseId" = we."id" AND ef."completed" = true
+        LEFT JOIN "exercise_feedbacks" ef ON ef."workoutExerciseId" = we."id"
         LEFT JOIN "sets_performed" sp ON sp."feedbackId" = ef."id"
         WHERE w."programId" = ${programId}
         GROUP BY w."weekNumber"
@@ -298,7 +298,6 @@ export async function loadProgressAggregates(programId: string): Promise<Trainee
     const programAgg = await prisma.exerciseFeedback.aggregate({
         where: {
             workoutExercise: { workout: { week: { programId } } },
-            completed: true,
         },
         _avg: { actualRpe: true },
         _count: { _all: true },
@@ -308,7 +307,6 @@ export async function loadProgressAggregates(programId: string): Promise<Trainee
         where: {
             completed: true,
             feedback: {
-                completed: true,
                 workoutExercise: { workout: { week: { programId } } },
             },
         },
@@ -411,7 +409,7 @@ export async function loadProgressAggregates(programId: string): Promise<Trainee
         FROM "weeks" w
         LEFT JOIN "workouts" wk ON wk."weekId" = w."id"
         LEFT JOIN "workout_exercises" we ON we."workoutId" = wk."id"
-        LEFT JOIN "exercise_feedbacks" ef ON ef."workoutExerciseId" = we."id" AND ef."completed" = true
+        LEFT JOIN "exercise_feedbacks" ef ON ef."workoutExerciseId" = we."id"
         WHERE w."programId" = ${programId}
         GROUP BY w."weekNumber"
     `

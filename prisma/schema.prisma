@@ -288,7 +288,6 @@ model ExerciseFeedback {
   workoutExerciseId String
   traineeId         String
   date              DateTime  @default(now())
-  completed         Boolean   @default(false)
   actualRpe         Float?    // RPE percepito 5.0-10.0
   notes             String?
   createdAt         DateTime  @default(now())

@@ -85,8 +85,8 @@ function getCurrentWeekRange(referenceDate: Date) {
     return { startDate, endDate }
 }
 
-function hasCompletedFeedback(feedbacks: Array<{ completed: boolean }>) {
-    return feedbacks.some((feedback) => feedback.completed)
+function isExerciseCompleted(exercise: { isCompleted: boolean }) {
+    return exercise.isCompleted
 }
 
 export default async function TrainerDashboard() {
@@ -170,11 +170,7 @@ export default async function TrainerDashboard() {
                     workoutExercises: {
                         select: {
                             id: true,
-                            exerciseFeedbacks: {
-                                select: {
-                                    completed: true,
-                                },
-                            },
+                            isCompleted: true,
                         },
                     },
                 },
@@ -208,9 +204,7 @@ export default async function TrainerDashboard() {
                 return false
             }
 
-            return workout.workoutExercises.every((exercise) =>
-                hasCompletedFeedback(exercise.exerciseFeedbacks)
-            )
+            return workout.workoutExercises.every((exercise) => isExerciseCompleted(exercise))
         }).length
 
         return {

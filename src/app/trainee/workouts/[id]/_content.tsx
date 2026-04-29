@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback, useMemo, Fragment } from 'react'
+import { useState, useEffect, useCallback, useMemo, Fragment } from 'react'
 import type { RestTime } from '@prisma/client'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
@@ -21,7 +21,6 @@ import {
 } from 'lucide-react'
 import YoutubeEmbed from '@/components/YoutubeEmbed'
 import { useSwipe } from '@/lib/useSwipe'
-import * as Sentry from '@sentry/nextjs'
 import { useToast } from '@/components/ToastNotification'
 import { Input } from '@/components/Input'
 
@@ -156,12 +155,6 @@ export default function WorkoutDetailContent() {
 
 
     const { showToast } = useToast()
-    const draftSyncEnabledRef = useRef(false)
-    const persistedExerciseIdsRef = useRef<Set<string>>(new Set())
-    const touchedExerciseIdsRef = useRef<Set<string>>(new Set())
-    const draftSyncTimeoutRef = useRef<number | null>(null)
-    const draftSyncPromiseRef = useRef<Promise<void> | null>(null)
-    const draftSyncPausedRef = useRef(false)
 
     const STORAGE_KEY = `workout_${workoutId}_feedback`
 
@@ -189,7 +182,6 @@ export default function WorkoutDetailContent() {
             orderedExercises.forEach((we: WorkoutExerciseWithWeight) => {
                 initialCompleted[we.id] = we.isCompleted
                 if (we.feedback) {
-                    persistedExerciseIdsRef.current.add(we.id)
                     initialFeedback[we.id] = we.feedback.setsPerformed.map(sp => ({
                         setNumber: sp.setNumber,
                         weight: sp.weight,
@@ -215,7 +207,6 @@ export default function WorkoutDetailContent() {
             setExerciseRPE(initialRPE)
             setExerciseCompleted(initialCompleted)
             setCurrentStep(0)
-            draftSyncEnabledRef.current = false
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : t('workouts.errorLoading'))
         } finally {
@@ -273,68 +264,7 @@ export default function WorkoutDetailContent() {
         }
     }
 
-    const syncDraftFeedback = useCallback(async () => {
-        if (!workout || draftSyncPausedRef.current) {
-            return
-        }
 
-        const runSync = async () => {
-            const exercisesToSync = workout.exercises.filter((exercise) => {
-                const sets = feedbackData[exercise.id] || []
-                const hasCompletedSets = sets.some((set) => !!set.completed)
-                const hasTouchedDraft = touchedExerciseIdsRef.current.has(exercise.id)
-                return hasCompletedSets || hasTouchedDraft || persistedExerciseIdsRef.current.has(exercise.id)
-            })
-
-            if (exercisesToSync.length === 0) {
-                return
-            }
-
-            try {
-                await Promise.all(
-                    exercisesToSync.map(async (exercise) => {
-                        const sets = feedbackData[exercise.id] || []
-                        const payload = {
-                            workoutExerciseId: exercise.id,
-                            sets: sets.map((set) => ({
-                                setNumber: set.setNumber,
-                                completed: !!set.completed,
-                                reps: set.reps,
-                                weight: set.weight,
-                            })),
-                            completed: false,
-                        }
-
-                        const res = await fetch('/api/feedback', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload),
-                        })
-
-                        if (!res.ok) {
-                            throw new Error('Failed to persist workout draft')
-                        }
-
-                        persistedExerciseIdsRef.current.add(exercise.id)
-                        touchedExerciseIdsRef.current.delete(exercise.id)
-                    })
-                )
-            } catch (err) {
-                Sentry.captureException(err)
-            }
-        }
-
-        const pendingSync = (draftSyncPromiseRef.current ?? Promise.resolve())
-            .then(runSync)
-            .finally(() => {
-                if (draftSyncPromiseRef.current === pendingSync) {
-                    draftSyncPromiseRef.current = null
-                }
-            })
-
-        draftSyncPromiseRef.current = pendingSync
-        await pendingSync
-    }, [feedbackData, workout])
 
     useEffect(() => {
         void fetchWorkout()
@@ -347,39 +277,12 @@ export default function WorkoutDetailContent() {
         }
     }, [feedbackData, exerciseRPE, globalNotes, saveLocalData])
 
-    useEffect(() => {
-        if (!workout || loading) {
-            return
-        }
-
-        if (submitting || draftSyncPausedRef.current) {
-            return
-        }
-
-        if (!draftSyncEnabledRef.current) {
-            draftSyncEnabledRef.current = true
-            return
-        }
-
-        draftSyncTimeoutRef.current = window.setTimeout(() => {
-            void syncDraftFeedback()
-        }, 800)
-
-        return () => {
-            if (draftSyncTimeoutRef.current !== null) {
-                window.clearTimeout(draftSyncTimeoutRef.current)
-                draftSyncTimeoutRef.current = null
-            }
-        }
-    }, [feedbackData, loading, submitting, syncDraftFeedback, workout])
-
     const updateSet = (
         workoutExerciseId: string,
         setIndex: number,
         field: 'weight' | 'reps',
         value: number
     ) => {
-        touchedExerciseIdsRef.current.add(workoutExerciseId)
         setFeedbackData((prev) => {
             const updated = { ...prev }
             updated[workoutExerciseId] = [...(prev[workoutExerciseId] || [])]
@@ -412,8 +315,6 @@ export default function WorkoutDetailContent() {
             showToast(t('workouts.errorRepsRequired'), 'error')
             return
         }
-
-        touchedExerciseIdsRef.current.add(workoutExerciseId)
 
         // Compute new set state before updating React state
         let newSet: SetPerformed
@@ -524,45 +425,34 @@ export default function WorkoutDetailContent() {
     const doSubmit = async () => {
         try {
             setSubmitting(true)
-            draftSyncPausedRef.current = true
 
-            if (draftSyncTimeoutRef.current !== null) {
-                window.clearTimeout(draftSyncTimeoutRef.current)
-                draftSyncTimeoutRef.current = null
+            const payload = {
+                notes: globalNotes.trim() || null,
+                exercises: workout!.exercises.map((we) => {
+                    const sets = feedbackData[we.id] || []
+                    return {
+                        workoutExerciseId: we.id,
+                        actualRpe: exerciseRPE[we.id] ?? null,
+                        sets: sets.map((s) => ({
+                            setNumber: s.setNumber,
+                            completed: !!s.completed,
+                            reps: s.reps,
+                            weight: s.weight,
+                        })),
+                    }
+                }),
             }
 
-            await draftSyncPromiseRef.current
-
-            const feedbackPromises = workout!.exercises.map(async (we) => {
-                const sets = feedbackData[we.id] || []
-                const payload = {
-                    workoutExerciseId: we.id,
-                    notes: globalNotes.trim() || null,
-                    sets: sets.map(s => ({
-                        setNumber: s.setNumber,
-                        completed: !!s.completed,
-                        reps: s.reps,
-                        weight: s.weight,
-                    })),
-                    completed: true,
-                    actualRpe: exerciseRPE[we.id] || null
-                }
-
-                const res = await fetch('/api/feedback', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                })
-
-                if (!res.ok) {
-                    const data = await res.json()
-                    throw new Error(getApiErrorMessage(data, t('workouts.errorFeedback'), t))
-                }
-
-                return res.json()
+            const res = await fetch(`/api/trainee/workouts/${workout!.id}/submit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
             })
 
-            await Promise.all(feedbackPromises)
+            if (!res.ok) {
+                const data = await res.json()
+                throw new Error(getApiErrorMessage(data, t('workouts.errorFeedback'), t))
+            }
 
             clearLocalData()
             showToast(t('workouts.feedbackSuccess'), 'success')
@@ -571,7 +461,6 @@ export default function WorkoutDetailContent() {
             router.push(navigateTo)
         } catch (err: unknown) {
             showToast(err instanceof Error ? err.message : t('workouts.errorFeedback'), 'error')
-            draftSyncPausedRef.current = false
             setSubmitting(false)
         }
     }

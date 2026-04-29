@@ -152,8 +152,8 @@ export async function GET(request: NextRequest) {
                         wk."id" AS workout_id,
                         w."programId",
                         COUNT(we."id") AS exercise_count,
-                        COUNT(DISTINCT CASE WHEN ef."completed" THEN we."id" END) AS completed_exercise_count,
-                        MAX(ef."date") FILTER (WHERE ef."completed") AS workout_last_feedback
+                        COUNT(DISTINCT CASE WHEN ef."id" IS NOT NULL THEN we."id" END) AS completed_exercise_count,
+                        MAX(ef."date") AS workout_last_feedback
                     FROM "workouts" wk
                     JOIN "weeks" w ON w."id" = wk."weekId"
                     LEFT JOIN "workout_exercises" we ON we."workoutId" = wk."id"
@@ -199,7 +199,7 @@ export async function GET(request: NextRequest) {
                         COUNT(we."id") AS exercise_count,
                         CASE
                             WHEN COUNT(we."id") > 0
-                                AND COUNT(we."id") = COUNT(DISTINCT CASE WHEN ef."completed" THEN we."id" END)
+                                AND COUNT(we."id") = COUNT(DISTINCT CASE WHEN ef."id" IS NOT NULL THEN we."id" END)
                             THEN 1
                             ELSE 0
                         END AS is_complete

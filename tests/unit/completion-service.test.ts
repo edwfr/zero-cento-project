@@ -3,7 +3,11 @@ import { cascadeCompletion } from '@/lib/completion-service'
 import { prisma } from '@/lib/prisma'
 
 // Mock the prisma module
-vi.mock('@/lib/prisma')
+vi.mock('@/lib/prisma', () => ({
+    prisma: {
+        $transaction: vi.fn(),
+    },
+}))
 
 describe('cascadeCompletion', () => {
     const mockWorkoutExerciseId = 'we-1'
@@ -120,8 +124,9 @@ describe('cascadeCompletion', () => {
                     weekId: mockWeekId,
                     isCompleted: false,
                 }),
+                update: vi.fn(),
                 count: vi.fn()
-                    .mockResolvedValueOnce(0) // 0 incomplete workouts
+                    .mockResolvedValueOnce(1) // 1 incomplete workout
                     .mockResolvedValueOnce(1), // 1 total
             },
             week: {
@@ -130,8 +135,9 @@ describe('cascadeCompletion', () => {
                     programId: mockProgramId,
                     isCompleted: false,
                 }),
+                update: vi.fn(),
                 count: vi.fn()
-                    .mockResolvedValueOnce(0)
+                    .mockResolvedValueOnce(1)
                     .mockResolvedValueOnce(1),
             },
             trainingProgram: {
@@ -268,6 +274,7 @@ describe('cascadeCompletion', () => {
                     weekId: mockWeekId,
                     isCompleted: true, // Already completed
                 }),
+                update: vi.fn(),
                 count: vi.fn()
                     .mockResolvedValueOnce(0)
                     .mockResolvedValueOnce(1),
@@ -292,6 +299,10 @@ describe('cascadeCompletion', () => {
                         id: mockProgramId,
                         status: 'completed',
                     }),
+                update: vi.fn().mockResolvedValue({
+                    id: mockProgramId,
+                    status: 'completed',
+                }),
             },
         }
 
@@ -321,6 +332,7 @@ describe('cascadeCompletion', () => {
                     weekId: mockWeekId,
                     isCompleted: false,
                 }),
+                update: vi.fn(),
                 count: vi.fn()
                     .mockResolvedValueOnce(0)
                     .mockResolvedValueOnce(0),

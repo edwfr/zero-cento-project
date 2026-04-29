@@ -86,9 +86,6 @@ export async function GET(
                                             },
                                         },
                                         exerciseFeedbacks: {
-                                            where: {
-                                                completed: true,
-                                            },
                                             orderBy: {
                                                 date: 'desc',
                                             },

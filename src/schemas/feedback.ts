@@ -24,7 +24,6 @@ export const setPerformedSchema = z.object({
 
 export const feedbackSchema = z.object({
     workoutExerciseId: z.string().uuid('validation.invalidWorkoutExerciseId'),
-    completed: z.boolean().default(false),
     actualRpe: z
         .number()
         .min(5.0, 'validation.rpeMin')

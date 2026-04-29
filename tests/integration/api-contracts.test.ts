@@ -91,7 +91,7 @@ import { GET as getMovementPattern, PUT as updateMovementPattern, DELETE as dele
 import { GET as listUsers, POST as createUser } from '@/app/api/users/route'
 import { GET as getUser, PUT as updateUser, DELETE as deleteUser } from '@/app/api/users/[id]/route'
 import { GET as listPrograms, POST as createProgram } from '@/app/api/programs/route'
-import { GET as listFeedback, POST as createFeedback } from '@/app/api/feedback/route'
+import { GET as listFeedback } from '@/app/api/feedback/route'
 import { GET as listPersonalRecords, POST as createPersonalRecord } from '@/app/api/personal-records/route'
 
 // ────────────────────────────────────────────────────────────────────────────
