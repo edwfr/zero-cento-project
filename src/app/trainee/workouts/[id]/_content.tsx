@@ -912,19 +912,6 @@ function ExerciseFocusCard({
                 </div>
 
                 {/* Secondary row - rest and RPE */}
-                <div className="flex gap-2 mb-4">
-                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">
-                        <Clock3 className="w-3.5 h-3.5" />
-                        {formatRestTime(we.restTime)}
-                    </span>
-                    {we.targetRpe !== null && (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-1 text-xs font-medium text-violet-700">
-                            <Gauge className="w-3.5 h-3.5" />
-                            RPE {we.targetRpe}
-                        </span>
-                    )}
-                </div>
-
                 {we.notes && (
                     <p className="text-sm text-gray-600 mb-4">
                         <FileText className="inline w-4 h-4 mr-1" />
@@ -1028,22 +1015,36 @@ function ExerciseFocusCard({
                 </div>
             </div>
 
-            {/* Overall RPE */}
+            {/* Footer: badges + overall RPE */}
             <div className="border-t border-gray-200 bg-gray-50 p-4 sm:p-6">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <label className="text-sm font-semibold text-gray-700">
-                        {t('workouts.overallRpe')}
-                    </label>
-                    <RPESelector
-                        value={rpe}
-                        onChange={onUpdateRpe}
-                        showLabel={false}
-                        centeredMenu={true}
-                        title={t('workouts.overallRpe')}
-                        placeholder={t('workouts.selectRpe')}
-                        descriptions={rpeDescriptions}
-                        className="w-full sm:w-auto"
-                    />
+                    <div className="flex gap-2 flex-wrap">
+                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">
+                            <Clock3 className="w-3.5 h-3.5" />
+                            {formatRestTime(we.restTime)}
+                        </span>
+                        {we.targetRpe !== null && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-1 text-xs font-medium text-violet-700">
+                                <Gauge className="w-3.5 h-3.5" />
+                                RPE {we.targetRpe}
+                            </span>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <label className="text-sm font-semibold text-gray-700 whitespace-nowrap">
+                            {t('workouts.overallRpe')}
+                        </label>
+                        <RPESelector
+                            value={rpe}
+                            onChange={onUpdateRpe}
+                            showLabel={false}
+                            centeredMenu={true}
+                            title={t('workouts.overallRpe')}
+                            placeholder={t('workouts.selectRpe')}
+                            descriptions={rpeDescriptions}
+                            className="w-full sm:w-auto"
+                        />
+                    </div>
                 </div>
             </div>
         </div>
