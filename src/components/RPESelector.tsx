@@ -9,6 +9,7 @@ interface RPESelectorProps {
     disabled?: boolean
     className?: string
     showLabel?: boolean
+    showDescription?: boolean
     centeredMenu?: boolean
     label?: string
     title?: string
@@ -50,6 +51,7 @@ export default function RPESelector({
     disabled = false,
     className = '',
     showLabel = true,
+    showDescription = true,
     centeredMenu = false,
     label = 'RPE (Fatica Percepita)',
     title,
@@ -175,7 +177,9 @@ export default function RPESelector({
                 <span className="text-sm font-semibold">
                     {selectedLabel}
                 </span>
-                <span className="text-xs text-gray-600 ml-2">{getRPEDescription(value)}</span>
+                {showDescription && (
+                    <span className="text-xs text-gray-600 ml-2">{getRPEDescription(value)}</span>
+                )}
             </button>
 
             {/* Dropdown Grid */}

@@ -822,23 +822,35 @@ function ExerciseFocusCard({
             {/* Header */}
             <div className="p-4 sm:p-6">
                 <div className="mb-4">
-                    <div className="flex items-center gap-2 mb-2">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-1">{we.exercise.name}</h2>
+                    {we.variant && (
+                        <p className="text-sm text-gray-600 mb-2">{we.variant}</p>
+                    )}
+                    <div className="flex flex-wrap gap-1.5">
                         <span
-                            className={`inline-flex rounded-full border px-1.5 py-0.5 text-[10px] font-semibold leading-none ${
+                            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold ${
                                 we.exercise.type === 'fundamental'
                                     ? 'border-red-300 bg-white text-red-700'
                                     : 'border-blue-300 bg-white text-blue-700'
                             }`}
                         >
                             {we.exercise.type === 'fundamental'
-                                ? t('workouts.tagFundamentalShort')
-                                : t('workouts.tagAccessoryShort')}
+                                ? t('workouts.tagFundamental')
+                                : t('workouts.tagAccessory')}
                         </span>
-                        <h2 className="text-2xl font-bold text-gray-900">{we.exercise.name}</h2>
+                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                            <Clock3 className="w-3 h-3" />
+                            <span className="font-semibold">{t('workouts.rest')}:</span>
+                            {formatRestTime(we.restTime)}
+                        </span>
+                        {we.targetRpe !== null && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700">
+                                <Gauge className="w-3 h-3" />
+                                <span className="font-semibold">RPE</span>
+                                {we.targetRpe}
+                            </span>
+                        )}
                     </div>
-                    {we.variant && (
-                        <p className="text-sm text-gray-600">{we.variant}</p>
-                    )}
                 </div>
 
                 {/* Big targets row */}
@@ -984,36 +996,22 @@ function ExerciseFocusCard({
                 </div>
             </div>
 
-            {/* Footer: badges + overall RPE */}
-            <div className="border-t border-gray-200 bg-gray-50 p-4 sm:p-6">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex gap-2 flex-wrap">
-                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">
-                            <Clock3 className="w-3.5 h-3.5" />
-                            {formatRestTime(we.restTime)}
-                        </span>
-                        {we.targetRpe !== null && (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-1 text-xs font-medium text-violet-700">
-                                <Gauge className="w-3.5 h-3.5" />
-                                RPE {we.targetRpe}
-                            </span>
-                        )}
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <label className="text-sm font-semibold text-gray-700 whitespace-nowrap">
-                            {t('workouts.overallRpe')}
-                        </label>
-                        <RPESelector
-                            value={rpe}
-                            onChange={onUpdateRpe}
-                            showLabel={false}
-                            centeredMenu={true}
-                            title={t('workouts.overallRpe')}
-                            placeholder={t('workouts.selectRpe')}
-                            descriptions={rpeDescriptions}
-                            className="w-full sm:w-auto"
-                        />
-                    </div>
+            {/* Footer: overall RPE */}
+            <div className="border-t border-gray-200 bg-gray-50 p-3 sm:p-4">
+                <div className="flex flex-row items-center justify-end gap-2">
+                    <label className="text-sm font-semibold text-gray-700 whitespace-nowrap">
+                        {t('workouts.overallRpe')}
+                    </label>
+                    <RPESelector
+                        value={rpe}
+                        onChange={onUpdateRpe}
+                        showLabel={false}
+                        showDescription={false}
+                        centeredMenu={true}
+                        title={t('workouts.overallRpe')}
+                        placeholder={t('workouts.selectRpe')}
+                        descriptions={rpeDescriptions}
+                    />
                 </div>
             </div>
         </div>
