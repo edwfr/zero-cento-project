@@ -5,7 +5,7 @@ import { requireRole } from '@/lib/auth'
 import { workoutSubmitSchema } from '@/schemas/feedback'
 import { logger } from '@/lib/logger'
 import { getTodayDateKey } from '@/lib/date-format'
-import { cascadeCompletion, cascadeWorkoutCompletion } from '@/lib/completion-service'
+import { cascadeWorkoutCompletion } from '@/lib/completion-service'
 
 /**
  * POST /api/trainee/workouts/[id]/submit
@@ -74,9 +74,10 @@ export async function POST(
         // 3. Calendar-day key for upsert idempotency (UTC-consistent for multi-timezone safety).
         const today = getTodayDateKey()
 
-        // 4. Single transaction: one upsert per exercise with nested setsPerformed reset.
-        const feedbacks = await prisma.$transaction(
-            exercises.map((ex) =>
+        // 4. Single transaction: feedback upserts + WorkoutExercise.isCompleted updates.
+        //    Slicing first N results gives feedbacks; remaining N are the isCompleted updates.
+        const txResults = await prisma.$transaction([
+            ...exercises.map((ex) =>
                 prisma.exerciseFeedback.upsert({
                     where: {
                         workoutExerciseId_traineeId_date: {
@@ -121,18 +122,18 @@ export async function POST(
                         date: true,
                     },
                 })
-            )
-        )
-
-        const cascades = []
-        for (const exercise of exercises) {
-            cascades.push(
-                await cascadeCompletion(
-                    exercise.workoutExerciseId,
-                    exercise.sets.length > 0 && exercise.sets.every((set) => set.completed)
-                )
-            )
-        }
+            ),
+            ...exercises.map((ex) =>
+                prisma.workoutExercise.update({
+                    where: { id: ex.workoutExerciseId },
+                    data: {
+                        isCompleted: ex.sets.length > 0 && ex.sets.every((s) => s.completed),
+                    },
+                    select: { id: true },
+                })
+            ),
+        ])
+        const feedbacks = txResults.slice(0, exercises.length)
 
         // Final submit closes the workout even if some exercises still lack outcomes.
         // Those exercise flags remain false, but the workout/week/program can advance.
@@ -150,7 +151,7 @@ export async function POST(
             'Workout submitted'
         )
 
-        return apiSuccess({ feedbacks, cascades, workoutCascade }, 200)
+        return apiSuccess({ feedbacks, workoutCascade }, 200)
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error, workoutId }, 'Error submitting workout')

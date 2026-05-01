@@ -59,19 +59,14 @@ async function cascadeFromWorkout(
 
   const weekId = updatedWorkout.weekId
 
-  const incompleteWorkoutCount = await tx.workout.count({
-    where: {
-      weekId,
-      isCompleted: false,
-      workoutExercises: { some: {} },
-    },
-  })
-  const totalWorkoutCount = await tx.workout.count({
-    where: {
-      weekId,
-      workoutExercises: { some: {} },
-    },
-  })
+  const [incompleteWorkoutCount, totalWorkoutCount] = await Promise.all([
+    tx.workout.count({
+      where: { weekId, isCompleted: false, workoutExercises: { some: {} } },
+    }),
+    tx.workout.count({
+      where: { weekId, workoutExercises: { some: {} } },
+    }),
+  ])
 
   const weekIsCompleted = totalWorkoutCount > 0 && incompleteWorkoutCount === 0
 
@@ -95,27 +90,21 @@ async function cascadeFromWorkout(
 
   const programId = updatedWeek.programId
 
-  const incompleteWeekCount = await tx.week.count({
-    where: {
-      programId,
-      isCompleted: false,
-      workouts: {
-        some: {
-          workoutExercises: { some: {} },
-        },
+  const [incompleteWeekCount, totalWeekCount] = await Promise.all([
+    tx.week.count({
+      where: {
+        programId,
+        isCompleted: false,
+        workouts: { some: { workoutExercises: { some: {} } } },
       },
-    },
-  })
-  const totalWeekCount = await tx.week.count({
-    where: {
-      programId,
-      workouts: {
-        some: {
-          workoutExercises: { some: {} },
-        },
+    }),
+    tx.week.count({
+      where: {
+        programId,
+        workouts: { some: { workoutExercises: { some: {} } } },
       },
-    },
-  })
+    }),
+  ])
 
   const programIsCompleted = totalWeekCount > 0 && incompleteWeekCount === 0
 

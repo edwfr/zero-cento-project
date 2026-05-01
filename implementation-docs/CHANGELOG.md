@@ -8,6 +8,17 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [2 Maggio 2026] — Ottimizzazione POST /api/trainee/workouts/[id]/submit
+
+**File modificati:**
+- `src/app/api/trainee/workouts/[id]/submit/route.ts` — rimosso loop sequenziale `cascadeCompletion` (N transazioni separate); spostati gli update `WorkoutExercise.isCompleted` nella transazione principale già esistente; rimosso campo `cascades` dalla response
+- `src/lib/completion-service.ts` — parallelizzate le coppie di `count` query in `cascadeFromWorkout` con `Promise.all`
+- `tests/integration/trainee-workout-submit.test.ts` — test aggiornati per la nuova struttura
+
+**Impatto:** da `N+1` transazioni DB a `2` transazioni indipendenti dal numero di esercizi; stima risparmio 250–700ms per workout con 6–8 esercizi.
+
+---
+
 ## [2 Maggio 2026] — Wizard publish trainer riallineato a 5 step
 
 **Task checklist:** #2.6
