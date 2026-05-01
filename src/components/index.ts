@@ -80,3 +80,4 @@ export { default as UserDeleteModal } from './UserDeleteModal'
 // Exercise Management Components (existing)
 export { default as ExercisesTable } from './ExercisesTable'
 export { default as ExerciseCreateModal } from './ExerciseCreateModal'
+export { default as WorkoutRecapPanel } from './WorkoutRecapPanel'

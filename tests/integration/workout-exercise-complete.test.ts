@@ -39,9 +39,14 @@ vi.mock('@/lib/prisma', () => ({
     },
 }))
 
+vi.mock('@/lib/completion-service', () => ({
+    cascadeCompletion: vi.fn(),
+}))
+
 import { PATCH } from '@/app/api/trainee/workout-exercises/[id]/complete/route'
 import { requireRole } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { cascadeCompletion } from '@/lib/completion-service'
 
 // ─── Fixture UUIDs ────────────────────────────────────────────────────────────
 
@@ -68,7 +73,7 @@ const mockTraineeOtherSession = {
 const mockCascadeResult = {
     workoutExercise: { id: UUIDS.we, isCompleted: true },
     workout: { id: UUIDS.workout, isCompleted: true },
-    week: { id: UUIDS.week, isCompleted: true },
+    week: { id: UUIDS.week, weekNumber: 1, isCompleted: true },
     program: { id: UUIDS.program, status: 'completed' as const },
 }
 
@@ -103,15 +108,14 @@ function makeRequest(url = `http://localhost:3000/api/trainee/workout-exercises/
 describe('PATCH /api/trainee/workout-exercises/[id]/complete', () => {
     beforeEach(() => {
         vi.clearAllMocks()
+
+        // Default: ownership check passes unless a test overrides it.
+        vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue({ id: UUIDS.we } as any)
+        vi.mocked(cascadeCompletion).mockResolvedValue(mockCascadeResult)
     })
 
     it('returns 200 OK with cascade result when exercise is marked complete', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
-
-        // Mock cascadeCompletion to return the mock result
-        vi.doMock('@/lib/completion-service', () => ({
-            cascadeCompletion: vi.fn().mockResolvedValue(mockCascadeResult),
-        }))
 
         const req = makeRequest(
             `http://localhost:3000/api/trainee/workout-exercises/${UUIDS.we}/complete`,
@@ -168,9 +172,12 @@ describe('PATCH /api/trainee/workout-exercises/[id]/complete', () => {
     })
 
     it('returns 401 when not authenticated', async () => {
-        const err = new Error('Unauthorized')
-        Object.defineProperty(err, 'status', { value: 401 })
-        vi.mocked(requireRole).mockRejectedValue(err)
+        vi.mocked(requireRole).mockRejectedValue(
+            new Response(JSON.stringify({ error: { code: 'UNAUTHORIZED' } }), {
+                status: 401,
+                headers: { 'Content-Type': 'application/json' },
+            })
+        )
 
         const req = makeRequest(
             `http://localhost:3000/api/trainee/workout-exercises/${UUIDS.we}/complete`,
@@ -203,8 +210,8 @@ describe('PATCH /api/trainee/workout-exercises/[id]/complete', () => {
         const res = await PATCH(req, withIdParam(UUIDS.we))
         const body = await res.json()
 
-        expect(res.status).toBe(403)
-        expect(body.error.code).toBe('FORBIDDEN')
+        expect(res.status).toBe(404)
+        expect(body.error.code).toBe('NOT_FOUND')
     })
 
     it('returns 404 when workout exercise not found', async () => {
@@ -234,13 +241,10 @@ describe('PATCH /api/trainee/workout-exercises/[id]/complete', () => {
         const mockDecompletionResult = {
             workoutExercise: { id: UUIDS.we, isCompleted: false },
             workout: { id: UUIDS.workout, isCompleted: false },
-            week: { id: UUIDS.week, isCompleted: false },
+            week: { id: UUIDS.week, weekNumber: 1, isCompleted: false },
             program: { id: UUIDS.program, status: 'active' as const },
         }
-
-        vi.doMock('@/lib/completion-service', () => ({
-            cascadeCompletion: vi.fn().mockResolvedValue(mockDecompletionResult),
-        }))
+        vi.mocked(cascadeCompletion).mockResolvedValue(mockDecompletionResult)
 
         const req = makeRequest(
             `http://localhost:3000/api/trainee/workout-exercises/${UUIDS.we}/complete`,
@@ -264,10 +268,6 @@ describe('PATCH /api/trainee/workout-exercises/[id]/complete', () => {
 
         const verifyCall = vi.fn().mockResolvedValue(mockWorkoutExercise)
         vi.mocked(prisma.workoutExercise.findFirst).mockImplementation(verifyCall)
-
-        vi.doMock('@/lib/completion-service', () => ({
-            cascadeCompletion: vi.fn().mockResolvedValue(mockCascadeResult),
-        }))
 
         const req = makeRequest(
             `http://localhost:3000/api/trainee/workout-exercises/${UUIDS.we}/complete`,

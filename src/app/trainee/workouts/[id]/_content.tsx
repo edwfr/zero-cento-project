@@ -12,6 +12,7 @@ import {
     Check,
     ChevronDown,
     ChevronUp,
+    ClipboardList,
     Clock3,
     FileText,
     Gauge,
@@ -23,6 +24,7 @@ import YoutubeEmbed from '@/components/YoutubeEmbed'
 import { useSwipe } from '@/lib/useSwipe'
 import { useToast } from '@/components/ToastNotification'
 import { Input } from '@/components/Input'
+import WorkoutRecapPanel from '@/components/WorkoutRecapPanel'
 
 interface Exercise {
     id: string
@@ -160,6 +162,7 @@ export default function WorkoutDetailContent() {
     const [globalNotes, setGlobalNotes] = useState('')
     const [expandedVideos, setExpandedVideos] = useState<Record<string, boolean>>({})
     const [currentStep, setCurrentStep] = useState(0)
+    const [recapOpen, setRecapOpen] = useState(false)
 
 
     const { showToast } = useToast()
@@ -655,6 +658,14 @@ export default function WorkoutDetailContent() {
                                 deload: t('weekType.deload'),
                             }}
                         />
+                        <button
+                            type="button"
+                            onClick={() => setRecapOpen(true)}
+                            aria-label={t('workouts.recapTitle')}
+                            className="rounded p-1.5 text-gray-500 hover:bg-gray-100"
+                        >
+                            <ClipboardList className="h-5 w-5" />
+                        </button>
                         <span className="text-xs text-gray-400 font-semibold tabular-nums w-9 text-right">
                             {workoutProgressPercent}%
                         </span>
@@ -740,6 +751,12 @@ export default function WorkoutDetailContent() {
                     </button>
                 )}
             </nav>
+
+            <WorkoutRecapPanel
+                workoutId={workoutId}
+                isOpen={recapOpen}
+                onClose={() => setRecapOpen(false)}
+            />
         </div>
     )
 }

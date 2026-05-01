@@ -219,7 +219,15 @@
         "errorMarkComplete": "Failed to update. Please try again.",
         "workoutCompletedToast": "Workout completed!",
         "weekCompletedToast": "Week {{week}} completed!",
-        "programCompletedToast": "Training program completed! 🎉"
+        "programCompletedToast": "Training program completed! 🎉",
+        "recapTitle": "Exercise Recap",
+        "recapClose": "Close",
+        "recapStatusDone": "Done",
+        "recapStatusInProgress": "In progress",
+        "recapStatusNotStarted": "Not started",
+        "recapSets": "{{completed}}/{{target}} sets",
+        "recapLoading": "Loading recap...",
+        "recapError": "Failed to load recap"
     },
     "records": {
         "title": "Your Personal Records",

@@ -65,6 +65,8 @@
       File: `src/app/trainee/workouts/[id]/page.tsx`  
       Include: integrazione `FeedbackForm`, auto-save localStorage, autosave immediato della singola spunta con update cascata completion, submit finale che chiude comunque il workout e propaga week/program senza forzare completi gli esercizi mancanti, chiusura corretta di settimana/scheda ignorando workout vuoti, YouTube embed, warning inline nel riepilogo per serie non completate con jump diretto all'esercizio, warning distinti e cliccabili per ogni esercizio senza dati ✅ _30 Apr 2026_  
       Spec: [next-actions.md § 19](./next-actions.md#19-workout-view-con-card-navigation-8h) · Dipende da: **2.1**, **2.2**
+- [x] **3.2** Workout recap panel nel focus mode trainee (header icon + bottom sheet + API aggregata DB) ✅ _1 Mag 2026_  
+      File: `src/app/trainee/workouts/[id]/_content.tsx`, `src/components/WorkoutRecapPanel.tsx`, `src/app/api/trainee/workouts/[id]/recap/route.ts`, `src/lib/workout-recap.ts`, `tests/unit/workout-recap.test.ts`
 
 ---
 
@@ -94,7 +96,7 @@
 - [x] **5.7** E2E test: login → redirect per ruolo (2h) ✅ _30 Mar 2026_
 - [x] **5.8** E2E test: trainer crea programma → pubblica → trainee lo vede (4h) ✅ _30 Mar 2026_
 - [x] **5.9** E2E test: trainee completa workout con feedback (3h) ✅ _30 Mar 2026_
-- [x] **5.10** Raggiungere copertura minima 80% (3h refactor + gap fill) ✅ _30 Mar 2026_
+- [x] **5.10** Raggiungere copertura minima 80% (3h refactor + gap fill) + stabilizzazione regressione test integrazione completion workout exercise ✅ _30 Mar 2026, 1 Mag 2026_
 
 ---
 

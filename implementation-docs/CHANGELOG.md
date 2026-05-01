@@ -8,6 +8,36 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [1 Maggio 2026] — Stabilizzazione test integrazione workout exercise completion
+
+**Task checklist:** #5.10
+**File modificati:**
+`tests/integration/workout-exercise-complete.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Resi deterministici i mock di `cascadeCompletion` con `vi.mock` statico, evitando `vi.doMock` runtime dopo l'import della route.
+- Impostato un default nel `beforeEach` per ownership (`prisma.workoutExercise.findFirst`) e risultato cascade, cosi i test happy-path non dipendono da side effect tra test.
+- Allineato il caso `401` al contratto reale di `requireRole` (throw di `Response`) invece di `Error` generico.
+- Aggiornata l'aspettativa del caso ownership-negata a `404 NOT_FOUND`, coerente con il comportamento corrente della route.
+
+---
+
+## [1 Maggio 2026] — Workout recap panel nel focus mode trainee
+
+**Task checklist:** #3.2
+**File modificati:**
+`src/lib/workout-recap.ts`, `tests/unit/workout-recap.test.ts`, `src/app/api/trainee/workouts/[id]/recap/route.ts`, `src/components/WorkoutRecapPanel.tsx`, `src/components/index.ts`, `src/app/trainee/workouts/[id]/_content.tsx`, `public/locales/en/trainee.json`, `public/locales/it/trainee.json`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Aggiunto un pulsante icona `ClipboardList` nell'header sticky del focus mode workout trainee per aprire un pannello riepilogo esercizi.
+- Introdotto `WorkoutRecapPanel` come bottom sheet mobile con fetch lazy a `GET /api/trainee/workouts/[id]/recap` solo quando il pannello viene aperto.
+- Il nuovo endpoint recap calcola gli stati esercizio direttamente a livello SQL (`not_started`, `in_progress`, `done`) aggregando `sets_performed` via join con `exercise_feedbacks`.
+- Ottimizzato `GET /api/trainee/workouts/[id]/recap`: rimossa la `findFirst` preliminare e incorporato controllo ownership trainee direttamente nella query aggregata SQL (un solo roundtrip DB).
+- Estratta logica condivisa in `computeExerciseStatus` con test unitari dedicati per i casi limite principali.
+- Aggiunte nuove chiavi i18n EN/IT per titolo pannello, etichette stato, loading/error e contatore serie.
+
+---
+
 ## [30 Aprile 2026] — Submit workout trainee chiude workout, settimana e programma anche con esercizi incompleti
 
 **Task checklist:** #3.1

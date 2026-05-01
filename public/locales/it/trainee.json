@@ -219,7 +219,15 @@
         "errorMarkComplete": "Errore aggiornamento. Riprova.",
         "workoutCompletedToast": "Workout completato!",
         "weekCompletedToast": "Settimana {{week}} completata!",
-        "programCompletedToast": "Programma di allenamento completato! 🎉"
+        "programCompletedToast": "Programma di allenamento completato! 🎉",
+        "recapTitle": "Riepilogo esercizi",
+        "recapClose": "Chiudi",
+        "recapStatusDone": "Completato",
+        "recapStatusInProgress": "In corso",
+        "recapStatusNotStarted": "Da iniziare",
+        "recapSets": "{{completed}}/{{target}} serie",
+        "recapLoading": "Caricamento riepilogo...",
+        "recapError": "Errore nel caricamento del riepilogo"
     },
     "records": {
         "title": "I Tuoi Massimali",
