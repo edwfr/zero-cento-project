@@ -227,7 +227,13 @@
         "recapStatusNotStarted": "Da iniziare",
         "recapSets": "{{completed}}/{{target}} serie",
         "recapLoading": "Caricamento riepilogo...",
-        "recapError": "Errore nel caricamento del riepilogo"
+        "recapError": "Errore nel caricamento del riepilogo",
+        "prevWeekTitle": "Settimana precedente",
+        "prevWeekClose": "Chiudi",
+        "prevWeekLoading": "Caricamento settimana precedente...",
+        "prevWeekError": "Errore nel caricamento dei dati precedenti",
+        "prevWeekNoData": "—",
+        "prevWeekSetRow": "#{{set}} · {{reps}} rep · {{weight}} kg"
     },
     "records": {
         "title": "I Tuoi Massimali",

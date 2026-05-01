@@ -227,7 +227,13 @@
         "recapStatusNotStarted": "Not started",
         "recapSets": "{{completed}}/{{target}} sets",
         "recapLoading": "Loading recap...",
-        "recapError": "Failed to load recap"
+        "recapError": "Failed to load recap",
+        "prevWeekTitle": "Last Week",
+        "prevWeekClose": "Close",
+        "prevWeekLoading": "Loading last week...",
+        "prevWeekError": "Failed to load last week data",
+        "prevWeekNoData": "—",
+        "prevWeekSetRow": "#{{set}} · {{reps}} rep · {{weight}} kg"
     },
     "records": {
         "title": "Your Personal Records",

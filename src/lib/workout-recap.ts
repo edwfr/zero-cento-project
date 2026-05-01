@@ -18,3 +18,19 @@ export function computeExerciseStatus(
     if (completedSets >= targetSets) return 'done'
     return 'in_progress'
 }
+
+export interface PrevWeekSet {
+    setNumber: number
+    reps: number
+    weight: number
+    completed: boolean
+}
+
+export interface PrevWeekExerciseItem {
+    id: string
+    exerciseName: string
+    order: number
+    targetSets: number
+    targetReps: string
+    sets: PrevWeekSet[]
+}

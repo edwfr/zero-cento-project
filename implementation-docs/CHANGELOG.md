@@ -8,6 +8,19 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [1 Maggio 2026] — Previous week panel nel focus mode trainee
+
+**Task checklist:** #3.3
+**File modificati:**
+`src/lib/workout-recap.ts`, `tests/unit/workout-recap.test.ts`, `src/app/api/trainee/workouts/[id]/prev-week/route.ts`, `tests/integration/trainee-workout-prev-week.test.ts`, `src/components/PrevWeekPanel.tsx`, `tests/unit/prev-week-panel.test.tsx`, `src/components/index.ts`, `src/app/trainee/workouts/[id]/_content.tsx`, `tests/unit/trainee-workout-focus.test.tsx`, `public/locales/en/trainee.json`, `public/locales/it/trainee.json`, `vitest.config.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Aggiunto pulsante `History` nell'header sticky del focus mode trainee (visibile solo da settimana 2 in poi) con apertura di un bottom sheet dedicato.
+- Introdotto `GET /api/trainee/workouts/[id]/prev-week` con query SQL unica (CTE + LATERAL) per recuperare gli esercizi della settimana precedente e l'ultimo snapshot feedback per esercizio.
+- Creato `PrevWeekPanel` con fetch lazy on-open, stati loading/error e rendering dettagliato delle serie (`#set · reps · kg`) o fallback senza dati.
+- Estesi i tipi condivisi in `workout-recap` e aggiunti test unit/integration per route, componente e visibilita condizionale del pulsante in base a `weekNumber`.
+- Aggiornate chiavi i18n EN/IT (`workouts.prevWeek*`) e inclusa copertura `PrevWeekPanel` in `vitest.config.ts`.
+
 ## [1 Maggio 2026] — Stabilizzazione test integrazione workout exercise completion
 
 ## [1 Maggio 2026] — Fix ancoraggio footer focus mode workout trainee

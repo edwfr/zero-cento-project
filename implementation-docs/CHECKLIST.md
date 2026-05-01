@@ -67,6 +67,8 @@
       Spec: [next-actions.md § 19](./next-actions.md#19-workout-view-con-card-navigation-8h) · Dipende da: **2.1**, **2.2**
 - [x] **3.2** Workout recap panel nel focus mode trainee (header icon + bottom sheet + API aggregata DB) ✅ _1 Mag 2026_  
       File: `src/app/trainee/workouts/[id]/_content.tsx`, `src/components/WorkoutRecapPanel.tsx`, `src/app/api/trainee/workouts/[id]/recap/route.ts`, `src/lib/workout-recap.ts`, `tests/unit/workout-recap.test.ts`
+- [x] **3.3** Previous week panel nel focus mode trainee (header icon condizionale + bottom sheet + API prev-week + test) ✅ _1 Mag 2026_  
+      File: `src/app/trainee/workouts/[id]/_content.tsx`, `src/components/PrevWeekPanel.tsx`, `src/app/api/trainee/workouts/[id]/prev-week/route.ts`, `src/lib/workout-recap.ts`, `tests/unit/prev-week-panel.test.tsx`, `tests/integration/trainee-workout-prev-week.test.ts`
 
 ---
 

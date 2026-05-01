@@ -16,6 +16,7 @@ import {
     Clock3,
     FileText,
     Gauge,
+    History,
     PlayCircle,
     ChevronLeft,
     ChevronRight,
@@ -25,6 +26,7 @@ import { useSwipe } from '@/lib/useSwipe'
 import { useToast } from '@/components/ToastNotification'
 import { Input } from '@/components/Input'
 import WorkoutRecapPanel from '@/components/WorkoutRecapPanel'
+import PrevWeekPanel from '@/components/PrevWeekPanel'
 
 interface Exercise {
     id: string
@@ -163,6 +165,7 @@ export default function WorkoutDetailContent() {
     const [expandedVideos, setExpandedVideos] = useState<Record<string, boolean>>({})
     const [currentStep, setCurrentStep] = useState(0)
     const [recapOpen, setRecapOpen] = useState(false)
+    const [prevWeekOpen, setPrevWeekOpen] = useState(false)
 
 
     const { showToast } = useToast()
@@ -658,6 +661,16 @@ export default function WorkoutDetailContent() {
                                 deload: t('weekType.deload'),
                             }}
                         />
+                        {workout.weekNumber > 1 && (
+                            <button
+                                type="button"
+                                onClick={() => setPrevWeekOpen(true)}
+                                aria-label={t('workouts.prevWeekTitle')}
+                                className="rounded p-1.5 text-gray-500 hover:bg-gray-100"
+                            >
+                                <History className="h-5 w-5" />
+                            </button>
+                        )}
                         <button
                             type="button"
                             onClick={() => setRecapOpen(true)}
@@ -758,6 +771,11 @@ export default function WorkoutDetailContent() {
                 workoutId={workoutId}
                 isOpen={recapOpen}
                 onClose={() => setRecapOpen(false)}
+            />
+            <PrevWeekPanel
+                workoutId={workoutId}
+                isOpen={prevWeekOpen}
+                onClose={() => setPrevWeekOpen(false)}
             />
         </div>
     )

@@ -153,7 +153,7 @@ describe('Trainee workout focus mode', () => {
         await renderContent()
         await user.click(screen.getByRole('button', { name: /next|avanti/i }))
         expect(screen.getByText('Tricep Extension')).toBeInTheDocument()
-        await user.click(screen.getByRole('button', { name: /prev|back|indietro/i }))
+        await user.click(screen.getByRole('button', { name: /^workouts\.prev$|\bback\b|indietro/i }))
         expect(screen.getByText('Bench Press')).toBeInTheDocument()
     })
 
@@ -280,5 +280,66 @@ describe('Trainee workout focus mode', () => {
         await waitFor(() => {
             expect(routerPush).toHaveBeenCalledWith('/trainee/programs/current?programId=program-1')
         })
+    })
+
+    it('shows prev-week button when weekNumber is greater than 1', async () => {
+        await renderContent()
+
+        const header = screen.getByTestId('focus-mode-header')
+
+        expect(
+            within(header).getByRole('button', {
+                name: /workouts\.prevWeekTitle|settimana precedente|last week/i,
+            })
+        ).toBeInTheDocument()
+    })
+
+    it('hides prev-week button when weekNumber is 1', async () => {
+        global.fetch = vi.fn(async (url: string) => {
+            if (typeof url === 'string' && url.includes('/api/trainee/workouts/')) {
+                return {
+                    ok: true,
+                    json: async () => ({
+                        data: { workout: { ...fixtureWorkout, weekNumber: 1 } },
+                    }),
+                } as Response
+            }
+
+            if (typeof url === 'string' && url.includes('/api/trainee/workout-exercises/')) {
+                return {
+                    ok: true,
+                    json: async () => ({
+                        data: {
+                            feedback: {
+                                id: 'feedback-1',
+                                workoutExerciseId: 'ex-1',
+                                actualRpe: 8,
+                                date: '2026-04-29T00:00:00.000Z',
+                                updatedAt: '2026-04-29T12:00:00.000Z',
+                                setsPerformed: [{ setNumber: 1, completed: true, reps: 8, weight: 80 }],
+                            },
+                            cascade: {
+                                workoutExercise: { id: 'ex-1', isCompleted: false },
+                                workout: { id: 'workout-1', isCompleted: false },
+                                week: { id: 'week-1', isCompleted: false, weekNumber: 1 },
+                                program: { id: 'program-1', status: 'active' },
+                            },
+                        },
+                    }),
+                } as Response
+            }
+
+            return { ok: true, json: async () => ({}) } as Response
+        }) as unknown as typeof fetch
+
+        await renderContent()
+
+        const header = screen.getByTestId('focus-mode-header')
+
+        expect(
+            within(header).queryByRole('button', {
+                name: /workouts\.prevWeekTitle|settimana precedente|last week/i,
+            })
+        ).not.toBeInTheDocument()
     })
 })
