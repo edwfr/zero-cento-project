@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
+import type { RestTime } from '@prisma/client'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { SkeletonDashboard } from '@/components'
 import {
@@ -26,7 +27,6 @@ import type { TraineeProgramView } from '@/lib/trainee-program-data'
 
 type WeekType = 'normal' | 'test' | 'deload'
 type WeightType = 'absolute' | 'percentage_1rm' | 'percentage_rm' | 'percentage_previous'
-type RestTime = 's30' | 'm1' | 'm2' | 'm3' | 'm5'
 type ProgramContentMode = 'current' | 'history'
 
 interface ProgramDetailContentProps {
