@@ -681,7 +681,7 @@ export default function WorkoutDetailContent() {
             </nav>
 
             {/* Scrollable body */}
-            <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6 pb-28 sm:pb-32">
                 <div className="max-w-2xl mx-auto">
                     {!isFinalStep && currentExercise ? (
                         <ExerciseFocusCard
@@ -713,43 +713,45 @@ export default function WorkoutDetailContent() {
             </div>
 
             {/* Sticky bottom nav */}
-            <nav className="sticky bottom-0 z-20 bg-white border-t border-gray-200 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between h-16">
-                <button
-                    onClick={() => goToStep(currentStep - 1)}
-                    disabled={currentStep === 0}
-                    className="p-2 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
-                    aria-label={t('workouts.prev')}
-                >
-                    <ChevronLeft className="w-5 h-5" />
-                </button>
-
-                {!isFinalStep && (
-                    <span className="text-sm font-semibold text-gray-600">
-                        {t('workouts.stepCounter', {
-                            current: currentStep + 1,
-                            total: sortedExercises.length,
-                        })}
-                    </span>
-                )}
-
-                {!isFinalStep ? (
+            <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/90">
+                <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 pb-[env(safe-area-inset-bottom)] sm:px-6 lg:px-8">
                     <button
-                        onClick={() => goToStep(currentStep + 1)}
-                        className="p-2 rounded hover:bg-gray-100"
-                        aria-label={t('workouts.next')}
+                        onClick={() => goToStep(currentStep - 1)}
+                        disabled={currentStep === 0}
+                        className="p-2 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                        aria-label={t('workouts.prev')}
                     >
-                        <ChevronRight className="w-5 h-5" />
+                        <ChevronLeft className="w-5 h-5" />
                     </button>
-                ) : (
-                    <button
-                        onClick={handleSubmit}
-                        disabled={submitting}
-                        className="px-6 py-2 bg-brand-primary text-white rounded font-semibold hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                        {submitting && <LoadingSpinner size="sm" color="white" />}
-                        {t('workouts.completeShort')}
-                    </button>
-                )}
+
+                    {!isFinalStep && (
+                        <span className="text-sm font-semibold text-gray-600">
+                            {t('workouts.stepCounter', {
+                                current: currentStep + 1,
+                                total: sortedExercises.length,
+                            })}
+                        </span>
+                    )}
+
+                    {!isFinalStep ? (
+                        <button
+                            onClick={() => goToStep(currentStep + 1)}
+                            className="p-2 rounded hover:bg-gray-100"
+                            aria-label={t('workouts.next')}
+                        >
+                            <ChevronRight className="w-5 h-5" />
+                        </button>
+                    ) : (
+                        <button
+                            onClick={handleSubmit}
+                            disabled={submitting}
+                            className="px-6 py-2 bg-brand-primary text-white rounded font-semibold hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                            {submitting && <LoadingSpinner size="sm" color="white" />}
+                            {t('workouts.completeShort')}
+                        </button>
+                    )}
+                </div>
             </nav>
 
             <WorkoutRecapPanel

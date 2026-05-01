@@ -10,6 +10,21 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [1 Maggio 2026] — Stabilizzazione test integrazione workout exercise completion
 
+## [1 Maggio 2026] — Fix ancoraggio footer focus mode workout trainee
+
+**Task checklist:** #3.1
+**File modificati:**
+`src/app/trainee/workouts/[id]/_content.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Il footer inferiore con contatore step e azione finale e stato portato da `sticky` a `fixed` per mantenerlo ancorato al viewport anche durante scroll rapidi verso l'alto.
+- Aggiunto padding inferiore al contenuto scrollabile (`pb-28/sm:pb-32`) per evitare che l'ultima card finisca coperta dal footer fisso.
+- Aggiunta gestione `safe-area-inset-bottom` nel container del footer per migliorare la resa su dispositivi mobile con area sicura inferiore.
+
+---
+
+## [1 Maggio 2026] — Stabilizzazione test integrazione workout exercise completion
+
 **Task checklist:** #5.10
 **File modificati:**
 `tests/integration/workout-exercise-complete.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`

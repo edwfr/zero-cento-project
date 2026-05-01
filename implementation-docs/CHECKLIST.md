@@ -63,7 +63,7 @@
 
 - [x] **3.1** Workout View con card navigation — mobile-first, swipeable cards, input serie (8h)  
       File: `src/app/trainee/workouts/[id]/page.tsx`  
-      Include: integrazione `FeedbackForm`, auto-save localStorage, autosave immediato della singola spunta con update cascata completion, submit finale che chiude comunque il workout e propaga week/program senza forzare completi gli esercizi mancanti, chiusura corretta di settimana/scheda ignorando workout vuoti, YouTube embed, warning inline nel riepilogo per serie non completate con jump diretto all'esercizio, warning distinti e cliccabili per ogni esercizio senza dati ✅ _30 Apr 2026_  
+      Include: integrazione `FeedbackForm`, auto-save localStorage, autosave immediato della singola spunta con update cascata completion, submit finale che chiude comunque il workout e propaga week/program senza forzare completi gli esercizi mancanti, chiusura corretta di settimana/scheda ignorando workout vuoti, YouTube embed, warning inline nel riepilogo per serie non completate con jump diretto all'esercizio, warning distinti e cliccabili per ogni esercizio senza dati, fix ancoraggio footer step counter/azione in basso durante scroll ✅ _30 Apr 2026, 1 Mag 2026_  
       Spec: [next-actions.md § 19](./next-actions.md#19-workout-view-con-card-navigation-8h) · Dipende da: **2.1**, **2.2**
 - [x] **3.2** Workout recap panel nel focus mode trainee (header icon + bottom sheet + API aggregata DB) ✅ _1 Mag 2026_  
       File: `src/app/trainee/workouts/[id]/_content.tsx`, `src/components/WorkoutRecapPanel.tsx`, `src/app/api/trainee/workouts/[id]/recap/route.ts`, `src/lib/workout-recap.ts`, `tests/unit/workout-recap.test.ts`
