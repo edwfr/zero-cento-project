@@ -103,6 +103,7 @@ const formatRestTime = (restTime: RestTime): string => {
     const labels: Record<RestTime, string> = {
         s30: '0:30',
         m1: '1:00',
+        m1s30: '1:30',
         m2: '2:00',
         m3: '3:00',
         m5: '5:00',

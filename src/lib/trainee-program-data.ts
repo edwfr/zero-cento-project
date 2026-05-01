@@ -31,7 +31,7 @@ export interface TraineeProgram {
                 weightType: 'absolute' | 'percentage_1rm' | 'percentage_rm' | 'percentage_previous'
                 weight: number | null
                 effectiveWeight: number | null
-                restTime: 's30' | 'm1' | 'm2' | 'm3' | 'm5'
+                restTime: 's30' | 'm1' | 'm1s30' | 'm2' | 'm3' | 'm5'
                 isWarmup: boolean
                 isSkeletonExercise: boolean
                 notes: string | null

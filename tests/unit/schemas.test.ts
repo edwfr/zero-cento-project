@@ -522,6 +522,11 @@ describe('workoutExerciseSchema', () => {
         expect(result.success).toBe(false)
     })
 
+    it('accepts m1s30 as valid restTime', () => {
+        const result = workoutExerciseSchema.safeParse({ ...validWorkoutExercise, restTime: 'm1s30' })
+        expect(result.success).toBe(true)
+    })
+
     it('rejects invalid restTime', () => {
         const result = workoutExerciseSchema.safeParse({ ...validWorkoutExercise, restTime: 'm10' })
         expect(result.success).toBe(false)

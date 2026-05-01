@@ -35,7 +35,7 @@ const workoutExerciseBaseSchema = z.object({
     ),
     weight: z.number().nullable().optional(),
     effectiveWeight: z.number().nullable().optional(),
-    restTime: z.enum(['s30', 'm1', 'm2', 'm3', 'm5'], {
+    restTime: z.enum(['s30', 'm1', 'm1s30', 'm2', 'm3', 'm5'], {
         errorMap: () => ({ message: 'Tempo recupero non valido' }),
     }),
     isWarmup: z.boolean().default(false),

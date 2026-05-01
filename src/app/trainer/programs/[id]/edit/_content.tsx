@@ -58,6 +58,7 @@ const RPE_OPTIONS = [5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10]
 const REST_TIME_OPTIONS: Array<{ value: RestTime; label: string }> = [
     { value: 's30', label: '30s' },
     { value: 'm1', label: '1m' },
+    { value: 'm1s30', label: '1m30s' },
     { value: 'm2', label: '2m' },
     { value: 'm3', label: '3m' },
     { value: 'm5', label: '5m' },

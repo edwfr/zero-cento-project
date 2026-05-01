@@ -47,11 +47,12 @@ enum WeightType {
 }
 
 enum RestTime {
-  s30  // 30 secondi
-  m1   // 1 minuto
-  m2   // 2 minuti
-  m3   // 3 minuti
-  m5   // 5 minuti
+  s30   // 30 secondi
+  m1    // 1 minuto
+  m1s30 // 1 minuto e 30 secondi
+  m2    // 2 minuti
+  m3    // 3 minuti
+  m5    // 5 minuti
 }
 
 // ============================================================================

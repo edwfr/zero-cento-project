@@ -280,7 +280,7 @@ export default function WorkoutDetailContent() {
     const sortedExercises = [...workout.workoutExercises].sort((a, b) => a.order - b.order)
 
     const getRestTimeLabel = (rt: RestTime): string => {
-        const opts = { s30: '30s', m1: '1m', m2: '2m', m3: '3m', m5: '5m' }
+        const opts = { s30: '30s', m1: '1m', m1s30: '1m30s', m2: '2m', m3: '3m', m5: '5m' }
         return opts[rt] || rt
     }
 

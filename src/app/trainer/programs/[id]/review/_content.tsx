@@ -14,7 +14,7 @@ import ProgramPdfExportButton from '@/components/ProgramPdfExportButton'
 import { ProgramPdfData, ProgramPdfLabels } from '@/lib/program-pdf-export'
 
 const PRIMARY_COLOR = 'rgb(var(--brand-primary))'
-type RestTimeValue = 's30' | 'm1' | 'm2' | 'm3' | 'm5'
+type RestTimeValue = 's30' | 'm1' | 'm1s30' | 'm2' | 'm3' | 'm5'
 
 interface MovementPatternColorSummary {
     color: string
