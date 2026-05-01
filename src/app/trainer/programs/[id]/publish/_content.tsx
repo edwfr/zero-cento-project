@@ -243,6 +243,13 @@ export default function PublishProgramPage() {
                             <div className="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center font-bold">
                                 ✓
                             </div>
+                            <span className="ml-2 font-semibold text-gray-900">{t('editProgram.stepStructure')}</span>
+                        </div>
+                        <div className="w-16 h-1 bg-green-500"></div>
+                        <div className="flex items-center">
+                            <div className="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center font-bold">
+                                ✓
+                            </div>
                             <span className="ml-2 font-semibold text-gray-900">{t('editProgram.stepExercises')}</span>
                         </div>
                         <div className="w-16 h-1 bg-green-500"></div>
@@ -255,7 +262,7 @@ export default function PublishProgramPage() {
                         <div className="w-16 h-1 bg-brand-primary"></div>
                         <div className="flex items-center">
                             <div className="w-10 h-10 bg-brand-primary text-white rounded-full flex items-center justify-center font-bold">
-                                4
+                                5
                             </div>
                             <span className="ml-2 font-semibold text-gray-900">{t('editProgram.stepPublish')}</span>
                         </div>

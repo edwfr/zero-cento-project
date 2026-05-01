@@ -8,6 +8,17 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [2 Maggio 2026] — Wizard publish trainer riallineato a 5 step
+
+**Task checklist:** #2.6
+**File modificati:**
+`src/app/trainer/programs/[id]/publish/_content.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Nella schermata `/trainer/programs/[id]/publish` il progress indicator mostrava 4 step invece dei 5 previsti dal flusso wizard.
+- Ripristinato lo step mancante `stepStructure` tra `Setup` ed `Esercizi`.
+- Aggiornata la numerazione finale: `Review` resta completato e `Publish` torna correttamente allo step `5` attivo.
+
 ## [1 Maggio 2026] — Previous week panel nel focus mode trainee
 
 **Task checklist:** #3.3

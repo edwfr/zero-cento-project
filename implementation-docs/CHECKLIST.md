@@ -50,7 +50,7 @@
 - [x] **2.5** Workout Detail Editor — step 3 wizard (8h)  
       File: `src/app/trainer/programs/[id]/workouts/[wId]/page.tsx`  
       Spec: [next-actions.md § 11](./next-actions.md#11-workout-detail-editor---step-3-wizard-8h)
-- [x] **2.6** Publish Programma — step 4 wizard (4h)  
+- [x] **2.6** Publish Programma — step 4 wizard (4h) + ripristino progress indicator a 5 step nel publish wizard ✅ _2 Mag 2026_  
       File: `src/app/trainer/programs/[id]/publish/page.tsx`  
       Spec: [next-actions.md § 12](./next-actions.md#12-publish-programma---step-4-wizard-4h)
 - [x] **2.7** Edit Programma (4h)  

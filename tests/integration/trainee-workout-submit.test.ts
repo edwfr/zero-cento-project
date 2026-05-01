@@ -11,6 +11,7 @@ vi.mock('@/lib/auth', () => ({
 vi.mock('@/lib/prisma', () => ({
     prisma: {
         workout: { findFirst: vi.fn() },
+        workoutExercise: { update: vi.fn() },
         exerciseFeedback: { upsert: vi.fn() },
         $transaction: vi.fn(),
     },
@@ -44,18 +45,18 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
         ;(requireRole as any).mockResolvedValue(mockTraineeSession)
     })
 
-    it('upserts feedback for all exercises in a single transaction', async () => {
+    it('upserts feedback and updates isCompleted for all exercises in a single transaction, no per-exercise cascade', async () => {
         ;(prisma.workout.findFirst as any).mockResolvedValue({
             id: UUIDS.workout,
             workoutExercises: [{ id: UUIDS.wex1 }, { id: UUIDS.wex2 }],
         })
+        // transaction returns 4 items: 2 feedback upserts + 2 workoutExercise updates
         ;(prisma.$transaction as any).mockResolvedValue([
-            { id: UUIDS.feedback1, workoutExerciseId: UUIDS.wex1 },
-            { id: UUIDS.feedback2, workoutExerciseId: UUIDS.wex2 },
+            { id: UUIDS.feedback1, workoutExerciseId: UUIDS.wex1, actualRpe: 8, notes: 'great session', date: '2026-05-02' },
+            { id: UUIDS.feedback2, workoutExerciseId: UUIDS.wex2, actualRpe: 7.5, notes: 'great session', date: '2026-05-02' },
+            { id: UUIDS.wex1 },
+            { id: UUIDS.wex2 },
         ])
-        ;(cascadeCompletion as any)
-            .mockResolvedValueOnce({ workoutExercise: { id: UUIDS.wex1, isCompleted: true } })
-            .mockResolvedValueOnce({ workoutExercise: { id: UUIDS.wex2, isCompleted: true } })
         ;(cascadeWorkoutCompletion as any).mockResolvedValue({
             workout: { id: UUIDS.workout, isCompleted: true },
             week: { id: 'week-1', weekNumber: 2, isCompleted: true },
@@ -91,10 +92,9 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
         expect(json.data.feedbacks).toHaveLength(2)
         expect(prisma.workout.findFirst).toHaveBeenCalledTimes(1)
         expect(prisma.$transaction).toHaveBeenCalledTimes(1)
-        expect(cascadeCompletion).toHaveBeenNthCalledWith(1, UUIDS.wex1, true)
-        expect(cascadeCompletion).toHaveBeenNthCalledWith(2, UUIDS.wex2, true)
+        expect(cascadeCompletion).not.toHaveBeenCalled()
         expect(cascadeWorkoutCompletion).toHaveBeenCalledWith(UUIDS.workout, true)
-        expect(json.data.cascades).toHaveLength(2)
+        expect(json.data).not.toHaveProperty('cascades')
         expect(json.data.workoutCascade).toEqual({
             workout: { id: UUIDS.workout, isCompleted: true },
             week: { id: 'week-1', weekNumber: 2, isCompleted: true },
@@ -102,17 +102,16 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
         })
     })
 
-    it('keeps incomplete exercise flags false but still marks the submitted workout as completed', async () => {
+    it('marks workout completed even when some exercise sets incomplete, no per-exercise cascade', async () => {
         ;(prisma.workout.findFirst as any).mockResolvedValue({
             id: UUIDS.workout,
             workoutExercises: [{ id: UUIDS.wex1 }],
         })
+        // transaction returns 2 items: 1 feedback upsert + 1 workoutExercise update
         ;(prisma.$transaction as any).mockResolvedValue([
-            { id: UUIDS.feedback1, workoutExerciseId: UUIDS.wex1 },
+            { id: UUIDS.feedback1, workoutExerciseId: UUIDS.wex1, actualRpe: null, notes: 'partial session', date: '2026-05-02' },
+            { id: UUIDS.wex1 },
         ])
-        ;(cascadeCompletion as any).mockResolvedValue({
-            workoutExercise: { id: UUIDS.wex1, isCompleted: false },
-        })
         ;(cascadeWorkoutCompletion as any).mockResolvedValue({
             workout: { id: UUIDS.workout, isCompleted: true },
             week: { id: 'week-1', weekNumber: 4, isCompleted: true },
@@ -143,8 +142,9 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
         const json = await res.json()
 
         expect(res.status).toBe(200)
-        expect(cascadeCompletion).toHaveBeenCalledWith(UUIDS.wex1, false)
+        expect(cascadeCompletion).not.toHaveBeenCalled()
         expect(cascadeWorkoutCompletion).toHaveBeenCalledWith(UUIDS.workout, true)
+        expect(json.data).not.toHaveProperty('cascades')
         expect(json.data.workoutCascade).toEqual({
             workout: { id: UUIDS.workout, isCompleted: true },
             week: { id: 'week-1', weekNumber: 4, isCompleted: true },
