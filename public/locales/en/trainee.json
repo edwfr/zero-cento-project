@@ -191,6 +191,8 @@
         "confirmBtn": "Confirm",
         "dayWeekShort": "D{{day}} · W{{week}}",
         "dayWeekLong": "Day {{day}} · Week {{week}}",
+        "quickActionsLabel": "Quick actions",
+        "dockDragLabel": "Drag to move",
         "workoutInfo": "Workout info",
         "workoutInfoTitle": "Workout details",
         "workoutInfoDay": "Day",

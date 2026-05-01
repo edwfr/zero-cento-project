@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo, Fragment } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef, Fragment } from 'react'
 import type { RestTime } from '@prisma/client'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
@@ -16,6 +16,7 @@ import {
     Clock3,
     FileText,
     Gauge,
+    GripVertical,
     History,
     PlayCircle,
     ChevronLeft,
@@ -129,6 +130,9 @@ const formatWeightKg = (value: number | null | undefined): string => {
     return `${formatWeightValue(value)} kg`
 }
 
+const DOCK_STORAGE_KEY = 'workout_dock_pos'
+const DOCK_VIEWPORT_MARGIN = 8
+
 const RPE_OPTIONS = [
     { value: 5, labelKey: 'rpe5' },
     { value: 5.5, labelKey: 'rpe5_5' },
@@ -166,6 +170,15 @@ export default function WorkoutDetailContent() {
     const [currentStep, setCurrentStep] = useState(0)
     const [recapOpen, setRecapOpen] = useState(false)
     const [prevWeekOpen, setPrevWeekOpen] = useState(false)
+    const [dockPos, setDockPos] = useState<{ top: number; left: number } | null>(null)
+    const dockRef = useRef<HTMLElement | null>(null)
+    const dockDragRef = useRef<{
+        startX: number
+        startY: number
+        origTop: number
+        origLeft: number
+        moved: boolean
+    } | null>(null)
 
 
     const { showToast } = useToast()
@@ -290,6 +303,93 @@ export default function WorkoutDetailContent() {
             saveLocalData()
         }
     }, [feedbackData, exerciseRPE, globalNotes, saveLocalData])
+
+    useEffect(() => {
+        try {
+            const saved = localStorage.getItem(DOCK_STORAGE_KEY)
+            if (!saved) return
+            const parsed = JSON.parse(saved)
+            if (typeof parsed?.top === 'number' && typeof parsed?.left === 'number') {
+                setDockPos({ top: parsed.top, left: parsed.left })
+            }
+        } catch {
+            // ignore corrupt entry
+        }
+    }, [])
+
+    useEffect(() => {
+        const clampToViewport = () => {
+            const el = dockRef.current
+            if (!el) return
+            const rect = el.getBoundingClientRect()
+            const maxLeft = window.innerWidth - rect.width - DOCK_VIEWPORT_MARGIN
+            const maxTop = window.innerHeight - rect.height - DOCK_VIEWPORT_MARGIN
+            setDockPos((prev) => {
+                if (!prev) return prev
+                const next = {
+                    top: Math.max(DOCK_VIEWPORT_MARGIN, Math.min(prev.top, maxTop)),
+                    left: Math.max(DOCK_VIEWPORT_MARGIN, Math.min(prev.left, maxLeft)),
+                }
+                return next.top === prev.top && next.left === prev.left ? prev : next
+            })
+        }
+        window.addEventListener('resize', clampToViewport)
+        return () => window.removeEventListener('resize', clampToViewport)
+    }, [])
+
+    const handleDockPointerDown = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
+        const el = dockRef.current
+        if (!el) return
+        const rect = el.getBoundingClientRect()
+        dockDragRef.current = {
+            startX: e.clientX,
+            startY: e.clientY,
+            origTop: rect.top,
+            origLeft: rect.left,
+            moved: false,
+        }
+        e.currentTarget.setPointerCapture(e.pointerId)
+    }, [])
+
+    const handleDockPointerMove = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
+        const drag = dockDragRef.current
+        if (!drag) return
+        const dx = e.clientX - drag.startX
+        const dy = e.clientY - drag.startY
+        if (!drag.moved && Math.hypot(dx, dy) < 4) return
+        drag.moved = true
+        const el = dockRef.current
+        if (!el) return
+        const rect = el.getBoundingClientRect()
+        const maxLeft = window.innerWidth - rect.width - DOCK_VIEWPORT_MARGIN
+        const maxTop = window.innerHeight - rect.height - DOCK_VIEWPORT_MARGIN
+        const top = Math.max(DOCK_VIEWPORT_MARGIN, Math.min(drag.origTop + dy, maxTop))
+        const left = Math.max(DOCK_VIEWPORT_MARGIN, Math.min(drag.origLeft + dx, maxLeft))
+        setDockPos({ top, left })
+    }, [])
+
+    const handleDockPointerUp = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
+        const drag = dockDragRef.current
+        if (!drag) return
+        if (drag.moved) {
+            try {
+                const el = dockRef.current
+                if (el) {
+                    const rect = el.getBoundingClientRect()
+                    localStorage.setItem(
+                        DOCK_STORAGE_KEY,
+                        JSON.stringify({ top: rect.top, left: rect.left })
+                    )
+                }
+            } catch {
+                // ignore persistence failure
+            }
+        }
+        dockDragRef.current = null
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+            e.currentTarget.releasePointerCapture(e.pointerId)
+        }
+    }, [])
 
     const updateSet = (
         workoutExerciseId: string,
@@ -635,24 +735,22 @@ export default function WorkoutDetailContent() {
 
     return (
         <div className="flex min-h-screen flex-col bg-gray-50" {...pageSwipeHandlers}>
-            {/* Sticky top bar */}
-            <nav data-testid="focus-mode-header" className="sticky top-0 z-20 bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-14">
-                    <div className="flex items-center gap-3">
-                        <div className="w-1 h-6 bg-brand-primary rounded-full" />
-                        <div>
-                            <p className="text-xs font-medium text-gray-400 uppercase tracking-widest leading-none mb-0.5">
-                                {workout.program.title}
-                            </p>
-                            <p className="text-sm font-bold text-gray-900 leading-none">
-                                {t('workouts.dayWeekLong', {
+            {/* Sticky top bar + floating action dock */}
+            <div data-testid="focus-mode-header">
+                <nav className="sticky top-0 z-20 bg-white border-b border-gray-200">
+                    <div className="flex items-center gap-2 px-4 py-2 sm:px-6 lg:px-8">
+                        <div className="w-1 h-5 bg-brand-primary rounded-full flex-shrink-0" />
+                        <div className="min-w-0 flex-1 leading-tight">
+                            <span className="block text-[11px] font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap">
+                                {t('workouts.dayWeekShort', {
                                     day: workout.dayIndex,
                                     week: workout.weekNumber,
                                 })}
-                            </p>
+                            </span>
+                            <span className="block text-base font-bold text-gray-900 truncate">
+                                {workout.program.title}
+                            </span>
                         </div>
-                    </div>
-                    <div className="flex items-center gap-2">
                         <WeekTypeBadge
                             weekType={workout.weekType}
                             labels={{
@@ -661,37 +759,59 @@ export default function WorkoutDetailContent() {
                                 deload: t('weekType.deload'),
                             }}
                         />
-                        {workout.weekNumber > 1 && (
-                            <button
-                                type="button"
-                                onClick={() => setPrevWeekOpen(true)}
-                                aria-label={t('workouts.prevWeekTitle')}
-                                className="rounded p-1.5 text-gray-500 hover:bg-gray-100"
-                            >
-                                <History className="h-5 w-5" />
-                            </button>
-                        )}
-                        <button
-                            type="button"
-                            onClick={() => setRecapOpen(true)}
-                            aria-label={t('workouts.recapTitle')}
-                            className="rounded p-1.5 text-gray-500 hover:bg-gray-100"
-                        >
-                            <ClipboardList className="h-5 w-5" />
-                        </button>
                         <span className="text-xs text-gray-400 font-semibold tabular-nums w-9 text-right">
                             {workoutProgressPercent}%
                         </span>
                     </div>
-                </div>
-                {/* Progress bar */}
-                <div className="h-1 bg-gray-100 -mx-4 sm:-mx-6 lg:-mx-8">
-                    <div
-                        className="h-1 bg-brand-primary transition-all duration-300 rounded-r-full"
-                        style={{ width: `${workoutProgressPercent}%` }}
-                    />
-                </div>
-            </nav>
+                    <div className="h-1 bg-gray-100">
+                        <div
+                            className="h-1 bg-brand-primary transition-all duration-300 rounded-r-full"
+                            style={{ width: `${workoutProgressPercent}%` }}
+                        />
+                    </div>
+                </nav>
+
+                <aside
+                    ref={dockRef}
+                    aria-label={t('workouts.quickActionsLabel')}
+                    data-swipe-ignore="true"
+                    className={`fixed z-20 flex flex-col items-center gap-1 rounded-full border border-gray-200 bg-white/90 p-1 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-white/75 ${
+                        dockPos ? '' : 'right-3 top-1/3'
+                    }`}
+                    style={dockPos ? { top: dockPos.top, left: dockPos.left } : undefined}
+                >
+                    <button
+                        type="button"
+                        onPointerDown={handleDockPointerDown}
+                        onPointerMove={handleDockPointerMove}
+                        onPointerUp={handleDockPointerUp}
+                        onPointerCancel={handleDockPointerUp}
+                        aria-label={t('workouts.dockDragLabel')}
+                        title={t('workouts.dockDragLabel')}
+                        className="flex h-6 w-9 cursor-grab touch-none items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 active:cursor-grabbing"
+                    >
+                        <GripVertical className="h-4 w-4" />
+                    </button>
+                    {workout.weekNumber > 1 && (
+                        <button
+                            type="button"
+                            onClick={() => setPrevWeekOpen(true)}
+                            aria-label={t('workouts.prevWeekTitle')}
+                            className="rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 hover:text-brand-primary"
+                        >
+                            <History className="h-5 w-5" />
+                        </button>
+                    )}
+                    <button
+                        type="button"
+                        onClick={() => setRecapOpen(true)}
+                        aria-label={t('workouts.recapTitle')}
+                        className="rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 hover:text-brand-primary"
+                    >
+                        <ClipboardList className="h-5 w-5" />
+                    </button>
+                </aside>
+            </div>
 
             {/* Scrollable body */}
             <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6 pb-28 sm:pb-32">
