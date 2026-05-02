@@ -113,18 +113,45 @@ export default async function TrainerDashboard() {
         where: { trainerId },
     })
 
-    // Get active trainees count
-    const activeTrainees = await prisma.trainerTrainee.findMany({
-        where: { trainerId },
-        include: {
+    // Get active trainees from last week (7 days)
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    const activeTraineesLastWeek = await prisma.trainerTrainee.findMany({
+        where: {
+            trainerId,
             trainee: {
-                select: {
-                    isActive: true,
+                exerciseFeedbacks: {
+                    some: {
+                        setsPerformed: {
+                            some: {
+                                createdAt: { gte: sevenDaysAgo },
+                            },
+                        },
+                    },
                 },
             },
         },
     })
-    const activeTraineesCount = activeTrainees.filter((t) => t.trainee.isActive).length
+    const activeTraineesLastWeekCount = activeTraineesLastWeek.length
+
+    // Get active trainees from last month (30 days)
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    const activeTraineesLastMonth = await prisma.trainerTrainee.findMany({
+        where: {
+            trainerId,
+            trainee: {
+                exerciseFeedbacks: {
+                    some: {
+                        setsPerformed: {
+                            some: {
+                                createdAt: { gte: thirtyDaysAgo },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    })
+    const activeTraineesLastMonthCount = activeTraineesLastMonth.length
 
     // Get programs count by status
     const programsCounts = await prisma.trainingProgram.groupBy({
@@ -268,9 +295,10 @@ export default async function TrainerDashboard() {
                                 {traineesCount}
                             </span>
                         </div>
-                        <p className="text-blue-700 text-sm">
-                            {t('trainerDashboard.statsCardTraineesSub', { count: activeTraineesCount })}
-                        </p>
+                        <div className="text-blue-700 text-sm space-y-1">
+                            <p>{t('trainerDashboard.statsCardTraineesActiveLastWeek', { count: activeTraineesLastWeekCount })}</p>
+                            <p>{t('trainerDashboard.statsCardTraineesActiveLastMonth', { count: activeTraineesLastMonthCount })}</p>
+                        </div>
                     </Link>
 
                     {/* Programs Card */}
@@ -290,6 +318,7 @@ export default async function TrainerDashboard() {
                             {t('trainerDashboard.statsCardProgramsSub', {
                                 active: activeCount,
                                 draft: draftCount,
+                                completed: completedCount,
                             })}
                         </p>
                     </Link>
