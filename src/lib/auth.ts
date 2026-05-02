@@ -90,6 +90,67 @@ export const getSession = cache(async (): Promise<AuthSession | null> => {
 })
 
 /**
+ * Get current session including inactive users
+ * Returns null only if not authenticated
+ * Used for pages that need to show "account inactive" message
+ */
+export const getSessionIncludingInactive = cache(async (): Promise<AuthSession | null> => {
+    const supabase = await createClient()
+
+    const {
+        data: { user: supabaseUser },
+        error,
+    } = await supabase.auth.getUser()
+
+    if (error || !supabaseUser) {
+        return null
+    }
+
+    // Fast path: all fields in JWT metadata
+    const meta = supabaseUser.user_metadata
+    if (
+        meta?.role &&
+        meta?.firstName &&
+        meta?.lastName &&
+        meta?.isActive !== undefined
+    ) {
+        return {
+            user: {
+                id: supabaseUser.id,
+                email: supabaseUser.email!,
+                firstName: meta.firstName as string,
+                lastName: meta.lastName as string,
+                role: meta.role as Role,
+                isActive: meta.isActive as boolean,
+            },
+            supabaseUser,
+        }
+    }
+
+    // Fallback: legacy users without complete metadata — hit Prisma
+    const user = await prisma.user.findUnique({
+        where: { email: supabaseUser.email },
+        select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+            isActive: true,
+        },
+    })
+
+    if (!user) {
+        return null
+    }
+
+    return {
+        user,
+        supabaseUser,
+    }
+})
+
+/**
  * Require authentication during onboarding - returns session without checking isActive
  * Used for activate endpoint where user needs to be authenticated but not yet active
  */
