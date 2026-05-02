@@ -51,7 +51,7 @@
         "deload": "Deload"
     },
     "history": {
-        "title": "📊 Storico Programmi",
+        "title": "Storico Programmi",
         "description": "Consulta lo storico dei tuoi programmi con stato, data di inizio e data di fine quando disponibile",
         "loadingError": "Errore caricamento storico",
         "noPrograms": "Nessun Programma",
@@ -75,7 +75,12 @@
         "viewActiveProgram": "Vai al programma attivo",
         "statsTotalPrograms": "Programmi Totali",
         "statsCompleted": "Programmi Completati",
-        "statsActive": "Programmi Attivi"
+        "statsActive": "Programmi Attivi",
+        "statsHeading": "Riepilogo",
+        "programsHeading": "I tuoi programmi",
+        "progressLabel": "Progresso",
+        "workoutsLabel": "Workout",
+        "noEndDate": "—"
     },
     "currentProgram": {
         "programProgress": "Progressione Programma",

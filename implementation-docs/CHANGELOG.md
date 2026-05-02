@@ -8,6 +8,19 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [2 Maggio 2026] — Restyling grafico pagina trainee history
+
+**File modificati:**
+- `src/app/trainee/history/_content.tsx` — restyling completo in linea con dashboard trainee: statistiche in alto con `StatCard`, card programma `rounded-2xl` con accento stato sul bordo sinistro, metadata con icone Lucide, hint box stilizzato, empty state con accento brand
+- `public/locales/it/trainee.json` — rimosso emoji dal titolo `history.title`; aggiunte chiavi `statsHeading`, `programsHeading`, `progressLabel`, `workoutsLabel`, `noEndDate`
+- `public/locales/en/trainee.json` — stesso aggiornamento i18n del blocco `history` in inglese
+
+**Note:**
+- Aggiunta progress bar nel solo programma `active` tramite fetch progressivo a `/api/programs/{id}/progress` dopo il caricamento della lista.
+- In caso di errore del fetch progress, la pagina resta funzionante e mostra comunque lo storico programmi.
+
+---
+
 ## [2 Maggio 2026] — Ottimizzazione POST /api/trainee/workouts/[id]/submit
 
 **File modificati:**

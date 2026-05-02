@@ -381,7 +381,7 @@
   Rimozione: `💪` (empty state hero), `🏆` `📊` `👤` `📅` nelle `StatCard`  
   Mapping: `💪` → `<Dumbbell />` + classe CSS `w-16 h-16`
 
-- [x] **10.22** `trainee/history/_content.tsx` — sostituire emoji empty state (0.25h)  
+- [x] **10.22** `trainee/history/_content.tsx` — sostituire emoji empty state (0.25h) + refresh grafico completo allineato alla dashboard (stats in alto, card rounded-2xl, progress bar active) ✅ _2 Mag 2026_  
   File: `src/app/trainee/history/_content.tsx`  
   Rimozione: `📋` (empty state `text-5xl`)  
   Mapping: `📋` → `<ClipboardList />` + classe `w-16 h-16 text-gray-300`

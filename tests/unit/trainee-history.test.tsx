@@ -46,6 +46,18 @@ describe('HistoryContent', () => {
                 } as Response
             }
 
+            if (url.includes('/api/programs/program-active/progress')) {
+                return {
+                    ok: true,
+                    json: async () => ({
+                        data: {
+                            completedWorkouts: 3,
+                            totalWorkouts: 6,
+                        },
+                    }),
+                } as Response
+            }
+
             throw new Error(`Unexpected fetch: ${url}`)
         }) as unknown as typeof fetch
     })
@@ -61,6 +73,8 @@ describe('HistoryContent', () => {
             expect(screen.getAllByText('history.completed').length).toBeGreaterThan(0)
         })
 
-        expect(global.fetch).toHaveBeenCalledTimes(1)
+        expect(global.fetch).toHaveBeenCalledTimes(2)
+        expect(global.fetch).toHaveBeenNthCalledWith(1, '/api/programs?limit=100')
+        expect(global.fetch).toHaveBeenNthCalledWith(2, '/api/programs/program-active/progress')
     })
 })
