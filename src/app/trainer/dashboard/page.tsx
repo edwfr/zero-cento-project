@@ -165,9 +165,7 @@ export default async function TrainerDashboard() {
     const completedCount = programsCounts.find((p) => p.status === 'completed')?._count || 0
 
     // Get exercises count
-    const exercisesCount = await prisma.exercise.count({
-        where: { createdBy: trainerId },
-    })
+    const exercisesCount = await prisma.exercise.count()
 
     // Get active test weeks currently in progress for the trainer's athletes.
     const currentMoment = new Date()
