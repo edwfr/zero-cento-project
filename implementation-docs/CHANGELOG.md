@@ -8,6 +8,19 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [3 Maggio 2026] — Standardizzazione pulsanti azione in PersonalRecordsExplorer
+
+**Task checklist:** #11.65
+**File modificati:**
+`src/components/PersonalRecordsExplorer.tsx`, `tests/unit/PersonalRecordsExplorer.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Sostituiti i pulsanti raw edit/delete (classi `text-blue-600` e `text-red-600`) in entrambe le tabelle di `PersonalRecordsExplorer` con i componenti standard `ActionIconButton` (`variant="edit"` / `variant="delete"`) all'interno di `InlineActions`.
+- Rimossi gli import non piu usati `Pencil` e `Trash2` da `lucide-react` nel componente.
+- Aggiunto test unitario dedicato che verifica il rendering dei pulsanti standard sia sulla riga record recente sia sulle righe storiche espanse.
+
+---
+
 ## [3 Maggio 2026] — Fix formato peso percentuale in edit programma trainer
 
 **Task checklist:** #2.7

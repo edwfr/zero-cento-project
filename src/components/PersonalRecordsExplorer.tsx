@@ -12,7 +12,8 @@ import {
     XAxis,
     YAxis,
 } from 'recharts'
-import { ChevronDown, ChevronRight, Pencil, Trash2 } from 'lucide-react'
+import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ActionIconButton, InlineActions } from '@/components/ActionIconButton'
 import { formatDate } from '@/lib/date-format'
 import { estimateOneRMFromRpeTable } from '@/lib/calculations'
 
@@ -353,28 +354,22 @@ export default function PersonalRecordsExplorer({
                                                 </td>
                                                 {showActions && (
                                                     <td className="px-4 py-3 text-right">
-                                                        <div className="inline-flex items-center gap-2">
+                                                        <InlineActions>
                                                             {onEditRecord && (
-                                                                <button
-                                                                    type="button"
+                                                                <ActionIconButton
+                                                                    variant="edit"
+                                                                    label={t('common.edit')}
                                                                     onClick={() => onEditRecord(group.latestRecord)}
-                                                                    className="rounded p-1 text-blue-600 hover:bg-blue-50 hover:text-blue-800"
-                                                                    title={t('common.edit')}
-                                                                >
-                                                                    <Pencil className="h-4 w-4" />
-                                                                </button>
+                                                                />
                                                             )}
                                                             {onDeleteRecord && (
-                                                                <button
-                                                                    type="button"
+                                                                <ActionIconButton
+                                                                    variant="delete"
+                                                                    label={t('common.delete')}
                                                                     onClick={() => onDeleteRecord(group.latestRecord)}
-                                                                    className="rounded p-1 text-red-600 hover:bg-red-50 hover:text-red-800"
-                                                                    title={t('common.delete')}
-                                                                >
-                                                                    <Trash2 className="h-4 w-4" />
-                                                                </button>
+                                                                />
                                                             )}
-                                                        </div>
+                                                        </InlineActions>
                                                     </td>
                                                 )}
                                             </tr>
@@ -419,28 +414,22 @@ export default function PersonalRecordsExplorer({
                                                                     </td>
                                                                     {showActions && (
                                                                         <td className="px-4 py-3 text-right">
-                                                                            <div className="inline-flex items-center gap-2">
+                                                                            <InlineActions>
                                                                                 {onEditRecord && (
-                                                                                    <button
-                                                                                        type="button"
+                                                                                    <ActionIconButton
+                                                                                        variant="edit"
+                                                                                        label={t('common.edit')}
                                                                                         onClick={() => onEditRecord(record)}
-                                                                                        className="rounded p-1 text-blue-600 hover:bg-blue-50 hover:text-blue-800"
-                                                                                        title={t('common.edit')}
-                                                                                    >
-                                                                                        <Pencil className="h-4 w-4" />
-                                                                                    </button>
+                                                                                    />
                                                                                 )}
                                                                                 {onDeleteRecord && (
-                                                                                    <button
-                                                                                        type="button"
+                                                                                    <ActionIconButton
+                                                                                        variant="delete"
+                                                                                        label={t('common.delete')}
                                                                                         onClick={() => onDeleteRecord(record)}
-                                                                                        className="rounded p-1 text-red-600 hover:bg-red-50 hover:text-red-800"
-                                                                                        title={t('common.delete')}
-                                                                                    >
-                                                                                        <Trash2 className="h-4 w-4" />
-                                                                                    </button>
+                                                                                    />
                                                                                 )}
-                                                                            </div>
+                                                                            </InlineActions>
                                                                         </td>
                                                                     )}
                                                                 </tr>

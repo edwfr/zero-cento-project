@@ -613,6 +613,7 @@
 
 - [ ] **11.64** Aggiornare i test di integrazione che assertano messaggi di errore in inglese (stringhe hardcoded → chiavi semantiche nel campo `key`)  
       File da verificare: `tests/integration/`
+- [x] **11.65** Standardizzare action icon buttons in `PersonalRecordsExplorer` + unit test dedicato ✅ _3 Mag 2026_
 
 ---
 
