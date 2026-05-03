@@ -221,7 +221,7 @@ function formatWeightInputFromStoredValues(weightType: WeightType, weight: numbe
     }
 
     if (weightType === 'percentage_1rm') {
-        return `%${weight}`
+        return `${weight}%`
     }
 
     if (weightType === 'percentage_rm') {

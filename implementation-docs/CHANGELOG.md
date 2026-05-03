@@ -8,6 +8,18 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [3 Maggio 2026] — Fix formato peso percentuale in edit programma trainer
+
+**Task checklist:** #2.7
+**File modificati:**
+`src/app/trainer/programs/[id]/edit/_content.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Corretto il formato di visualizzazione dei pesi `percentage_1rm` al caricamento da database nella schermata edit programma trainer.
+- Dopo refresh la UI mostra ora `numero%` (es. `90%`) invece di `%numero`.
+
+---
+
 ## [3 Maggio 2026] — Deferred exercise deletion nel wizard edit programma trainer
 
 **Task checklist:** #2.7
