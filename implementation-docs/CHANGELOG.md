@@ -21,6 +21,20 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [3 Maggio 2026] — Autocomplete standard per esercizio nel modal massimali trainer
+
+**Task checklist:** #11.66
+**File modificati:**
+`src/app/trainer/trainees/[id]/records/_content.tsx`, `tests/unit/records-exercise-autocomplete.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Nel modal `Aggiungi/Modifica Massimale` e stato sostituito il controllo nativo `<select>` dell'esercizio con `AutocompleteSearch` usando la lista `exercises` gia caricata e ordinata lato pagina.
+- Mantenuta la stessa semantica di stato: `selectedExerciseId` resta la source of truth, con mapping `onSelect` verso `opt?.id ?? ''`.
+- Preservato il comportamento `disabled` in modal edit (`editingRecord`) e il messaggio informativo che impedisce il cambio esercizio.
+- Aggiunto test unitario dedicato che apre il modal e verifica assenza del select nativo e presenza di un input associato al campo esercizio.
+
+---
+
 ## [3 Maggio 2026] — Fix formato peso percentuale in edit programma trainer
 
 **Task checklist:** #2.7

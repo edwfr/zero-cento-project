@@ -14,6 +14,7 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
 import { FormLabel } from '@/components/FormLabel'
+import AutocompleteSearch, { type AutocompleteOption } from '@/components/AutocompleteSearch'
 
 interface Trainee {
     id: string
@@ -331,22 +332,19 @@ export default function TraineeRecordsContent() {
 
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div>
-                                    <FormLabel required>
-                                        {t('personalRecords.exercise')}
-                                    </FormLabel>
-                                    <select
+                                    <AutocompleteSearch
+                                        options={exercises.map((ex): AutocompleteOption => ({
+                                            id: ex.id,
+                                            label: ex.name,
+                                            sublabel: ex.type === 'fundamental' ? t('exercises.fundamental') : t('exercises.accessory'),
+                                        }))}
                                         value={selectedExerciseId}
-                                        onChange={(e) => setSelectedExerciseId(e.target.value)}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
-                                        required
+                                        onSelect={(opt) => setSelectedExerciseId(opt?.id ?? '')}
+                                        placeholder={t('personalRecords.searchExercise', { defaultValue: 'Cerca esercizio...' })}
                                         disabled={!!editingRecord}
-                                    >
-                                        {exercises.map((ex) => (
-                                            <option key={ex.id} value={ex.id}>
-                                                {ex.name} ({ex.type === 'fundamental' ? t('exercises.fundamental') : t('exercises.accessory')})
-                                            </option>
-                                        ))}
-                                    </select>
+                                        required
+                                        label={t('personalRecords.exercise')}
+                                    />
                                     {editingRecord && (
                                         <p className="text-xs text-gray-500 mt-1">
                                             {t('personalRecords.cannotChangeExercise')}
