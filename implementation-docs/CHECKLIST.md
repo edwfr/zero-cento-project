@@ -615,6 +615,7 @@
       File da verificare: `tests/integration/`
 - [x] **11.65** Standardizzare action icon buttons in `PersonalRecordsExplorer` + unit test dedicato ✅ _3 Mag 2026_
 - [x] **11.66** Sostituire select esercizio modal massimali trainer con `AutocompleteSearch` + unit test dedicato ✅ _3 Mag 2026_
+- [x] **11.67** Mostrare i messaggi di validazione specifici da `error.details[].message` nel frontend (`getApiErrorMessage`) + allineamento i18n `validation.minOneMuscleGroup` + unit test dedicato ✅ _3 Mag 2026_
 
 ---
 

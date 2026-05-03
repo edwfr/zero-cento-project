@@ -67,7 +67,7 @@
         "weightMinZero": "Weight must be >= 0",
         "effectiveWeightMinZero": "Effective weight must be >= 0",
         "atLeastOneExercise": "At least one exercise is required",
-        "minMuscleGroup": "At least one muscle group required",
+        "minOneMuscleGroup": "At least one muscle group required",
         "minExercise": "At least one exercise required",
         "weightRequired": "Weight is required for percentage types",
         "selectMuscleGroup": "Select at least one muscle group",

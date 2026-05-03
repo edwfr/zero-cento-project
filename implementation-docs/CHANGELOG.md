@@ -8,6 +8,20 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [3 Maggio 2026] — Errori validazione API exercises: messaggio specifico da details
+
+**Task checklist:** #11.67
+**File modificati:**
+`src/lib/api-error.ts`, `public/locales/it/validation.json`, `public/locales/en/validation.json`, `tests/unit/lib/api-error.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Aggiornato `getApiErrorMessage` per leggere e prioritizzare `error.details[0].message` quando presente, prima del fallback su `error.key`.
+- Aggiunta risoluzione i18n multi-namespace per chiavi semantiche di validazione restituite da API (es. `validation.minOneMuscleGroup`).
+- In assenza di traduzione, il helper restituisce comunque il messaggio specifico ritornato dall'API invece del generico `validation.invalidInput`.
+- Aggiunte le chiavi mancanti `validation.minOneMuscleGroup` in EN/IT e copertura unit test dedicata.
+
+---
+
 ## [3 Maggio 2026] — Standardizzazione pulsanti azione in PersonalRecordsExplorer
 
 **Task checklist:** #11.65

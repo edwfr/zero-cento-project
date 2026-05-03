@@ -1,14 +1,22 @@
 import { describe, it, expect, vi } from 'vitest'
 import { getApiErrorMessage } from '@/lib/api-error'
 
+const createMockT = () => vi.fn((key: string, options?: { defaultValue?: string }) => {
+    const translations: Record<string, string> = {
+        'errors:exercise.nameExists': 'Un esercizio con questo nome esiste gia',
+        'errors:user.notFound': 'Utente non trovato',
+        'errors:program.createDenied': 'Puoi creare programmi solo per i tuoi atleti',
+        'errors:feedback.modifyDenied': 'Puoi modificare solo il tuo feedback',
+        'errors:validation.minOneMuscleGroup': 'Almeno un gruppo muscolare richiesto',
+        'validation:validation.minOneMuscleGroup': 'Almeno un gruppo muscolare richiesto',
+    }
+
+    return translations[key] ?? options?.defaultValue ?? key
+})
+
 describe('getApiErrorMessage', () => {
     it('should translate error key using errors namespace', () => {
-        const mockT = vi.fn((key: string) => {
-            if (key === 'errors:exercise.nameExists') {
-                return 'Un esercizio con questo nome esiste già'
-            }
-            return key
-        })
+        const mockT = createMockT()
 
         const apiResponse = {
             error: {
@@ -21,7 +29,7 @@ describe('getApiErrorMessage', () => {
         const result = getApiErrorMessage(apiResponse, 'Errore generico', mockT as any)
 
         expect(mockT).toHaveBeenCalledWith('errors:exercise.nameExists', { defaultValue: 'Errore generico' })
-        expect(result).toBe('Un esercizio con questo nome esiste già')
+        expect(result).toBe('Un esercizio con questo nome esiste gia')
     })
 
     it('should return fallback when no error key is present', () => {
@@ -54,14 +62,7 @@ describe('getApiErrorMessage', () => {
     })
 
     it('should handle various error keys correctly', () => {
-        const mockT = vi.fn((key: string) => {
-            const translations: Record<string, string> = {
-                'errors:user.notFound': 'Utente non trovato',
-                'errors:program.createDenied': 'Puoi creare programmi solo per i tuoi atleti',
-                'errors:feedback.modifyDenied': 'Puoi modificare solo il tuo feedback'
-            }
-            return translations[key] || key
-        })
+        const mockT = createMockT()
 
         const testCases = [
             {
@@ -82,5 +83,47 @@ describe('getApiErrorMessage', () => {
             const result = getApiErrorMessage(response, 'Fallback', mockT as any)
             expect(result).toBe(expected)
         })
+    })
+
+    it('should prioritize details message key over generic error key', () => {
+        const mockT = createMockT()
+
+        const apiResponse = {
+            error: {
+                code: 'VALIDATION_ERROR',
+                message: 'Invalid input',
+                key: 'validation.invalidInput',
+                details: [
+                    {
+                        message: 'validation.minOneMuscleGroup',
+                        path: ['muscleGroups']
+                    }
+                ]
+            }
+        }
+
+        const result = getApiErrorMessage(apiResponse, 'Errore generico', mockT as any)
+
+        expect(result).toBe('Almeno un gruppo muscolare richiesto')
+    })
+
+    it('should return details message as-is when no translation exists', () => {
+        const mockT = createMockT()
+
+        const apiResponse = {
+            error: {
+                code: 'VALIDATION_ERROR',
+                message: 'Invalid input',
+                details: [
+                    {
+                        message: 'validation.unknownKey'
+                    }
+                ]
+            }
+        }
+
+        const result = getApiErrorMessage(apiResponse, 'Errore generico', mockT as any)
+
+        expect(result).toBe('validation.unknownKey')
     })
 })
