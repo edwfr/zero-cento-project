@@ -466,6 +466,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
     const [rowStateById, setRowStateById] = useState<Record<string, EditableWorkoutExerciseRow>>({})
     const [draftRowIdsByWorkout, setDraftRowIdsByWorkout] = useState<Record<string, string[]>>({})
+    const [pendingDeletesByWorkout, setPendingDeletesByWorkout] = useState<Record<string, string[]>>({})
     const [customVariantInputByRowId, setCustomVariantInputByRowId] = useState<Record<string, boolean>>({})
     const [wizardStep, setWizardStep] = useState<'structure' | 'details'>(
         readOnly ? 'details' : 'structure'
@@ -476,7 +477,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const [applyingStructure, setApplyingStructure] = useState(false)
     const [savingRowId, setSavingRowId] = useState<string | null>(null)
     const [savingWorkoutId, setSavingWorkoutId] = useState<string | null>(null)
-    const [deletingRowId, setDeletingRowId] = useState<string | null>(null)
+    const [deletingRowId] = useState<string | null>(null)
     const [reorderingWorkoutId, setReorderingWorkoutId] = useState<string | null>(null)
 
     const [confirmCopyNextWeek, setConfirmCopyNextWeek] = useState<Week | null>(null)
@@ -1222,7 +1223,10 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
     const getWorkoutRows = useCallback(
         (workout: Workout) => {
+            const pendingDeleteIds = new Set(pendingDeletesByWorkout[workout.id] ?? [])
+
             const persistedRows = workout.workoutExercises
+                .filter((workoutExercise) => !pendingDeleteIds.has(workoutExercise.id))
                 .map((workoutExercise) =>
                     rowStateById[workoutExercise.id] || buildEditableRow(workout.id, workoutExercise)
                 )
@@ -1235,7 +1239,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
             return [...persistedRows, ...draftRows]
         },
-        [draftRowIdsByWorkout, rowStateById]
+        [draftRowIdsByWorkout, pendingDeletesByWorkout, rowStateById]
     )
 
     const handleDragEnd = useCallback(
@@ -1707,8 +1711,9 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         }
 
         const workoutRows = [...getWorkoutRows(workout)].sort((left, right) => left.order - right.order)
+        const pendingDeleteIds = pendingDeletesByWorkout[workout.id] ?? []
 
-        if (workoutRows.length === 0) {
+        if (workoutRows.length === 0 && pendingDeleteIds.length === 0) {
             showToast(t('editProgram.tableNoWorkoutExercises'), 'warning')
             return false
         }
@@ -1787,6 +1792,35 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
         try {
             setSavingWorkoutId(workout.id)
+
+            if (pendingDeleteIds.length > 0) {
+                const deleteResults = await Promise.all(
+                    pendingDeleteIds.map((exerciseId) =>
+                        fetch(`/api/programs/${programId}/workouts/${workout.id}/exercises/${exerciseId}`, {
+                            method: 'DELETE',
+                        })
+                    )
+                )
+
+                const failedResult = deleteResults.find((result) => !result.ok)
+                if (failedResult) {
+                    const errData = await failedResult.json()
+                    throw new Error(getApiErrorMessage(errData, t('editProgram.rowDeleteError'), t))
+                }
+
+                setPendingDeletesByWorkout((current) => {
+                    const { [workout.id]: _removed, ...rest } = current
+                    return rest
+                })
+            }
+
+            if (workoutRows.length === 0) {
+                await fetchProgram({ showLoading: false })
+                showToast(t('editProgram.workoutRowsSavedSuccess'), 'success')
+                setExpandedWorkoutIds((current) => ({ ...current, [workout.id]: false }))
+                return true
+            }
+
             const savedDraftRowIds: string[] = []
 
             const bulkPayload = {
@@ -1881,7 +1915,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         router.push('/trainer/programs')
     }
 
-    const deleteRow = async () => {
+    const deleteRow = () => {
         if (!confirmDeleteRow) {
             return
         }
@@ -1894,32 +1928,11 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             return
         }
 
-        try {
-            setDeletingRowId(rowId)
-
-            const res = await fetch(
-                `/api/programs/${programId}/workouts/${workoutId}/exercises/${rowId}`,
-                {
-                    method: 'DELETE',
-                }
-            )
-
-            if (!res.ok) {
-                const data = await res.json()
-                throw new Error(getApiErrorMessage(data, t('editProgram.rowDeleteError'), t))
-            }
-
-            await fetchProgram({ showLoading: false })
-            showToast(t('editProgram.rowDeletedSuccess'), 'success')
-            setConfirmDeleteRow(null)
-        } catch (err: unknown) {
-            showToast(
-                err instanceof Error ? err.message : t('editProgram.rowDeleteGenericError'),
-                'error'
-            )
-        } finally {
-            setDeletingRowId(null)
-        }
+        setPendingDeletesByWorkout((current) => ({
+            ...current,
+            [workoutId]: [...(current[workoutId] ?? []), rowId],
+        }))
+        setConfirmDeleteRow(null)
     }
 
     const hasUnsavedWorkoutChanges = useMemo(() => {
@@ -3388,19 +3401,13 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
                 <ConfirmationModal
                     isOpen={confirmDeleteRow !== null}
-                    onClose={() => {
-                        if (!deletingRowId) {
-                            setConfirmDeleteRow(null)
-                        }
-                    }}
-                    onConfirm={() => {
-                        void deleteRow()
-                    }}
+                    onClose={() => setConfirmDeleteRow(null)}
+                    onConfirm={deleteRow}
                     title={t('editProgram.confirmDeleteRowTitle')}
                     message={t('editProgram.confirmDeleteRowMessage')}
                     confirmText={t('editProgram.confirmDeleteRowConfirm')}
                     variant="danger"
-                    isLoading={deletingRowId !== null}
+                    isLoading={false}
                 />
 
                 <ConfirmationModal

@@ -53,7 +53,7 @@
 - [x] **2.6** Publish Programma — step 4 wizard (4h) + ripristino progress indicator a 5 step nel publish wizard ✅ _2 Mag 2026_  
       File: `src/app/trainer/programs/[id]/publish/page.tsx`  
       Spec: [next-actions.md § 12](./next-actions.md#12-publish-programma---step-4-wizard-4h)
-- [x] **2.7** Edit Programma (4h)  
+- [x] **2.7** Edit Programma (4h) + deferred exercise delete su "Salva workout" ✅ _3 Mag 2026_  
       File: `src/app/trainer/programs/[id]/edit/page.tsx`  
       Spec: [next-actions.md § 14](./next-actions.md#14-edit-programma-4h)
 

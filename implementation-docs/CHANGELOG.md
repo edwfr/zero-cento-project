@@ -8,6 +8,20 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [3 Maggio 2026] — Deferred exercise deletion nel wizard edit programma trainer
+
+**Task checklist:** #2.7
+**File modificati:**
+`src/app/trainer/programs/[id]/edit/_content.tsx`, `tests/integration/workout-exercise-delete.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Il click su cestino per una riga persistita non invia piu DELETE immediata: la riga viene marcata in `pendingDeletesByWorkout` e nascosta subito dalla UI.
+- `saveWorkoutRows` applica prima le DELETE pendenti in parallelo e poi invia il bulk PUT con le righe rimaste.
+- Gestito il caso limite in cui restano solo cancellazioni: dopo le DELETE viene fatto refresh programma, toast success e chiusura workout senza inviare bulk PUT vuota.
+- Aggiunto test di integrazione dedicato per `DELETE /api/programs/[id]/workouts/[workoutId]/exercises/[exerciseId]` (vincoli draft/ownership, 404 su workout mismatch, reorder successivo alla delete).
+
+---
+
 ## [2 Maggio 2026] — Restyling grafico pagina trainee history
 
 **File modificati:**
