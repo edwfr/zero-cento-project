@@ -5,7 +5,7 @@ import type { RestTime } from '@prisma/client'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
-import { RPESelector, SkeletonDetail, WeekTypeBadge } from '@/components'
+import { FloatingRestTimer, RPESelector, SkeletonDetail, WeekTypeBadge } from '@/components'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import {
     AlertTriangle,
@@ -15,7 +15,6 @@ import {
     ClipboardList,
     Clock3,
     FileText,
-    Gauge,
     GripVertical,
     History,
     PlayCircle,
@@ -28,6 +27,7 @@ import { useToast } from '@/components/ToastNotification'
 import { Input } from '@/components/Input'
 import WorkoutRecapPanel from '@/components/WorkoutRecapPanel'
 import PrevWeekPanel from '@/components/PrevWeekPanel'
+import { useRestTimer } from '@/lib/useRestTimer'
 
 interface Exercise {
     id: string
@@ -133,6 +133,51 @@ const formatWeightKg = (value: number | null | undefined): string => {
 const DOCK_STORAGE_KEY = 'workout_dock_pos'
 const DOCK_VIEWPORT_MARGIN = 8
 
+const REST_TO_SECONDS: Record<RestTime, number> = {
+    s30: 30,
+    m1: 60,
+    m1s30: 90,
+    m2: 120,
+    m3: 180,
+    m5: 300,
+}
+
+function playSound(): void {
+    try {
+        const audioContextClass = window.AudioContext || (window as typeof window & {
+            webkitAudioContext?: typeof AudioContext
+        }).webkitAudioContext
+        if (!audioContextClass) {
+            return
+        }
+
+        const ctx = new audioContextClass()
+        const now = ctx.currentTime
+
+        const scheduleTone = (frequency: number, startDelay: number, duration: number) => {
+            const oscillator = ctx.createOscillator()
+            const gain = ctx.createGain()
+
+            oscillator.type = 'sine'
+            oscillator.frequency.value = frequency
+            gain.gain.setValueAtTime(0.2, now + startDelay)
+            gain.gain.exponentialRampToValueAtTime(0.001, now + startDelay + duration)
+
+            oscillator.connect(gain)
+            gain.connect(ctx.destination)
+
+            oscillator.start(now + startDelay)
+            oscillator.stop(now + startDelay + duration)
+        }
+
+        scheduleTone(880, 0, 0.2)
+        scheduleTone(440, 0.25, 0.15)
+        setTimeout(() => void ctx.close(), 700)
+    } catch {
+        // Audio may be unavailable on some devices/browser states.
+    }
+}
+
 const RPE_OPTIONS = [
     { value: 5, labelKey: 'rpe5' },
     { value: 5.5, labelKey: 'rpe5_5' },
@@ -182,6 +227,38 @@ export default function WorkoutDetailContent() {
 
 
     const { showToast } = useToast()
+    const notificationPermissionRequested = useRef(false)
+
+    const requestNotificationPermission = useCallback(() => {
+        if (notificationPermissionRequested.current) {
+            return
+        }
+
+        if (typeof Notification === 'undefined' || Notification.permission !== 'default') {
+            return
+        }
+
+        notificationPermissionRequested.current = true
+        void Notification.requestPermission()
+    }, [])
+
+    const onTimerExpire = useCallback(() => {
+        playSound()
+
+        if (
+            typeof document !== 'undefined' &&
+            document.hidden &&
+            typeof Notification !== 'undefined' &&
+            Notification.permission === 'granted'
+        ) {
+            new Notification(t('workouts.restDone'), { silent: true })
+            return
+        }
+
+        showToast(t('workouts.restDone'), 'success')
+    }, [showToast, t])
+
+    const timer = useRestTimer({ onExpire: onTimerExpire })
 
     const STORAGE_KEY = `workout_${workoutId}_feedback`
 
@@ -495,6 +572,11 @@ export default function WorkoutDetailContent() {
         if (!currentSet) return
 
         const isCompleting = !currentSet.completed
+
+        if (isCompleting) {
+            requestNotificationPermission()
+            timer.start(REST_TO_SECONDS[we.restTime])
+        }
 
         // "8" → can auto-fill with planned value on first tap
         // "max" → user must enter actual reps (how many they achieved)
@@ -810,6 +892,14 @@ export default function WorkoutDetailContent() {
                     >
                         <ClipboardList className="h-5 w-5" />
                     </button>
+                    <div className="w-full px-1 pt-1">
+                        <FloatingRestTimer
+                            mode="dock"
+                            secondsLeft={timer.secondsLeft}
+                            totalSeconds={timer.totalSeconds}
+                            onStop={timer.stop}
+                        />
+                    </div>
                 </aside>
             </div>
 
@@ -960,34 +1050,25 @@ function ExerciseFocusCard({
             {/* Header */}
             <div className="p-4 sm:p-6">
                 <div className="mb-4">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-1">{we.exercise.name}</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                        <span
+                            className={`mr-1.5 text-sm font-bold align-middle ${
+                                we.exercise.type === 'fundamental' ? 'text-red-600' : 'text-blue-600'
+                            }`}
+                        >
+                            {we.exercise.type === 'fundamental' ? 'F' : 'A'}
+                        </span>
+                        {we.exercise.name}
+                    </h2>
                     {we.variant && (
                         <p className="text-sm text-gray-600 mb-2">{we.variant}</p>
                     )}
                     <div className="flex flex-wrap gap-1.5">
-                        <span
-                            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold ${
-                                we.exercise.type === 'fundamental'
-                                    ? 'border-red-300 bg-white text-red-700'
-                                    : 'border-blue-300 bg-white text-blue-700'
-                            }`}
-                        >
-                            {we.exercise.type === 'fundamental'
-                                ? t('workouts.tagFundamental')
-                                : t('workouts.tagAccessory')}
-                        </span>
                         <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
                             <Clock3 className="w-3 h-3" />
                             <span className="font-semibold">{t('workouts.rest')}:</span>
                             {formatRestTime(we.restTime)}
                         </span>
-                        {we.targetRpe !== null && (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700">
-                                <Gauge className="w-3 h-3" />
-                                <span className="font-semibold">RPE</span>
-                                {we.targetRpe}
-                            </span>
-                        )}
                     </div>
                 </div>
 
@@ -1027,6 +1108,14 @@ function ExerciseFocusCard({
                                 {trainerSettingValue}
                             </span>
                         )}
+                    </div>
+                    <div className="flex-[0.75] rounded-xl border border-brand-primary/30 bg-brand-primary/5 px-3 py-3 text-center">
+                        <span className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary">
+                            RPE
+                        </span>
+                        <span className="mt-1 block text-2xl font-black text-gray-900">
+                            {we.targetRpe ?? '—'}
+                        </span>
                     </div>
                 </div>
 

@@ -83,6 +83,11 @@ const fixtureWorkout = {
 beforeEach(() => {
     routerPush.mockReset()
     searchParamsValue = ''
+    global.Notification = Object.assign(vi.fn(), {
+        permission: 'default' as NotificationPermission,
+        requestPermission: vi.fn().mockResolvedValue('granted' as NotificationPermission),
+    }) as unknown as typeof Notification
+
     global.fetch = vi.fn(async (url: string) => {
         if (typeof url === 'string' && url.includes('/api/trainee/workouts/')) {
             return {
@@ -180,6 +185,93 @@ describe('Trainee workout focus mode', () => {
         expect(repsInputs[0].value).toBe('8')
         // First kg input (set #1, col kg) — should now hold planned effectiveWeight 80
         expect(repsInputs[1].value).toBe('80')
+    })
+
+    it('shows F prefix before a fundamental exercise name', async () => {
+        await renderContent()
+
+        const heading = screen.getByRole('heading', { level: 2 })
+        expect(heading.textContent).toMatch(/^F\s*Bench Press/)
+    })
+
+    it('shows A prefix before an accessory exercise name', async () => {
+        const user = userEvent.setup()
+        await renderContent()
+
+        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+
+        const heading = screen.getByRole('heading', { level: 2 })
+        expect(heading.textContent).toMatch(/^A\s*Tricep Extension/)
+    })
+
+    it('shows RPE target value in the targets row box', async () => {
+        await renderContent()
+
+        const rpeLabel = screen.getByText('RPE')
+        const rpeBox = rpeLabel.closest('div[class*="rounded-xl"]')
+        expect(rpeBox?.textContent).toContain('8')
+    })
+
+    it('does not render the fundamental/accessory type badge', async () => {
+        await renderContent()
+
+        expect(screen.queryByText('workouts.tagFundamental')).not.toBeInTheDocument()
+        expect(screen.queryByText('workouts.tagAccessory')).not.toBeInTheDocument()
+    })
+
+    it('does not render the RPE target badge (violet badge row)', async () => {
+        await renderContent()
+
+        const rpeElements = screen.getAllByText('RPE')
+        expect(rpeElements).toHaveLength(1)
+    })
+
+    it('shows rest timer pill immediately after checking a set', async () => {
+        const user = userEvent.setup()
+        await renderContent()
+
+        const checkButtons = screen.getAllByRole('button', { name: /workouts\.markSetDone/i })
+        await user.click(checkButtons[0])
+
+        expect(screen.getByTestId('floating-rest-timer-countdown')).toHaveTextContent('2:00')
+    })
+
+    it('resets timer to full duration when another set is checked while timer running', async () => {
+        const user = userEvent.setup()
+        await renderContent()
+
+        const checkButtons = screen.getAllByRole('button', { name: /workouts\.markSetDone/i })
+        await user.click(checkButtons[0])
+        expect(screen.getByTestId('floating-rest-timer-countdown')).toHaveTextContent('2:00')
+
+        await user.click(checkButtons[1])
+        expect(screen.getByTestId('floating-rest-timer-countdown')).toHaveTextContent('2:00')
+    })
+
+    it('stop button dismisses the timer', async () => {
+        const user = userEvent.setup()
+        await renderContent()
+
+        const checkButtons = screen.getAllByRole('button', { name: /workouts\.markSetDone/i })
+        await user.click(checkButtons[0])
+        expect(screen.getByTestId('floating-rest-timer-countdown')).toHaveTextContent('2:00')
+
+        await user.click(screen.getByRole('button', { name: /stop timer/i }))
+        expect(screen.queryByTestId('floating-rest-timer-countdown')).not.toBeInTheDocument()
+    })
+
+    it('keeps timer visible when navigating to another exercise card', async () => {
+        const user = userEvent.setup()
+        await renderContent()
+
+        const checkButtons = screen.getAllByRole('button', { name: /workouts\.markSetDone/i })
+        await user.click(checkButtons[0])
+        expect(screen.getByTestId('floating-rest-timer-countdown')).toHaveTextContent('2:00')
+
+        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+
+        expect(screen.getByText('Tricep Extension')).toBeInTheDocument()
+        expect(screen.getByTestId('floating-rest-timer-countdown')).toBeInTheDocument()
     })
 
     it('keeps inputs editable after a set is marked completed', async () => {

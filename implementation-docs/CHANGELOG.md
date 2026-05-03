@@ -8,6 +8,61 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [3 Maggio 2026] — Allineamento stile action timer nel dock draggable
+
+**Task checklist:** #11.68
+**File modificati:**
+`src/components/FloatingRestTimer.tsx`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Aggiornato il timer in modalità dock per usare lo stesso visual language degli altri quick action button (niente pill/bordo dedicato).
+- Il countdown resta visibile solo quando il timer è attivo, come badge compatto vicino all'icona.
+- In stato idle resta solo l'icona timer, coerente con gli altri controlli del dock.
+
+---
+
+## [3 Maggio 2026] — Timer spostato nel dock quick actions workout trainee
+
+**Task checklist:** #11.68
+**File modificati:**
+`src/components/FloatingRestTimer.tsx`, `src/app/trainee/workouts/[id]/_content.tsx`, `tests/unit/trainee-workout-focus.test.tsx`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Spostato il timer dal floating bottom al dock delle azioni rapide, insieme alle altre action del focus mode trainee.
+- L'attivazione resta invariata: la spunta di una serie avvia/restarta il timer in base al rest dell'esercizio.
+- In stato idle il timer resta disponibile nel dock con placeholder `--:--`; in stato attivo mostra countdown e supporta stop direttamente dalla stessa action.
+- Aggiornati i test del focus mode per riflettere il nuovo comportamento UI del comando stop.
+
+---
+
+## [3 Maggio 2026] — Timer rest persistente tra card esercizi trainee
+
+**Task checklist:** #11.68
+**File modificati:**
+`src/app/trainee/workouts/[id]/_content.tsx`, `tests/unit/trainee-workout-focus.test.tsx`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Rimosso il reset automatico del timer al cambio `currentStep` nella schermata workout trainee.
+- Il countdown rimane visibile e continua anche quando l'utente naviga alle card degli altri esercizi.
+- Aggiunto test unitario dedicato che verifica la persistenza del timer durante la navigazione tra esercizi.
+
+---
+
+## [3 Maggio 2026] — Rest timer workout trainee + update exercise focus card
+
+**Task checklist:** #11.68
+**File modificati:**
+`src/lib/useRestTimer.ts`, `src/components/FloatingRestTimer.tsx`, `src/components/index.ts`, `src/app/trainee/workouts/[id]/_content.tsx`, `public/locales/en/trainee.json`, `public/locales/it/trainee.json`, `tests/unit/use-rest-timer.test.ts`, `tests/unit/components/FloatingRestTimer.test.tsx`, `tests/unit/trainee-workout-focus.test.tsx`, `vitest.config.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Aggiunto hook `useRestTimer` con restart su nuova spunta serie, callback di expiry e stato "done" breve (500ms) per consentire flash visuale nel timer floating.
+- Introdotto componente `FloatingRestTimer` fixed (`z-40`) con countdown `MM:SS`, barra progressiva, stati urgenza (default/amber/red), dismiss e check finale in done-state.
+- Integrata la logica timer nel focus mode trainee: avvio su check set, reset su cambio esercizio, mapping completo `RestTime -> secondi`, suono Web Audio a due toni all'expire, toast/notification in base a visibilita pagina e permessi browser.
+- Aggiornata card esercizio focus: prefisso compatto `F/A` nel titolo, rimozione badge tipo + badge RPE nella row badge, aggiunta quarta target box `RPE`.
+- Estesa copertura test con suite dedicate per hook timer e componente floating, piu casi integrati sul workout focus; aggiornata `coverage.include` in `vitest.config.ts`.
+
+---
+
 ## [3 Maggio 2026] — Errori validazione API exercises: messaggio specifico da details
 
 **Task checklist:** #11.67

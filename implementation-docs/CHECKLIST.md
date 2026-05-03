@@ -616,6 +616,7 @@
 - [x] **11.65** Standardizzare action icon buttons in `PersonalRecordsExplorer` + unit test dedicato ✅ _3 Mag 2026_
 - [x] **11.66** Sostituire select esercizio modal massimali trainer con `AutocompleteSearch` + unit test dedicato ✅ _3 Mag 2026_
 - [x] **11.67** Mostrare i messaggi di validazione specifici da `error.details[].message` nel frontend (`getApiErrorMessage`) + allineamento i18n `validation.minOneMuscleGroup` + unit test dedicato ✅ _3 Mag 2026_
+- [x] **11.68** Aggiungere rest timer workout trainee (sound + notification), box target RPE e cleanup card badge row + unit test dedicati ✅ _3 Mag 2026_
 
 ---
 
