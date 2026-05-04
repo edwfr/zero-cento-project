@@ -594,17 +594,18 @@ export default function WorkoutDetailContent() {
 
         // Compute new set state before updating React state
         let newSet: SetPerformed
-        if (isCompleting && !(currentSet.reps > 0) && isPreciseReps) {
-            // Auto-fill with planned value for precise-rep exercises only
-            const plannedReps = parseInt(we.reps.trim(), 10)
-            newSet = {
-                ...currentSet,
-                completed: true,
-                reps: plannedReps,
-                weight: currentSet.weight > 0 ? currentSet.weight : (we.effectiveWeight ?? we.weight ?? 0),
-            }
+        if (isCompleting) {
+            const effectiveReps = currentSet.reps > 0
+                ? currentSet.reps
+                : isPreciseReps
+                    ? parseInt(we.reps.trim(), 10)
+                    : 0
+            const effectiveWeight = currentSet.weight > 0
+                ? currentSet.weight
+                : (we.effectiveWeight ?? we.weight ?? 0)
+            newSet = { ...currentSet, completed: true, reps: effectiveReps, weight: effectiveWeight }
         } else {
-            newSet = { ...currentSet, completed: isCompleting }
+            newSet = { ...currentSet, completed: false }
         }
 
         const newSets = currentSets.map((s, i) => (i === setIndex ? newSet : s))
