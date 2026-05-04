@@ -9,9 +9,10 @@ interface WorkoutRecapPanelProps {
     workoutId: string
     isOpen: boolean
     onClose: () => void
+    onSelectExercise?: (workoutExerciseId: string) => void
 }
 
-export default function WorkoutRecapPanel({ workoutId, isOpen, onClose }: WorkoutRecapPanelProps) {
+export default function WorkoutRecapPanel({ workoutId, isOpen, onClose, onSelectExercise }: WorkoutRecapPanelProps) {
     const { t } = useTranslation('trainee')
     const [exercises, setExercises] = useState<ExerciseRecapItem[]>([])
     const [loading, setLoading] = useState(false)
@@ -94,25 +95,32 @@ export default function WorkoutRecapPanel({ workoutId, isOpen, onClose }: Workou
                     {!loading && !error && (
                         <ul className="space-y-0">
                             {exercises.map((exercise) => (
-                                <li
-                                    key={exercise.id}
-                                    className="flex items-center gap-3 border-b border-gray-100 py-3 last:border-0"
-                                >
-                                    <StatusIcon status={exercise.status} />
-                                    <div className="min-w-0 flex-1">
-                                        <p className="truncate text-sm font-medium text-gray-800">
-                                            {exercise.exerciseName}
-                                        </p>
-                                        <p className="text-xs text-gray-400">
-                                            {getStatusLabel(t, exercise.status)}
-                                        </p>
-                                    </div>
-                                    <span className="shrink-0 tabular-nums text-xs text-gray-400">
-                                        {t('workouts.recapSets', {
-                                            completed: exercise.completedSets,
-                                            target: exercise.targetSets,
-                                        })}
-                                    </span>
+                                <li key={exercise.id} className="border-b border-gray-100 last:border-0">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            onSelectExercise?.(exercise.id)
+                                            onClose()
+                                        }}
+                                        disabled={!onSelectExercise}
+                                        className="flex w-full items-center gap-3 py-3 text-left transition-colors hover:bg-gray-50 disabled:cursor-default"
+                                    >
+                                        <StatusIcon status={exercise.status} />
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-sm font-medium text-gray-800">
+                                                {exercise.exerciseName}
+                                            </p>
+                                            <p className="text-xs text-gray-400">
+                                                {exercise.targetSets} × {exercise.reps} × {exercise.effectiveWeight != null ? `${exercise.effectiveWeight} kg` : '-'}
+                                            </p>
+                                        </div>
+                                        <span className="shrink-0 tabular-nums text-xs text-gray-400">
+                                            {t('workouts.recapSets', {
+                                                completed: exercise.completedSets,
+                                                target: exercise.targetSets,
+                                            })}
+                                        </span>
+                                    </button>
                                 </li>
                             ))}
                         </ul>

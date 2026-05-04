@@ -209,6 +209,8 @@
         "completeShort": "Complete workout",
         "summaryTitle": "Summary",
         "summaryStats": "{{done}} / {{total}} exercises · {{sets}} sets",
+        "summaryExerciseSpec": "{{sets}} × {{reps}} × {{weight}}",
+        "summaryExerciseSets": "{{completed}}/{{total}}",
         "incompleteSetsInline": "Exercises with incomplete sets:",
         "missingDataInline": "Exercises with no data:",
         "jumpToExercise": "Go to exercise",

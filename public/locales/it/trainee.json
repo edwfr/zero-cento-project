@@ -209,6 +209,8 @@
         "completeShort": "Invia feedback",
         "summaryTitle": "Riepilogo",
         "summaryStats": "{{done}} / {{total}} esercizi · {{sets}} set",
+        "summaryExerciseSpec": "{{sets}} × {{reps}} × {{weight}}",
+        "summaryExerciseSets": "{{completed}}/{{total}}",
         "incompleteSetsInline": "Esercizi con serie non completate",
         "missingDataInline": "Esercizio da iniziare",
         "jumpToExercise": "Vai all'esercizio",

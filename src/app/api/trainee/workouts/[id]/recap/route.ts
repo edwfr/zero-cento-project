@@ -11,7 +11,8 @@ interface RecapRow {
     order: number
     targetSets: number
     completedSets: number
-    totalSetsPerformed: number
+    reps: string
+    effectiveWeight: number | null
 }
 
 export async function GET(
@@ -30,17 +31,24 @@ export async function GET(
                 we.order                                                         AS "order",
                 we.sets                                                          AS "targetSets",
                 COALESCE(SUM(CASE WHEN sp.completed THEN 1 ELSE 0 END), 0)::int AS "completedSets",
-                COUNT(sp.id)::int                                                AS "totalSetsPerformed"
+                we.reps                                                          AS "reps",
+                we."effectiveWeight"                                             AS "effectiveWeight"
             FROM workout_exercises we
             JOIN workouts w ON w.id = we."workoutId"
             JOIN weeks wk ON wk.id = w."weekId"
             JOIN training_programs tp ON tp.id = wk."programId"
             JOIN exercises e ON e.id = we."exerciseId"
-            LEFT JOIN exercise_feedbacks ef ON ef."workoutExerciseId" = we.id
-            LEFT JOIN sets_performed sp ON sp."feedbackId" = ef.id
+            LEFT JOIN LATERAL (
+                SELECT id FROM exercise_feedbacks
+                WHERE "workoutExerciseId" = we.id
+                  AND "traineeId" = ${session.user.id}
+                ORDER BY date DESC
+                LIMIT 1
+            ) latest_ef ON true
+            LEFT JOIN sets_performed sp ON sp."feedbackId" = latest_ef.id
             WHERE we."workoutId" = ${workoutId}
               AND tp."traineeId" = ${session.user.id}
-            GROUP BY we.id, e.name, we.order, we.sets
+            GROUP BY we.id, e.name, we.order, we.sets, we.reps, we."effectiveWeight"
             ORDER BY we.order
         `
 
@@ -54,7 +62,9 @@ export async function GET(
             order: row.order,
             targetSets: row.targetSets,
             completedSets: row.completedSets,
-            status: computeExerciseStatus(row.totalSetsPerformed, row.completedSets, row.targetSets),
+            reps: row.reps,
+            effectiveWeight: row.effectiveWeight,
+            status: computeExerciseStatus(row.completedSets, row.targetSets),
         }))
 
         return apiSuccess({ exercises })

@@ -75,12 +75,6 @@ interface SetPerformed {
     completed?: boolean | null
 }
 
-interface ExerciseWarningTarget {
-    id: string
-    name: string
-    stepIndex: number
-}
-
 interface ExerciseRPE {
     workoutExerciseId: string
     rpe: number | null
@@ -605,7 +599,7 @@ export default function WorkoutDetailContent() {
                 : (we.effectiveWeight ?? we.weight ?? 0)
             newSet = { ...currentSet, completed: true, reps: effectiveReps, weight: effectiveWeight }
         } else {
-            newSet = { ...currentSet, completed: false }
+            newSet = { ...currentSet, completed: false, reps: 0, weight: 0 }
         }
 
         const newSets = currentSets.map((s, i) => (i === setIndex ? newSet : s))
@@ -745,45 +739,6 @@ export default function WorkoutDetailContent() {
     const workoutProgressPercent = totalPlannedSets > 0
         ? Math.round((totalCompletedSets / totalPlannedSets) * 100)
         : 0
-
-    const emptyExerciseTargets = useMemo(
-        () =>
-            sortedExercises
-                .flatMap((we, stepIndex) => {
-                    const sets = feedbackData[we.id] || []
-                    const isPreciseReps = /^\d+$/.test(we.reps.trim())
-                    const isMaxReps = we.reps.trim() === 'max'
-                    // precise or max: require reps > 0; ranges: just require checked
-                    const hasDoneSet = (isPreciseReps || isMaxReps)
-                        ? sets.some((s) => s.completed && s.reps > 0)
-                        : sets.some((s) => s.completed)
-                    return hasDoneSet
-                        ? []
-                        : [{
-                              id: we.id,
-                              name: we.exercise.name,
-                              stepIndex,
-                          }]
-                }),
-        [feedbackData, sortedExercises]
-    )
-
-    const incompleteSetExerciseTargets = useMemo(
-        () =>
-            sortedExercises
-                .flatMap((we, stepIndex) => {
-                    const sets = feedbackData[we.id] || []
-                    const completedSets = sets.filter((set) => set.completed).length
-                    return completedSets > 0 && completedSets < sets.length
-                        ? [{
-                              id: we.id,
-                              name: we.exercise.name,
-                              stepIndex,
-                          }]
-                        : []
-                                }),
-        [feedbackData, sortedExercises]
-    )
 
     const { handlers: pageSwipeHandlers } = useSwipe({
         onSwipeLeft: () => goToStep(currentStep + 1),
@@ -925,8 +880,8 @@ export default function WorkoutDetailContent() {
                             completed={completedExerciseCount}
                             total={sortedExercises.length}
                             totalSets={totalCompletedSets}
-                            emptyExercises={emptyExerciseTargets}
-                            incompleteSetExercises={incompleteSetExerciseTargets}
+                            exercises={sortedExercises}
+                            feedbackData={feedbackData}
                             globalNotes={globalNotes}
                             onNotesChange={setGlobalNotes}
                             onSelectExercise={goToStep}
@@ -982,6 +937,10 @@ export default function WorkoutDetailContent() {
                 workoutId={workoutId}
                 isOpen={recapOpen}
                 onClose={() => setRecapOpen(false)}
+                onSelectExercise={(exerciseId) => {
+                    const idx = sortedExercises.findIndex((e) => e.id === exerciseId)
+                    if (idx !== -1) goToStep(idx)
+                }}
             />
             <PrevWeekPanel
                 workoutId={workoutId}
@@ -1183,6 +1142,7 @@ function ExerciseFocusCard({
                                         onChange={(e) =>
                                             onUpdateSet(we.id, setIdx, 'reps', parseInt(e.target.value) || 0)
                                         }
+                                        disabled={!!set.completed}
                                         aria-label={`${t('workouts.reps')} ${set.setNumber}`}
                                         inputSize="md"
                                         className="text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -1199,6 +1159,7 @@ function ExerciseFocusCard({
                                         onChange={(e) =>
                                             onUpdateSet(we.id, setIdx, 'weight', parseFloat(e.target.value) || 0)
                                         }
+                                        disabled={!!set.completed}
                                         aria-label={`${t('workouts.weightKg')} ${set.setNumber}`}
                                         inputSize="md"
                                         className="text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -1250,8 +1211,8 @@ interface FinalStepProps {
     completed: number
     total: number
     totalSets: number
-    emptyExercises: ExerciseWarningTarget[]
-    incompleteSetExercises: ExerciseWarningTarget[]
+    exercises: WorkoutExerciseWithWeight[]
+    feedbackData: Record<string, SetPerformed[]>
     globalNotes: string
     onNotesChange: (notes: string) => void
     onSelectExercise: (stepIndex: number) => void
@@ -1262,27 +1223,79 @@ function FinalStep({
     completed,
     total,
     totalSets,
-    emptyExercises,
-    incompleteSetExercises,
+    exercises,
+    feedbackData,
     globalNotes,
     onNotesChange,
     onSelectExercise,
     t,
 }: FinalStepProps) {
+    const incompleteExercises = exercises.filter((we) => {
+        const completedSets = (feedbackData[we.id] || []).filter((s) => s.completed).length
+        return completedSets < we.sets
+    })
+
     return (
         <div className="space-y-6">
-            {/* Summary */}
             <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                <h2 className="text-2xl font-bold text-gray-900 mb-1">
                     {t('workouts.summaryTitle')}
                 </h2>
-                <p className="text-gray-600 mb-6">
+                <p className="text-gray-600 mb-4">
                     {t('workouts.summaryStats', {
                         done: completed,
                         total,
                         sets: totalSets,
                     })}
                 </p>
+
+                {incompleteExercises.length > 0 && (
+                    <div className="space-y-2 mb-6">
+                        {incompleteExercises.map((we) => {
+                            const idx = exercises.indexOf(we)
+                            const sets = feedbackData[we.id] || []
+                            const completedSets = sets.filter((s) => s.completed).length
+                            const weight = formatWeightKg(we.effectiveWeight ?? we.weight)
+
+                            return (
+                                <button
+                                    key={we.id}
+                                    type="button"
+                                    onClick={() => onSelectExercise(idx)}
+                                    className="w-full rounded-lg border border-amber-200 bg-amber-50 p-3 text-left transition-colors hover:border-amber-300 hover:bg-amber-100"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <AlertTriangle className="h-4 w-4 flex-shrink-0 text-amber-500" />
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-sm font-semibold text-gray-900 truncate">
+                                                {we.exercise.name}
+                                                {we.variant && (
+                                                    <span className="ml-1.5 text-xs font-normal text-gray-500">
+                                                        {we.variant}
+                                                    </span>
+                                                )}
+                                            </p>
+                                            <p className="mt-0.5 text-xs text-gray-500">
+                                                {t('workouts.summaryExerciseSpec', {
+                                                    sets: we.sets,
+                                                    reps: we.reps,
+                                                    weight,
+                                                })}
+                                            </p>
+                                        </div>
+                                        <span className="flex-shrink-0 rounded-full px-2.5 py-1 text-xs font-bold tabular-nums bg-amber-100 text-amber-700">
+                                            {t('workouts.summaryExerciseSets', {
+                                                completed: completedSets,
+                                                total: we.sets,
+                                            })}
+                                        </span>
+                                        <ChevronRight className="h-4 w-4 flex-shrink-0 text-amber-500" />
+                                    </div>
+                                </button>
+                            )
+                        })}
+                    </div>
+                )}
 
                 {/* Notes */}
                 <div>
@@ -1296,66 +1309,6 @@ function FinalStep({
                         rows={4}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                     />
-
-                    <div className="mt-4 space-y-3">
-                        {incompleteSetExercises.length > 0 && (
-                            <div className="space-y-3">
-                                {incompleteSetExercises.map((exercise) => (
-                                    <button
-                                        key={exercise.id}
-                                        type="button"
-                                        onClick={() => onSelectExercise(exercise.stepIndex)}
-                                        className="w-full rounded-lg border border-amber-200 bg-amber-50 p-4 text-left transition-colors hover:border-amber-300 hover:bg-amber-100"
-                                    >
-                                        <div className="flex items-start gap-3">
-                                            <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
-                                            <div className="min-w-0 flex-1">
-                                                <p className="font-semibold text-amber-800 text-sm">
-                                                    {t('workouts.incompleteSetsInline')}
-                                                </p>
-                                                <p className="mt-1 text-sm font-medium text-amber-700">
-                                                    {exercise.name}
-                                                </p>
-                                                <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-amber-700">
-                                                    {t('workouts.jumpToExercise')}
-                                                </p>
-                                            </div>
-                                            <ChevronRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-700" />
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-
-                        {emptyExercises.length > 0 && (
-                            <div className="space-y-3">
-                                {emptyExercises.map((exercise) => (
-                                    <button
-                                        key={exercise.id}
-                                        type="button"
-                                        onClick={() => onSelectExercise(exercise.stepIndex)}
-                                        className="w-full rounded-lg border border-amber-200 bg-amber-50 p-4 text-left transition-colors hover:border-amber-300 hover:bg-amber-100"
-                                    >
-                                        <div className="flex items-start gap-3">
-                                            <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
-                                            <div className="min-w-0 flex-1">
-                                                <p className="font-semibold text-amber-800 text-sm">
-                                                    {t('workouts.missingDataInline')}
-                                                </p>
-                                                <p className="mt-1 text-sm font-medium text-amber-700">
-                                                    {exercise.name}
-                                                </p>
-                                                <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-amber-700">
-                                                    {t('workouts.jumpToExercise')}
-                                                </p>
-                                            </div>
-                                            <ChevronRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-700" />
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
                 </div>
             </div>
         </div>

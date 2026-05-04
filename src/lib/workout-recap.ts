@@ -6,15 +6,13 @@ export interface ExerciseRecapItem {
     order: number
     targetSets: number
     completedSets: number
+    reps: string
+    effectiveWeight: number | null
     status: ExerciseStatus
 }
 
-export function computeExerciseStatus(
-    totalSetsPerformed: number,
-    completedSets: number,
-    targetSets: number
-): ExerciseStatus {
-    if (totalSetsPerformed === 0) return 'not_started'
+export function computeExerciseStatus(completedSets: number, targetSets: number): ExerciseStatus {
+    if (completedSets === 0) return 'not_started'
     if (completedSets >= targetSets) return 'done'
     return 'in_progress'
 }

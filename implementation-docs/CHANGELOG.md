@@ -8,6 +8,24 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [4 Maggio 2026] — Disable input serie completate nella schermata workout
+
+**File modificati:**
+`src/app/trainee/workouts/[id]/_content.tsx`
+
+Input reps e kg di una serie disabilitati (`disabled`) quando `set.completed === true`. Usa il supporto nativo `disabled` del componente `Input` (già stilato con `bg-gray-100 cursor-not-allowed`).
+
+---
+
+## [4 Maggio 2026] — Riepilogo workout: lista esercizi cliccabile con spec e contatore serie
+
+**File modificati:**
+`src/app/trainee/workouts/[id]/_content.tsx`, `public/locales/it/trainee.json`, `public/locales/en/trainee.json`
+
+Nel `FinalStep` della schermata workout aggiunta lista esercizi scrollabile. Ogni riga mostra `sets × reps × kg` e un badge `X/Y` con il conteggio serie completate (basato su `sets_performed` con `completed === true`). Cliccando si torna alla card di quell'esercizio. Badge verde = tutto completato, ambra = parziale, grigio = non iniziato.
+
+---
+
 ## [3 Maggio 2026] — Allineamento stile action timer nel dock draggable
 
 **Task checklist:** #11.68
