@@ -601,7 +601,7 @@ export default function WorkoutDetailContent() {
                 ...currentSet,
                 completed: true,
                 reps: plannedReps,
-                weight: we.effectiveWeight ?? we.weight ?? 0,
+                weight: currentSet.weight > 0 ? currentSet.weight : (we.effectiveWeight ?? we.weight ?? 0),
             }
         } else {
             newSet = { ...currentSet, completed: isCompleting }
