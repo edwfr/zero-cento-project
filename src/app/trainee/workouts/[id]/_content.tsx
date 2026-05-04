@@ -1051,9 +1051,6 @@ function ExerciseFocusCard({
                         </span>
                     </div>
                     <div className="flex-1 rounded-xl border border-brand-primary/30 bg-brand-primary/5 px-3 py-3 text-center">
-                        <span className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary">
-                            KG
-                        </span>
                         <span
                             className={`block text-2xl font-black mt-1 leading-none whitespace-nowrap ${
                                 calculatedWeightMissing ? 'text-gray-400' : 'text-gray-900'
