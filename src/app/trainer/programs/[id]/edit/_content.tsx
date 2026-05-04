@@ -286,7 +286,9 @@ function parseWeightInputValue(rawValue: string): ParsedWeightInputValue {
 }
 
 function roundWeightValue(value: number): number {
-    return Math.round((value + Number.EPSILON) * 100) / 100
+    // Ceil to nearest 0.5 kg; pre-round to 4dp to eliminate floating-point noise
+    const precise = Math.round(value * 10000) / 10000
+    return Math.ceil(precise * 2) / 2
 }
 
 function formatWeightForDisplay(value: number): string {

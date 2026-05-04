@@ -8,6 +8,15 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [4 Maggio 2026] — Arrotondamento al mezzo chilo per pesi calcolati in %
+
+**File modificati:**
+`src/app/trainer/programs/[id]/edit/_content.tsx`
+
+`roundWeightValue` aggiornata: ceil al 0.5kg più vicino (`Math.ceil(precise * 2) / 2`) invece di round a 2 decimali. Si applica solo ai pesi calcolati da % (1RM, nRM, percentage_previous). Es: 8.3 → 8.5, 8.9 → 9.0.
+
+---
+
 ## [4 Maggio 2026] — Disable input serie completate nella schermata workout
 
 **File modificati:**
