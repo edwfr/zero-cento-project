@@ -2255,6 +2255,13 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                     const rowStyle = getMovementPatternRowStyle(
                                                         selectedExercise?.movementPattern?.color
                                                     )
+                                                    const inputStyle = rowStyle
+                                                        ? {
+                                                              backgroundColor: rowStyle.backgroundColor as string,
+                                                              borderColor: rowStyle.borderLeftColor as string,
+                                                          }
+                                                        : undefined
+                                                    const accentColor = rowStyle?.borderLeftColor as string | undefined
 
                                                     return (
                                                         <div
@@ -2278,6 +2285,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                     }}
                                                                     placeholder={t('editProgram.selectExercise')}
                                                                     className="min-w-0 flex-1"
+                                                                    inputStyle={inputStyle}
+                                                                    accentColor={accentColor}
                                                                 />
 
                                                                 <ActionIconButton

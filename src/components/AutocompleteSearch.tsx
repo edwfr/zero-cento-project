@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { CSSProperties, useState, useRef, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/Input'
 import { FormLabel } from '@/components/FormLabel'
@@ -25,6 +25,8 @@ interface AutocompleteSearchProps {
     emptyMessage?: string
     className?: string
     id?: string
+    inputStyle?: CSSProperties
+    accentColor?: string
 }
 
 /**
@@ -46,6 +48,8 @@ export default function AutocompleteSearch({
     emptyMessage,
     className = '',
     id,
+    inputStyle,
+    accentColor,
 }: AutocompleteSearchProps) {
     const { t } = useTranslation(['common', 'components'])
     const inputId = id || `autocomplete-${Math.random().toString(36).slice(2, 9)}`
@@ -177,11 +181,15 @@ export default function AutocompleteSearch({
                     inputSize="md"
                     state={error ? 'error' : 'default'}
                     className="pr-10"
+                    style={inputStyle}
                     aria-invalid={!!error}
                 />
 
                 {/* Chevron icon */}
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                <div
+                    className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400"
+                    style={accentColor ? { color: accentColor } : undefined}
+                >
                     {loading ? (
                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-brand-primary border-t-transparent" />
                     ) : (
