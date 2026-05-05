@@ -2895,7 +2895,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                         <col className="w-[6%]" />
                                                                         <col className="w-[9%]" />
                                                                     </colgroup>
-                                                                    <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
+                                                                    <thead className="bg-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
                                                                         <tr>
                                                                             <th className="w-6 px-0.5 py-3">
                                                                                 <span className="sr-only">{t('editProgram.dragHandleLabel')}</span>
@@ -3074,7 +3074,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                 'number'
 
                                                                             const groupColor = exerciseGroupColors.get(row.id)
-                                                                            const rowBgClass = groupColor === 'even' ? 'bg-gray-50' : groupColor === 'odd' ? 'bg-gray-100' : ''
+                                                                            const rowBgClass = groupColor === 'even' ? 'bg-white' : groupColor === 'odd' ? 'bg-gray-200' : ''
 
                                                                             return (
                                                                                 <React.Fragment key={row.id}>
