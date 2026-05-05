@@ -8,6 +8,19 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [5 Maggio 2026] — Report SBD trainee: celle complete FRQ/NBL/IM
+
+**Task checklist:** #11.68
+**File modificati:**
+`src/app/trainer/trainees/[id]/_content.tsx`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Nella schermata `/trainer/trainees/[id]`, sezione `Report SBD`, ogni cella della tabella per riga fondamentale ora mostra tre metriche come nella vista programma: `FRQ`, `NBL`, `IM`.
+- Mantenuto il layout compatto esistente (metriche impilate nella cella) e allineate le label a quelle usate nella tabella SBD di review programma (`reviewProgram.sbdFrqCol`, `reviewProgram.sbdNblCol`, `reviewProgram.sbdImCol`).
+- Per i punti pianificati giornalieri, `FRQ` viene valorizzato a `1` quando il fondamentale e presente (`NBL > 0`) altrimenti `0`; `IM` resta `-` in assenza di dato intensita sul payload corrente.
+
+---
+
 ## [5 Maggio 2026] — Fix coerenza dati report SBD trainee con workout schedulati
 
 **Task checklist:** #11.68
