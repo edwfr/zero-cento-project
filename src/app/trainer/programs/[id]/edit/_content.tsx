@@ -400,18 +400,18 @@ function areEditableRowsEquivalent(
 
 function SortableExerciseRow({
     id,
-    isDraft,
     readOnly,
+    className,
     children,
 }: {
     id: string
-    isDraft: boolean
     readOnly: boolean
+    className?: string
     children: (dragHandleProps: React.HTMLAttributes<HTMLElement> | null) => React.ReactNode
 }) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id,
-        disabled: isDraft || readOnly,
+        disabled: readOnly,
     })
 
     const style: React.CSSProperties = {
@@ -423,8 +423,8 @@ function SortableExerciseRow({
     }
 
     return (
-        <tr ref={setNodeRef} style={style}>
-            {children(isDraft || readOnly ? null : { ...attributes, ...listeners })}
+        <tr ref={setNodeRef} style={style} className={className}>
+            {children(readOnly ? null : { ...attributes, ...listeners })}
         </tr>
     )
 }
@@ -1249,29 +1249,28 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             const { active, over } = event
             if (!over || active.id === over.id) return
 
-            const workoutRows = getWorkoutRows(workout).filter((row) => !row.isDraft)
-            const oldIndex = workoutRows.findIndex((r) => r.id === active.id)
-            const newIndex = workoutRows.findIndex((r) => r.id === over.id)
+            const allRows = getWorkoutRows(workout)
+            const oldIndex = allRows.findIndex((r) => r.id === active.id)
+            const newIndex = allRows.findIndex((r) => r.id === over.id)
             if (oldIndex === -1 || newIndex === -1) return
 
-            // Build new ordered array
-            const reordered = [...workoutRows]
+            const reordered = [...allRows]
             const [moved] = reordered.splice(oldIndex, 1)
             reordered.splice(newIndex, 0, moved)
 
-            // Optimistic update
-            const previousOrders = Object.fromEntries(
-                workoutRows.map((r) => [r.id, r.order])
-            )
+            // Optimistic update for all rows (including drafts)
+            const previousOrders = Object.fromEntries(allRows.map((r) => [r.id, r.order]))
             setRowStateById((current) => {
                 const next = { ...current }
                 reordered.forEach((row, i) => {
-                    if (next[row.id]) {
-                        next[row.id] = { ...next[row.id], order: i + 1 }
-                    }
+                    next[row.id] = { ...(next[row.id] ?? row), order: i + 1 }
                 })
                 return next
             })
+
+            // Only persist reorder for non-draft rows
+            const persistedReordered = reordered.filter((r) => !r.isDraft)
+            if (persistedReordered.length === 0) return
 
             try {
                 setReorderingWorkoutId(workout.id)
@@ -1281,7 +1280,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            exercises: reordered.map((row, i) => ({
+                            exercises: persistedReordered.map((row, i) => ({
                                 id: row.id,
                                 order: i + 1,
                             })),
@@ -1294,13 +1293,11 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     throw new Error(getApiErrorMessage(data, t('editProgram.rowReorderError'), t))
                 }
             } catch (err) {
-                // Revert optimistic update
+                // Revert all rows to pre-drag orders
                 setRowStateById((current) => {
                     const next = { ...current }
-                    workoutRows.forEach((row) => {
-                        if (next[row.id]) {
-                            next[row.id] = { ...next[row.id], order: previousOrders[row.id] }
-                        }
+                    allRows.forEach((row) => {
+                        next[row.id] = { ...(next[row.id] ?? row), order: previousOrders[row.id] }
                     })
                     return next
                 })
@@ -2588,8 +2585,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             return (
                                 <section
                                     key={week.id}
-                                    className={`rounded-xl border bg-white shadow-sm ${isActive ? 'border-brand-primary' : 'border-gray-200'
-                                        }`}
+                                    className="rounded-xl border border-gray-200 bg-white shadow-sm"
                                 >
                                     <div className="px-4 py-4 border-b border-gray-100">
                                         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -2797,9 +2793,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                     }
                                                                 >
                                                                     <SortableContext
-                                                                        items={workoutRows
-                                                                            .filter((r) => !r.isDraft)
-                                                                            .map((r) => r.id)}
+                                                                        items={workoutRows.map((r) => r.id)}
                                                                         strategy={verticalListSortingStrategy}
                                                                         disabled={
                                                                             readOnly ||
@@ -3001,7 +2995,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                 <SortableExerciseRow
                                                                                     key={row.id}
                                                                                     id={row.id}
-                                                                                    isDraft={row.isDraft}
                                                                                     readOnly={readOnly}
                                                                                 >
                                                                                     {(dragHandleProps) => (
