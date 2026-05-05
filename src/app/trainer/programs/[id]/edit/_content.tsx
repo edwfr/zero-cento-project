@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback, useMemo, type CSSProperties } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useMemo, type CSSProperties } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
@@ -36,6 +36,7 @@ import {
     type WorkoutStructureTemplateRow,
 } from './structure-utils'
 import { transformApiWeek } from './transform-utils'
+import { computeExerciseGroupColors } from './row-utils'
 import {
     DndContext,
     closestCenter,
@@ -425,6 +426,37 @@ function SortableExerciseRow({
     return (
         <tr ref={setNodeRef} style={style} className={className}>
             {children(readOnly ? null : { ...attributes, ...listeners })}
+        </tr>
+    )
+}
+
+function InsertRowSeparator({
+    onInsert,
+    disabled,
+    ariaLabel,
+}: {
+    onInsert: () => void
+    disabled: boolean
+    ariaLabel: string
+}) {
+    return (
+        <tr className="group/insert-sep" style={{ lineHeight: 0 }}>
+            <td
+                colSpan={10}
+                style={{ padding: 0, height: '4px', position: 'relative', overflow: 'visible' }}
+            >
+                <div className="absolute left-1/2 top-1/2 z-10 hidden -translate-x-1/2 -translate-y-1/2 group-hover/insert-sep:flex">
+                    <button
+                        type="button"
+                        onClick={onInsert}
+                        disabled={disabled}
+                        className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-primary text-white shadow-sm transition-transform hover:scale-110 disabled:opacity-60"
+                        aria-label={ariaLabel}
+                    >
+                        <Plus className="h-3 w-3" />
+                    </button>
+                </div>
+            </td>
         </tr>
     )
 }
@@ -2736,6 +2768,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                 const workoutRows = [...getWorkoutRows(workout)].sort(
                                                     (left, right) => left.order - right.order
                                                 )
+                                                const exerciseGroupColors = computeExerciseGroupColors(workoutRows)
                                                 const workoutHasUnsavedChanges =
                                                     hasWorkoutUnsavedChanges(workout)
                                                 const effectiveWeightPreviewByRowId: Record<string, number | null> = {}
@@ -2965,7 +2998,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                             </th>
                                                                         </tr>
                                                                     </thead>
-                                                                    <tbody className="divide-y divide-gray-100 bg-white">
+                                                                    <tbody className="bg-white">
                                                                         {workoutRows.length === 0 && (
                                                                             <tr>
                                                                                 <td
@@ -3040,12 +3073,16 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                 typeof previewEffectiveWeight ===
                                                                                 'number'
 
+                                                                            const groupColor = exerciseGroupColors.get(row.id)
+                                                                            const rowBgClass = groupColor === 'even' ? 'bg-gray-50' : groupColor === 'odd' ? 'bg-gray-100' : ''
+
                                                                             return (
-                                                                                <SortableExerciseRow
-                                                                                    key={row.id}
-                                                                                    id={row.id}
-                                                                                    readOnly={readOnly}
-                                                                                >
+                                                                                <React.Fragment key={row.id}>
+                                                                                    <SortableExerciseRow
+                                                                                        id={row.id}
+                                                                                        readOnly={readOnly}
+                                                                                        className={`border-b border-gray-100 ${rowBgClass}`}
+                                                                                    >
                                                                                     {(dragHandleProps) => (
                                                                                         <>
                                                                                             <td className="w-6 px-0.5 py-3 align-middle">
@@ -3371,7 +3408,15 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                     </td>
                                                                                         </>
                                                                                     )}
-                                                                                </SortableExerciseRow>
+                                                                                    </SortableExerciseRow>
+                                                                                    {!readOnly && rowIndex < workoutRows.length - 1 && (
+                                                                                        <InsertRowSeparator
+                                                                                            onInsert={() => insertDraftRowAt(workout.id, rowIndex)}
+                                                                                            disabled={Boolean(savingRowId || deletingRowId)}
+                                                                                            ariaLabel={t('editProgram.insertRowBetween')}
+                                                                                        />
+                                                                                    )}
+                                                                                </React.Fragment>
                                                                             )
                                                                         })}
                                                                     </tbody>
