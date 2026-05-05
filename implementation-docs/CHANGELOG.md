@@ -8,6 +8,144 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [6 Maggio 2026] — Storico progressione: grafico prima della tabella
+
+**Task checklist:** #11.79
+**File modificati:**
+`src/app/trainee/records/_content.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Nella sezione espandibile `Storico Progressione` di `/trainee/records` e stato invertito l'ordine dei blocchi: ora il grafico `Andamento 1RM` viene renderizzato prima della tabella storica.
+- Nessuna modifica ai dati o alle colonne: cambiato solo l'ordine visuale per migliorare priorita informativa.
+
+---
+
+## [6 Maggio 2026] — Trainee records: solo loader giallo senza testo
+
+**Task checklist:** #11.78
+**File modificati:**
+`src/app/trainee/records/_content.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Nel loading iniziale di `/trainee/records` e stato rimosso il `FullPageLoader` con copy (`Stiamo preparando...`).
+- La schermata mostra ora solo overlay con spinner giallo (`NavigationLoadingOverlay`), senza testo transitorio.
+
+---
+
+## [6 Maggio 2026] — Loader giallo iniziale su schermata trainee records
+
+**Task checklist:** #11.77
+**File modificati:**
+`src/app/trainee/records/_content.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Al caricamento client-side della schermata `/trainee/records` e stato rimosso il rendering della preview/skeleton tabellare.
+- Durante il fetch dei dati viene ora mostrato direttamente il loader brand giallo full-screen (`FullPageLoader`), evitando la visualizzazione parziale anticipata del contenuto pagina.
+
+---
+
+## [6 Maggio 2026] — Bottone Vedi Progressione fit-content e centrato
+
+**Task checklist:** #11.76
+**File modificati:**
+`src/app/trainee/records/_content.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Aggiornato il bottone `Vedi Progressione` nella card massimali di `/trainee/records` per avere larghezza pari al contenuto (non full width).
+- Il bottone e ora centrato orizzontalmente nel contenitore tramite wrapper `flex justify-center`.
+- Mantenuta la freccia di stato (su/giu) inline con il testo del bottone.
+
+---
+
+## [6 Maggio 2026] — Fix centratura freccia nel bottone Vedi Progressione
+
+**Task checklist:** #11.75
+**File modificati:**
+`src/app/trainee/records/_content.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Corretto l'allineamento verticale (asse Y) dell'icona freccia nel bottone `Vedi Progressione` della schermata `/trainee/records`.
+- La freccia non usa piu il canale `iconPosition="right"` del componente `Button`, ma viene renderizzata nel contenuto del bottone con layout flex esplicito e `ml-auto`, garantendo centratura visiva stabile.
+
+---
+
+## [6 Maggio 2026] — Sezione filtri piu compatta su trainee records
+
+**Task checklist:** #11.74
+**File modificati:**
+`src/app/trainee/records/_content.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Compattata la card filtri in alto su `/trainee/records` riducendo padding (`Card` con `padding="sm"`), spazi verticali e gap tra controlli.
+- Label filtri rese piu piccole e compatte, con stile uppercase discreto per mantenere leggibilita senza aumentare l'altezza del blocco.
+- Pulsanti tipologia ridotti in larghezza minima per densita migliore su mobile mantenendo la stessa logica funzionale.
+
+---
+
+## [6 Maggio 2026] — Refactor barra ricerca e filtri in alto su trainee records
+
+**Task checklist:** #11.73
+**File modificati:**
+`src/app/trainee/records/_content.tsx`, `public/locales/it/trainee.json`, `public/locales/en/trainee.json`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Refactoring della sezione ricerca in alto nella schermata `/trainee/records` con input piu chiaro (icona search), azione di pulizia query (`Pulisci`) e azione `Reset filtri`.
+- Aggiunto contatore risultati dinamico (`N esercizi trovati`) in fondo alla card filtri.
+- Mantenuta invariata la logica di filtro per testo e tipologia, migliorando solo UX e leggibilita.
+
+---
+
+## [6 Maggio 2026] — Storico progressione trainee in tabella unica
+
+**Task checklist:** #11.72
+**File modificati:**
+`src/app/trainee/records/_content.tsx`, `public/locales/it/trainee.json`, `public/locales/en/trainee.json`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Nella sezione espansa di progressione in `/trainee/records` e stato rimosso il layout a card su mobile: lo storico e ora sempre renderizzato in tabella, su tutti i breakpoint.
+- Colonne allineate alla richiesta: `Data`, `Test registrato`, `1RM calcolato`.
+- Il grafico di andamento 1RM e stato mantenuto invariato sotto la tabella.
+
+---
+
+## [6 Maggio 2026] — Card massimali trainee: rimozione badge PR e due max in riga
+
+**Task checklist:** #11.71
+**File modificati:**
+`src/app/trainee/records/_content.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Rimossa dalla card in `/trainee/records` la pill con conteggio totale PR per esercizio.
+- I due box principali (`Massimale registrato` e `1RM normalizzato`) sono ora forzati sulla stessa riga anche su mobile (`grid-cols-2`) per rendere il confronto immediato.
+
+---
+
+## [6 Maggio 2026] — Enfasi tipografica mobile su valori massimale trainee
+
+**Task checklist:** #11.70
+**File modificati:**
+`src/app/trainee/records/_content.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Nella card massimali di `/trainee/records` i due valori principali (`Massimale registrato` e `1RM normalizzato`) sono stati resi piu evidenti su mobile con dimensione font aumentata, peso tipografico piu marcato e maggiore separazione visiva delle tile.
+- La griglia metriche e ora `1 colonna` su mobile e `2 colonne` da `sm`, per privilegiare leggibilita e gerarchia dei pesi sui dispositivi piccoli.
+
+---
+
+## [6 Maggio 2026] — Refactor mobile-first card massimali trainee
+
+**Task checklist:** #11.69
+**File modificati:**
+`src/app/trainee/records/_content.tsx`, `public/locales/it/trainee.json`, `public/locales/en/trainee.json`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Ridisegnata la card nella schermata `/trainee/records` in ottica mobile-first con header compatto (titolo esercizio + tipo + data) e metriche in due tile leggibili (`Massimale registrato` e `1RM normalizzato`).
+- Sostituita l'azione precedente `Vedi progressione` con trigger full-width stile accordion (`Progressione (tabella + grafico)`) per un'interazione piu chiara su touch.
+- La sezione progressione ora mostra storico in doppio formato: card list su mobile e tabella su viewport `md+`, mantenendo il line chart 1RM sotto lo storico.
+- Uniformato il calcolo 1RM alla tabella RPE (`estimateOneRMFromRpeTable`) per coerenza con il resto della piattaforma.
+
+---
+
 ## [5 Maggio 2026] — Report SBD trainee: celle complete FRQ/NBL/IM
 
 **Task checklist:** #11.68

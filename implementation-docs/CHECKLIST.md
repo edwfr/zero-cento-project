@@ -617,6 +617,17 @@
 - [x] **11.66** Sostituire select esercizio modal massimali trainer con `AutocompleteSearch` + unit test dedicato ✅ _3 Mag 2026_
 - [x] **11.67** Mostrare i messaggi di validazione specifici da `error.details[].message` nel frontend (`getApiErrorMessage`) + allineamento i18n `validation.minOneMuscleGroup` + unit test dedicato ✅ _3 Mag 2026_
 - [x] **11.68** Aggiungere istogramma settimanale serie allenanti S/B/D in review programma e reportistica atleta (su tutte le schede) con filtro lift + recap FRQ/NBL/IM aggregato per fondamentali (Squat, Panca, Stacco) in review/edit programma + formato compatto allineato tra edit/review/view/trainee report + pannello SBD trainee alimentato da workout schedulati (no PR storici) + tabella trainee con colonne settimane filtrate (N settimane da finestra temporale) + label filtro lift rinominata in `Fondamentale` + ordine filtri standardizzato (sinistra finestra temporale, destra esercizio/fondamentale) + pannelli pianificazione allineati allo stile filtri del primo pannello con azioni `Seleziona tutti / Deseleziona tutti` sui filtri multipli + secondo pannello senza sfondo grigio e filtro fondamentali multi-selezione + rimozione pannello annidato del grafico embedded (grafico a livello pannello principale) + filtro fondamentali convertito in badge multi-selezione con label `Fondamentali` + filtro gruppi muscolari convertito a badge multi-selezione nel pannello successivo + etichette filtri trainee allineate a `Filtra per esercizio` / `Filtra per fondamentale` + filtro esercizio 1RM convertito a badge multi-selezione anche nella schermata `/trainer/trainees/[id]` + badge filtro 1RM colorati come le linee esercizio del grafico sottostante ✅ _5 Mag 2026_
+- [x] **11.69** Refactor mobile-first card `trainee/records`: titolo + metriche massimale/1RM in layout compatto, azione progressione stile accordion e storico in tabella/card + line chart ✅ _6 Mag 2026_
+- [x] **11.70** Potenziare enfasi tipografica mobile su card massimali trainee: valori peso (registrato/normalizzato) con font size maggiore e tile piu evidenti ✅ _6 Mag 2026_
+- [x] **11.71** Rifinitura card massimali trainee: rimosso badge conteggio PR e allineati i due box max (registrato/normalizzato) sulla stessa riga anche su mobile ✅ _6 Mag 2026_
+- [x] **11.72** Storico progressione trainee in formato tabellare unico (no card mobile), con colonne `Data`, `Test registrato`, `1RM calcolato` e grafico invariato ✅ _6 Mag 2026_
+- [x] **11.73** Refactor ricerca/filtri in alto su `/trainee/records`: input con icona, clear query, reset filtri e contatore risultati ✅ _6 Mag 2026_
+- [x] **11.74** Compattare sezione filtri su `/trainee/records`: padding ridotto, spacing piu denso e controlli ricerca/tipologia piu compatti ✅ _6 Mag 2026_
+- [x] **11.75** Fix allineamento verticale freccia nel bottone `Vedi Progressione` su `/trainee/records` ✅ _6 Mag 2026_
+- [x] **11.76** Bottone `Vedi Progressione` a larghezza contenuto e centrato sull'asse X del contenitore su `/trainee/records` ✅ _6 Mag 2026_
+- [x] **11.77** Sostituire preview/skeleton iniziale di `/trainee/records` con loader giallo brand (`FullPageLoader`) al caricamento schermata ✅ _6 Mag 2026_
+- [x] **11.78** Su `/trainee/records` mostrare solo loader giallo senza testo transitorio (`Stiamo preparando...`) durante il fetch iniziale ✅ _6 Mag 2026_
+- [x] **11.79** Nello storico progressione di `/trainee/records` mostrare prima il grafico e poi la tabella ✅ _6 Mag 2026_
 
 ---
 

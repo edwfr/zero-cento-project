@@ -5,7 +5,7 @@
 - [x] [TRN-002] Aggiungere box per RPE in vista esercizio
 - [ ] [TRN-003] Rendere feedback obbligatorio per settimana di test
 - [ ] [TRN-004] Aggiungere note per esercizio su singolo workout
-- [ ] [TRN-005] Vista dei massimali con grafici - riusare grafici della sezione trainer?
+- [x] [TRN-005] Vista dei massimali con grafici - riusare grafici della sezione trainer?
 
 ## TO DO LIST TRAINER
 - [X] [TRN-006] Grafico istogramma sia su recap di scheda sia su reportistica per esercizi SBD
