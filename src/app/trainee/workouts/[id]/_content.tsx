@@ -121,7 +121,7 @@ const formatWeightKg = (value: number | null | undefined): string => {
     if (typeof value !== 'number' || !Number.isFinite(value)) {
         return '-'
     }
-    return `${formatWeightValue(value)} kg`
+    return `${formatWeightValue(value)}`
 }
 
 const DOCK_STORAGE_KEY = 'workout_dock_pos'
@@ -813,9 +813,8 @@ export default function WorkoutDetailContent() {
                     ref={dockRef}
                     aria-label={t('workouts.quickActionsLabel')}
                     data-swipe-ignore="true"
-                    className={`fixed z-20 flex flex-col items-center gap-1 rounded-full border border-gray-200 bg-white/90 p-1 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-white/75 ${
-                        dockPos ? '' : 'right-3 top-1/3'
-                    }`}
+                    className={`fixed z-20 flex flex-col items-center gap-1 rounded-full border border-gray-200 bg-white/90 p-1 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-white/75 ${dockPos ? '' : 'right-3 top-1/3'
+                        }`}
                     style={dockPos ? { top: dockPos.top, left: dockPos.left } : undefined}
                 >
                     <button
@@ -1012,9 +1011,8 @@ function ExerciseFocusCard({
                 <div className="mb-4">
                     <h2 className="text-2xl font-bold text-gray-900 mb-1">
                         <span
-                            className={`mr-1.5 text-sm font-bold align-middle ${
-                                we.exercise.type === 'fundamental' ? 'text-red-600' : 'text-blue-600'
-                            }`}
+                            className={`mr-1.5 text-sm font-bold align-middle ${we.exercise.type === 'fundamental' ? 'text-red-600' : 'text-blue-600'
+                                }`}
                         >
                             {we.exercise.type === 'fundamental' ? 'F' : 'A'}
                         </span>
@@ -1051,10 +1049,12 @@ function ExerciseFocusCard({
                         </span>
                     </div>
                     <div className="flex-1 rounded-xl border border-brand-primary/30 bg-brand-primary/5 px-3 py-3 text-center">
+                        <span className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary">
+                            KG
+                        </span>
                         <span
-                            className={`block text-2xl font-black mt-1 leading-none whitespace-nowrap ${
-                                calculatedWeightMissing ? 'text-gray-400' : 'text-gray-900'
-                            }`}
+                            className={`block text-2xl font-black mt-1 leading-none whitespace-nowrap ${calculatedWeightMissing ? 'text-gray-400' : 'text-gray-900'
+                                }`}
                         >
                             {calculatedWeightMissing
                                 ? '-'
@@ -1166,11 +1166,10 @@ function ExerciseFocusCard({
                                     <button
                                         type="button"
                                         onClick={() => onToggleSet(we.id, setIdx)}
-                                        className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${
-                                            set.completed
+                                        className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${set.completed
                                                 ? 'border-green-300 bg-green-100 text-green-700'
                                                 : 'border-gray-300 bg-white text-gray-400 hover:border-green-300 hover:text-green-600'
-                                        }`}
+                                            }`}
                                         aria-label={t('workouts.markSetDone')}
                                     >
                                         <Check className="w-4 h-4" />
