@@ -8,6 +8,19 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [5 Maggio 2026] — UX improvements trainer program edit page
+
+**File modificati:**
+`src/app/trainer/programs/[id]/edit/_content.tsx`, `src/components/InsertRowSeparator.tsx` (new), `src/lib/computeExerciseGroupColors.ts` (new), `tests/unit/computeExerciseGroupColors.test.ts` (new)
+
+**Note:**
+- Rimosso bordo giallo dai pannelli settimane attive: sempre visualizzati con bordo grigio-200 per coherenza visiva.
+- Rese immediatamente sortabili via dnd-kit le righe di esercizio non salvate (draft): più necessario attendere il salvataggio prima di riordinarle.
+- Aggiunto componente `InsertRowSeparator` con icona "+" inline tra le righe per inserire esercizi in posizione specifica senza ricaricamento manuale.
+- Implementato utility `computeExerciseGroupColors` per colorazione alternata grigio delle righe esercizi (gray-50 vs gray-100) basata sul raggruppamento (exercise group id).
+
+---
+
 ## [4 Maggio 2026] — Arrotondamento al mezzo chilo per pesi calcolati in %
 
 **File modificati:**
