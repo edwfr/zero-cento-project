@@ -178,6 +178,16 @@ interface EditProgramContentProps {
     readOnly?: boolean
 }
 
+type FundamentalLift = 'squat' | 'bench' | 'deadlift'
+
+const FUNDAMENTAL_PATTERNS: Record<FundamentalLift, string[]> = {
+    squat: ['squat', 'back squat', 'front squat', 'box squat'],
+    bench: ['bench press', 'bench', 'panca'],
+    deadlift: ['deadlift', 'stacco', 'stacco da terra'],
+}
+
+const FUNDAMENTAL_LIFT_ORDER: FundamentalLift[] = ['squat', 'bench', 'deadlift']
+
 type ParsedWeightInputMode =
     | 'empty'
     | 'absolute'
@@ -210,6 +220,24 @@ type ResolveWeightInputOutcome =
 function parseRepsValue(repsValue: string): number {
     const match = repsValue.match(/^\d+/)
     return match ? parseInt(match[0], 10) : 0
+}
+
+function matchFundamentalLift(exerciseName: string): FundamentalLift | null {
+    const lowerName = exerciseName.toLowerCase()
+
+    if (FUNDAMENTAL_PATTERNS.squat.some((pattern) => lowerName.includes(pattern))) {
+        return 'squat'
+    }
+
+    if (FUNDAMENTAL_PATTERNS.bench.some((pattern) => lowerName.includes(pattern))) {
+        return 'bench'
+    }
+
+    if (FUNDAMENTAL_PATTERNS.deadlift.some((pattern) => lowerName.includes(pattern))) {
+        return 'deadlift'
+    }
+
+    return null
 }
 
 function estimateOneRMValue(weight: number, reps: number): number {
@@ -1079,75 +1107,82 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         () =>
             program
                 ? program.weeks.reduce((acc, week) => {
-                    acc[week.id] = Object.values(
-                        week.workouts.reduce(
-                            (weekAcc, workout) => {
-                                workout.workoutExercises
-                                    .filter(
-                                        (workoutExercise) =>
-                                            workoutExercise.exercise.type === 'fundamental' &&
-                                            !workoutExercise.isWarmup
-                                    )
-                                    .forEach((workoutExercise) => {
-                                        const key = workoutExercise.exercise.id
-                                        const plannedReps = parseRepsValue(workoutExercise.reps)
-                                        const liftCount = workoutExercise.sets * plannedReps
+                    const metricsByLift = week.workouts.reduce(
+                        (weekAcc, workout) => {
+                            workout.workoutExercises
+                                .filter(
+                                    (workoutExercise) =>
+                                        workoutExercise.exercise.type === 'fundamental' &&
+                                        !workoutExercise.isWarmup
+                                )
+                                .forEach((workoutExercise) => {
+                                    const matchedLift = matchFundamentalLift(workoutExercise.exercise.name)
+                                    if (!matchedLift) {
+                                        return
+                                    }
 
-                                        let intensity: number | null = null
-                                        if (
-                                            workoutExercise.weightType === 'percentage_1rm' &&
-                                            typeof workoutExercise.weight === 'number'
-                                        ) {
-                                            intensity = workoutExercise.weight
-                                        } else if (
-                                            workoutExercise.weightType === 'absolute' &&
-                                            typeof workoutExercise.weight === 'number'
-                                        ) {
-                                            const estimatedOneRM =
-                                                estimatedOneRMByExercise[workoutExercise.exercise.id]
-                                            if (estimatedOneRM) {
-                                                intensity = (workoutExercise.weight / estimatedOneRM) * 100
-                                            }
+                                    const plannedReps = parseRepsValue(workoutExercise.reps)
+                                    const liftCount = workoutExercise.sets * plannedReps
+
+                                    let intensity: number | null = null
+                                    if (
+                                        workoutExercise.weightType === 'percentage_1rm' &&
+                                        typeof workoutExercise.weight === 'number'
+                                    ) {
+                                        intensity = workoutExercise.weight
+                                    } else if (
+                                        workoutExercise.weightType === 'absolute' &&
+                                        typeof workoutExercise.weight === 'number'
+                                    ) {
+                                        const estimatedOneRM =
+                                            estimatedOneRMByExercise[workoutExercise.exercise.id]
+                                        if (estimatedOneRM) {
+                                            intensity = (workoutExercise.weight / estimatedOneRM) * 100
                                         }
+                                    }
 
-                                        if (!weekAcc[key]) {
-                                            weekAcc[key] = {
-                                                exerciseId: workoutExercise.exercise.id,
-                                                exerciseName: workoutExercise.exercise.name,
-                                                workoutIds: new Set<string>(),
-                                                totalLifts: 0,
-                                                weightedIntensitySum: 0,
-                                                intensityLiftCount: 0,
-                                            }
+                                    if (!weekAcc[matchedLift]) {
+                                        weekAcc[matchedLift] = {
+                                            lift: matchedLift,
+                                            workoutIds: new Set<string>(),
+                                            totalLifts: 0,
+                                            weightedIntensitySum: 0,
+                                            intensityLiftCount: 0,
                                         }
+                                    }
 
-                                        weekAcc[key].workoutIds.add(workout.id)
-                                        weekAcc[key].totalLifts += liftCount
+                                    weekAcc[matchedLift].workoutIds.add(workout.id)
+                                    weekAcc[matchedLift].totalLifts += liftCount
 
-                                        if (intensity !== null && liftCount > 0) {
-                                            weekAcc[key].weightedIntensitySum += intensity * liftCount
-                                            weekAcc[key].intensityLiftCount += liftCount
-                                        }
-                                    })
+                                    if (intensity !== null && liftCount > 0) {
+                                        weekAcc[matchedLift].weightedIntensitySum += intensity * liftCount
+                                        weekAcc[matchedLift].intensityLiftCount += liftCount
+                                    }
+                                })
 
-                                return weekAcc
-                            },
-                            {} as Record<
-                                string,
-                                {
-                                    exerciseId: string
-                                    exerciseName: string
-                                    workoutIds: Set<string>
-                                    totalLifts: number
-                                    weightedIntensitySum: number
-                                    intensityLiftCount: number
-                                }
-                            >
-                        )
+                            return weekAcc
+                        },
+                        {} as Record<
+                            FundamentalLift,
+                            {
+                                lift: FundamentalLift
+                                workoutIds: Set<string>
+                                totalLifts: number
+                                weightedIntensitySum: number
+                                intensityLiftCount: number
+                            }
+                        >
                     )
+
+                    acc[week.id] = Object.values(metricsByLift)
                         .map((metric) => ({
-                            exerciseId: metric.exerciseId,
-                            exerciseName: metric.exerciseName,
+                            lift: metric.lift,
+                            liftLabel:
+                                metric.lift === 'squat'
+                                    ? t('reports.squat')
+                                    : metric.lift === 'bench'
+                                        ? t('reports.bench')
+                                        : t('reports.deadlift'),
                             frequency: metric.workoutIds.size,
                             totalLifts: metric.totalLifts,
                             averageIntensity:
@@ -1155,33 +1190,33 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                     ? metric.weightedIntensitySum / metric.intensityLiftCount
                                     : null,
                         }))
-                        .sort((left, right) =>
-                            left.exerciseName.localeCompare(right.exerciseName, 'it', {
-                                sensitivity: 'base',
-                            })
+                        .sort(
+                            (left, right) =>
+                                FUNDAMENTAL_LIFT_ORDER.indexOf(left.lift) -
+                                FUNDAMENTAL_LIFT_ORDER.indexOf(right.lift)
                         )
 
                     return acc
-                }, {} as Record<string, Array<{ exerciseId: string; exerciseName: string; frequency: number; totalLifts: number; averageIntensity: number | null }>>)
+                }, {} as Record<string, Array<{ lift: FundamentalLift; liftLabel: string; frequency: number; totalLifts: number; averageIntensity: number | null }>>)
                 : {},
-        [estimatedOneRMByExercise, program]
+        [estimatedOneRMByExercise, program, t]
     )
 
-    const sbdMetricsByExerciseAcrossWeeks = useMemo(
+    const sbdMetricsByLiftAcrossWeeks = useMemo(
         () =>
             program
                 ? Array.from(
                     program.weeks.reduce((acc, week) => {
                         ; (weekSbdMetrics[week.id] || []).forEach((metric) => {
-                            if (!acc.has(metric.exerciseId)) {
-                                acc.set(metric.exerciseId, {
-                                    exerciseId: metric.exerciseId,
-                                    exerciseName: metric.exerciseName,
+                            if (!acc.has(metric.lift)) {
+                                acc.set(metric.lift, {
+                                    lift: metric.lift,
+                                    liftLabel: metric.liftLabel,
                                     metricsByWeekId: {},
                                 })
                             }
 
-                            const currentMetric = acc.get(metric.exerciseId)
+                            const currentMetric = acc.get(metric.lift)
 
                             if (currentMetric) {
                                 currentMetric.metricsByWeekId[week.id] = metric
@@ -1190,15 +1225,15 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
                         return acc
                     }, new Map<
-                        string,
+                        FundamentalLift,
                         {
-                            exerciseId: string
-                            exerciseName: string
+                            lift: FundamentalLift
+                            liftLabel: string
                             metricsByWeekId: Record<
                                 string,
                                 {
-                                    exerciseId: string
-                                    exerciseName: string
+                                    lift: FundamentalLift
+                                    liftLabel: string
                                     frequency: number
                                     totalLifts: number
                                     averageIntensity: number | null
@@ -1207,10 +1242,10 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                         }
                     >())
                         .values()
-                ).sort((left, right) =>
-                    left.exerciseName.localeCompare(right.exerciseName, 'it', {
-                        sensitivity: 'base',
-                    })
+                ).sort(
+                    (left, right) =>
+                        FUNDAMENTAL_LIFT_ORDER.indexOf(left.lift) -
+                        FUNDAMENTAL_LIFT_ORDER.indexOf(right.lift)
                 )
                 : [],
         [program, weekSbdMetrics]
@@ -2813,13 +2848,13 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
                                 {!isSbdHelperCollapsed && (
                                     <div className="mt-4 max-h-72 overflow-y-auto">
-                                        {sbdMetricsByExerciseAcrossWeeks.length > 0 ? (
+                                        {sbdMetricsByLiftAcrossWeeks.length > 0 ? (
                                             <div className="overflow-x-auto">
                                                 <table className="min-w-[780px] w-full divide-y divide-slate-200 text-xs">
                                                     <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
                                                         <tr>
                                                             <th className="sticky left-0 z-10 bg-slate-50 px-3 py-2 text-left">
-                                                                {t('editProgram.tableExercise')}
+                                                                {t('reviewProgram.sbdExerciseCol')}
                                                             </th>
                                                             {program.weeks.map((week) => (
                                                                 <th key={week.id} className="px-3 py-2 text-left whitespace-nowrap">
@@ -2829,14 +2864,14 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-slate-100 bg-white">
-                                                        {sbdMetricsByExerciseAcrossWeeks.map((exerciseMetric) => (
-                                                            <tr key={exerciseMetric.exerciseId}>
+                                                        {sbdMetricsByLiftAcrossWeeks.map((liftMetric) => (
+                                                            <tr key={liftMetric.lift}>
                                                                 <td className="sticky left-0 z-10 bg-white px-3 py-2 align-top text-sm font-semibold text-slate-900 whitespace-nowrap">
-                                                                    {exerciseMetric.exerciseName}
+                                                                    {liftMetric.liftLabel}
                                                                 </td>
                                                                 {program.weeks.map((week) => {
                                                                     const metric =
-                                                                        exerciseMetric.metricsByWeekId[week.id]
+                                                                        liftMetric.metricsByWeekId[week.id]
 
                                                                     return (
                                                                         <td key={week.id} className="px-3 py-2 align-top">

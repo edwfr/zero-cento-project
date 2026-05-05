@@ -8,6 +8,14 @@ type Params = {
     params: Promise<{ id: string }>
 }
 
+type FundamentalLift = 'squat' | 'bench' | 'deadlift'
+
+const FUNDAMENTAL_PATTERNS: Record<FundamentalLift, string[]> = {
+    squat: ['squat', 'back squat', 'front squat', 'box squat'],
+    bench: ['bench press', 'bench', 'panca'],
+    deadlift: ['deadlift', 'stacco', 'stacco da terra'],
+}
+
 const formatDateKey = (date: Date) => date.toISOString().split('T')[0]
 
 const getWeekStartDate = (
@@ -25,6 +33,24 @@ const getWeekStartDate = (
     const nextDate = new Date(programStartDate)
     nextDate.setDate(nextDate.getDate() + (week.weekNumber - 1) * 7)
     return nextDate
+}
+
+const matchFundamentalLift = (exerciseName: string): FundamentalLift | null => {
+    const lowerName = exerciseName.toLowerCase()
+
+    if (FUNDAMENTAL_PATTERNS.squat.some((pattern) => lowerName.includes(pattern))) {
+        return 'squat'
+    }
+
+    if (FUNDAMENTAL_PATTERNS.bench.some((pattern) => lowerName.includes(pattern))) {
+        return 'bench'
+    }
+
+    if (FUNDAMENTAL_PATTERNS.deadlift.some((pattern) => lowerName.includes(pattern))) {
+        return 'deadlift'
+    }
+
+    return null
 }
 
 export async function GET(request: Request, { params }: Params) {
@@ -75,6 +101,8 @@ export async function GET(request: Request, { params }: Params) {
                                         isWarmup: true,
                                         exercise: {
                                             select: {
+                                                name: true,
+                                                type: true,
                                                 exerciseMuscleGroups: {
                                                     select: {
                                                         coefficient: true,
@@ -99,7 +127,14 @@ export async function GET(request: Request, { params }: Params) {
         })
 
         const muscleGroupCatalog = new Map<string, { id: string; name: string }>()
-        const timelineMap = new Map<string, { date: string; values: Map<string, number> }>()
+        const timelineMap = new Map<
+            string,
+            {
+                date: string
+                values: Map<string, number>
+                fundamentalValues: Record<FundamentalLift, number>
+            }
+        >()
 
         programs.forEach((program) => {
             program.weeks.forEach((week) => {
@@ -113,10 +148,39 @@ export async function GET(request: Request, { params }: Params) {
                 const timelineEntry = timelineMap.get(dateKey) || {
                     date: dateKey,
                     values: new Map<string, number>(),
+                    fundamentalValues: {
+                        squat: 0,
+                        bench: 0,
+                        deadlift: 0,
+                    },
                 }
 
                 week.workouts.forEach((workout) => {
                     workout.workoutExercises.forEach((workoutExercise) => {
+                        const baseTrainingSets = calculateTrainingSets(
+                            workoutExercise.sets,
+                            1,
+                            workoutExercise.isWarmup
+                        )
+
+                        if (
+                            baseTrainingSets > 0 &&
+                            workoutExercise.exercise.type === 'fundamental'
+                        ) {
+                            const fundamentalLift = matchFundamentalLift(
+                                workoutExercise.exercise.name
+                            )
+
+                            if (fundamentalLift) {
+                                timelineEntry.fundamentalValues[fundamentalLift] = Number(
+                                    (
+                                        timelineEntry.fundamentalValues[fundamentalLift] +
+                                        baseTrainingSets
+                                    ).toFixed(1)
+                                )
+                            }
+                        }
+
                         workoutExercise.exercise.exerciseMuscleGroups.forEach((entry) => {
                             muscleGroupCatalog.set(entry.muscleGroup.id, entry.muscleGroup)
 
@@ -162,6 +226,11 @@ export async function GET(request: Request, { params }: Params) {
                     muscleGroupName: muscleGroup.name,
                     trainingSets: Number((entry.values.get(muscleGroup.id) || 0).toFixed(1)),
                 })),
+                fundamentalSets: {
+                    squat: Number(entry.fundamentalValues.squat.toFixed(1)),
+                    bench: Number(entry.fundamentalValues.bench.toFixed(1)),
+                    deadlift: Number(entry.fundamentalValues.deadlift.toFixed(1)),
+                },
             }))
 
         return apiSuccess({

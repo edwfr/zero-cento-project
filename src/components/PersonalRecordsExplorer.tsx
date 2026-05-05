@@ -93,7 +93,7 @@ export default function PersonalRecordsExplorer({
 }: PersonalRecordsExplorerProps) {
     const { t } = useTranslation('common')
     const [expandedExerciseIds, setExpandedExerciseIds] = useState<Record<string, boolean>>({})
-    const [selectedExerciseId, setSelectedExerciseId] = useState<string>('all')
+    const [selectedExerciseIds, setSelectedExerciseIds] = useState<string[]>([])
     const [selectedTimeWindow, setSelectedTimeWindow] = useState<TimeWindow>('180d')
 
     const showActions = Boolean(onEditRecord || onDeleteRecord)
@@ -146,18 +146,19 @@ export default function PersonalRecordsExplorer({
     }, [records])
 
     useEffect(() => {
-        if (selectedExerciseId === 'all') {
+        if (selectedExerciseIds.length === 0) {
             return
         }
 
-        const selectedExerciseExists = groupedRecords.some(
-            (group) => group.exercise.id === selectedExerciseId
+        const availableExerciseIds = new Set(groupedRecords.map((group) => group.exercise.id))
+        const nextSelectedIds = selectedExerciseIds.filter((exerciseId) =>
+            availableExerciseIds.has(exerciseId)
         )
 
-        if (!selectedExerciseExists) {
-            setSelectedExerciseId('all')
+        if (nextSelectedIds.length !== selectedExerciseIds.length) {
+            setSelectedExerciseIds(nextSelectedIds)
         }
-    }, [groupedRecords, selectedExerciseId])
+    }, [groupedRecords, selectedExerciseIds])
 
     const filteredRecordsForChart = useMemo(() => {
         const now = new Date()
@@ -175,7 +176,7 @@ export default function PersonalRecordsExplorer({
 
         return records.filter((record) => {
             const matchesExercise =
-                selectedExerciseId === 'all' || record.exercise.id === selectedExerciseId
+                selectedExerciseIds.length === 0 || selectedExerciseIds.includes(record.exercise.id)
 
             if (!matchesExercise) {
                 return false
@@ -188,7 +189,7 @@ export default function PersonalRecordsExplorer({
             const recordDate = new Date(record.recordDate)
             return !Number.isNaN(recordDate.getTime()) && recordDate >= cutoffDate
         })
-    }, [records, selectedExerciseId, selectedTimeWindow])
+    }, [records, selectedExerciseIds, selectedTimeWindow])
 
     const chartLineSeries = useMemo<ChartLineSeries[]>(() => {
         const exerciseMap = new Map<string, string>()
@@ -251,6 +252,24 @@ export default function PersonalRecordsExplorer({
             ...currentState,
             [exerciseId]: !currentState[exerciseId],
         }))
+    }
+
+    const toggleExerciseFilter = (exerciseId: string) => {
+        setSelectedExerciseIds((currentIds) => {
+            if (currentIds.length === 0) {
+                return [exerciseId]
+            }
+
+            if (currentIds.includes(exerciseId)) {
+                return currentIds.filter((id) => id !== exerciseId)
+            }
+
+            return [...currentIds, exerciseId]
+        })
+    }
+
+    const showAllExercises = () => {
+        setSelectedExerciseIds([])
     }
 
     return (
@@ -463,18 +482,35 @@ export default function PersonalRecordsExplorer({
                             <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600">
                                 {t('common.personalRecordsExplorer.filterExercise')}
                             </label>
-                            <select
-                                value={selectedExerciseId}
-                                onChange={(event) => setSelectedExerciseId(event.target.value)}
-                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                            >
-                                <option value="all">{t('common.personalRecordsExplorer.allExercises')}</option>
-                                {groupedRecords.map((group) => (
-                                    <option key={group.exercise.id} value={group.exercise.id}>
-                                        {group.exercise.name}
-                                    </option>
-                                ))}
-                            </select>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                                <button
+                                    type="button"
+                                    onClick={showAllExercises}
+                                    className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm transition-colors ${selectedExerciseIds.length === 0
+                                        ? 'border-slate-300 bg-slate-100 text-slate-900 hover:bg-slate-200'
+                                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900'
+                                        }`}
+                                >
+                                    {t('common.personalRecordsExplorer.allExercises')}
+                                </button>
+                                {groupedRecords.map((group) => {
+                                    const isActive = selectedExerciseIds.includes(group.exercise.id)
+
+                                    return (
+                                        <button
+                                            key={group.exercise.id}
+                                            type="button"
+                                            onClick={() => toggleExerciseFilter(group.exercise.id)}
+                                            className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm transition-colors ${isActive
+                                                ? 'border-slate-300 bg-slate-100 text-slate-900 hover:bg-slate-200'
+                                                : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900'
+                                                }`}
+                                        >
+                                            {group.exercise.name}
+                                        </button>
+                                    )
+                                })}
+                            </div>
                         </div>
 
                         <div>

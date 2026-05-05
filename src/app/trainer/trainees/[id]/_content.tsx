@@ -52,10 +52,23 @@ interface PersonalRecord {
     }
 }
 
+interface PlannedTrainingSetsPoint {
+    date: string
+    fundamentalSets: {
+        squat: number
+        bench: number
+        deadlift: number
+    }
+}
+
 type RecordTimeWindow = '30d' | '90d' | '180d' | '365d' | 'all'
-type SbdLift = 'all' | 'squat' | 'bench' | 'deadlift'
-type SbdLiftValue = Exclude<SbdLift, 'all'>
-type RecordsPanel = 'maxProgression' | 'sbdProgression' | 'latestRecords' | 'plannedMuscleReport'
+type SbdLiftValue = 'squat' | 'bench' | 'deadlift'
+type RecordsPanel =
+    | 'maxProgression'
+    | 'sbdProgression'
+    | 'latestRecords'
+    | 'plannedFundamentalReport'
+    | 'plannedMuscleReport'
 
 interface ChartRow {
     dateKey: string
@@ -72,6 +85,12 @@ interface ChartSeries {
 interface SbdKpiRow {
     lift: SbdLiftValue
     label: string
+    frequency: number
+    totalLifts: number
+    averageIntensity: number | null
+}
+
+interface SbdPointMetric {
     frequency: number
     totalLifts: number
     averageIntensity: number | null
@@ -138,6 +157,53 @@ function calculateOneRepMax(weight: number, reps: number): number {
     return Math.round(weight * (36 / (37 - reps)) * 10) / 10
 }
 
+function getExerciseBadgeStyle(color: string | undefined, isActive: boolean) {
+    if (!isActive || !color) {
+        return {
+            borderColor: '#E5E7EB',
+            backgroundColor: '#FFFFFF',
+            color: '#4B5563',
+        }
+    }
+
+    if (color.includes('var(--brand-primary)')) {
+        return {
+            borderColor: 'rgba(var(--brand-primary), 0.45)',
+            backgroundColor: 'rgba(var(--brand-primary), 0.12)',
+            color: 'rgb(var(--brand-primary))',
+        }
+    }
+
+    const hex = color.replace('#', '')
+    const normalizedHex =
+        hex.length === 3
+            ? hex
+                .split('')
+                .map((char) => `${char}${char}`)
+                .join('')
+            : hex
+
+    const red = Number.parseInt(normalizedHex.slice(0, 2), 16)
+    const green = Number.parseInt(normalizedHex.slice(2, 4), 16)
+    const blue = Number.parseInt(normalizedHex.slice(4, 6), 16)
+
+    return {
+        borderColor: `rgba(${red}, ${green}, ${blue}, 0.45)`,
+        backgroundColor: `rgba(${red}, ${green}, ${blue}, 0.12)`,
+        color: `rgb(${Math.round(red * 0.6)}, ${Math.round(green * 0.6)}, ${Math.round(blue * 0.6)})`,
+    }
+}
+
+function getSbdPointMetric(point: PlannedTrainingSetsPoint, lift: SbdLiftValue): SbdPointMetric {
+    const totalLifts = Number(point.fundamentalSets[lift] || 0)
+
+    return {
+        frequency: totalLifts > 0 ? 1 : 0,
+        totalLifts,
+        averageIntensity: null,
+    }
+}
+
 export default function TraineeDetailContent() {
     const params = useParams<{ id: string }>()
     const router = useRouter()
@@ -148,16 +214,18 @@ export default function TraineeDetailContent() {
     const [trainee, setTrainee] = useState<Trainee | null>(null)
     const [programs, setPrograms] = useState<Program[]>([])
     const [records, setRecords] = useState<PersonalRecord[]>([])
+    const [plannedPoints, setPlannedPoints] = useState<PlannedTrainingSetsPoint[]>([])
     const [error, setError] = useState<string | null>(null)
     const [activeTab, setActiveTab] = useState<'programs' | 'records' | 'reports'>('programs')
-    const [oneRmExerciseFilter, setOneRmExerciseFilter] = useState<string>('all')
+    const [oneRmExerciseFilters, setOneRmExerciseFilters] = useState<string[] | null>(null)
     const [oneRmTimeWindow, setOneRmTimeWindow] = useState<RecordTimeWindow>('180d')
-    const [sbdLiftFilter, setSbdLiftFilter] = useState<SbdLift>('all')
+    const [sbdLiftFilters, setSbdLiftFilters] = useState<SbdLiftValue[] | null>(null)
     const [sbdTimeWindow, setSbdTimeWindow] = useState<RecordTimeWindow>('180d')
     const [collapsedPanels, setCollapsedPanels] = useState<Record<RecordsPanel, boolean>>({
         maxProgression: false,
         sbdProgression: false,
         latestRecords: false,
+        plannedFundamentalReport: false,
         plannedMuscleReport: false,
     })
 
@@ -165,16 +233,18 @@ export default function TraineeDetailContent() {
         try {
             setLoading(true)
 
-            const [traineeRes, programsRes, recordsRes] = await Promise.all([
+            const [traineeRes, programsRes, recordsRes, plannedRes] = await Promise.all([
                 fetch(`/api/users/${traineeId}`),
                 fetch(`/api/programs?traineeId=${traineeId}`),
                 fetch(`/api/personal-records?traineeId=${traineeId}`),
+                fetch(`/api/users/${traineeId}/reports/planned-training-sets`),
             ])
 
-            const [traineeData, programsData, recordsData] = await Promise.all([
+            const [traineeData, programsData, recordsData, plannedData] = await Promise.all([
                 traineeRes.json(),
                 programsRes.json(),
                 recordsRes.json(),
+                plannedRes.json(),
             ])
 
             if (!traineeRes.ok) {
@@ -184,6 +254,7 @@ export default function TraineeDetailContent() {
             setTrainee(traineeData.data.user)
             setPrograms(programsData.data?.items || programsData.data?.programs || [])
             setRecords(recordsData.data?.items || recordsData.data?.records || [])
+            setPlannedPoints(plannedRes.ok ? plannedData.data?.points || [] : [])
         } catch (err: any) {
             setError(err.message)
         } finally {
@@ -242,18 +313,19 @@ export default function TraineeDetailContent() {
     }, [records])
 
     useEffect(() => {
-        if (oneRmExerciseFilter === 'all') {
+        if (oneRmExerciseFilters === null) {
             return
         }
 
-        const selectedExerciseStillExists = exerciseOptions.some(
-            (exercise) => exercise.id === oneRmExerciseFilter
+        const availableExerciseIds = new Set(exerciseOptions.map((exercise) => exercise.id))
+        const nextSelectedIds = oneRmExerciseFilters.filter((exerciseId) =>
+            availableExerciseIds.has(exerciseId)
         )
 
-        if (!selectedExerciseStillExists) {
-            setOneRmExerciseFilter('all')
+        if (nextSelectedIds.length !== oneRmExerciseFilters.length) {
+            setOneRmExerciseFilters(nextSelectedIds)
         }
-    }, [exerciseOptions, oneRmExerciseFilter])
+    }, [exerciseOptions, oneRmExerciseFilters])
 
     const oneRmFilteredRecords = useMemo(() => {
         const daysByWindow: Record<Exclude<RecordTimeWindow, 'all'>, number> = {
@@ -270,7 +342,7 @@ export default function TraineeDetailContent() {
                 : new Date(now.getTime() - daysByWindow[oneRmTimeWindow] * 24 * 60 * 60 * 1000)
 
         return records.filter((record) => {
-            if (oneRmExerciseFilter !== 'all' && record.exercise.id !== oneRmExerciseFilter) {
+            if (oneRmExerciseFilters !== null && !oneRmExerciseFilters.includes(record.exercise.id)) {
                 return false
             }
 
@@ -281,7 +353,38 @@ export default function TraineeDetailContent() {
             const recordDate = new Date(record.recordDate)
             return !Number.isNaN(recordDate.getTime()) && recordDate >= cutoffDate
         })
-    }, [oneRmExerciseFilter, oneRmTimeWindow, records])
+    }, [oneRmExerciseFilters, oneRmTimeWindow, records])
+
+    const toggleOneRmExerciseFilter = (exerciseId: string) => {
+        setOneRmExerciseFilters((currentIds) => {
+            if (currentIds === null) {
+                return [exerciseId]
+            }
+
+            if (currentIds.includes(exerciseId)) {
+                return currentIds.filter((id) => id !== exerciseId)
+            }
+
+            return [...currentIds, exerciseId]
+        })
+    }
+
+    const selectAllOneRmExercises = () => {
+        setOneRmExerciseFilters(null)
+    }
+
+    const deselectAllOneRmExercises = () => {
+        setOneRmExerciseFilters([])
+    }
+
+    const exerciseColorById = useMemo(
+        () =>
+            exerciseOptions.reduce((acc, exercise, index) => {
+                acc[exercise.id] = CHART_COLORS[index % CHART_COLORS.length]
+                return acc
+            }, {} as Record<string, string>),
+        [exerciseOptions]
+    )
 
     const maxProgressionSeries = useMemo<ChartSeries[]>(() => {
         const seriesMap = new Map<string, string>()
@@ -297,9 +400,9 @@ export default function TraineeDetailContent() {
             .map(([exerciseId, exerciseName], index) => ({
                 dataKey: exerciseId,
                 label: exerciseName,
-                color: CHART_COLORS[index % CHART_COLORS.length],
+                color: exerciseColorById[exerciseId] || CHART_COLORS[index % CHART_COLORS.length],
             }))
-    }, [oneRmFilteredRecords])
+    }, [exerciseColorById, oneRmFilteredRecords])
 
     const maxProgressionChartData = useMemo<ChartRow[]>(() => {
         const chartRowsByDate = new Map<string, ChartRow>()
@@ -329,7 +432,7 @@ export default function TraineeDetailContent() {
         return Array.from(chartRowsByDate.values()).sort((left, right) => left.dateKey.localeCompare(right.dateKey))
     }, [oneRmFilteredRecords])
 
-    const sbdFilteredRecords = useMemo(() => {
+    const sbdFilteredPlannedPoints = useMemo(() => {
         const daysByWindow: Record<Exclude<RecordTimeWindow, 'all'>, number> = {
             '30d': 30,
             '90d': 90,
@@ -343,25 +446,15 @@ export default function TraineeDetailContent() {
                 ? null
                 : new Date(now.getTime() - daysByWindow[sbdTimeWindow] * 24 * 60 * 60 * 1000)
 
-        return records.filter((record) => {
-            const sbdLift = matchSbdLift(record.exercise.name)
-
-            if (!sbdLift) {
-                return false
-            }
-
-            if (sbdLiftFilter !== 'all' && sbdLift !== sbdLiftFilter) {
-                return false
-            }
-
+        return plannedPoints.filter((point) => {
             if (!cutoffDate) {
                 return true
             }
 
-            const recordDate = new Date(record.recordDate)
-            return !Number.isNaN(recordDate.getTime()) && recordDate >= cutoffDate
+            const pointDate = new Date(point.date)
+            return !Number.isNaN(pointDate.getTime()) && pointDate >= cutoffDate
         })
-    }, [records, sbdLiftFilter, sbdTimeWindow])
+    }, [plannedPoints, sbdTimeWindow])
 
     const sbdSeries = useMemo<ChartSeries[]>(() => {
         const baseSeries: ChartSeries[] = [
@@ -370,168 +463,83 @@ export default function TraineeDetailContent() {
             { dataKey: 'deadlift', label: t('reports.deadlift'), color: SBD_COLORS.deadlift },
         ]
 
-        if (sbdLiftFilter === 'all') {
+        if (sbdLiftFilters === null) {
             return baseSeries
         }
 
-        return baseSeries.filter((series) => series.dataKey === sbdLiftFilter)
-    }, [sbdLiftFilter, t])
+        const activeLiftSet = new Set(sbdLiftFilters)
+        return baseSeries.filter((series) => activeLiftSet.has(series.dataKey as SbdLiftValue))
+    }, [sbdLiftFilters, t])
 
     const sbdChartData = useMemo<ChartRow[]>(() => {
-        const chartRowsByDate = new Map<string, ChartRow>()
-
-        sbdFilteredRecords.forEach((record) => {
-            const sbdLift = matchSbdLift(record.exercise.name)
-            if (!sbdLift) {
-                return
-            }
-
-            const dateKey = normalizeRecordDateKey(record.recordDate)
-            const oneRepMax = calculateOneRepMax(record.weight, record.reps)
-
-            if (!chartRowsByDate.has(dateKey)) {
-                chartRowsByDate.set(dateKey, {
-                    dateKey,
-                    dateLabel: formatDate(dateKey),
-                })
-            }
-
-            const chartRow = chartRowsByDate.get(dateKey)
-            if (!chartRow) {
-                return
-            }
-
-            const currentValue = chartRow[sbdLift]
-            if (typeof currentValue !== 'number' || oneRepMax > currentValue) {
-                chartRow[sbdLift] = oneRepMax
-            }
-        })
-
-        return Array.from(chartRowsByDate.values()).sort((left, right) => left.dateKey.localeCompare(right.dateKey))
-    }, [sbdFilteredRecords])
-
-    const bestSbdOneRmByLift = useMemo(() => {
-        const bestOneRmByLift: Record<SbdLiftValue, number | null> = {
-            squat: null,
-            bench: null,
-            deadlift: null,
-        }
-
-        records.forEach((record) => {
-            const sbdLift = matchSbdLift(record.exercise.name)
-            if (!sbdLift) {
-                return
-            }
-
-            const oneRepMax = calculateOneRepMax(record.weight, record.reps)
-            const currentBest = bestOneRmByLift[sbdLift]
-
-            if (currentBest === null || oneRepMax > currentBest) {
-                bestOneRmByLift[sbdLift] = oneRepMax
-            }
-        })
-
-        return bestOneRmByLift
-    }, [records])
+        return sbdFilteredPlannedPoints
+            .map((point) => ({
+                dateKey: point.date,
+                dateLabel: formatDate(point.date),
+                squat: Number(point.fundamentalSets.squat || 0),
+                bench: Number(point.fundamentalSets.bench || 0),
+                deadlift: Number(point.fundamentalSets.deadlift || 0),
+            }))
+            .sort((left, right) => left.dateKey.localeCompare(right.dateKey))
+    }, [sbdFilteredPlannedPoints])
 
     const sbdKpiRows = useMemo<SbdKpiRow[]>(() => {
         const aggregates: Record<
             SbdLiftValue,
             {
-                sessionDateKeys: Set<string>
                 totalLifts: number
-                weightedIntensitySum: number
-                intensityLiftCount: number
             }
         > = {
             squat: {
-                sessionDateKeys: new Set<string>(),
                 totalLifts: 0,
-                weightedIntensitySum: 0,
-                intensityLiftCount: 0,
             },
             bench: {
-                sessionDateKeys: new Set<string>(),
                 totalLifts: 0,
-                weightedIntensitySum: 0,
-                intensityLiftCount: 0,
             },
             deadlift: {
-                sessionDateKeys: new Set<string>(),
                 totalLifts: 0,
-                weightedIntensitySum: 0,
-                intensityLiftCount: 0,
             },
         }
 
-        sbdFilteredRecords.forEach((record) => {
-            const sbdLift = matchSbdLift(record.exercise.name)
-            if (!sbdLift) {
-                return
-            }
-
-            const reps = Math.max(record.reps, 0)
-            const sessionDateKey = normalizeRecordDateKey(record.recordDate)
-            const aggregate = aggregates[sbdLift]
-            aggregate.sessionDateKeys.add(sessionDateKey)
-            aggregate.totalLifts += reps
-
-            const bestOneRm = bestSbdOneRmByLift[sbdLift]
-            if (bestOneRm && bestOneRm > 0 && reps > 0) {
-                const intensity = (record.weight / bestOneRm) * 100
-                aggregate.weightedIntensitySum += intensity * reps
-                aggregate.intensityLiftCount += reps
-            }
+        sbdFilteredPlannedPoints.forEach((point) => {
+            aggregates.squat.totalLifts += Number(point.fundamentalSets.squat || 0)
+            aggregates.bench.totalLifts += Number(point.fundamentalSets.bench || 0)
+            aggregates.deadlift.totalLifts += Number(point.fundamentalSets.deadlift || 0)
         })
 
         return SBD_LIFTS.map((lift) => {
             const aggregate = aggregates[lift]
+            const frequency = sbdFilteredPlannedPoints.filter(
+                (point) => Number(point.fundamentalSets[lift] || 0) > 0
+            ).length
 
             return {
                 lift,
                 label: t(`reports.${lift}`),
-                frequency: aggregate.sessionDateKeys.size,
-                totalLifts: aggregate.totalLifts,
-                averageIntensity:
-                    aggregate.intensityLiftCount > 0
-                        ? aggregate.weightedIntensitySum / aggregate.intensityLiftCount
-                        : null,
+                frequency,
+                totalLifts: Number(aggregate.totalLifts.toFixed(1)),
+                averageIntensity: null,
             }
         })
-    }, [bestSbdOneRmByLift, sbdFilteredRecords, t])
+    }, [sbdFilteredPlannedPoints, t])
 
     const visibleSbdKpiRows = useMemo(() => {
-        if (sbdLiftFilter === 'all') {
+        if (sbdLiftFilters === null) {
             return sbdKpiRows
         }
 
-        return sbdKpiRows.filter((row) => row.lift === sbdLiftFilter)
-    }, [sbdKpiRows, sbdLiftFilter])
+        const activeLiftSet = new Set(sbdLiftFilters)
+        return sbdKpiRows.filter((row) => activeLiftSet.has(row.lift))
+    }, [sbdKpiRows, sbdLiftFilters])
 
     const sbdKpiSummary = useMemo(() => {
         const totalFrequency = visibleSbdKpiRows.reduce((sum, row) => sum + row.frequency, 0)
         const totalLifts = visibleSbdKpiRows.reduce((sum, row) => sum + row.totalLifts, 0)
 
-        const weightedIntensitySum = visibleSbdKpiRows.reduce((sum, row) => {
-            if (row.averageIntensity === null) {
-                return sum
-            }
-
-            return sum + row.averageIntensity * row.totalLifts
-        }, 0)
-
-        const intensityLifts = visibleSbdKpiRows.reduce((sum, row) => {
-            if (row.averageIntensity === null) {
-                return sum
-            }
-
-            return sum + row.totalLifts
-        }, 0)
-
         return {
             totalFrequency,
-            totalLifts,
-            averageIntensity: intensityLifts > 0 ? weightedIntensitySum / intensityLifts : null,
+            totalLifts: Number(totalLifts.toFixed(1)),
+            averageIntensity: null as number | null,
         }
     }, [visibleSbdKpiRows])
 
@@ -543,12 +551,27 @@ export default function TraineeDetailContent() {
         { value: 'all', label: t('common:common.personalRecordsExplorer.windowAll') },
     ]
 
-    const sbdLiftOptions: Array<{ value: SbdLift; label: string }> = [
-        { value: 'all', label: t('common:common.all') },
-        { value: 'squat', label: t('reports.squat') },
-        { value: 'bench', label: t('reports.bench') },
-        { value: 'deadlift', label: t('reports.deadlift') },
-    ]
+    const showAllSbdLifts = () => {
+        setSbdLiftFilters(null)
+    }
+
+    const deselectAllSbdLifts = () => {
+        setSbdLiftFilters([])
+    }
+
+    const toggleSbdLiftFilter = (lift: SbdLiftValue) => {
+        setSbdLiftFilters((currentLifts) => {
+            if (currentLifts === null) {
+                return [lift]
+            }
+
+            if (currentLifts.includes(lift)) {
+                return currentLifts.filter((currentLift) => currentLift !== lift)
+            }
+
+            return [...currentLifts, lift]
+        })
+    }
 
     const togglePanel = (panel: RecordsPanel) => {
         setCollapsedPanels((current) => ({
@@ -887,23 +910,6 @@ export default function TraineeDetailContent() {
                                     <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-2">
                                         <div>
                                             <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600">
-                                                {t('common:common.personalRecordsExplorer.filterExercise')}
-                                            </label>
-                                            <select
-                                                value={oneRmExerciseFilter}
-                                                onChange={(event) => setOneRmExerciseFilter(event.target.value)}
-                                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                                            >
-                                                <option value="all">{t('common:common.personalRecordsExplorer.allExercises')}</option>
-                                                {exerciseOptions.map((exercise) => (
-                                                    <option key={exercise.id} value={exercise.id}>
-                                                        {exercise.name}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600">
                                                 {t('common:common.personalRecordsExplorer.filterWindow')}
                                             </label>
                                             <select
@@ -917,6 +923,51 @@ export default function TraineeDetailContent() {
                                                     </option>
                                                 ))}
                                             </select>
+                                        </div>
+                                        <div>
+                                            <div className="mb-1 flex items-center justify-between gap-3 flex-wrap">
+                                                <label className="text-xs font-semibold uppercase tracking-wide text-gray-600">
+                                                    {t('athletes.reportingFilterByExerciseLabel')}
+                                                </label>
+                                                <div className="flex items-center gap-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={selectAllOneRmExercises}
+                                                        className="text-sm font-semibold text-[#0F766E] hover:text-[#115E59]"
+                                                    >
+                                                        {t('athletes.reportingSelectAllFilters')}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={deselectAllOneRmExercises}
+                                                        className="text-sm font-semibold text-slate-600 hover:text-slate-800"
+                                                    >
+                                                        {t('athletes.reportingDeselectAllFilters')}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="mt-2 flex flex-wrap gap-2">
+                                                {exerciseOptions.map((exercise) => {
+                                                    const isActive = oneRmExerciseFilters === null || oneRmExerciseFilters.includes(exercise.id)
+                                                    const exerciseColor = exerciseColorById[exercise.id]
+
+                                                    return (
+                                                        <button
+                                                            key={exercise.id}
+                                                            type="button"
+                                                            onClick={() => toggleOneRmExerciseFilter(exercise.id)}
+                                                            className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors"
+                                                            style={getExerciseBadgeStyle(exerciseColor, isActive)}
+                                                        >
+                                                            <span
+                                                                className="h-2.5 w-2.5 rounded-full"
+                                                                style={{ backgroundColor: exerciseColor }}
+                                                            />
+                                                            {exercise.name}
+                                                        </button>
+                                                    )
+                                                })}
+                                            </div>
                                         </div>
                                     </div>
 
@@ -983,7 +1034,7 @@ export default function TraineeDetailContent() {
                                 <div>
                                     <h3 className="text-lg font-bold text-gray-900">{t('reports.sbdReport')}</h3>
                                     <p className="mt-1 text-sm text-gray-600">
-                                        {t('athletes.estimated1RM')} ({t('common:common.personalRecordsExplorer.filterWindow')})
+                                        {t('athletes.reportingFundamentalDescription')}
                                     </p>
                                 </div>
                                 <span className="rounded-full border border-gray-200 bg-gray-50 p-2 text-gray-500 transition-colors group-hover:bg-gray-100">
@@ -1016,20 +1067,49 @@ export default function TraineeDetailContent() {
                                         </div>
 
                                         <div>
-                                            <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-600">
-                                                {t('reports.sbdReport')}
-                                            </label>
-                                            <select
-                                                value={sbdLiftFilter}
-                                                onChange={(event) => setSbdLiftFilter(event.target.value as SbdLift)}
-                                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                                            >
-                                                {sbdLiftOptions.map((option) => (
-                                                    <option key={option.value} value={option.value}>
-                                                        {option.label}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                            <div className="mb-1 flex items-center justify-between gap-3 flex-wrap">
+                                                <label className="text-xs font-semibold uppercase tracking-wide text-gray-600">
+                                                    {t('athletes.reportingFilterByFundamentalLabel')}
+                                                </label>
+                                                <div className="flex items-center gap-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={showAllSbdLifts}
+                                                        className="text-sm font-semibold text-[#0F766E] hover:text-[#115E59]"
+                                                    >
+                                                        {t('athletes.reportingSelectAllFilters')}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={deselectAllSbdLifts}
+                                                        className="text-sm font-semibold text-slate-600 hover:text-slate-800"
+                                                    >
+                                                        {t('athletes.reportingDeselectAllFilters')}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="mt-2 flex flex-wrap gap-2">
+                                                {SBD_LIFTS.map((lift) => {
+                                                    const isActive = sbdLiftFilters === null || sbdLiftFilters.includes(lift)
+                                                    const badgeStyle = getExerciseBadgeStyle(SBD_COLORS[lift], isActive)
+
+                                                    return (
+                                                        <button
+                                                            key={lift}
+                                                            type="button"
+                                                            onClick={() => toggleSbdLiftFilter(lift)}
+                                                            className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors"
+                                                            style={badgeStyle}
+                                                        >
+                                                            <span
+                                                                className="h-2.5 w-2.5 rounded-full"
+                                                                style={{ backgroundColor: SBD_COLORS[lift] }}
+                                                            />
+                                                            {t(`reports.${lift}`)}
+                                                        </button>
+                                                    )
+                                                })}
+                                            </div>
                                         </div>
                                     </div>
 
@@ -1053,24 +1133,63 @@ export default function TraineeDetailContent() {
                                     </div>
 
                                     <div className="overflow-x-auto rounded-lg border border-slate-200">
-                                        <table className="min-w-full divide-y divide-slate-200 text-sm">
-                                            <thead className="bg-slate-50 text-slate-500">
+                                        <table className="min-w-[780px] w-full divide-y divide-slate-200 text-xs">
+                                            <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
                                                 <tr>
-                                                    <th className="px-4 py-3 text-left font-semibold">{t('personalRecords.exercise')}</th>
-                                                    <th className="px-4 py-3 text-left font-semibold">{t('editProgram.sbdFrq')}</th>
-                                                    <th className="px-4 py-3 text-left font-semibold">{t('editProgram.sbdNbl')}</th>
-                                                    <th className="px-4 py-3 text-left font-semibold">{t('editProgram.sbdIm')}</th>
+                                                    <th className="sticky left-0 z-10 bg-slate-50 px-3 py-2 text-left">
+                                                        {t('reviewProgram.sbdExerciseCol')}
+                                                    </th>
+                                                    {sbdFilteredPlannedPoints.map((point) => (
+                                                        <th key={point.date} className="px-3 py-2 text-left whitespace-nowrap">
+                                                            {formatDate(point.date)}
+                                                        </th>
+                                                    ))}
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-100 bg-white">
                                                 {visibleSbdKpiRows.map((row) => (
-                                                    <tr key={row.lift} className="hover:bg-slate-50/70">
-                                                        <td className="px-4 py-3 font-semibold text-slate-900">{row.label}</td>
-                                                        <td className="px-4 py-3 text-slate-700">{row.frequency}</td>
-                                                        <td className="px-4 py-3 text-slate-700">{row.totalLifts}</td>
-                                                        <td className="px-4 py-3 text-slate-700">
-                                                            {row.averageIntensity !== null ? `${row.averageIntensity.toFixed(1)}%` : '-'}
+                                                    <tr key={row.lift}>
+                                                        <td className="sticky left-0 z-10 bg-white px-3 py-2 align-top text-sm font-semibold text-slate-900 whitespace-nowrap">
+                                                            {row.label}
                                                         </td>
+                                                        {sbdFilteredPlannedPoints.map((point) => (
+                                                            <td key={`${row.lift}-${point.date}`} className="px-3 py-2 align-top">
+                                                                {(() => {
+                                                                    const metric = getSbdPointMetric(point, row.lift)
+
+                                                                    return (
+                                                                <div className="space-y-0.5 text-[11px] text-slate-700">
+                                                                    <p>
+                                                                        <span className="font-semibold text-slate-500">
+                                                                            {t('reviewProgram.sbdFrqCol')}:
+                                                                        </span>{' '}
+                                                                        <span className="font-semibold text-slate-900">
+                                                                            {metric.frequency}
+                                                                        </span>
+                                                                    </p>
+                                                                    <p>
+                                                                        <span className="font-semibold text-slate-500">
+                                                                            {t('reviewProgram.sbdNblCol')}:
+                                                                        </span>{' '}
+                                                                        <span className="font-semibold text-slate-900">
+                                                                            {metric.totalLifts.toFixed(1).replace(/\.0$/, '')}
+                                                                        </span>
+                                                                    </p>
+                                                                    <p>
+                                                                        <span className="font-semibold text-slate-500">
+                                                                            {t('reviewProgram.sbdImCol')}:
+                                                                        </span>{' '}
+                                                                        <span className="font-semibold text-slate-900">
+                                                                            {metric.averageIntensity !== null
+                                                                                ? `${metric.averageIntensity.toFixed(1)}%`
+                                                                                : '-'}
+                                                                        </span>
+                                                                    </p>
+                                                                </div>
+                                                                    )
+                                                                })()}
+                                                            </td>
+                                                        ))}
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -1083,7 +1202,7 @@ export default function TraineeDetailContent() {
                                                 <LineChart data={sbdChartData} margin={{ top: 8, right: 16, left: 4, bottom: 0 }}>
                                                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                                     <XAxis dataKey="dateLabel" minTickGap={24} />
-                                                    <YAxis tickFormatter={(value) => `${formatWeight(Number(value))}`} width={56} />
+                                                    <YAxis width={56} />
                                                     <Tooltip
                                                         formatter={(value, name) => {
                                                             const numericValue = Array.isArray(value)
@@ -1093,7 +1212,7 @@ export default function TraineeDetailContent() {
                                                                 sbdSeries.find((series) => series.dataKey === String(name))
                                                                     ?.label || String(name)
 
-                                                            return [`${formatWeight(numericValue)} kg`, lineLabel]
+                                                            return [numericValue, lineLabel]
                                                         }}
                                                     />
                                                     <Legend
@@ -1125,9 +1244,42 @@ export default function TraineeDetailContent() {
                                         </div>
                                     )}
 
-                                    <p className="text-[11px] leading-4 text-slate-500">
-                                        IM calcolata come intensita media ponderata sulle ripetizioni rispetto al miglior 1RM storico per categoria S/B/D.
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="rounded-xl border border-gray-100 bg-white shadow-md overflow-hidden">
+                            <button
+                                type="button"
+                                onClick={() => togglePanel('plannedFundamentalReport')}
+                                className="group flex w-full items-start justify-between gap-4 px-5 py-4 text-left"
+                                aria-expanded={!collapsedPanels.plannedFundamentalReport}
+                            >
+                                <div>
+                                    <h3 className="text-lg font-bold text-gray-900">
+                                        {t('athletes.reportingFundamentalTitle')}
+                                    </h3>
+                                    <p className="mt-1 text-sm text-gray-600">
+                                        {t('athletes.reportingFundamentalDescription')}
                                     </p>
+                                </div>
+                                <span className="rounded-full border border-gray-200 bg-gray-50 p-2 text-gray-500 transition-colors group-hover:bg-gray-100">
+                                    {collapsedPanels.plannedFundamentalReport ? (
+                                        <ChevronDown className="h-4 w-4" />
+                                    ) : (
+                                        <ChevronUp className="h-4 w-4" />
+                                    )}
+                                </span>
+                            </button>
+
+                            {!collapsedPanels.plannedFundamentalReport && (
+                                <div className="px-5 pb-5">
+                                    <TraineePlannedMuscleGroupReport
+                                        traineeId={traineeId}
+                                        hideHeader
+                                        embedded
+                                        panelMode="fundamental"
+                                    />
                                 </div>
                             )}
                         </div>
@@ -1158,7 +1310,12 @@ export default function TraineeDetailContent() {
 
                             {!collapsedPanels.plannedMuscleReport && (
                                 <div className="px-5 pb-5">
-                                    <TraineePlannedMuscleGroupReport traineeId={traineeId} hideHeader embedded />
+                                    <TraineePlannedMuscleGroupReport
+                                        traineeId={traineeId}
+                                        hideHeader
+                                        embedded
+                                        panelMode="muscle-groups"
+                                    />
                                 </div>
                             )}
                         </div>

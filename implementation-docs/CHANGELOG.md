@@ -8,6 +8,78 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [5 Maggio 2026] — Fix coerenza dati report SBD trainee con workout schedulati
+
+**Task checklist:** #11.68
+**File modificati:**
+`src/app/trainer/trainees/[id]/_content.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Nel pannello `Report SBD` della schermata trainer trainee (`/trainer/trainees/[id]`) la sorgente dati e stata allineata ai workout pianificati: ora usa i punti di `/api/users/[id]/reports/planned-training-sets` invece dei personal records.
+- KPI e grafico SBD riportano quindi volumi schedulati (serie allenanti fondamentali per settimana) mantenendo filtri lift/finestra temporale e il layout compatto.
+- Rimossa la semantica 1RM dal pannello SBD (descrizione e tooltip) per evitare incongruenze con i dati pianificati.
+- Aggiornata la tabella SBD trainee: la prima colonna resta il fondamentale e le colonne successive mostrano le settimane pianificate incluse nella finestra temporale selezionata (N settimane/periodo filtrato), invece della singola colonna generica `Report SBD`.
+- Aggiornata l'etichetta del filtro lift nel pannello SBD trainee: ora mostra `Fondamentale` invece di `Report SBD`.
+- Standardizzato il layout filtri nei pannelli report trainee: filtro `finestra temporale` posizionato a sinistra e filtro specifico (`esercizio` o `fondamentale`) a destra.
+- Uniformato anche i pannelli report pianificazione embedded allo stile filtri del primo pannello (due select affiancate: finestra temporale a sinistra, filtro specifico a destra).
+- Nei filtri multipli (gruppi muscolari) aggiunte azioni esplicite `Seleziona tutti` e `Deseleziona tutti` con nuove chiavi i18n EN/IT.
+- Nel secondo pannello (fondamentali pianificati) rimosso lo sfondo grigio interno del blocco grafico e allineato a sfondo bianco.
+- Il filtro fondamentali del secondo pannello e ora multi-selezione, con azioni `Seleziona tutti` e `Deseleziona tutti`.
+- Rimosso il wrapper pannello annidato nei report pianificazione embedded: filtri e grafico sono ora renderizzati direttamente al livello del pannello principale (stesso comportamento percepito del pannello `Progressione 1RM nel tempo`).
+- Il filtro dei fondamentali nel secondo pannello e stato reso multi-selezione tramite badge/chip toggle (non piu select box multipla), mantenendo le azioni `Seleziona tutti` e `Deseleziona tutti`.
+- Aggiornata l'etichetta filtro da `Fondamentali visibili` a `Fondamentali`.
+- Applicato lo stesso pattern anche al pannello successivo: il filtro `Gruppi muscolari visibili` ora e multi-selezione tramite badge/chip toggle, con azioni `Seleziona tutti` e `Deseleziona tutti`.
+- Nella schermata trainee, allineata la copy delle etichette filtro a `Filtra per esercizio` (pannello progressione 1RM) e `Filtra per fondamentale` (pannello Report SBD).
+- Nel grafico `Progressione 1RM nel tempo` di `PersonalRecordsExplorer`, il filtro esercizio e stato convertito da select singola a badge multi-selezione, con badge `tutti` per reset rapido.
+- Applicata la stessa UX anche nella pagina `/trainer/trainees/[id]`: nel pannello `Progressione 1RM nel tempo` il filtro `Filtra per esercizio` e ora multi-selezione a badge (con badge `tutti`).
+- Allineata la colorazione dei badge filtro (fondamentali e gruppi muscolari) ai colori delle serie nei grafici corrispondenti, per coerenza visiva immediata tra filtro e tracciato.
+- Nel pannello `Progressione 1RM nel tempo` della pagina trainee, i badge esercizio usano ora la stessa mappa colori delle linee del grafico sottostante (incluso pallino colore per ciascun badge).
+- Nel pannello `Report SBD` della pagina `/trainer/trainees/[id]`, il filtro `Filtra per fondamentale` e stato convertito da menu a tendina a badge/chip multi-selezione con opzione `Tutti`, e ogni badge usa il colore della linea corrispondente nel grafico sottostante.
+- Normalizzato lo stile badge su tutti i pannelli report della pagina trainee: badge coerenti con il pannello `Progressione 1RM nel tempo` (chip neutro + pallino colore serie) e azioni esplicite `Seleziona tutti / Deseleziona tutti` nei filtri a badge (1RM e SBD), mantenendo lo stesso pattern anche nei pannelli embedded fondamentali e gruppi muscolari.
+- Rifinito il layout filtri badge: azioni `Seleziona tutti / Deseleziona tutti` allineate sulla stessa riga della label filtro nei pannelli report trainee, con label filtro badge sempre in maiuscolo anche nei pannelli `Serie allenanti fondamentali pianificate` e `Serie pianificate per gruppo muscolare nel tempo`.
+
+---
+
+## [5 Maggio 2026] — Formato compatto SBD allineato tra edit, review/view e report trainee
+
+**Task checklist:** #11.68
+**File modificati:**
+`src/app/trainer/programs/[id]/review/_content.tsx`, `src/app/trainer/trainees/[id]/_content.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Allineata la visualizzazione del recap SBD in review/view programma al formato compatto usato nello step edit: matrice per fondamentali (Squat/Panca/Stacco) con colonne settimana e metriche FRQ/NBL/IM impilate in cella.
+- Aggiornato anche il pannello `Report SBD` nel dettaglio trainee con tabella compatta (metrica impilata per lift), mantenendo invariati filtri e grafico progressione 1RM.
+- La rotta `/trainer/programs/[id]` con `backContext=trainee` eredita automaticamente il nuovo layout perché usa `review/_content.tsx` in modalità `viewOnly`.
+
+---
+
+## [5 Maggio 2026] — Recap SBD aggregato per fondamentali in review/edit programma
+
+**Task checklist:** #11.68
+**File modificati:**
+`src/app/trainer/programs/[id]/review/_content.tsx`, `src/app/trainer/programs/[id]/edit/_content.tsx`, `public/locales/it/trainer.json`, `public/locales/en/trainer.json`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Nella schermata review programma (`/trainer/programs/[id]/review`) il recap settimanale FRQ/NBL/IM ora aggrega per fondamentali fissi (Squat, Panca, Stacco) invece che per singolo esercizio/variante.
+- Nello step edit (`/trainer/programs/[id]/edit`) la card `Reportistica SBD scheda` mostra solo tre righe (Squat, Panca, Stacco) con metriche settimanali aggregate per colonna settimana.
+- Aggiornata la copy EN/IT dei testi helper/report per esplicitare la logica per fondamentali.
+
+---
+
+## [5 Maggio 2026] — Istogramma serie allenanti S/B/D in review e reportistica atleta
+
+**Task checklist:** #11.68
+**File modificati:**
+`src/components/ProgramMuscleGroupCharts.tsx`, `src/app/api/users/[id]/reports/planned-training-sets/route.ts`, `src/components/TraineePlannedMuscleGroupReport.tsx`, `public/locales/it/trainer.json`, `public/locales/en/trainer.json`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+
+**Note:**
+- Aggiunto nuovo grafico a istogramma settimanale con serie allenanti programmate per i fondamentali Squat, Panca, Stacco nella schermata review programma (`/trainer/programs/[id]/review`) prima della heatmap per gruppo muscolare.
+- Introdotto filtro per lift (`Tutti`, `Squat`, `Panca`, `Stacco`) sul nuovo istogramma.
+- Estesa l'API `GET /api/users/[id]/reports/planned-training-sets` con aggregazione `fundamentalSets` per settimana, calcolata su tutte le schede attive/completate del trainee.
+- Integrato lo stesso istogramma nella reportistica atleta (`/trainer/trainees/[id]` → sezione report pianificazione), mantenendo la finestra temporale esistente e aggiungendo filtro per lift.
+
+---
+
 ## [5 Maggio 2026] — Structure step: cross-workout drag, DragOverlay, smooth animation
 
 **File modificati:**
