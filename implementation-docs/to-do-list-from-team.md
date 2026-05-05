@@ -8,3 +8,4 @@
 - [x] Trainer - in fase di creazione scheda colorare righe di due tonalità di grigio differente raggruppando per nome esercizio uguale
 - [ ] Trainee - rendere feedback obbligatorio per settimana di test
 - [ ] Trainer - creazione nuova scheda da precedente
+- [ ] Trainee - aggiungere note per esercizio
