@@ -2895,7 +2895,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                         <col className="w-[6%]" />
                                                                         <col className="w-[9%]" />
                                                                     </colgroup>
-                                                                    <thead className="bg-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
+                                                                    <thead className="bg-brand-primary text-left text-xs font-semibold uppercase tracking-wide text-white">
                                                                         <tr>
                                                                             <th className="w-6 px-0.5 py-3">
                                                                                 <span className="sr-only">{t('editProgram.dragHandleLabel')}</span>
