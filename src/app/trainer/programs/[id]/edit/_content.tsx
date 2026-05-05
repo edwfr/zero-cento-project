@@ -445,7 +445,7 @@ function InsertRowSeparator({
                 colSpan={10}
                 style={{ padding: 0, height: '4px', position: 'relative', overflow: 'visible' }}
             >
-                <div className="absolute left-1/2 top-1/2 z-10 hidden -translate-x-1/2 -translate-y-1/2 group-hover/insert-sep:flex">
+                <div className="absolute left-4 top-1/2 z-10 hidden -translate-y-1/2 group-hover/insert-sep:flex">
                     <button
                         type="button"
                         onClick={onInsert}
