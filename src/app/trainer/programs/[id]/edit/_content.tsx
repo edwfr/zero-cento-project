@@ -39,15 +39,20 @@ import { transformApiWeek } from './transform-utils'
 import { computeExerciseGroupColors } from './row-utils'
 import {
     DndContext,
+    DragOverlay,
     closestCenter,
     KeyboardSensor,
     PointerSensor,
     useSensor,
     useSensors,
+    useDroppable,
     type DragEndEvent,
+    type DragOverEvent,
+    type DragStartEvent,
 } from '@dnd-kit/core'
 import {
     SortableContext,
+    arrayMove,
     sortableKeyboardCoordinates,
     useSortable,
     verticalListSortingStrategy,
@@ -461,6 +466,76 @@ function InsertRowSeparator({
     )
 }
 
+function StructureInsertSeparator({
+    onInsert,
+    ariaLabel,
+}: {
+    onInsert: () => void
+    ariaLabel: string
+}) {
+    return (
+        <div className="group/struct-sep relative h-2">
+            <div className="absolute left-3 top-1/2 z-10 hidden -translate-y-1/2 group-hover/struct-sep:flex">
+                <button
+                    type="button"
+                    onClick={onInsert}
+                    className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-primary text-white shadow-sm transition-transform hover:scale-110"
+                    aria-label={ariaLabel}
+                >
+                    <Plus className="h-3 w-3" />
+                </button>
+            </div>
+        </div>
+    )
+}
+
+function SortableStructureRow({
+    id,
+    workoutIndex,
+    children,
+}: {
+    id: string
+    workoutIndex: number
+    children: (dragHandleProps: React.HTMLAttributes<HTMLElement>) => React.ReactNode
+}) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+        id,
+        data: { workoutIndex },
+    })
+
+    const style: React.CSSProperties = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        position: 'relative',
+        zIndex: isDragging ? 1 : 'auto',
+    }
+
+    return (
+        <div ref={setNodeRef} style={style}>
+            {children({ ...attributes, ...listeners })}
+        </div>
+    )
+}
+
+function WorkoutDropContainer({
+    workoutIndex,
+    children,
+}: {
+    workoutIndex: number
+    children: React.ReactNode
+}) {
+    const { setNodeRef } = useDroppable({
+        id: `workout-col-${workoutIndex}`,
+        data: { workoutIndex, isContainer: true },
+    })
+    return (
+        <div ref={setNodeRef} className="flex flex-col p-3 min-h-8">
+            {children}
+        </div>
+    )
+}
+
 export default function EditProgramContent({ readOnly = false }: EditProgramContentProps) {
     const params = useParams()
     const searchParams = useSearchParams()
@@ -509,6 +584,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         Record<number, WorkoutStructureTemplateRow[]>
     >({})
     const [applyingStructure, setApplyingStructure] = useState(false)
+    const [activeStructureDragId, setActiveStructureDragId] = useState<string | null>(null)
+    const preDragStructureRowsRef = useRef<Record<number, WorkoutStructureTemplateRow[]> | null>(null)
     const [savingRowId, setSavingRowId] = useState<string | null>(null)
     const [savingWorkoutId, setSavingWorkoutId] = useState<string | null>(null)
     const [deletingRowId] = useState<string | null>(null)
@@ -1502,6 +1579,89 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         })
     }, [])
 
+    const insertStructureRowAt = useCallback((workoutIndex: number, afterIndex: number) => {
+        const rowId = `structure-${workoutIndex}-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+        setStructureRowsByWorkoutIndex((current) => {
+            const workoutRows = current[workoutIndex] || []
+            const nextRows = [...workoutRows]
+            nextRows.splice(afterIndex + 1, 0, { id: rowId, exerciseId: '' })
+            return { ...current, [workoutIndex]: nextRows }
+        })
+    }, [])
+
+    const handleStructureDragStart = useCallback((event: DragStartEvent) => {
+        preDragStructureRowsRef.current = structureRowsByWorkoutIndex
+        setActiveStructureDragId(event.active.id as string)
+    }, [structureRowsByWorkoutIndex])
+
+    const handleStructureDragOver = useCallback((event: DragOverEvent) => {
+        const { active, over } = event
+        if (!over) return
+        const activeId = active.id as string
+        const overId = over.id as string
+        if (activeId === overId) return
+
+        const srcWorkout = active.data.current?.workoutIndex as number | undefined
+        const isOverContainer = over.data.current?.isContainer as boolean | undefined
+        const dstWorkout = over.data.current?.workoutIndex as number | undefined
+
+        if (srcWorkout === undefined || dstWorkout === undefined || srcWorkout === dstWorkout) return
+
+        setStructureRowsByWorkoutIndex((current) => {
+            const srcRows = [...(current[srcWorkout] || [])]
+            const srcIdx = srcRows.findIndex((r) => r.id === activeId)
+            if (srcIdx < 0) return current
+
+            const [moved] = srcRows.splice(srcIdx, 1)
+            const dstRows = [...(current[dstWorkout] || [])]
+
+            if (isOverContainer) {
+                dstRows.push(moved)
+            } else {
+                const overIdx = dstRows.findIndex((r) => r.id === overId)
+                dstRows.splice(overIdx < 0 ? dstRows.length : overIdx, 0, moved)
+            }
+
+            return { ...current, [srcWorkout]: srcRows, [dstWorkout]: dstRows }
+        })
+    }, [])
+
+    const handleStructureDragEnd = useCallback((event: DragEndEvent) => {
+        setActiveStructureDragId(null)
+        preDragStructureRowsRef.current = null
+
+        const { active, over } = event
+        if (!over) return
+
+        const activeId = active.id as string
+        const overId = over.id as string
+        if (activeId === overId) return
+
+        const srcWorkout = active.data.current?.workoutIndex as number | undefined
+        const isOverContainer = over.data.current?.isContainer as boolean | undefined
+        const dstWorkout = over.data.current?.workoutIndex as number | undefined
+
+        if (srcWorkout === undefined || dstWorkout === undefined) return
+        // Cross-container already handled in onDragOver; only same-container arrayMove needed
+        if (srcWorkout !== dstWorkout || isOverContainer) return
+
+        setStructureRowsByWorkoutIndex((current) => {
+            const rows = current[srcWorkout] || []
+            const oldIdx = rows.findIndex((r) => r.id === activeId)
+            const newIdx = rows.findIndex((r) => r.id === overId)
+            if (oldIdx < 0 || newIdx < 0) return current
+            return { ...current, [srcWorkout]: arrayMove(rows, oldIdx, newIdx) }
+        })
+    }, [])
+
+    const handleStructureDragCancel = useCallback(() => {
+        if (preDragStructureRowsRef.current) {
+            setStructureRowsByWorkoutIndex(preDragStructureRowsRef.current)
+        }
+        setActiveStructureDragId(null)
+        preDragStructureRowsRef.current = null
+    }, [])
+
     const addDraftRow = (workoutId: string) => {
         if (readOnly || savingRowId || deletingRowId) {
             return
@@ -2281,140 +2441,217 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                         </div>
 
                         <div className="overflow-x-auto p-5">
-                            <div
-                                className="grid min-w-full gap-4"
-                                style={{
-                                    gridTemplateColumns: `repeat(${program.workoutsPerWeek}, minmax(260px, 1fr))`,
-                                }}
+                            <DndContext
+                                sensors={dndSensors}
+                                collisionDetection={closestCenter}
+                                onDragStart={handleStructureDragStart}
+                                onDragOver={handleStructureDragOver}
+                                onDragEnd={handleStructureDragEnd}
+                                onDragCancel={handleStructureDragCancel}
                             >
-                                {Array.from({ length: program.workoutsPerWeek }).map((_, workoutIndex) => {
-                                    const structureRows = structureRowsByWorkoutIndex[workoutIndex] || []
+                                <div
+                                    className="grid min-w-full gap-4"
+                                    style={{
+                                        gridTemplateColumns: `repeat(${program.workoutsPerWeek}, minmax(260px, 1fr))`,
+                                    }}
+                                >
+                                    {Array.from({ length: program.workoutsPerWeek }).map((_, workoutIndex) => {
+                                        const structureRows = structureRowsByWorkoutIndex[workoutIndex] || []
 
-                                    return (
-                                        <div
-                                            key={`structure-workout-${workoutIndex}`}
-                                            className="min-w-0 rounded-lg border border-gray-200 bg-white"
-                                        >
-                                            <div className="flex flex-col gap-2 border-b border-gray-100 px-4 py-3">
-                                                <div>
-                                                    <h3 className="text-base font-bold text-gray-900">
-                                                        {t('editProgram.workoutFallback', {
-                                                            number: workoutIndex + 1,
-                                                        })}
-                                                    </h3>
-                                                    <p className="text-xs text-gray-500">
-                                                        {t('editProgram.exercisesCount', {
-                                                            count: structureRows.length,
-                                                        })}
-                                                    </p>
+                                        return (
+                                            <div
+                                                key={`structure-workout-${workoutIndex}`}
+                                                className="min-w-0 rounded-lg border border-gray-200 bg-white"
+                                            >
+                                                <div className="flex flex-col gap-2 border-b border-gray-100 px-4 py-3">
+                                                    <div>
+                                                        <h3 className="text-base font-bold text-gray-900">
+                                                            {t('editProgram.workoutFallback', {
+                                                                number: workoutIndex + 1,
+                                                            })}
+                                                        </h3>
+                                                        <p className="text-xs text-gray-500">
+                                                            {t('editProgram.exercisesCount', {
+                                                                count: structureRows.length,
+                                                            })}
+                                                        </p>
+                                                    </div>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => addStructureRow(workoutIndex)}
+                                                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-brand-primary/20 bg-brand-primary/10 px-3 py-2 text-sm font-semibold text-brand-primary hover:bg-brand-primary/15"
+                                                    >
+                                                        <Plus className="h-4 w-4" />
+                                                        {t('editProgram.addRow')}
+                                                    </button>
                                                 </div>
 
-                                                <button
-                                                    type="button"
-                                                    onClick={() => addStructureRow(workoutIndex)}
-                                                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-brand-primary/20 bg-brand-primary/10 px-3 py-2 text-sm font-semibold text-brand-primary hover:bg-brand-primary/15"
+                                                <SortableContext
+                                                    items={structureRows.map((r) => r.id)}
+                                                    strategy={verticalListSortingStrategy}
                                                 >
-                                                    <Plus className="h-4 w-4" />
-                                                    {t('editProgram.addRow')}
-                                                </button>
-                                            </div>
+                                                    <WorkoutDropContainer workoutIndex={workoutIndex}>
+                                                        {structureRows.length === 0 && (
+                                                            <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-3 py-4 text-center text-sm text-gray-500">
+                                                                {t('editProgram.structureNoRows')}
+                                                            </div>
+                                                        )}
 
-                                            <div className="space-y-2 p-3">
-                                                {structureRows.length === 0 && (
-                                                    <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-3 py-4 text-center text-sm text-gray-500">
-                                                        {t('editProgram.structureNoRows')}
+                                                        {structureRows.map((structureRow, rowIndex) => {
+                                                            const selectedExercise = structureRow.exerciseId
+                                                                ? exerciseLookupById.get(structureRow.exerciseId)
+                                                                : undefined
+                                                            const rowStyle = getMovementPatternRowStyle(
+                                                                selectedExercise?.movementPattern?.color
+                                                            )
+                                                            const inputStyle = rowStyle
+                                                                ? {
+                                                                      backgroundColor: rowStyle.backgroundColor as string,
+                                                                      borderColor: rowStyle.borderLeftColor as string,
+                                                                  }
+                                                                : undefined
+                                                            const accentColor = rowStyle?.borderLeftColor as string | undefined
+
+                                                            return (
+                                                                <React.Fragment key={structureRow.id}>
+                                                                    <SortableStructureRow id={structureRow.id} workoutIndex={workoutIndex}>
+                                                                        {(dragHandleProps) => (
+                                                                            <div
+                                                                                className="rounded-lg border border-gray-200 border-l-4 border-l-transparent p-2"
+                                                                                style={rowStyle}
+                                                                            >
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        {...dragHandleProps}
+                                                                                        className="cursor-grab touch-none text-gray-400 hover:text-gray-600 active:cursor-grabbing"
+                                                                                        aria-label={t('editProgram.dragHandleLabel')}
+                                                                                    >
+                                                                                        <GripVertical className="h-4 w-4" />
+                                                                                    </button>
+
+                                                                                    <AutocompleteSearch
+                                                                                        id={`structure-exercise-${workoutIndex}-${structureRow.id}`}
+                                                                                        options={autocompleteExerciseOptions}
+                                                                                        value={structureRow.exerciseId || undefined}
+                                                                                        onSelect={(option) => {
+                                                                                            updateStructureRowFields(
+                                                                                                workoutIndex,
+                                                                                                structureRow.id,
+                                                                                                {
+                                                                                                    exerciseId: option?.id ?? '',
+                                                                                                }
+                                                                                            )
+                                                                                        }}
+                                                                                        placeholder={t('editProgram.selectExercise')}
+                                                                                        className="min-w-0 flex-1"
+                                                                                        inputStyle={inputStyle}
+                                                                                        accentColor={accentColor}
+                                                                                    />
+
+                                                                                    <ActionIconButton
+                                                                                        variant="delete"
+                                                                                        label={t('editProgram.deleteRowTitle')}
+                                                                                        onClick={() =>
+                                                                                            removeStructureRow(
+                                                                                                workoutIndex,
+                                                                                                structureRow.id
+                                                                                            )
+                                                                                        }
+                                                                                    />
+                                                                                </div>
+
+                                                                                <div className="mt-2 flex items-center gap-1.5">
+                                                                                    {selectedExercise ? (
+                                                                                        <>
+                                                                                            <span
+                                                                                                className={`inline-flex w-fit rounded-full px-2 py-0.5 text-[10px] font-semibold ${selectedExercise.type ===
+                                                                                                    'fundamental'
+                                                                                                    ? 'bg-red-100 text-red-700'
+                                                                                                    : 'bg-blue-100 text-blue-700'
+                                                                                                    }`}
+                                                                                            >
+                                                                                                {selectedExercise.type === 'fundamental'
+                                                                                                    ? 'F'
+                                                                                                    : 'A'}
+                                                                                            </span>
+                                                                                            {selectedExercise.movementPattern && (
+                                                                                                <MovementPatternTag
+                                                                                                    name={selectedExercise.movementPattern.name}
+                                                                                                    color={selectedExercise.movementPattern.color}
+                                                                                                    className="w-fit"
+                                                                                                />
+                                                                                            )}
+                                                                                        </>
+                                                                                    ) : (
+                                                                                        <span className="text-xs text-gray-500">
+                                                                                            {t('editProgram.tableMeta')}: -
+                                                                                        </span>
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+                                                                        )}
+                                                                    </SortableStructureRow>
+
+                                                                    {rowIndex < structureRows.length - 1 && (
+                                                                        <StructureInsertSeparator
+                                                                            onInsert={() => insertStructureRowAt(workoutIndex, rowIndex)}
+                                                                            ariaLabel={t('editProgram.insertRowBetween')}
+                                                                        />
+                                                                    )}
+                                                                </React.Fragment>
+                                                            )
+                                                        })}
+                                                    </WorkoutDropContainer>
+                                                </SortableContext>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+
+                                <DragOverlay>
+                                    {activeStructureDragId && (() => {
+                                        const activeRow = Object.values(structureRowsByWorkoutIndex)
+                                            .flat()
+                                            .find((r) => r.id === activeStructureDragId)
+                                        if (!activeRow) return null
+                                        const draggedExercise = activeRow.exerciseId
+                                            ? exerciseLookupById.get(activeRow.exerciseId)
+                                            : undefined
+                                        const overlayStyle = getMovementPatternRowStyle(draggedExercise?.movementPattern?.color)
+                                        return (
+                                            <div
+                                                className="rounded-lg border border-gray-200 border-l-4 border-l-transparent p-2 shadow-lg opacity-90 bg-white"
+                                                style={overlayStyle}
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <GripVertical className="h-4 w-4 text-gray-400" />
+                                                    <span className="min-w-0 flex-1 truncate text-sm text-gray-700">
+                                                        {draggedExercise?.name ?? t('editProgram.selectExercise')}
+                                                    </span>
+                                                </div>
+                                                {draggedExercise && (
+                                                    <div className="mt-2 flex items-center gap-1.5">
+                                                        <span
+                                                            className={`inline-flex w-fit rounded-full px-2 py-0.5 text-[10px] font-semibold ${draggedExercise.type === 'fundamental' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}
+                                                        >
+                                                            {draggedExercise.type === 'fundamental' ? 'F' : 'A'}
+                                                        </span>
+                                                        {draggedExercise.movementPattern && (
+                                                            <MovementPatternTag
+                                                                name={draggedExercise.movementPattern.name}
+                                                                color={draggedExercise.movementPattern.color}
+                                                                className="w-fit"
+                                                            />
+                                                        )}
                                                     </div>
                                                 )}
-
-                                                {structureRows.map((structureRow) => {
-                                                    const selectedExercise = structureRow.exerciseId
-                                                        ? exerciseLookupById.get(structureRow.exerciseId)
-                                                        : undefined
-                                                    const rowStyle = getMovementPatternRowStyle(
-                                                        selectedExercise?.movementPattern?.color
-                                                    )
-                                                    const inputStyle = rowStyle
-                                                        ? {
-                                                              backgroundColor: rowStyle.backgroundColor as string,
-                                                              borderColor: rowStyle.borderLeftColor as string,
-                                                          }
-                                                        : undefined
-                                                    const accentColor = rowStyle?.borderLeftColor as string | undefined
-
-                                                    return (
-                                                        <div
-                                                            key={structureRow.id}
-                                                            className="rounded-lg border border-gray-200 border-l-4 border-l-transparent p-2"
-                                                            style={rowStyle}
-                                                        >
-                                                            <div className="flex items-center gap-2">
-                                                                <AutocompleteSearch
-                                                                    id={`structure-exercise-${workoutIndex}-${structureRow.id}`}
-                                                                    options={autocompleteExerciseOptions}
-                                                                    value={structureRow.exerciseId || undefined}
-                                                                    onSelect={(option) => {
-                                                                        updateStructureRowFields(
-                                                                            workoutIndex,
-                                                                            structureRow.id,
-                                                                            {
-                                                                                exerciseId: option?.id ?? '',
-                                                                            }
-                                                                        )
-                                                                    }}
-                                                                    placeholder={t('editProgram.selectExercise')}
-                                                                    className="min-w-0 flex-1"
-                                                                    inputStyle={inputStyle}
-                                                                    accentColor={accentColor}
-                                                                />
-
-                                                                <ActionIconButton
-                                                                    variant="delete"
-                                                                    label={t('editProgram.deleteRowTitle')}
-                                                                    onClick={() =>
-                                                                        removeStructureRow(
-                                                                            workoutIndex,
-                                                                            structureRow.id
-                                                                        )
-                                                                    }
-                                                                />
-                                                            </div>
-
-                                                            <div className="mt-2 flex items-center gap-1.5">
-                                                                {selectedExercise ? (
-                                                                    <>
-                                                                        <span
-                                                                            className={`inline-flex w-fit rounded-full px-2 py-0.5 text-[10px] font-semibold ${selectedExercise.type ===
-                                                                                'fundamental'
-                                                                                ? 'bg-red-100 text-red-700'
-                                                                                : 'bg-blue-100 text-blue-700'
-                                                                                }`}
-                                                                        >
-                                                                            {selectedExercise.type === 'fundamental'
-                                                                                ? 'F'
-                                                                                : 'A'}
-                                                                        </span>
-                                                                        {selectedExercise.movementPattern && (
-                                                                            <MovementPatternTag
-                                                                                name={selectedExercise.movementPattern.name}
-                                                                                color={selectedExercise.movementPattern.color}
-                                                                                className="w-fit"
-                                                                            />
-                                                                        )}
-                                                                    </>
-                                                                ) : (
-                                                                    <span className="text-xs text-gray-500">
-                                                                        {t('editProgram.tableMeta')}: -
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    )
-                                                })}
                                             </div>
-                                        </div>
-                                    )
-                                })}
-                            </div>
+                                        )
+                                    })()}
+                                </DragOverlay>
+                            </DndContext>
                         </div>
                     </section>
                 )}

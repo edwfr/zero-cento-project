@@ -8,6 +8,34 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [5 Maggio 2026] — Structure step: cross-workout drag, DragOverlay, smooth animation
+
+**File modificati:**
+`src/app/trainer/programs/[id]/edit/_content.tsx`
+
+**Note:**
+- Singolo `DndContext` condiviso tra tutte le colonne workout: ora è possibile trascinare un esercizio da un workout a un altro.
+- Aggiunto `onDragOver` per live preview cross-container: l'elemento si sposta in tempo reale nella colonna destinazione durante il drag.
+- Aggiunto `DragOverlay` floating ghost che segue il cursore durante il drag.
+- Aggiunto `onDragCancel` che ripristina lo stato pre-drag (Escape cancella il movimento).
+- `WorkoutDropContainer` con `useDroppable` permette drop su colonne vuote.
+- `SortableStructureRow` ora passa `workoutIndex` come `data` a `useSortable` per tracking cross-container.
+
+---
+
+## [5 Maggio 2026] — Structure step sortable rows + insert separator
+
+**File modificati:**
+`src/app/trainer/programs/[id]/edit/_content.tsx`
+
+**Note:**
+- Aggiunto ordinamento drag-and-drop (dnd-kit) alle righe dello step scheletro: ogni workout card usa `DndContext` + `SortableContext` con drag handle (GripVertical) su ogni riga.
+- Aggiunto separatore "+" tra le righe dello step scheletro: compare al hover tra due righe consecutive e inserisce una nuova riga vuota in quella posizione.
+- Introdotti due nuovi componenti interni: `SortableStructureRow` (wrapper div-based per dnd-kit) e `StructureInsertSeparator` (separatore hover con bottone +).
+- Introdotte due nuove funzioni: `insertStructureRowAt` (inserisce riga in posizione specifica) e `handleStructureDragEnd` (aggiorna ordine dopo drag).
+
+---
+
 ## [5 Maggio 2026] — UX improvements trainer program edit page
 
 **File modificati:**
