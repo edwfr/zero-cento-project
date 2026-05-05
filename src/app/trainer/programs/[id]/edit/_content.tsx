@@ -1513,6 +1513,55 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         }))
     }
 
+    const insertDraftRowAt = (workoutId: string, afterRowIndex: number) => {
+        if (readOnly || savingRowId || deletingRowId) return
+
+        const workout = program?.weeks
+            .flatMap((week) => week.workouts)
+            .find((w) => w.id === workoutId)
+        if (!workout) return
+
+        const allRows = getWorkoutRows(workout)
+        const rowAfter = allRows[afterRowIndex]
+        if (!rowAfter) return
+
+        const insertAtOrder = rowAfter.order + 1
+        const draftRowId = `draft-${workoutId}-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+
+        setRowStateById((current) => {
+            const next = { ...current }
+            // Shift all rows whose order >= insertAtOrder
+            allRows.forEach((row) => {
+                if (row.order >= insertAtOrder) {
+                    next[row.id] = { ...(next[row.id] ?? row), order: row.order + 1 }
+                }
+            })
+            // Insert new draft at the insertion point
+            next[draftRowId] = {
+                id: draftRowId,
+                workoutId,
+                exerciseId: '',
+                variant: '',
+                sets: '',
+                reps: '',
+                targetRpe: '',
+                weight: '',
+                isWarmup: false,
+                order: insertAtOrder,
+                restTime: 'm2',
+                notes: null,
+                isDraft: true,
+                isSkeletonExercise: false,
+            }
+            return next
+        })
+
+        setDraftRowIdsByWorkout((current) => ({
+            ...current,
+            [workoutId]: [...(current[workoutId] || []), draftRowId],
+        }))
+    }
+
     const removeDraftRow = (rowId: string, workoutId: string) => {
         setDraftRowIdsByWorkout((currentDraftRows) => {
             const currentWorkoutDraftRows = currentDraftRows[workoutId] || []
