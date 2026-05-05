@@ -5,7 +5,7 @@ import type { RestTime } from '@prisma/client'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
-import { FloatingRestTimer, RPESelector, SkeletonDetail, WeekTypeBadge } from '@/components'
+import { RPESelector, SkeletonDetail, WeekTypeBadge } from '@/components'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import {
     AlertTriangle,
@@ -27,7 +27,6 @@ import { useToast } from '@/components/ToastNotification'
 import { Input } from '@/components/Input'
 import WorkoutRecapPanel from '@/components/WorkoutRecapPanel'
 import PrevWeekPanel from '@/components/PrevWeekPanel'
-import { useRestTimer } from '@/lib/useRestTimer'
 
 interface Exercise {
     id: string
@@ -127,51 +126,6 @@ const formatWeightKg = (value: number | null | undefined): string => {
 const DOCK_STORAGE_KEY = 'workout_dock_pos'
 const DOCK_VIEWPORT_MARGIN = 8
 
-const REST_TO_SECONDS: Record<RestTime, number> = {
-    s30: 30,
-    m1: 60,
-    m1s30: 90,
-    m2: 120,
-    m3: 180,
-    m5: 300,
-}
-
-function playSound(): void {
-    try {
-        const audioContextClass = window.AudioContext || (window as typeof window & {
-            webkitAudioContext?: typeof AudioContext
-        }).webkitAudioContext
-        if (!audioContextClass) {
-            return
-        }
-
-        const ctx = new audioContextClass()
-        const now = ctx.currentTime
-
-        const scheduleTone = (frequency: number, startDelay: number, duration: number) => {
-            const oscillator = ctx.createOscillator()
-            const gain = ctx.createGain()
-
-            oscillator.type = 'sine'
-            oscillator.frequency.value = frequency
-            gain.gain.setValueAtTime(0.2, now + startDelay)
-            gain.gain.exponentialRampToValueAtTime(0.001, now + startDelay + duration)
-
-            oscillator.connect(gain)
-            gain.connect(ctx.destination)
-
-            oscillator.start(now + startDelay)
-            oscillator.stop(now + startDelay + duration)
-        }
-
-        scheduleTone(880, 0, 0.2)
-        scheduleTone(440, 0.25, 0.15)
-        setTimeout(() => void ctx.close(), 700)
-    } catch {
-        // Audio may be unavailable on some devices/browser states.
-    }
-}
-
 const RPE_OPTIONS = [
     { value: 5, labelKey: 'rpe5' },
     { value: 5.5, labelKey: 'rpe5_5' },
@@ -221,38 +175,6 @@ export default function WorkoutDetailContent() {
 
 
     const { showToast } = useToast()
-    const notificationPermissionRequested = useRef(false)
-
-    const requestNotificationPermission = useCallback(() => {
-        if (notificationPermissionRequested.current) {
-            return
-        }
-
-        if (typeof Notification === 'undefined' || Notification.permission !== 'default') {
-            return
-        }
-
-        notificationPermissionRequested.current = true
-        void Notification.requestPermission()
-    }, [])
-
-    const onTimerExpire = useCallback(() => {
-        playSound()
-
-        if (
-            typeof document !== 'undefined' &&
-            document.hidden &&
-            typeof Notification !== 'undefined' &&
-            Notification.permission === 'granted'
-        ) {
-            new Notification(t('workouts.restDone'), { silent: true })
-            return
-        }
-
-        showToast(t('workouts.restDone'), 'success')
-    }, [showToast, t])
-
-    const timer = useRestTimer({ onExpire: onTimerExpire })
 
     const STORAGE_KEY = `workout_${workoutId}_feedback`
 
@@ -567,11 +489,6 @@ export default function WorkoutDetailContent() {
 
         const isCompleting = !currentSet.completed
 
-        if (isCompleting) {
-            requestNotificationPermission()
-            timer.start(REST_TO_SECONDS[we.restTime])
-        }
-
         // "8" → can auto-fill with planned value on first tap
         // "max" → user must enter actual reps (how many they achieved)
         // "6-8", "6/8" → can complete freely (no strict block)
@@ -848,12 +765,6 @@ export default function WorkoutDetailContent() {
                         <ClipboardList className="h-5 w-5" />
                     </button>
                     <div className="w-full px-1 pt-1">
-                        <FloatingRestTimer
-                            mode="dock"
-                            secondsLeft={timer.secondsLeft}
-                            totalSeconds={timer.totalSeconds}
-                            onStop={timer.stop}
-                        />
                     </div>
                 </aside>
             </div>

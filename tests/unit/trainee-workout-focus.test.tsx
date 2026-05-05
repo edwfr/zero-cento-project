@@ -226,54 +226,6 @@ describe('Trainee workout focus mode', () => {
         expect(rpeElements).toHaveLength(1)
     })
 
-    it('shows rest timer pill immediately after checking a set', async () => {
-        const user = userEvent.setup()
-        await renderContent()
-
-        const checkButtons = screen.getAllByRole('button', { name: /workouts\.markSetDone/i })
-        await user.click(checkButtons[0])
-
-        expect(screen.getByTestId('floating-rest-timer-countdown')).toHaveTextContent('2:00')
-    })
-
-    it('resets timer to full duration when another set is checked while timer running', async () => {
-        const user = userEvent.setup()
-        await renderContent()
-
-        const checkButtons = screen.getAllByRole('button', { name: /workouts\.markSetDone/i })
-        await user.click(checkButtons[0])
-        expect(screen.getByTestId('floating-rest-timer-countdown')).toHaveTextContent('2:00')
-
-        await user.click(checkButtons[1])
-        expect(screen.getByTestId('floating-rest-timer-countdown')).toHaveTextContent('2:00')
-    })
-
-    it('stop button dismisses the timer', async () => {
-        const user = userEvent.setup()
-        await renderContent()
-
-        const checkButtons = screen.getAllByRole('button', { name: /workouts\.markSetDone/i })
-        await user.click(checkButtons[0])
-        expect(screen.getByTestId('floating-rest-timer-countdown')).toHaveTextContent('2:00')
-
-        await user.click(screen.getByRole('button', { name: /stop timer/i }))
-        expect(screen.queryByTestId('floating-rest-timer-countdown')).not.toBeInTheDocument()
-    })
-
-    it('keeps timer visible when navigating to another exercise card', async () => {
-        const user = userEvent.setup()
-        await renderContent()
-
-        const checkButtons = screen.getAllByRole('button', { name: /workouts\.markSetDone/i })
-        await user.click(checkButtons[0])
-        expect(screen.getByTestId('floating-rest-timer-countdown')).toHaveTextContent('2:00')
-
-        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
-
-        expect(screen.getByText('Tricep Extension')).toBeInTheDocument()
-        expect(screen.getByTestId('floating-rest-timer-countdown')).toBeInTheDocument()
-    })
-
     it('keeps inputs editable after a set is marked completed', async () => {
         const user = userEvent.setup()
         await renderContent()
