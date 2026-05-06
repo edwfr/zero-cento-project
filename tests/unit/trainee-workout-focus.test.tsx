@@ -383,4 +383,40 @@ describe('Trainee workout focus mode', () => {
             })
         ).not.toBeInTheDocument()
     })
+
+    it('exercise note section is collapsed by default when no saved note', async () => {
+        await renderContent()
+
+        expect(
+            screen.queryByPlaceholderText(/workouts\.exerciseNotePlaceholder/i)
+        ).not.toBeInTheDocument()
+        expect(
+            screen.getByRole('button', { name: /workouts\.exerciseNoteLabel/i })
+        ).toBeInTheDocument()
+    })
+
+    it('exercise note section expands when header button is clicked', async () => {
+        const user = userEvent.setup()
+        await renderContent()
+
+        const toggleBtn = screen.getByRole('button', { name: /workouts\.exerciseNoteLabel/i })
+        await user.click(toggleBtn)
+
+        expect(
+            screen.getByPlaceholderText(/workouts\.exerciseNotePlaceholder/i)
+        ).toBeInTheDocument()
+    })
+
+    it('exercise note section collapses again after a second click on the header', async () => {
+        const user = userEvent.setup()
+        await renderContent()
+
+        const toggleBtn = screen.getByRole('button', { name: /workouts\.exerciseNoteLabel/i })
+        await user.click(toggleBtn)
+        await user.click(toggleBtn)
+
+        expect(
+            screen.queryByPlaceholderText(/workouts\.exerciseNotePlaceholder/i)
+        ).not.toBeInTheDocument()
+    })
 })
