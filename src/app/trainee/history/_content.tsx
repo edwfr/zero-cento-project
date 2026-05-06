@@ -192,11 +192,11 @@ export default function HistoryContent() {
                         <span className="font-semibold text-gray-800">{t('history.statsHeading')}</span>
                         <span className="text-gray-300">|</span>
                         <span>
-                            {t('history.statsLine', {
-                                total: programs.length,
-                                active: activePrograms,
-                                completed: completedPrograms,
-                            })}
+                            {[
+                                t('history.statsTotal', { count: programs.length }),
+                                t('history.statsActive_count', { count: activePrograms }),
+                                t('history.statsCompleted_count', { count: completedPrograms }),
+                            ].join(' · ')}
                         </span>
                     </div>
 
@@ -239,32 +239,31 @@ export default function HistoryContent() {
                                                     firstName: program.trainer.firstName,
                                                     lastName: program.trainer.lastName,
                                                 })}
-                                                {program.startDate && (
-                                                    <>
-                                                        {' · '}
-                                                        {endDate
-                                                            ? t('history.programRowPeriod', {
-                                                                start: formatDate(program.startDate),
-                                                                end: formatDate(endDate),
-                                                            })
-                                                            : t('history.programRowStarted', {
-                                                                date: formatDate(program.startDate),
-                                                            })}
-                                                    </>
-                                                )}
-                                                {' · '}
-                                                {t('history.programRowDuration', { count: program.durationWeeks })}
-                                                {progressPercent !== null && (
-                                                    <>
-                                                        {' · '}
-                                                        {t('history.programRowProgress', {
-                                                            percent: progressPercent,
-                                                            completed: progress?.completed ?? 0,
-                                                            total: progress?.total ?? 0,
-                                                        })}
-                                                    </>
-                                                )}
                                             </p>
+                                            {program.startDate && (
+                                                <p className="text-xs text-gray-400 mt-0.5">
+                                                    {endDate
+                                                        ? t('history.programRowPeriod', {
+                                                            start: formatDate(program.startDate),
+                                                            end: formatDate(endDate),
+                                                        })
+                                                        : t('history.programRowStarted', {
+                                                            date: formatDate(program.startDate),
+                                                        })}
+                                                    {' · '}
+                                                    {t('history.programRowDuration', { count: program.durationWeeks })}
+                                                </p>
+                                            )}
+                                            {progressPercent !== null && (
+                                                <div className="mt-1.5">
+                                                    <div className="h-1.5 w-full rounded-full bg-gray-100">
+                                                        <div
+                                                            className="h-1.5 rounded-full bg-brand-primary transition-all"
+                                                            style={{ width: `${progressPercent}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <ChevronRight className="h-4 w-4 shrink-0 text-gray-400 transition-colors group-hover:text-brand-primary" />

@@ -8,6 +8,31 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [6 Maggio 2026] — Fix: token i18n rotti in /trainee/history statsLine
+
+Rimosso uso di sintassi ICU plural `{{var, plural, one{} other{}}}` non supportata da i18next senza plugin. Sostituita con 3 chiavi separate (`statsTotal`, `statsActive_count`, `statsCompleted_count`) con suffissi `_one`/`_other` per pluralizzazione nativa i18next. Aggiornato componente `_content.tsx` per comporre la stringa con 3 chiamate `t()` separate.
+
+---
+
+## [6 Maggio 2026] — Components Showcase: avanzamento percentuale nei Week Type Banners
+
+**Task checklist:** #11.81
+**File modificati:**
+`src/components/WeekTypeBanner.tsx`,
+`src/app/components-showcase/page.tsx`,
+`public/locales/en/components.json`,
+`public/locales/it/components.json`,
+`implementation-docs/CHECKLIST.md`
+
+**Note:**
+- Esteso `WeekTypeBanner` con prop opzionale `progressPercentage` (normalizzata 0-100) e rendering di `ProgressBar` inline sotto descrizione.
+- Aggiornata la demo `/components-showcase` nella sezione Week Type Banners con valori di avanzamento percentuale per ogni tipo settimana.
+- Aggiunte chiavi i18n `components.weekTypeBanner.progress` in EN/IT.
+- Progress bar dei Week Type Banners ora colorata con il colore primario del tipo settimana (`bg-week-*`) e visualizzazione semplificata con sola percentuale (senza `n / 100`).
+- Rimosso il testo descrittivo del tipo settimana nel banner e sostituito il titolo con formato operativo: `Settimana X / Giorno Y - Nome scheda` (con fallback a sola settimana se giorno/scheda non sono forniti).
+
+---
+
 ## [6 Maggio 2026] — Stabilizzazione test residui suite completa
 
 **Task checklist:** follow-up QA branch
