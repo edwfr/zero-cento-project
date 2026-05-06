@@ -266,6 +266,8 @@ export async function GET(request: NextRequest) {
                         lastFeedbackByProgramId.get(program.id)?.toISOString() ??
                         completionSnapshot?.lastCompletedWorkoutAt?.toISOString() ??
                         null,
+                    totalWorkouts: completionSnapshot?.totalWorkouts ?? 0,
+                    completedWorkouts: completionSnapshot?.completedWorkouts ?? 0,
                     testWeeks: testsSummary?.testWeeks ?? [],
                     testWeekSummaries: testsSummary?.testWeekSummaries ?? [],
                     hasTestWeeks: testsSummary?.hasTestWeeks ?? false,

@@ -30,6 +30,10 @@ Rimosso uso di sintassi ICU plural `{{var, plural, one{} other{}}}` non supporta
 - Aggiunte chiavi i18n `components.weekTypeBanner.progress` in EN/IT.
 - Progress bar dei Week Type Banners ora colorata con il colore primario del tipo settimana (`bg-week-*`) e visualizzazione semplificata con sola percentuale (senza `n / 100`).
 - Rimosso il testo descrittivo del tipo settimana nel banner e sostituito il titolo con formato operativo: `Settimana X / Giorno Y - Nome scheda` (con fallback a sola settimana se giorno/scheda non sono forniti).
+- Applicato `WeekTypeBanner` anche in `/trainee/workouts/[id]` al posto dell'header sticky custom (giorno/settimana + titolo scheda + badge + barra progress), mantenendo il progress dinamico del workout.
+- Rimossa la classe `bg-white` dal wrapper sticky del banner in `/trainee/workouts/[id]` per eliminare il pannello bianco disallineato rispetto alla card esercizio sottostante.
+- Rimosso anche il bordo inferiore `border-b border-gray-200` del wrapper sticky per eliminare il separatore grigio tra banner e card esercizio.
+- Ridotto lo spazio verticale tra `WeekTypeBanner` sticky e prima card esercizio diminuendo `pb` del wrapper header e `pt` del contenuto scrollabile.
 
 ---
 

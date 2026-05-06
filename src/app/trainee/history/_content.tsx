@@ -22,6 +22,8 @@ interface Program {
     lastWorkoutCompletedAt: string | null
     durationWeeks: number
     workoutsPerWeek: number
+    totalWorkouts: number
+    completedWorkouts: number
     createdAt: string
     trainer: {
         firstName: string
@@ -50,11 +52,6 @@ export default function HistoryContent() {
     const [loading, setLoading] = useState(true)
     const [programs, setPrograms] = useState<Program[]>([])
     const [error, setError] = useState<string | null>(null)
-    const [activeProgramProgress, setActiveProgramProgress] = useState<{
-        programId: string
-        completed: number
-        total: number
-    } | null>(null)
 
     const isPublishedProgram = (program: Program): boolean => program.status !== 'draft'
 
@@ -73,26 +70,6 @@ export default function HistoryContent() {
             const publishedPrograms = (data.data.items ?? []).filter(isPublishedProgram) as Program[]
             setPrograms(publishedPrograms)
 
-            const active = publishedPrograms.find((program) => program.status === 'active')
-            if (active) {
-                setActiveProgramProgress(null)
-                try {
-                    const progressRes = await fetch(`/api/programs/${active.id}/progress`)
-                    const progressData = await progressRes.json()
-
-                    if (progressRes.ok) {
-                        setActiveProgramProgress({
-                            programId: active.id,
-                            completed: progressData.data.completedWorkouts ?? 0,
-                            total: progressData.data.totalWorkouts ?? 0,
-                        })
-                    }
-                } catch {
-                    // Progress fetch failure is non-fatal; the card simply won't render the bar.
-                }
-            } else {
-                setActiveProgramProgress(null)
-            }
         } catch (err: unknown) {
             setError((err as Error).message)
         } finally {
@@ -213,11 +190,8 @@ export default function HistoryContent() {
                                 const programStatus = program.status
                                 const endDate = getProgramEndDate(program)
                                 const accentClass = getStatusAccentClass(programStatus)
-                                const progress = activeProgramProgress?.programId === program.id
-                                    ? activeProgramProgress
-                                    : null
-                                const progressPercent = progress && progress.total > 0
-                                    ? Math.round((progress.completed / progress.total) * 100)
+                                const progressPercent = program.totalWorkouts > 0
+                                    ? Math.round((program.completedWorkouts / program.totalWorkouts) * 100)
                                     : null
 
                                 return (
