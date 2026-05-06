@@ -669,6 +669,7 @@ export default function WorkoutDetailContent() {
                 <div className="max-w-2xl mx-auto space-y-4">
                     {!isFinalStep && currentExercise ? (
                         <ExerciseFocusCard
+                            key={currentExercise.id}
                             we={currentExercise}
                             sets={feedbackData[currentExercise.id] || []}
                             rpe={exerciseRPE[currentExercise.id] ?? null}
@@ -795,6 +796,8 @@ function ExerciseFocusCard({
     rpeDescriptions,
     t,
 }: ExerciseFocusCardProps) {
+    const [noteExpanded, setNoteExpanded] = useState(!!savedNote)
+
     const trainerSettingValue = (() => {
         if (typeof we.weight !== 'number' || !Number.isFinite(we.weight)) {
             return '-'
@@ -1026,33 +1029,47 @@ function ExerciseFocusCard({
             </div>
 
             {/* Exercise note */}
-            <div className="border-t border-gray-200 p-4 sm:p-6">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    {t('workouts.exerciseNoteLabel')}
-                </label>
-                <textarea
-                    value={exerciseNote}
-                    onChange={(e) => onUpdateNote(e.target.value)}
-                    placeholder={t('workouts.exerciseNotePlaceholder')}
-                    rows={2}
-                    maxLength={1000}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-primary focus:border-transparent resize-none"
-                />
-                <div className="mt-2 flex justify-end">
-                    <button
-                        type="button"
-                        onClick={onSaveNote}
-                        disabled={exerciseNote === savedNote || isNoteSaving}
-                        className={`inline-flex items-center gap-2 px-4 py-1.5 text-sm font-semibold rounded-lg transition-colors ${
-                            exerciseNote === savedNote || isNoteSaving
-                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                : 'bg-brand-primary text-white hover:bg-brand-primary-hover'
-                        }`}
-                    >
-                        {isNoteSaving && <LoadingSpinner size="sm" color="gray" />}
-                        {t('workouts.saveNote')}
-                    </button>
-                </div>
+            <div className="border-t border-gray-200">
+                <button
+                    type="button"
+                    onClick={() => setNoteExpanded((prev) => !prev)}
+                    aria-expanded={noteExpanded}
+                    className="w-full flex items-center justify-between px-4 py-3 sm:px-6"
+                >
+                    <span className="text-sm font-semibold text-gray-700">
+                        {t('workouts.exerciseNoteLabel')}
+                    </span>
+                    {noteExpanded
+                        ? <ChevronUp className="w-4 h-4 text-gray-400" />
+                        : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                </button>
+                {noteExpanded && (
+                    <div className="px-4 pb-4 sm:px-6 sm:pb-6">
+                        <textarea
+                            value={exerciseNote}
+                            onChange={(e) => onUpdateNote(e.target.value)}
+                            placeholder={t('workouts.exerciseNotePlaceholder')}
+                            rows={2}
+                            maxLength={1000}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-primary focus:border-transparent resize-none"
+                        />
+                        <div className="mt-2 flex justify-end">
+                            <button
+                                type="button"
+                                onClick={onSaveNote}
+                                disabled={exerciseNote === savedNote || isNoteSaving}
+                                className={`inline-flex items-center gap-2 px-4 py-1.5 text-sm font-semibold rounded-lg transition-colors ${
+                                    exerciseNote === savedNote || isNoteSaving
+                                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                        : 'bg-brand-primary text-white hover:bg-brand-primary-hover'
+                                }`}
+                            >
+                                {isNoteSaving && <LoadingSpinner size="sm" color="gray" />}
+                                {t('workouts.saveNote')}
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     )
