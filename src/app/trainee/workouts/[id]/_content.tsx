@@ -796,7 +796,7 @@ function ExerciseFocusCard({
     rpeDescriptions,
     t,
 }: ExerciseFocusCardProps) {
-    const [noteExpanded, setNoteExpanded] = useState(!!savedNote)
+    const [noteExpanded, setNoteExpanded] = useState(false)
 
     const trainerSettingValue = (() => {
         if (typeof we.weight !== 'number' || !Number.isFinite(we.weight)) {
