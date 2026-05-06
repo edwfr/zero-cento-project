@@ -1,6 +1,5 @@
-import type { RestTime } from '@prisma/client'
+import type { RestTime, WeekType } from '@prisma/client'
 
-type WeekType = 'normal' | 'test' | 'deload'
 type WeightType = 'absolute' | 'percentage_1rm' | 'percentage_rm' | 'percentage_previous'
 
 export interface ProgramPdfExercise {

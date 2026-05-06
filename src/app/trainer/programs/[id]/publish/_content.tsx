@@ -6,6 +6,7 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import { WeekType } from '@prisma/client'
 import WeekTypeBadge from '@/components/WeekTypeBadge'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
@@ -20,7 +21,7 @@ interface WorkoutSummary {
 
 interface WeekSummary {
     weekNumber: number
-    weekType: 'normal' | 'test' | 'deload'
+    weekType: WeekType
     workouts: WorkoutSummary[]
 }
 

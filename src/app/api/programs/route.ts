@@ -345,7 +345,7 @@ export async function POST(request: NextRequest) {
 
             weeksData.push({
                 weekNumber: i,
-                weekType: 'normal' as const,
+                weekType: 'volume' as const,
                 workouts: {
                     create: workoutsData,
                 },

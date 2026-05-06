@@ -26,7 +26,7 @@ const fixtureWorkout = {
     dayIndex: 3,
     notes: null,
     weekNumber: 2,
-    weekType: 'normal' as const,
+    weekType: 'volume' as const,
     program: { id: 'p1', title: 'Test Program' },
     exercises: [
         {

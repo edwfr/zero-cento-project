@@ -1,3 +1,4 @@
+import { WeekType } from '@prisma/client'
 import { z } from 'zod'
 
 /**
@@ -5,7 +6,7 @@ import { z } from 'zod'
  */
 
 export const weekConfigSchema = z.object({
-    weekType: z.enum(['normal', 'test', 'deload'], {
+    weekType: z.nativeEnum(WeekType, {
         errorMap: () => ({ message: 'validation.invalidWeekType' }),
     }),
     feedbackRequested: z.boolean().default(false),

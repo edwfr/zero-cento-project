@@ -156,7 +156,7 @@ describe('GET /api/programs', () => {
                 completedAt: null,
                 trainer: { id: 'trainer-uuid-1', firstName: 'Marco', lastName: 'Trainer' },
                 trainee: { id: 'trainee-uuid-1', firstName: 'Mario', lastName: 'Atleta' },
-                weeks: [{ id: 'week-1', weekNumber: 1, weekType: 'normal' }],
+                weeks: [{ id: 'week-1', weekNumber: 1, weekType: 'volume' }],
             },
         ] as any)
         // First $queryRaw: completion stats aggregate. Second: empty test-week aggregate.
@@ -198,7 +198,7 @@ describe('GET /api/programs', () => {
                 completedAt: null,
                 trainer: { id: 'trainer-uuid-1', firstName: 'Marco', lastName: 'Trainer' },
                 trainee: { id: 'trainee-uuid-1', firstName: 'Mario', lastName: 'Atleta' },
-                weeks: [{ id: 'week-1', weekNumber: 1, weekType: 'normal' }],
+                weeks: [{ id: 'week-1', weekNumber: 1, weekType: 'volume' }],
             },
         ] as any)
         vi.mocked(prisma.$queryRaw)
@@ -350,7 +350,7 @@ const mockSourceWeek = {
     id: 'week-1',
     programId: 'prog-1',
     weekNumber: 1,
-    weekType: 'normal',
+    weekType: 'volume',
     workouts: [
         {
             id: 'workout-src-1',
@@ -380,7 +380,7 @@ const mockTargetWeek = {
     id: 'week-2',
     programId: 'prog-1',
     weekNumber: 2,
-    weekType: 'normal',
+    weekType: 'volume',
     workouts: [{ id: 'workout-tgt-1', dayIndex: 1 }],
 }
 
@@ -388,7 +388,7 @@ const mockUpdatedWeek = {
     id: 'week-2',
     programId: 'prog-1',
     weekNumber: 2,
-    weekType: 'normal',
+    weekType: 'volume',
     workouts: [
         {
             id: 'workout-tgt-1',

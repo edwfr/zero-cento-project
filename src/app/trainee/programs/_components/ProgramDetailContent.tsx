@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
-import type { RestTime } from '@prisma/client'
+import type { RestTime, WeekType } from '@prisma/client'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { SkeletonDashboard } from '@/components'
 import {
@@ -25,7 +25,6 @@ import {
 } from '@/lib/program-pdf-export'
 import type { TraineeProgramView } from '@/lib/trainee-program-data'
 
-type WeekType = 'normal' | 'test' | 'deload'
 type WeightType = 'absolute' | 'percentage_1rm' | 'percentage_rm' | 'percentage_previous'
 type ProgramContentMode = 'current' | 'history'
 
@@ -491,15 +490,17 @@ export default function ProgramDetailContent({
             generatedAtLabel: t('currentProgram.pdfGeneratedAtLabel'),
             weekLabel: (week: number) => t('currentProgram.week', { number: week }),
             weekTypeLabel: (weekType: WeekType) => {
-                if (weekType === 'test') {
-                    return t('currentProgram.weekTypeTest')
+                const labels: Record<WeekType, string> = {
+                    tecnica: t('currentProgram.weekTypeTecnica'),
+                    ipertrofia: t('currentProgram.weekTypeIpertrofia'),
+                    volume: t('currentProgram.weekTypeVolume'),
+                    forza_generale: t('currentProgram.weekTypeForzaGenerale'),
+                    intensificazione: t('currentProgram.weekTypeIntensificazione'),
+                    picco: t('currentProgram.weekTypePicco'),
+                    test: t('currentProgram.weekTypeTest'),
+                    deload: t('currentProgram.weekTypeDeload'),
                 }
-
-                if (weekType === 'deload') {
-                    return t('currentProgram.weekTypeDeload')
-                }
-
-                return t('currentProgram.weekTypeStandard')
+                return labels[weekType]
             },
             workoutLabel: (dayIndex: number) =>
                 t('currentProgram.day', {
@@ -785,7 +786,12 @@ export default function ProgramDetailContent({
                                     <WeekTypeBadge
                                         weekType={week.weekType}
                                         labels={{
-                                            normal: t('currentProgram.weekTypeStandard'),
+                                            tecnica: t('currentProgram.weekTypeTecnica'),
+                                            ipertrofia: t('currentProgram.weekTypeIpertrofia'),
+                                            volume: t('currentProgram.weekTypeVolume'),
+                                            forza_generale: t('currentProgram.weekTypeForzaGenerale'),
+                                            intensificazione: t('currentProgram.weekTypeIntensificazione'),
+                                            picco: t('currentProgram.weekTypePicco'),
                                             test: t('currentProgram.weekTypeTest'),
                                             deload: t('currentProgram.weekTypeDeload'),
                                         }}

@@ -34,9 +34,14 @@ enum ProgramStatus {
 }
 
 enum WeekType {
-  normal   // Settimana standard
-  test     // Settimana di valutazione/test massimali (UI trainee con colori vivaci)
-  deload   // Settimana di scarico/recupero (UI trainee con colori rilassanti)
+  tecnica          // Focus sulla tecnica degli esercizi
+  ipertrofia       // Settimana ipertrofia
+  volume           // Alto volume di allenamento
+  forza_generale   // Sviluppo della forza generale
+  intensificazione // Alta intensità e carichi elevati
+  picco            // Settimana pre-gara di picco
+  test             // Settimana di valutazione/test massimali
+  deload           // Settimana di scarico/recupero
 }
 
 enum WeightType {
@@ -224,7 +229,7 @@ model Week {
   programId         String
   weekNumber        Int
   startDate         DateTime? // Calcolato: program.startDate + (weekNumber-1)*7 giorni
-  weekType          WeekType  @default(normal)
+  weekType          WeekType  @default(volume)
   feedbackRequested Boolean   @default(false)
   generalFeedback   String?
   isCompleted       Boolean   @default(false)

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef, Fragment } from 'react'
 import type { RestTime } from '@prisma/client'
+import { WeekType } from '@prisma/client'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
@@ -84,7 +85,7 @@ interface Workout {
     dayIndex: number
     notes: string | null
     weekNumber: number
-    weekType: 'normal' | 'test' | 'deload'
+    weekType: WeekType
     program: {
         id: string
         title: string
@@ -709,7 +710,12 @@ export default function WorkoutDetailContent() {
                         <WeekTypeBadge
                             weekType={workout.weekType}
                             labels={{
-                                normal: t('weekType.normal'),
+                                tecnica: t('weekType.tecnica'),
+                                ipertrofia: t('weekType.ipertrofia'),
+                                volume: t('weekType.volume'),
+                                forza_generale: t('weekType.forza_generale'),
+                                intensificazione: t('weekType.intensificazione'),
+                                picco: t('weekType.picco'),
                                 test: t('weekType.test'),
                                 deload: t('weekType.deload'),
                             }}

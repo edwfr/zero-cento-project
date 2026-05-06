@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import type { WeekType } from '@prisma/client'
 import { useTranslation } from 'react-i18next'
 import { NavigationCard, ProgressBar, SkeletonDashboard, WeekTypeBadge } from '@/components'
 import { getApiErrorMessage } from '@/lib/api-error'
@@ -35,7 +36,7 @@ interface NextWorkout {
     name: string
     dayOfWeek: number
     weekNumber: number
-    weekType: 'normal' | 'test' | 'deload'
+    weekType: WeekType
     exerciseCount: number
     completed: boolean
     started: boolean
@@ -192,18 +193,21 @@ export default function TraineeDashboardContent() {
                         <p className="text-sm font-semibold uppercase tracking-[0.12em] text-brand-primary">
                             {t('trainee:dashboard.nextWorkout')}
                         </p>
-                        {nextWorkout.weekType !== 'normal' && (
-                            <div className="flex items-center justify-center mt-2">
-                                <WeekTypeBadge
-                                    weekType={nextWorkout.weekType}
-                                    labels={{
-                                        normal: t('trainee:weekType.normal'),
-                                        test: t('trainee:weekType.test'),
-                                        deload: t('trainee:weekType.deload'),
-                                    }}
-                                />
-                            </div>
-                        )}
+                        <div className="flex items-center justify-center mt-2">
+                            <WeekTypeBadge
+                                weekType={nextWorkout.weekType}
+                                labels={{
+                                    tecnica: t('trainee:weekType.tecnica'),
+                                    ipertrofia: t('trainee:weekType.ipertrofia'),
+                                    volume: t('trainee:weekType.volume'),
+                                    forza_generale: t('trainee:weekType.forza_generale'),
+                                    intensificazione: t('trainee:weekType.intensificazione'),
+                                    picco: t('trainee:weekType.picco'),
+                                    test: t('trainee:weekType.test'),
+                                    deload: t('trainee:weekType.deload'),
+                                }}
+                            />
+                        </div>
                     </div>
 
                     <div className="flex items-end justify-center gap-6">

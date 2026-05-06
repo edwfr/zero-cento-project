@@ -414,28 +414,49 @@ describe('updateMuscleGroupSchema', () => {
 import { weekConfigSchema, updateWeekSchema } from '@/schemas/week'
 
 describe('weekConfigSchema', () => {
-    it('accepts normal week type', () => {
-        const result = weekConfigSchema.safeParse({ weekType: 'normal', feedbackRequested: false })
+    it('accepts tecnica', () => {
+        const result = weekConfigSchema.safeParse({ weekType: 'tecnica', feedbackRequested: false })
         expect(result.success).toBe(true)
     })
-
-    it('accepts test week type', () => {
+    it('accepts ipertrofia', () => {
+        const result = weekConfigSchema.safeParse({ weekType: 'ipertrofia', feedbackRequested: false })
+        expect(result.success).toBe(true)
+    })
+    it('accepts volume', () => {
+        const result = weekConfigSchema.safeParse({ weekType: 'volume', feedbackRequested: false })
+        expect(result.success).toBe(true)
+    })
+    it('accepts forza_generale', () => {
+        const result = weekConfigSchema.safeParse({ weekType: 'forza_generale', feedbackRequested: false })
+        expect(result.success).toBe(true)
+    })
+    it('accepts intensificazione', () => {
+        const result = weekConfigSchema.safeParse({ weekType: 'intensificazione', feedbackRequested: false })
+        expect(result.success).toBe(true)
+    })
+    it('accepts picco', () => {
+        const result = weekConfigSchema.safeParse({ weekType: 'picco', feedbackRequested: false })
+        expect(result.success).toBe(true)
+    })
+    it('accepts test', () => {
         const result = weekConfigSchema.safeParse({ weekType: 'test', feedbackRequested: true })
         expect(result.success).toBe(true)
     })
-
-    it('accepts deload week type', () => {
+    it('accepts deload', () => {
         const result = weekConfigSchema.safeParse({ weekType: 'deload', feedbackRequested: false })
         expect(result.success).toBe(true)
     })
-
-    it('rejects invalid week type', () => {
-        const result = weekConfigSchema.safeParse({ weekType: 'invalid', feedbackRequested: false })
+    it('rejects normal (removed)', () => {
+        const result = weekConfigSchema.safeParse({ weekType: 'normal', feedbackRequested: false })
         expect(result.success).toBe(false)
     })
-
+    it('rejects invalid value', () => {
+        const result = weekConfigSchema.safeParse({ weekType: 'invalid', feedbackRequested: false })
+        expect(result.success).toBe(false)
+        expect(result.error?.issues[0].message).toBe('validation.invalidWeekType')
+    })
     it('defaults feedbackRequested to false', () => {
-        const result = weekConfigSchema.safeParse({ weekType: 'normal' })
+        const result = weekConfigSchema.safeParse({ weekType: 'volume' })
         expect(result.success).toBe(true)
         if (result.success) {
             expect(result.data.feedbackRequested).toBe(false)

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo, type CSSPrope
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
-import { RestTime, WeightType } from '@prisma/client'
+import { RestTime, WeightType, WeekType } from '@prisma/client'
 import { getApiErrorMessage } from '@/lib/api-error'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ConfirmationModal from '@/components/ConfirmationModal'
@@ -117,7 +117,7 @@ interface Workout {
 interface Week {
     id: string
     weekNumber: number
-    weekType: 'normal' | 'test' | 'deload'
+    weekType: WeekType
     workouts: Workout[]
 }
 
@@ -1096,7 +1096,12 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
     const weekTypeBadgeLabels = useMemo(
         () => ({
-            normal: t('editProgram.weekTypeStandard'),
+            tecnica: t('editProgram.weekTypeTecnica'),
+            ipertrofia: t('editProgram.weekTypeIpertrofia'),
+            volume: t('editProgram.weekTypeVolume'),
+            forza_generale: t('editProgram.weekTypeForzaGenerale'),
+            intensificazione: t('editProgram.weekTypeIntensificazione'),
+            picco: t('editProgram.weekTypePicco'),
             test: t('editProgram.weekTypeTest'),
             deload: t('editProgram.weekTypeDeload'),
         }),
@@ -1253,7 +1258,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
     const handleWeekTypeChange = async (
         weekId: string,
-        newType: 'normal' | 'test' | 'deload'
+        newType: WeekType
     ) => {
         if (!program || readOnly) return
 
@@ -2987,7 +2992,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                 )}
                                             </div>
 
-                                            <div className="flex flex-wrap items-center gap-2">
+                                            <div className="flex flex-wrap items-center gap-1.5" style={{ maxWidth: '34rem' }}>
                                                 {readOnly ? (
                                                     <WeekTypeBadge
                                                         weekType={week.weekType}
@@ -2995,39 +3000,36 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                     />
                                                 ) : (
                                                     <>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleWeekTypeChange(week.id, 'normal')}
-                                                            disabled={saving}
-                                                            className={`rounded-full transition-all disabled:cursor-not-allowed disabled:opacity-60 ${week.weekType === 'normal'
-                                                                ? 'ring-2 ring-gray-500 ring-offset-1'
-                                                                : 'opacity-70 hover:opacity-100'
+                                                        {(
+                                                            [
+                                                                'tecnica',
+                                                                'ipertrofia',
+                                                                'volume',
+                                                                'forza_generale',
+                                                                'intensificazione',
+                                                                'picco',
+                                                                'test',
+                                                                'deload',
+                                                            ] as const
+                                                        ).map((type) => (
+                                                            <button
+                                                                key={type}
+                                                                type="button"
+                                                                onClick={() => handleWeekTypeChange(week.id, type)}
+                                                                disabled={saving}
+                                                                className={`rounded-full transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
+                                                                    week.weekType === type
+                                                                        ? 'ring-2 ring-offset-1 ring-current'
+                                                                        : 'hover:opacity-90'
                                                                 }`}
-                                                        >
-                                                            <WeekTypeBadge weekType="normal" labels={weekTypeBadgeLabels} />
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleWeekTypeChange(week.id, 'test')}
-                                                            disabled={saving}
-                                                            className={`rounded-full transition-all disabled:cursor-not-allowed disabled:opacity-60 ${week.weekType === 'test'
-                                                                ? 'ring-2 ring-week-test ring-offset-1'
-                                                                : 'opacity-70 hover:opacity-100'
-                                                                }`}
-                                                        >
-                                                            <WeekTypeBadge weekType="test" labels={weekTypeBadgeLabels} />
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleWeekTypeChange(week.id, 'deload')}
-                                                            disabled={saving}
-                                                            className={`rounded-full transition-all disabled:cursor-not-allowed disabled:opacity-60 ${week.weekType === 'deload'
-                                                                ? 'ring-2 ring-week-deload ring-offset-1'
-                                                                : 'opacity-70 hover:opacity-100'
-                                                                }`}
-                                                        >
-                                                            <WeekTypeBadge weekType="deload" labels={weekTypeBadgeLabels} />
-                                                        </button>
+                                                            >
+                                                                <WeekTypeBadge
+                                                                    weekType={type}
+                                                                    labels={weekTypeBadgeLabels}
+                                                                    variant={week.weekType === type ? 'solid' : 'ghost'}
+                                                                />
+                                                            </button>
+                                                        ))}
                                                     </>
                                                 )}
                                             </div>

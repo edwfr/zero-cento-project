@@ -46,7 +46,12 @@
         "startWorkoutAria": "Start workout day {{day}} week {{week}}"
     },
     "weekType": {
-        "normal": "Standard",
+        "tecnica": "Technique",
+        "ipertrofia": "Hypertrophy",
+        "volume": "Volume",
+        "forza_generale": "General Strength",
+        "intensificazione": "Intensification",
+        "picco": "Peak",
         "test": "Test",
         "deload": "Deload"
     },
@@ -103,7 +108,12 @@
         "closeWeek": "Close week panel",
         "openWorkoutDetails": "Show workout details",
         "closeWorkoutDetails": "Hide workout details",
-        "weekTypeStandard": "Standard",
+        "weekTypeTecnica": "Technique",
+        "weekTypeIpertrofia": "Hypertrophy",
+        "weekTypeVolume": "Volume",
+        "weekTypeForzaGenerale": "General Strength",
+        "weekTypeIntensificazione": "Intensification",
+        "weekTypePicco": "Peak",
         "weekTypeTest": "Test",
         "weekTypeDeload": "Deload",
         "tableExercise": "Exercise",

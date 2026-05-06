@@ -47,7 +47,7 @@ describe('GET /api/trainee/workouts/[id]', () => {
             notes: 'Workout notes',
             week: {
                 weekNumber: 2,
-                weekType: 'normal',
+                weekType: 'volume',
                 program: {
                     id: 'program-1',
                     title: 'Programma Test',

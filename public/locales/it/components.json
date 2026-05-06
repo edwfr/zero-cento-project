@@ -58,9 +58,14 @@
     "weekTypeBanner": {
         "week": "Settimana",
         "badges": {
-            "normal": "Standard",
+            "tecnica": "Tecnica",
+            "ipertrofia": "Ipertrofia",
+            "volume": "Volume",
+            "forzaGenerale": "Forza Generale",
+            "intensificazione": "Intensificazione",
+            "picco": "Picco",
             "test": "Test",
-            "deload": "Scarico"
+            "deload": "Deload"
         }
     },
     "pagination": {

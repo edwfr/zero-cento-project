@@ -1,4 +1,5 @@
 import { prisma } from './prisma'
+import type { WeekType } from '@prisma/client'
 import { loadTraineePrMap, resolveEffectiveWeight } from './calculations'
 import { logger } from './logger'
 
@@ -16,7 +17,7 @@ export interface TraineeProgram {
     trainer: { firstName: string; lastName: string }
     weeks: Array<{
         weekNumber: number
-        weekType: 'normal' | 'test' | 'deload'
+        weekType: WeekType
         workouts: Array<{
             id: string
             dayIndex: number
@@ -188,7 +189,7 @@ async function loadProgramTreeForTrainee(
 
     const weeks = program.weeks.map((week) => ({
         weekNumber: week.weekNumber,
-        weekType: week.weekType as 'normal' | 'test' | 'deload',
+        weekType: week.weekType,
         workouts: week.workouts.map((workout) => {
             const siblings = workout.workoutExercises
             return {

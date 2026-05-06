@@ -16,6 +16,36 @@ const config: Config = {
                     accent: '#FFFFFF',
                 },
                 week: {
+                    tecnica: {
+                        light: '#ede9fe',
+                        DEFAULT: '#7c3aed',
+                        dark: '#6d28d9',
+                    },
+                    ipertrofia: {
+                        light: '#fce7f3',
+                        DEFAULT: '#db2777',
+                        dark: '#be185d',
+                    },
+                    volume: {
+                        light: '#dbeafe',
+                        DEFAULT: '#2563eb',
+                        dark: '#1d4ed8',
+                    },
+                    'forza-generale': {
+                        light: '#ffedd5',
+                        DEFAULT: '#ea580c',
+                        dark: '#c2410c',
+                    },
+                    intensificazione: {
+                        light: '#fef3c7',
+                        DEFAULT: '#d97706',
+                        dark: '#b45309',
+                    },
+                    picco: {
+                        light: '#fefce8',
+                        DEFAULT: '#ca8a04',
+                        dark: '#a16207',
+                    },
                     test: {
                         light: '#fecaca',
                         DEFAULT: '#ef4444',

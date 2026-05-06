@@ -67,7 +67,7 @@ describe('GET /api/programs/[id] — trainee branch', () => {
             weeks: [
                 {
                     weekNumber: 1,
-                    weekType: 'normal',
+                    weekType: 'volume',
                     workouts: [
                         {
                             id: 'w-1',
@@ -100,7 +100,7 @@ describe('GET /api/programs/[id] — trainee branch', () => {
             weeks: [
                 {
                     weekNumber: 1,
-                    weekType: 'normal',
+                    weekType: 'volume',
                     workouts: [
                         {
                             id: 'w-1',

@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronUp, FileEdit } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import MovementPatternTag from '@/components/MovementPatternTag'
+import { WeekType } from '@prisma/client'
 import WeekTypeBadge from '@/components/WeekTypeBadge'
 import ProgramMuscleGroupCharts from '@/components/ProgramMuscleGroupCharts'
 import { getApiErrorMessage } from '@/lib/api-error'
@@ -63,7 +64,7 @@ interface WorkoutSummary {
 interface WeekSummary {
     id: string
     weekNumber: number
-    weekType: 'normal' | 'test' | 'deload'
+    weekType: WeekType
     workouts: WorkoutSummary[]
 }
 
@@ -511,16 +512,18 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
             startDateLabel: t('reviewProgram.pdfStartDateLabel'),
             generatedAtLabel: t('reviewProgram.pdfGeneratedAtLabel'),
             weekLabel: (week: number) => t('reviewProgram.weekTitle', { week }),
-            weekTypeLabel: (weekType: 'normal' | 'test' | 'deload') => {
-                if (weekType === 'test') {
-                    return t('reviewProgram.weekTypeTest')
+            weekTypeLabel: (weekType: WeekType) => {
+                const labels: Record<WeekType, string> = {
+                    tecnica: t('reviewProgram.weekTypeTecnica'),
+                    ipertrofia: t('reviewProgram.weekTypeIpertrofia'),
+                    volume: t('reviewProgram.weekTypeVolume'),
+                    forza_generale: t('reviewProgram.weekTypeForzaGenerale'),
+                    intensificazione: t('reviewProgram.weekTypeIntensificazione'),
+                    picco: t('reviewProgram.weekTypePicco'),
+                    test: t('reviewProgram.weekTypeTest'),
+                    deload: t('reviewProgram.weekTypeDeload'),
                 }
-
-                if (weekType === 'deload') {
-                    return t('reviewProgram.weekTypeDeload')
-                }
-
-                return t('reviewProgram.weekTypeStandard')
+                return labels[weekType] ?? weekType
             },
             workoutLabel: (dayIndex: number) =>
                 t('reviewProgram.workoutTitle', { number: dayIndex }),
@@ -877,7 +880,12 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                                 <WeekTypeBadge
                                                     weekType={week.weekType}
                                                     labels={{
-                                                        normal: t('reviewProgram.weekTypeStandard'),
+                                                        tecnica: t('reviewProgram.weekTypeTecnica'),
+                                                        ipertrofia: t('reviewProgram.weekTypeIpertrofia'),
+                                                        volume: t('reviewProgram.weekTypeVolume'),
+                                                        forza_generale: t('reviewProgram.weekTypeForzaGenerale'),
+                                                        intensificazione: t('reviewProgram.weekTypeIntensificazione'),
+                                                        picco: t('reviewProgram.weekTypePicco'),
                                                         test: t('reviewProgram.weekTypeTest'),
                                                         deload: t('reviewProgram.weekTypeDeload'),
                                                     }}

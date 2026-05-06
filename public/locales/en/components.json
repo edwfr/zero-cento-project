@@ -58,7 +58,12 @@
     "weekTypeBanner": {
         "week": "Week",
         "badges": {
-            "normal": "Standard",
+            "tecnica": "Technique",
+            "ipertrofia": "Hypertrophy",
+            "volume": "Volume",
+            "forzaGenerale": "General Strength",
+            "intensificazione": "Intensification",
+            "picco": "Peak",
             "test": "Test",
             "deload": "Deload"
         }
