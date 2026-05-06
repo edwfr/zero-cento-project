@@ -8,6 +8,14 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [6 Maggio 2026] — Exercise focus card: type badge moved to rest row
+
+**Task checklist:** #11.94
+**File modificati:** `src/app/trainee/workouts/[id]/_content.tsx`, `public/locales/en/trainee.json`, `public/locales/it/trainee.json`, `tests/unit/trainee-workout-focus.test.tsx`
+**Note:** Spostato il badge tipo esercizio (fundamental/accessory) dalla riga titolo alla riga del recupero in `ExerciseFocusCard`, sostituendo le abbreviazioni `F/A` con etichette tradotte complete via i18n (`trainer:exercises.fundamental/accessory`). Aggiornata la label `workouts.rest` a minuscolo (`rest`) in EN/IT e adeguati i test unitari del focus mode trainee.
+
+---
+
 ## [6 Maggio 2026] — WeekTypeBanner: layout mobile ottimizzato
 
 Ristrutturato il layout mobile di `WeekTypeBanner` per migliorare la leggibilità su smartphone. Mobile: icona + badge sulla stessa riga (justify-between), titolo sotto a piena larghezza, progress bar in fondo. Desktop invariato (flex-row con badge a destra). Eliminata duplicazione dei `badgeLabels` estraendo la costante fuori dal JSX.

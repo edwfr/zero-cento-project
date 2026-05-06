@@ -187,21 +187,25 @@ describe('Trainee workout focus mode', () => {
         expect(repsInputs[1].value).toBe('80')
     })
 
-    it('shows F prefix before a fundamental exercise name', async () => {
+    it('shows full fundamental label in the rest row', async () => {
         await renderContent()
 
         expect(screen.getByText('Bench Press')).toBeInTheDocument()
-        expect(screen.getByText('F')).toBeInTheDocument()
+        expect(screen.getByText('trainer:exercises.fundamental')).toBeInTheDocument()
+        // Badge no longer uses abbreviated 'F'
+        expect(screen.queryByText('F')).not.toBeInTheDocument()
     })
 
-    it('shows A prefix before an accessory exercise name', async () => {
+    it('shows full accessory label in the rest row', async () => {
         const user = userEvent.setup()
         await renderContent()
 
         await user.click(screen.getByRole('button', { name: /next|avanti/i }))
 
         expect(screen.getByText('Tricep Extension')).toBeInTheDocument()
-        expect(screen.getByText('A')).toBeInTheDocument()
+        expect(screen.getByText('trainer:exercises.accessory')).toBeInTheDocument()
+        // Badge no longer uses abbreviated 'A'
+        expect(screen.queryByText('A')).not.toBeInTheDocument()
     })
 
     it('shows RPE target value in the targets row box', async () => {

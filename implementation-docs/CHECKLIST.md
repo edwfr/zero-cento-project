@@ -642,6 +642,7 @@
 - [x] **11.91** `Riepilogo esercizi`: rimuovere barratura dalle righe set con `completed=false` ✅ _6 Mag 2026_
 - [x] **11.92** `Riepilogo esercizi`: mostrare reps/kg pianificati per set non completati e reps/kg effettivi per set completati (con righe non completate barrate) ✅ _6 Mag 2026_
 - [x] **11.93** `Riepilogo esercizi`: layout sintetico solo con nome esercizio, `serie × rep × kg` e stato avanzamento; rimosso dettaglio sotto riga ✅ _6 Mag 2026_
+- [x] **11.94** `ExerciseFocusCard` (trainee workout focus): spostare badge tipo esercizio nella riga rest, sostituire `F/A` con etichette complete tradotte e rendere `rest` minuscolo in EN/IT ✅ _6 Mag 2026_
 
 ---
 
