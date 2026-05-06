@@ -8,6 +8,14 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [6 Maggio 2026] — Fix badge tipo esercizio in ExerciseFocusCard
+
+**Task checklist:** —
+**File modificati:** `src/app/trainee/workouts/[id]/_content.tsx`
+**Note:** Nel componente `ExerciseFocusCard` (modalità esecuzione workout trainee) il tipo esercizio era mostrato come testo colorato inline (`<span>` senza sfondo dentro `<h2>`). Sostituito con il badge pill (`bg-red-100`/`bg-blue-100`) coerente con la vista trainer program.
+
+---
+
 ## [6 Maggio 2026] — Storico progressione: grafico prima della tabella
 
 **Task checklist:** #11.79

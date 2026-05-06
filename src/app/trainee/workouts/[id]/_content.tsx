@@ -926,15 +926,19 @@ function ExerciseFocusCard({
             {/* Header */}
             <div className="p-4 sm:p-6">
                 <div className="mb-4">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
                         <span
-                            className={`mr-1.5 text-sm font-bold align-middle ${we.exercise.type === 'fundamental' ? 'text-red-600' : 'text-blue-600'
+                            className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${we.exercise.type === 'fundamental'
+                                ? 'bg-red-100 text-red-700'
+                                : 'bg-blue-100 text-blue-700'
                                 }`}
                         >
                             {we.exercise.type === 'fundamental' ? 'F' : 'A'}
                         </span>
-                        {we.exercise.name}
-                    </h2>
+                        <h2 className="text-2xl font-bold text-gray-900">
+                            {we.exercise.name}
+                        </h2>
+                    </div>
                     {we.variant && (
                         <p className="text-sm text-gray-600 mb-2">{we.variant}</p>
                     )}
