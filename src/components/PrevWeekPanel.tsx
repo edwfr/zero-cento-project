@@ -6,6 +6,12 @@ import { useTranslation } from 'react-i18next'
 import type { PrevWeekExerciseItem } from '@/lib/workout-recap'
 import WorkoutExerciseDisplayList, { type ExerciseDisplayItem } from './WorkoutExerciseDisplayList'
 
+const prevWeekCache = new Map<string, PrevWeekExerciseItem[]>()
+
+export function __resetPrevWeekCacheForTests() {
+    prevWeekCache.clear()
+}
+
 interface PrevWeekPanelProps {
     workoutId: string
 }
@@ -20,6 +26,12 @@ export default function PrevWeekPanel({ workoutId }: PrevWeekPanelProps) {
 
     useEffect(() => {
         if (!expanded) return
+        const cached = prevWeekCache.get(workoutId)
+        if (cached) {
+            setExercises(cached)
+            setError(null)
+            return
+        }
         if (exercises.length > 0 || error) return // already loaded
         let cancelled = false
 
@@ -34,7 +46,9 @@ export default function PrevWeekPanel({ workoutId }: PrevWeekPanelProps) {
                 }
 
                 if (!cancelled) {
-                    setExercises(data?.data?.exercises ?? [])
+                    const fetchedExercises = data?.data?.exercises ?? []
+                    prevWeekCache.set(workoutId, fetchedExercises)
+                    setExercises(fetchedExercises)
                 }
             } catch (err: unknown) {
                 if (!cancelled) {

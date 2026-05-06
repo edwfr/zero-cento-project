@@ -26,6 +26,7 @@ export async function GET(
                     select: {
                         id: true,
                         order: true,
+                        isCompleted: true,
                         sets: true,
                         reps: true,
                         effectiveWeight: true,
@@ -61,6 +62,7 @@ export async function GET(
             const feedback = we.exerciseFeedbacks[0] ?? null
             const setsPerformed = feedback?.setsPerformed ?? []
             const completedSets = setsPerformed.filter((s) => s.completed).length
+            const hasAnyCompletedSet = setsPerformed.some((s) => s.completed)
 
             return {
                 id: we.id,
@@ -70,7 +72,7 @@ export async function GET(
                 completedSets,
                 reps: we.reps,
                 effectiveWeight: we.effectiveWeight,
-                status: computeExerciseStatus(completedSets, we.sets),
+                status: computeExerciseStatus(we.isCompleted, hasAnyCompletedSet),
                 actualRpe: feedback?.actualRpe ?? null,
                 exerciseNote: feedback?.notes ?? null,
                 sets: setsPerformed.map((s) => ({

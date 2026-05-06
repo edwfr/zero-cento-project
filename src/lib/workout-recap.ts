@@ -21,9 +21,9 @@ export interface ExerciseRecapItem {
     sets: SetRecap[]
 }
 
-export function computeExerciseStatus(completedSets: number, targetSets: number): ExerciseStatus {
-    if (completedSets === 0) return 'not_started'
-    if (completedSets >= targetSets) return 'done'
+export function computeExerciseStatus(workoutExerciseCompleted: boolean, hasAnyCompletedSet: boolean): ExerciseStatus {
+    if (workoutExerciseCompleted) return 'done'
+    if (!hasAnyCompletedSet) return 'not_started'
     return 'in_progress'
 }
 

@@ -629,6 +629,19 @@
 - [x] **11.78** Su `/trainee/records` mostrare solo loader giallo senza testo transitorio (`Stiamo preparando...`) durante il fetch iniziale ✅ _6 Mag 2026_
 - [x] **11.79** Nello storico progressione di `/trainee/records` mostrare prima il grafico e poi la tabella ✅ _6 Mag 2026_
 - [x] **11.80** Refactor `/trainee/programs/[id]` e `/trainee/history`: toggle settimana icon-only, componente condiviso `WorkoutExerciseDisplayList`, note trainee per esercizio completato e card storico compatte in singola riga ✅ _6 Mag 2026_
+- [x] **11.81** Aggiornare `/components-showcase` Week Type Banners con indicatore `%` di avanzamento tramite `WeekTypeBanner.progressPercentage` ✅ _6 Mag 2026_
+- [x] **11.82** Aggiornare titolo `WeekTypeBanner` in formato `Settimana / Giorno - Scheda` e rimuovere descrizione del tipo settimana ✅ _6 Mag 2026_
+- [x] **11.83** Applicare `WeekTypeBanner` in `/trainee/workouts/[id]` sostituendo l'header sticky custom con banner unificato ✅ _6 Mag 2026_
+- [x] **11.84** Rimuovere sfondo bianco del wrapper sticky del `WeekTypeBanner` in `/trainee/workouts/[id]` per allineamento visuale con la card contenuto ✅ _6 Mag 2026_
+- [x] **11.85** Rimuovere separatore grigio (`border-b`) tra `WeekTypeBanner` sticky e card esercizio in `/trainee/workouts/[id]` ✅ _6 Mag 2026_
+- [x] **11.86** Ridurre spacing verticale tra `WeekTypeBanner` sticky e prima card esercizio in `/trainee/workouts/[id]` ✅ _6 Mag 2026_
+- [x] **11.87** Cache client-side per `PrevWeekPanel` e `WorkoutRecapPanel` in `/trainee/workouts/[id]` (fetch solo alla prima apertura per workout) ✅ _6 Mag 2026_
+- [x] **11.88** Spostare `Riepilogo esercizi` da floating button a pannello inline espandibile/collassabile tra card esercizio e `Settimana precedente` ✅ _6 Mag 2026_
+- [x] **11.89** `WorkoutRecapPanel`: fetch backend a ogni apertura (no cache) + auto-close su cambio esercizio (`<`/`>` o click esercizio nel recap) ✅ _6 Mag 2026_
+- [x] **11.90** Correggere stato righe `Riepilogo esercizi` con priorità `workout_exercises.isCompleted` + fallback su `sets_performed.completed` ✅ _6 Mag 2026_
+- [x] **11.91** `Riepilogo esercizi`: rimuovere barratura dalle righe set con `completed=false` ✅ _6 Mag 2026_
+- [x] **11.92** `Riepilogo esercizi`: mostrare reps/kg pianificati per set non completati e reps/kg effettivi per set completati (con righe non completate barrate) ✅ _6 Mag 2026_
+- [x] **11.93** `Riepilogo esercizi`: layout sintetico solo con nome esercizio, `serie × rep × kg` e stato avanzamento; rimosso dettaglio sotto riga ✅ _6 Mag 2026_
 
 ---
 

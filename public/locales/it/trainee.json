@@ -262,7 +262,7 @@
         "recapStatusNotStarted": "Da iniziare",
         "recapSets": "{{completed}}/{{target}} serie",
         "recapSetLabel": "Serie {{set}}",
-        "recapRepsUnit": "rip",
+        "recapRepsUnit": "rep",
         "recapWorkoutNote": "Note workout",
         "recapLoading": "Caricamento riepilogo...",
         "recapError": "Errore nel caricamento del riepilogo",

@@ -57,6 +57,8 @@
     },
     "weekTypeBanner": {
         "week": "Settimana",
+        "day": "Giorno",
+        "progress": "Avanzamento",
         "badges": {
             "tecnica": "Tecnica",
             "ipertrofia": "Ipertrofia",

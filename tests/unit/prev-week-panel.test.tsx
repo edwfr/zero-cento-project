@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import PrevWeekPanel from '@/components/PrevWeekPanel'
+import PrevWeekPanel, { __resetPrevWeekCacheForTests } from '@/components/PrevWeekPanel'
 
 vi.mock('react-i18next', () => ({
     useTranslation: () => ({
@@ -47,6 +47,7 @@ const mockExercises = [
 describe('PrevWeekPanel', () => {
     beforeEach(() => {
         vi.resetAllMocks()
+        __resetPrevWeekCacheForTests()
     })
 
     it('renders header while collapsed by default', () => {
@@ -139,5 +140,27 @@ describe('PrevWeekPanel', () => {
         await user.click(screen.getByRole('button', { name: 'Last Week' }))
 
         await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2))
+    })
+
+    it('uses cache for same workout after remount', async () => {
+        global.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({ data: { exercises: mockExercises } }),
+        }) as unknown as typeof fetch
+
+        const user = userEvent.setup()
+        const firstRender = render(<PrevWeekPanel workoutId="w-cache" />)
+
+        await user.click(screen.getByRole('button', { name: 'Last Week' }))
+        await waitFor(() => expect(screen.getByText('Bench Press')).toBeInTheDocument())
+        expect(global.fetch).toHaveBeenCalledTimes(1)
+
+        firstRender.unmount()
+
+        render(<PrevWeekPanel workoutId="w-cache" />)
+        await user.click(screen.getByRole('button', { name: 'Last Week' }))
+
+        await waitFor(() => expect(screen.getByText('Bench Press')).toBeInTheDocument())
+        expect(global.fetch).toHaveBeenCalledTimes(1)
     })
 })

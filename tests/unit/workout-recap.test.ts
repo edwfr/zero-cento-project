@@ -3,24 +3,20 @@ import { computeExerciseStatus } from '@/lib/workout-recap'
 import type { PrevWeekExerciseItem } from '@/lib/workout-recap'
 
 describe('computeExerciseStatus', () => {
-    it('returns not_started when no sets completed', () => {
-        expect(computeExerciseStatus(0, 4)).toBe('not_started')
+    it('returns done when workoutExercise isCompleted is true', () => {
+        expect(computeExerciseStatus(true, false)).toBe('done')
     })
 
-    it('returns done when completedSets equals targetSets', () => {
-        expect(computeExerciseStatus(4, 4)).toBe('done')
+    it('returns done when workoutExercise isCompleted is true and at least one set is completed', () => {
+        expect(computeExerciseStatus(true, true)).toBe('done')
     })
 
-    it('returns done when completedSets exceeds targetSets', () => {
-        expect(computeExerciseStatus(5, 4)).toBe('done')
+    it('returns not_started when workoutExercise isCompleted is false and no set is completed', () => {
+        expect(computeExerciseStatus(false, false)).toBe('not_started')
     })
 
-    it('returns in_progress when some sets are completed', () => {
-        expect(computeExerciseStatus(2, 4)).toBe('in_progress')
-    })
-
-    it('returns not_started when sets exist but none completed (undo)', () => {
-        expect(computeExerciseStatus(0, 4)).toBe('not_started')
+    it('returns in_progress when workoutExercise isCompleted is false and at least one set is completed', () => {
+        expect(computeExerciseStatus(false, true)).toBe('in_progress')
     })
 })
 

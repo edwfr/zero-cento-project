@@ -43,6 +43,10 @@ Rimosso uso di sintassi ICU plural `{{var, plural, one{} other{}}}` non supporta
 - Ottimizzazione performance focus mode trainee: aggiunta cache client-side per workoutId su `PrevWeekPanel` e `WorkoutRecapPanel`; dalla seconda apertura dello stesso workout i pannelli usano dati in memoria senza nuove chiamate backend.
 - Refactor UX `/trainee/workouts/[id]`: rimosso recap dal floating button e trasformato in pannello inline espandibile/collassabile (stile `PrevWeekPanel`), posizionato tra card esercizio e sezione settimana precedente.
 - Fix coerenza stato recap: rimossa cache del `WorkoutRecapPanel` per forzare fetch backend a ogni apertura; aggiunta chiusura automatica pannello quando cambia esercizio (navigazione `<`/`>` o selezione esercizio dal recap).
+- Corretto calcolo stato in `Riepilogo esercizi`: `done` se `workout_exercises.isCompleted=true`; `not_started` se `isCompleted=false` e nessun `sets_performed.completed=true`; `in_progress` se `isCompleted=false` e almeno un set completato.
+- Fix UI `Riepilogo esercizi`: rimosso stile barrato dalle righe set con `completed=false`; ora i set non completati sono solo attenuati (grigio) senza line-through.
+- Aggiornato rendering righe set in `Riepilogo esercizi`: per `completed=true` mostra reps/kg effettivi; per `completed=false` mostra reps/weight pianificati dell'esercizio, mantenendo stile barrato per distinguere le serie ancora da completare.
+- Semplificato `Riepilogo esercizi` su richiesta UX: rimosso dettaglio espanso per set/RPE/note; il pannello mostra solo riga sintetica per esercizio con nome, schema `serie × rep × kg` e stato avanzamento (`completed/target`).
 
 ---
 

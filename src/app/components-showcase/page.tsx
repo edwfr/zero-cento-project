@@ -625,14 +625,14 @@ function ComponentShowcase() {
                 {/* Week Type Banners */}
                 <section className="space-y-4 rounded-lg bg-white p-6 shadow">
                     <h2 className="mb-4 text-2xl font-bold text-gray-900">Week Type Banners</h2>
-                    <WeekTypeBanner weekType="tecnica" weekNumber={1} />
-                    <WeekTypeBanner weekType="ipertrofia" weekNumber={2} />
-                    <WeekTypeBanner weekType="volume" weekNumber={3} />
-                    <WeekTypeBanner weekType="forza_generale" weekNumber={4} />
-                    <WeekTypeBanner weekType="intensificazione" weekNumber={5} />
-                    <WeekTypeBanner weekType="picco" weekNumber={6} />
-                    <WeekTypeBanner weekType="test" weekNumber={7} />
-                    <WeekTypeBanner weekType="deload" weekNumber={8} />
+                    <WeekTypeBanner weekType="tecnica" weekNumber={1} dayNumber={1} workoutName="Lower A" progressPercentage={12} />
+                    <WeekTypeBanner weekType="ipertrofia" weekNumber={2} dayNumber={2} workoutName="Upper A" progressPercentage={24} />
+                    <WeekTypeBanner weekType="volume" weekNumber={3} dayNumber={1} workoutName="Lower B" progressPercentage={36} />
+                    <WeekTypeBanner weekType="forza_generale" weekNumber={4} dayNumber={2} workoutName="Upper B" progressPercentage={48} />
+                    <WeekTypeBanner weekType="intensificazione" weekNumber={5} dayNumber={1} workoutName="Lower C" progressPercentage={60} />
+                    <WeekTypeBanner weekType="picco" weekNumber={6} dayNumber={2} workoutName="Upper C" progressPercentage={74} />
+                    <WeekTypeBanner weekType="test" weekNumber={7} dayNumber={1} workoutName="Test Day" progressPercentage={89} />
+                    <WeekTypeBanner weekType="deload" weekNumber={8} dayNumber={2} workoutName="Recovery Session" progressPercentage={100} />
                 </section>
 
                 {/* Form Components */}
