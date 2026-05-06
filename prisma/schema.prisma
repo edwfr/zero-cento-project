@@ -245,11 +245,11 @@ model Week {
 }
 
 model Workout {
-  id       String  @id @default(uuid())
-  weekId   String
-  dayIndex Int
-  notes    String?
-  isCompleted Boolean @default(false)
+  id           String  @id @default(uuid())
+  weekId       String
+  dayIndex     Int
+  traineeNotes String? @map("trainee_notes")
+  isCompleted  Boolean @default(false)
 
   // Relations
   week             Week              @relation("WeekWorkouts", fields: [weekId], references: [id], onDelete: Cascade)

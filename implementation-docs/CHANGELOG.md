@@ -8,6 +8,39 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [6 Maggio 2026] — Note trainee per esercizio e workout summary
+
+**Task checklist:** spec `docs/superpowers/specs/2026-05-06-trainee-workout-notes-design.md`
+**File modificati:**
+`prisma/schema.prisma`, `prisma/migrations/20260506000001_rename_workout_notes/migration.sql`,
+`src/schemas/feedback.ts`,
+`src/app/api/trainee/workout-exercises/[id]/feedback/route.ts`,
+`src/app/api/trainee/workouts/[id]/submit/route.ts`,
+`src/app/api/trainee/workouts/[id]/route.ts`,
+`src/app/api/trainee/workouts/[id]/prev-week/route.ts`,
+`src/app/api/programs/[id]/workouts/[workoutId]/trainee-notes/route.ts` *(nuovo)*,
+`src/app/api/programs/[id]/copy-week/route.ts`,
+`src/lib/workout-recap.ts`,
+`src/app/trainee/workouts/[id]/_content.tsx`,
+`src/components/PrevWeekPanel.tsx`,
+`src/app/trainer/programs/[id]/workouts/[wId]/_content.tsx`,
+`public/locales/en/trainee.json`, `public/locales/it/trainee.json`,
+`tests/unit/workout-recap.test.ts`
+
+**Note:**
+- Rinominato `Workout.notes` → `Workout.traineeNotes` (`@map("trainee_notes")`). Campo era sempre null in produzione (mai scritto da API trainer). Migration SQL `ALTER TABLE workouts RENAME COLUMN notes TO trainee_notes`.
+- `ExerciseFeedback.notes` ora salvato per-esercizio via `PATCH /feedback` (non più global-notes duplicato). Schema `workoutExerciseAutosaveSchema` aggiornato con `notes` opzionale.
+- `workoutSubmitSchema` aggiornato: `notes` → `traineeNotes` top-level. Submit scrive `Workout.traineeNotes` in transazione; non sovrascrive `ExerciseFeedback.notes` per esercizio.
+- `GET /api/trainee/workouts/[id]`: risposta include `traineeNotes` + `notes` per ogni feedback.
+- `GET /api/trainee/workouts/[id]/prev-week`: query SQL estesa per `ef.notes`; `PrevWeekExerciseItem` include `exerciseNote`.
+- `GET /api/programs/[id]/workouts/[workoutId]/trainee-notes`: nuovo endpoint trainer per leggere note trainee di un workout completato.
+- `ExerciseFocusCard`: aggiunto textarea + pulsante "Salva Nota" con call a `PATCH /feedback`.
+- `FinalStep`: label rinominata `workoutSummaryLabel/Placeholder`; payload invia `traineeNotes`.
+- `PrevWeekPanel`: mostra `exerciseNote` con icona `FileText` se non null.
+- Trainer workout detail: carica note trainee via fetch silenzioso; mostra sezione "Note trainee" quando workout completato.
+
+---
+
 ## [6 Maggio 2026] — Fix badge tipo esercizio in ExerciseFocusCard
 
 **Task checklist:** —

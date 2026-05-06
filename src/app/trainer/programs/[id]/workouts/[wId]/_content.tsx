@@ -10,7 +10,7 @@ import MovementPatternTag from '@/components/MovementPatternTag'
 import { WeightType, RestTime } from '@prisma/client'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { Trash2, Dumbbell, GripVertical, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react'
+import { Trash2, Dumbbell, GripVertical, ChevronLeft, ChevronRight, BarChart3, FileText, MessageSquare } from 'lucide-react'
 import {
     DndContext,
     closestCenter,
@@ -59,7 +59,7 @@ interface WorkoutExercise {
 interface Workout {
     id: string
     dayIndex: number
-    notes: string | null
+    isCompleted: boolean
     workoutExercises: WorkoutExercise[]
 }
 
@@ -145,6 +145,10 @@ export default function WorkoutDetailContent() {
 
     const [isPRPanelCollapsed, setIsPRPanelCollapsed] = useState(false)
     const [isSbdPanelCollapsed, setIsSbdPanelCollapsed] = useState(false)
+    const [traineeNotesData, setTraineeNotesData] = useState<{
+        workoutNote: string | null
+        exercises: Array<{ workoutExerciseId: string; exerciseName: string; note: string }>
+    } | null>(null)
     const { showToast } = useToast()
     const [confirmModal, setConfirmModal] = useState<{
         title: string
@@ -195,6 +199,16 @@ export default function WorkoutDetailContent() {
     useEffect(() => {
         void fetchData()
     }, [fetchData])
+
+    useEffect(() => {
+        if (!workout?.isCompleted) return
+        fetch(`/api/programs/${programId}/workouts/${workoutId}/trainee-notes`)
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+                if (data?.data) setTraineeNotesData(data.data)
+            })
+            .catch(() => { /* silently hidden on failure */ })
+    }, [programId, workout?.isCompleted, workoutId])
 
     const handleDeleteExercise = (workoutExerciseId: string) => {
         setConfirmModal({
@@ -584,9 +598,6 @@ export default function WorkoutDetailContent() {
                     <p className="text-gray-600 mt-2">
                         {t('workoutDetail.forTrainee')} {program.trainee.firstName} {program.trainee.lastName}
                     </p>
-                    {workout.notes && (
-                        <p className="text-gray-700 mt-2 italic">📝 {workout.notes}</p>
-                    )}
                 </div>
 
                 {/* Exercises List */}
@@ -700,6 +711,37 @@ export default function WorkoutDetailContent() {
                         <p className="text-gray-600">
                             {t('workoutDetail.noExercisesDesc')}
                         </p>
+                    </div>
+                )}
+
+                {/* Trainee notes — shown when workout is completed and notes exist */}
+                {workout.isCompleted && traineeNotesData && (traineeNotesData.workoutNote || traineeNotesData.exercises.length > 0) && (
+                    <div className="mb-6 rounded-lg border border-gray-200 bg-white shadow-sm">
+                        <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-3">
+                            <MessageSquare className="h-4 w-4 text-gray-400" />
+                            <h3 className="text-sm font-bold text-gray-900">Note trainee</h3>
+                        </div>
+                        <div className="divide-y divide-gray-100 px-4 py-3 space-y-3">
+                            {traineeNotesData.exercises.map((ex) => (
+                                <div key={ex.workoutExerciseId} className="pt-3 first:pt-0">
+                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                                        {ex.exerciseName}
+                                    </p>
+                                    <p className="flex items-start gap-1.5 text-sm text-gray-700">
+                                        <FileText className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-gray-400" />
+                                        {ex.note}
+                                    </p>
+                                </div>
+                            ))}
+                            {traineeNotesData.workoutNote && (
+                                <div className="pt-3 first:pt-0">
+                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                                        Riepilogo workout
+                                    </p>
+                                    <p className="text-sm text-gray-700">{traineeNotesData.workoutNote}</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
 

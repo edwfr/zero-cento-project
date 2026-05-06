@@ -17,7 +17,6 @@ import {
     Clock3,
     FileText,
     GripVertical,
-    History,
     PlayCircle,
     ChevronLeft,
     ChevronRight,
@@ -83,7 +82,7 @@ interface ExerciseRPE {
 interface Workout {
     id: string
     dayIndex: number
-    notes: string | null
+    traineeNotes: string | null
     weekNumber: number
     weekType: WeekType
     program: {
@@ -153,17 +152,19 @@ export default function WorkoutDetailContent() {
     // State
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
+    const [savingNote, setSavingNote] = useState(false)
     const [workout, setWorkout] = useState<Workout | null>(null)
     const [error, setError] = useState<string | null>(null)
 
     const [feedbackData, setFeedbackData] = useState<Record<string, SetPerformed[]>>({})
     const [exerciseRPE, setExerciseRPE] = useState<Record<string, number | null>>({})
+    const [exerciseNotes, setExerciseNotes] = useState<Record<string, string>>({})
+    const [savedExerciseNotes, setSavedExerciseNotes] = useState<Record<string, string>>({})
     const [exerciseCompleted, setExerciseCompleted] = useState<Record<string, boolean>>({})
     const [globalNotes, setGlobalNotes] = useState('')
     const [expandedVideos, setExpandedVideos] = useState<Record<string, boolean>>({})
     const [currentStep, setCurrentStep] = useState(0)
     const [recapOpen, setRecapOpen] = useState(false)
-    const [prevWeekOpen, setPrevWeekOpen] = useState(false)
     const [dockPos, setDockPos] = useState<{ top: number; left: number } | null>(null)
     const dockRef = useRef<HTMLElement | null>(null)
     const dockDragRef = useRef<{
@@ -210,9 +211,6 @@ export default function WorkoutDetailContent() {
                         completed: sp.completed ?? true,
                     }))
                     initialRPE[we.id] = we.feedback.avgRPE
-                    if (we.feedback.notes) {
-                        setGlobalNotes(we.feedback.notes)
-                    }
                 } else {
                     initialFeedback[we.id] = Array.from({ length: we.sets }, (_, i) => ({
                         setNumber: i + 1,
@@ -224,9 +222,21 @@ export default function WorkoutDetailContent() {
                 }
             })
 
+            // Pre-fill exercise notes from feedback
+            const initialExerciseNotes: Record<string, string> = {}
+            orderedExercises.forEach((we: WorkoutExerciseWithWeight) => {
+                if (we.feedback?.notes) {
+                    initialExerciseNotes[we.id] = we.feedback.notes
+                }
+            })
+
             setFeedbackData(initialFeedback)
             setExerciseRPE(initialRPE)
+            setExerciseNotes(initialExerciseNotes)
+            setSavedExerciseNotes(initialExerciseNotes)
             setExerciseCompleted(initialCompleted)
+            // Pre-fill workout summary from traineeNotes (not from any exercise feedback)
+            setGlobalNotes(data.data.workout.traineeNotes ?? '')
             setCurrentStep(0)
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : t('workouts.errorLoading'))
@@ -254,6 +264,7 @@ export default function WorkoutDetailContent() {
                 )
                 setFeedbackData(normalizedFeedback)
                 setExerciseRPE(parsed.exerciseRPE || {})
+                setExerciseNotes(parsed.exerciseNotes || {})
                 setGlobalNotes(parsed.globalNotes || '')
             }
         } catch {
@@ -268,6 +279,7 @@ export default function WorkoutDetailContent() {
                 JSON.stringify({
                     feedbackData,
                     exerciseRPE,
+                    exerciseNotes,
                     globalNotes,
                     savedAt: new Date().toISOString(),
                 })
@@ -275,7 +287,7 @@ export default function WorkoutDetailContent() {
         } catch {
             // localStorage write failed; in-memory state is still valid
         }
-    }, [STORAGE_KEY, exerciseRPE, feedbackData, globalNotes])
+    }, [STORAGE_KEY, exerciseRPE, exerciseNotes, feedbackData, globalNotes])
 
     const clearLocalData = () => {
         try {
@@ -296,7 +308,7 @@ export default function WorkoutDetailContent() {
         if (Object.keys(feedbackData).length > 0) {
             saveLocalData()
         }
-    }, [feedbackData, exerciseRPE, globalNotes, saveLocalData])
+    }, [feedbackData, exerciseRPE, exerciseNotes, globalNotes, saveLocalData])
 
     useEffect(() => {
         try {
@@ -416,6 +428,7 @@ export default function WorkoutDetailContent() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     actualRpe: exerciseRPE[workoutExerciseId] ?? null,
+                    notes: (exerciseNotes[workoutExerciseId] ?? '').trim() || null,
                     sets: nextSets.map((set) => ({
                         setNumber: set.setNumber,
                         completed: !!set.completed,
@@ -436,6 +449,11 @@ export default function WorkoutDetailContent() {
             setExerciseCompleted((prev) => ({
                 ...prev,
                 [workoutExerciseId]: cascade.workoutExercise.isCompleted,
+            }))
+
+            setSavedExerciseNotes((prev) => ({
+                ...prev,
+                [workoutExerciseId]: exerciseNotes[workoutExerciseId] ?? '',
             }))
 
             if (!cascade.workoutExercise.isCompleted) {
@@ -477,7 +495,7 @@ export default function WorkoutDetailContent() {
             }))
             showToast(err instanceof Error ? err.message : t('workouts.errorFeedback'), 'error')
         }
-    }, [exerciseRPE, showToast, t])
+    }, [exerciseNotes, exerciseRPE, showToast, t])
 
     const toggleSetCompleted = (workoutExerciseId: string, setIndex: number) => {
         if (!workout) return
@@ -549,6 +567,45 @@ export default function WorkoutDetailContent() {
         }))
     }
 
+    const updateExerciseNote = (workoutExerciseId: string, note: string) => {
+        setExerciseNotes((prev) => ({ ...prev, [workoutExerciseId]: note }))
+    }
+
+    const saveExerciseNote = useCallback(async (workoutExerciseId: string) => {
+        const note = exerciseNotes[workoutExerciseId] ?? ''
+        const sets = feedbackData[workoutExerciseId] ?? []
+        setSavingNote(true)
+        try {
+            const res = await fetch(`/api/trainee/workout-exercises/${workoutExerciseId}/feedback`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    actualRpe: exerciseRPE[workoutExerciseId] ?? null,
+                    notes: note.trim() || null,
+                    sets: sets.map((s) => ({
+                        setNumber: s.setNumber,
+                        completed: !!s.completed,
+                        reps: s.reps,
+                        weight: s.weight,
+                    })),
+                }),
+            })
+            const data = await res.json()
+            if (!res.ok) {
+                throw new Error(getApiErrorMessage(data, t('workouts.errorFeedback'), t))
+            }
+            showToast(t('workouts.exerciseNoteSaved'), 'success')
+            setSavedExerciseNotes((prev) => ({
+                ...prev,
+                [workoutExerciseId]: note,
+            }))
+        } catch (err: unknown) {
+            showToast(err instanceof Error ? err.message : t('workouts.errorFeedback'), 'error')
+        } finally {
+            setSavingNote(false)
+        }
+    }, [exerciseNotes, exerciseRPE, feedbackData, setSavedExerciseNotes, showToast, t])
+
     const toggleVideo = (workoutExerciseId: string) => {
         setExpandedVideos((prev) => ({
             ...prev,
@@ -561,7 +618,7 @@ export default function WorkoutDetailContent() {
             setSubmitting(true)
 
             const payload = {
-                notes: globalNotes.trim() || null,
+                traineeNotes: globalNotes.trim() || null,
                 exercises: workout!.exercises.map((we) => {
                     const sets = feedbackData[we.id] || []
                     return {
@@ -752,16 +809,6 @@ export default function WorkoutDetailContent() {
                     >
                         <GripVertical className="h-4 w-4" />
                     </button>
-                    {workout.weekNumber > 1 && (
-                        <button
-                            type="button"
-                            onClick={() => setPrevWeekOpen(true)}
-                            aria-label={t('workouts.prevWeekTitle')}
-                            className="rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 hover:text-brand-primary"
-                        >
-                            <History className="h-5 w-5" />
-                        </button>
-                    )}
                     <button
                         type="button"
                         onClick={() => setRecapOpen(true)}
@@ -777,17 +824,22 @@ export default function WorkoutDetailContent() {
 
             {/* Scrollable body */}
             <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6 pb-28 sm:pb-32">
-                <div className="max-w-2xl mx-auto">
+                <div className="max-w-2xl mx-auto space-y-4">
                     {!isFinalStep && currentExercise ? (
                         <ExerciseFocusCard
                             we={currentExercise}
                             sets={feedbackData[currentExercise.id] || []}
                             rpe={exerciseRPE[currentExercise.id] ?? null}
+                            exerciseNote={exerciseNotes[currentExercise.id] ?? ''}
+                            savedNote={savedExerciseNotes[currentExercise.id] ?? ''}
+                            isNoteSaving={savingNote}
                             videoExpanded={expandedVideos[currentExercise.id] ?? false}
                             onToggleVideo={() => toggleVideo(currentExercise.id)}
                             onUpdateSet={(id, idx, field, value) => updateSet(id, idx, field, value)}
                             onToggleSet={(id, idx) => toggleSetCompleted(id, idx)}
                             onUpdateRpe={(rpe) => updateExerciseRPE(currentExercise.id, rpe)}
+                            onUpdateNote={(note) => updateExerciseNote(currentExercise.id, note)}
+                            onSaveNote={() => saveExerciseNote(currentExercise.id)}
                             rpeDescriptions={rpeDescriptions}
                             t={t}
                         />
@@ -803,6 +855,10 @@ export default function WorkoutDetailContent() {
                             onSelectExercise={goToStep}
                             t={t}
                         />
+                    )}
+
+                    {!isFinalStep && workout.weekNumber > 1 && (
+                        <PrevWeekPanel workoutId={workoutId} />
                     )}
                 </div>
             </div>
@@ -858,11 +914,6 @@ export default function WorkoutDetailContent() {
                     if (idx !== -1) goToStep(idx)
                 }}
             />
-            <PrevWeekPanel
-                workoutId={workoutId}
-                isOpen={prevWeekOpen}
-                onClose={() => setPrevWeekOpen(false)}
-            />
         </div>
     )
 }
@@ -871,11 +922,16 @@ interface ExerciseFocusCardProps {
     we: WorkoutExerciseWithWeight
     sets: SetPerformed[]
     rpe: number | null
+    exerciseNote: string
+    savedNote: string
+    isNoteSaving: boolean
     videoExpanded: boolean
     onToggleVideo: () => void
     onUpdateSet: (id: string, idx: number, field: 'weight' | 'reps', value: number) => void
     onToggleSet: (id: string, idx: number) => void
     onUpdateRpe: (rpe: number | null) => void
+    onUpdateNote: (note: string) => void
+    onSaveNote: () => void
     rpeDescriptions: Record<number, string>
     t: (key: string, vars?: Record<string, unknown>) => string
 }
@@ -884,11 +940,16 @@ function ExerciseFocusCard({
     we,
     sets,
     rpe,
+    exerciseNote,
+    savedNote,
+    isNoteSaving,
     videoExpanded,
     onToggleVideo,
     onUpdateSet,
     onToggleSet,
     onUpdateRpe,
+    onUpdateNote,
+    onSaveNote,
     rpeDescriptions,
     t,
 }: ExerciseFocusCardProps) {
@@ -1120,6 +1181,36 @@ function ExerciseFocusCard({
                     />
                 </div>
             </div>
+
+            {/* Exercise note */}
+            <div className="border-t border-gray-200 p-4 sm:p-6">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    {t('workouts.exerciseNoteLabel')}
+                </label>
+                <textarea
+                    value={exerciseNote}
+                    onChange={(e) => onUpdateNote(e.target.value)}
+                    placeholder={t('workouts.exerciseNotePlaceholder')}
+                    rows={2}
+                    maxLength={1000}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-primary focus:border-transparent resize-none"
+                />
+                <div className="mt-2 flex justify-end">
+                    <button
+                        type="button"
+                        onClick={onSaveNote}
+                        disabled={exerciseNote === savedNote || isNoteSaving}
+                        className={`inline-flex items-center gap-2 px-4 py-1.5 text-sm font-semibold rounded-lg transition-colors ${
+                            exerciseNote === savedNote || isNoteSaving
+                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                : 'bg-brand-primary text-white hover:bg-brand-primary-hover'
+                        }`}
+                    >
+                        {isNoteSaving && <LoadingSpinner size="sm" color="gray" />}
+                        {t('workouts.saveNote')}
+                    </button>
+                </div>
+            </div>
         </div>
     )
 }
@@ -1217,12 +1308,12 @@ function FinalStep({
                 {/* Notes */}
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        {t('workouts.notesLabel')}
+                        {t('workouts.workoutSummaryLabel')}
                     </label>
                     <textarea
                         value={globalNotes}
                         onChange={(e) => onNotesChange(e.target.value)}
-                        placeholder={t('workouts.notesPlaceholder')}
+                        placeholder={t('workouts.workoutSummaryPlaceholder')}
                         rows={4}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                     />

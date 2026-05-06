@@ -14,6 +14,7 @@ interface PrevWeekRow {
     setReps: number | null
     setWeight: number | null
     setCompleted: boolean | null
+    exerciseNote: string | null
 }
 
 export async function GET(
@@ -52,12 +53,13 @@ export async function GET(
                 sp."setNumber"              AS "setNumber",
                 sp.reps                     AS "setReps",
                 sp.weight                   AS "setWeight",
-                sp.completed                AS "setCompleted"
+                sp.completed                AS "setCompleted",
+                latest_ef.notes             AS "exerciseNote"
             FROM workout_exercises we
             JOIN prev_workout pw ON we."workoutId" = pw.id
             JOIN exercises e ON e.id = we."exerciseId"
             LEFT JOIN LATERAL (
-                SELECT id FROM exercise_feedbacks
+                SELECT id, notes FROM exercise_feedbacks
                 WHERE "workoutExerciseId" = we.id
                   AND "traineeId" = ${session.user.id}
                 ORDER BY "updatedAt" DESC
@@ -77,6 +79,7 @@ export async function GET(
                     order: row.order,
                     targetSets: row.targetSets,
                     targetReps: row.targetReps,
+                    exerciseNote: row.exerciseNote ?? null,
                     sets: [],
                 })
             }

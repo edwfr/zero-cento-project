@@ -53,7 +53,7 @@ export async function PATCH(
         }
 
         const today = getTodayDateKey()
-        const { actualRpe, sets } = parsed.data
+        const { actualRpe, notes, sets } = parsed.data
 
         const feedback = await prisma.exerciseFeedback.upsert({
             where: {
@@ -68,7 +68,7 @@ export async function PATCH(
                 traineeId: session.user.id,
                 date: today,
                 actualRpe: actualRpe ?? null,
-                notes: null,
+                notes: notes ?? null,
                 setsPerformed: {
                     create: sets.map((set) => ({
                         setNumber: set.setNumber,
@@ -80,6 +80,7 @@ export async function PATCH(
             },
             update: {
                 actualRpe: actualRpe ?? null,
+                notes: notes ?? null,
                 setsPerformed: {
                     deleteMany: {},
                     create: sets.map((set) => ({
@@ -94,6 +95,7 @@ export async function PATCH(
                 id: true,
                 workoutExerciseId: true,
                 actualRpe: true,
+                notes: true,
                 date: true,
                 updatedAt: true,
                 setsPerformed: {

@@ -33,7 +33,7 @@ export async function POST(
             )
         }
 
-        const { notes, exercises } = parsed.data
+        const { traineeNotes, exercises } = parsed.data
 
         // 1. Single ownership check: workout belongs to a program owned by this trainee.
         //    Also returns the set of valid workoutExercise ids in one query.
@@ -74,7 +74,8 @@ export async function POST(
         // 3. Calendar-day key for upsert idempotency (UTC-consistent for multi-timezone safety).
         const today = getTodayDateKey()
 
-        // 4. Single transaction: feedback upserts + WorkoutExercise.isCompleted updates.
+        // 4. Single transaction: feedback upserts + WorkoutExercise.isCompleted updates +
+        //    Workout.traineeNotes update. Per-exercise notes are NOT touched here.
         //    Slicing first N results gives feedbacks; remaining N are the isCompleted updates.
         const txResults = await prisma.$transaction([
             ...exercises.map((ex) =>
@@ -90,7 +91,6 @@ export async function POST(
                         workoutExerciseId: ex.workoutExerciseId,
                         traineeId: session.user.id,
                         date: today,
-                        notes: notes ?? null,
                         actualRpe: ex.actualRpe ?? null,
                         setsPerformed: {
                             create: ex.sets.map((s) => ({
@@ -102,7 +102,6 @@ export async function POST(
                         },
                     },
                     update: {
-                        notes: notes ?? null,
                         actualRpe: ex.actualRpe ?? null,
                         setsPerformed: {
                             deleteMany: {},
@@ -132,6 +131,11 @@ export async function POST(
                     select: { id: true },
                 })
             ),
+            prisma.workout.update({
+                where: { id: workoutId },
+                data: { traineeNotes: traineeNotes ?? null },
+                select: { id: true },
+            }),
         ])
         const feedbacks = txResults.slice(0, exercises.length)
 

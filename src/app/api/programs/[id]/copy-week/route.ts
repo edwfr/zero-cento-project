@@ -200,7 +200,7 @@ export async function POST(
                         id: targetWorkout.id,
                         weekId: targetWorkout.weekId,
                         dayIndex: targetWorkout.dayIndex,
-                        notes: targetWorkout.notes,
+                        notes: targetWorkout.traineeNotes,
                         workoutExercises: planned.map(({ id, sourceExercise }) => ({
                             id,
                             workoutId: targetWorkout.id,

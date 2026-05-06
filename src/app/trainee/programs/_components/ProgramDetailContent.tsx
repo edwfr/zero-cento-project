@@ -903,15 +903,6 @@ export default function ProgramDetailContent({
                                                                                     className="rounded-lg border border-gray-200 bg-gray-50 p-3"
                                                                                 >
                                                                                     <div className="flex flex-wrap items-center gap-2">
-                                                                                        <span className={`inline-flex rounded-full border px-1.5 py-0.5 text-[10px] font-semibold leading-none ${exercise.exercise.type === 'fundamental'
-                                                                                            ? 'border-red-300 bg-white text-red-700'
-                                                                                            : 'border-blue-300 bg-white text-blue-700'
-                                                                                            }`}>
-                                                                                            {exercise.exercise.type === 'fundamental'
-                                                                                                ? t('currentProgram.fundamentalShort')
-                                                                                                : t('currentProgram.accessoryShort')}
-                                                                                        </span>
-
                                                                                         {exercise.isWarmup && (
                                                                                             <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
                                                                                                 {t('currentProgram.warmupShort')}
@@ -933,18 +924,6 @@ export default function ProgramDetailContent({
                                                                                             <span className="text-base font-bold text-gray-900">
                                                                                                 {weightLabels.effective}
                                                                                             </span>
-                                                                                        </div>
-                                                                                        <div className="flex flex-col gap-1">
-                                                                                            <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-                                                                                                <Clock3 className="h-3.5 w-3.5" />
-                                                                                                {formatRestTime(exercise.restTime)}
-                                                                                            </span>
-                                                                                            {exercise.targetRpe !== null && exercise.targetRpe !== undefined && (
-                                                                                                <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700">
-                                                                                                    <Gauge className="h-3.5 w-3.5" />
-                                                                                                    {exercise.targetRpe}
-                                                                                                </span>
-                                                                                            )}
                                                                                         </div>
                                                                                     </div>
 
@@ -974,12 +953,6 @@ export default function ProgramDetailContent({
                                                                                         {t('currentProgram.tableWeight')}
                                                                                     </th>
                                                                                     <th className="px-3 py-3">
-                                                                                        {t('currentProgram.tableRest')}
-                                                                                    </th>
-                                                                                    <th className="px-3 py-3">
-                                                                                        {t('currentProgram.tableRpe')}
-                                                                                    </th>
-                                                                                    <th className="px-3 py-3">
                                                                                         {t('currentProgram.tableNotes')}
                                                                                     </th>
                                                                                 </tr>
@@ -992,15 +965,6 @@ export default function ProgramDetailContent({
                                                                                         <tr key={exercise.id}>
                                                                                             <td className="px-3 py-3 align-top">
                                                                                                 <div className="flex items-center gap-2">
-                                                                                                    <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${exercise.exercise.type === 'fundamental'
-                                                                                                        ? 'bg-red-100 text-red-700'
-                                                                                                        : 'bg-blue-100 text-blue-700'
-                                                                                                        }`}>
-                                                                                                        {exercise.exercise.type === 'fundamental'
-                                                                                                            ? t('currentProgram.fundamentalShort')
-                                                                                                            : t('currentProgram.accessoryShort')}
-                                                                                                    </span>
-
                                                                                                     <span className="font-medium text-gray-900">
                                                                                                         {exercise.exercise.name}
                                                                                                     </span>
@@ -1032,12 +996,6 @@ export default function ProgramDetailContent({
                                                                                                         weight: weightLabels.assigned,
                                                                                                     })}
                                                                                                 </p>
-                                                                                            </td>
-                                                                                            <td className="px-3 py-3 align-top text-gray-700">
-                                                                                                {formatRestTime(exercise.restTime)}
-                                                                                            </td>
-                                                                                            <td className="px-3 py-3 align-top text-gray-700">
-                                                                                                {exercise.targetRpe ?? t('currentProgram.tableMissingValue')}
                                                                                             </td>
                                                                                             <td className="px-3 py-3 align-top text-xs italic text-gray-600">
                                                                                                 {exercise.notes || t('currentProgram.tableMissingValue')}

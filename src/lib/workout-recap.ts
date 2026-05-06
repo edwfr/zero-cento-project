@@ -1,5 +1,12 @@
 export type ExerciseStatus = 'not_started' | 'in_progress' | 'done'
 
+export interface SetRecap {
+    setNumber: number
+    reps: number
+    weight: number
+    completed: boolean
+}
+
 export interface ExerciseRecapItem {
     id: string
     exerciseName: string
@@ -9,6 +16,9 @@ export interface ExerciseRecapItem {
     reps: string
     effectiveWeight: number | null
     status: ExerciseStatus
+    actualRpe: number | null
+    exerciseNote: string | null
+    sets: SetRecap[]
 }
 
 export function computeExerciseStatus(completedSets: number, targetSets: number): ExerciseStatus {
@@ -30,5 +40,6 @@ export interface PrevWeekExerciseItem {
     order: number
     targetSets: number
     targetReps: string
+    exerciseNote: string | null
     sets: PrevWeekSet[]
 }

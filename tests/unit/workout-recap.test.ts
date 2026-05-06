@@ -32,6 +32,7 @@ describe('PrevWeekExerciseItem type', () => {
             order: 1,
             targetSets: 4,
             targetReps: '8',
+            exerciseNote: null,
             sets: [{ setNumber: 1, reps: 8, weight: 100, completed: true }],
         }
 
@@ -46,6 +47,7 @@ describe('PrevWeekExerciseItem type', () => {
             order: 2,
             targetSets: 3,
             targetReps: '10',
+            exerciseNote: null,
             sets: [],
         }
 

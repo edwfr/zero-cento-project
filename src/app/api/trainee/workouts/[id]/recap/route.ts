@@ -5,16 +5,6 @@ import { logger } from '@/lib/logger'
 import { computeExerciseStatus } from '@/lib/workout-recap'
 import type { ExerciseRecapItem } from '@/lib/workout-recap'
 
-interface RecapRow {
-    id: string
-    exerciseName: string
-    order: number
-    targetSets: number
-    completedSets: number
-    reps: string
-    effectiveWeight: number | null
-}
-
 export async function GET(
     _request: Request,
     { params }: { params: Promise<{ id: string }> }
@@ -24,50 +14,75 @@ export async function GET(
     try {
         const session = await requireRole(['trainee'])
 
-        const rows = await prisma.$queryRaw<RecapRow[]>`
-            SELECT
-                we.id,
-                e.name                                                           AS "exerciseName",
-                we.order                                                         AS "order",
-                we.sets                                                          AS "targetSets",
-                COALESCE(SUM(CASE WHEN sp.completed THEN 1 ELSE 0 END), 0)::int AS "completedSets",
-                we.reps                                                          AS "reps",
-                we."effectiveWeight"                                             AS "effectiveWeight"
-            FROM workout_exercises we
-            JOIN workouts w ON w.id = we."workoutId"
-            JOIN weeks wk ON wk.id = w."weekId"
-            JOIN training_programs tp ON tp.id = wk."programId"
-            JOIN exercises e ON e.id = we."exerciseId"
-            LEFT JOIN LATERAL (
-                SELECT id FROM exercise_feedbacks
-                WHERE "workoutExerciseId" = we.id
-                  AND "traineeId" = ${session.user.id}
-                ORDER BY date DESC
-                LIMIT 1
-            ) latest_ef ON true
-            LEFT JOIN sets_performed sp ON sp."feedbackId" = latest_ef.id
-            WHERE we."workoutId" = ${workoutId}
-              AND tp."traineeId" = ${session.user.id}
-            GROUP BY we.id, e.name, we.order, we.sets, we.reps, we."effectiveWeight"
-            ORDER BY we.order
-        `
+        const workout = await prisma.workout.findFirst({
+            where: {
+                id: workoutId,
+                week: { program: { traineeId: session.user.id } },
+            },
+            select: {
+                traineeNotes: true,
+                workoutExercises: {
+                    orderBy: { order: 'asc' },
+                    select: {
+                        id: true,
+                        order: true,
+                        sets: true,
+                        reps: true,
+                        effectiveWeight: true,
+                        exercise: { select: { name: true } },
+                        exerciseFeedbacks: {
+                            where: { traineeId: session.user.id },
+                            orderBy: { date: 'desc' },
+                            take: 1,
+                            select: {
+                                actualRpe: true,
+                                notes: true,
+                                setsPerformed: {
+                                    orderBy: { setNumber: 'asc' },
+                                    select: {
+                                        setNumber: true,
+                                        reps: true,
+                                        weight: true,
+                                        completed: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        })
 
-        if (rows.length === 0) {
+        if (!workout) {
             return apiError('NOT_FOUND', 'Workout not found', 404, undefined, 'workout.notFound')
         }
 
-        const exercises: ExerciseRecapItem[] = rows.map((row) => ({
-            id: row.id,
-            exerciseName: row.exerciseName,
-            order: row.order,
-            targetSets: row.targetSets,
-            completedSets: row.completedSets,
-            reps: row.reps,
-            effectiveWeight: row.effectiveWeight,
-            status: computeExerciseStatus(row.completedSets, row.targetSets),
-        }))
+        const exercises: ExerciseRecapItem[] = workout.workoutExercises.map((we) => {
+            const feedback = we.exerciseFeedbacks[0] ?? null
+            const setsPerformed = feedback?.setsPerformed ?? []
+            const completedSets = setsPerformed.filter((s) => s.completed).length
 
-        return apiSuccess({ exercises })
+            return {
+                id: we.id,
+                exerciseName: we.exercise.name,
+                order: we.order,
+                targetSets: we.sets,
+                completedSets,
+                reps: we.reps,
+                effectiveWeight: we.effectiveWeight,
+                status: computeExerciseStatus(completedSets, we.sets),
+                actualRpe: feedback?.actualRpe ?? null,
+                exerciseNote: feedback?.notes ?? null,
+                sets: setsPerformed.map((s) => ({
+                    setNumber: s.setNumber,
+                    reps: s.reps,
+                    weight: s.weight,
+                    completed: s.completed,
+                })),
+            }
+        })
+
+        return apiSuccess({ exercises, workoutNote: workout.traineeNotes ?? null })
     } catch (error: unknown) {
         if (error instanceof Response) return error
         logger.error({ error, workoutId }, 'Error fetching workout recap')

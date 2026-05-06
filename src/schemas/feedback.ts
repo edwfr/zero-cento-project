@@ -50,7 +50,7 @@ export const weekFeedbackSchema = z.object({
 })
 
 export const workoutSubmitSchema = z.object({
-    notes: z.string().max(1000, 'validation.notesTooLong').nullish(),
+    traineeNotes: z.string().max(1000, 'validation.notesTooLong').nullish(),
     exercises: z
         .array(
             z.object({
@@ -78,6 +78,7 @@ export const workoutExerciseAutosaveSchema = z.object({
         .max(10.0, 'validation.rpeMax')
         .multipleOf(0.5, 'validation.rpeStep')
         .nullish(),
+    notes: z.string().max(1000, 'validation.notesTooLong').nullish(),
     sets: z
         .array(setPerformedSchema)
         .min(1, 'validation.minOneSeries')
@@ -90,3 +91,4 @@ export type UpdateFeedbackInput = z.infer<typeof updateFeedbackSchema>
 export type WeekFeedbackInput = z.infer<typeof weekFeedbackSchema>
 export type WorkoutSubmitInput = z.infer<typeof workoutSubmitSchema>
 export type WorkoutExerciseAutosaveInput = z.infer<typeof workoutExerciseAutosaveSchema>
+

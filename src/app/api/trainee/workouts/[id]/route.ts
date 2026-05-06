@@ -228,7 +228,7 @@ export async function GET(
             workout: {
                 id: workout.id,
                 dayIndex: workout.dayIndex,
-                notes: workout.notes,
+                traineeNotes: workout.traineeNotes,
                 weekNumber: workout.week.weekNumber,
                 weekType: workout.week.weekType,
                 program: {

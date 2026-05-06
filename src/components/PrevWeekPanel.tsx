@@ -1,25 +1,25 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { X, History } from 'lucide-react'
+import { History, FileText, ChevronDown, ChevronUp } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { PrevWeekExerciseItem } from '@/lib/workout-recap'
 
 interface PrevWeekPanelProps {
     workoutId: string
-    isOpen: boolean
-    onClose: () => void
 }
 
-export default function PrevWeekPanel({ workoutId, isOpen, onClose }: PrevWeekPanelProps) {
+export default function PrevWeekPanel({ workoutId }: PrevWeekPanelProps) {
     const { t } = useTranslation('trainee')
     const prevWeekErrorText = t('workouts.prevWeekError')
+    const [expanded, setExpanded] = useState(false)
     const [exercises, setExercises] = useState<PrevWeekExerciseItem[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
-        if (!isOpen) return
+        if (!expanded) return
+        if (exercises.length > 0 || error) return // already loaded
         let cancelled = false
 
         const load = async () => {
@@ -50,49 +50,36 @@ export default function PrevWeekPanel({ workoutId, isOpen, onClose }: PrevWeekPa
         return () => {
             cancelled = true
         }
-    }, [isOpen, workoutId, prevWeekErrorText])
-
-    if (!isOpen) return null
+    }, [expanded, workoutId, prevWeekErrorText, exercises.length, error])
 
     return (
-        <>
-            <div
-                className="fixed inset-0 z-30 bg-black/40"
-                onClick={onClose}
-                aria-hidden="true"
-            />
-
-            <div
-                role="dialog"
-                aria-label={t('workouts.prevWeekTitle')}
-                className="fixed bottom-0 left-0 right-0 z-40 flex max-h-[80vh] flex-col rounded-t-2xl bg-white shadow-xl"
+        <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+            {/* Header / toggle */}
+            <button
+                type="button"
+                onClick={() => setExpanded((v) => !v)}
+                aria-expanded={expanded}
+                className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
             >
-                <div className="flex justify-center pb-1 pt-3">
-                    <div className="h-1 w-10 rounded-full bg-gray-300" />
-                </div>
+                <History className="h-4 w-4 shrink-0 text-gray-400" />
+                <span className="flex-1 text-sm font-semibold text-gray-700">
+                    {t('workouts.prevWeekTitle')}
+                </span>
+                {expanded
+                    ? <ChevronUp className="h-4 w-4 shrink-0 text-gray-400" />
+                    : <ChevronDown className="h-4 w-4 shrink-0 text-gray-400" />
+                }
+            </button>
 
-                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-                    <div className="flex items-center gap-2">
-                        <History className="h-4 w-4 text-gray-400" />
-                        <h2 className="text-base font-bold text-gray-900">{t('workouts.prevWeekTitle')}</h2>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        aria-label={t('workouts.prevWeekClose')}
-                        className="rounded p-1 text-gray-500 hover:bg-gray-100"
-                    >
-                        <X className="h-5 w-5" />
-                    </button>
-                </div>
-
-                <div className="flex-1 overflow-y-auto px-4 py-3">
+            {/* Collapsible body */}
+            {expanded && (
+                <div className="border-t border-gray-100 px-4 py-3">
                     {loading && (
-                        <p className="py-8 text-center text-sm text-gray-500">{t('workouts.prevWeekLoading')}</p>
+                        <p className="py-4 text-center text-sm text-gray-500">{t('workouts.prevWeekLoading')}</p>
                     )}
 
                     {error && (
-                        <p className="py-8 text-center text-sm text-red-600">{error}</p>
+                        <p className="py-4 text-center text-sm text-red-600">{error}</p>
                     )}
 
                     {!loading && !error && (
@@ -123,12 +110,18 @@ export default function PrevWeekPanel({ workoutId, isOpen, onClose }: PrevWeekPa
                                             ))}
                                         </ul>
                                     )}
+                                    {exercise.exerciseNote && (
+                                        <p className="mt-1.5 flex items-start gap-1 text-xs text-gray-500 italic">
+                                            <FileText className="mt-0.5 h-3 w-3 flex-shrink-0" />
+                                            {exercise.exerciseNote}
+                                        </p>
+                                    )}
                                 </li>
                             ))}
                         </ul>
                     )}
                 </div>
-            </div>
-        </>
+            )}
+        </div>
     )
 }
