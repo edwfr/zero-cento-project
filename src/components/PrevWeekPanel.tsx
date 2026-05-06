@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { History, FileText, ChevronDown, ChevronUp } from 'lucide-react'
+import { History, ChevronDown, ChevronUp } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { PrevWeekExerciseItem } from '@/lib/workout-recap'
+import WorkoutExerciseDisplayList, { type ExerciseDisplayItem } from './WorkoutExerciseDisplayList'
 
 interface PrevWeekPanelProps {
     workoutId: string
@@ -52,6 +53,14 @@ export default function PrevWeekPanel({ workoutId }: PrevWeekPanelProps) {
         }
     }, [expanded, workoutId, prevWeekErrorText, exercises.length, error])
 
+    const displayItems: ExerciseDisplayItem[] = exercises.map((ex) => ({
+        id: ex.id,
+        exerciseName: ex.exerciseName,
+        scheme: `${ex.targetSets} x ${ex.targetReps}`,
+        performedSets: ex.sets,
+        traineeNote: ex.exerciseNote,
+    }))
+
     return (
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
             {/* Header / toggle */}
@@ -83,42 +92,13 @@ export default function PrevWeekPanel({ workoutId }: PrevWeekPanelProps) {
                     )}
 
                     {!loading && !error && (
-                        <ul className="space-y-0">
-                            {exercises.map((exercise) => (
-                                <li
-                                    key={exercise.id}
-                                    className="border-b border-gray-100 py-3 last:border-0"
-                                >
-                                    <p className="mb-1 truncate text-sm font-semibold text-gray-800">
-                                        {exercise.exerciseName}
-                                    </p>
-                                    {exercise.sets.length === 0 ? (
-                                        <p className="text-xs text-gray-400">{t('workouts.prevWeekNoData')}</p>
-                                    ) : (
-                                        <ul className="space-y-0.5">
-                                            {exercise.sets.map((set) => (
-                                                <li
-                                                    key={set.setNumber}
-                                                    className="text-xs text-gray-500 tabular-nums"
-                                                >
-                                                    {t('workouts.prevWeekSetRow', {
-                                                        set: set.setNumber,
-                                                        reps: set.reps,
-                                                        weight: set.weight,
-                                                    })}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                    {exercise.exerciseNote && (
-                                        <p className="mt-1.5 flex items-start gap-1 text-xs text-gray-500 italic">
-                                            <FileText className="mt-0.5 h-3 w-3 flex-shrink-0" />
-                                            {exercise.exerciseNote}
-                                        </p>
-                                    )}
-                                </li>
-                            ))}
-                        </ul>
+                        <WorkoutExerciseDisplayList
+                            items={displayItems}
+                            emptyText={t('workouts.prevWeekNoData')}
+                            setRowLabel={(set, reps, weight) =>
+                                t('workouts.prevWeekSetRow', { set, reps, weight })
+                            }
+                        />
                     )}
                 </div>
             )}

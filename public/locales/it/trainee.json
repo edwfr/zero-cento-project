@@ -82,9 +82,14 @@
         "statsCompleted": "Programmi Completati",
         "statsActive": "Programmi Attivi",
         "statsHeading": "Riepilogo",
+        "statsLine": "{{total}} programm{{total, plural, one{a} other{i}}} · {{active}} attiv{{active, plural, one{o} other{i}}} · {{completed}} completat{{completed, plural, one{o} other{i}}}",
         "programsHeading": "I tuoi programmi",
         "progressLabel": "Progresso",
         "workoutsLabel": "Workout",
+        "programRowStarted": "dal {{date}}",
+        "programRowPeriod": "{{start}} → {{end}}",
+        "programRowDuration": "{{count}} sett.",
+        "programRowProgress": "{{percent}}% ({{completed}}/{{total}} workout)",
         "noEndDate": "—"
     },
     "currentProgram": {

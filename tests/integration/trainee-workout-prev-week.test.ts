@@ -82,6 +82,7 @@ describe('GET /api/trainee/workouts/[id]/prev-week', () => {
                 order: 1,
                 targetSets: 3,
                 targetReps: '5',
+                exerciseNote: null,
                 sets: [
                     { setNumber: 1, reps: 5, weight: 120, completed: true },
                     { setNumber: 2, reps: 5, weight: 120, completed: true },
@@ -93,6 +94,7 @@ describe('GET /api/trainee/workouts/[id]/prev-week', () => {
                 order: 2,
                 targetSets: 2,
                 targetReps: '12',
+                exerciseNote: null,
                 sets: [],
             },
         ])

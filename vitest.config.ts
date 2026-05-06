@@ -27,6 +27,7 @@ export default defineConfig({
                 'src/components/ActionIconButton.tsx',
                 'src/components/DashboardLayout.tsx',
                 'src/components/PrevWeekPanel.tsx',
+                'src/components/WorkoutExerciseDisplayList.tsx',
                 'src/app/api/exercises/route.ts',
                 'src/app/api/exercises/[id]/route.ts',
                 'src/app/api/feedback/route.ts',

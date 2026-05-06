@@ -82,9 +82,14 @@
         "statsCompleted": "Completed Programs",
         "statsActive": "Active Programs",
         "statsHeading": "Summary",
+        "statsLine": "{{total}} program{{total, plural, one{} other{s}}} · {{active}} active · {{completed}} completed",
         "programsHeading": "Your programs",
         "progressLabel": "Progress",
         "workoutsLabel": "Workouts",
+        "programRowStarted": "from {{date}}",
+        "programRowPeriod": "{{start}} → {{end}}",
+        "programRowDuration": "{{count}} wk.",
+        "programRowProgress": "{{percent}}% ({{completed}}/{{total}} workouts)",
         "noEndDate": "—"
     },
     "currentProgram": {

@@ -10,7 +10,7 @@ vi.mock('@/lib/auth', () => ({
 
 vi.mock('@/lib/prisma', () => ({
     prisma: {
-        workout: { findFirst: vi.fn() },
+        workout: { findFirst: vi.fn(), update: vi.fn() },
         workoutExercise: { update: vi.fn() },
         exerciseFeedback: { upsert: vi.fn() },
         $transaction: vi.fn(),
@@ -56,6 +56,7 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
             { id: UUIDS.feedback2, workoutExerciseId: UUIDS.wex2, actualRpe: 7.5, notes: 'great session', date: '2026-05-02' },
             { id: UUIDS.wex1 },
             { id: UUIDS.wex2 },
+            { id: UUIDS.workout },
         ])
         ;(cascadeWorkoutCompletion as any).mockResolvedValue({
             workout: { id: UUIDS.workout, isCompleted: true },
@@ -64,7 +65,7 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
         })
 
         const body = {
-            notes: 'great session',
+            traineeNotes: 'great session',
             exercises: [
                 {
                     workoutExerciseId: UUIDS.wex1,
@@ -111,6 +112,7 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
         ;(prisma.$transaction as any).mockResolvedValue([
             { id: UUIDS.feedback1, workoutExerciseId: UUIDS.wex1, actualRpe: null, notes: 'partial session', date: '2026-05-02' },
             { id: UUIDS.wex1 },
+            { id: UUIDS.workout },
         ])
         ;(cascadeWorkoutCompletion as any).mockResolvedValue({
             workout: { id: UUIDS.workout, isCompleted: true },
@@ -119,7 +121,7 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
         })
 
         const body = {
-            notes: 'partial session',
+            traineeNotes: 'partial session',
             exercises: [
                 {
                     workoutExerciseId: UUIDS.wex1,
@@ -156,7 +158,7 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
         ;(prisma.workout.findFirst as any).mockResolvedValue(null)
 
         const body = {
-            notes: null,
+            traineeNotes: null,
             exercises: [
                 {
                     workoutExerciseId: UUIDS.wex1,
@@ -184,7 +186,7 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
         })
 
         const body = {
-            notes: null,
+            traineeNotes: null,
             exercises: [
                 {
                     workoutExerciseId: UUIDS.wex2,
@@ -206,7 +208,7 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
     })
 
     it('returns 400 on schema validation error (empty exercises)', async () => {
-        const body = { notes: null, exercises: [] }
+        const body = { traineeNotes: null, exercises: [] }
 
         const request = new NextRequest('http://localhost/api/trainee/workouts/' + UUIDS.workout + '/submit', {
             method: 'POST',

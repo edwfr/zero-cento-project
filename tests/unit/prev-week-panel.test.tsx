@@ -26,6 +26,7 @@ const mockExercises = [
         order: 1,
         targetSets: 3,
         targetReps: '8',
+        exerciseNote: 'Felt strong',
         sets: [
             { setNumber: 1, reps: 8, weight: 80, completed: true },
             { setNumber: 2, reps: 8, weight: 80, completed: true },
@@ -38,6 +39,7 @@ const mockExercises = [
         order: 2,
         targetSets: 3,
         targetReps: '12',
+        exerciseNote: null,
         sets: [],
     },
 ]
@@ -47,15 +49,14 @@ describe('PrevWeekPanel', () => {
         vi.resetAllMocks()
     })
 
-    it('renders nothing when closed', () => {
-        const { container } = render(
-            <PrevWeekPanel workoutId="w1" isOpen={false} onClose={vi.fn()} />
-        )
+    it('renders header while collapsed by default', () => {
+        render(<PrevWeekPanel workoutId="w1" />)
 
-        expect(container).toBeEmptyDOMElement()
+        expect(screen.getByText('Last Week')).toBeInTheDocument()
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument()
     })
 
-    it('shows loading state initially when open', () => {
+    it('shows loading state after opening panel', async () => {
         global.fetch = vi.fn().mockImplementation(
             async () =>
                 new Promise(() => {
@@ -63,7 +64,10 @@ describe('PrevWeekPanel', () => {
                 })
         ) as unknown as typeof fetch
 
-        render(<PrevWeekPanel workoutId="w1" isOpen={true} onClose={vi.fn()} />)
+        const user = userEvent.setup()
+        render(<PrevWeekPanel workoutId="w1" />)
+
+        await user.click(screen.getByRole('button', { name: 'Last Week' }))
 
         expect(screen.getByText('Loading...')).toBeInTheDocument()
     })
@@ -74,13 +78,16 @@ describe('PrevWeekPanel', () => {
             json: async () => ({ data: { exercises: mockExercises } }),
         }) as unknown as typeof fetch
 
-        render(<PrevWeekPanel workoutId="w1" isOpen={true} onClose={vi.fn()} />)
+        const user = userEvent.setup()
+        render(<PrevWeekPanel workoutId="w1" />)
+        await user.click(screen.getByRole('button', { name: 'Last Week' }))
 
         await waitFor(() => expect(screen.getByText('Bench Press')).toBeInTheDocument())
         expect(screen.getByText('#1 · 8 rep · 80 kg')).toBeInTheDocument()
         expect(screen.getByText('#3 · 7 rep · 80 kg')).toBeInTheDocument()
         expect(screen.getByText('Tricep Extension')).toBeInTheDocument()
-        expect(screen.getByText('No data')).toBeInTheDocument()
+        expect(screen.getByText('Felt strong')).toBeInTheDocument()
+        expect(screen.getByText('3 x 12')).toBeInTheDocument()
     })
 
     it('shows error when fetch fails', async () => {
@@ -89,23 +96,29 @@ describe('PrevWeekPanel', () => {
             json: async () => ({ error: { message: 'Server error' } }),
         }) as unknown as typeof fetch
 
-        render(<PrevWeekPanel workoutId="w1" isOpen={true} onClose={vi.fn()} />)
+        const user = userEvent.setup()
+        render(<PrevWeekPanel workoutId="w1" />)
+        await user.click(screen.getByRole('button', { name: 'Last Week' }))
 
         await waitFor(() => expect(screen.getByText('Server error')).toBeInTheDocument())
     })
 
-    it('calls onClose when close button is clicked', async () => {
+    it('toggles content visibility when header button is clicked', async () => {
         global.fetch = vi.fn().mockResolvedValue({
             ok: true,
             json: async () => ({ data: { exercises: [] } }),
         }) as unknown as typeof fetch
 
-        const onClose = vi.fn()
         const user = userEvent.setup()
-        render(<PrevWeekPanel workoutId="w1" isOpen={true} onClose={onClose} />)
+        render(<PrevWeekPanel workoutId="w1" />)
 
-        await user.click(screen.getByRole('button', { name: 'Close' }))
-        expect(onClose).toHaveBeenCalledOnce()
+        const toggle = screen.getByRole('button', { name: 'Last Week' })
+
+        await user.click(toggle)
+        await waitFor(() => expect(screen.getByText('No data')).toBeInTheDocument())
+
+        await user.click(toggle)
+        expect(screen.queryByText('No data')).not.toBeInTheDocument()
     })
 
     it('re-fetches when workoutId changes', async () => {
@@ -114,13 +127,16 @@ describe('PrevWeekPanel', () => {
             json: async () => ({ data: { exercises: [] } }),
         }) as unknown as typeof fetch
 
-        const { rerender } = render(
-            <PrevWeekPanel workoutId="w1" isOpen={true} onClose={vi.fn()} />
-        )
+        const user = userEvent.setup()
+        const { rerender } = render(<PrevWeekPanel workoutId="w1" />)
+
+        await user.click(screen.getByRole('button', { name: 'Last Week' }))
 
         await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1))
 
-        rerender(<PrevWeekPanel workoutId="w2" isOpen={true} onClose={vi.fn()} />)
+        rerender(<PrevWeekPanel workoutId="w2" />)
+
+        await user.click(screen.getByRole('button', { name: 'Last Week' }))
 
         await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2))
     })

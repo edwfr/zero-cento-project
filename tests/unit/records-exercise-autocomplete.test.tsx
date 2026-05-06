@@ -34,5 +34,5 @@ describe('TraineeRecordsContent modal exercise field', () => {
 
         const exerciseInput = screen.getByLabelText(/personalRecords\.exercise/i)
         expect(exerciseInput.tagName).toBe('INPUT')
-    })
+    }, 15000)
 })

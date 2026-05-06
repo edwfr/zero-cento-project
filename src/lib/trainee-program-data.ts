@@ -80,6 +80,7 @@ interface WorkoutEntry {
     exercisesPerformed: Array<{
         workoutExerciseId: string
         performedSets: Array<{ setNumber: number; reps: number; weight: number }>
+        traineeNote: string | null
     }>
 }
 
@@ -341,6 +342,25 @@ export async function loadProgressAggregates(programId: string): Promise<Trainee
         orderBy: [{ feedback: { date: 'desc' } }, { setNumber: 'asc' }],
     }) as unknown as PerformedSetRow[]
 
+    const feedbackNotesRows = await prisma.exerciseFeedback.findMany({
+        where: {
+            workoutExercise: { workout: { week: { programId } } },
+            notes: { not: null },
+        },
+        select: {
+            workoutExerciseId: true,
+            notes: true,
+        },
+        orderBy: { updatedAt: 'desc' },
+    })
+
+    const latestNoteByWeId = new Map<string, string>()
+    for (const row of feedbackNotesRows) {
+        if (!latestNoteByWeId.has(row.workoutExerciseId) && row.notes) {
+            latestNoteByWeId.set(row.workoutExerciseId, row.notes)
+        }
+    }
+
     // De-dup: keep set rows from the most recent completed feedback per workoutExerciseId.
     const exercisesPerformedMap = new Map<string, Map<string, { setNumber: number; reps: number; weight: number }[]>>()
     const seenWorkoutExerciseIds = new Set<string>()
@@ -380,7 +400,11 @@ export async function loadProgressAggregates(programId: string): Promise<Trainee
 
         const exercisesPerformedForWorkout = exercisesPerformedMap.get(wk.id) ?? new Map()
         const exercisesPerformed = Array.from(exercisesPerformedForWorkout.entries()).map(
-            ([workoutExerciseId, performedSets]) => ({ workoutExerciseId, performedSets })
+            ([workoutExerciseId, performedSets]) => ({
+                workoutExerciseId,
+                performedSets,
+                traineeNote: latestNoteByWeId.get(workoutExerciseId) ?? null,
+            })
         )
 
         return {

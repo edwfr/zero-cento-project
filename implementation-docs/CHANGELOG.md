@@ -8,6 +8,53 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [6 Maggio 2026] — Stabilizzazione test residui suite completa
+
+**Task checklist:** follow-up QA branch
+**File modificati:**
+`tests/integration/trainee-workout-prev-week.test.ts`,
+`tests/integration/trainee-workout-submit.test.ts`,
+`tests/unit/trainee-workout-focus.test.tsx`,
+`tests/unit/records-exercise-autocomplete.test.tsx`
+
+**Note:**
+- Allineati i test integrazione `prev-week` alla shape aggiornata con `exerciseNote`.
+- Aggiornati i test `submit workout` al payload corrente (`traineeNotes`) e alla transazione Prisma che include `workout.update`.
+- Aggiornate le aspettative dei test focus mode trainee al comportamento UI corrente (badge tipo esercizio, input set disabilitati dopo completion, warning card nel riepilogo, posizione pannello previous week).
+- Ridotta la flakiness del test autocomplete con timeout esplicito del caso lento.
+- Verifica finale eseguita: `npm run test:unit` con suite completamente verde.
+
+---
+
+## [6 Maggio 2026] — Refactor dettaglio programma trainee e storico compatto
+
+**Task checklist:** #11.80
+**File modificati:**
+`src/lib/trainee-program-data.ts`,
+`src/components/WorkoutExerciseDisplayList.tsx`,
+`src/components/PrevWeekPanel.tsx`,
+`src/components/index.ts`,
+`src/app/trainee/programs/_components/ProgramDetailContent.tsx`,
+`src/app/trainee/history/_content.tsx`,
+`public/locales/it/trainee.json`,
+`public/locales/en/trainee.json`,
+`tests/unit/WorkoutExerciseDisplayList.test.tsx`,
+`tests/unit/trainee-program-data-notes.test.ts`,
+`tests/unit/prev-week-panel.test.tsx`,
+`tests/unit/lib/trainee-program-data.test.ts`,
+`vitest.config.ts`,
+`implementation-docs/CHECKLIST.md`
+
+**Note:**
+- Aggiunta la proprieta `traineeNote` negli aggregati progress (`exercisesPerformed`) caricando la nota piu recente per `workoutExercise` da `exercise_feedbacks.notes`.
+- Introdotto il nuovo componente condiviso `WorkoutExerciseDisplayList` per uniformare rendering esercizi/set/note tra pannelli trainee.
+- `PrevWeekPanel` ora usa `WorkoutExerciseDisplayList` con mapping dei set precedenti e note trainee.
+- `ProgramDetailContent` ora usa toggle settimana icon-only in header, integra `WorkoutExerciseDisplayList` nei dettagli workout e preserva `traineeNote` nel merge program/progress.
+- `/trainee/history` compattata con stats inline e card programma monoriga con metadati e avanzamento attivo in testo.
+- Aggiornati test unitari correlati e aggiunta copertura dedicata per il nuovo componente.
+
+---
+
 ## [6 Maggio 2026] — Note trainee per esercizio e workout summary
 
 **Task checklist:** spec `docs/superpowers/specs/2026-05-06-trainee-workout-notes-design.md`

@@ -628,6 +628,7 @@
 - [x] **11.77** Sostituire preview/skeleton iniziale di `/trainee/records` con loader giallo brand (`FullPageLoader`) al caricamento schermata ✅ _6 Mag 2026_
 - [x] **11.78** Su `/trainee/records` mostrare solo loader giallo senza testo transitorio (`Stiamo preparando...`) durante il fetch iniziale ✅ _6 Mag 2026_
 - [x] **11.79** Nello storico progressione di `/trainee/records` mostrare prima il grafico e poi la tabella ✅ _6 Mag 2026_
+- [x] **11.80** Refactor `/trainee/programs/[id]` e `/trainee/history`: toggle settimana icon-only, componente condiviso `WorkoutExerciseDisplayList`, note trainee per esercizio completato e card storico compatte in singola riga ✅ _6 Mag 2026_
 
 ---
 

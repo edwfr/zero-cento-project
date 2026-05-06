@@ -4,7 +4,7 @@ vi.mock('@/lib/prisma', () => ({
     prisma: {
         trainingProgram: { findUnique: vi.fn(), findFirst: vi.fn() },
         workout: { findMany: vi.fn() },
-        exerciseFeedback: { aggregate: vi.fn() },
+        exerciseFeedback: { aggregate: vi.fn(), findMany: vi.fn() },
         setPerformed: { findMany: vi.fn() },
         personalRecord: { findMany: vi.fn() },
         $queryRaw: vi.fn(),
@@ -31,6 +31,7 @@ beforeEach(() => {
         _avg: { actualRpe: null },
         _count: { _all: 0 },
     })
+    ;(prisma.exerciseFeedback.findMany as any).mockResolvedValue([])
     ;(prisma.setPerformed.findMany as any).mockResolvedValue([])
     ;(prisma.personalRecord.findMany as any).mockResolvedValue([])
 })
