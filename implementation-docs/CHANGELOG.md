@@ -8,6 +8,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [6 Maggio 2026] — WeekTypeBanner: layout mobile ottimizzato
+
+Ristrutturato il layout mobile di `WeekTypeBanner` per migliorare la leggibilità su smartphone. Mobile: icona + badge sulla stessa riga (justify-between), titolo sotto a piena larghezza, progress bar in fondo. Desktop invariato (flex-row con badge a destra). Eliminata duplicazione dei `badgeLabels` estraendo la costante fuori dal JSX.
+
+---
+
 ## [6 Maggio 2026] — Fix: token i18n rotti in /trainee/history statsLine
 
 Rimosso uso di sintassi ICU plural `{{var, plural, one{} other{}}}` non supportata da i18next senza plugin. Sostituita con 3 chiavi separate (`statsTotal`, `statsActive_count`, `statsCompleted_count`) con suffissi `_one`/`_other` per pluralizzazione nativa i18next. Aggiornato componente `_content.tsx` per comporre la stringa con 3 chiamate `t()` separate.
@@ -34,6 +40,9 @@ Rimosso uso di sintassi ICU plural `{{var, plural, one{} other{}}}` non supporta
 - Rimossa la classe `bg-white` dal wrapper sticky del banner in `/trainee/workouts/[id]` per eliminare il pannello bianco disallineato rispetto alla card esercizio sottostante.
 - Rimosso anche il bordo inferiore `border-b border-gray-200` del wrapper sticky per eliminare il separatore grigio tra banner e card esercizio.
 - Ridotto lo spazio verticale tra `WeekTypeBanner` sticky e prima card esercizio diminuendo `pb` del wrapper header e `pt` del contenuto scrollabile.
+- Ottimizzazione performance focus mode trainee: aggiunta cache client-side per workoutId su `PrevWeekPanel` e `WorkoutRecapPanel`; dalla seconda apertura dello stesso workout i pannelli usano dati in memoria senza nuove chiamate backend.
+- Refactor UX `/trainee/workouts/[id]`: rimosso recap dal floating button e trasformato in pannello inline espandibile/collassabile (stile `PrevWeekPanel`), posizionato tra card esercizio e sezione settimana precedente.
+- Fix coerenza stato recap: rimossa cache del `WorkoutRecapPanel` per forzare fetch backend a ogni apertura; aggiunta chiusura automatica pannello quando cambia esercizio (navigazione `<`/`>` o selezione esercizio dal recap).
 
 ---
 

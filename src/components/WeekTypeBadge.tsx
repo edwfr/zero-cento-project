@@ -8,6 +8,7 @@ interface WeekTypeBadgeProps {
     weekType: WeekType
     labels?: Partial<WeekTypeBadgeLabels>
     variant?: 'solid' | 'ghost'
+    className?: string
 }
 
 const ICON_CLASS = 'h-3.5 w-3.5 shrink-0'
@@ -63,14 +64,14 @@ const CONFIG: Record<WeekType, { solid: string; ghost: string; icon: ReactNode; 
     },
 }
 
-export default function WeekTypeBadge({ weekType, labels, variant = 'solid' }: WeekTypeBadgeProps) {
+export default function WeekTypeBadge({ weekType, labels, variant = 'solid', className: extraClassName = '' }: WeekTypeBadgeProps) {
     const baseClassName = 'inline-flex items-center gap-1.5 rounded-full border-2 px-3 py-1 text-xs font-semibold'
     const { solid, ghost, icon, defaultLabel } = CONFIG[weekType]
     const label = labels?.[weekType] ?? defaultLabel
-    const className = variant === 'ghost' ? ghost : solid
+    const colorClassName = variant === 'ghost' ? ghost : solid
 
     return (
-        <span className={`${baseClassName} ${className}`}>
+        <span className={`${baseClassName} ${colorClassName} ${extraClassName}`.trim()}>
             {icon}
             <span>{label}</span>
         </span>

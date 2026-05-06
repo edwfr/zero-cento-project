@@ -5,8 +5,11 @@ interface ProgressBarProps {
     total: number
     label?: string
     showPercentage?: boolean
+    showCurrentTotal?: boolean
     size?: 'sm' | 'md' | 'lg'
     color?: 'primary' | 'success' | 'warning' | 'danger'
+    barClassName?: string
+    labelClassName?: string
     className?: string
 }
 
@@ -19,8 +22,11 @@ export default function ProgressBar({
     total,
     label,
     showPercentage = true,
+    showCurrentTotal = true,
     size = 'md',
     color = 'primary',
+    barClassName = '',
+    labelClassName = 'text-sm font-semibold text-gray-700',
     className = '',
 }: ProgressBarProps) {
     const percentage = total > 0 ? Math.round((current / total) * 100) : 0
@@ -42,7 +48,7 @@ export default function ProgressBar({
         <div className={className}>
             {(label || showPercentage) && (
                 <div className="flex items-center justify-between mb-2">
-                    {label && <span className="text-sm font-semibold text-gray-700">{label}</span>}
+                    {label && <span className={labelClassName}>{label}</span>}
                     {showPercentage && (
                         <span className="text-sm font-semibold text-gray-900">{percentage}%</span>
                     )}
@@ -51,7 +57,7 @@ export default function ProgressBar({
 
             <div className={`w-full bg-gray-200 rounded-full overflow-hidden ${sizeClasses[size]}`}>
                 <div
-                    className={`${colorClasses[color]} ${sizeClasses[size]} rounded-full transition-all duration-500 ease-out`}
+                    className={`${barClassName || colorClasses[color]} ${sizeClasses[size]} rounded-full transition-all duration-500 ease-out`}
                     style={{ width: `${percentage}%` }}
                     role="progressbar"
                     aria-valuenow={current}
@@ -61,7 +67,7 @@ export default function ProgressBar({
                 />
             </div>
 
-            {total > 0 && (
+            {showCurrentTotal && total > 0 && (
                 <div className="flex items-center justify-between mt-1">
                     <span className="text-xs text-gray-600">
                         {current} / {total}
