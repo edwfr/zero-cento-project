@@ -8,6 +8,13 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [Unreleased]
+
+### Changed
+- `ExerciseFocusCard`: "Nota Esercizio (opzionale)" section is now collapsible. Collapsed by default; expanded if a saved note exists. Toggle button in header row with ChevronUp/ChevronDown icon.
+
+---
+
 ## [6 Maggio 2026] — Riepilogo esercizi aggiornato subito dopo la spunta
 
 **Task checklist:** #11.95
