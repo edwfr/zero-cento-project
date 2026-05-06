@@ -4,7 +4,7 @@
 - [ ] [TRN-001] Aggiungere timer dopo flag della serie
 - [x] [TRN-002] Aggiungere box per RPE in vista esercizio
 - [ ] [TRN-003] Rendere feedback obbligatorio per settimana di test
-- [ ] [TRN-004] Aggiungere note per esercizio su singolo workout
+- [x] [TRN-004] Aggiungere note per esercizio su singolo workout
 - [x] [TRN-005] Vista dei massimali con grafici - riusare grafici della sezione trainer?
 
 ## TO DO LIST TRAINER
@@ -12,5 +12,5 @@
 - [x] [TRN-007] Aggiunta esercizio con + tra le righe e nuove righe subito ordinabile
 - [ ] [TRN-008] -n% con riga precedente senza peso
 - [ ] [TRN-009] Creazione nuova scheda da precedente
-- [ ] [TRN-010] Rivedere Week Type (Standard nome errato)
+- [x] [TRN-010] Rivedere Week Type (Standard nome errato)
 - [ ] [TRN-011] Rivedere data model per skeleton

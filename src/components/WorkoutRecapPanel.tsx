@@ -8,10 +8,16 @@ import type { ExerciseRecapItem, ExerciseStatus } from '@/lib/workout-recap'
 interface WorkoutRecapPanelProps {
     workoutId: string
     closeSignal?: number
+    refreshSignal?: number
     onSelectExercise?: (workoutExerciseId: string) => void
 }
 
-export default function WorkoutRecapPanel({ workoutId, closeSignal, onSelectExercise }: WorkoutRecapPanelProps) {
+export default function WorkoutRecapPanel({
+    workoutId,
+    closeSignal,
+    refreshSignal,
+    onSelectExercise,
+}: WorkoutRecapPanelProps) {
     const { t } = useTranslation('trainee')
     const recapErrorText = t('workouts.recapError')
     const [expanded, setExpanded] = useState(false)
@@ -57,7 +63,7 @@ export default function WorkoutRecapPanel({ workoutId, closeSignal, onSelectExer
         return () => {
             cancelled = true
         }
-    }, [expanded, workoutId, recapErrorText])
+    }, [expanded, workoutId, recapErrorText, refreshSignal])
 
     return (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">

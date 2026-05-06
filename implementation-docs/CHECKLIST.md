@@ -643,6 +643,7 @@
 - [x] **11.92** `Riepilogo esercizi`: mostrare reps/kg pianificati per set non completati e reps/kg effettivi per set completati (con righe non completate barrate) ✅ _6 Mag 2026_
 - [x] **11.93** `Riepilogo esercizi`: layout sintetico solo con nome esercizio, `serie × rep × kg` e stato avanzamento; rimosso dettaglio sotto riga ✅ _6 Mag 2026_
 - [x] **11.94** `ExerciseFocusCard` (trainee workout focus): spostare badge tipo esercizio nella riga rest, sostituire `F/A` con etichette complete tradotte e rendere `rest` minuscolo in EN/IT ✅ _6 Mag 2026_
+- [x] **11.95** `/trainee/workouts/[id]`: aggiornare in tempo reale `Riepilogo esercizi` dopo la spunta di una serie/esercizio, anche con pannello recap gia aperto ✅ _6 Mag 2026_
 
 ---
 

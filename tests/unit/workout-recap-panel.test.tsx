@@ -173,6 +173,34 @@ describe('WorkoutRecapPanel', () => {
         await waitFor(() => expect(screen.queryByText('Back Squat')).not.toBeInTheDocument())
     })
 
+    it('re-fetches while expanded when refreshSignal changes', async () => {
+        global.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => mockRecapResponse,
+        }) as unknown as typeof fetch
+
+        const user = userEvent.setup()
+        const { rerender } = render(
+            <WorkoutRecapPanel
+                workoutId="w1"
+                refreshSignal={0}
+            />
+        )
+
+        await user.click(screen.getByRole('button', { name: 'Workout Recap' }))
+        await waitFor(() => expect(screen.getByText('Back Squat')).toBeInTheDocument())
+        const callsAfterOpen = vi.mocked(global.fetch).mock.calls.length
+
+        rerender(
+            <WorkoutRecapPanel
+                workoutId="w1"
+                refreshSignal={1}
+            />
+        )
+
+        await waitFor(() => expect(vi.mocked(global.fetch).mock.calls.length).toBeGreaterThan(callsAfterOpen))
+    })
+
     it('closes when user selects an exercise', async () => {
         global.fetch = vi.fn().mockResolvedValue({
             ok: true,

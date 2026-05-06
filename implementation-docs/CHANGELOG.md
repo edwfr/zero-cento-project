@@ -8,6 +8,14 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ---
 
+## [6 Maggio 2026] — Riepilogo esercizi aggiornato subito dopo la spunta
+
+**Task checklist:** #11.95
+**File modificati:** `src/app/trainee/workouts/[id]/_content.tsx`, `src/components/WorkoutRecapPanel.tsx`, `tests/unit/workout-recap-panel.test.tsx`, `implementation-docs/CHECKLIST.md`
+**Note:** Aggiunto un segnale di refresh dal focus workout al `WorkoutRecapPanel` per rieseguire il fetch del recap quando cambia il numero di serie completate. In questo modo, se il pannello `Riepilogo esercizi` e aperto, i conteggi/stati si aggiornano immediatamente dopo la spunta senza dover richiudere e riaprire il pannello. Aggiunto test unitario che verifica il re-fetch su variazione `refreshSignal` con pannello gia espanso.
+
+---
+
 ## [6 Maggio 2026] — Exercise focus card: type badge moved to rest row
 
 **Task checklist:** #11.94

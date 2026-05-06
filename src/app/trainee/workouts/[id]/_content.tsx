@@ -159,6 +159,7 @@ export default function WorkoutDetailContent() {
     const [globalNotes, setGlobalNotes] = useState('')
     const [expandedVideos, setExpandedVideos] = useState<Record<string, boolean>>({})
     const [currentStep, setCurrentStep] = useState(0)
+    const [recapRefreshSignal, setRecapRefreshSignal] = useState(0)
 
 
     const { showToast } = useToast()
@@ -353,6 +354,9 @@ export default function WorkoutDetailContent() {
                 ...prev,
                 [workoutExerciseId]: exerciseNotes[workoutExerciseId] ?? '',
             }))
+
+            // Refresh recap only after feedback persistence has been confirmed by API.
+            setRecapRefreshSignal((prev) => prev + 1)
 
             if (!cascade.workoutExercise.isCompleted) {
                 return
@@ -698,6 +702,7 @@ export default function WorkoutDetailContent() {
                     <WorkoutRecapPanel
                         workoutId={workoutId}
                         closeSignal={currentStep}
+                        refreshSignal={recapRefreshSignal}
                         onSelectExercise={(exerciseId) => {
                             const idx = sortedExercises.findIndex((e) => e.id === exerciseId)
                             if (idx !== -1) goToStep(idx)
