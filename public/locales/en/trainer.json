@@ -528,7 +528,7 @@
         "weightModalGenericTitle": "Invalid weight value",
         "weightModalAcknowledge": "Understood",
         "weightModalPreviousTitle": "-n% value is not allowed",
-        "weightModalPreviousMessage": "Row {{index}} ({{exercise}}): to use -n%, the same workout must already contain a previous row of the same exercise with a resolvable weight.",
+        "weightModalPreviousMessage": "Row {{index}} ({{exercise}}): to use -n%, the same workout must already contain a previous row of the same exercise.",
         "weightModalOneRmTitle": "%n (1RM) value is not allowed",
         "weightModalOneRmMessage": "Row {{index}} ({{exercise}}): no saved max record was found for this trainee exercise.",
         "rowSaveError": "Error while saving row",

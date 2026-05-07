@@ -528,7 +528,7 @@
         "weightModalGenericTitle": "Valore peso non ammesso",
         "weightModalAcknowledge": "Ho capito",
         "weightModalPreviousTitle": "Valore -n% non ammissibile",
-        "weightModalPreviousMessage": "Riga {{index}} ({{exercise}}): per usare -n% deve esistere nello stesso workout una riga precedente dello stesso esercizio con un peso calcolabile.",
+        "weightModalPreviousMessage": "Riga {{index}} ({{exercise}}): per usare -n% deve esistere nello stesso workout una riga precedente dello stesso esercizio.",
         "weightModalOneRmTitle": "Valore %n (1RM) non ammissibile",
         "weightModalOneRmMessage": "Riga {{index}} ({{exercise}}): non esiste un massimale salvato per questo esercizio del trainee.",
         "rowSaveError": "Errore durante il salvataggio della riga",
