@@ -2244,6 +2244,20 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         }
     }
 
+    const handleSaveSkeletonDraftAndBack = async () => {
+        if (!program || savingDraftAndBack) {
+            return
+        }
+        setSavingDraftAndBack(true)
+        try {
+            const success = await saveSkeleton()
+            if (!success) return
+        } finally {
+            setSavingDraftAndBack(false)
+        }
+        router.push('/trainer/programs')
+    }
+
     const handleSaveDraftAndBack = async () => {
         if (!program || savingDraftAndBack) {
             return
@@ -2819,12 +2833,15 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             )}
                             {t('editProgram.structureApplyAndContinue')}
                         </button>
-                        <Link
-                            href="/trainer/programs"
-                            className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
+                        <button
+                            type="button"
+                            disabled={savingDraftAndBack || applyingStructure}
+                            onClick={() => { void handleSaveSkeletonDraftAndBack() }}
+                            className="inline-flex items-center justify-center gap-2 bg-gray-300 hover:bg-gray-400 disabled:opacity-60 disabled:cursor-not-allowed text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
                         >
+                            {savingDraftAndBack && <LoadingSpinner size="sm" color="gray" />}
                             {t('editProgram.saveDraft')}
-                        </Link>
+                        </button>
                     </div>
                 )}
 
