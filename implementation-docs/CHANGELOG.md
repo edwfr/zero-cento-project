@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### Added
+- **Delete Workout Feature** — Trainers can now delete individual workouts from a week on `/trainer/programs/[id]/edit`. New `DELETE /api/programs/[id]/workouts/[workoutId]` API route cascades to exercises. Delete button (trash icon) in workout panel header. Confirmation modal required before deletion. Optimistic state removal after success.
+
 ### Changed
 - `ExerciseFocusCard`: "Nota Esercizio (opzionale)" section is now collapsible. Collapsed by default; expanded if a saved note exists. Toggle button in header row with ChevronUp/ChevronDown icon.
 

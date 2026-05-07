@@ -618,6 +618,12 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const [savingWorkoutId, setSavingWorkoutId] = useState<string | null>(null)
     const [deletingRowId] = useState<string | null>(null)
     const [reorderingWorkoutId, setReorderingWorkoutId] = useState<string | null>(null)
+    const [deletingWorkoutId, setDeletingWorkoutId] = useState<string | null>(null)
+    const [confirmDeleteWorkout, setConfirmDeleteWorkout] = useState<{
+        workoutId: string
+        weekId: string
+        workoutLabel: string
+    } | null>(null)
 
     const [confirmCopyNextWeek, setConfirmCopyNextWeek] = useState<Week | null>(null)
     const [confirmDeleteRow, setConfirmDeleteRow] = useState<{
@@ -2215,6 +2221,61 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         setConfirmDeleteRow(null)
     }
 
+    const handleDeleteWorkout = async () => {
+        if (!confirmDeleteWorkout) return
+        const { workoutId, weekId, workoutLabel } = confirmDeleteWorkout
+
+        try {
+            setDeletingWorkoutId(workoutId)
+            const res = await fetch(`/api/programs/${programId}/workouts/${workoutId}`, {
+                method: 'DELETE',
+            })
+            const data = await res.json()
+
+            if (!res.ok) {
+                throw new Error(getApiErrorMessage(data, t('editProgram.workoutDeleteError'), t))
+            }
+
+            setProgram((current) => {
+                if (!current) return current
+                return {
+                    ...current,
+                    weeks: current.weeks.map((week) =>
+                        week.id === weekId
+                            ? { ...week, workouts: week.workouts.filter((w) => w.id !== workoutId) }
+                            : week
+                    ),
+                }
+            })
+
+            // Clean up any orphaned draft/pending state for this workout
+            setDraftRowIdsByWorkout((current) => {
+                const next = { ...current }
+                if (next[workoutId]) {
+                    setRowStateById((rows) => {
+                        const nextRows = { ...rows }
+                        next[workoutId].forEach((id) => delete nextRows[id])
+                        return nextRows
+                    })
+                    delete next[workoutId]
+                }
+                return next
+            })
+            setPendingDeletesByWorkout((current) => {
+                const next = { ...current }
+                delete next[workoutId]
+                return next
+            })
+
+            showToast(t('editProgram.workoutDeletedSuccess'), 'success')
+            setConfirmDeleteWorkout(null)
+        } catch (err: unknown) {
+            showToast(err instanceof Error ? err.message : t('editProgram.workoutDeleteError'), 'error')
+        } finally {
+            setDeletingWorkoutId(null)
+        }
+    }
+
     const hasUnsavedWorkoutChanges = useMemo(() => {
         if (!program) {
             return false
@@ -3132,6 +3193,24 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                         )}
                                                                         {t('editProgram.saveRowTitle')}
                                                                     </button>
+                                                                    <ActionIconButton
+                                                                        variant="delete"
+                                                                        label={t('editProgram.deleteWorkoutTitle')}
+                                                                        onClick={() =>
+                                                                            setConfirmDeleteWorkout({
+                                                                                workoutId: workout.id,
+                                                                                weekId: week.id,
+                                                                                workoutLabel,
+                                                                            })
+                                                                        }
+                                                                        disabled={Boolean(
+                                                                            savingRowId ||
+                                                                            deletingRowId ||
+                                                                            savingWorkoutId ||
+                                                                            deletingWorkoutId
+                                                                        )}
+                                                                        isLoading={deletingWorkoutId === workout.id}
+                                                                    />
                                                                 </div>
                                                             )}
                                                         </div>
@@ -3780,6 +3859,21 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     confirmText={t('editProgram.confirmDeleteRowConfirm')}
                     variant="danger"
                     isLoading={false}
+                />
+
+                <ConfirmationModal
+                    isOpen={confirmDeleteWorkout !== null}
+                    onClose={() => {
+                        if (!deletingWorkoutId) setConfirmDeleteWorkout(null)
+                    }}
+                    onConfirm={() => void handleDeleteWorkout()}
+                    title={t('editProgram.confirmDeleteWorkoutTitle')}
+                    message={t('editProgram.confirmDeleteWorkoutMessage', {
+                        label: confirmDeleteWorkout?.workoutLabel ?? '',
+                    })}
+                    confirmText={t('editProgram.confirmDeleteWorkoutConfirm')}
+                    variant="danger"
+                    isLoading={deletingWorkoutId !== null}
                 />
 
                 <ConfirmationModal
