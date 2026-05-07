@@ -210,7 +210,6 @@ interface ParsedWeightInputResult {
 type WeightInputParsingErrorCode =
     | 'invalid_format'
     | 'missing_previous_occurrence'
-    | 'missing_previous_weight'
     | 'missing_1rm'
 
 type ResolveWeightInputOutcome =
@@ -1924,7 +1923,13 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
         const previousEffectiveWeight = effectiveWeightByRowId[previousRow.id]
         if (typeof previousEffectiveWeight !== 'number' || !Number.isFinite(previousEffectiveWeight)) {
-            return { errorCode: 'missing_previous_weight' }
+            return {
+                parsedWeight: {
+                    weightType: 'percentage_previous',
+                    weight: value,
+                    effectiveWeight: null,
+                },
+            }
         }
 
         return {
@@ -2035,8 +2040,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     t('editProgram.tableExercise')
 
                 if (
-                    resolvedWeightInput.errorCode === 'missing_previous_occurrence' ||
-                    resolvedWeightInput.errorCode === 'missing_previous_weight'
+                    resolvedWeightInput.errorCode === 'missing_previous_occurrence'
                 ) {
                     setBlockingWeightErrorModal({
                         title: t('editProgram.weightModalPreviousTitle'),
