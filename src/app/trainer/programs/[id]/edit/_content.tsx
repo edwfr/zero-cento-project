@@ -2208,7 +2208,10 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 }
             })
 
-            // Batch-remove all saved draft rows in one state update BEFORE refetch
+            await fetchProgram({ showLoading: false })
+
+            // Batch-remove all saved draft rows in one state update AFTER refetch
+            // so the rows remain visible under the overlay while the API call is in-flight
             if (savedDraftRowIds.length > 0) {
                 setDraftRowIdsByWorkout((current) => {
                     const workoutDrafts = current[workout.id] ?? []
@@ -2227,8 +2230,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     return next
                 })
             }
-
-            await fetchProgram({ showLoading: false })
             showToast(t('editProgram.workoutRowsSavedSuccess'), 'success')
             setExpandedWorkoutIds((current) => ({ ...current, [workout.id]: false }))
             return true
@@ -3303,15 +3304,14 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                         <table className="w-full table-fixed divide-y divide-gray-200 text-sm">
                                                                     <colgroup>
                                                                         <col className="w-[1%]" />
-                                                                        <col className="w-[4%]" />
-                                                                        <col className="w-[18%]" />
-                                                                        <col className="w-[18%]" />
+                                                                        <col className="w-[5%]" />
+                                                                        <col className="w-[26%]" />
+                                                                        <col className="w-[26%]" />
+                                                                        <col className="w-[8%]" />
+                                                                        <col className="w-[8%]" />
+                                                                        <col className="w-[8%]" />
+                                                                        <col className="w-[12%]" />
                                                                         <col className="w-[6%]" />
-                                                                        <col className="w-[6%]" />
-                                                                        <col className="w-[6%]" />
-                                                                        <col className="w-[6%]" />
-                                                                        <col className="w-[6%]" />
-                                                                        <col className="w-[4%]" />
                                                                     </colgroup>
                                                                     <thead className="bg-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-gray-700">
                                                                         <tr>
@@ -3407,20 +3407,13 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                 )}
                                                                             </th>
                                                                             <th className="px-1 py-1">{t('editProgram.tableRest')}</th>
-                                                                            <th className="px-1 py-1 whitespace-nowrap text-[10px] normal-case tracking-normal">
-                                                                                <span className="sr-only">
-                                                                                    {readOnly
-                                                                                        ? t('editProgram.tableMeta')
-                                                                                        : `${t('editProgram.tableMeta')}/${t('editProgram.tableActions')}`}
-                                                                                </span>
-                                                                            </th>
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody className="bg-white">
                                                                         {workoutRows.length === 0 && (
                                                                             <tr>
                                                                                 <td
-                                                                                    colSpan={9}
+                                                                                    colSpan={8}
                                                                                     className="px-1 py-6 text-center text-sm text-gray-500"
                                                                                 >
                                                                                     {t('editProgram.tableNoWorkoutExercises')}
@@ -3443,7 +3436,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                             const variantFieldClassName =
                                                                                 'h-6 w-full rounded-lg border border-gray-300 px-1.5 text-xs leading-4 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-400'
                                                                             const metricFieldClassName =
-                                                                                'h-6 w-full rounded-lg border border-gray-300 px-1.5 text-left text-xs leading-4 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-400'
+                                                                                'h-6 w-full rounded-lg border border-gray-300 px-1.5 text-center text-xs leading-4 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-400'
                                                                             const rowBusy =
                                                                                 savingRowId === row.id ||
                                                                                 deletingRowId === row.id ||
@@ -3779,11 +3772,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                 </option>
                                                                                             ))}
                                                                                         </select>
-                                                                                    </td>
-
-                                                                                    <td className="px-1 py-1">
-                                                                                        <div className="mx-auto flex max-w-full items-center justify-center gap-1">
-                                                                                        </div>
                                                                                     </td>
                                                                                         </>
                                                                                     )}
