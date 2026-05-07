@@ -17,6 +17,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 - **Compact Workout Edit UI** — Reduced vertical density of exercise table in `/trainer/programs/[id]/edit` for a spreadsheet-like layout: table cells and inputs now use `py-1` instead of `py-3`, input heights reduced from `h-9` to `h-7`. Tab key navigation now constrained to only the 5 metric fields (sets, reps, RPE, weight, rest); all other interactive elements (drag handle, warmup checkbox, exercise/variant selectors, delete button) excluded from tab order via `tabIndex={-1}`. **Files modified:** `src/components/AutocompleteSearch.tsx`, `src/app/trainer/programs/[id]/edit/_content.tsx`, `tests/unit/AutocompleteSearch.test.tsx`.
 - `ExerciseFocusCard`: "Nota Esercizio (opzionale)" section is now collapsible. Collapsed by default; expanded if a saved note exists. Toggle button in header row with ChevronUp/ChevronDown icon.
 
+### Fixed
+- **Workout edit: `-n%` weight allowed when previous row has no weight** — Trainers can now save `-n%` weight on a row whose previous same-exercise row has no weight set. At runtime the trainee finds their own weight for the previous set during the session; the current set applies the percentage offset to that logged weight. Previously this was blocked with a validation error on save. **Files modified:** `src/app/trainer/programs/[id]/edit/_content.tsx`, `public/locales/en/trainer.json`, `public/locales/it/trainer.json`, `tests/unit/calculations.test.ts`.
+
 ---
 
 ## [6 Maggio 2026] — Riepilogo esercizi aggiornato subito dopo la spunta
