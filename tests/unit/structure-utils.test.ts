@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { buildStructureRowsForWorkout } from '@/app/trainer/programs/[id]/edit/structure-utils'
 
 describe('buildStructureRowsForWorkout', () => {
-    it('returns 4 empty rows when sourceExercises is empty', () => {
+    it('returns 4 empty rows when skeletonRows is empty', () => {
         const rows = buildStructureRowsForWorkout(0, [])
         expect(rows).toHaveLength(4)
         rows.forEach((row) => {
@@ -19,15 +19,28 @@ describe('buildStructureRowsForWorkout', () => {
         })
     })
 
-    it('maps from sourceExercises when non-empty', () => {
-        const source = [
-            { id: 'we-1', exercise: { id: 'ex-1' }, isSkeletonExercise: false },
-            { id: 'we-2', exercise: { id: 'ex-2' }, isSkeletonExercise: false },
+    it('maps from skeleton rows when non-empty', () => {
+        const skeleton = [
+            { dayIndex: 1, order: 0, exerciseId: 'ex-1' },
+            { dayIndex: 1, order: 1, exerciseId: 'ex-2' },
         ]
-        const rows = buildStructureRowsForWorkout(1, source)
+        const rows = buildStructureRowsForWorkout(1, skeleton)
         expect(rows).toHaveLength(2)
-        expect(rows[0]).toEqual({ id: 'structure-1-we-1-0', exerciseId: 'ex-1' })
-        expect(rows[1]).toEqual({ id: 'structure-1-we-2-1', exerciseId: 'ex-2' })
+        expect(rows[0]).toEqual({ id: 'structure-1-skeleton-0', exerciseId: 'ex-1' })
+        expect(rows[1]).toEqual({ id: 'structure-1-skeleton-1', exerciseId: 'ex-2' })
+    })
+
+    it('filters skeleton rows by dayIndex', () => {
+        const skeleton = [
+            { dayIndex: 0, order: 0, exerciseId: 'ex-0' },
+            { dayIndex: 1, order: 0, exerciseId: 'ex-1' },
+            { dayIndex: 1, order: 1, exerciseId: 'ex-2' },
+            { dayIndex: 2, order: 0, exerciseId: 'ex-3' },
+        ]
+        const rows = buildStructureRowsForWorkout(1, skeleton)
+        expect(rows).toHaveLength(2)
+        expect(rows[0].exerciseId).toBe('ex-1')
+        expect(rows[1].exerciseId).toBe('ex-2')
     })
 
     it('returns unique ids across rows', () => {

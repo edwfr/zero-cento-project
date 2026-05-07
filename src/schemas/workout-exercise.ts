@@ -40,7 +40,6 @@ const workoutExerciseBaseSchema = z.object({
         errorMap: () => ({ message: 'Tempo recupero non valido' }),
     }),
     isWarmup: z.boolean().default(false),
-    isSkeletonExercise: z.boolean().default(false),
     notes: z.string().max(500).nullable().optional(),
     order: z.number().int().min(1),
 })

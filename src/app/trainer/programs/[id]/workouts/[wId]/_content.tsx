@@ -51,7 +51,6 @@ interface WorkoutExercise {
     weight: number | null
     effectiveWeight: number | null
     isWarmup: boolean
-    isSkeletonExercise: boolean
     notes: string | null
     exercise: Exercise
 }

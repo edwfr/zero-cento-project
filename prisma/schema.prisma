@@ -173,6 +173,7 @@ model Exercise {
   exerciseMuscleGroups ExerciseMuscleGroup[]  @relation("ExerciseMuscleGroups")
   workoutExercises     WorkoutExercise[]      @relation("ExerciseWorkouts")
   personalRecords      PersonalRecord[]       @relation("ExerciseRecords")
+  workoutSkeletons     WorkoutSkeleton[]      @relation("ExerciseSkeletons")
 
   @@index([type])
   @@index([movementPatternId])
@@ -216,6 +217,7 @@ model TrainingProgram {
   trainer User   @relation("TrainerPrograms", fields: [trainerId], references: [id])
   trainee User   @relation("TraineePrograms", fields: [traineeId], references: [id])
   weeks   Week[] @relation("ProgramWeeks")
+  workoutSkeletons WorkoutSkeleton[] @relation("ProgramSkeletons")
 
   // Indexes per dashboard queries
   @@index([trainerId, status])
@@ -273,7 +275,6 @@ model WorkoutExercise {
   effectiveWeight Float? // kg effettivi calcolati dal trainer
   restTime   RestTime
   isWarmup   Boolean    @default(false)
-  isSkeletonExercise Boolean @default(false) // True se esercizio è uno schema vuoto/template non completamente configurato
   notes      String?
   order      Int
   isCompleted Boolean   @default(false)
@@ -287,6 +288,23 @@ model WorkoutExercise {
   @@index([exerciseId])
   @@index([workoutId, isCompleted])
   @@map("workout_exercises")
+}
+
+model WorkoutSkeleton {
+  id         String   @id @default(uuid())
+  programId  String
+  dayIndex   Int      // 0..workoutsPerWeek-1 — workout column in step 2
+  order      Int      // row order within the day
+  exerciseId String
+  createdAt  DateTime @default(now())
+
+  // Relations
+  program  TrainingProgram @relation("ProgramSkeletons", fields: [programId], references: [id], onDelete: Cascade)
+  exercise Exercise        @relation("ExerciseSkeletons", fields: [exerciseId], references: [id])
+
+  @@unique([programId, dayIndex, order])
+  @@index([programId, dayIndex])
+  @@map("workout_skeletons")
 }
 
 model ExerciseFeedback {

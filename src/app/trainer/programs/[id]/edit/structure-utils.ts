@@ -3,28 +3,29 @@ export interface WorkoutStructureTemplateRow {
     exerciseId: string
 }
 
+export interface SkeletonRow {
+    dayIndex: number
+    order: number
+    exerciseId: string
+}
+
 const DEFAULT_EXERCISE_ROW_COUNT = 4
 
 export function buildStructureRowsForWorkout(
     workoutIndex: number,
-    sourceExercises: Array<{ id: string; exercise: { id: string }; isSkeletonExercise: boolean }>
+    skeletonRows: SkeletonRow[]
 ): WorkoutStructureTemplateRow[] {
-    const skeletonExercises = sourceExercises.filter((we) => we.isSkeletonExercise)
+    // Filter skeleton rows for this workout day index
+    const rowsForWorkout = skeletonRows.filter((row) => row.dayIndex === workoutIndex)
 
-    if (skeletonExercises.length > 0) {
-        return skeletonExercises.map((we, rowIndex) => ({
-            id: `structure-${workoutIndex}-${we.id}-${rowIndex}`,
-            exerciseId: we.exercise.id,
+    if (rowsForWorkout.length > 0) {
+        return rowsForWorkout.map((row, rowIndex) => ({
+            id: `structure-${workoutIndex}-skeleton-${row.order}`,
+            exerciseId: row.exerciseId,
         }))
     }
 
-    if (sourceExercises.length > 0) {
-        return sourceExercises.map((we, rowIndex) => ({
-            id: `structure-${workoutIndex}-${we.id}-${rowIndex}`,
-            exerciseId: we.exercise.id,
-        }))
-    }
-
+    // Return 4 default empty rows if skeleton is empty
     return Array.from({ length: DEFAULT_EXERCISE_ROW_COUNT }, (_, i) => ({
         id: `structure-${workoutIndex}-default-${i}`,
         exerciseId: '',

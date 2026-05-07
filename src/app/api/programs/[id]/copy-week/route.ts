@@ -214,7 +214,6 @@ export async function POST(
                             effectiveWeight: sourceExercise.effectiveWeight,
                             restTime: sourceExercise.restTime,
                             isWarmup: sourceExercise.isWarmup,
-                            isSkeletonExercise: false,
                             notes: sourceExercise.notes,
                             order: sourceExercise.order,
                             exercise: sourceExercise.exercise,

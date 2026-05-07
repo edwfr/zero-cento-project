@@ -77,6 +77,15 @@ export async function GET(
                         weekNumber: 'asc',
                     },
                 },
+                workoutSkeletons: {
+                    select: {
+                        id: true,
+                        dayIndex: true,
+                        order: true,
+                        exerciseId: true,
+                    },
+                    orderBy: [{ dayIndex: 'asc' }, { order: 'asc' }],
+                },
             },
         })
 

@@ -43,7 +43,6 @@ const baseExercise = {
     effectiveWeight: 100,
     restTime: 'm2' as const,
     isWarmup: false,
-    isSkeletonExercise: false,
     notes: null,
     variant: null,
     order: 1,
