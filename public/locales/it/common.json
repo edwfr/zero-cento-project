@@ -126,7 +126,9 @@
             "noHistory": "Nessun altro record nello storico.",
             "noChartData": "Nessun dato disponibile per i filtri selezionati.",
             "noNotes": "-",
-            "oneRmUnit": "kg"
+            "oneRmUnit": "kg",
+            "dragToDelete": "Trascina una riga qui per eliminarla",
+            "dropToDelete": "Rilascia per eliminare"
         },
         "selected": "selezionati",
         "characters": "caratteri"

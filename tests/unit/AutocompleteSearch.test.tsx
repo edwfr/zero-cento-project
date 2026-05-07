@@ -44,4 +44,17 @@ describe('AutocompleteSearch', () => {
         const input = screen.getByRole('combobox')
         expect(input).toHaveAttribute('placeholder', 'Search exercises')
     })
+
+    it('applies compact styling when compact prop is true', () => {
+        const { container } = render(
+            <AutocompleteSearch
+                options={options}
+                onSelect={vi.fn()}
+                compact
+            />
+        )
+        const input = screen.getByRole('combobox')
+        // When compact is true, the input should have the compact class applied
+        expect(input).toHaveClass('!px-2', '!py-1', '!text-xs', '!leading-4')
+    })
 })

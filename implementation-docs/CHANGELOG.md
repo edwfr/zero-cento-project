@@ -11,7 +11,8 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Added
-- **Delete Workout Feature** — Trainers can now delete individual workouts from a week on `/trainer/programs/[id]/edit`. New `DELETE /api/programs/[id]/workouts/[workoutId]` API route cascades to exercises. Delete button (trash icon) in workout panel header. Confirmation modal required before deletion. Optimistic state removal after success.
+- **[7 Maggio 2026] Drag-and-drop cestino in PersonalRecordsExplorer** — Rimosso il pulsante delete (`ActionIconButton variant="delete"`) dalle righe della tabella PR. Introdotto meccanismo drag-and-drop: righe draggabili quando `onDeleteRecord` è fornito. Zona cestino tra tabella e grafico, evidenziata in rosso durante il trascinamento. `showActions` ora dipende solo da `onEditRecord`. Token i18n `dragToDelete` / `dropToDelete` aggiunti in EN e IT. **File:** `src/components/PersonalRecordsExplorer.tsx`, `public/locales/{en,it}/common.json`.
+
 
 ### Changed
 - **Compact Workout Edit UI** — Reduced vertical density of exercise table in `/trainer/programs/[id]/edit` for a spreadsheet-like layout: table cells and inputs now use `py-1` instead of `py-3`, input heights reduced from `h-9` to `h-7`. Tab key navigation now constrained to only the 5 metric fields (sets, reps, RPE, weight, rest); all other interactive elements (drag handle, warmup checkbox, exercise/variant selectors, delete button) excluded from tab order via `tabIndex={-1}`. **Files modified:** `src/components/AutocompleteSearch.tsx`, `src/app/trainer/programs/[id]/edit/_content.tsx`, `tests/unit/AutocompleteSearch.test.tsx`.

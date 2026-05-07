@@ -12,7 +12,7 @@ import {
     XAxis,
     YAxis,
 } from 'recharts'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react'
 import { ActionIconButton, InlineActions } from '@/components/ActionIconButton'
 import { formatDate } from '@/lib/date-format'
 import { estimateOneRMFromRpeTable } from '@/lib/calculations'
@@ -95,8 +95,10 @@ export default function PersonalRecordsExplorer({
     const [expandedExerciseIds, setExpandedExerciseIds] = useState<Record<string, boolean>>({})
     const [selectedExerciseIds, setSelectedExerciseIds] = useState<string[]>([])
     const [selectedTimeWindow, setSelectedTimeWindow] = useState<TimeWindow>('180d')
+    const [draggedRecord, setDraggedRecord] = useState<PersonalRecordExplorerItem | null>(null)
+    const [isDragOverTrash, setIsDragOverTrash] = useState(false)
 
-    const showActions = Boolean(onEditRecord || onDeleteRecord)
+    const showActions = Boolean(onEditRecord)
 
     const computeOneRepMax = useMemo(() => {
         if (calculateOneRepMax) {
@@ -272,6 +274,33 @@ export default function PersonalRecordsExplorer({
         setSelectedExerciseIds([])
     }
 
+    const handleDragStart = (record: PersonalRecordExplorerItem) => {
+        setDraggedRecord(record)
+    }
+
+    const handleDragEnd = () => {
+        setDraggedRecord(null)
+        setIsDragOverTrash(false)
+    }
+
+    const handleTrashDragOver = (event: React.DragEvent) => {
+        event.preventDefault()
+        setIsDragOverTrash(true)
+    }
+
+    const handleTrashDragLeave = () => {
+        setIsDragOverTrash(false)
+    }
+
+    const handleTrashDrop = (event: React.DragEvent) => {
+        event.preventDefault()
+        setIsDragOverTrash(false)
+        if (draggedRecord && onDeleteRecord) {
+            onDeleteRecord(draggedRecord)
+            setDraggedRecord(null)
+        }
+    }
+
     return (
         <div className={`space-y-6 ${className}`}>
             <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-md">
@@ -325,7 +354,12 @@ export default function PersonalRecordsExplorer({
 
                                     return (
                                         <Fragment key={group.exercise.id}>
-                                            <tr className="hover:bg-gray-50">
+                                            <tr
+                                                className={`hover:bg-gray-50 ${onDeleteRecord ? 'cursor-grab active:cursor-grabbing' : ''} ${draggedRecord?.id === group.latestRecord.id ? 'opacity-40' : ''}`}
+                                                draggable={!!onDeleteRecord}
+                                                onDragStart={() => handleDragStart(group.latestRecord)}
+                                                onDragEnd={handleDragEnd}
+                                            >
                                                 <td className="px-4 py-3">
                                                     <div className="flex items-center gap-2">
                                                         <button
@@ -381,13 +415,6 @@ export default function PersonalRecordsExplorer({
                                                                     onClick={() => onEditRecord(group.latestRecord)}
                                                                 />
                                                             )}
-                                                            {onDeleteRecord && (
-                                                                <ActionIconButton
-                                                                    variant="delete"
-                                                                    label={t('common.delete')}
-                                                                    onClick={() => onDeleteRecord(group.latestRecord)}
-                                                                />
-                                                            )}
                                                         </InlineActions>
                                                     </td>
                                                 )}
@@ -412,7 +439,13 @@ export default function PersonalRecordsExplorer({
                                                             )
 
                                                             return (
-                                                                <tr key={record.id} className="bg-gray-50/80 hover:bg-gray-100/80">
+                                                                <tr
+                                                                    key={record.id}
+                                                                    className={`bg-gray-50/80 hover:bg-gray-100/80 ${onDeleteRecord ? 'cursor-grab active:cursor-grabbing' : ''} ${draggedRecord?.id === record.id ? 'opacity-40' : ''}`}
+                                                                    draggable={!!onDeleteRecord}
+                                                                    onDragStart={() => handleDragStart(record)}
+                                                                    onDragEnd={handleDragEnd}
+                                                                >
                                                                     <td className="px-4 py-3 text-sm text-gray-700 pl-12">
                                                                         {t('common.personalRecordsExplorer.historyPrefix')}
                                                                     </td>
@@ -441,13 +474,6 @@ export default function PersonalRecordsExplorer({
                                                                                         onClick={() => onEditRecord(record)}
                                                                                     />
                                                                                 )}
-                                                                                {onDeleteRecord && (
-                                                                                    <ActionIconButton
-                                                                                        variant="delete"
-                                                                                        label={t('common.delete')}
-                                                                                        onClick={() => onDeleteRecord(record)}
-                                                                                    />
-                                                                                )}
                                                                             </InlineActions>
                                                                         </td>
                                                                     )}
@@ -465,6 +491,28 @@ export default function PersonalRecordsExplorer({
                     </div>
                 )}
             </div>
+
+            {onDeleteRecord && groupedRecords.length > 0 && (
+                <div
+                    onDragOver={handleTrashDragOver}
+                    onDragLeave={handleTrashDragLeave}
+                    onDrop={handleTrashDrop}
+                    className={`flex items-center justify-center gap-3 rounded-xl border-2 border-dashed py-4 px-6 transition-all duration-150 ${
+                        isDragOverTrash
+                            ? 'border-red-500 bg-red-50 text-red-600'
+                            : draggedRecord
+                            ? 'border-red-300 bg-red-50/50 text-red-400'
+                            : 'border-gray-200 bg-gray-50/50 text-gray-400'
+                    }`}
+                >
+                    <Trash2 className="h-5 w-5 flex-shrink-0" />
+                    <span className="text-sm font-medium select-none">
+                        {isDragOverTrash
+                            ? t('common.personalRecordsExplorer.dropToDelete')
+                            : t('common.personalRecordsExplorer.dragToDelete')}
+                    </span>
+                </div>
+            )}
 
             <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-md">
                 <div className="border-b border-gray-100 bg-gradient-to-r from-[#ECFDF5] to-[#EFF6FF] px-5 py-4">

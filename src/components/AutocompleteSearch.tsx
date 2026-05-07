@@ -28,6 +28,7 @@ interface AutocompleteSearchProps {
     inputStyle?: CSSProperties
     accentColor?: string
     tabIndex?: number
+    compact?: boolean
 }
 
 /**
@@ -52,6 +53,7 @@ export default function AutocompleteSearch({
     inputStyle,
     accentColor,
     tabIndex,
+    compact = false,
 }: AutocompleteSearchProps) {
     const { t } = useTranslation(['common', 'components'])
     const inputId = id || `autocomplete-${Math.random().toString(36).slice(2, 9)}`
@@ -182,7 +184,7 @@ export default function AutocompleteSearch({
                     autoComplete="off"
                     inputSize="md"
                     state={error ? 'error' : 'default'}
-                    className="pr-10"
+                    className={`pr-10 ${compact ? '!px-2 !py-1 !text-xs !leading-4 h-6' : ''}`}
                     style={inputStyle}
                     aria-invalid={!!error}
                     tabIndex={tabIndex}
@@ -222,11 +224,11 @@ export default function AutocompleteSearch({
                     className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto"
                 >
                     {loading ? (
-                        <li className="px-4 py-3 text-sm text-gray-500 text-center">
+                        <li className={`text-gray-500 text-center ${compact ? 'px-2 py-1 text-xs' : 'px-4 py-3 text-sm'}`}>
                             {t('common:common.loading')}
                         </li>
                     ) : filteredOptions.length === 0 ? (
-                        <li className="px-4 py-3 text-sm text-gray-500 text-center">
+                        <li className={`text-gray-500 text-center ${compact ? 'px-2 py-1 text-xs' : 'px-4 py-3 text-sm'}`}>
                             {resolvedEmptyMessage}
                         </li>
                     ) : (
@@ -242,14 +244,15 @@ export default function AutocompleteSearch({
                                 }}
                                 onMouseEnter={() => setActiveIndex(index)}
                                 className={`
-                                    px-4 py-2 cursor-pointer transition-colors text-sm
+                                    cursor-pointer transition-colors
+                                    ${compact ? 'px-2 py-1 text-xs' : 'px-4 py-2 text-sm'}
                                     ${index === activeIndex ? 'bg-brand-primary/10 text-brand-primary' : 'hover:bg-gray-50'}
                                     ${option.id === value ? 'font-semibold' : ''}
                                 `}
                             >
                                 <div className="font-medium">{option.label}</div>
                                 {option.sublabel && (
-                                    <div className="text-xs text-gray-500">{option.sublabel}</div>
+                                    <div className={compact ? 'text-[10px] text-gray-500' : 'text-xs text-gray-500'}>{option.sublabel}</div>
                                 )}
                             </li>
                         ))

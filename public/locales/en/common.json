@@ -126,7 +126,9 @@
             "noHistory": "No additional records in history.",
             "noChartData": "No data available for the selected filters.",
             "noNotes": "-",
-            "oneRmUnit": "kg"
+            "oneRmUnit": "kg",
+            "dragToDelete": "Drag a row here to delete it",
+            "dropToDelete": "Release to delete"
         },
         "selected": "selected",
         "characters": "characters"

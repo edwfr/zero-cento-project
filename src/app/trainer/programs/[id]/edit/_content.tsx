@@ -641,11 +641,36 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
     const [isPrHelperCollapsed, setIsPrHelperCollapsed] = useState(false)
     const [isSbdHelperCollapsed, setIsSbdHelperCollapsed] = useState(false)
+    const [isDragOverTrash, setIsDragOverTrash] = useState(false)
+    const [activeExerciseRowDragId, setActiveExerciseRowDragId] = useState<string | null>(null)
+    const trashRef = useRef<HTMLDivElement>(null)
 
     const dndSensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
     )
+
+    // Monitor mouse position during exercise row drag to detect trash hover
+    useEffect(() => {
+        if (!activeExerciseRowDragId) {
+            setIsDragOverTrash(false)
+            return
+        }
+
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!trashRef.current) return
+            const trashRect = trashRef.current.getBoundingClientRect()
+            const isOver =
+                e.clientX >= trashRect.left &&
+                e.clientX <= trashRect.right &&
+                e.clientY >= trashRect.top &&
+                e.clientY <= trashRect.bottom
+            setIsDragOverTrash(isOver)
+        }
+
+        document.addEventListener('mousemove', handleMouseMove)
+        return () => document.removeEventListener('mousemove', handleMouseMove)
+    }, [activeExerciseRowDragId])
 
     const fetchExerciseCatalog = useCallback(async () => {
         try {
@@ -1401,6 +1426,36 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const handleDragEnd = useCallback(
         async (event: DragEndEvent, workout: Workout) => {
             const { active, over } = event
+            setActiveExerciseRowDragId(null)
+            setIsDragOverTrash(false)
+
+            // If dropped on trash, delete the row
+            if (isDragOverTrash && active.id) {
+                const allRows = getWorkoutRows(workout)
+                const rowToDelete = allRows.find((r) => r.id === active.id)
+                if (rowToDelete) {
+                    if (rowToDelete.isDraft) {
+                        // Remove draft row directly
+                        setRowStateById((current) => {
+                            const next = { ...current }
+                            delete next[rowToDelete.id]
+                            return next
+                        })
+                        setDraftRowIdsByWorkout((current) => ({
+                            ...current,
+                            [workout.id]: (current[workout.id] ?? []).filter((id) => id !== rowToDelete.id),
+                        }))
+                    } else {
+                        setPendingDeletesByWorkout((current) => ({
+                            ...current,
+                            [workout.id]: [...(current[workout.id] ?? []), rowToDelete.id],
+                        }))
+                    }
+                    showToast(t('editProgram.rowDeletedSuccess'), 'success')
+                }
+                return
+            }
+
             if (!over || active.id === over.id) return
 
             const allRows = getWorkoutRows(workout)
@@ -1463,7 +1518,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 setReorderingWorkoutId(null)
             }
         },
-        [getWorkoutRows, programId, showToast, t]
+        [getWorkoutRows, programId, showToast, t, isDragOverTrash]
     )
 
     const hasWorkoutUnsavedChanges = useCallback(
@@ -1673,9 +1728,25 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
     const handleStructureDragEnd = useCallback((event: DragEndEvent) => {
         setActiveStructureDragId(null)
+        setActiveExerciseRowDragId(null)
+        setIsDragOverTrash(false)
         preDragStructureRowsRef.current = null
 
         const { active, over } = event
+
+        // If dropped on trash, delete the structure row
+        if (isDragOverTrash && active.id) {
+            const srcWorkout = active.data.current?.workoutIndex as number | undefined
+            if (srcWorkout !== undefined) {
+                setStructureRowsByWorkoutIndex((current) => {
+                    const rows = current[srcWorkout] || []
+                    return { ...current, [srcWorkout]: rows.filter((r) => r.id !== active.id) }
+                })
+                showToast(t('editProgram.rowDeletedSuccess'), 'success')
+            }
+            return
+        }
+
         if (!over) return
 
         const activeId = active.id as string
@@ -1697,7 +1768,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             if (oldIdx < 0 || newIdx < 0) return current
             return { ...current, [srcWorkout]: arrayMove(rows, oldIdx, newIdx) }
         })
-    }, [])
+    }, [isDragOverTrash, showToast, t])
 
     const handleStructureDragCancel = useCallback(() => {
         if (preDragStructureRowsRef.current) {
@@ -2549,7 +2620,10 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             <DndContext
                                 sensors={dndSensors}
                                 collisionDetection={closestCenter}
-                                onDragStart={handleStructureDragStart}
+                                onDragStart={(event) => {
+                                    handleStructureDragStart(event)
+                                    setActiveExerciseRowDragId(String(event.active.id))
+                                }}
                                 onDragOver={handleStructureDragOver}
                                 onDragEnd={handleStructureDragEnd}
                                 onDragCancel={handleStructureDragCancel}
@@ -2636,6 +2710,14 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                         <GripVertical className="h-4 w-4" />
                                                                                     </button>
 
+                                                                                    {selectedExercise && (
+                                                                                        <span
+                                                                                            className={`inline-flex shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${selectedExercise.type === 'fundamental' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}
+                                                                                        >
+                                                                                            {selectedExercise.type === 'fundamental' ? 'F' : 'A'}
+                                                                                        </span>
+                                                                                    )}
+
                                                                                     <AutocompleteSearch
                                                                                         id={`structure-exercise-${workoutIndex}-${structureRow.id}`}
                                                                                         options={autocompleteExerciseOptions}
@@ -2653,47 +2735,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                         className="min-w-0 flex-1"
                                                                                         inputStyle={inputStyle}
                                                                                         accentColor={accentColor}
+                                                                                        compact={true}
                                                                                     />
-
-                                                                                    <ActionIconButton
-                                                                                        variant="delete"
-                                                                                        label={t('editProgram.deleteRowTitle')}
-                                                                                        onClick={() =>
-                                                                                            removeStructureRow(
-                                                                                                workoutIndex,
-                                                                                                structureRow.id
-                                                                                            )
-                                                                                        }
-                                                                                    />
-                                                                                </div>
-
-                                                                                <div className="mt-2 flex items-center gap-1.5">
-                                                                                    {selectedExercise ? (
-                                                                                        <>
-                                                                                            <span
-                                                                                                className={`inline-flex w-fit rounded-full px-2 py-0.5 text-[10px] font-semibold ${selectedExercise.type ===
-                                                                                                    'fundamental'
-                                                                                                    ? 'bg-red-100 text-red-700'
-                                                                                                    : 'bg-blue-100 text-blue-700'
-                                                                                                    }`}
-                                                                                            >
-                                                                                                {selectedExercise.type === 'fundamental'
-                                                                                                    ? 'F'
-                                                                                                    : 'A'}
-                                                                                            </span>
-                                                                                            {selectedExercise.movementPattern && (
-                                                                                                <MovementPatternTag
-                                                                                                    name={selectedExercise.movementPattern.name}
-                                                                                                    color={selectedExercise.movementPattern.color}
-                                                                                                    className="w-fit"
-                                                                                                />
-                                                                                            )}
-                                                                                        </>
-                                                                                    ) : (
-                                                                                        <span className="text-xs text-gray-500">
-                                                                                            {t('editProgram.tableMeta')}: -
-                                                                                        </span>
-                                                                                    )}
                                                                                 </div>
                                                                             </div>
                                                                         )}
@@ -2737,19 +2780,12 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                     </span>
                                                 </div>
                                                 {draggedExercise && (
-                                                    <div className="mt-2 flex items-center gap-1.5">
+                                                    <div className="mt-1.5 flex items-center gap-1.5">
                                                         <span
                                                             className={`inline-flex w-fit rounded-full px-2 py-0.5 text-[10px] font-semibold ${draggedExercise.type === 'fundamental' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}
                                                         >
                                                             {draggedExercise.type === 'fundamental' ? 'F' : 'A'}
                                                         </span>
-                                                        {draggedExercise.movementPattern && (
-                                                            <MovementPatternTag
-                                                                name={draggedExercise.movementPattern.name}
-                                                                color={draggedExercise.movementPattern.color}
-                                                                className="w-fit"
-                                                            />
-                                                        )}
                                                     </div>
                                                 )}
                                             </div>
@@ -3227,6 +3263,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                 <DndContext
                                                                     sensors={dndSensors}
                                                                     collisionDetection={closestCenter}
+                                                                    onDragStart={(event) => setActiveExerciseRowDragId(String(event.active.id))}
                                                                     onDragEnd={(event) =>
                                                                         void handleDragEnd(event, workout)
                                                                     }
@@ -3250,7 +3287,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                         <col className="w-[6%]" />
                                                                         <col className="w-[6%]" />
                                                                         <col className="w-[6%]" />
-                                                                        <col className="w-[9%]" />
+                                                                        <col className="w-[4%]" />
                                                                     </colgroup>
                                                                     <thead className="bg-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-gray-700">
                                                                         <tr>
@@ -3380,9 +3417,9 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                     !variantOptions.includes(row.variant)
                                                                                 )
                                                                             const variantFieldClassName =
-                                                                                'h-9 w-full rounded-lg border border-gray-300 px-1.5 text-sm leading-5 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-400'
+                                                                                'h-6 w-full rounded-lg border border-gray-300 px-1.5 text-xs leading-4 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-400'
                                                                             const metricFieldClassName =
-                                                                                'h-7 w-full rounded-lg border border-gray-300 px-1.5 text-left text-sm leading-5 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-400'
+                                                                                'h-6 w-full rounded-lg border border-gray-300 px-1.5 text-left text-xs leading-4 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-400'
                                                                             const rowBusy =
                                                                                 savingRowId === row.id ||
                                                                                 deletingRowId === row.id ||
@@ -3498,6 +3535,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                             disabled={rowBusy || readOnly}
                                                                                             className="w-full"
                                                                                             tabIndex={-1}
+                                                                                            compact
                                                                                         />
                                                                                     </td>
 
@@ -3544,6 +3582,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                         }
                                                                                                         className="w-full"
                                                                                                         tabIndex={-1}
+                                                                                                        compact
                                                                                                     />
                                                                                                 )}
                                                                                             </div>
@@ -3561,7 +3600,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                 disabled={
                                                                                                     rowBusy || readOnly || !selectedExercise
                                                                                                 }
-                                                                                                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                                                                                className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                                                                                                 tabIndex={-1}
                                                                                                 title={
                                                                                                     isCustomVariantInput
@@ -3608,7 +3647,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                 updateRowFields(row.id, { reps: event.target.value })
                                                                                             }
                                                                                             disabled={rowBusy || readOnly}
-                                                                                            className="h-7 w-16 rounded-lg border border-gray-300 px-1.5 text-center text-sm leading-5 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-400"
+                                                                                            className="h-6 w-16 rounded-lg border border-gray-300 px-1.5 text-center text-xs leading-4 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-400"
                                                                                             aria-label={t('editProgram.tableReps')}
                                                                                         />
                                                                                     </td>
@@ -3663,7 +3702,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                 )}
                                                                                             </div>
                                                                                         ) : (
-                                                                                            <>
+                                                                                            <div className="flex items-center gap-1">
                                                                                                 <Input
                                                                                                     type="text"
                                                                                                     value={row.weight}
@@ -3679,7 +3718,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                 {shouldShowEffectiveWeight &&
                                                                                                     typeof effectiveWeightToDisplay ===
                                                                                                     'number' && (
-                                                                                                        <p className="mt-1 text-[11px] font-semibold text-emerald-700">
+                                                                                                        <p className="text-[11px] font-semibold text-emerald-700 whitespace-nowrap">
                                                                                                             {t(
                                                                                                                 'editProgram.effectiveWeightPreview',
                                                                                                                 {
@@ -3690,7 +3729,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                             )}
                                                                                                         </p>
                                                                                                     )}
-                                                                                            </>
+                                                                                            </div>
                                                                                         )}
                                                                                     </td>
 
@@ -3705,7 +3744,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                 })
                                                                                             }
                                                                                             disabled={rowBusy || readOnly}
-                                                                                            className="w-full rounded-lg border border-gray-300 px-1.5 py-1 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                                                                                            className="w-full rounded-lg border border-gray-300 px-1.5 py-0.5 text-xs focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
                                                                                         >
                                                                                             {REST_TIME_OPTIONS.map((restOption) => (
                                                                                                 <option
@@ -3720,54 +3759,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
                                                                                     <td className="px-1 py-1">
                                                                                         <div className="mx-auto flex max-w-full items-center justify-center gap-1">
-                                                                                            <div>
-                                                                                                {selectedExercise ? (
-                                                                                                    <div className="flex items-center gap-1.5">
-                                                                                                        <span
-                                                                                                            className={`inline-flex w-fit rounded-full px-2 py-0.5 text-[10px] font-semibold ${selectedExercise.type ===
-                                                                                                                'fundamental'
-                                                                                                                ? 'bg-red-100 text-red-700'
-                                                                                                                : 'bg-blue-100 text-blue-700'
-                                                                                                                }`}
-                                                                                                        >
-                                                                                                            {selectedExercise.type === 'fundamental'
-                                                                                                                ? 'F'
-                                                                                                                : 'A'}
-                                                                                                        </span>
-                                                                                                        {selectedExercise.movementPattern && (
-                                                                                                            <MovementPatternTag
-                                                                                                                name={selectedExercise.movementPattern.name}
-                                                                                                                color={selectedExercise.movementPattern.color}
-                                                                                                                compact
-                                                                                                                className="w-fit"
-                                                                                                            />
-                                                                                                        )}
-                                                                                                    </div>
-                                                                                                ) : (
-                                                                                                    <span className="text-xs text-gray-400">
-                                                                                                        -
-                                                                                                    </span>
-                                                                                                )}
-                                                                                            </div>
-
-                                                                                            {!readOnly && (
-                                                                                                <div>
-                                                                                                    <ActionIconButton
-                                                                                                        variant="delete"
-                                                                                                        label={t('editProgram.deleteRowTitle')}
-                                                                                                        onClick={() =>
-                                                                                                            setConfirmDeleteRow({
-                                                                                                                rowId: row.id,
-                                                                                                                workoutId: workout.id,
-                                                                                                                isDraft: row.isDraft,
-                                                                                                            })
-                                                                                                        }
-                                                                                                        disabled={rowBusy}
-                                                                                                        isLoading={deletingRowId === row.id}
-                                                                                                        tabIndex={-1}
-                                                                                                    />
-                                                                                                </div>
-                                                                                            )}
                                                                                         </div>
                                                                                     </td>
                                                                                         </>
@@ -3798,6 +3789,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             )
                         })}
                     </div>
+
+
 
                     {!readOnly && (
                         <div className="flex space-x-4 mt-8">
@@ -3835,6 +3828,22 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     )}
 
                 </div>
+
+                {/* Floating trash zone — visible in structure (step 2) and details (step 3) */}
+                {!readOnly && (
+                    <div
+                        ref={trashRef}
+                        className={`fixed bottom-6 left-6 z-50 w-16 h-16 rounded-full flex items-center justify-center transition-all duration-200 ${
+                            isDragOverTrash
+                                ? 'bg-red-500 text-white shadow-2xl scale-110'
+                                : 'bg-gray-300 text-gray-600 shadow-lg'
+                        }`}
+                        aria-label={t('editProgram.deleteRowTitle')}
+                        title={t('editProgram.deleteRowTitle')}
+                    >
+                        <Trash2 className="w-6 h-6" />
+                    </div>
+                )}
 
                 <ConfirmationModal
                     isOpen={confirmCopyNextWeek !== null}

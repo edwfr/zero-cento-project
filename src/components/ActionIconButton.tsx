@@ -11,6 +11,7 @@ export interface ActionIconButtonProps {
     disabled?: boolean
     isLoading?: boolean
     tabIndex?: number
+    className?: string
 }
 
 const VARIANT_CONFIG: Record<ActionVariant, { Icon: LucideIcon; activeClass: string }> = {
@@ -34,17 +35,19 @@ export function ActionIconButton({
     disabled = false,
     isLoading = false,
     tabIndex,
+    className,
 }: ActionIconButtonProps) {
     const { Icon, activeClass } = VARIANT_CONFIG[variant]
     const isDisabled = disabled || isLoading
-    const className = `${BASE} ${isDisabled ? DISABLED_CLASS : activeClass}`
+    const baseClassName = `${BASE} ${isDisabled ? DISABLED_CLASS : activeClass}`
+    const finalClassName = className ? `${baseClassName} ${className}` : baseClassName
     const icon = isLoading
         ? <Loader2 className="w-4 h-4 animate-spin" />
         : <Icon className="w-4 h-4" />
 
     if (href && !isDisabled) {
         return (
-            <Link href={href} className={className} title={label} aria-label={label} tabIndex={tabIndex}>
+            <Link href={href} className={finalClassName} title={label} aria-label={label} tabIndex={tabIndex}>
                 {icon}
             </Link>
         )
@@ -55,7 +58,7 @@ export function ActionIconButton({
             type="button"
             onClick={onClick}
             disabled={isDisabled}
-            className={className}
+            className={finalClassName}
             title={label}
             aria-label={label}
             tabIndex={tabIndex}
