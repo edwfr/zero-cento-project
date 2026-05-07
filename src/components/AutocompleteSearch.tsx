@@ -1,6 +1,7 @@
 'use client'
 
 import { CSSProperties, useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/Input'
 import { FormLabel } from '@/components/FormLabel'
@@ -64,9 +65,35 @@ export default function AutocompleteSearch({
     const [query, setQuery] = useState('')
     const [isOpen, setIsOpen] = useState(false)
     const [activeIndex, setActiveIndex] = useState(-1)
+    const [dropdownStyle, setDropdownStyle] = useState<CSSProperties>({})
     const inputRef = useRef<HTMLInputElement>(null)
     const listRef = useRef<HTMLUListElement>(null)
     const containerRef = useRef<HTMLDivElement>(null)
+
+    const updateDropdownPosition = useCallback(() => {
+        if (containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect()
+            setDropdownStyle({
+                position: 'fixed',
+                top: rect.bottom + 4,
+                left: rect.left,
+                width: rect.width,
+                zIndex: 9999,
+            })
+        }
+    }, [])
+
+    // Keep dropdown position in sync while open (scroll / resize)
+    useEffect(() => {
+        if (!isOpen) return
+        updateDropdownPosition()
+        window.addEventListener('scroll', updateDropdownPosition, true)
+        window.addEventListener('resize', updateDropdownPosition)
+        return () => {
+            window.removeEventListener('scroll', updateDropdownPosition, true)
+            window.removeEventListener('resize', updateDropdownPosition)
+        }
+    }, [isOpen, updateDropdownPosition])
 
     // Compute label of currently selected option
     const selectedOption = options.find((o) => o.id === value)
@@ -176,7 +203,7 @@ export default function AutocompleteSearch({
                     }
                     value={query}
                     onChange={handleInputChange}
-                    onFocus={() => setIsOpen(true)}
+                    onFocus={() => { updateDropdownPosition(); setIsOpen(true) }}
                     onKeyDown={handleKeyDown}
                     placeholder={resolvedPlaceholder}
                     disabled={disabled}
@@ -215,13 +242,14 @@ export default function AutocompleteSearch({
                 </div>
             </div>
 
-            {/* Dropdown list */}
-            {isOpen && (
+            {/* Dropdown list — rendered in a portal to escape any overflow:hidden/auto ancestor */}
+            {isOpen && createPortal(
                 <ul
                     ref={listRef}
                     id={`${inputId}-list`}
                     role="listbox"
-                    className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto"
+                    className="bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto"
+                    style={dropdownStyle}
                 >
                     {loading ? (
                         <li className={`text-gray-500 text-center ${compact ? 'px-2 py-1 text-xs' : 'px-4 py-3 text-sm'}`}>
@@ -257,7 +285,8 @@ export default function AutocompleteSearch({
                             </li>
                         ))
                     )}
-                </ul>
+                </ul>,
+                document.body
             )}
 
             {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
