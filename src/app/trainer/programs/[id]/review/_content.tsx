@@ -324,7 +324,9 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
 
     const isDraft = program?.status === 'draft'
     const isProgramEditable = Boolean(isDraft)
-    const totalWorkouts = program ? program.durationWeeks * program.workoutsPerWeek : 0
+    const totalWorkouts = program
+        ? program.weeks.reduce((total, week) => total + week.workouts.length, 0)
+        : 0
     const configuredWorkouts =
         program?.weeks.reduce(
             (sum, week) =>

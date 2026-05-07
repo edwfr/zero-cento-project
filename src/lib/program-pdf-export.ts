@@ -254,7 +254,7 @@ export async function exportProgramToPdf(
                 doc.setTextColor(35, 35, 35)
                 doc.setFont('helvetica', 'bold')
                 doc.setFontSize(10)
-                doc.text(labels.workoutLabel(workout.dayIndex), 14, cursorY)
+                doc.text(labels.workoutLabel(workoutIndex + 1), 14, cursorY)
 
                 const bodyRows = workout.exercises.length > 0
                     ? workout.exercises.map((exercise) => {

@@ -65,7 +65,7 @@ export default function PublishProgramPage() {
         const errors: string[] = []
 
         // Check all workouts have exercises
-        const totalWorkouts = prog.durationWeeks * prog.workoutsPerWeek
+        const totalWorkouts = prog.weeks.reduce((total, week) => total + week.workouts.length, 0)
         const configuredWorkouts = prog.weeks.reduce(
             (sum, week) => sum + week.workouts.filter((w) => w.exerciseCount > 0).length,
             0
@@ -204,7 +204,7 @@ export default function PublishProgramPage() {
         )
     }
 
-    const totalWorkouts = program.durationWeeks * program.workoutsPerWeek
+    const totalWorkouts = program.weeks.reduce((total, week) => total + week.workouts.length, 0)
     const configuredWorkouts = program.weeks.reduce(
         (sum, week) => sum + week.workouts.filter((w) => w.exerciseCount > 0).length,
         0

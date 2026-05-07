@@ -644,6 +644,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const [activeExerciseRowDragId, setActiveExerciseRowDragId] = useState<string | null>(null)
     const trashRef = useRef<HTMLDivElement>(null)
 
+    const hasSetInitialStepRef = useRef(false)
+
     const dndSensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -843,6 +845,18 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         void fetchProgram()
         void fetchExerciseCatalog()
     }, [fetchProgram, fetchExerciseCatalog])
+
+    // Auto-advance to 'details' step on initial load if exercises already exist
+    useEffect(() => {
+        if (!program || readOnly || hasSetInitialStepRef.current) return
+        hasSetInitialStepRef.current = true
+        const hasExercises = program.weeks.some((week) =>
+            week.workouts.some((workout) => workout.workoutExercises.length > 0)
+        )
+        if (hasExercises) {
+            setWizardStep('details')
+        }
+    }, [program, readOnly])
 
     useEffect(() => {
         const handleVisibilityChange = () => {
@@ -1077,7 +1091,10 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         )
     }, [program])
 
-    const totalWorkouts = program ? program.durationWeeks * program.workoutsPerWeek : 0
+    // Use actual workout count so that deleted workouts don't block the "next" button
+    const totalWorkouts = program
+        ? program.weeks.reduce((total, week) => total + week.workouts.length, 0)
+        : 0
 
     const recordsByExercise = useMemo(
         () =>
@@ -2379,6 +2396,16 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 .filter((r) => r.exerciseId)
                 .map((r, i) => ({ dayIndex: Number(dayIndex), order: i, exerciseId: r.exerciseId }))
         )
+
+        // Skip PUT if the skeleton is unchanged
+        const currentKey = rows.map((r) => `${r.dayIndex}:${r.exerciseId}`).join('|')
+        const savedKey = (program.skeleton ?? [])
+            .slice()
+            .sort((a, b) => a.dayIndex !== b.dayIndex ? a.dayIndex - b.dayIndex : a.order - b.order)
+            .map((s) => `${s.dayIndex}:${s.exerciseId}`)
+            .join('|')
+        if (currentKey === savedKey) return true
+
         const res = await fetch(`/api/programs/${program.id}/skeleton`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -2521,7 +2548,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-4">
                 {!readOnly && (
                     <div className="mb-8">
                         <div className="flex flex-wrap items-center justify-center gap-4 mb-4">
@@ -3514,207 +3541,219 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                             </td>
 
                                                                                             <td className="px-1 py-1 align-middle">
-                                                                                        <label className="flex h-full w-full items-center justify-center">
-                                                                                            <input
-                                                                                                type="checkbox"
-                                                                                                checked={row.isWarmup}
-                                                                                                onChange={(event) =>
-                                                                                                    updateRowFields(row.id, {
-                                                                                                        isWarmup: event.target.checked,
-                                                                                                    })
-                                                                                                }
-                                                                                                disabled={rowBusy || readOnly}
-                                                                                                tabIndex={-1}
-                                                                                                className="h-4 w-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
-                                                                                            />
-                                                                                        </label>
-                                                                                    </td>
-
-                                                                                    <td className="px-1 py-1">
-                                                                                        <AutocompleteSearch
-                                                                                            id={`exercise-row-${row.id}`}
-                                                                                            options={autocompleteExerciseOptions}
-                                                                                            value={row.exerciseId || undefined}
-                                                                                            onSelect={(option) => {
-                                                                                                updateRowFields(row.id, {
-                                                                                                    exerciseId: option?.id ?? '',
-                                                                                                    variant: '',
-                                                                                                })
-
-                                                                                                setCustomVariantInputByRowId(
-                                                                                                    (currentModes) => ({
-                                                                                                        ...currentModes,
-                                                                                                        [row.id]: false,
-                                                                                                    })
-                                                                                                )
-                                                                                            }}
-                                                                                            placeholder={t('editProgram.selectExercise')}
-                                                                                            disabled={rowBusy || readOnly}
-                                                                                            className="w-full"
-                                                                                            tabIndex={-1}
-                                                                                            compact
-                                                                                        />
-                                                                                    </td>
-
-                                                                                    <td className="px-1 py-1">
-                                                                                        <div className="flex items-center gap-1">
-                                                                                            <div className="min-w-0 flex-1">
-                                                                                                {isCustomVariantInput ? (
-                                                                                                    <Input
-                                                                                                        type="text"
-                                                                                                        value={row.variant}
-                                                                                                        onChange={(event) =>
-                                                                                                            updateRowFields(row.id, {
-                                                                                                                variant: event.target.value,
-                                                                                                            })
-                                                                                                        }
-                                                                                                        disabled={
-                                                                                                            rowBusy ||
-                                                                                                            readOnly ||
-                                                                                                            !selectedExercise
-                                                                                                        }
-                                                                                                        className={variantFieldClassName}
-                                                                                                        placeholder={t('editProgram.variantPlaceholder')}
-                                                                                                        tabIndex={-1}
-                                                                                                    />
-                                                                                                ) : (
-                                                                                                    <AutocompleteSearch
-                                                                                                        id={`variant-row-${row.id}`}
-                                                                                                        options={variantOptions.map((variantOption) => ({
-                                                                                                            id: variantOption,
-                                                                                                            label: variantOption,
-                                                                                                        }))}
-                                                                                                        value={row.variant || undefined}
-                                                                                                        onSelect={(option) =>
-                                                                                                            updateRowFields(row.id, {
-                                                                                                                variant: option?.id ?? '',
-                                                                                                            })
-                                                                                                        }
-                                                                                                        placeholder={t('editProgram.noVariantOption')}
-                                                                                                        emptyMessage={t('editProgram.noVariantAvailable')}
-                                                                                                        disabled={
-                                                                                                            rowBusy ||
-                                                                                                            readOnly ||
-                                                                                                            !selectedExercise
-                                                                                                        }
-                                                                                                        className="w-full"
-                                                                                                        tabIndex={-1}
-                                                                                                        compact
-                                                                                                    />
-                                                                                                )}
+                                                                                        {readOnly ? (
+                                                                                            <div className="flex h-full w-full items-center justify-center">
+                                                                                                {row.isWarmup && <Flame className="h-4 w-4 text-week-test" />}
                                                                                             </div>
-
-                                                                                            <button
-                                                                                                type="button"
-                                                                                                onClick={() =>
-                                                                                                    toggleCustomVariantInput({
-                                                                                                        rowId: row.id,
-                                                                                                        currentVariant: row.variant,
-                                                                                                        variantOptions,
-                                                                                                        selectedExercise,
-                                                                                                    })
-                                                                                                }
-                                                                                                disabled={
-                                                                                                    rowBusy || readOnly || !selectedExercise
-                                                                                                }
-                                                                                                className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
-                                                                                                tabIndex={-1}
-                                                                                                title={
-                                                                                                    isCustomVariantInput
-                                                                                                        ? t('editProgram.lockVariantInputTitle')
-                                                                                                        : t('editProgram.unlockVariantInputTitle')
-                                                                                                }
-                                                                                                aria-label={
-                                                                                                    isCustomVariantInput
-                                                                                                        ? t('editProgram.lockVariantInputTitle')
-                                                                                                        : t('editProgram.unlockVariantInputTitle')
-                                                                                                }
-                                                                                            >
-                                                                                                {isCustomVariantInput ? (
-                                                                                                    <LockOpen className="h-4 w-4" />
-                                                                                                ) : (
-                                                                                                    <Lock className="h-4 w-4" />
-                                                                                                )}
-                                                                                            </button>
-                                                                                        </div>
-                                                                                    </td>
-
-                                                                                    <td className="px-1 py-1">
-                                                                                        <Input
-                                                                                            type="number"
-                                                                                            min="1"
-                                                                                            max="20"
-                                                                                            step="1"
-                                                                                            value={row.sets}
-                                                                                            onChange={(event) =>
-                                                                                                updateRowFields(row.id, {
-                                                                                                    sets: event.target.value,
-                                                                                                })
-                                                                                            }
-                                                                                            disabled={rowBusy || readOnly}
-                                                                                            className={metricFieldClassName}
-                                                                                        />
-                                                                                    </td>
-
-                                                                                    <td className="px-1 py-1">
-                                                                                        <Input
-                                                                                            type="text"
-                                                                                            value={row.reps}
-                                                                                            onChange={(event) =>
-                                                                                                updateRowFields(row.id, { reps: event.target.value })
-                                                                                            }
-                                                                                            disabled={rowBusy || readOnly}
-                                                                                            className="h-6 w-16 rounded-lg border border-gray-300 px-1.5 text-center text-xs leading-4 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-400"
-                                                                                            aria-label={t('editProgram.tableReps')}
-                                                                                        />
-                                                                                    </td>
-
-                                                                                    <td className="px-1 py-1">
-                                                                                        <select
-                                                                                            value={row.targetRpe}
-                                                                                            onChange={(event) =>
-                                                                                                updateRowFields(row.id, {
-                                                                                                    targetRpe: event.target.value,
-                                                                                                })
-                                                                                            }
-                                                                                            disabled={rowBusy || readOnly}
-                                                                                            className={metricFieldClassName}
-                                                                                        >
-                                                                                            <option value="">-</option>
-                                                                                            {RPE_OPTIONS.map((rpeValue) => (
-                                                                                                <option key={rpeValue} value={String(rpeValue)}>
-                                                                                                    {rpeValue}
-                                                                                                </option>
-                                                                                            ))}
-                                                                                        </select>
+                                                                                        ) : (
+                                                                                            <label className="flex h-full w-full items-center justify-center">
+                                                                                                <input
+                                                                                                    type="checkbox"
+                                                                                                    checked={row.isWarmup}
+                                                                                                    onChange={(event) =>
+                                                                                                        updateRowFields(row.id, {
+                                                                                                            isWarmup: event.target.checked,
+                                                                                                        })
+                                                                                                    }
+                                                                                                    disabled={rowBusy}
+                                                                                                    tabIndex={-1}
+                                                                                                    className="h-4 w-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+                                                                                                />
+                                                                                            </label>
+                                                                                        )}
                                                                                     </td>
 
                                                                                     <td className="px-1 py-1">
                                                                                         {readOnly ? (
-                                                                                            <div className="space-y-1">
-                                                                                                <p className="text-[11px] text-gray-600">
-                                                                                                    {t('editProgram.assignedWeightPreview', {
-                                                                                                        weight: assignedWeightDisplay,
-                                                                                                    })}
+                                                                                            <span className="truncate text-xs font-medium text-gray-900">
+                                                                                                {selectedExercise?.name ?? '-'}
+                                                                                            </span>
+                                                                                        ) : (
+                                                                                            <AutocompleteSearch
+                                                                                                id={`exercise-row-${row.id}`}
+                                                                                                options={autocompleteExerciseOptions}
+                                                                                                value={row.exerciseId || undefined}
+                                                                                                onSelect={(option) => {
+                                                                                                    updateRowFields(row.id, {
+                                                                                                        exerciseId: option?.id ?? '',
+                                                                                                        variant: '',
+                                                                                                    })
+
+                                                                                                    setCustomVariantInputByRowId(
+                                                                                                        (currentModes) => ({
+                                                                                                            ...currentModes,
+                                                                                                            [row.id]: false,
+                                                                                                        })
+                                                                                                    )
+                                                                                                }}
+                                                                                                placeholder={t('editProgram.selectExercise')}
+                                                                                                disabled={rowBusy}
+                                                                                                className="w-full"
+                                                                                                tabIndex={-1}
+                                                                                                compact
+                                                                                            />
+                                                                                        )}
+                                                                                    </td>
+
+                                                                                    <td className="px-1 py-1">
+                                                                                        {readOnly ? (
+                                                                                            <span className="text-xs text-gray-700">
+                                                                                                {row.variant || '-'}
+                                                                                            </span>
+                                                                                        ) : (
+                                                                                            <div className="flex items-center gap-1">
+                                                                                                <div className="min-w-0 flex-1">
+                                                                                                    {isCustomVariantInput ? (
+                                                                                                        <Input
+                                                                                                            type="text"
+                                                                                                            value={row.variant}
+                                                                                                            onChange={(event) =>
+                                                                                                                updateRowFields(row.id, {
+                                                                                                                    variant: event.target.value,
+                                                                                                                })
+                                                                                                            }
+                                                                                                            disabled={
+                                                                                                                rowBusy ||
+                                                                                                                !selectedExercise
+                                                                                                            }
+                                                                                                            className={variantFieldClassName}
+                                                                                                            placeholder={t('editProgram.variantPlaceholder')}
+                                                                                                            tabIndex={-1}
+                                                                                                        />
+                                                                                                    ) : (
+                                                                                                        <AutocompleteSearch
+                                                                                                            id={`variant-row-${row.id}`}
+                                                                                                            options={variantOptions.map((variantOption) => ({
+                                                                                                                id: variantOption,
+                                                                                                                label: variantOption,
+                                                                                                            }))}
+                                                                                                            value={row.variant || undefined}
+                                                                                                            onSelect={(option) =>
+                                                                                                                updateRowFields(row.id, {
+                                                                                                                    variant: option?.id ?? '',
+                                                                                                                })
+                                                                                                            }
+                                                                                                            placeholder={t('editProgram.noVariantOption')}
+                                                                                                            emptyMessage={t('editProgram.noVariantAvailable')}
+                                                                                                            disabled={
+                                                                                                                rowBusy ||
+                                                                                                                !selectedExercise
+                                                                                                            }
+                                                                                                            className="w-full"
+                                                                                                            tabIndex={-1}
+                                                                                                            compact
+                                                                                                        />
+                                                                                                    )}
+                                                                                                </div>
+
+                                                                                                <button
+                                                                                                    type="button"
+                                                                                                    onClick={() =>
+                                                                                                        toggleCustomVariantInput({
+                                                                                                            rowId: row.id,
+                                                                                                            currentVariant: row.variant,
+                                                                                                            variantOptions,
+                                                                                                            selectedExercise,
+                                                                                                        })
+                                                                                                    }
+                                                                                                    disabled={
+                                                                                                        rowBusy || !selectedExercise
+                                                                                                    }
+                                                                                                    className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                                                                                    tabIndex={-1}
+                                                                                                    title={
+                                                                                                        isCustomVariantInput
+                                                                                                            ? t('editProgram.lockVariantInputTitle')
+                                                                                                            : t('editProgram.unlockVariantInputTitle')
+                                                                                                    }
+                                                                                                    aria-label={
+                                                                                                        isCustomVariantInput
+                                                                                                            ? t('editProgram.lockVariantInputTitle')
+                                                                                                            : t('editProgram.unlockVariantInputTitle')
+                                                                                                    }
+                                                                                                >
+                                                                                                    {isCustomVariantInput ? (
+                                                                                                        <LockOpen className="h-4 w-4" />
+                                                                                                    ) : (
+                                                                                                        <Lock className="h-4 w-4" />
+                                                                                                    )}
+                                                                                                </button>
+                                                                                            </div>
+                                                                                        )}
+                                                                                    </td>
+
+                                                                                    <td className="px-1 py-1">
+                                                                                        {readOnly ? (
+                                                                                            <span className="block text-xs font-semibold text-gray-900">{row.sets || '-'}</span>
+                                                                                        ) : (
+                                                                                            <Input
+                                                                                                type="number"
+                                                                                                min="1"
+                                                                                                max="20"
+                                                                                                step="1"
+                                                                                                value={row.sets}
+                                                                                                onChange={(event) =>
+                                                                                                    updateRowFields(row.id, {
+                                                                                                        sets: event.target.value,
+                                                                                                    })
+                                                                                                }
+                                                                                                disabled={rowBusy}
+                                                                                                className={metricFieldClassName}
+                                                                                            />
+                                                                                        )}
+                                                                                    </td>
+
+                                                                                    <td className="px-1 py-1">
+                                                                                        {readOnly ? (
+                                                                                            <span className="block text-xs font-semibold text-gray-900">{row.reps || '-'}</span>
+                                                                                        ) : (
+                                                                                            <Input
+                                                                                                type="text"
+                                                                                                value={row.reps}
+                                                                                                onChange={(event) =>
+                                                                                                    updateRowFields(row.id, { reps: event.target.value })
+                                                                                                }
+                                                                                                disabled={rowBusy}
+                                                                                                className="h-6 w-16 rounded-lg border border-gray-300 px-1.5 text-center text-xs leading-4 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-400"
+                                                                                                aria-label={t('editProgram.tableReps')}
+                                                                                            />
+                                                                                        )}
+                                                                                    </td>
+
+                                                                                    <td className="px-1 py-1">
+                                                                                        {readOnly ? (
+                                                                                            <span className="block text-xs font-semibold text-gray-900">{row.targetRpe || '-'}</span>
+                                                                                        ) : (
+                                                                                            <select
+                                                                                                value={row.targetRpe}
+                                                                                                onChange={(event) =>
+                                                                                                    updateRowFields(row.id, {
+                                                                                                        targetRpe: event.target.value,
+                                                                                                    })
+                                                                                                }
+                                                                                                disabled={rowBusy}
+                                                                                                className={metricFieldClassName}
+                                                                                            >
+                                                                                                <option value="">-</option>
+                                                                                                {RPE_OPTIONS.map((rpeValue) => (
+                                                                                                    <option key={rpeValue} value={String(rpeValue)}>
+                                                                                                        {rpeValue}
+                                                                                                    </option>
+                                                                                                ))}
+                                                                                            </select>
+                                                                                        )}
+                                                                                    </td>
+
+                                                                                    <td className="px-1 py-1">
+                                                                                        {readOnly ? (
+                                                                                            <div className="flex items-center gap-1 flex-wrap">
+                                                                                                <p className="text-xs font-semibold text-gray-900 whitespace-nowrap">
+                                                                                                    {assignedWeightDisplay}
                                                                                                 </p>
                                                                                                 {shouldShowEffectiveWeight &&
-                                                                                                    typeof effectiveWeightToDisplay ===
-                                                                                                    'number' ? (
-                                                                                                    <p className="text-[11px] font-semibold text-emerald-700">
-                                                                                                        {t(
-                                                                                                            'editProgram.effectiveWeightPreview',
-                                                                                                            {
-                                                                                                                weight: `${formatWeightForDisplay(
-                                                                                                                    effectiveWeightToDisplay
-                                                                                                                )} kg`,
-                                                                                                            }
-                                                                                                        )}
-                                                                                                    </p>
-                                                                                                ) : (
-                                                                                                    <p className="text-[11px] font-semibold text-emerald-700">
-                                                                                                        {t(
-                                                                                                            'editProgram.effectiveWeightPreviewUnavailable'
-                                                                                                        )}
+                                                                                                    typeof effectiveWeightToDisplay === 'number' && (
+                                                                                                    <p className="text-[11px] text-emerald-700 whitespace-nowrap">
+                                                                                                        {`= ${formatWeightForDisplay(effectiveWeightToDisplay)} kg`}
                                                                                                     </p>
                                                                                                 )}
                                                                                             </div>
@@ -3751,27 +3790,33 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                     </td>
 
                                                                                     <td className="px-1 py-1">
-                                                                                        <select
-                                                                                            value={row.restTime}
-                                                                                            onChange={(event) =>
-                                                                                                updateRowFields(row.id, {
-                                                                                                    restTime:
-                                                                                                        event.target
-                                                                                                            .value as RestTime,
-                                                                                                })
-                                                                                            }
-                                                                                            disabled={rowBusy || readOnly}
-                                                                                            className="w-full rounded-lg border border-gray-300 px-1.5 py-0.5 text-xs focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
-                                                                                        >
-                                                                                            {REST_TIME_OPTIONS.map((restOption) => (
-                                                                                                <option
-                                                                                                    key={restOption.value}
-                                                                                                    value={restOption.value}
-                                                                                                >
-                                                                                                    {restOption.label}
-                                                                                                </option>
-                                                                                            ))}
-                                                                                        </select>
+                                                                                        {readOnly ? (
+                                                                                            <span className="block text-xs font-semibold text-gray-900">
+                                                                                                {REST_TIME_OPTIONS.find((o) => o.value === row.restTime)?.label ?? row.restTime}
+                                                                                            </span>
+                                                                                        ) : (
+                                                                                            <select
+                                                                                                value={row.restTime}
+                                                                                                onChange={(event) =>
+                                                                                                    updateRowFields(row.id, {
+                                                                                                        restTime:
+                                                                                                            event.target
+                                                                                                                .value as RestTime,
+                                                                                                    })
+                                                                                                }
+                                                                                                disabled={rowBusy}
+                                                                                                className="w-full rounded-lg border border-gray-300 px-1.5 py-0.5 text-xs focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                                                                                            >
+                                                                                                {REST_TIME_OPTIONS.map((restOption) => (
+                                                                                                    <option
+                                                                                                        key={restOption.value}
+                                                                                                        value={restOption.value}
+                                                                                                    >
+                                                                                                        {restOption.label}
+                                                                                                    </option>
+                                                                                                ))}
+                                                                                            </select>
+                                                                                        )}
                                                                                     </td>
                                                                                         </>
                                                                                     )}
