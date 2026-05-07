@@ -10,13 +10,13 @@
 ## TO DO LIST TRAINER
 - [X] [TRN-006] Grafico istogramma sia su recap di scheda sia su reportistica per esercizi SBD
 - [x] [TRN-007] Aggiunta esercizio con + tra le righe e nuove righe subito ordinabile
-- [ ] [TRN-008] -n% con riga precedente senza peso
+- [x] [TRN-008] -n% con riga precedente senza peso
 - [ ] [TRN-009] Creazione nuova scheda da precedente
 - [x] [TRN-010] Rivedere Week Type (Standard nome errato)
 - [x] [TRN-011] Rivedere data model per skeleton
 - [x] [TRN-012] sul peso in % il calcolo deve essere in real time per il trainer
 - [x] [TRN-013] in settimana n esima rimuovere esercizi e salvare
-- [ ] [TRN-014] in settimana n rimuovere workout -> da testare
-- [ ] [TRN-015] inserire secondi in esercizio (tipo plank) -> da testare
-- [ ] [TRN-016] ridurre dimensioni form più excel stile -> da testare
-- [ ] [TRN-017] quando utente si sposta con tab non aprire menu a tendina -> da testare
+- [x] [TRN-014] in settimana n rimuovere workout
+- [x] [TRN-015] inserire secondi in esercizio (tipo plank)
+- [x] [TRN-016] ridurre dimensioni form più excel stile
+- [x] [TRN-017] quando utente si sposta con tab non aprire menu a tendina 
