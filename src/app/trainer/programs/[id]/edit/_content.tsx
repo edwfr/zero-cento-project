@@ -1955,8 +1955,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     }
 
     const getBaseValidationError = (row: EditableWorkoutExerciseRow): string | null => {
-        // Allow: number (8), range (8-10), drop-set (6/8), or keyword "max"
-        const repsPattern = /^(\d+|\d+-\d+|\d+\/\d+|max)$/
+        // Allow: number (8), range (8-10), drop-set (6/8), seconds (30"), or keyword "max"
+        const repsPattern = /^(\d+|\d+-\d+|\d+\/\d+|\d+"|max)$/
         const parsedSets = Number.parseInt(row.sets, 10)
         const parsedRpe = row.targetRpe.trim() === '' ? null : Number(row.targetRpe)
 

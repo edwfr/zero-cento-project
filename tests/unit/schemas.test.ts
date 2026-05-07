@@ -511,6 +511,26 @@ describe('workoutExerciseSchema', () => {
         expect(result.success).toBe(true)
     })
 
+    it('accepts reps as seconds string', () => {
+        const result = workoutExerciseSchema.safeParse({ ...validWorkoutExercise, reps: '30"' })
+        expect(result.success).toBe(true)
+    })
+
+    it('accepts reps as single-digit seconds string', () => {
+        const result = workoutExerciseSchema.safeParse({ ...validWorkoutExercise, reps: '5"' })
+        expect(result.success).toBe(true)
+    })
+
+    it('rejects invalid seconds format with double quote only', () => {
+        const result = workoutExerciseSchema.safeParse({ ...validWorkoutExercise, reps: '"' })
+        expect(result.success).toBe(false)
+    })
+
+    it('rejects double quote suffix without leading digit', () => {
+        const result = workoutExerciseSchema.safeParse({ ...validWorkoutExercise, reps: 'abc"' })
+        expect(result.success).toBe(false)
+    })
+
     it('rejects percentage weight type without weight value', () => {
         const result = workoutExerciseSchema.safeParse({
             ...validWorkoutExercise,
