@@ -35,6 +35,7 @@ import {
     buildStructureRowsForWorkout,
     type WorkoutStructureTemplateRow,
 } from './structure-utils'
+import { hydrateDraftRowsForWorkout } from './skeleton-hydration'
 import { transformApiWeek } from './transform-utils'
 import { computeExerciseGroupColors } from './row-utils'
 import {
@@ -103,7 +104,6 @@ interface WorkoutExercise {
     effectiveWeight: number | null
     restTime: RestTime
     isWarmup: boolean
-    isSkeletonExercise: boolean
     notes: string | null
     exercise: ExerciseReference
 }
@@ -134,6 +134,7 @@ interface Program {
     durationWeeks: number
     workoutsPerWeek: number
     weeks: Week[]
+    skeleton: { dayIndex: number; order: number; exerciseId: string }[]
 }
 
 interface PersonalRecord {
@@ -171,7 +172,6 @@ interface EditableWorkoutExerciseRow {
     restTime: RestTime
     notes: string | null
     isDraft: boolean
-    isSkeletonExercise: boolean
 }
 
 interface EditProgramContentProps {
@@ -404,7 +404,6 @@ function buildEditableRow(
         restTime: workoutExercise.restTime,
         notes: workoutExercise.notes,
         isDraft,
-        isSkeletonExercise: workoutExercise.isSkeletonExercise,
     }
 }
 
@@ -814,6 +813,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 weeks: (data.data.program.weeks || []).map((week: any) =>
                     transformApiWeek(week, trainerId) as Week
                 ),
+                skeleton: data.data.program.skeleton ?? [],
             }
 
             if (requestId !== requestIdRef.current) {
@@ -938,7 +938,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         })
 
         setStructureRowsByWorkoutIndex((currentStructureRowsByWorkoutIndex) => {
-            const firstWeek = program.weeks[0]
+            const skeleton = program.skeleton ?? []
             const nextStructureRowsByWorkoutIndex: Record<number, WorkoutStructureTemplateRow[]> = {}
             let hasChanges = false
 
@@ -950,13 +950,10 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     continue
                 }
 
-                const sourceWorkout = firstWeek?.workouts[workoutIndex]
-                const sourceRows = sourceWorkout?.workoutExercises ?? []
                 hasChanges = true
-
                 nextStructureRowsByWorkoutIndex[workoutIndex] = buildStructureRowsForWorkout(
                     workoutIndex,
-                    sourceRows
+                    skeleton
                 )
             }
 
@@ -1811,7 +1808,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 restTime: 'm2',
                 notes: null,
                 isDraft: true,
-                isSkeletonExercise: false,
             },
         }))
 
@@ -1859,7 +1855,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 restTime: 'm2',
                 notes: null,
                 isDraft: true,
-                isSkeletonExercise: false,
             }
             return next
         })
@@ -2031,7 +2026,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             effectiveWeight: parsedWeight.effectiveWeight,
             restTime: row.restTime,
             isWarmup: row.isWarmup,
-            isSkeletonExercise: row.isSkeletonExercise,
             notes: row.notes,
         }
     }
@@ -2363,10 +2357,32 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
     const canProceedToReview = completedWorkouts === totalWorkouts && !hasUnsavedWorkoutChanges
 
-    const applyStructureToAllWeeks = useCallback(() => {
+    const saveSkeleton = useCallback(async (): Promise<boolean> => {
+        if (!program || readOnly) return true
+        const rows = Object.entries(structureRowsByWorkoutIndex).flatMap(([dayIndex, rowList]) =>
+            rowList
+                .filter((r) => r.exerciseId)
+                .map((r, i) => ({ dayIndex: Number(dayIndex), order: i, exerciseId: r.exerciseId }))
+        )
+        const res = await fetch(`/api/programs/${program.id}/skeleton`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rows }),
+        })
+        if (!res.ok) {
+            showToast(t('editProgram.skeletonSaveError'), 'error')
+            return false
+        }
+        return true
+    }, [program, readOnly, structureRowsByWorkoutIndex, showToast, t])
+
+    const applyStructureToAllWeeks = useCallback(async () => {
         if (!program || readOnly) {
             return
         }
+
+        const saved = await saveSkeleton()
+        if (!saved) return
 
         const cleanedStructureByWorkoutIndex: Record<number, WorkoutStructureTemplateRow[]> =
             Object.entries(structureRowsByWorkoutIndex).reduce((acc, [workoutIndex, rows]) => {
@@ -2405,48 +2421,38 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     }
 
                     const existingRows = getWorkoutRows(workout)
-                    const existingCountByKey = existingRows.reduce((acc, existingRow) => {
-                        const key = existingRow.exerciseId
-                        acc[key] = (acc[key] || 0) + 1
-                        return acc
-                    }, {} as Record<string, number>)
-                    const templateSeenByKey: Record<string, number> = {}
-                    let nextOrder = existingRows.length + 1
+                    const hydratedRows = hydrateDraftRowsForWorkout({
+                        workoutId: workout.id,
+                        skeletonForDay: structureRows.map((r, i) => ({
+                            dayIndex: workoutIndex,
+                            order: i,
+                            exerciseId: r.exerciseId,
+                        })),
+                        existingExerciseCount: workout.workoutExercises.length,
+                        startingOrder: existingRows.length + 1,
+                    })
 
-                    structureRows.forEach((structureRow) => {
-                        const key = structureRow.exerciseId
-                        templateSeenByKey[key] = (templateSeenByKey[key] || 0) + 1
-
-                        if ((existingCountByKey[key] || 0) >= templateSeenByKey[key]) {
-                            return
-                        }
-
-                        const draftRowId = `draft-${workout.id}-${Date.now()}-${Math.floor(Math.random() * 1000)}-${nextOrder}`
-                        const draftRow: EditableWorkoutExerciseRow = {
-                            id: draftRowId,
+                    hydratedRows.forEach((draftRow) => {
+                        const row: EditableWorkoutExerciseRow = {
+                            id: draftRow.id,
                             workoutId: workout.id,
-                            exerciseId: structureRow.exerciseId,
+                            exerciseId: draftRow.exerciseId,
                             variant: '',
-                            sets: '',
-                            reps: '',
+                            sets: String(draftRow.sets),
+                            reps: draftRow.reps,
                             targetRpe: '',
                             weight: '',
                             isWarmup: false,
-                            order: nextOrder,
+                            order: draftRow.order,
                             restTime: 'm2',
                             notes: null,
                             isDraft: true,
-                            isSkeletonExercise: true,
                         }
-
-                        nextRowsById[draftRowId] = draftRow
+                        nextRowsById[draftRow.id] = row
                         nextDraftRowsByWorkout[workout.id] = [
                             ...(nextDraftRowsByWorkout[workout.id] || []),
-                            draftRowId,
+                            draftRow.id,
                         ]
-                        existingCountByKey[key] = (existingCountByKey[key] || 0) + 1
-                        existingRows.push(draftRow)
-                        nextOrder += 1
                     })
                 })
             })
@@ -2474,6 +2480,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         program,
         readOnly,
         rowStateById,
+        saveSkeleton,
         showToast,
         structureRowsByWorkoutIndex,
         t,

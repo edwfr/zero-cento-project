@@ -160,7 +160,8 @@ export async function GET(
             resolvedProgram = { ...program, weeks: resolvedWeeks }
         }
 
-        return apiSuccess({ program: resolvedProgram })
+        const { workoutSkeletons, ...programWithoutSkeletons } = resolvedProgram as typeof resolvedProgram & { workoutSkeletons: unknown }
+        return apiSuccess({ program: { ...programWithoutSkeletons, skeleton: workoutSkeletons ?? [] } })
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error, programId }, 'Error fetching program')

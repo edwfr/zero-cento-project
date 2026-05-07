@@ -439,6 +439,7 @@
         "structureDescription": "Configura gli esercizi per ogni workout. Verranno precompilati su tutte le settimane e poi potrai completare set, ripetizioni e carichi.",
         "structureNoRows": "Nessun esercizio nello scheletro di questo workout.",
         "structureNoExercisesWarning": "Aggiungi almeno un esercizio nello scheletro prima di continuare",
+        "skeletonSaveError": "Errore nel salvataggio della struttura. Riprova.",
         "structureAppliedSuccess": "Scheletro applicato a tutte le settimane. Completa ora i dettagli.",
         "structureApplyAndContinue": "Avanti: dettagli esercizi",
         "editStructureStepButton": "Modifica scheletro",
