@@ -10,6 +10,7 @@ export interface ActionIconButtonProps {
     onClick?: () => void
     disabled?: boolean
     isLoading?: boolean
+    tabIndex?: number
 }
 
 const VARIANT_CONFIG: Record<ActionVariant, { Icon: LucideIcon; activeClass: string }> = {
@@ -32,6 +33,7 @@ export function ActionIconButton({
     onClick,
     disabled = false,
     isLoading = false,
+    tabIndex,
 }: ActionIconButtonProps) {
     const { Icon, activeClass } = VARIANT_CONFIG[variant]
     const isDisabled = disabled || isLoading
@@ -42,7 +44,7 @@ export function ActionIconButton({
 
     if (href && !isDisabled) {
         return (
-            <Link href={href} className={className} title={label} aria-label={label}>
+            <Link href={href} className={className} title={label} aria-label={label} tabIndex={tabIndex}>
                 {icon}
             </Link>
         )
@@ -56,6 +58,7 @@ export function ActionIconButton({
             className={className}
             title={label}
             aria-label={label}
+            tabIndex={tabIndex}
         >
             {icon}
         </button>

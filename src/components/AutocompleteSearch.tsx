@@ -27,6 +27,7 @@ interface AutocompleteSearchProps {
     id?: string
     inputStyle?: CSSProperties
     accentColor?: string
+    tabIndex?: number
 }
 
 /**
@@ -50,6 +51,7 @@ export default function AutocompleteSearch({
     id,
     inputStyle,
     accentColor,
+    tabIndex,
 }: AutocompleteSearchProps) {
     const { t } = useTranslation(['common', 'components'])
     const inputId = id || `autocomplete-${Math.random().toString(36).slice(2, 9)}`
@@ -183,6 +185,7 @@ export default function AutocompleteSearch({
                     className="pr-10"
                     style={inputStyle}
                     aria-invalid={!!error}
+                    tabIndex={tabIndex}
                 />
 
                 {/* Chevron icon */}

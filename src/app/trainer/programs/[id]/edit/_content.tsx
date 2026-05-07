@@ -3250,10 +3250,10 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                     </colgroup>
                                                                     <thead className="bg-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-gray-700">
                                                                         <tr>
-                                                                            <th className="w-6 px-0.5 py-3">
+                                                                            <th className="w-6 px-0.5 py-1">
                                                                                 <span className="sr-only">{t('editProgram.dragHandleLabel')}</span>
                                                                             </th>
-                                                                            <th className="px-1 py-3 text-center">
+                                                                            <th className="px-1 py-1 text-center">
                                                                                 <span
                                                                                     className="inline-flex items-center justify-center w-full"
                                                                                     title={t('editProgram.tableWarmup')}
@@ -3265,10 +3265,10 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                     </span>
                                                                                 </span>
                                                                             </th>
-                                                                            <th className="px-1 py-3">{t('editProgram.tableExercise')}</th>
-                                                                            <th className="px-1 py-3">{t('editProgram.tableVariant')}</th>
-                                                                            <th className="px-1 py-3">{t('editProgram.tableSets')}</th>
-                                                                            <th className="relative px-1 py-3">
+                                                                            <th className="px-1 py-1">{t('editProgram.tableExercise')}</th>
+                                                                            <th className="px-1 py-1">{t('editProgram.tableVariant')}</th>
+                                                                            <th className="px-1 py-1">{t('editProgram.tableSets')}</th>
+                                                                            <th className="relative px-1 py-1">
                                                                                 <div className="flex items-center justify-start gap-1">
                                                                                     <span>{t('editProgram.tableReps')}</span>
                                                                                     {!readOnly && (
@@ -3304,8 +3304,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                     </div>
                                                                                 )}
                                                                             </th>
-                                                                            <th className="px-1 py-3">{t('editProgram.tableRpe')}</th>
-                                                                            <th className="relative px-1 py-3">
+                                                                            <th className="px-1 py-1">{t('editProgram.tableRpe')}</th>
+                                                                            <th className="relative px-1 py-1">
                                                                                 <div className="flex items-center justify-start gap-1">
                                                                                     <span>{t('editProgram.tableWeightKg')}</span>
                                                                                     {!readOnly && (
@@ -3341,8 +3341,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                     </div>
                                                                                 )}
                                                                             </th>
-                                                                            <th className="px-1 py-3">{t('editProgram.tableRest')}</th>
-                                                                            <th className="px-1 py-3 whitespace-nowrap text-[10px] normal-case tracking-normal">
+                                                                            <th className="px-1 py-1">{t('editProgram.tableRest')}</th>
+                                                                            <th className="px-1 py-1 whitespace-nowrap text-[10px] normal-case tracking-normal">
                                                                                 <span className="sr-only">
                                                                                     {readOnly
                                                                                         ? t('editProgram.tableMeta')
@@ -3378,7 +3378,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                             const variantFieldClassName =
                                                                                 'h-9 w-full rounded-lg border border-gray-300 px-1.5 text-sm leading-5 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-400'
                                                                             const metricFieldClassName =
-                                                                                'h-9 w-full rounded-lg border border-gray-300 px-1.5 text-left text-sm leading-5 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-400'
+                                                                                'h-7 w-full rounded-lg border border-gray-300 px-1.5 text-left text-sm leading-5 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-400'
                                                                             const rowBusy =
                                                                                 savingRowId === row.id ||
                                                                                 deletingRowId === row.id ||
@@ -3438,13 +3438,14 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                     >
                                                                                     {(dragHandleProps) => (
                                                                                         <>
-                                                                                            <td className="w-6 px-0.5 py-3 align-middle">
+                                                                                            <td className="w-6 px-0.5 py-1 align-middle">
                                                                                                 {dragHandleProps ? (
                                                                                                     <button
                                                                                                         type="button"
                                                                                                         className="flex h-full w-6 cursor-grab items-center justify-center text-gray-300 hover:text-gray-500 active:cursor-grabbing disabled:cursor-not-allowed"
                                                                                                         disabled={Boolean(rowBusy)}
                                                                                                         {...dragHandleProps}
+                                                                                                        tabIndex={-1}
                                                                                                         aria-label={t('editProgram.dragHandleLabel')}
                                                                                                     >
                                                                                                         <GripVertical className="h-4 w-4" />
@@ -3454,7 +3455,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                 )}
                                                                                             </td>
 
-                                                                                            <td className="px-1 py-3 align-middle">
+                                                                                            <td className="px-1 py-1 align-middle">
                                                                                         <label className="flex h-full w-full items-center justify-center">
                                                                                             <input
                                                                                                 type="checkbox"
@@ -3465,12 +3466,13 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                     })
                                                                                                 }
                                                                                                 disabled={rowBusy || readOnly}
+                                                                                                tabIndex={-1}
                                                                                                 className="h-4 w-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
                                                                                             />
                                                                                         </label>
                                                                                     </td>
 
-                                                                                    <td className="px-1 py-3">
+                                                                                    <td className="px-1 py-1">
                                                                                         <AutocompleteSearch
                                                                                             id={`exercise-row-${row.id}`}
                                                                                             options={autocompleteExerciseOptions}
@@ -3491,10 +3493,11 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                             placeholder={t('editProgram.selectExercise')}
                                                                                             disabled={rowBusy || readOnly}
                                                                                             className="w-full"
+                                                                                            tabIndex={-1}
                                                                                         />
                                                                                     </td>
 
-                                                                                    <td className="px-1 py-3">
+                                                                                    <td className="px-1 py-1">
                                                                                         <div className="flex items-center gap-1">
                                                                                             <div className="min-w-0 flex-1">
                                                                                                 {isCustomVariantInput ? (
@@ -3513,6 +3516,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                         }
                                                                                                         className={variantFieldClassName}
                                                                                                         placeholder={t('editProgram.variantPlaceholder')}
+                                                                                                        tabIndex={-1}
                                                                                                     />
                                                                                                 ) : (
                                                                                                     <AutocompleteSearch
@@ -3535,6 +3539,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                             !selectedExercise
                                                                                                         }
                                                                                                         className="w-full"
+                                                                                                        tabIndex={-1}
                                                                                                     />
                                                                                                 )}
                                                                                             </div>
@@ -3553,6 +3558,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                     rowBusy || readOnly || !selectedExercise
                                                                                                 }
                                                                                                 className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                                                                                tabIndex={-1}
                                                                                                 title={
                                                                                                     isCustomVariantInput
                                                                                                         ? t('editProgram.lockVariantInputTitle')
@@ -3573,7 +3579,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                         </div>
                                                                                     </td>
 
-                                                                                    <td className="px-1 py-3">
+                                                                                    <td className="px-1 py-1">
                                                                                         <Input
                                                                                             type="number"
                                                                                             min="1"
@@ -3590,7 +3596,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                         />
                                                                                     </td>
 
-                                                                                    <td className="px-1 py-3">
+                                                                                    <td className="px-1 py-1">
                                                                                         <Input
                                                                                             type="text"
                                                                                             value={row.reps}
@@ -3598,12 +3604,12 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                 updateRowFields(row.id, { reps: event.target.value })
                                                                                             }
                                                                                             disabled={rowBusy || readOnly}
-                                                                                            className="h-9 w-16 rounded-lg border border-gray-300 px-1.5 text-center text-sm leading-5 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-400"
+                                                                                            className="h-7 w-16 rounded-lg border border-gray-300 px-1.5 text-center text-sm leading-5 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-400"
                                                                                             aria-label={t('editProgram.tableReps')}
                                                                                         />
                                                                                     </td>
 
-                                                                                    <td className="px-1 py-3">
+                                                                                    <td className="px-1 py-1">
                                                                                         <select
                                                                                             value={row.targetRpe}
                                                                                             onChange={(event) =>
@@ -3623,7 +3629,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                         </select>
                                                                                     </td>
 
-                                                                                    <td className="px-1 py-3">
+                                                                                    <td className="px-1 py-1">
                                                                                         {readOnly ? (
                                                                                             <div className="space-y-1">
                                                                                                 <p className="text-[11px] text-gray-600">
@@ -3684,7 +3690,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                         )}
                                                                                     </td>
 
-                                                                                    <td className="px-1 py-3">
+                                                                                    <td className="px-1 py-1">
                                                                                         <select
                                                                                             value={row.restTime}
                                                                                             onChange={(event) =>
@@ -3695,7 +3701,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                 })
                                                                                             }
                                                                                             disabled={rowBusy || readOnly}
-                                                                                            className="w-full rounded-lg border border-gray-300 px-1.5 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                                                                                            className="w-full rounded-lg border border-gray-300 px-1.5 py-1 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
                                                                                         >
                                                                                             {REST_TIME_OPTIONS.map((restOption) => (
                                                                                                 <option
@@ -3708,7 +3714,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                         </select>
                                                                                     </td>
 
-                                                                                    <td className="px-1 py-3">
+                                                                                    <td className="px-1 py-1">
                                                                                         <div className="mx-auto flex max-w-full items-center justify-center gap-1">
                                                                                             <div>
                                                                                                 {selectedExercise ? (
@@ -3754,6 +3760,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                         }
                                                                                                         disabled={rowBusy}
                                                                                                         isLoading={deletingRowId === row.id}
+                                                                                                        tabIndex={-1}
                                                                                                     />
                                                                                                 </div>
                                                                                             )}

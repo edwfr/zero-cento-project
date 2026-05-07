@@ -730,6 +730,47 @@ describe('calculateEffectiveWeight', () => {
             ).rejects.toThrow(CALCULATION_ERROR_KEYS.noPreviousOccurrenceFound)
         })
 
+        it('returns null when previous exercise has weight: null', async () => {
+            const previousExercise: WorkoutExercise = {
+                id: 'we-prev',
+                workoutId: mockWorkoutId,
+                exerciseId: mockExerciseId,
+                order: 1,
+                sets: 3,
+                reps: '8',
+                weightType: 'absolute',
+                weight: null, // trainer left blank
+                rpe: null,
+                restSeconds: 120,
+                notes: null,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            }
+
+            const currentExercise: WorkoutExercise = {
+                id: 'we-curr',
+                workoutId: mockWorkoutId,
+                exerciseId: mockExerciseId,
+                order: 2,
+                sets: 3,
+                reps: '8',
+                weightType: 'percentage_previous',
+                weight: -10, // -10%
+                rpe: null,
+                restSeconds: 120,
+                notes: null,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            }
+
+            vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(
+                normalizeWorkoutExerciseNullable(previousExercise)
+            )
+
+            const result = await calculateEffectiveWeight(currentExercise, mockTraineeId)
+            expect(result).toBeNull()
+        })
+
         it('throws error when recursion depth exceeds limit', async () => {
             const currentExercise: WorkoutExercise = {
                 id: 'we-12',
