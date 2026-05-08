@@ -160,7 +160,7 @@ export default function WorkoutDetailContent() {
     const [expandedVideos, setExpandedVideos] = useState<Record<string, boolean>>({})
     const [currentStep, setCurrentStep] = useState(0)
     const [recapRefreshSignal, setRecapRefreshSignal] = useState(0)
-    const [persistingSetIdx, setPersistingSetIdx] = useState<number | null>(null)
+    const [persistingKeys, setPersistingKeys] = useState<Set<string>>(new Set())
 
 
     const { showToast } = useToast()
@@ -323,7 +323,7 @@ export default function WorkoutDetailContent() {
     }) => {
         const { workoutExerciseId, setIdx, changedSet, previousSets, previousExerciseCompleted } = input
 
-        setPersistingSetIdx(setIdx)
+        setPersistingKeys((prev) => new Set(prev).add(`${workoutExerciseId}:${setIdx}`))
         try {
             const res = await fetch(`/api/trainee/workout-exercises/${workoutExerciseId}/feedback`, {
                 method: 'PATCH',
@@ -400,7 +400,11 @@ export default function WorkoutDetailContent() {
             }))
             showToast(err instanceof Error ? err.message : t('workouts.errorFeedback'), 'error')
         } finally {
-            setPersistingSetIdx(null)
+            setPersistingKeys((prev) => {
+                const next = new Set(prev)
+                next.delete(`${workoutExerciseId}:${setIdx}`)
+                return next
+            })
         }
     }, [exerciseNotes, exerciseRPE, showToast, t])
 
@@ -468,12 +472,21 @@ export default function WorkoutDetailContent() {
         })
     }
 
-    const updateExerciseRPE = (workoutExerciseId: string, rpe: number | null) => {
-        setExerciseRPE((prev) => ({
-            ...prev,
-            [workoutExerciseId]: rpe,
-        }))
-    }
+    const updateExerciseRPE = useCallback(async (workoutExerciseId: string, rpe: number | null) => {
+        setExerciseRPE((prev) => ({ ...prev, [workoutExerciseId]: rpe }))
+        try {
+            const res = await fetch(`/api/trainee/workout-exercises/${workoutExerciseId}/feedback/rpe`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ actualRpe: rpe }),
+            })
+            const data = await res.json()
+            if (!res.ok) throw new Error(getApiErrorMessage(data, t('workouts.errorFeedback'), t))
+        } catch (err: unknown) {
+            setExerciseRPE((prev) => ({ ...prev, [workoutExerciseId]: exerciseRPE[workoutExerciseId] ?? null }))
+            showToast(err instanceof Error ? err.message : t('workouts.errorFeedback'), 'error')
+        }
+    }, [exerciseRPE, showToast, t])
 
     const updateExerciseNote = (workoutExerciseId: string, note: string) => {
         setExerciseNotes((prev) => ({ ...prev, [workoutExerciseId]: note }))
@@ -679,7 +692,7 @@ export default function WorkoutDetailContent() {
                             onToggleVideo={() => toggleVideo(currentExercise.id)}
                             onUpdateSet={(id, idx, field, value) => updateSet(id, idx, field, value)}
                             onToggleSet={(id, idx) => toggleSetCompleted(id, idx)}
-                            persistingSetIdx={persistingSetIdx}
+                            persistingKeys={persistingKeys}
                             onUpdateRpe={(rpe) => updateExerciseRPE(currentExercise.id, rpe)}
                             onUpdateNote={(note) => updateExerciseNote(currentExercise.id, note)}
                             onSaveNote={() => saveExerciseNote(currentExercise.id)}
@@ -772,7 +785,7 @@ interface ExerciseFocusCardProps {
     onToggleVideo: () => void
     onUpdateSet: (id: string, idx: number, field: 'weight' | 'reps', value: number) => void
     onToggleSet: (id: string, idx: number) => void
-    persistingSetIdx: number | null
+    persistingKeys: Set<string>
     onUpdateRpe: (rpe: number | null) => void
     onUpdateNote: (note: string) => void
     onSaveNote: () => void
@@ -791,7 +804,7 @@ function ExerciseFocusCard({
     onToggleVideo,
     onUpdateSet,
     onToggleSet,
-    persistingSetIdx,
+    persistingKeys,
     onUpdateRpe,
     onUpdateNote,
     onSaveNote,
@@ -996,15 +1009,15 @@ function ExerciseFocusCard({
                                     <button
                                         type="button"
                                         onClick={() => onToggleSet(we.id, setIdx)}
-                                        disabled={persistingSetIdx === setIdx}
+                                        disabled={persistingKeys.has(`${we.id}:${setIdx}`)}
                                         className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors disabled:opacity-70 disabled:cursor-not-allowed ${set.completed
                                                 ? 'border-green-300 bg-green-100 text-green-700'
                                                 : 'border-gray-300 bg-white text-gray-400 hover:border-green-300 hover:text-green-600'
                                             }`}
                                         aria-label={t('workouts.markSetDone')}
                                     >
-                                        {persistingSetIdx === setIdx
-                                            ? <LoadingSpinner size="sm" color={set.completed ? 'primary' : 'gray'} />
+                                        {persistingKeys.has(`${we.id}:${setIdx}`)
+                                            ? <LoadingSpinner size="sm" color="green" />
                                             : <Check className="w-4 h-4" />
                                         }
                                     </button>

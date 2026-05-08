@@ -82,10 +82,20 @@ export const workoutExerciseAutosaveSchema = z.object({
     set: setPerformedSchema.optional(),
 })
 
+export const workoutExerciseRpeSchema = z.object({
+    actualRpe: z
+        .number()
+        .min(5.0, 'validation.rpeMin')
+        .max(10.0, 'validation.rpeMax')
+        .multipleOf(0.5, 'validation.rpeStep')
+        .nullable(),
+})
+
 export type SetPerformedInput = z.infer<typeof setPerformedSchema>
 export type FeedbackInput = z.infer<typeof feedbackSchema>
 export type UpdateFeedbackInput = z.infer<typeof updateFeedbackSchema>
 export type WeekFeedbackInput = z.infer<typeof weekFeedbackSchema>
 export type WorkoutSubmitInput = z.infer<typeof workoutSubmitSchema>
 export type WorkoutExerciseAutosaveInput = z.infer<typeof workoutExerciseAutosaveSchema>
+export type WorkoutExerciseRpeInput = z.infer<typeof workoutExerciseRpeSchema>
 

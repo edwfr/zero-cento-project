@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 
 interface LoadingSpinnerProps {
     size?: 'sm' | 'md' | 'lg' | 'xl'
-    color?: 'primary' | 'white' | 'gray'
+    color?: 'primary' | 'white' | 'gray' | 'green'
     className?: string
     label?: string
 }
@@ -32,6 +32,7 @@ export default function LoadingSpinner({
         primary: 'border-brand-primary/30 border-t-brand-primary',
         white: 'border-white/30 border-t-white',
         gray: 'border-gray-300 border-t-gray-700',
+        green: 'border-green-200 border-t-green-600',
     }
 
     return (
@@ -52,6 +53,7 @@ export default function LoadingSpinner({
                         ${color === 'primary' ? 'text-gray-700' : ''}
                         ${color === 'white' ? 'text-white' : ''}
                         ${color === 'gray' ? 'text-gray-600' : ''}
+                        ${color === 'green' ? 'text-green-700' : ''}
                     `}
                 >
                     {label}
