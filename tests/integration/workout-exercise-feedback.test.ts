@@ -16,6 +16,10 @@ vi.mock('@/lib/prisma', () => ({
         exerciseFeedback: {
             upsert: vi.fn(),
         },
+        setPerformed: {
+            upsert: vi.fn(),
+            count: vi.fn(),
+        },
     },
 }))
 
@@ -56,10 +60,14 @@ describe('PATCH /api/trainee/workout-exercises/[id]/feedback', () => {
             id: UUIDS.feedback,
             workoutExerciseId: UUIDS.workoutExercise,
             actualRpe: 8,
+            notes: null,
             date: new Date('2026-04-29T00:00:00.000Z'),
             updatedAt: new Date('2026-04-29T12:00:00.000Z'),
-            setsPerformed: [{ setNumber: 1, completed: true, reps: 5, weight: 100 }],
         } as any)
+        vi.mocked(prisma.setPerformed.upsert).mockResolvedValue({ setNumber: 1 } as any)
+        vi.mocked(prisma.setPerformed.count)
+            .mockResolvedValueOnce(1)  // total sets
+            .mockResolvedValueOnce(0) // incomplete sets
         vi.mocked(cascadeCompletion).mockResolvedValue({
             workoutExercise: { id: UUIDS.workoutExercise, isCompleted: true },
             workout: { id: 'workout-1', isCompleted: true },
@@ -68,10 +76,10 @@ describe('PATCH /api/trainee/workout-exercises/[id]/feedback', () => {
         } as any)
     })
 
-    it('upserts feedback for one exercise and updates cascade completion when all sets are completed', async () => {
+    it('upserts feedback and set, cascades completion when set is completed', async () => {
         const request = makeRequest({
             actualRpe: 8,
-            sets: [{ setNumber: 1, completed: true, reps: 5, weight: 100 }],
+            set: { setNumber: 1, completed: true, reps: 5, weight: 100 },
         })
 
         const res = await PATCH(request, withIdParam(UUIDS.workoutExercise))
@@ -80,18 +88,21 @@ describe('PATCH /api/trainee/workout-exercises/[id]/feedback', () => {
         expect(res.status).toBe(200)
         expect(prisma.workoutExercise.findFirst).toHaveBeenCalledTimes(1)
         expect(prisma.exerciseFeedback.upsert).toHaveBeenCalledTimes(1)
+        expect(prisma.setPerformed.upsert).toHaveBeenCalledTimes(1)
         expect(cascadeCompletion).toHaveBeenCalledWith(UUIDS.workoutExercise, true)
         expect(json.data.feedback.id).toBe(UUIDS.feedback)
         expect(json.data.cascade.workoutExercise.isCompleted).toBe(true)
     })
 
-    it('marks the exercise as incomplete when at least one set is not completed', async () => {
+    it('marks exercise incomplete when at least one set is not completed', async () => {
+        vi.mocked(prisma.setPerformed.count)
+            .mockReset()
+            .mockResolvedValueOnce(2)  // total sets
+            .mockResolvedValueOnce(1) // incomplete sets
+
         const request = makeRequest({
             actualRpe: 7.5,
-            sets: [
-                { setNumber: 1, completed: true, reps: 5, weight: 100 },
-                { setNumber: 2, completed: false, reps: 0, weight: 100 },
-            ],
+            set: { setNumber: 2, completed: false, reps: 0, weight: 100 },
         })
 
         const res = await PATCH(request, withIdParam(UUIDS.workoutExercise))
@@ -100,8 +111,23 @@ describe('PATCH /api/trainee/workout-exercises/[id]/feedback', () => {
         expect(cascadeCompletion).toHaveBeenCalledWith(UUIDS.workoutExercise, false)
     })
 
+    it('skips setPerformed upsert when no set provided', async () => {
+        vi.mocked(prisma.setPerformed.count)
+            .mockReset()
+            .mockResolvedValueOnce(0)  // total sets
+            .mockResolvedValueOnce(0) // incomplete sets
+
+        const request = makeRequest({ actualRpe: 8, notes: 'Felt good' })
+
+        const res = await PATCH(request, withIdParam(UUIDS.workoutExercise))
+
+        expect(res.status).toBe(200)
+        expect(prisma.setPerformed.upsert).not.toHaveBeenCalled()
+        expect(cascadeCompletion).toHaveBeenCalledWith(UUIDS.workoutExercise, false)
+    })
+
     it('returns 400 when validation fails', async () => {
-        const request = makeRequest({ actualRpe: 11, sets: [] })
+        const request = makeRequest({ actualRpe: 11 })
 
         const res = await PATCH(request, withIdParam(UUIDS.workoutExercise))
         const json = await res.json()
@@ -116,7 +142,7 @@ describe('PATCH /api/trainee/workout-exercises/[id]/feedback', () => {
 
         const request = makeRequest({
             actualRpe: null,
-            sets: [{ setNumber: 1, completed: true, reps: 5, weight: 100 }],
+            set: { setNumber: 1, completed: true, reps: 5, weight: 100 },
         })
 
         const res = await PATCH(request, withIdParam(UUIDS.workoutExercise))
@@ -134,7 +160,7 @@ describe('PATCH /api/trainee/workout-exercises/[id]/feedback', () => {
 
         const request = makeRequest({
             actualRpe: null,
-            sets: [{ setNumber: 1, completed: true, reps: 5, weight: 100 }],
+            set: { setNumber: 1, completed: true, reps: 5, weight: 100 },
         })
 
         const res = await PATCH(request, withIdParam(UUIDS.workoutExercise))

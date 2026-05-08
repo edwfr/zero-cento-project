@@ -79,10 +79,7 @@ export const workoutExerciseAutosaveSchema = z.object({
         .multipleOf(0.5, 'validation.rpeStep')
         .nullish(),
     notes: z.string().max(1000, 'validation.notesTooLong').nullish(),
-    sets: z
-        .array(setPerformedSchema)
-        .min(1, 'validation.minOneSeries')
-        .max(50, 'validation.maxSeries'),
+    set: setPerformedSchema.optional(),
 })
 
 export type SetPerformedInput = z.infer<typeof setPerformedSchema>

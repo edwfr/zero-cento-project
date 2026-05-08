@@ -53,7 +53,7 @@ export async function PATCH(
         }
 
         const today = getTodayDateKey()
-        const { actualRpe, notes, sets } = parsed.data
+        const { actualRpe, notes, set } = parsed.data
 
         const feedback = await prisma.exerciseFeedback.upsert({
             where: {
@@ -69,27 +69,10 @@ export async function PATCH(
                 date: today,
                 actualRpe: actualRpe ?? null,
                 notes: notes ?? null,
-                setsPerformed: {
-                    create: sets.map((set) => ({
-                        setNumber: set.setNumber,
-                        completed: set.completed,
-                        reps: set.reps,
-                        weight: set.weight,
-                    })),
-                },
             },
             update: {
                 actualRpe: actualRpe ?? null,
                 notes: notes ?? null,
-                setsPerformed: {
-                    deleteMany: {},
-                    create: sets.map((set) => ({
-                        setNumber: set.setNumber,
-                        completed: set.completed,
-                        reps: set.reps,
-                        weight: set.weight,
-                    })),
-                },
             },
             select: {
                 id: true,
@@ -98,24 +81,40 @@ export async function PATCH(
                 notes: true,
                 date: true,
                 updatedAt: true,
-                setsPerformed: {
-                    select: {
-                        setNumber: true,
-                        completed: true,
-                        reps: true,
-                        weight: true,
-                    },
-                    orderBy: {
-                        setNumber: 'asc',
-                    },
-                },
             },
         })
 
-        const cascade = await cascadeCompletion(
-            id,
-            sets.length > 0 && sets.every((set) => set.completed)
-        )
+        if (set) {
+            await prisma.setPerformed.upsert({
+                where: {
+                    feedbackId_setNumber: {
+                        feedbackId: feedback.id,
+                        setNumber: set.setNumber,
+                    },
+                },
+                create: {
+                    feedbackId: feedback.id,
+                    setNumber: set.setNumber,
+                    completed: set.completed,
+                    reps: set.reps,
+                    weight: set.weight,
+                },
+                update: {
+                    completed: set.completed,
+                    reps: set.reps,
+                    weight: set.weight,
+                },
+                select: { setNumber: true },
+            })
+        }
+
+        const [totalSets, incompleteSets] = await Promise.all([
+            prisma.setPerformed.count({ where: { feedbackId: feedback.id } }),
+            prisma.setPerformed.count({ where: { feedbackId: feedback.id, completed: false } }),
+        ])
+        const allCompleted = totalSets > 0 && incompleteSets === 0
+
+        const cascade = await cascadeCompletion(id, allCompleted)
 
         logger.info(
             {

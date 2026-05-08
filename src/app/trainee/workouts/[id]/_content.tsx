@@ -160,6 +160,7 @@ export default function WorkoutDetailContent() {
     const [expandedVideos, setExpandedVideos] = useState<Record<string, boolean>>({})
     const [currentStep, setCurrentStep] = useState(0)
     const [recapRefreshSignal, setRecapRefreshSignal] = useState(0)
+    const [persistingSetIdx, setPersistingSetIdx] = useState<number | null>(null)
 
 
     const { showToast } = useToast()
@@ -315,12 +316,14 @@ export default function WorkoutDetailContent() {
 
     const persistExerciseFeedback = useCallback(async (input: {
         workoutExerciseId: string
-        nextSets: SetPerformed[]
+        setIdx: number
+        changedSet: SetPerformed
         previousSets: SetPerformed[]
         previousExerciseCompleted: boolean
     }) => {
-        const { workoutExerciseId, nextSets, previousSets, previousExerciseCompleted } = input
+        const { workoutExerciseId, setIdx, changedSet, previousSets, previousExerciseCompleted } = input
 
+        setPersistingSetIdx(setIdx)
         try {
             const res = await fetch(`/api/trainee/workout-exercises/${workoutExerciseId}/feedback`, {
                 method: 'PATCH',
@@ -328,12 +331,12 @@ export default function WorkoutDetailContent() {
                 body: JSON.stringify({
                     actualRpe: exerciseRPE[workoutExerciseId] ?? null,
                     notes: (exerciseNotes[workoutExerciseId] ?? '').trim() || null,
-                    sets: nextSets.map((set) => ({
-                        setNumber: set.setNumber,
-                        completed: !!set.completed,
-                        reps: set.reps,
-                        weight: set.weight,
-                    })),
+                    set: {
+                        setNumber: changedSet.setNumber,
+                        completed: !!changedSet.completed,
+                        reps: changedSet.reps,
+                        weight: changedSet.weight,
+                    },
                 }),
             })
 
@@ -396,6 +399,8 @@ export default function WorkoutDetailContent() {
                 [workoutExerciseId]: previousExerciseCompleted,
             }))
             showToast(err instanceof Error ? err.message : t('workouts.errorFeedback'), 'error')
+        } finally {
+            setPersistingSetIdx(null)
         }
     }, [exerciseNotes, exerciseRPE, showToast, t])
 
@@ -456,7 +461,8 @@ export default function WorkoutDetailContent() {
 
         void persistExerciseFeedback({
             workoutExerciseId,
-            nextSets: newSets,
+            setIdx: setIndex,
+            changedSet: newSet,
             previousSets,
             previousExerciseCompleted,
         })
@@ -475,7 +481,6 @@ export default function WorkoutDetailContent() {
 
     const saveExerciseNote = useCallback(async (workoutExerciseId: string) => {
         const note = exerciseNotes[workoutExerciseId] ?? ''
-        const sets = feedbackData[workoutExerciseId] ?? []
         setSavingNote(true)
         try {
             const res = await fetch(`/api/trainee/workout-exercises/${workoutExerciseId}/feedback`, {
@@ -484,12 +489,6 @@ export default function WorkoutDetailContent() {
                 body: JSON.stringify({
                     actualRpe: exerciseRPE[workoutExerciseId] ?? null,
                     notes: note.trim() || null,
-                    sets: sets.map((s) => ({
-                        setNumber: s.setNumber,
-                        completed: !!s.completed,
-                        reps: s.reps,
-                        weight: s.weight,
-                    })),
                 }),
             })
             const data = await res.json()
@@ -506,7 +505,7 @@ export default function WorkoutDetailContent() {
         } finally {
             setSavingNote(false)
         }
-    }, [exerciseNotes, exerciseRPE, feedbackData, setSavedExerciseNotes, showToast, t])
+    }, [exerciseNotes, exerciseRPE, setSavedExerciseNotes, showToast, t])
 
     const toggleVideo = (workoutExerciseId: string) => {
         setExpandedVideos((prev) => ({
@@ -680,6 +679,7 @@ export default function WorkoutDetailContent() {
                             onToggleVideo={() => toggleVideo(currentExercise.id)}
                             onUpdateSet={(id, idx, field, value) => updateSet(id, idx, field, value)}
                             onToggleSet={(id, idx) => toggleSetCompleted(id, idx)}
+                            persistingSetIdx={persistingSetIdx}
                             onUpdateRpe={(rpe) => updateExerciseRPE(currentExercise.id, rpe)}
                             onUpdateNote={(note) => updateExerciseNote(currentExercise.id, note)}
                             onSaveNote={() => saveExerciseNote(currentExercise.id)}
@@ -772,6 +772,7 @@ interface ExerciseFocusCardProps {
     onToggleVideo: () => void
     onUpdateSet: (id: string, idx: number, field: 'weight' | 'reps', value: number) => void
     onToggleSet: (id: string, idx: number) => void
+    persistingSetIdx: number | null
     onUpdateRpe: (rpe: number | null) => void
     onUpdateNote: (note: string) => void
     onSaveNote: () => void
@@ -790,6 +791,7 @@ function ExerciseFocusCard({
     onToggleVideo,
     onUpdateSet,
     onToggleSet,
+    persistingSetIdx,
     onUpdateRpe,
     onUpdateNote,
     onSaveNote,
@@ -994,13 +996,17 @@ function ExerciseFocusCard({
                                     <button
                                         type="button"
                                         onClick={() => onToggleSet(we.id, setIdx)}
-                                        className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${set.completed
+                                        disabled={persistingSetIdx === setIdx}
+                                        className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors disabled:opacity-70 disabled:cursor-not-allowed ${set.completed
                                                 ? 'border-green-300 bg-green-100 text-green-700'
                                                 : 'border-gray-300 bg-white text-gray-400 hover:border-green-300 hover:text-green-600'
                                             }`}
                                         aria-label={t('workouts.markSetDone')}
                                     >
-                                        <Check className="w-4 h-4" />
+                                        {persistingSetIdx === setIdx
+                                            ? <LoadingSpinner size="sm" color={set.completed ? 'primary' : 'gray'} />
+                                            : <Check className="w-4 h-4" />
+                                        }
                                     </button>
                                 </div>
                             </Fragment>
