@@ -3,11 +3,13 @@
 import { useState, useEffect, useCallback, useMemo, Fragment } from 'react'
 import type { RestTime } from '@prisma/client'
 import { WeekType } from '@prisma/client'
+import * as Sentry from '@sentry/nextjs'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { RPESelector, SkeletonDetail, WeekTypeBanner } from '@/components'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import { keepaliveFetch } from '@/lib/keepalive-fetch'
 import {
     AlertTriangle,
     Check,
@@ -191,12 +193,35 @@ export default function WorkoutDetailContent() {
             orderedExercises.forEach((we: WorkoutExerciseWithWeight) => {
                 initialCompleted[we.id] = we.isCompleted
                 if (we.feedback) {
-                    initialFeedback[we.id] = we.feedback.setsPerformed.map(sp => ({
-                        setNumber: sp.setNumber,
-                        weight: sp.weight,
-                        reps: sp.reps,
-                        completed: sp.completed ?? true,
-                    }))
+                    const bySetNumber = new Map(
+                        we.feedback.setsPerformed.map((sp) => [sp.setNumber, sp])
+                    )
+                    const maxSetNumber = Math.max(
+                        we.sets,
+                        ...we.feedback.setsPerformed.map((sp) => sp.setNumber)
+                    )
+
+                    const paddedSets: SetPerformed[] = []
+                    for (let setNumber = 1; setNumber <= maxSetNumber; setNumber++) {
+                        const existingSet = bySetNumber.get(setNumber)
+                        if (existingSet) {
+                            paddedSets.push({
+                                setNumber: existingSet.setNumber,
+                                weight: existingSet.weight,
+                                reps: existingSet.reps,
+                                completed: existingSet.completed ?? true,
+                            })
+                        } else {
+                            paddedSets.push({
+                                setNumber,
+                                weight: we.effectiveWeight || 0,
+                                reps: 0,
+                                completed: false,
+                            })
+                        }
+                    }
+
+                    initialFeedback[we.id] = paddedSets
                     initialRPE[we.id] = we.feedback.avgRPE
                 } else {
                     initialFeedback[we.id] = Array.from({ length: we.sets }, (_, i) => ({
@@ -235,25 +260,14 @@ export default function WorkoutDetailContent() {
     const loadLocalData = useCallback(() => {
         try {
             const saved = localStorage.getItem(STORAGE_KEY)
-            if (saved) {
-                const parsed = JSON.parse(saved)
-                const normalizedFeedback = Object.fromEntries(
-                    Object.entries(parsed.feedbackData || {}).map(([workoutExerciseId, sets]) => [
-                        workoutExerciseId,
-                        (sets as SetPerformed[]).map((set) => {
-                            const legacyStatus = (set as SetPerformed & { status?: 'done' | 'not-done' | null }).status
-                            return {
-                                ...set,
-                                completed: set.completed ?? (legacyStatus === 'done'),
-                            }
-                        }),
-                    ])
-                )
-                setFeedbackData(normalizedFeedback)
-                setExerciseRPE(parsed.exerciseRPE || {})
-                setExerciseNotes(parsed.exerciseNotes || {})
-                setGlobalNotes(parsed.globalNotes || '')
+            if (!saved) return
+
+            const parsed = JSON.parse(saved)
+            if (typeof parsed?.globalNotes === 'string') {
+                setGlobalNotes(parsed.globalNotes)
             }
+            // Do not restore feedbackData / exerciseRPE / exerciseNotes from localStorage.
+            // Server state is authoritative for autosaved exercise data.
         } catch {
             // localStorage read failed; start with empty state
         }
@@ -287,8 +301,17 @@ export default function WorkoutDetailContent() {
 
 
     useEffect(() => {
-        void fetchWorkout()
-        loadLocalData()
+        let cancelled = false
+
+        void (async () => {
+            await fetchWorkout()
+            if (cancelled) return
+            loadLocalData()
+        })()
+
+        return () => {
+            cancelled = true
+        }
     }, [fetchWorkout, loadLocalData])
 
     useEffect(() => {
@@ -325,7 +348,7 @@ export default function WorkoutDetailContent() {
 
         setPersistingKeys((prev) => new Set(prev).add(`${workoutExerciseId}:${setIdx}`))
         try {
-            const res = await fetch(`/api/trainee/workout-exercises/${workoutExerciseId}/feedback`, {
+            const res = await keepaliveFetch(`/api/trainee/workout-exercises/${workoutExerciseId}/feedback`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -398,6 +421,15 @@ export default function WorkoutDetailContent() {
                 ...prev,
                 [workoutExerciseId]: previousExerciseCompleted,
             }))
+            Sentry.captureException(err, {
+                tags: {
+                    feature: 'trainee-set-autosave',
+                },
+                extra: {
+                    workoutExerciseId,
+                    setNumber: changedSet.setNumber,
+                },
+            })
             showToast(err instanceof Error ? err.message : t('workouts.errorFeedback'), 'error')
         } finally {
             setPersistingKeys((prev) => {

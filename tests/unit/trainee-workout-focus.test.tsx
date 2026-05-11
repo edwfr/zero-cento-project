@@ -257,6 +257,150 @@ describe('Trainee workout focus mode', () => {
         })
     })
 
+    it('uses keepalive: true on the set-autosave PATCH', async () => {
+        const user = userEvent.setup()
+        await renderContent()
+
+        const checkButtons = screen.getAllByRole('button', { name: /workouts\.markSetDone/i })
+        await user.click(checkButtons[0])
+
+        await waitFor(() => {
+            const call = (global.fetch as any).mock.calls.find(
+                ([url, init]: [string, RequestInit]) =>
+                    typeof url === 'string'
+                    && url.endsWith('/api/trainee/workout-exercises/ex-1/feedback')
+                    && init?.method === 'PATCH'
+            )
+
+            expect(call).toBeTruthy()
+            expect(call[1].keepalive).toBe(true)
+
+            const body = JSON.parse(call[1].body as string)
+            expect(body).toHaveProperty('set')
+        })
+    })
+
+    it('pads missing sets up to we.sets when feedback has fewer rows', async () => {
+        const partialFixture = {
+            ...fixtureWorkout,
+            exercises: [
+                {
+                    ...fixtureWorkout.exercises[0],
+                    feedback: {
+                        id: 'feedback-1',
+                        workoutExerciseId: 'ex-1',
+                        traineeId: 'trainee-1',
+                        date: '2026-05-11T00:00:00.000Z',
+                        totalVolume: 0,
+                        avgRPE: 8,
+                        notes: null,
+                        completed: false,
+                        setsPerformed: [
+                            { setNumber: 1, completed: true, reps: 8, weight: 80 },
+                            { setNumber: 2, completed: true, reps: 8, weight: 80 },
+                        ],
+                    },
+                },
+                fixtureWorkout.exercises[1],
+            ],
+        }
+
+        ;(global.fetch as any).mockImplementation(async (url: string) => {
+            if (url.includes('/api/trainee/workouts/')) {
+                return { ok: true, json: async () => ({ data: { workout: partialFixture } }) } as Response
+            }
+            return { ok: true, json: async () => ({}) } as Response
+        })
+
+        await renderContent()
+
+        const checkButtons = screen.getAllByRole('button', { name: /workouts\.markSetDone/i })
+        expect(checkButtons).toHaveLength(4)
+    })
+
+    it('preserves extra set rows beyond we.sets when present in feedback', async () => {
+        const withExtraSetFixture = {
+            ...fixtureWorkout,
+            exercises: [
+                {
+                    ...fixtureWorkout.exercises[0],
+                    feedback: {
+                        id: 'feedback-1',
+                        workoutExerciseId: 'ex-1',
+                        traineeId: 'trainee-1',
+                        date: '2026-05-11T00:00:00.000Z',
+                        totalVolume: 0,
+                        avgRPE: 8,
+                        notes: null,
+                        completed: false,
+                        setsPerformed: [
+                            { setNumber: 1, completed: true, reps: 8, weight: 80 },
+                            { setNumber: 2, completed: true, reps: 8, weight: 80 },
+                            { setNumber: 3, completed: true, reps: 8, weight: 80 },
+                            { setNumber: 4, completed: true, reps: 8, weight: 80 },
+                            { setNumber: 5, completed: false, reps: 0, weight: 0 },
+                        ],
+                    },
+                },
+                fixtureWorkout.exercises[1],
+            ],
+        }
+
+        ;(global.fetch as any).mockImplementation(async (url: string) => {
+            if (url.includes('/api/trainee/workouts/')) {
+                return {
+                    ok: true,
+                    json: async () => ({ data: { workout: withExtraSetFixture } }),
+                } as Response
+            }
+            return { ok: true, json: async () => ({}) } as Response
+        })
+
+        await renderContent()
+
+        const checkButtons = screen.getAllByRole('button', { name: /workouts\.markSetDone/i })
+        expect(checkButtons).toHaveLength(5)
+    })
+
+    it('prefers server data over stale localStorage feedback on mount', async () => {
+        const storageKey = 'workout_workout-1_feedback'
+        localStorage.setItem(
+            storageKey,
+            JSON.stringify({
+                feedbackData: {
+                    'ex-1': [{ setNumber: 1, completed: true, reps: 99, weight: 999 }],
+                },
+                exerciseRPE: { 'ex-1': 10 },
+                exerciseNotes: { 'ex-1': 'stale note' },
+                globalNotes: '',
+                savedAt: new Date().toISOString(),
+            })
+        )
+
+        await renderContent()
+
+        const repsInputs = screen.getAllByRole('spinbutton') as HTMLInputElement[]
+        expect(repsInputs[0].value).toBe('')
+    })
+
+    it('writes feedbackData to localStorage in the legacy shape for ProgramDetailContent', async () => {
+        const user = userEvent.setup()
+        await renderContent()
+
+        const checkButtons = screen.getAllByRole('button', { name: /workouts\.markSetDone/i })
+        await user.click(checkButtons[0])
+
+        await waitFor(() => {
+            const raw = localStorage.getItem('workout_workout-1_feedback')
+            expect(raw).toBeTruthy()
+
+            const parsed = JSON.parse(raw as string)
+            expect(parsed.feedbackData).toBeTruthy()
+            expect(parsed.feedbackData['ex-1']).toBeTruthy()
+            expect(parsed.feedbackData['ex-1'][0].completed).toBe(true)
+        })
+    })
+
     it('shows warning cards on the final step when no sets are completed', async () => {
         const user = userEvent.setup()
         await renderContent()

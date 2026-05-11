@@ -1,7 +1,7 @@
 # ✅ CHECKLIST SVILUPPO - ZeroCento Training Platform
 
 **Posizionamento prodotto:** training management platform trainer-led  
-**Stato attuale:** 166/176 task completati (~94%)  
+**Stato attuale:** 167/177 task completati (~94%)  
 **Task rimanenti:** 10 (Sprint 6: 5 task, Sprint 8: 7 task, Sprint 11: 1 task, ma 3 già completati del TM)  
 **Riferimenti:** [system-review.md](./system-review.md) · [CHANGELOG.md](./CHANGELOG.md)
 
@@ -647,6 +647,8 @@
 - [x] **11.96** `/trainer/programs/[id]/edit`: cancellazione riga immediata su drop nel cestino con hide ottimistico + rollback in errore (toast informativo), `DELETE` idempotente su `404`, rimozione codice deferred `pendingDeletesByWorkout` e rimozione delete in riga (solo drag-and-drop) ✅ _11 Mag 2026_
 - [x] **11.97** `/trainer/programs/[id]/edit`: ricalcolo live del peso effettivo (testo verde) quando cambia la percentuale `%`, anche dopo copia settimana ✅ _11 Mag 2026_
 - [x] **11.98** `/trainer/programs/[id]/review`: rendere collassabile/espandibile il pannello `Serie allenanti fondamentali pianificate` con toggle header coerente agli altri pannelli report ✅ _11 Mag 2026_
+- [x] **11.99** Affidabilita autosave singola serie trainee — keepalive fetch, pad serie mancanti, mount server-first ✅ _11 Mag 2026_  
+      File: `src/app/trainee/workouts/[id]/_content.tsx`, `src/lib/keepalive-fetch.ts` · Dettagli: vedi piano `docs/superpowers/plans/2026-05-11-trainee-set-feedback-reliability.md`
 
 ---
 

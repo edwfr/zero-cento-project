@@ -40,7 +40,7 @@ const mockRecords = [
 ]
 
 describe('PersonalRecordsExplorer action buttons', () => {
-    it('renders standard action icon variants for edit and delete', () => {
+    it('renders edit action buttons and delete drop zone (no delete icon buttons)', () => {
         const onEdit = vi.fn()
         const onDelete = vi.fn()
 
@@ -55,19 +55,46 @@ describe('PersonalRecordsExplorer action buttons', () => {
         fireEvent.click(screen.getByLabelText('common.personalRecordsExplorer.expand'))
 
         const editButtons = screen.getAllByTitle('common.edit')
-        const deleteButtons = screen.getAllByTitle('common.delete')
+        const deleteButtons = screen.queryAllByTitle('common.delete')
+        const dropZoneLabel = screen.getByText('common.personalRecordsExplorer.dragToDelete')
 
         expect(editButtons).toHaveLength(2)
-        expect(deleteButtons).toHaveLength(2)
+        expect(deleteButtons).toHaveLength(0)
+        expect(dropZoneLabel).toBeInTheDocument()
 
         editButtons.forEach((button) => {
             expect(button).toHaveClass('bg-green-600')
             expect(button).not.toHaveClass('text-blue-600')
         })
+    })
 
-        deleteButtons.forEach((button) => {
-            expect(button).toHaveClass('bg-red-600')
-            expect(button).not.toHaveClass('text-red-600')
-        })
+    it('calls onDeleteRecord when dropping a dragged row on trash zone', () => {
+        const onEdit = vi.fn()
+        const onDelete = vi.fn()
+
+        render(
+            <PersonalRecordsExplorer
+                records={mockRecords}
+                onEditRecord={onEdit}
+                onDeleteRecord={onDelete}
+            />
+        )
+
+        const firstRow = screen
+            .getAllByRole('row')
+            .find((row) => row.getAttribute('draggable') === 'true')
+        const dropZone = screen.getByText('common.personalRecordsExplorer.dragToDelete').closest('div')
+
+        expect(firstRow).toBeTruthy()
+        expect(dropZone).toBeTruthy()
+
+        fireEvent.dragStart(firstRow as HTMLElement)
+        fireEvent.dragOver(dropZone as HTMLElement)
+        fireEvent.drop(dropZone as HTMLElement)
+
+        expect(onDelete).toHaveBeenCalledTimes(1)
+        expect(onDelete).toHaveBeenCalledWith(
+            expect.objectContaining({ id: 'rec-1' })
+        )
     })
 })
