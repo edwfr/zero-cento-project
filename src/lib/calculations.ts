@@ -11,6 +11,29 @@ export type TraineePrMap = Map<string, number>
 const prKey = (exerciseId: string, reps: number) => `${exerciseId}:${reps}`
 
 /**
+ * Best normalized 1RM for an exercise across all rep-range records in the map.
+ * Iterates PR map entries for the given exerciseId, returns the max
+ * `normalizedOneRM(weight, reps)`, or null when no record exists.
+ */
+function bestNormalizedOneRMForExercise(
+    prMap: TraineePrMap,
+    exerciseId: string
+): number | null {
+    let best: number | null = null
+    const prefix = `${exerciseId}:`
+    for (const [key, weight] of prMap.entries()) {
+        if (!key.startsWith(prefix)) continue
+        const reps = Number(key.slice(prefix.length))
+        if (!Number.isFinite(reps) || reps <= 0) continue
+        const normalized = normalizedOneRM(weight, reps)
+        if (best === null || normalized > best) {
+            best = normalized
+        }
+    }
+    return best
+}
+
+/**
  * Load all personal records for a trainee into a (exerciseId:reps → weight) map.
  * Most recent record per (exerciseId, reps) wins.
  * One query replaces N `personalRecord.findFirst` calls.
@@ -52,8 +75,8 @@ export function resolveEffectiveWeight(
             return workoutExercise.weight
 
         case 'percentage_1rm': {
-            const oneRm = prMap.get(prKey(workoutExercise.exerciseId, 1))
-            if (oneRm === undefined) return null
+            const oneRm = bestNormalizedOneRMForExercise(prMap, workoutExercise.exerciseId)
+            if (oneRm === null) return null
             return (oneRm * (workoutExercise.weight || 0)) / 100
         }
 
@@ -116,20 +139,31 @@ export async function calculateEffectiveWeight(
             return workoutExercise.weight
 
         case 'percentage_1rm': {
-            // Find 1RM personal record
-            const record = await prisma.personalRecord.findFirst({
+            // Best normalized 1RM across all rep-range records (RPE table)
+            const records = await prisma.personalRecord.findMany({
                 where: {
                     traineeId,
                     exerciseId: workoutExercise.exerciseId,
-                    reps: 1,
                 },
-                orderBy: {
-                    recordDate: 'desc',
-                },
+                select: { weight: true, reps: true, recordDate: true },
+                orderBy: { recordDate: 'desc' },
             })
 
-            if (!record) return null
-            return (record.weight * (workoutExercise.weight || 0)) / 100
+            if (records.length === 0) return null
+
+            let bestOneRm: number | null = null
+            const seenReps = new Set<number>()
+            for (const record of records) {
+                if (seenReps.has(record.reps)) continue
+                seenReps.add(record.reps)
+                const normalized = normalizedOneRM(record.weight, record.reps)
+                if (bestOneRm === null || normalized > bestOneRm) {
+                    bestOneRm = normalized
+                }
+            }
+
+            if (bestOneRm === null) return null
+            return (bestOneRm * (workoutExercise.weight || 0)) / 100
         }
 
         case 'percentage_rm': {
@@ -391,4 +425,12 @@ export function estimateOneRMFromRpeTable(weight: number, reps: number, rpe = 10
     }
 
     return weight / (percentage / 100)
+}
+
+/**
+ * Canonical normalized 1RM used across the app.
+ * Mike Tuchscherer RPE table at RPE 10, rounded to the nearest 0.5 kg.
+ */
+export function normalizedOneRM(weight: number, reps: number): number {
+    return Math.round(estimateOneRMFromRpeTable(weight, reps, 10) * 2) / 2
 }

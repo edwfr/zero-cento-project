@@ -513,6 +513,7 @@
         "prHelperDescription": "Migliori riferimenti carico in kg per singolo esercizio",
         "prHelperNoData": "Nessun massimale disponibile.",
         "prRecordFormat": "{{weight}} kg x {{reps}} rep",
+        "prHelperEstimatedOneRm": "1RM calcolato: {{weight}} kg",
         "sbdHelperTitle": "Reportistica SBD scheda",
         "sbdHelperDescription": "Recap FRQ, NBL e IM per fondamentale (Squat, Panca, Stacco) su tutte le settimane",
         "sbdHelperNoData": "Nessun dato SBD disponibile nella settimana selezionata.",

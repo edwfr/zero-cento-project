@@ -81,6 +81,7 @@ vi.mock('@/lib/prisma', () => ({
         },
         personalRecord: {
             findFirst: vi.fn(),
+            findMany: vi.fn(),
         },
         $transaction: vi.fn((fn: any) => fn()),
     },

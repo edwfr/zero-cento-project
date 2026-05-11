@@ -513,6 +513,7 @@
         "prHelperDescription": "Best load references in kg for each exercise",
         "prHelperNoData": "No PR data available.",
         "prRecordFormat": "{{weight}} kg x {{reps}} rep",
+        "prHelperEstimatedOneRm": "Estimated 1RM: {{weight}} kg",
         "sbdHelperTitle": "Program SBD reporting",
         "sbdHelperDescription": "FRQ, NBL and IM recap by fundamental lift (Squat, Bench, Deadlift) across all weeks",
         "sbdHelperNoData": "No SBD data available for the selected week.",

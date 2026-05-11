@@ -6,6 +6,7 @@ import {
     parseReps,
     estimateOneRM,
     estimateOneRMFromRpeTable,
+    normalizedOneRM,
     calculateEffectiveWeight as calculateEffectiveWeightRaw,
 } from '@/lib/calculations'
 import { prisma } from '@/lib/prisma'
@@ -162,6 +163,29 @@ describe('estimateOneRMFromRpeTable', () => {
     })
 })
 
+describe('normalizedOneRM', () => {
+    it('returns input weight for 1 rep', () => {
+        expect(normalizedOneRM(100, 1)).toBe(100)
+    })
+
+    it('rounds to nearest 0.5 kg', () => {
+        // 100 / 0.863 = 115.8748... → 116 (nearest 0.5)
+        expect(normalizedOneRM(100, 5)).toBe(116)
+    })
+
+    it('produces a multiple of 0.5', () => {
+        const value = normalizedOneRM(82.5, 7)
+        expect(value * 2).toBe(Math.round(value * 2))
+    })
+
+    it('matches estimateOneRMFromRpeTable at RPE 10 (rounded to 0.5)', () => {
+        const reps = 8
+        const weight = 90
+        const expected = Math.round(estimateOneRMFromRpeTable(weight, reps, 10) * 2) / 2
+        expect(normalizedOneRM(weight, reps)).toBe(expected)
+    })
+})
+
 describe('calculateEffectiveWeight', () => {
     const mockTraineeId = 'trainee-123'
     const mockExerciseId = 'exercise-456'
@@ -245,26 +269,23 @@ describe('calculateEffectiveWeight', () => {
                 updatedAt: new Date(),
             }
 
-            vi.mocked(prisma.personalRecord.findFirst).mockResolvedValue(mockRecord)
+            vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([mockRecord])
 
             const result = await calculateEffectiveWeight(workoutExercise, mockTraineeId)
-            // 150 * 80 / 100 = 120
+            // 150 (1RM) * 80 / 100 = 120
             expect(result).toBe(120)
 
-            // Verify the query
-            expect(prisma.personalRecord.findFirst).toHaveBeenCalledWith({
+            expect(prisma.personalRecord.findMany).toHaveBeenCalledWith({
                 where: {
                     traineeId: mockTraineeId,
                     exerciseId: mockExerciseId,
-                    reps: 1,
                 },
-                orderBy: {
-                    recordDate: 'desc',
-                },
+                select: { weight: true, reps: true, recordDate: true },
+                orderBy: { recordDate: 'desc' },
             })
         })
 
-        it('returns null when 1RM record not found', async () => {
+        it('falls back to best normalized 1RM (RPE table) when only nRM records exist', async () => {
             const workoutExercise: WorkoutExercise = {
                 id: 'we-1',
                 workoutId: mockWorkoutId,
@@ -281,7 +302,43 @@ describe('calculateEffectiveWeight', () => {
                 updatedAt: new Date(),
             }
 
-            vi.mocked(prisma.personalRecord.findFirst).mockResolvedValue(null)
+            // 100 kg @ 5 reps → normalizedOneRM ≈ 100 / 0.863 ≈ 115.9
+            vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([
+                {
+                    id: 'pr-5',
+                    traineeId: mockTraineeId,
+                    exerciseId: mockExerciseId,
+                    weight: 100,
+                    reps: 5,
+                    notes: null,
+                    recordDate: new Date(),
+                    createdAt: new Date(),
+                },
+            ])
+
+            const result = await calculateEffectiveWeight(workoutExercise, mockTraineeId)
+            // 116 (rounded to 0.5 from 115.87) * 80 / 100 = 92.8
+            expect(result).toBeCloseTo(92.8, 1)
+        })
+
+        it('returns null when no personal record exists', async () => {
+            const workoutExercise: WorkoutExercise = {
+                id: 'we-1',
+                workoutId: mockWorkoutId,
+                exerciseId: mockExerciseId,
+                order: 1,
+                sets: 3,
+                reps: '8',
+                weightType: 'percentage_1rm',
+                weight: 80,
+                rpe: null,
+                restSeconds: 120,
+                notes: null,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            }
+
+            vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([])
 
             const result = await calculateEffectiveWeight(workoutExercise, mockTraineeId)
             expect(result).toBeNull()
@@ -698,7 +755,7 @@ describe('calculateEffectiveWeight', () => {
             vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(
                 normalizeWorkoutExerciseNullable(previousExercise)
             )
-            vi.mocked(prisma.personalRecord.findFirst).mockResolvedValue(null)
+            vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([])
 
             const result = await calculateEffectiveWeight(currentExercise, mockTraineeId)
             expect(result).toBeNull()
@@ -923,10 +980,10 @@ describe('calculateEffectiveWeight', () => {
             vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(
                 normalizeWorkoutExerciseNullable(exercise1)
             )
-            vi.mocked(prisma.personalRecord.findFirst).mockResolvedValue(mockRecord)
+            vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([mockRecord])
 
             const result = await calculateEffectiveWeight(exercise2, mockTraineeId)
-            // Exercise 1: 150 * 0.8 = 120kg
+            // Exercise 1: 150 (1RM) * 0.8 = 120kg
             // Exercise 2: 120 * 1.1 = 132kg
             expect(result).toBe(132)
         })

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { normalizedOneRM } from '@/lib/calculations'
 
 /**
  * GET /api/programs/[id]/review
@@ -155,9 +156,9 @@ export async function GET(
             }
             bestWeightByExerciseAndReps[exId][reps] = weight
 
-            const estimated1RM = weight * (1 + reps / 30)
-            if (!estimatedOneRMByExercise[exId] || estimated1RM > estimatedOneRMByExercise[exId]) {
-                estimatedOneRMByExercise[exId] = estimated1RM
+            const normalized = normalizedOneRM(weight, reps)
+            if (!estimatedOneRMByExercise[exId] || normalized > estimatedOneRMByExercise[exId]) {
+                estimatedOneRMByExercise[exId] = normalized
             }
         }
 

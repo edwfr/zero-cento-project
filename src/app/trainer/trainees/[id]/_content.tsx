@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
+import { normalizedOneRM } from '@/lib/calculations'
 import Link from 'next/link'
 import { SkeletonDetail } from '@/components'
 import { formatDate } from '@/lib/date-format'
@@ -149,12 +150,6 @@ function matchSbdLift(exerciseName: string): SbdLiftValue | null {
     }
 
     return null
-}
-
-function calculateOneRepMax(weight: number, reps: number): number {
-    if (reps === 1) return weight
-    // Brzycki formula
-    return Math.round(weight * (36 / (37 - reps)) * 10) / 10
 }
 
 function getExerciseBadgeStyle(color: string | undefined, isActive: boolean) {
@@ -409,7 +404,7 @@ export default function TraineeDetailContent() {
 
         oneRmFilteredRecords.forEach((record) => {
             const dateKey = normalizeRecordDateKey(record.recordDate)
-            const oneRepMax = calculateOneRepMax(record.weight, record.reps)
+            const oneRepMax = normalizedOneRM(record.weight, record.reps)
 
             if (!chartRowsByDate.has(dateKey)) {
                 chartRowsByDate.set(dateKey, {
@@ -862,7 +857,7 @@ export default function TraineeDetailContent() {
                                                                 {record.reps} reps
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-brand-primary">
-                                                                {calculateOneRepMax(record.weight, record.reps)} kg
+                                                                {normalizedOneRM(record.weight, record.reps)} kg
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                                                 {formatDate(record.recordDate)}

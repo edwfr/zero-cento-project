@@ -15,7 +15,7 @@ import {
 import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react'
 import { ActionIconButton, InlineActions } from '@/components/ActionIconButton'
 import { formatDate } from '@/lib/date-format'
-import { estimateOneRMFromRpeTable } from '@/lib/calculations'
+import { normalizedOneRM } from '@/lib/calculations'
 
 const CHART_COLORS = ['rgb(var(--brand-primary))', '#0F766E', '#2563EB', '#DC2626', '#7C3AED', '#0891B2', '#65A30D', '#EA580C']
 
@@ -105,9 +105,7 @@ export default function PersonalRecordsExplorer({
             return calculateOneRepMax
         }
 
-        return (weight: number, reps: number) => {
-            return Math.round(estimateOneRMFromRpeTable(weight, reps, 10) * 10) / 10
-        }
+        return (weight: number, reps: number) => normalizedOneRM(weight, reps)
     }, [calculateOneRepMax])
 
     const groupedRecords = useMemo<GroupedExerciseRecords[]>(() => {

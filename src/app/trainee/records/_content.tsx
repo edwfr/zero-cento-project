@@ -12,7 +12,7 @@ import {
     YAxis,
 } from 'recharts'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { estimateOneRMFromRpeTable } from '@/lib/calculations'
+import { normalizedOneRM } from '@/lib/calculations'
 import { Button, Card, FormLabel, Input, NavigationLoadingOverlay } from '@/components'
 import { BarChart2, ChevronDown, ChevronUp, Search, X } from 'lucide-react'
 import { formatDate } from '@/lib/date-format'
@@ -90,7 +90,7 @@ export default function PersonalRecordsContent() {
     }, [fetchRecords])
 
     const calculateOneRepMax = useCallback((weight: number, reps: number): number => {
-        return Math.round(estimateOneRMFromRpeTable(weight, reps, 10) * 10) / 10
+        return normalizedOneRM(weight, reps)
     }, [])
 
     const buildProgressChartData = useCallback((exerciseRecords: PersonalRecord[]): ProgressChartPoint[] => {

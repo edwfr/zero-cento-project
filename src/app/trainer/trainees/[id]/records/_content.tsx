@@ -8,7 +8,7 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import { formatDateForInput, getTodayForInput } from '@/lib/date-format'
-import { estimateOneRMFromRpeTable } from '@/lib/calculations'
+import { normalizedOneRM } from '@/lib/calculations'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { Button } from '@/components/Button'
@@ -224,8 +224,7 @@ export default function TraineeRecordsContent() {
     }
 
     const calculateOneRepMax = (weight: number, reps: number): number => {
-        const normalizedOneRM = estimateOneRMFromRpeTable(weight, reps, 10)
-        return Math.round(normalizedOneRM * 10) / 10
+        return normalizedOneRM(weight, reps)
     }
 
     if (loading) {

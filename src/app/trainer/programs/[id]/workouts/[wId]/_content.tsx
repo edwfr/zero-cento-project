@@ -10,6 +10,7 @@ import MovementPatternTag from '@/components/MovementPatternTag'
 import { WeightType, RestTime } from '@prisma/client'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
+import { normalizedOneRM } from '@/lib/calculations'
 import { Trash2, Dumbbell, GripVertical, ChevronLeft, ChevronRight, BarChart3, FileText, MessageSquare } from 'lucide-react'
 import {
     DndContext,
@@ -98,11 +99,6 @@ interface PersonalRecord {
 function parseRepsValue(repsValue: string): number {
     const match = repsValue.match(/^\d+/)
     return match ? parseInt(match[0], 10) : 0
-}
-
-function estimateOneRMValue(weight: number, reps: number): number {
-    if (reps <= 1) return weight
-    return weight * (1 + reps / 30)
 }
 
 function SortableExerciseItem({ id, children }: { id: string; children: React.ReactNode }) {
@@ -317,19 +313,16 @@ export default function WorkoutDetailContent() {
         return acc
     }, {} as Record<string, PersonalRecord[]>)
 
-    // Get best PR for each exercise (by 1RM estimation)
-    const bestPRs = Object.entries(recordsByExercise).map(([exerciseId, records]) => {
-        const bestRecord = records.reduce((best, current) => {
-            // Simple 1RM estimation: weight * (1 + reps/30)
-            const currentEstimated1RM = estimateOneRMValue(current.weight, current.reps)
-            const bestEstimated1RM = estimateOneRMValue(best.weight, best.reps)
-            return currentEstimated1RM > bestEstimated1RM ? current : best
+    const bestPRs = Object.values(recordsByExercise).map((records) => {
+        return records.reduce((best, current) => {
+            const currentNormalized = normalizedOneRM(current.weight, current.reps)
+            const bestNormalized = normalizedOneRM(best.weight, best.reps)
+            return currentNormalized > bestNormalized ? current : best
         })
-        return bestRecord
     })
 
-    const estimatedOneRMByExercise = bestPRs.reduce((acc, record) => {
-        acc[record.exerciseId] = estimateOneRMValue(record.weight, record.reps)
+    const normalizedOneRMByExercise = bestPRs.reduce((acc, record) => {
+        acc[record.exerciseId] = normalizedOneRM(record.weight, record.reps)
         return acc
     }, {} as Record<string, number>)
 
@@ -351,9 +344,9 @@ export default function WorkoutDetailContent() {
                         if (weekExercise.weightType === 'percentage_1rm' && typeof weekExercise.weight === 'number') {
                             intensity = weekExercise.weight
                         } else if (weekExercise.weightType === 'absolute' && typeof weekExercise.weight === 'number') {
-                            const estimatedOneRM = estimatedOneRMByExercise[weekExercise.exercise.id]
-                            if (estimatedOneRM) {
-                                intensity = (weekExercise.weight / estimatedOneRM) * 100
+                            const normalized = normalizedOneRMByExercise[weekExercise.exercise.id]
+                            if (normalized) {
+                                intensity = (weekExercise.weight / normalized) * 100
                             }
                         }
 

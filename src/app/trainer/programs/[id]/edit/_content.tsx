@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { RestTime, WeightType, WeekType } from '@prisma/client'
 import { getApiErrorMessage } from '@/lib/api-error'
+import { normalizedOneRM } from '@/lib/calculations'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import { useToast } from '@/components/ToastNotification'
@@ -237,11 +238,6 @@ function matchFundamentalLift(exerciseName: string): FundamentalLift | null {
     }
 
     return null
-}
-
-function estimateOneRMValue(weight: number, reps: number): number {
-    if (reps <= 1) return weight
-    return weight * (1 + reps / 30)
 }
 
 function formatWeightInputFromStoredValues(weightType: WeightType, weight: number | null): string {
@@ -594,6 +590,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const lastVisibilityRefreshRef = useRef(0)
     const trainerIdRef = useRef('')
     const loadedPersonalRecordsTraineeIdRef = useRef<string | null>(null)
+    const savingWorkoutIdsRef = useRef<Set<string>>(new Set())
 
     const [activeWeekId, setActiveWeekId] = useState<string | null>(null)
     const [expandedWeekIds, setExpandedWeekIds] = useState<Record<string, boolean>>({})
@@ -601,7 +598,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
     const [rowStateById, setRowStateById] = useState<Record<string, EditableWorkoutExerciseRow>>({})
     const [draftRowIdsByWorkout, setDraftRowIdsByWorkout] = useState<Record<string, string[]>>({})
-    const [pendingDeletesByWorkout, setPendingDeletesByWorkout] = useState<Record<string, string[]>>({})
     const [customVariantInputByRowId, setCustomVariantInputByRowId] = useState<Record<string, boolean>>({})
     const [wizardStep, setWizardStep] = useState<'structure' | 'details'>(
         readOnly ? 'details' : 'structure'
@@ -614,7 +610,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const preDragStructureRowsRef = useRef<Record<number, WorkoutStructureTemplateRow[]> | null>(null)
     const [savingRowId, setSavingRowId] = useState<string | null>(null)
     const [savingWorkoutId, setSavingWorkoutId] = useState<string | null>(null)
-    const [deletingRowId] = useState<string | null>(null)
     const [reorderingWorkoutId, setReorderingWorkoutId] = useState<string | null>(null)
     const [deletingWorkoutId, setDeletingWorkoutId] = useState<string | null>(null)
     const [confirmDeleteWorkout, setConfirmDeleteWorkout] = useState<{
@@ -624,11 +619,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     } | null>(null)
 
     const [confirmCopyNextWeek, setConfirmCopyNextWeek] = useState<Week | null>(null)
-    const [confirmDeleteRow, setConfirmDeleteRow] = useState<{
-        rowId: string
-        workoutId: string
-        isDraft: boolean
-    } | null>(null)
     const [blockingWeightErrorModal, setBlockingWeightErrorModal] = useState<{
         title: string
         message: string
@@ -1114,23 +1104,23 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             Object.values(recordsByExercise)
                 .map((records) =>
                     records.reduce((best, current) => {
-                        const currentEstimatedOneRM = estimateOneRMValue(current.weight, current.reps)
-                        const bestEstimatedOneRM = estimateOneRMValue(best.weight, best.reps)
-                        return currentEstimatedOneRM > bestEstimatedOneRM ? current : best
+                        const currentNormalized = normalizedOneRM(current.weight, current.reps)
+                        const bestNormalized = normalizedOneRM(best.weight, best.reps)
+                        return currentNormalized > bestNormalized ? current : best
                     })
                 )
                 .sort((left, right) => {
-                    const leftValue = estimateOneRMValue(left.weight, left.reps)
-                    const rightValue = estimateOneRMValue(right.weight, right.reps)
+                    const leftValue = normalizedOneRM(left.weight, left.reps)
+                    const rightValue = normalizedOneRM(right.weight, right.reps)
                     return rightValue - leftValue
                 }),
         [recordsByExercise]
     )
 
-    const estimatedOneRMByExercise = useMemo(
+    const normalizedOneRMByExercise = useMemo(
         () =>
             bestPRs.reduce((acc, record) => {
-                acc[record.exerciseId] = estimateOneRMValue(record.weight, record.reps)
+                acc[record.exerciseId] = normalizedOneRM(record.weight, record.reps)
                 return acc
             }, {} as Record<string, number>),
         [bestPRs]
@@ -1183,10 +1173,10 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                         workoutExercise.weightType === 'absolute' &&
                                         typeof workoutExercise.weight === 'number'
                                     ) {
-                                        const estimatedOneRM =
-                                            estimatedOneRMByExercise[workoutExercise.exercise.id]
-                                        if (estimatedOneRM) {
-                                            intensity = (workoutExercise.weight / estimatedOneRM) * 100
+                                        const normalized =
+                                            normalizedOneRMByExercise[workoutExercise.exercise.id]
+                                        if (normalized) {
+                                            intensity = (workoutExercise.weight / normalized) * 100
                                         }
                                     }
 
@@ -1248,7 +1238,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     return acc
                 }, {} as Record<string, Array<{ lift: FundamentalLift; liftLabel: string; frequency: number; totalLifts: number; averageIntensity: number | null }>>)
                 : {},
-        [estimatedOneRMByExercise, program, t]
+        [normalizedOneRMByExercise, program, t]
     )
 
     const sbdMetricsByLiftAcrossWeeks = useMemo(
@@ -1418,10 +1408,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
     const getWorkoutRows = useCallback(
         (workout: Workout) => {
-            const pendingDeleteIds = new Set(pendingDeletesByWorkout[workout.id] ?? [])
-
             const persistedRows = workout.workoutExercises
-                .filter((workoutExercise) => !pendingDeleteIds.has(workoutExercise.id))
                 .map((workoutExercise) =>
                     rowStateById[workoutExercise.id] || buildEditableRow(workout.id, workoutExercise)
                 )
@@ -1434,7 +1421,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
             return [...persistedRows, ...draftRows]
         },
-        [draftRowIdsByWorkout, pendingDeletesByWorkout, rowStateById]
+        [draftRowIdsByWorkout, rowStateById]
     )
 
     const handleDragEnd = useCallback(
@@ -1442,6 +1429,10 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             const { active, over } = event
             setActiveExerciseRowDragId(null)
             setIsDragOverTrash(false)
+
+            if (readOnly || savingRowId || savingWorkoutIdsRef.current.has(workout.id)) {
+                return
+            }
 
             // If dropped on trash, delete the row
             if (isDragOverTrash && active.id) {
@@ -1459,13 +1450,72 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             ...current,
                             [workout.id]: (current[workout.id] ?? []).filter((id) => id !== rowToDelete.id),
                         }))
+                        showToast(t('editProgram.rowDeletedSuccess'), 'success')
                     } else {
-                        setPendingDeletesByWorkout((current) => ({
-                            ...current,
-                            [workout.id]: [...(current[workout.id] ?? []), rowToDelete.id],
-                        }))
+                        try {
+                            setSavingRowId(rowToDelete.id)
+
+                            const res = await fetch(
+                                `/api/programs/${programId}/workouts/${workout.id}/exercises/${rowToDelete.id}`,
+                                {
+                                    method: 'DELETE',
+                                }
+                            )
+
+                            if (!res.ok && res.status !== 404) {
+                                const data = await res.json().catch(() => null)
+                                throw new Error(
+                                    getApiErrorMessage(data, t('editProgram.rowDeleteError'), t)
+                                )
+                            }
+
+                            setProgram((currentProgram) => {
+                                if (!currentProgram) {
+                                    return currentProgram
+                                }
+
+                                return {
+                                    ...currentProgram,
+                                    weeks: currentProgram.weeks.map((week) => ({
+                                        ...week,
+                                        workouts: week.workouts.map((candidateWorkout) => {
+                                            if (candidateWorkout.id !== workout.id) {
+                                                return candidateWorkout
+                                            }
+
+                                            const remainingExercises = candidateWorkout.workoutExercises
+                                                .filter((workoutExercise) => workoutExercise.id !== rowToDelete.id)
+                                                .sort((left, right) => left.order - right.order)
+                                                .map((workoutExercise, index) => ({
+                                                    ...workoutExercise,
+                                                    order: index + 1,
+                                                }))
+
+                                            return {
+                                                ...candidateWorkout,
+                                                workoutExercises: remainingExercises,
+                                            }
+                                        }),
+                                    })),
+                                }
+                            })
+
+                            setRowStateById((currentRows) => {
+                                const nextRows = { ...currentRows }
+                                delete nextRows[rowToDelete.id]
+                                return nextRows
+                            })
+
+                            showToast(t('editProgram.rowDeletedSuccess'), 'success')
+                        } catch (err: unknown) {
+                            showToast(
+                                err instanceof Error ? err.message : t('editProgram.rowDeleteError'),
+                                'error'
+                            )
+                        } finally {
+                            setSavingRowId(null)
+                        }
                     }
-                    showToast(t('editProgram.rowDeletedSuccess'), 'success')
                 }
                 return
             }
@@ -1532,7 +1582,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 setReorderingWorkoutId(null)
             }
         },
-        [getWorkoutRows, programId, showToast, t, isDragOverTrash]
+        [getWorkoutRows, isDragOverTrash, programId, readOnly, savingRowId, showToast, t]
     )
 
     const hasWorkoutUnsavedChanges = useCallback(
@@ -1793,7 +1843,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     }, [])
 
     const addDraftRow = (workoutId: string) => {
-        if (readOnly || savingRowId || deletingRowId) {
+        if (readOnly || savingRowId) {
             return
         }
 
@@ -1835,7 +1885,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     }
 
     const insertDraftRowAt = (workoutId: string, afterRowIndex: number) => {
-        if (readOnly || savingRowId || deletingRowId) return
+        if (readOnly || savingRowId) return
 
         const workout = program?.weeks
             .flatMap((week) => week.workouts)
@@ -1955,7 +2005,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 return { errorCode: 'invalid_format' }
             }
 
-            const oneRm = estimatedOneRMByExercise[row.exerciseId]
+            const oneRm = normalizedOneRMByExercise[row.exerciseId]
             if (!Number.isFinite(oneRm) || oneRm <= 0) {
                 return { errorCode: 'missing_1rm' }
             }
@@ -2083,10 +2133,13 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             return false
         }
 
-        const workoutRows = [...getWorkoutRows(workout)].sort((left, right) => left.order - right.order)
-        const pendingDeleteIds = pendingDeletesByWorkout[workout.id] ?? []
+        if (savingWorkoutIdsRef.current.has(workout.id)) {
+            return false
+        }
 
-        if (workoutRows.length === 0 && pendingDeleteIds.length === 0) {
+        const workoutRows = [...getWorkoutRows(workout)].sort((left, right) => left.order - right.order)
+
+        if (workoutRows.length === 0) {
             showToast(t('editProgram.tableNoWorkoutExercises'), 'warning')
             return false
         }
@@ -2163,35 +2216,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         }
 
         try {
+            savingWorkoutIdsRef.current.add(workout.id)
             setSavingWorkoutId(workout.id)
-
-            if (pendingDeleteIds.length > 0) {
-                const deleteResults = await Promise.all(
-                    pendingDeleteIds.map((exerciseId) =>
-                        fetch(`/api/programs/${programId}/workouts/${workout.id}/exercises/${exerciseId}`, {
-                            method: 'DELETE',
-                        })
-                    )
-                )
-
-                const failedResult = deleteResults.find((result) => !result.ok)
-                if (failedResult) {
-                    const errData = await failedResult.json()
-                    throw new Error(getApiErrorMessage(errData, t('editProgram.rowDeleteError'), t))
-                }
-
-                setPendingDeletesByWorkout((current) => {
-                    const { [workout.id]: _removed, ...rest } = current
-                    return rest
-                })
-            }
-
-            if (workoutRows.length === 0) {
-                await fetchProgram({ showLoading: false })
-                showToast(t('editProgram.workoutRowsSavedSuccess'), 'success')
-                setExpandedWorkoutIds((current) => ({ ...current, [workout.id]: false }))
-                return true
-            }
 
             const savedDraftRowIds: string[] = []
 
@@ -2257,6 +2283,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             )
             return false
         } finally {
+            savingWorkoutIdsRef.current.delete(workout.id)
             setSavingRowId(null)
             setSavingWorkoutId(null)
         }
@@ -2302,26 +2329,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         router.push('/trainer/programs')
     }
 
-    const deleteRow = () => {
-        if (!confirmDeleteRow) {
-            return
-        }
-
-        const { rowId, workoutId, isDraft } = confirmDeleteRow
-
-        if (isDraft) {
-            removeDraftRow(rowId, workoutId)
-            setConfirmDeleteRow(null)
-            return
-        }
-
-        setPendingDeletesByWorkout((current) => ({
-            ...current,
-            [workoutId]: [...(current[workoutId] ?? []), rowId],
-        }))
-        setConfirmDeleteRow(null)
-    }
-
     const handleDeleteWorkout = async () => {
         if (!confirmDeleteWorkout) return
         const { workoutId, weekId, workoutLabel } = confirmDeleteWorkout
@@ -2349,7 +2356,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 }
             })
 
-            // Clean up any orphaned draft/pending state for this workout
+            // Clean up any orphaned draft state for this workout
             setDraftRowIdsByWorkout((current) => {
                 const next = { ...current }
                 if (next[workoutId]) {
@@ -2360,11 +2367,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     })
                     delete next[workoutId]
                 }
-                return next
-            })
-            setPendingDeletesByWorkout((current) => {
-                const next = { ...current }
-                delete next[workoutId]
                 return next
             })
 
@@ -2951,6 +2953,14 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                         reps: record.reps,
                                                                     })}
                                                                 </p>
+                                                                <p className="text-xs text-gray-600 font-medium">
+                                                                    {t('editProgram.prHelperEstimatedOneRm', {
+                                                                        weight: normalizedOneRM(
+                                                                            record.weight,
+                                                                            record.reps
+                                                                        ),
+                                                                    })}
+                                                                </p>
                                                             </div>
                                                             <span
                                                                 className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${type === 'fundamental'
@@ -3257,7 +3267,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => addDraftRow(workout.id)}
-                                                                        disabled={Boolean(savingRowId || deletingRowId || savingWorkoutId)}
+                                                                        disabled={Boolean(savingRowId || savingWorkoutId)}
                                                                         className="inline-flex items-center gap-2 rounded-lg border border-brand-primary/20 bg-brand-primary/10 px-3 py-2 text-sm font-semibold text-brand-primary hover:bg-brand-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
                                                                     >
                                                                         <Plus className="w-4 h-4" />
@@ -3271,7 +3281,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                         disabled={
                                                                             Boolean(
                                                                                 savingRowId ||
-                                                                                deletingRowId ||
                                                                                 savingWorkoutId
                                                                             ) || !workoutHasUnsavedChanges
                                                                         }
@@ -3297,7 +3306,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                         }
                                                                         disabled={Boolean(
                                                                             savingRowId ||
-                                                                            deletingRowId ||
                                                                             savingWorkoutId ||
                                                                             deletingWorkoutId
                                                                         )}
@@ -3466,7 +3474,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                 'h-6 w-full rounded-lg border border-gray-300 px-1.5 text-center text-xs leading-4 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-400'
                                                                             const rowBusy =
                                                                                 savingRowId === row.id ||
-                                                                                deletingRowId === row.id ||
                                                                                 savingWorkoutId === workout.id
                                                                             const parsedWeightInputForPreview = parseWeightInputValue(
                                                                                 row.weight
@@ -3824,7 +3831,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                     {!readOnly && rowIndex < workoutRows.length - 1 && (
                                                                                         <InsertRowSeparator
                                                                                             onInsert={() => insertDraftRowAt(workout.id, rowIndex)}
-                                                                                            disabled={Boolean(savingRowId || deletingRowId)}
+                                                                                            disabled={Boolean(savingRowId)}
                                                                                             ariaLabel={t('editProgram.insertRowBetween')}
                                                                                         />
                                                                                     )}
@@ -3925,17 +3932,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     confirmText={t('editProgram.copyWeekConfirm')}
                     variant="warning"
                     isLoading={copyingWeekId !== null}
-                />
-
-                <ConfirmationModal
-                    isOpen={confirmDeleteRow !== null}
-                    onClose={() => setConfirmDeleteRow(null)}
-                    onConfirm={deleteRow}
-                    title={t('editProgram.confirmDeleteRowTitle')}
-                    message={t('editProgram.confirmDeleteRowMessage')}
-                    confirmText={t('editProgram.confirmDeleteRowConfirm')}
-                    variant="danger"
-                    isLoading={false}
                 />
 
                 <ConfirmationModal

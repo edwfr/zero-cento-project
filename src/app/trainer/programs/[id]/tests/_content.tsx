@@ -9,7 +9,7 @@ import { SkeletonTable } from '@/components'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/components/ToastNotification'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { estimateOneRMFromRpeTable } from '@/lib/calculations'
+import { normalizedOneRM } from '@/lib/calculations'
 import { formatDate, getTodayForInput } from '@/lib/date-format'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
@@ -161,8 +161,7 @@ export default function ProgramTestResultsContent() {
     }
 
     const calculateOneRepMax = (inputWeight: number, inputReps: number): number => {
-        const normalizedOneRM = estimateOneRMFromRpeTable(inputWeight, inputReps, 10)
-        return Math.round(normalizedOneRM * 10) / 10
+        return normalizedOneRM(inputWeight, inputReps)
     }
 
     const handleCreateRecord = async (event: React.FormEvent<HTMLFormElement>) => {
