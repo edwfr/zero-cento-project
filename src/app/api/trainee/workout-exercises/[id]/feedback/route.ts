@@ -39,7 +39,7 @@ export async function PATCH(
                     },
                 },
             },
-            select: { id: true },
+            select: { id: true, sets: true },
         })
 
         if (!owns) {
@@ -108,11 +108,26 @@ export async function PATCH(
             })
         }
 
-        const [totalSets, incompleteSets] = await Promise.all([
-            prisma.setPerformed.count({ where: { feedbackId: feedback.id } }),
-            prisma.setPerformed.count({ where: { feedbackId: feedback.id, completed: false } }),
+        const [completedPlannedSets, incompletePlannedSets] = await Promise.all([
+            prisma.setPerformed.count({
+                where: {
+                    feedbackId: feedback.id,
+                    setNumber: { lte: owns.sets },
+                    completed: true,
+                },
+            }),
+            prisma.setPerformed.count({
+                where: {
+                    feedbackId: feedback.id,
+                    setNumber: { lte: owns.sets },
+                    completed: false,
+                },
+            }),
         ])
-        const allCompleted = totalSets > 0 && incompleteSets === 0
+        const allCompleted =
+            owns.sets > 0 &&
+            completedPlannedSets >= owns.sets &&
+            incompletePlannedSets === 0
 
         const cascade = await cascadeCompletion(id, allCompleted)
 

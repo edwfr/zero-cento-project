@@ -34,11 +34,21 @@ describe('keepaliveFetch', () => {
         expect(init.keepalive).toBe(false)
     })
 
-    it('attaches a 10s AbortSignal.timeout when no signal is provided', async () => {
+    it('does not attach a signal by default', async () => {
         const fetchSpy = vi.fn().mockResolvedValue(new Response('{}'))
         vi.stubGlobal('fetch', fetchSpy)
 
         await keepaliveFetch('/api/x', { method: 'PATCH' })
+
+        const init = fetchSpy.mock.calls[0][1] as RequestInit
+        expect(init.signal).toBeUndefined()
+    })
+
+    it('attaches AbortSignal.timeout when timeoutMs is provided and no signal exists', async () => {
+        const fetchSpy = vi.fn().mockResolvedValue(new Response('{}'))
+        vi.stubGlobal('fetch', fetchSpy)
+
+        await keepaliveFetch('/api/x', { method: 'PATCH', timeoutMs: 10_000 })
 
         const init = fetchSpy.mock.calls[0][1] as RequestInit
         expect(init.signal).toBeInstanceOf(AbortSignal)

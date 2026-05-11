@@ -7,6 +7,35 @@ import { logger } from '@/lib/logger'
 import { getTodayDateKey } from '@/lib/date-format'
 import { cascadeWorkoutCompletion } from '@/lib/completion-service'
 
+const arePlannedSetsCompleted = (
+    sets: Array<{ setNumber: number; completed: boolean }>,
+    plannedSetCount: number
+): boolean => {
+    if (plannedSetCount <= 0) {
+        return false
+    }
+
+    const plannedSetStatus = new Map<number, boolean>()
+
+    for (const set of sets) {
+        if (set.setNumber >= 1 && set.setNumber <= plannedSetCount) {
+            plannedSetStatus.set(set.setNumber, set.completed)
+        }
+    }
+
+    if (plannedSetStatus.size < plannedSetCount) {
+        return false
+    }
+
+    for (let setNumber = 1; setNumber <= plannedSetCount; setNumber++) {
+        if (plannedSetStatus.get(setNumber) !== true) {
+            return false
+        }
+    }
+
+    return true
+}
+
 /**
  * POST /api/trainee/workouts/[id]/submit
  * Atomic submit of the whole workout: notes + per-exercise (actualRpe + sets[]).
@@ -44,7 +73,7 @@ export async function POST(
             },
             select: {
                 id: true,
-                workoutExercises: { select: { id: true } },
+                workoutExercises: { select: { id: true, sets: true } },
             },
         })
 
@@ -60,6 +89,9 @@ export async function POST(
 
         // 2. Validate every submitted exercise belongs to this workout.
         const validIds = new Set(workout.workoutExercises.map((we) => we.id))
+        const plannedSetsByExerciseId = new Map(
+            workout.workoutExercises.map((we) => [we.id, we.sets] as const)
+        )
         const invalid = exercises.find((ex) => !validIds.has(ex.workoutExerciseId))
         if (invalid) {
             return apiError(
@@ -126,7 +158,10 @@ export async function POST(
                 prisma.workoutExercise.update({
                     where: { id: ex.workoutExerciseId },
                     data: {
-                        isCompleted: ex.sets.length > 0 && ex.sets.every((s) => s.completed),
+                        isCompleted: arePlannedSetsCompleted(
+                            ex.sets,
+                            plannedSetsByExerciseId.get(ex.workoutExerciseId) ?? 0
+                        ),
                     },
                     select: { id: true },
                 })

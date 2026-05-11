@@ -123,6 +123,14 @@ const formatWeightKg = (value: number | null | undefined): string => {
     return `${formatWeightValue(value)}`
 }
 
+const isAbortError = (error: unknown): boolean => {
+    if (error instanceof DOMException) {
+        return error.name === 'AbortError'
+    }
+
+    return error instanceof Error && error.name === 'AbortError'
+}
+
 const RPE_OPTIONS = [
     { value: 5, labelKey: 'rpe5' },
     { value: 5.5, labelKey: 'rpe5_5' },
@@ -413,6 +421,8 @@ export default function WorkoutDetailContent() {
                 }, toastDelay)
             }
         } catch (err: unknown) {
+            const aborted = isAbortError(err)
+
             setFeedbackData((prev) => ({
                 ...prev,
                 [workoutExerciseId]: previousSets,
@@ -424,13 +434,21 @@ export default function WorkoutDetailContent() {
             Sentry.captureException(err, {
                 tags: {
                     feature: 'trainee-set-autosave',
+                    aborted: String(aborted),
                 },
                 extra: {
                     workoutExerciseId,
                     setNumber: changedSet.setNumber,
                 },
             })
-            showToast(err instanceof Error ? err.message : t('workouts.errorFeedback'), 'error')
+            showToast(
+                aborted
+                    ? t('workouts.errorFeedback')
+                    : err instanceof Error
+                        ? err.message
+                        : t('workouts.errorFeedback'),
+                'error'
+            )
         } finally {
             setPersistingKeys((prev) => {
                 const next = new Set(prev)

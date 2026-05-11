@@ -55,7 +55,10 @@ describe('PATCH /api/trainee/workout-exercises/[id]/feedback', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
-        vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue({ id: UUIDS.workoutExercise } as any)
+        vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue({
+            id: UUIDS.workoutExercise,
+            sets: 1,
+        } as any)
         vi.mocked(prisma.exerciseFeedback.upsert).mockResolvedValue({
             id: UUIDS.feedback,
             workoutExerciseId: UUIDS.workoutExercise,
@@ -66,8 +69,8 @@ describe('PATCH /api/trainee/workout-exercises/[id]/feedback', () => {
         } as any)
         vi.mocked(prisma.setPerformed.upsert).mockResolvedValue({ setNumber: 1 } as any)
         vi.mocked(prisma.setPerformed.count)
-            .mockResolvedValueOnce(1)  // total sets
-            .mockResolvedValueOnce(0) // incomplete sets
+            .mockResolvedValueOnce(1) // completed planned sets
+            .mockResolvedValueOnce(0) // incomplete planned sets
         vi.mocked(cascadeCompletion).mockResolvedValue({
             workoutExercise: { id: UUIDS.workoutExercise, isCompleted: true },
             workout: { id: 'workout-1', isCompleted: true },
@@ -95,14 +98,39 @@ describe('PATCH /api/trainee/workout-exercises/[id]/feedback', () => {
     })
 
     it('marks exercise incomplete when at least one set is not completed', async () => {
+        vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue({
+            id: UUIDS.workoutExercise,
+            sets: 2,
+        } as any)
         vi.mocked(prisma.setPerformed.count)
             .mockReset()
-            .mockResolvedValueOnce(2)  // total sets
-            .mockResolvedValueOnce(1) // incomplete sets
+            .mockResolvedValueOnce(1) // completed planned sets
+            .mockResolvedValueOnce(1) // incomplete planned sets
 
         const request = makeRequest({
             actualRpe: 7.5,
             set: { setNumber: 2, completed: false, reps: 0, weight: 100 },
+        })
+
+        const res = await PATCH(request, withIdParam(UUIDS.workoutExercise))
+
+        expect(res.status).toBe(200)
+        expect(cascadeCompletion).toHaveBeenCalledWith(UUIDS.workoutExercise, false)
+    })
+
+    it('keeps exercise incomplete when not all planned sets are saved yet', async () => {
+        vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue({
+            id: UUIDS.workoutExercise,
+            sets: 3,
+        } as any)
+        vi.mocked(prisma.setPerformed.count)
+            .mockReset()
+            .mockResolvedValueOnce(1) // completed planned sets
+            .mockResolvedValueOnce(0) // incomplete planned sets
+
+        const request = makeRequest({
+            actualRpe: 8,
+            set: { setNumber: 1, completed: true, reps: 5, weight: 100 },
         })
 
         const res = await PATCH(request, withIdParam(UUIDS.workoutExercise))

@@ -1,7 +1,7 @@
 # ✅ CHECKLIST SVILUPPO - ZeroCento Training Platform
 
 **Posizionamento prodotto:** training management platform trainer-led  
-**Stato attuale:** 167/177 task completati (~94%)  
+**Stato attuale:** 169/179 task completati (~94%)  
 **Task rimanenti:** 10 (Sprint 6: 5 task, Sprint 8: 7 task, Sprint 11: 1 task, ma 3 già completati del TM)  
 **Riferimenti:** [system-review.md](./system-review.md) · [CHANGELOG.md](./CHANGELOG.md)
 
@@ -649,6 +649,10 @@
 - [x] **11.98** `/trainer/programs/[id]/review`: rendere collassabile/espandibile il pannello `Serie allenanti fondamentali pianificate` con toggle header coerente agli altri pannelli report ✅ _11 Mag 2026_
 - [x] **11.99** Affidabilita autosave singola serie trainee — keepalive fetch, pad serie mancanti, mount server-first ✅ _11 Mag 2026_  
       File: `src/app/trainee/workouts/[id]/_content.tsx`, `src/lib/keepalive-fetch.ts` · Dettagli: vedi piano `docs/superpowers/plans/2026-05-11-trainee-set-feedback-reliability.md`
+- [x] **11.100** Mitigazione AbortError autosave serie trainee — timeout implicito rimosso da `keepaliveFetch` e messaggio tecnico nascosto in UI ✅ _11 Mag 2026_  
+      File: `src/lib/keepalive-fetch.ts`, `src/app/trainee/workouts/[id]/_content.tsx`, `tests/unit/keepalive-fetch.test.ts` · Dettagli: fallback timeout ora opt-in (`timeoutMs`), `AbortError` mappato su errore utente generico con tag Sentry `aborted`
+- [x] **11.101** Correggere completamento prematuro su autosave serie trainee — il cascade ora usa il numero di set pianificate (non solo le righe `sets_performed` presenti) evitando toast anticipati di workout/settimana ✅ _11 Mag 2026_  
+      File: `src/app/api/trainee/workout-exercises/[id]/feedback/route.ts`, `src/app/api/trainee/workouts/[id]/submit/route.ts`, `tests/integration/workout-exercise-feedback.test.ts`, `tests/integration/trainee-workout-submit.test.ts` · Dettagli: completamento esercizio true solo quando tutte le set pianificate risultano presenti e completate
 
 ---
 

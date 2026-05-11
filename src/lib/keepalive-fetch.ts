@@ -1,10 +1,17 @@
-const DEFAULT_TIMEOUT_MS = 10_000
+interface KeepaliveFetchInit extends RequestInit {
+    timeoutMs?: number
+}
 
-export function keepaliveFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
+export function keepaliveFetch(input: RequestInfo | URL, init: KeepaliveFetchInit = {}): Promise<Response> {
+    const { timeoutMs, ...requestInit } = init
+
     const merged: RequestInit = {
-        ...init,
-        keepalive: init.keepalive ?? true,
-        signal: init.signal ?? AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
+        ...requestInit,
+        keepalive: requestInit.keepalive ?? true,
+    }
+
+    if (!requestInit.signal && typeof timeoutMs === 'number' && timeoutMs > 0) {
+        merged.signal = AbortSignal.timeout(timeoutMs)
     }
 
     return fetch(input, merged)
