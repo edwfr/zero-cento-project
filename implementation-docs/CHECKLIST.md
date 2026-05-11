@@ -646,6 +646,7 @@
 - [x] **11.95** `/trainee/workouts/[id]`: aggiornare in tempo reale `Riepilogo esercizi` dopo la spunta di una serie/esercizio, anche con pannello recap gia aperto ✅ _6 Mag 2026_
 - [x] **11.96** `/trainer/programs/[id]/edit`: cancellazione riga immediata su drop nel cestino con hide ottimistico + rollback in errore (toast informativo), `DELETE` idempotente su `404`, rimozione codice deferred `pendingDeletesByWorkout` e rimozione delete in riga (solo drag-and-drop) ✅ _11 Mag 2026_
 - [x] **11.97** `/trainer/programs/[id]/edit`: ricalcolo live del peso effettivo (testo verde) quando cambia la percentuale `%`, anche dopo copia settimana ✅ _11 Mag 2026_
+- [x] **11.98** `/trainer/programs/[id]/review`: rendere collassabile/espandibile il pannello `Serie allenanti fondamentali pianificate` con toggle header coerente agli altri pannelli report ✅ _11 Mag 2026_
 
 ---
 

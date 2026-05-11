@@ -18,6 +18,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 - **[11 Maggio 2026] Edit programma trainer: preview peso effettivo aggiornata al cambio percentuale** — Nella schermata `/trainer/programs/[id]/edit`, il testo verde del peso effettivo ora privilegia il valore ricalcolato dalla preview live in modalita edit (input peso corrente), invece del valore persistito della riga. Corretto il caso post copia settimana in cui, modificando la `%`, la stima restava ferma al valore precedente fino al salvataggio. **Files modificati:** `src/app/trainer/programs/[id]/edit/_content.tsx`, `src/app/trainer/programs/[id]/edit/effective-weight-display.ts`, `tests/unit/effective-weight-display.test.ts`.
 - **[8 Maggio 2026] Fix race condition loader set completamento allenamento** — Nella schermata `/trainee/workouts/[id]`, cliccando rapidamente le spunte di serie su esercizi diversi, il loader della prima serie scompariva prima del completamento della richiesta. Il problema era che `persistingSetIdx: number | null` era uno stato globale condiviso tra tutti gli esercizi: una seconda chiamata sovrascriveva l'indice e il primo `finally` azzerava anche il loader della seconda. Sostituito con `persistingKeys: Set<string>` dove ogni chiave è `"${workoutExerciseId}:${setIdx}"`, così ogni richiesta in volo aggiunge/rimuove solo la propria chiave, senza interferire con le altre. Aggiunto anche `color="green"` a `LoadingSpinner` (variante `border-green-200 border-t-green-600`) e il loader nel bottone spunta ora usa sempre `color="green"`. **Files modificati:** `src/app/trainee/workouts/[id]/_content.tsx`, `src/components/LoadingSpinner.tsx`.
 
+### [11 Maggio 2026] — Review programma: pannello serie fondamentali collassabile
+
+**Task checklist:** #11.98
+**File modificati:** `src/components/ProgramMuscleGroupCharts.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Nella schermata `/trainer/programs/[id]/review`, il pannello `Serie allenanti fondamentali pianificate` ora e espandibile/collassabile con toggle in header (`ChevronUp/ChevronDown`) e stato dedicato `isFundamentalCollapsed`, allineato al comportamento degli altri pannelli report.
+
 ### [11 Maggio 2026] — Stabilizzazione delete deferred in edit programma trainer
 
 **Task checklist:** #11.96

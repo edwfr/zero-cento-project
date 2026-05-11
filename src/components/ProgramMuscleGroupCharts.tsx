@@ -98,6 +98,7 @@ function matchFundamentalLift(exerciseName: string): FundamentalLift | null {
 export default function ProgramMuscleGroupCharts({ weeks }: ProgramMuscleGroupChartsProps) {
     const { t } = useTranslation('trainer')
     const [visibleMuscleGroupIds, setVisibleMuscleGroupIds] = useState<string[]>([])
+    const [isFundamentalCollapsed, setIsFundamentalCollapsed] = useState(false)
     const [isHeatmapCollapsed, setIsHeatmapCollapsed] = useState(false)
     const [isTrendCollapsed, setIsTrendCollapsed] = useState(false)
     const [fundamentalLiftFilter, setFundamentalLiftFilter] = useState<'all' | FundamentalLift>('all')
@@ -302,98 +303,121 @@ export default function ProgramMuscleGroupCharts({ weeks }: ProgramMuscleGroupCh
     return (
         <div className="mt-8 mb-8 space-y-8">
             <div className="overflow-hidden bg-white rounded-lg shadow-md p-6">
-                <div>
-                    <h2 className="text-xl font-bold text-gray-900">
-                        {t('editProgram.trainingSetsFundamentalTitle')}
-                    </h2>
-                    <p className="mt-2 text-sm text-gray-600">
-                        {t('editProgram.trainingSetsFundamentalDescription')}
-                    </p>
-                </div>
-
-                <div className="mt-5">
-                    <div className="mb-3 flex items-center justify-between gap-3 flex-wrap">
-                        <p className="text-sm font-medium text-gray-700">
-                            {t('editProgram.trainingSetsFundamentalFilterTitle')}
+                <button
+                    type="button"
+                    onClick={() => setIsFundamentalCollapsed((current) => !current)}
+                    className="group flex w-full items-start justify-between gap-4 text-left"
+                    aria-expanded={!isFundamentalCollapsed}
+                >
+                    <div>
+                        <h2 className="text-xl font-bold text-gray-900">
+                            {t('editProgram.trainingSetsFundamentalTitle')}
+                        </h2>
+                        <p className="mt-2 text-sm text-gray-600">
+                            {t('editProgram.trainingSetsFundamentalDescription')}
                         </p>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                        {[
-                            { value: 'all' as const, label: t('editProgram.trainingSetsFundamentalFilterAll') },
-                            { value: 'squat' as const, label: t('reports.squat') },
-                            { value: 'bench' as const, label: t('reports.bench') },
-                            { value: 'deadlift' as const, label: t('reports.deadlift') },
-                        ].map((option) => {
-                            const isActive = fundamentalLiftFilter === option.value
+                    <span className="rounded-full border border-gray-200 bg-gray-50 p-2 text-gray-500 transition-colors group-hover:bg-gray-100">
+                        {isFundamentalCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+                    </span>
+                </button>
 
-                            return (
-                                <button
-                                    key={option.value}
-                                    type="button"
-                                    onClick={() => setFundamentalLiftFilter(option.value)}
-                                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors ${isActive
-                                        ? 'border-slate-300 bg-slate-100 text-slate-900 hover:bg-slate-200'
-                                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900'
-                                        }`}
-                                >
-                                    {option.value !== 'all' && (
-                                        <span
-                                            className="h-2.5 w-2.5 rounded-full"
-                                            style={{ backgroundColor: FUNDAMENTAL_COLORS[option.value] }}
-                                        />
-                                    )}
-                                    {option.label}
-                                </button>
-                            )
-                        })}
-                    </div>
-                </div>
+                {!isFundamentalCollapsed && (
+                    <>
+                        <div className="mt-5">
+                            <div className="mb-3 flex items-center justify-between gap-3 flex-wrap">
+                                <p className="text-sm font-medium text-gray-700">
+                                    {t('editProgram.trainingSetsFundamentalFilterTitle')}
+                                </p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {[
+                                    {
+                                        value: 'all' as const,
+                                        label: t('editProgram.trainingSetsFundamentalFilterAll'),
+                                    },
+                                    { value: 'squat' as const, label: t('reports.squat') },
+                                    { value: 'bench' as const, label: t('reports.bench') },
+                                    { value: 'deadlift' as const, label: t('reports.deadlift') },
+                                ].map((option) => {
+                                    const isActive = fundamentalLiftFilter === option.value
 
-                <div className="mt-6">
-                    {hasFundamentalData ? (
-                        <div className="h-[24rem]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={weeklyFundamentalChartData} margin={{ top: 12, right: 12, left: 12, bottom: 12 }}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                    <XAxis dataKey="weekLabel" />
-                                    <YAxis />
-                                    <Tooltip
-                                        formatter={(value, name) => {
-                                            const liftName =
-                                                name === 'squat'
-                                                    ? t('reports.squat')
-                                                    : name === 'bench'
-                                                        ? t('reports.bench')
-                                                        : t('reports.deadlift')
-                                            return [`${formatTrainingSetsValue(Number(value ?? 0))} ${t('editProgram.trainingSetsUnit')}`, liftName]
-                                        }}
-                                    />
-                                    <Legend
-                                        formatter={(value) =>
-                                            value === 'squat'
-                                                ? t('reports.squat')
-                                                : value === 'bench'
-                                                    ? t('reports.bench')
-                                                    : t('reports.deadlift')
-                                        }
-                                    />
-                                    {visibleFundamentalLifts.map((lift) => (
-                                        <Bar
-                                            key={lift}
-                                            dataKey={lift}
-                                            fill={FUNDAMENTAL_COLORS[lift]}
-                                            radius={[6, 6, 0, 0]}
-                                        />
-                                    ))}
-                                </BarChart>
-                            </ResponsiveContainer>
+                                    return (
+                                        <button
+                                            key={option.value}
+                                            type="button"
+                                            onClick={() => setFundamentalLiftFilter(option.value)}
+                                            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors ${isActive
+                                                ? 'border-slate-300 bg-slate-100 text-slate-900 hover:bg-slate-200'
+                                                : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900'
+                                                }`}
+                                        >
+                                            {option.value !== 'all' && (
+                                                <span
+                                                    className="h-2.5 w-2.5 rounded-full"
+                                                    style={{ backgroundColor: FUNDAMENTAL_COLORS[option.value] }}
+                                                />
+                                            )}
+                                            {option.label}
+                                        </button>
+                                    )
+                                })}
+                            </div>
                         </div>
-                    ) : (
-                        <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center text-sm text-gray-600">
-                            {t('editProgram.trainingSetsFundamentalEmpty')}
+
+                        <div className="mt-6">
+                            {hasFundamentalData ? (
+                                <div className="h-[24rem]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart
+                                            data={weeklyFundamentalChartData}
+                                            margin={{ top: 12, right: 12, left: 12, bottom: 12 }}
+                                        >
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                            <XAxis dataKey="weekLabel" />
+                                            <YAxis />
+                                            <Tooltip
+                                                formatter={(value, name) => {
+                                                    const liftName =
+                                                        name === 'squat'
+                                                            ? t('reports.squat')
+                                                            : name === 'bench'
+                                                                ? t('reports.bench')
+                                                                : t('reports.deadlift')
+                                                    return [
+                                                        `${formatTrainingSetsValue(Number(value ?? 0))} ${t('editProgram.trainingSetsUnit')}`,
+                                                        liftName,
+                                                    ]
+                                                }}
+                                            />
+                                            <Legend
+                                                formatter={(value) =>
+                                                    value === 'squat'
+                                                        ? t('reports.squat')
+                                                        : value === 'bench'
+                                                            ? t('reports.bench')
+                                                            : t('reports.deadlift')
+                                                }
+                                            />
+                                            {visibleFundamentalLifts.map((lift) => (
+                                                <Bar
+                                                    key={lift}
+                                                    dataKey={lift}
+                                                    fill={FUNDAMENTAL_COLORS[lift]}
+                                                    radius={[6, 6, 0, 0]}
+                                                />
+                                            ))}
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            ) : (
+                                <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center text-sm text-gray-600">
+                                    {t('editProgram.trainingSetsFundamentalEmpty')}
+                                </div>
+                            )}
                         </div>
-                    )}
-                </div>
+                    </>
+                )}
             </div>
 
             <div className="bg-white rounded-lg shadow-md p-6">
