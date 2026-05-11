@@ -474,6 +474,7 @@
         "workoutFallback": "Workout {{number}}",
         "workoutIndexLabel": "Workout {{current}}/{{total}}",
         "addRow": "Aggiungi riga",
+        "addExercise": "Aggiungi esercizio",
         "insertRowBetween": "Inserisci riga qui",
         "dragHandleLabel": "Trascina per riordinare",
         "tableWarmup": "Warmup",

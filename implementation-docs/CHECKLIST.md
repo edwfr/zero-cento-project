@@ -1,7 +1,7 @@
 # ✅ CHECKLIST SVILUPPO - ZeroCento Training Platform
 
 **Posizionamento prodotto:** training management platform trainer-led  
-**Stato attuale:** 165/175 task completati (~94%)  
+**Stato attuale:** 166/176 task completati (~94%)  
 **Task rimanenti:** 10 (Sprint 6: 5 task, Sprint 8: 7 task, Sprint 11: 1 task, ma 3 già completati del TM)  
 **Riferimenti:** [system-review.md](./system-review.md) · [CHANGELOG.md](./CHANGELOG.md)
 
@@ -644,7 +644,8 @@
 - [x] **11.93** `Riepilogo esercizi`: layout sintetico solo con nome esercizio, `serie × rep × kg` e stato avanzamento; rimosso dettaglio sotto riga ✅ _6 Mag 2026_
 - [x] **11.94** `ExerciseFocusCard` (trainee workout focus): spostare badge tipo esercizio nella riga rest, sostituire `F/A` con etichette complete tradotte e rendere `rest` minuscolo in EN/IT ✅ _6 Mag 2026_
 - [x] **11.95** `/trainee/workouts/[id]`: aggiornare in tempo reale `Riepilogo esercizi` dopo la spunta di una serie/esercizio, anche con pannello recap gia aperto ✅ _6 Mag 2026_
-- [x] **11.96** `/trainer/programs/[id]/edit`: cancellazione riga immediata su drop nel cestino (DELETE immediata, 404 idempotente), rimozione codice deferred `pendingDeletesByWorkout` e rimozione delete in riga (solo drag-and-drop) ✅ _11 Mag 2026_
+- [x] **11.96** `/trainer/programs/[id]/edit`: cancellazione riga immediata su drop nel cestino con hide ottimistico + rollback in errore (toast informativo), `DELETE` idempotente su `404`, rimozione codice deferred `pendingDeletesByWorkout` e rimozione delete in riga (solo drag-and-drop) ✅ _11 Mag 2026_
+- [x] **11.97** `/trainer/programs/[id]/edit`: ricalcolo live del peso effettivo (testo verde) quando cambia la percentuale `%`, anche dopo copia settimana ✅ _11 Mag 2026_
 
 ---
 

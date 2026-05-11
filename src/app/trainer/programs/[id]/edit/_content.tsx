@@ -15,7 +15,6 @@ import MovementPatternTag from '@/components/MovementPatternTag'
 import WeekTypeBadge from '@/components/WeekTypeBadge'
 import AutocompleteSearch from '@/components/AutocompleteSearch'
 import { Input } from '@/components/Input'
-import { ActionIconButton } from '@/components'
 import {
     BarChart3,
     ChevronDown,
@@ -39,6 +38,7 @@ import {
 import { hydrateDraftRowsForWorkout } from './skeleton-hydration'
 import { transformApiWeek } from './transform-utils'
 import { computeExerciseGroupColors } from './row-utils'
+import { resolveEffectiveWeightDisplay } from '@/app/trainer/programs/[id]/edit/effective-weight-display'
 import {
     DndContext,
     DragOverlay,
@@ -1452,6 +1452,68 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                         }))
                         showToast(t('editProgram.rowDeletedSuccess'), 'success')
                     } else {
+                        const persistedRow = workout.workoutExercises.find(
+                            (workoutExercise) => workoutExercise.id === rowToDelete.id
+                        )
+
+                        if (!persistedRow) {
+                            showToast(t('editProgram.rowDeleteError'), 'error')
+                            return
+                        }
+
+                        const previousWorkoutExercises = workout.workoutExercises
+                        const previousRowState = rowStateById[rowToDelete.id]
+
+                        const optimisticallyRemainingExercises = previousWorkoutExercises
+                            .filter((workoutExercise) => workoutExercise.id !== rowToDelete.id)
+                            .sort((left, right) => left.order - right.order)
+                            .map((workoutExercise, index) => ({
+                                ...workoutExercise,
+                                order: index + 1,
+                            }))
+
+                        setProgram((currentProgram) => {
+                            if (!currentProgram) {
+                                return currentProgram
+                            }
+
+                            return {
+                                ...currentProgram,
+                                weeks: currentProgram.weeks.map((week) => ({
+                                    ...week,
+                                    workouts: week.workouts.map((candidateWorkout) => {
+                                        if (candidateWorkout.id !== workout.id) {
+                                            return candidateWorkout
+                                        }
+
+                                        return {
+                                            ...candidateWorkout,
+                                            workoutExercises: optimisticallyRemainingExercises,
+                                        }
+                                    }),
+                                })),
+                            }
+                        })
+
+                        setRowStateById((currentRows) => {
+                            const nextRows = { ...currentRows }
+                            delete nextRows[rowToDelete.id]
+
+                            Object.keys(nextRows).forEach((rowId) => {
+                                const row = nextRows[rowId]
+                                if (row.workoutId !== workout.id || row.isDraft || row.order <= rowToDelete.order) {
+                                    return
+                                }
+
+                                nextRows[rowId] = {
+                                    ...row,
+                                    order: row.order - 1,
+                                }
+                            })
+
+                            return nextRows
+                        })
+
                         try {
                             setSavingRowId(rowToDelete.id)
 
@@ -1469,6 +1531,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                 )
                             }
 
+                            showToast(t('editProgram.rowDeletedSuccess'), 'success')
+                        } catch (err: unknown) {
                             setProgram((currentProgram) => {
                                 if (!currentProgram) {
                                     return currentProgram
@@ -1483,17 +1547,9 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                 return candidateWorkout
                                             }
 
-                                            const remainingExercises = candidateWorkout.workoutExercises
-                                                .filter((workoutExercise) => workoutExercise.id !== rowToDelete.id)
-                                                .sort((left, right) => left.order - right.order)
-                                                .map((workoutExercise, index) => ({
-                                                    ...workoutExercise,
-                                                    order: index + 1,
-                                                }))
-
                                             return {
                                                 ...candidateWorkout,
-                                                workoutExercises: remainingExercises,
+                                                workoutExercises: previousWorkoutExercises,
                                             }
                                         }),
                                     })),
@@ -1502,12 +1558,28 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
                             setRowStateById((currentRows) => {
                                 const nextRows = { ...currentRows }
-                                delete nextRows[rowToDelete.id]
+
+                                if (previousRowState) {
+                                    nextRows[rowToDelete.id] = previousRowState
+                                } else {
+                                    nextRows[rowToDelete.id] = buildEditableRow(workout.id, persistedRow)
+                                }
+
+                                previousWorkoutExercises.forEach((workoutExercise) => {
+                                    const existingRowState = nextRows[workoutExercise.id]
+                                    if (!existingRowState || existingRowState.isDraft) {
+                                        return
+                                    }
+
+                                    nextRows[workoutExercise.id] = {
+                                        ...existingRowState,
+                                        order: workoutExercise.order,
+                                    }
+                                })
+
                                 return nextRows
                             })
 
-                            showToast(t('editProgram.rowDeletedSuccess'), 'success')
-                        } catch (err: unknown) {
                             showToast(
                                 err instanceof Error ? err.message : t('editProgram.rowDeleteError'),
                                 'error'
@@ -1582,7 +1654,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 setReorderingWorkoutId(null)
             }
         },
-        [getWorkoutRows, isDragOverTrash, programId, readOnly, savingRowId, showToast, t]
+        [getWorkoutRows, isDragOverTrash, programId, readOnly, rowStateById, savingRowId, showToast, t]
     )
 
     const hasWorkoutUnsavedChanges = useCallback(
@@ -2713,7 +2785,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                         className="inline-flex items-center justify-center gap-2 rounded-lg border border-brand-primary/20 bg-brand-primary/10 px-3 py-2 text-sm font-semibold text-brand-primary hover:bg-brand-primary/15"
                                                     >
                                                         <Plus className="h-4 w-4" />
-                                                        {t('editProgram.addRow')}
+                                                        {t('editProgram.addExercise')}
                                                     </button>
                                                 </div>
 
@@ -3271,7 +3343,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                         className="inline-flex items-center gap-2 rounded-lg border border-brand-primary/20 bg-brand-primary/10 px-3 py-2 text-sm font-semibold text-brand-primary hover:bg-brand-primary/15 disabled:cursor-not-allowed disabled:opacity-60"
                                                                     >
                                                                         <Plus className="w-4 h-4" />
-                                                                        {t('editProgram.addRow')}
+                                                                        {t('editProgram.addExercise')}
                                                                     </button>
                                                                     <button
                                                                         type="button"
@@ -3294,9 +3366,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                         )}
                                                                         {t('editProgram.saveRowTitle')}
                                                                     </button>
-                                                                    <ActionIconButton
-                                                                        variant="delete"
-                                                                        label={t('editProgram.deleteWorkoutTitle')}
+                                                                    <button
+                                                                        type="button"
                                                                         onClick={() =>
                                                                             setConfirmDeleteWorkout({
                                                                                 workoutId: workout.id,
@@ -3309,8 +3380,15 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                             savingWorkoutId ||
                                                                             deletingWorkoutId
                                                                         )}
-                                                                        isLoading={deletingWorkoutId === workout.id}
-                                                                    />
+                                                                        className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                                                    >
+                                                                        {deletingWorkoutId === workout.id ? (
+                                                                            <LoadingSpinner size="sm" color="gray" />
+                                                                        ) : (
+                                                                            <Trash2 className="w-4 h-4" />
+                                                                        )}
+                                                                        {t('editProgram.deleteWorkoutTitle')}
+                                                                    </button>
                                                                 </div>
                                                             )}
                                                         </div>
@@ -3508,10 +3586,11 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                     ? '-'
                                                                                     : row.weight.trim()
                                                                             const effectiveWeightToDisplay =
-                                                                                typeof persistedEffectiveWeight ===
-                                                                                    'number'
-                                                                                    ? persistedEffectiveWeight
-                                                                                    : previewEffectiveWeight
+                                                                                resolveEffectiveWeightDisplay({
+                                                                                    readOnly,
+                                                                                    previewEffectiveWeight,
+                                                                                    persistedEffectiveWeight,
+                                                                                })
                                                                             const shouldShowEffectiveWeight = readOnly
                                                                                 ? true
                                                                                 : shouldShowEffectiveWeightPreview &&
