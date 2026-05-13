@@ -13,6 +13,7 @@ export interface ExerciseDisplayItem {
         reps: number
         weight: number
         completed: boolean
+        actualRpe?: number | null
     }>
     trainerNote?: string | null
     traineeNote?: string | null
@@ -21,7 +22,7 @@ export interface ExerciseDisplayItem {
 interface WorkoutExerciseDisplayListProps {
     items: ExerciseDisplayItem[]
     emptyText?: string
-    setRowLabel?: (set: number, reps: number, weight: number) => string
+    setRowLabel?: (set: number, reps: number, weight: number, rpe: number | null) => string
 }
 
 export default function WorkoutExerciseDisplayList({
@@ -33,8 +34,10 @@ export default function WorkoutExerciseDisplayList({
         return <p className="text-sm text-gray-400">{emptyText}</p>
     }
 
-    const defaultSetRow = (set: number, reps: number, weight: number) =>
-        `#${set} · ${reps} rep · ${weight} kg`
+    const defaultSetRow = (set: number, reps: number, weight: number, rpe: number | null) =>
+        rpe != null
+            ? `#${set} · ${reps} rep · ${weight} kg @ RPE ${rpe}`
+            : `#${set} · ${reps} rep · ${weight} kg`
 
     const renderSet = setRowLabel ?? defaultSetRow
 
@@ -69,7 +72,7 @@ export default function WorkoutExerciseDisplayList({
                                         key={set.setNumber}
                                         className="text-xs text-gray-500 tabular-nums"
                                     >
-                                        {renderSet(set.setNumber, set.reps, set.weight)}
+                                        {renderSet(set.setNumber, set.reps, set.weight, set.actualRpe ?? null)}
                                     </li>
                                 ))}
                             </ul>

@@ -82,7 +82,7 @@ describe('PATCH /api/trainee/workout-exercises/[id]/feedback', () => {
     it('upserts feedback and set, cascades completion when set is completed', async () => {
         const request = makeRequest({
             actualRpe: 8,
-            set: { setNumber: 1, completed: true, reps: 5, weight: 100 },
+            set: { setNumber: 1, completed: true, reps: 5, weight: 100, actualRpe: 8.5 },
         })
 
         const res = await PATCH(request, withIdParam(UUIDS.workoutExercise))
@@ -92,9 +92,44 @@ describe('PATCH /api/trainee/workout-exercises/[id]/feedback', () => {
         expect(prisma.workoutExercise.findFirst).toHaveBeenCalledTimes(1)
         expect(prisma.exerciseFeedback.upsert).toHaveBeenCalledTimes(1)
         expect(prisma.setPerformed.upsert).toHaveBeenCalledTimes(1)
+        expect(prisma.setPerformed.upsert).toHaveBeenCalledWith(
+            expect.objectContaining({
+                create: expect.objectContaining({
+                    feedbackId: UUIDS.feedback,
+                    setNumber: 1,
+                    reps: 5,
+                    weight: 100,
+                    completed: true,
+                    actualRpe: 8.5,
+                }),
+                update: expect.objectContaining({
+                    reps: 5,
+                    weight: 100,
+                    completed: true,
+                    actualRpe: 8.5,
+                }),
+            })
+        )
         expect(cascadeCompletion).toHaveBeenCalledWith(UUIDS.workoutExercise, true)
         expect(json.data.feedback.id).toBe(UUIDS.feedback)
         expect(json.data.cascade.workoutExercise.isCompleted).toBe(true)
+    })
+
+    it('stores set actualRpe as null when omitted', async () => {
+        const request = makeRequest({
+            actualRpe: 8,
+            set: { setNumber: 1, completed: true, reps: 5, weight: 100 },
+        })
+
+        const res = await PATCH(request, withIdParam(UUIDS.workoutExercise))
+
+        expect(res.status).toBe(200)
+        expect(prisma.setPerformed.upsert).toHaveBeenCalledWith(
+            expect.objectContaining({
+                create: expect.objectContaining({ actualRpe: null }),
+                update: expect.objectContaining({ actualRpe: null }),
+            })
+        )
     })
 
     it('marks exercise incomplete when at least one set is not completed', async () => {
@@ -156,6 +191,20 @@ describe('PATCH /api/trainee/workout-exercises/[id]/feedback', () => {
 
     it('returns 400 when validation fails', async () => {
         const request = makeRequest({ actualRpe: 11 })
+
+        const res = await PATCH(request, withIdParam(UUIDS.workoutExercise))
+        const json = await res.json()
+
+        expect(res.status).toBe(400)
+        expect(json.error.code).toBe('VALIDATION_ERROR')
+        expect(prisma.exerciseFeedback.upsert).not.toHaveBeenCalled()
+    })
+
+    it('returns 400 when set actualRpe is invalid', async () => {
+        const request = makeRequest({
+            actualRpe: 8,
+            set: { setNumber: 1, completed: true, reps: 5, weight: 100, actualRpe: 7.3 },
+        })
 
         const res = await PATCH(request, withIdParam(UUIDS.workoutExercise))
         const json = await res.json()

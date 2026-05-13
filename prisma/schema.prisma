@@ -336,6 +336,7 @@ model SetPerformed {
   setNumber  Int      // Numero progressivo serie: 1, 2, 3, ...
   reps       Int
   weight     Float    // kg
+  actualRpe  Float?   // RPE percepito 5.0-10.0, step 0.5, opzionale
   completed  Boolean  @default(true)
   createdAt  DateTime @default(now())
 

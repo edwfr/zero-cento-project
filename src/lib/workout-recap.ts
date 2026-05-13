@@ -32,6 +32,7 @@ export interface PrevWeekSet {
     reps: number
     weight: number
     completed: boolean
+    actualRpe: number | null
 }
 
 export interface PrevWeekExerciseItem {

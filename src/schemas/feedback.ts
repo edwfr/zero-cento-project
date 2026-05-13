@@ -20,6 +20,12 @@ export const setPerformedSchema = z.object({
         .number()
         .min(0, 'validation.minWeight')
         .max(500, 'validation.maxWeight'),
+    actualRpe: z
+        .number()
+        .min(5.0, 'validation.rpeMin')
+        .max(10.0, 'validation.rpeMax')
+        .multipleOf(0.5, 'validation.rpeStep')
+        .nullish(),
 })
 
 export const feedbackSchema = z.object({

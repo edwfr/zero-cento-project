@@ -44,6 +44,7 @@ describe('GET /api/trainee/workouts/[id]/prev-week', () => {
                 setReps: 5,
                 setWeight: 120,
                 setCompleted: true,
+                setActualRpe: 8.5,
             },
             {
                 weId: 'we-1',
@@ -55,6 +56,7 @@ describe('GET /api/trainee/workouts/[id]/prev-week', () => {
                 setReps: 5,
                 setWeight: 120,
                 setCompleted: true,
+                setActualRpe: null,
             },
             {
                 weId: 'we-2',
@@ -66,6 +68,7 @@ describe('GET /api/trainee/workouts/[id]/prev-week', () => {
                 setReps: null,
                 setWeight: null,
                 setCompleted: null,
+                setActualRpe: null,
             },
         ])
 
@@ -84,8 +87,8 @@ describe('GET /api/trainee/workouts/[id]/prev-week', () => {
                 targetReps: '5',
                 exerciseNote: null,
                 sets: [
-                    { setNumber: 1, reps: 5, weight: 120, completed: true },
-                    { setNumber: 2, reps: 5, weight: 120, completed: true },
+                    { setNumber: 1, reps: 5, weight: 120, completed: true, actualRpe: 8.5 },
+                    { setNumber: 2, reps: 5, weight: 120, completed: true, actualRpe: null },
                 ],
             },
             {

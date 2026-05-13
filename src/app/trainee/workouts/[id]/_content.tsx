@@ -72,6 +72,7 @@ interface SetPerformed {
     weight: number
     reps: number
     completed?: boolean | null
+    actualRpe: number | null
 }
 
 interface ExerciseRPE {
@@ -218,6 +219,7 @@ export default function WorkoutDetailContent() {
                                 weight: existingSet.weight,
                                 reps: existingSet.reps,
                                 completed: existingSet.completed ?? true,
+                                actualRpe: existingSet.actualRpe ?? null,
                             })
                         } else {
                             paddedSets.push({
@@ -225,6 +227,7 @@ export default function WorkoutDetailContent() {
                                 weight: we.effectiveWeight || 0,
                                 reps: 0,
                                 completed: false,
+                                actualRpe: null,
                             })
                         }
                     }
@@ -237,6 +240,7 @@ export default function WorkoutDetailContent() {
                         weight: we.effectiveWeight || 0,
                         reps: 0,
                         completed: false,
+                        actualRpe: null,
                     }))
                     initialRPE[we.id] = we.targetRpe
                 }
@@ -345,6 +349,22 @@ export default function WorkoutDetailContent() {
         })
     }
 
+    const updateSetRpe = (
+        workoutExerciseId: string,
+        setIndex: number,
+        rpe: number | null
+    ) => {
+        setFeedbackData((prev) => {
+            const updated = { ...prev }
+            updated[workoutExerciseId] = [...(prev[workoutExerciseId] || [])]
+            updated[workoutExerciseId][setIndex] = {
+                ...updated[workoutExerciseId][setIndex],
+                actualRpe: rpe,
+            }
+            return updated
+        })
+    }
+
     const persistExerciseFeedback = useCallback(async (input: {
         workoutExerciseId: string
         setIdx: number
@@ -367,6 +387,7 @@ export default function WorkoutDetailContent() {
                         completed: !!changedSet.completed,
                         reps: changedSet.reps,
                         weight: changedSet.weight,
+                        actualRpe: changedSet.actualRpe ?? null,
                     },
                 }),
             })
@@ -494,9 +515,15 @@ export default function WorkoutDetailContent() {
             const effectiveWeight = currentSet.weight > 0
                 ? currentSet.weight
                 : (we.effectiveWeight ?? we.weight ?? 0)
-            newSet = { ...currentSet, completed: true, reps: effectiveReps, weight: effectiveWeight }
+            newSet = {
+                ...currentSet,
+                completed: true,
+                reps: effectiveReps,
+                weight: effectiveWeight,
+                actualRpe: currentSet.actualRpe ?? null,
+            }
         } else {
-            newSet = { ...currentSet, completed: false, reps: 0, weight: 0 }
+            newSet = { ...currentSet, completed: false, reps: 0, weight: 0, actualRpe: null }
         }
 
         const newSets = currentSets.map((s, i) => (i === setIndex ? newSet : s))
@@ -593,6 +620,7 @@ export default function WorkoutDetailContent() {
                             completed: !!s.completed,
                             reps: s.reps,
                             weight: s.weight,
+                            actualRpe: s.actualRpe ?? null,
                         })),
                     }
                 }),
@@ -741,6 +769,7 @@ export default function WorkoutDetailContent() {
                             videoExpanded={expandedVideos[currentExercise.id] ?? false}
                             onToggleVideo={() => toggleVideo(currentExercise.id)}
                             onUpdateSet={(id, idx, field, value) => updateSet(id, idx, field, value)}
+                            onUpdateSetRpe={(id, idx, rpe) => updateSetRpe(id, idx, rpe)}
                             onToggleSet={(id, idx) => toggleSetCompleted(id, idx)}
                             persistingKeys={persistingKeys}
                             onUpdateRpe={(rpe) => updateExerciseRPE(currentExercise.id, rpe)}
@@ -834,6 +863,7 @@ interface ExerciseFocusCardProps {
     videoExpanded: boolean
     onToggleVideo: () => void
     onUpdateSet: (id: string, idx: number, field: 'weight' | 'reps', value: number) => void
+    onUpdateSetRpe: (id: string, idx: number, rpe: number | null) => void
     onToggleSet: (id: string, idx: number) => void
     persistingKeys: Set<string>
     onUpdateRpe: (rpe: number | null) => void
@@ -853,6 +883,7 @@ function ExerciseFocusCard({
     videoExpanded,
     onToggleVideo,
     onUpdateSet,
+    onUpdateSetRpe,
     onToggleSet,
     persistingKeys,
     onUpdateRpe,
@@ -1006,13 +1037,16 @@ function ExerciseFocusCard({
                 <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase">
                     {t('workouts.setsHeading')}
                 </h3>
-                <div className="grid grid-cols-[40px_1fr_1fr_48px] gap-x-2 px-2 mb-4">
+                <div className="grid grid-cols-[36px_1fr_1fr_1fr_44px] gap-x-2 px-2 mb-4">
                     <span />
                     <span className="pb-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wide">
                         {t('workouts.repsShort')}
                     </span>
                     <span className="pb-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wide">
                         {t('workouts.kgShort')}
+                    </span>
+                    <span className="pb-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wide">
+                        RPE
                     </span>
                     <span />
                     {sets.map((set, setIdx) => {
@@ -1053,6 +1087,15 @@ function ExerciseFocusCard({
                                         aria-label={`${t('workouts.weightKg')} ${set.setNumber}`}
                                         inputSize="md"
                                         className="text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    />
+                                </div>
+                                <div className={`flex items-center justify-center py-2 ${border}`} data-swipe-ignore="true">
+                                    <RpeCell
+                                        value={set.actualRpe}
+                                        disabled={!!set.completed}
+                                        onChange={(rpe) => onUpdateSetRpe(we.id, setIdx, rpe)}
+                                        descriptions={rpeDescriptions}
+                                        t={t}
                                     />
                                 </div>
                                 <div className={`flex items-center justify-center ${border}`}>
@@ -1249,5 +1292,30 @@ function FinalStep({
                 </div>
             </div>
         </div>
+    )
+}
+
+interface RpeCellProps {
+    value: number | null
+    disabled: boolean
+    onChange: (rpe: number | null) => void
+    descriptions: Record<number, string>
+    t: (key: string, vars?: Record<string, unknown>) => string
+}
+
+function RpeCell({ value, disabled, onChange, descriptions, t }: RpeCellProps) {
+    return (
+        <RPESelector
+            value={value}
+            onChange={onChange}
+            disabled={disabled}
+            showLabel={false}
+            showDescription={false}
+            centeredMenu={true}
+            title={t('workouts.setRpeTitle')}
+            placeholder="–"
+            descriptions={descriptions}
+            className="min-w-[56px]"
+        />
     )
 }

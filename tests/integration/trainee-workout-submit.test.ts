@@ -73,12 +73,12 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
                 {
                     workoutExerciseId: UUIDS.wex1,
                     actualRpe: 8,
-                    sets: [{ setNumber: 1, completed: true, reps: 5, weight: 100 }],
+                    sets: [{ setNumber: 1, completed: true, reps: 5, weight: 100, actualRpe: 8.5 }],
                 },
                 {
                     workoutExerciseId: UUIDS.wex2,
                     actualRpe: 7.5,
-                    sets: [{ setNumber: 1, completed: true, reps: 8, weight: 60 }],
+                    sets: [{ setNumber: 1, completed: true, reps: 8, weight: 60, actualRpe: null }],
                 },
             ],
         }
@@ -96,6 +96,68 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
         expect(json.data.feedbacks).toHaveLength(2)
         expect(prisma.workout.findFirst).toHaveBeenCalledTimes(1)
         expect(prisma.$transaction).toHaveBeenCalledTimes(1)
+        expect(prisma.exerciseFeedback.upsert).toHaveBeenNthCalledWith(
+            1,
+            expect.objectContaining({
+                create: expect.objectContaining({
+                    setsPerformed: {
+                        create: [
+                            {
+                                setNumber: 1,
+                                completed: true,
+                                reps: 5,
+                                weight: 100,
+                                actualRpe: 8.5,
+                            },
+                        ],
+                    },
+                }),
+                update: expect.objectContaining({
+                    setsPerformed: expect.objectContaining({
+                        create: [
+                            {
+                                setNumber: 1,
+                                completed: true,
+                                reps: 5,
+                                weight: 100,
+                                actualRpe: 8.5,
+                            },
+                        ],
+                    }),
+                }),
+            })
+        )
+        expect(prisma.exerciseFeedback.upsert).toHaveBeenNthCalledWith(
+            2,
+            expect.objectContaining({
+                create: expect.objectContaining({
+                    setsPerformed: {
+                        create: [
+                            {
+                                setNumber: 1,
+                                completed: true,
+                                reps: 8,
+                                weight: 60,
+                                actualRpe: null,
+                            },
+                        ],
+                    },
+                }),
+                update: expect.objectContaining({
+                    setsPerformed: expect.objectContaining({
+                        create: [
+                            {
+                                setNumber: 1,
+                                completed: true,
+                                reps: 8,
+                                weight: 60,
+                                actualRpe: null,
+                            },
+                        ],
+                    }),
+                }),
+            })
+        )
         expect(prisma.workoutExercise.update).toHaveBeenNthCalledWith(
             1,
             expect.objectContaining({

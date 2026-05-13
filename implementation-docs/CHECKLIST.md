@@ -653,6 +653,8 @@
       File: `src/lib/keepalive-fetch.ts`, `src/app/trainee/workouts/[id]/_content.tsx`, `tests/unit/keepalive-fetch.test.ts` · Dettagli: fallback timeout ora opt-in (`timeoutMs`), `AbortError` mappato su errore utente generico con tag Sentry `aborted`
 - [x] **11.101** Correggere completamento prematuro su autosave serie trainee — il cascade ora usa il numero di set pianificate (non solo le righe `sets_performed` presenti) evitando toast anticipati di workout/settimana ✅ _11 Mag 2026_  
       File: `src/app/api/trainee/workout-exercises/[id]/feedback/route.ts`, `src/app/api/trainee/workouts/[id]/submit/route.ts`, `tests/integration/workout-exercise-feedback.test.ts`, `tests/integration/trainee-workout-submit.test.ts` · Dettagli: completamento esercizio true solo quando tutte le set pianificate risultano presenti e completate
+- [x] **11.102** Trainee workout per-set RPE — aggiungere `actualRpe` opzionale (5.0-10.0 step 0.5) su singola serie, persistenza autosave/submit e visualizzazione nel pannello settimana precedente con suffisso `@ RPE x` ✅ _13 Mag 2026_  
+      File: `prisma/schema.prisma`, `src/schemas/feedback.ts`, `src/app/api/trainee/workout-exercises/[id]/feedback/route.ts`, `src/app/api/trainee/workouts/[id]/submit/route.ts`, `src/app/api/trainee/workouts/[id]/prev-week/route.ts`, `src/app/trainee/workouts/[id]/_content.tsx`, `src/components/{WorkoutExerciseDisplayList.tsx,PrevWeekPanel.tsx}`, `public/locales/{en,it}/trainee.json`, test unit/integration correlati
 
 ---
 

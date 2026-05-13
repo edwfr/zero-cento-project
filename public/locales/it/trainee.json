@@ -194,6 +194,7 @@
         "markSetDone": "Segna set come fatto",
         "markSetUndone": "Segna set come non fatto",
         "overallRpe": "RPE Percepito:",
+        "setRpeTitle": "RPE per serie",
         "selectRpe": "Seleziona RPE",
         "rpeOptions": {
             "rpe5": "5 RPE (5+ reps in riserva)",
@@ -271,7 +272,8 @@
         "prevWeekLoading": "Caricamento settimana precedente...",
         "prevWeekError": "Errore nel caricamento dei dati precedenti",
         "prevWeekNoData": "—",
-        "prevWeekSetRow": "#{{set}} · {{reps}} rep · {{weight}} kg"
+        "prevWeekSetRow": "#{{set}} · {{reps}} rep · {{weight}} kg",
+        "prevWeekSetRowWithRpe": "#{{set}} · {{reps}} rep · {{weight}} kg @ RPE {{rpe}}"
     },
     "records": {
         "title": "I Tuoi Massimali",

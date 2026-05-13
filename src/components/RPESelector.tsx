@@ -98,7 +98,9 @@ export default function RPESelector({
         }
     }, [centeredMenu, isOpen])
 
-    const selectedLabel = value ? `RPE ${value.toFixed(1)}` : resolvedPlaceholder
+    const selectedLabel = value
+        ? (showLabel ? `RPE ${value.toFixed(1)}` : value.toFixed(1))
+        : resolvedPlaceholder
     const modalTitle = title || label
     const optionsGrid = (
         <>
@@ -164,7 +166,8 @@ export default function RPESelector({
                 disabled={disabled}
                 onClick={() => setIsOpen(!isOpen)}
                 className={`
-                    flex items-center justify-between rounded-lg border-2 px-3 py-1.5
+                    flex items-center rounded-lg border-2 px-3 py-1.5
+                    ${showDescription ? 'justify-between' : 'justify-center'}
                     transition-all duration-200
                     ${value
                         ? 'border-brand-primary bg-white text-gray-900'

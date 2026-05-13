@@ -211,8 +211,8 @@ describe('Trainee workout focus mode', () => {
     it('shows RPE target value in the targets row box', async () => {
         await renderContent()
 
-        const rpeLabel = screen.getByText('RPE')
-        const rpeBox = rpeLabel.closest('div[class*="rounded-xl"]')
+        const rpeLabels = screen.getAllByText('RPE')
+        const rpeBox = rpeLabels[0].closest('div[class*="rounded-xl"]')
         expect(rpeBox?.textContent).toContain('8')
     })
 
@@ -223,11 +223,11 @@ describe('Trainee workout focus mode', () => {
         expect(screen.queryByText('workouts.tagAccessory')).not.toBeInTheDocument()
     })
 
-    it('does not render the RPE target badge (violet badge row)', async () => {
+    it('renders two RPE labels: target card and sets grid column', async () => {
         await renderContent()
 
         const rpeElements = screen.getAllByText('RPE')
-        expect(rpeElements).toHaveLength(1)
+        expect(rpeElements).toHaveLength(2)
     })
 
     it('disables inputs after a set is marked completed', async () => {
@@ -277,6 +277,8 @@ describe('Trainee workout focus mode', () => {
 
             const body = JSON.parse(call[1].body as string)
             expect(body).toHaveProperty('set')
+            expect(body.set).toHaveProperty('actualRpe')
+            expect(body.set.actualRpe).toBeNull()
         })
     })
 

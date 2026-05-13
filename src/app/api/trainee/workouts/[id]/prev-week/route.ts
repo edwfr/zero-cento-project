@@ -14,6 +14,7 @@ interface PrevWeekRow {
     setReps: number | null
     setWeight: number | null
     setCompleted: boolean | null
+    setActualRpe: number | null
     exerciseNote: string | null
 }
 
@@ -54,6 +55,7 @@ export async function GET(
                 sp.reps                     AS "setReps",
                 sp.weight                   AS "setWeight",
                 sp.completed                AS "setCompleted",
+                sp."actualRpe"              AS "setActualRpe",
                 latest_ef.notes             AS "exerciseNote"
             FROM workout_exercises we
             JOIN prev_workout pw ON we."workoutId" = pw.id
@@ -90,6 +92,7 @@ export async function GET(
                     reps: row.setReps,
                     weight: row.setWeight,
                     completed: row.setCompleted ?? false,
+                    actualRpe: row.setActualRpe ?? null,
                 })
             }
         }

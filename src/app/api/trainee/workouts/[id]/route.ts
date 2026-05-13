@@ -10,6 +10,7 @@ interface FeedbackSetSnapshot {
     completed: boolean
     reps: number
     weight: number
+    actualRpe: number | null
 }
 
 interface FeedbackSnapshot {
@@ -71,6 +72,7 @@ const mergeFeedbackRows = (rows: FeedbackSnapshot[]) => {
                     completed: set.completed,
                     reps: set.reps,
                     weight: set.weight,
+                    actualRpe: set.actualRpe ?? null,
                 })
             }
         }

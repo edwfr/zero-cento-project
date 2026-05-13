@@ -29,7 +29,7 @@ describe('PrevWeekExerciseItem type', () => {
             targetSets: 4,
             targetReps: '8',
             exerciseNote: null,
-            sets: [{ setNumber: 1, reps: 8, weight: 100, completed: true }],
+            sets: [{ setNumber: 1, reps: 8, weight: 100, completed: true, actualRpe: null }],
         }
 
         expect(item.sets).toHaveLength(1)

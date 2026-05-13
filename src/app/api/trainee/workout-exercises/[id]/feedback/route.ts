@@ -98,11 +98,13 @@ export async function PATCH(
                     completed: set.completed,
                     reps: set.reps,
                     weight: set.weight,
+                    actualRpe: set.actualRpe ?? null,
                 },
                 update: {
                     completed: set.completed,
                     reps: set.reps,
                     weight: set.weight,
+                    actualRpe: set.actualRpe ?? null,
                 },
                 select: { setNumber: true },
             })

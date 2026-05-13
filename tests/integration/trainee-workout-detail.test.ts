@@ -94,8 +94,8 @@ describe('GET /api/trainee/workouts/[id]', () => {
                 date: new Date('2026-04-29T00:00:00.000Z'),
                 updatedAt: new Date('2026-04-29T18:00:00.000Z'),
                 setsPerformed: [
-                    { setNumber: 1, completed: true, reps: 5, weight: 100 },
-                    { setNumber: 2, completed: true, reps: 5, weight: 100 },
+                    { setNumber: 1, completed: true, reps: 5, weight: 100, actualRpe: 8.5 },
+                    { setNumber: 2, completed: true, reps: 5, weight: 100, actualRpe: null },
                 ],
             },
             {
@@ -106,8 +106,8 @@ describe('GET /api/trainee/workouts/[id]', () => {
                 date: new Date('2026-04-28T00:00:00.000Z'),
                 updatedAt: new Date('2026-04-28T18:00:00.000Z'),
                 setsPerformed: [
-                    { setNumber: 1, completed: false, reps: 0, weight: 100 },
-                    { setNumber: 2, completed: false, reps: 0, weight: 100 },
+                    { setNumber: 1, completed: false, reps: 0, weight: 100, actualRpe: null },
+                    { setNumber: 2, completed: false, reps: 0, weight: 100, actualRpe: null },
                 ],
             },
         ] as any)
@@ -134,8 +134,8 @@ describe('GET /api/trainee/workouts/[id]', () => {
         })
         expect(json.data.workout.exercises[0].feedback.id).toBe('fb-latest')
         expect(json.data.workout.exercises[0].feedback.setsPerformed).toEqual([
-            { setNumber: 1, completed: true, reps: 5, weight: 100 },
-            { setNumber: 2, completed: true, reps: 5, weight: 100 },
+            { setNumber: 1, completed: true, reps: 5, weight: 100, actualRpe: 8.5 },
+            { setNumber: 2, completed: true, reps: 5, weight: 100, actualRpe: null },
         ])
     })
 
@@ -150,8 +150,8 @@ describe('GET /api/trainee/workouts/[id]', () => {
                 date: new Date('2026-04-30T00:00:00.000Z'),
                 updatedAt: new Date('2026-04-30T18:00:00.000Z'),
                 setsPerformed: [
-                    { setNumber: 1, completed: false, reps: 0, weight: 100 },
-                    { setNumber: 2, completed: false, reps: 0, weight: 100 },
+                    { setNumber: 1, completed: false, reps: 0, weight: 100, actualRpe: null },
+                    { setNumber: 2, completed: false, reps: 0, weight: 100, actualRpe: null },
                 ],
             },
             {
@@ -163,8 +163,8 @@ describe('GET /api/trainee/workouts/[id]', () => {
                 date: new Date('2026-04-29T00:00:00.000Z'),
                 updatedAt: new Date('2026-04-29T18:00:00.000Z'),
                 setsPerformed: [
-                    { setNumber: 1, completed: true, reps: 5, weight: 100 },
-                    { setNumber: 2, completed: true, reps: 5, weight: 100 },
+                    { setNumber: 1, completed: true, reps: 5, weight: 100, actualRpe: 8 },
+                    { setNumber: 2, completed: true, reps: 5, weight: 100, actualRpe: 8.5 },
                 ],
             },
         ] as any)
@@ -176,8 +176,8 @@ describe('GET /api/trainee/workouts/[id]', () => {
         expect(json.data.workout.exercises[0].feedback.notes).toBe('completed earlier')
         expect(json.data.workout.exercises[0].feedback.avgRPE).toBe(8)
         expect(json.data.workout.exercises[0].feedback.setsPerformed).toEqual([
-            { setNumber: 1, completed: true, reps: 5, weight: 100 },
-            { setNumber: 2, completed: true, reps: 5, weight: 100 },
+            { setNumber: 1, completed: true, reps: 5, weight: 100, actualRpe: 8 },
+            { setNumber: 2, completed: true, reps: 5, weight: 100, actualRpe: 8.5 },
         ])
     })
 })
