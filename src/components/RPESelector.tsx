@@ -101,6 +101,7 @@ export default function RPESelector({
     const selectedLabel = value
         ? (showLabel ? `RPE ${value.toFixed(1)}` : value.toFixed(1))
         : resolvedPlaceholder
+    const isCompact = !showDescription
     const modalTitle = title || label
     const optionsGrid = (
         <>
@@ -166,18 +167,26 @@ export default function RPESelector({
                 disabled={disabled}
                 onClick={() => setIsOpen(!isOpen)}
                 className={`
-                    flex items-center rounded-lg border-2 px-3 py-1.5
+                    flex items-center rounded-lg
                     ${showDescription ? 'justify-between' : 'justify-center'}
                     transition-all duration-200
                     ${value
-                        ? 'border-brand-primary bg-white text-gray-900'
+                        ? isCompact
+                            ? 'border-gray-400 bg-white text-gray-900'
+                            : 'border-brand-primary bg-white text-gray-900'
                         : 'border-gray-300 bg-white text-gray-700'
                     }
-                    ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:border-brand-primary/70'}
-                    focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:ring-offset-1
+                    ${isCompact ? 'h-[42px] border px-4 py-2' : 'border-2 px-3 py-1.5'}
+                    ${disabled
+                        ? 'cursor-not-allowed opacity-50'
+                        : isCompact
+                            ? 'cursor-pointer hover:border-gray-400'
+                            : 'cursor-pointer hover:border-brand-primary/70'
+                    }
+                    focus:outline-none focus:ring-2 ${isCompact ? 'focus:ring-gray-300' : 'focus:ring-brand-primary/50'} focus:ring-offset-1
                 `}
             >
-                <span className="text-sm font-semibold">
+                <span className={isCompact ? 'text-base tabular-nums' : 'text-sm font-semibold'}>
                     {selectedLabel}
                 </span>
                 {showDescription && (

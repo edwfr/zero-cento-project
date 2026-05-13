@@ -146,6 +146,8 @@ const RPE_OPTIONS = [
     { value: 10, labelKey: 'rpe10' },
 ] as const
 
+const SHOW_OVERALL_RPE_PANEL = false
+
 export default function WorkoutDetailContent() {
     const { t } = useTranslation('trainee')
     const router = useRouter()
@@ -1037,7 +1039,7 @@ function ExerciseFocusCard({
                 <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase">
                     {t('workouts.setsHeading')}
                 </h3>
-                <div className="grid grid-cols-[36px_1fr_1fr_1fr_44px] gap-x-2 px-2 mb-4">
+                <div className="grid grid-cols-[34px_1fr_1fr_1fr_44px] gap-x-2 px-2 mb-4">
                     <span />
                     <span className="pb-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wide">
                         {t('workouts.repsShort')}
@@ -1121,24 +1123,26 @@ function ExerciseFocusCard({
                 </div>
             </div>
 
-            {/* Footer: overall RPE */}
-            <div className="border-t border-gray-200 bg-gray-50 p-3 sm:p-4">
-                <div className="flex flex-row items-center justify-end gap-2">
-                    <label className="text-sm font-semibold text-gray-700 whitespace-nowrap">
-                        {t('workouts.overallRpe')}
-                    </label>
-                    <RPESelector
-                        value={rpe}
-                        onChange={onUpdateRpe}
-                        showLabel={false}
-                        showDescription={false}
-                        centeredMenu={true}
-                        title={t('workouts.overallRpe')}
-                        placeholder={t('workouts.selectRpe')}
-                        descriptions={rpeDescriptions}
-                    />
+            {/* Footer: overall RPE (kept in code, currently hidden) */}
+            {SHOW_OVERALL_RPE_PANEL && (
+                <div className="border-t border-gray-200 bg-gray-50 p-3 sm:p-4">
+                    <div className="flex flex-row items-center justify-end gap-2">
+                        <label className="text-sm font-semibold text-gray-700 whitespace-nowrap">
+                            {t('workouts.overallRpe')}
+                        </label>
+                        <RPESelector
+                            value={rpe}
+                            onChange={onUpdateRpe}
+                            showLabel={false}
+                            showDescription={false}
+                            centeredMenu={true}
+                            title={t('workouts.overallRpe')}
+                            placeholder={t('workouts.selectRpe')}
+                            descriptions={rpeDescriptions}
+                        />
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Exercise note */}
             <div className="border-t border-gray-200">
