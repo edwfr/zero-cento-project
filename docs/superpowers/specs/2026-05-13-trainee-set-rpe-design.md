@@ -108,7 +108,7 @@ Initialization (`fetchWorkout`):
 
 Set rows grid: change `grid-cols-[40px_1fr_1fr_48px]` → `grid-cols-[36px_1fr_1fr_1fr_44px]`. Header row adds an `RPE` label between `KG` and the check column.
 
-New per-row component `RpeCell`:
+New per-row component `RpeCell` (extracted as a private component inside `_content.tsx`; not exported from `src/components/index.ts`):
 - Compact button rendered as input-styled control showing `RPE 8.0` or `–`.
 - Disabled when `set.completed` (RPE is editable only before check; consistent with reps/kg).
 - Tap opens `RPESelector` with `centeredMenu={true}` (reuses the existing modal selector and italian descriptions).
@@ -184,7 +184,7 @@ Existing `workouts.prevWeekSetRow` retained for the no-RPE branch.
 **Unit**
 - `tests/unit/rpe-schema.test.ts`: extend — `setPerformedSchema` accepts `actualRpe` null, 5.0, 10.0, 8.5; rejects 4.5, 10.5, 7.3, non-number.
 - `tests/unit/WorkoutExerciseDisplayList.test.tsx`: row with `actualRpe` renders `@ RPE x`; null renders no suffix; custom `setRowLabel` receives rpe argument.
-- New `tests/unit/RpeCell.test.tsx` (if `RpeCell` is extracted as a component): disabled when `set.completed`, tap opens selector, `onChange` propagates.
+- `RpeCell` behaviour is covered indirectly via `_content.tsx` integration in the existing trainee workout page tests; no standalone unit test required.
 
 **Integration**
 - `tests/integration/workout-exercise-rpe.test.ts`: extend — PATCH with `set.actualRpe` writes to `sets_performed.actualRpe`; null clears it.
