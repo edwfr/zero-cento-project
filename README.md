@@ -186,3 +186,6 @@ See [design/07-testing.md](design/07-testing.md) for full strategy.
 | `PrismaClient in browser`             | Only use Prisma in Server Components or API Routes            |
 | `User not found after login`          | Run `npm run prisma:seed`, verify user IDs match `auth.users` |
 | `RATE_LIMIT_EXCEEDED` in dev          | Comment out `checkRateLimit()` in `src/middleware.ts`         |
+
+
+
