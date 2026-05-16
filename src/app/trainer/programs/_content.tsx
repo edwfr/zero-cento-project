@@ -390,6 +390,11 @@ export default function TrainerProgramsContent() {
                                                                     href={`/trainer/programs/${program.id}`}
                                                                 />
                                                                 <ActionIconButton
+                                                                    variant="clone"
+                                                                    label={t('programs.cloneProgram')}
+                                                                    href={`/trainer/programs/new?cloneFromProgramId=${program.id}`}
+                                                                />
+                                                                <ActionIconButton
                                                                     variant="delete"
                                                                     label={t('programs.delete')}
                                                                     onClick={() =>
@@ -403,6 +408,11 @@ export default function TrainerProgramsContent() {
                                                                     variant="view"
                                                                     label={t('programs.viewProgram')}
                                                                     href={`/trainer/programs/${program.id}`}
+                                                                />
+                                                                <ActionIconButton
+                                                                    variant="clone"
+                                                                    label={t('programs.cloneProgram')}
+                                                                    href={`/trainer/programs/new?cloneFromProgramId=${program.id}`}
                                                                 />
                                                                 <ActionIconButton
                                                                     variant="view-test"

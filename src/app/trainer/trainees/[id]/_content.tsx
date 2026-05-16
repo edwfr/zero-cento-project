@@ -756,6 +756,11 @@ export default function TraineeDetailContent() {
                                                             label={t('athletes.viewProgram')}
                                                             href={`/trainer/programs/${program.id}?backContext=trainee&traineeId=${traineeId}`}
                                                         />
+                                                        <ActionIconButton
+                                                            variant="clone"
+                                                            label={t('programs.cloneProgram')}
+                                                            href={`/trainer/programs/new?cloneFromProgramId=${program.id}&traineeId=${traineeId}`}
+                                                        />
                                                         {program.status === 'draft' && (
                                                             <ActionIconButton
                                                                 variant="edit"

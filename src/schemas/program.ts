@@ -21,6 +21,7 @@ export const createProgramSchema = z.object({
         .int('validation.workoutsInteger')
         .min(1, 'validation.minWorkouts')
         .max(7, 'validation.maxWorkouts'),
+    cloneFromProgramId: z.string().uuid('validation.invalidCloneSourceId').optional(),
 })
 
 export const updateProgramSchema = createProgramSchema.partial()

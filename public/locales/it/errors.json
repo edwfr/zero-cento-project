@@ -57,6 +57,8 @@
     "program": {
         "notFound": "Programma non trovato",
         "createDenied": "Puoi creare programmi solo per i tuoi atleti",
+        "cloneDenied": "Non puoi clonare il programma di un altro trainer.",
+        "cloneSourceNotFound": "Programma di origine non trovato.",
         "assignDenied": "Puoi assegnare programmi solo ai tuoi atleti",
         "modifyDenied": "Puoi modificare solo i tuoi programmi",
         "deleteDenied": "Puoi eliminare solo i tuoi programmi",
@@ -124,7 +126,9 @@
         "targetMustBeTrainee": "L'utente destinatario deve avere il ruolo atleta",
         "targetMustBeTrainer": "L'utente destinatario deve avere il ruolo trainer",
         "userMustBeTrainee": "L'utente deve avere il ruolo atleta",
-        "sourceWeekRequired": "La settimana sorgente è obbligatoria"
+        "invalidCloneSourceId": "L'id del programma sorgente deve essere un UUID valido",
+        "sourceWeekRequired": "La settimana sorgente è obbligatoria",
+        "workoutsPerWeekMismatchWithClone": "I giorni di allenamento a settimana devono corrispondere al programma di origine."
     },
     "internal": {
         "default": "Si è verificato un errore. Riprova.",

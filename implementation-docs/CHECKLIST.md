@@ -655,6 +655,8 @@
       File: `src/app/api/trainee/workout-exercises/[id]/feedback/route.ts`, `src/app/api/trainee/workouts/[id]/submit/route.ts`, `tests/integration/workout-exercise-feedback.test.ts`, `tests/integration/trainee-workout-submit.test.ts` · Dettagli: completamento esercizio true solo quando tutte le set pianificate risultano presenti e completate
 - [x] **11.102** Trainee workout per-set RPE — aggiungere `actualRpe` opzionale (5.0-10.0 step 0.5) su singola serie, persistenza autosave/submit e visualizzazione nel pannello settimana precedente con suffisso `@ RPE x` ✅ _13 Mag 2026_  
       File: `prisma/schema.prisma`, `src/schemas/feedback.ts`, `src/app/api/trainee/workout-exercises/[id]/feedback/route.ts`, `src/app/api/trainee/workouts/[id]/submit/route.ts`, `src/app/api/trainee/workouts/[id]/prev-week/route.ts`, `src/app/trainee/workouts/[id]/_content.tsx`, `src/components/{WorkoutExerciseDisplayList.tsx,PrevWeekPanel.tsx}`, `public/locales/{en,it}/trainee.json`, test unit/integration correlati
+- [x] **11.103** Clone program trainer: nuova azione `Clone` su liste programmi, prefill wizard `/trainer/programs/new` da sorgente e copia atomica `WorkoutSkeleton` in `POST /api/programs` con `cloneFromProgramId` + guard RBAC/validazioni (404/403/400) ✅ _13 Mag 2026_  
+      File: `src/app/trainer/programs/_content.tsx`, `src/app/trainer/trainees/[id]/_content.tsx`, `src/app/trainer/programs/new/{page.tsx,NewProgramContent.tsx}`, `src/app/api/programs/route.ts`, `src/schemas/program.ts`, `src/components/ActionIconButton.tsx`, `public/locales/{en,it}/{trainer.json,errors.json}`, `tests/unit/{schemas.test.ts,NewProgramContent.test.tsx}`, `tests/integration/programs-clone.test.ts`
 
 ---
 

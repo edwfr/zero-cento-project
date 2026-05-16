@@ -306,7 +306,14 @@ export async function POST(request: NextRequest) {
             return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors, 'validation.invalidInput')
         }
 
-        const { title, traineeId, isSbdProgram, durationWeeks, workoutsPerWeek } = validation.data
+        const {
+            title,
+            traineeId,
+            isSbdProgram,
+            durationWeeks,
+            workoutsPerWeek,
+            cloneFromProgramId,
+        } = validation.data
 
         // Verify trainee exists and is a trainee role
         const trainee = await prisma.user.findUnique({
@@ -336,23 +343,15 @@ export async function POST(request: NextRequest) {
         }
 
         // Create program with nested weeks and workouts
-        const weeksData = []
-        for (let i = 1; i <= durationWeeks; i++) {
-            const workoutsData = []
-            for (let j = 1; j <= workoutsPerWeek; j++) {
-                workoutsData.push({
-                    dayIndex: j,
-                })
-            }
-
-            weeksData.push({
-                weekNumber: i,
-                weekType: 'volume' as const,
-                workouts: {
-                    create: workoutsData,
-                },
-            })
-        }
+        const weeksData = Array.from({ length: durationWeeks }, (_, weekIdx) => ({
+            weekNumber: weekIdx + 1,
+            weekType: 'volume' as const,
+            workouts: {
+                create: Array.from({ length: workoutsPerWeek }, (_, workoutIdx) => ({
+                    dayIndex: workoutIdx + 1,
+                })),
+            },
+        }))
 
         // Get trainer ID from relation or use session user
         let actualTrainerId = session.user.id
@@ -365,43 +364,110 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        const program = await prisma.trainingProgram.create({
-            data: {
-                title,
-                trainerId: actualTrainerId,
-                traineeId,
-                isSbdProgram,
-                durationWeeks,
-                workoutsPerWeek,
-                status: 'draft',
-                weeks: {
-                    create: weeksData,
+        if (cloneFromProgramId) {
+            const source = await prisma.trainingProgram.findUnique({
+                where: { id: cloneFromProgramId },
+                select: {
+                    id: true,
+                    trainerId: true,
+                    workoutsPerWeek: true,
                 },
-            },
-            include: {
-                trainer: {
+            })
+
+            if (!source) {
+                return apiError(
+                    'NOT_FOUND',
+                    'Source program not found',
+                    404,
+                    undefined,
+                    'program.cloneSourceNotFound'
+                )
+            }
+
+            if (session.user.role === 'trainer' && source.trainerId !== session.user.id) {
+                return apiError(
+                    'FORBIDDEN',
+                    'Cannot clone another trainer\'s program',
+                    403,
+                    undefined,
+                    'program.cloneDenied'
+                )
+            }
+
+            if (source.workoutsPerWeek !== workoutsPerWeek) {
+                return apiError(
+                    'VALIDATION_ERROR',
+                    'workoutsPerWeek must match the source program',
+                    400,
+                    undefined,
+                    'validation.workoutsPerWeekMismatchWithClone'
+                )
+            }
+        }
+
+        const program = await prisma.$transaction(async (tx) => {
+            const createdProgram = await tx.trainingProgram.create({
+                data: {
+                    title,
+                    trainerId: actualTrainerId,
+                    traineeId,
+                    isSbdProgram,
+                    durationWeeks,
+                    workoutsPerWeek,
+                    status: 'draft',
+                    weeks: {
+                        create: weeksData,
+                    },
+                },
+                include: {
+                    trainer: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
+                        },
+                    },
+                    trainee: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
+                        },
+                    },
+                    weeks: {
+                        include: {
+                            workouts: true,
+                        },
+                        orderBy: {
+                            weekNumber: 'asc',
+                        },
+                    },
+                },
+            })
+
+            if (cloneFromProgramId) {
+                const sourceRows = await tx.workoutSkeleton.findMany({
+                    where: { programId: cloneFromProgramId },
                     select: {
-                        id: true,
-                        firstName: true,
-                        lastName: true,
+                        dayIndex: true,
+                        order: true,
+                        exerciseId: true,
                     },
-                },
-                trainee: {
-                    select: {
-                        id: true,
-                        firstName: true,
-                        lastName: true,
-                    },
-                },
-                weeks: {
-                    include: {
-                        workouts: true,
-                    },
-                    orderBy: {
-                        weekNumber: 'asc',
-                    },
-                },
-            },
+                })
+
+                if (sourceRows.length > 0) {
+                    await tx.workoutSkeleton.createMany({
+                        data: sourceRows.map((row) => ({
+                            programId: createdProgram.id,
+                            dayIndex: row.dayIndex,
+                            order: row.order,
+                            exerciseId: row.exerciseId,
+                        })),
+                    })
+                }
+            }
+
+            return createdProgram
         })
 
         logger.info(
@@ -409,6 +475,7 @@ export async function POST(request: NextRequest) {
                 programId: program.id,
                 trainerId: program.trainerId,
                 traineeId: program.traineeId,
+                clonedFrom: cloneFromProgramId ?? null,
             },
             'Program created successfully'
         )

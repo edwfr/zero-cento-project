@@ -14,14 +14,30 @@ interface Trainee {
     lastName: string
 }
 
+interface CloneSource {
+    id: string
+    title: string
+    traineeId: string
+    workoutsPerWeek: number
+    isSbdProgram: boolean
+}
+
+type CloneError = 'notFound' | 'forbidden' | null
+
 interface NewProgramContentProps {
     trainees: Trainee[]
     initialTraineeId: string
+    cloneSource?: CloneSource | null
+    cloneError?: CloneError
+    startBlankHref?: string
 }
 
 export default function NewProgramContent({
     trainees,
     initialTraineeId,
+    cloneSource = null,
+    cloneError = null,
+    startBlankHref = '/trainer/programs/new',
 }: NewProgramContentProps) {
     const router = useRouter()
     const { t } = useTranslation(['trainer', 'common'])
@@ -30,10 +46,10 @@ export default function NewProgramContent({
 
     // Form state
     const [title, setTitle] = useState('')
-    const [traineeId, setTraineeId] = useState(initialTraineeId)
-    const [isSbdProgram, setIsSbdProgram] = useState(false)
+    const [traineeId, setTraineeId] = useState(cloneSource?.traineeId ?? initialTraineeId)
+    const [isSbdProgram, setIsSbdProgram] = useState(cloneSource?.isSbdProgram ?? false)
     const [durationWeeks, setDurationWeeks] = useState(4)
-    const [workoutsPerWeek, setWorkoutsPerWeek] = useState(3)
+    const [workoutsPerWeek, setWorkoutsPerWeek] = useState(cloneSource?.workoutsPerWeek ?? 3)
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError(null)
@@ -70,6 +86,7 @@ export default function NewProgramContent({
                     isSbdProgram,
                     durationWeeks,
                     workoutsPerWeek,
+                    ...(cloneSource ? { cloneFromProgramId: cloneSource.id } : {}),
                 }),
             })
 
@@ -151,6 +168,32 @@ export default function NewProgramContent({
             </div>
 
             <div className="max-w-3xl mx-auto">
+            {cloneError && (
+                <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6">
+                    {cloneError === 'notFound'
+                        ? t('programs.cloneSourceErrorNotFound')
+                        : t('programs.cloneSourceErrorForbidden')}
+                </div>
+            )}
+
+            {cloneSource && (
+                <div className="bg-blue-50 border border-blue-200 text-blue-900 px-4 py-3 rounded-lg mb-6 flex items-center justify-between gap-4">
+                    <span className="text-sm">
+                        <Trans
+                            i18nKey="trainer:programs.cloneFromBanner"
+                            values={{ title: cloneSource.title }}
+                            components={{ b: <span className="font-semibold" /> }}
+                        />
+                    </span>
+                    <Link
+                        href={startBlankHref}
+                        className="text-sm font-semibold text-blue-700 hover:text-blue-900 underline"
+                    >
+                        {t('programs.cloneCancelLink')}
+                    </Link>
+                </div>
+            )}
+
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-900">{t('programs.newProgramSetupTitle')}</h1>
                 <p className="text-gray-600 mt-2">
@@ -288,7 +331,8 @@ export default function NewProgramContent({
                                         }
                                     }
                                 }}
-                                disabled={loading}
+                                disabled={loading || !!cloneSource}
+                                readOnly={!!cloneSource}
                                 inputSize="md"
                                 required
                             />
@@ -299,7 +343,7 @@ export default function NewProgramContent({
                                     key={workouts}
                                     type="button"
                                     onClick={() => setWorkoutsPerWeek(workouts)}
-                                    disabled={loading}
+                                    disabled={loading || !!cloneSource}
                                     className={`px-3 py-1 text-sm font-semibold rounded ${workoutsPerWeek === workouts
                                         ? 'bg-brand-primary text-white'
                                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -310,6 +354,11 @@ export default function NewProgramContent({
                             ))}
                         </div>
                     </div>
+                    {cloneSource && (
+                        <p className="text-xs text-gray-500 mt-1">
+                            {t('programs.workoutsPerWeekLockedByClone')}
+                        </p>
+                    )}
                 </div>
 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

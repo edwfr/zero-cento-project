@@ -135,6 +135,29 @@ describe('createProgramSchema', () => {
         expect(createProgramSchema.safeParse(validProgram).success).toBe(true)
     })
 
+    it('accepts payload without cloneFromProgramId', () => {
+        const result = createProgramSchema.safeParse(validProgram)
+        expect(result.success).toBe(true)
+    })
+
+    it('accepts a valid uuid for cloneFromProgramId', () => {
+        const result = createProgramSchema.safeParse({
+            ...validProgram,
+            cloneFromProgramId: '00000000-0000-0000-0000-000000000001',
+        })
+
+        expect(result.success).toBe(true)
+    })
+
+    it('rejects a non-uuid cloneFromProgramId', () => {
+        const result = createProgramSchema.safeParse({
+            ...validProgram,
+            cloneFromProgramId: 'not-a-uuid',
+        })
+
+        expect(result.success).toBe(false)
+    })
+
     it('rejects title shorter than 3 characters', () => {
         const result = createProgramSchema.safeParse({ ...validProgram, title: 'PB' })
         expect(result.success).toBe(false)

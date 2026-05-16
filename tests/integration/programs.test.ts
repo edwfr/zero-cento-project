@@ -8,8 +8,8 @@ vi.mock('@/lib/auth', () => ({
     getSession: vi.fn(),
 }))
 
-vi.mock('@/lib/prisma', () => ({
-    prisma: {
+vi.mock('@/lib/prisma', () => {
+    const prisma = {
         trainingProgram: {
             findMany: vi.fn(),
             findUnique: vi.fn(),
@@ -45,18 +45,31 @@ vi.mock('@/lib/prisma', () => ({
             deleteMany: vi.fn(),
             createMany: vi.fn(),
         },
+        workoutSkeleton: {
+            findMany: vi.fn(),
+            createMany: vi.fn(),
+        },
         $transaction: vi.fn(async (fn: (tx: any) => Promise<any>) => {
             const tx = {
+                trainingProgram: {
+                    create: vi.fn().mockImplementation((args: any) => prisma.trainingProgram.create(args)),
+                },
                 workoutExercise: {
                     deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
                     createMany: vi.fn().mockResolvedValue({ count: 1 }),
+                },
+                workoutSkeleton: {
+                    findMany: vi.fn().mockImplementation((args: any) => prisma.workoutSkeleton.findMany(args)),
+                    createMany: vi.fn().mockImplementation((args: any) => prisma.workoutSkeleton.createMany(args)),
                 },
             }
             return fn(tx)
         }),
         $queryRaw: vi.fn().mockResolvedValue([]),
-    },
-}))
+    }
+
+    return { prisma }
+})
 
 vi.mock('@/lib/logger', () => ({
     logger: {

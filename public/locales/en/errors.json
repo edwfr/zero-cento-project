@@ -57,6 +57,8 @@
     "program": {
         "notFound": "Program not found",
         "createDenied": "You can only create programs for your own trainees",
+        "cloneDenied": "You cannot clone another trainer's program.",
+        "cloneSourceNotFound": "Source program not found.",
         "assignDenied": "You can only assign programs to your own trainees",
         "modifyDenied": "You can only modify your own programs",
         "deleteDenied": "You can only delete your own programs",
@@ -124,7 +126,9 @@
         "targetMustBeTrainee": "Target user must have trainee role",
         "targetMustBeTrainer": "Target user must have trainer role",
         "userMustBeTrainee": "User must have trainee role",
-        "sourceWeekRequired": "Source week is required"
+        "invalidCloneSourceId": "Clone source program id must be a valid UUID",
+        "sourceWeekRequired": "Source week is required",
+        "workoutsPerWeekMismatchWithClone": "Workouts per week must match the source program."
     },
     "internal": {
         "default": "An error occurred. Please try again.",
