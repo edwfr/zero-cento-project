@@ -14,6 +14,8 @@ const historyResponse = {
                 lastWorkoutCompletedAt: '2026-04-20T00:00:00.000Z',
                 durationWeeks: 8,
                 workoutsPerWeek: 4,
+                totalWorkouts: 32,
+                completedWorkouts: 12,
                 createdAt: '2026-03-20T00:00:00.000Z',
                 trainer: { firstName: 'Mario', lastName: 'Rossi' },
             },
@@ -26,6 +28,8 @@ const historyResponse = {
                 lastWorkoutCompletedAt: '2026-03-20T00:00:00.000Z',
                 durationWeeks: 6,
                 workoutsPerWeek: 3,
+                totalWorkouts: 18,
+                completedWorkouts: 18,
                 createdAt: '2026-01-20T00:00:00.000Z',
                 trainer: { firstName: 'Luigi', lastName: 'Verdi' },
             },
@@ -63,5 +67,23 @@ describe('HistoryContent', () => {
 
         expect(global.fetch).toHaveBeenCalledTimes(1)
         expect(global.fetch).toHaveBeenNthCalledWith(1, '/api/programs?limit=100')
+    })
+
+    it('uses green progress bar for completed programs', async () => {
+        render(<HistoryContent />)
+
+        const completedTitle = await screen.findByText('Programma Completato')
+        const completedRow = completedTitle.closest('a')
+        expect(completedRow).toBeTruthy()
+
+        const completedProgressBar = completedRow?.querySelector('div.bg-state-success')
+        expect(completedProgressBar).toBeTruthy()
+
+        const activeTitle = screen.getByText('Programma Attivo')
+        const activeRow = activeTitle.closest('a')
+        expect(activeRow).toBeTruthy()
+
+        const activeProgressBar = activeRow?.querySelector('div.bg-brand-primary')
+        expect(activeProgressBar).toBeTruthy()
     })
 })

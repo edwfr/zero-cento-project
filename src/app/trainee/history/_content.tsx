@@ -193,6 +193,9 @@ export default function HistoryContent() {
                                 const progressPercent = program.totalWorkouts > 0
                                     ? Math.round((program.completedWorkouts / program.totalWorkouts) * 100)
                                     : null
+                                const progressBarClass = programStatus === 'completed'
+                                    ? 'bg-state-success'
+                                    : 'bg-brand-primary'
 
                                 return (
                                     <Link
@@ -232,7 +235,7 @@ export default function HistoryContent() {
                                                 <div className="mt-1.5">
                                                     <div className="h-1.5 w-full rounded-full bg-gray-100">
                                                         <div
-                                                            className="h-1.5 rounded-full bg-brand-primary transition-all"
+                                                            className={`h-1.5 rounded-full transition-all ${progressBarClass}`}
                                                             style={{ width: `${progressPercent}%` }}
                                                         />
                                                     </div>

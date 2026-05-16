@@ -661,6 +661,8 @@
       File: `src/app/trainee/programs/_components/ProgramDetailContent.tsx`, `tests/unit/WorkoutExerciseDisplayList.test.tsx`
 - [x] **11.105** `/trainee/workouts/[id]`: ridimensionare gli input set `reps/kg/rpe` con proporzioni dedicate e recuperare spazio orizzontale riducendo padding/gap della griglia (anche lato spunta verde) ✅ _16 Mag 2026_  
       File: `src/app/trainee/workouts/[id]/_content.tsx`, `tests/unit/trainee-workout-focus.test.tsx`
+- [x] **11.106** `/trainee/history`: usare progress bar verde per i programmi con `status=completed` (mantenendo il colore brand per i programmi attivi) ✅ _16 Mag 2026_  
+      File: `src/app/trainee/history/_content.tsx`, `tests/unit/trainee-history.test.tsx`
 
 ---
 
