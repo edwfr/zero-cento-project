@@ -230,6 +230,23 @@ describe('Trainee workout focus mode', () => {
         expect(rpeElements).toHaveLength(2)
     })
 
+    it('uses resized set-grid proportions and compact numeric inputs', async () => {
+        await renderContent()
+
+        const repsHeader = screen.getByText('workouts.repsShort')
+        const setsGrid = repsHeader.closest('div.grid')
+
+        expect(setsGrid).toBeTruthy()
+        expect(setsGrid?.className).toContain('grid-cols-[30px_3fr_5fr_3fr_42px]')
+        expect(setsGrid?.className).toContain('gap-x-1')
+
+        const spinInputs = screen.getAllByRole('spinbutton') as HTMLInputElement[]
+        expect(spinInputs[0].className).toContain('px-2')
+        expect(spinInputs[0].className).toContain('tabular-nums')
+        expect(spinInputs[1].className).toContain('px-2')
+        expect(spinInputs[1].className).toContain('tabular-nums')
+    })
+
     it('disables inputs after a set is marked completed', async () => {
         const user = userEvent.setup()
         await renderContent()

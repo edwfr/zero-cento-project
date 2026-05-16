@@ -1039,7 +1039,7 @@ function ExerciseFocusCard({
                 <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase">
                     {t('workouts.setsHeading')}
                 </h3>
-                <div className="grid grid-cols-[34px_1fr_1fr_1fr_44px] gap-x-2 px-2 mb-4">
+                <div className="grid grid-cols-[30px_3fr_5fr_3fr_42px] gap-x-1 px-0.5 mb-4 sm:grid-cols-[32px_3fr_5fr_3fr_44px] sm:gap-x-1.5 sm:px-1">
                     <span />
                     <span className="pb-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wide">
                         {t('workouts.repsShort')}
@@ -1056,7 +1056,7 @@ function ExerciseFocusCard({
                         return (
                             <Fragment key={setIdx}>
                                 <div className={`flex items-center justify-center ${border}`}>
-                                    <span className="text-sm font-semibold text-gray-600">#{set.setNumber}</span>
+                                    <span className="text-xs font-semibold text-gray-600 sm:text-sm">#{set.setNumber}</span>
                                 </div>
                                 <div className={`flex items-center py-2 ${border}`}>
                                     <Input
@@ -1071,7 +1071,7 @@ function ExerciseFocusCard({
                                         disabled={!!set.completed}
                                         aria-label={`${t('workouts.reps')} ${set.setNumber}`}
                                         inputSize="md"
-                                        className="text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                        className="px-2 text-center text-sm tabular-nums [appearance:textfield] sm:px-3 sm:text-base [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                     />
                                 </div>
                                 <div className={`flex items-center py-2 ${border}`}>
@@ -1088,10 +1088,10 @@ function ExerciseFocusCard({
                                         disabled={!!set.completed}
                                         aria-label={`${t('workouts.weightKg')} ${set.setNumber}`}
                                         inputSize="md"
-                                        className="text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                        className="px-2 text-center text-sm tabular-nums [appearance:textfield] sm:px-3 sm:text-base [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                     />
                                 </div>
-                                <div className={`flex items-center justify-center py-2 ${border}`} data-swipe-ignore="true">
+                                <div className={`flex items-center py-2 ${border}`} data-swipe-ignore="true">
                                     <RpeCell
                                         value={set.actualRpe}
                                         disabled={!!set.completed}
@@ -1319,7 +1319,7 @@ function RpeCell({ value, disabled, onChange, descriptions, t }: RpeCellProps) {
             title={t('workouts.setRpeTitle')}
             placeholder="–"
             descriptions={descriptions}
-            className="min-w-[56px]"
+            className="w-full min-w-0 [&>button]:w-full [&>button]:h-10 [&>button]:justify-center [&>button]:px-2.5 [&>button]:text-sm sm:[&>button]:px-3 [&>button>span]:tabular-nums"
         />
     )
 }

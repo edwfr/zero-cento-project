@@ -20,6 +20,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 **File modificati:** `src/app/trainee/programs/_components/ProgramDetailContent.tsx`, `tests/unit/WorkoutExerciseDisplayList.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 **Note:** Nella schermata `/trainee/programs/current` la riga schema esercizio non mostra piu solo `serie x reps`: ora include anche il peso e il target RPE quando configurati dal trainer. Per pesi assoluti viene mostrato `NNkg`; per pesi percentuali vengono mostrati sia il valore assegnato (es. `% 1RM`, `% RM`, `+/-%`) sia i kg effettivi calcolati quando disponibili. I valori `0kg` non vengono mostrati. Il target RPE viene renderizzato nel formato `@RPE n` (es. `@RPE 8`, `@RPE 7.5`), con stringa finale tipo `3 x 8 · 80kg · @RPE 8`.
 
+### [16 Maggio 2026] — Trainee workout focus: resize input reps/kg/rpe
+
+**Task checklist:** #11.105
+**File modificati:** `src/app/trainee/workouts/[id]/_content.tsx`, `tests/unit/trainee-workout-focus.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Nella schermata `/trainee/workouts/[id]` la griglia dei set e stata ridimensionata per assegnare spazio ottimizzato ai campi numerici: `kg` piu ampio, con `reps` e `RPE` allineati alla stessa larghezza (RPE ottimizzato per `10.0`). Per sfruttare meglio lo spazio orizzontale sono stati ridotti il padding laterale e il gap tra colonne, oltre ai margini delle colonne di indice set/spunta. Gli input numerici ora usano classi locali piu compatte (`px-2`, `tabular-nums`) e la cella RPE usa un bottone compatto locale espanso a tutta colonna, cosi lo spazio percepito tra `reps-kg` e `kg-rpe` risulta coerente. La logica di autosave/completamento resta invariata.
+
 ### [13 Maggio 2026] — Trainee per-set RPE
 
 **Task checklist:** #11.102

@@ -659,6 +659,8 @@
       File: `src/app/trainer/programs/_content.tsx`, `src/app/trainer/trainees/[id]/_content.tsx`, `src/app/trainer/programs/new/{page.tsx,NewProgramContent.tsx}`, `src/app/api/programs/route.ts`, `src/schemas/program.ts`, `src/components/ActionIconButton.tsx`, `public/locales/{en,it}/{trainer.json,errors.json}`, `tests/unit/{schemas.test.ts,NewProgramContent.test.tsx}`, `tests/integration/programs-clone.test.ts`
 - [x] **11.104** `/trainee/programs/current`: arricchire la riga schema esercizio con peso trainer e target RPE (`@`) mantenendo `WorkoutExerciseDisplayList` invariato ✅ _16 Mag 2026_  
       File: `src/app/trainee/programs/_components/ProgramDetailContent.tsx`, `tests/unit/WorkoutExerciseDisplayList.test.tsx`
+- [x] **11.105** `/trainee/workouts/[id]`: ridimensionare gli input set `reps/kg/rpe` con proporzioni dedicate e recuperare spazio orizzontale riducendo padding/gap della griglia (anche lato spunta verde) ✅ _16 Mag 2026_  
+      File: `src/app/trainee/workouts/[id]/_content.tsx`, `tests/unit/trainee-workout-focus.test.tsx`
 
 ---
 
