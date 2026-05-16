@@ -182,6 +182,80 @@ const hasLocalWorkoutProgress = (workoutId: string): boolean => {
     }
 }
 
+const formatCompactNumber = (value: number): string => {
+    if (!Number.isFinite(value)) {
+        return '-'
+    }
+
+    return Number.isInteger(value) ? String(value) : value.toFixed(1)
+}
+
+const formatAssignedWeight = (weightType: WeightType, weight: number | null): string | null => {
+    if (typeof weight !== 'number' || !Number.isFinite(weight)) {
+        return null
+    }
+
+    const formattedWeight = formatCompactNumber(weight)
+
+    switch (weightType) {
+        case 'absolute':
+            return `${formattedWeight}kg`
+        case 'percentage_1rm':
+            return `${formattedWeight}% 1RM`
+        case 'percentage_rm':
+            return `${formattedWeight}% RM`
+        case 'percentage_previous':
+            return `${weight > 0 ? '+' : ''}${formattedWeight}%`
+        default:
+            return null
+    }
+}
+
+const formatEffectiveWeight = (weight: number | null): string | null => {
+    if (typeof weight !== 'number' || !Number.isFinite(weight) || weight <= 0) {
+        return null
+    }
+
+    return `${formatCompactNumber(weight)}kg`
+}
+
+const formatTargetRpe = (targetRpe: number | null): string | null => {
+    if (typeof targetRpe !== 'number' || !Number.isFinite(targetRpe)) {
+        return null
+    }
+
+    return `@RPE ${formatCompactNumber(targetRpe)}`
+}
+
+const buildExerciseScheme = (exercise: WorkoutExercise): string => {
+    const segments = [`${exercise.sets} x ${exercise.reps}`]
+
+    if (exercise.weightType === 'absolute') {
+        const absoluteWeight = formatEffectiveWeight(exercise.effectiveWeight ?? exercise.weight)
+        if (absoluteWeight) {
+            segments.push(absoluteWeight)
+        }
+    } else {
+        const assignedWeight = formatAssignedWeight(exercise.weightType, exercise.weight)
+        const effectiveWeight = formatEffectiveWeight(exercise.effectiveWeight)
+
+        if (assignedWeight) {
+            segments.push(assignedWeight)
+        }
+
+        if (effectiveWeight) {
+            segments.push(effectiveWeight)
+        }
+    }
+
+    const rpe = formatTargetRpe(exercise.targetRpe)
+    if (rpe) {
+        segments.push(rpe)
+    }
+
+    return segments.join(' · ')
+}
+
 const mapTraineeProgramViewToProgram = (view: TraineeProgramView): Program => {
     const workoutProgressById = new Map<string, WorkoutProgress>(
         (view.progress.workouts || []).map((workout) => [workout.id, workout])
@@ -609,7 +683,7 @@ export default function ProgramDetailContent({
                 exerciseName: exercise.exercise.name,
                 variant: exercise.variant,
                 isWarmup: exercise.isWarmup,
-                scheme: `${exercise.sets} x ${exercise.reps}`,
+                scheme: buildExerciseScheme(exercise),
                 performedSets: completedSets,
                 trainerNote: exercise.notes,
                 traineeNote: performed?.traineeNote ?? null,

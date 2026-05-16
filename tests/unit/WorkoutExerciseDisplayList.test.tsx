@@ -41,6 +41,20 @@ describe('WorkoutExerciseDisplayList', () => {
         expect(screen.getByText('4 x 6')).toBeTruthy()
     })
 
+    it('renders enriched scheme with kg and @RPE when no performed sets', () => {
+        const enrichedItems: ExerciseDisplayItem[] = [
+            {
+                id: 'we-3',
+                exerciseName: 'Deadlift',
+                scheme: '3 x 8 · 80kg · @RPE 8',
+                performedSets: [],
+            },
+        ]
+
+        render(<WorkoutExerciseDisplayList items={enrichedItems} />)
+        expect(screen.getByText('3 x 8 · 80kg · @RPE 8')).toBeTruthy()
+    })
+
     it('renders trainer note', () => {
         render(<WorkoutExerciseDisplayList items={items} />)
         expect(screen.getByText('Keep knees out')).toBeTruthy()
