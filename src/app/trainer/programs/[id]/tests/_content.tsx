@@ -29,6 +29,7 @@ interface TestResultRow {
 interface TestResultWorkout {
     workoutId: string
     dayIndex: number
+    workoutSummaryComment: string | null
     comments: string[]
     rows: TestResultRow[]
 }
@@ -294,18 +295,6 @@ export default function ProgramTestResultsContent() {
 
                             <div className="space-y-6">
                                 {week.workouts.map((workout) => {
-                                    const workoutComments = (
-                                        Array.isArray(workout.comments)
-                                            ? workout.comments
-                                            : Array.from(
-                                                new Set(
-                                                    workout.rows
-                                                        .map((row) => row.comments?.trim())
-                                                        .filter((comment): comment is string => !!comment)
-                                                )
-                                            )
-                                    ).filter((comment): comment is string => typeof comment === 'string' && comment.trim().length > 0)
-
                                     return (
                                         <div key={workout.workoutId}>
                                             <h3 className="text-lg font-semibold text-gray-800 mb-3">
@@ -337,6 +326,9 @@ export default function ProgramTestResultsContent() {
                                                                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                                                         {t('testResults.colWeight')}
                                                                     </th>
+                                                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                                        {t('testResults.colComments')}
+                                                                    </th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody className="bg-white divide-y divide-gray-200">
@@ -357,6 +349,9 @@ export default function ProgramTestResultsContent() {
                                                                         <td className="px-4 py-3 text-sm text-gray-700">
                                                                             {row.weightUsed}
                                                                         </td>
+                                                                        <td className="px-4 py-3 text-sm text-gray-700 break-words">
+                                                                            {row.comments?.trim() || t('testResults.noComments')}
+                                                                        </td>
                                                                     </tr>
                                                                 ))}
                                                             </tbody>
@@ -365,30 +360,11 @@ export default function ProgramTestResultsContent() {
 
                                                     <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
                                                         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                                            {t('testResults.colComments')}
+                                                            {t('testResults.workoutSummaryLabel')}
                                                         </p>
-                                                        {workoutComments.length > 0 ? (
-                                                            workoutComments.length === 1 ? (
-                                                                <p className="mt-1 text-sm text-gray-700 break-words">
-                                                                    {workoutComments[0]}
-                                                                </p>
-                                                            ) : (
-                                                                <ul className="mt-2 space-y-1 list-disc pl-5">
-                                                                    {workoutComments.map((comment, index) => (
-                                                                        <li
-                                                                            key={`${workout.workoutId}-comment-${index}`}
-                                                                            className="text-sm text-gray-700 break-words"
-                                                                        >
-                                                                            {comment}
-                                                                        </li>
-                                                                    ))}
-                                                                </ul>
-                                                            )
-                                                        ) : (
-                                                            <p className="mt-1 text-sm text-gray-500">
-                                                                {t('testResults.noComments')}
-                                                            </p>
-                                                        )}
+                                                        <p className="mt-1 text-sm text-gray-700 break-words">
+                                                            {workout.workoutSummaryComment || t('testResults.noWorkoutSummary')}
+                                                        </p>
                                                     </div>
                                                 </>
                                             )}

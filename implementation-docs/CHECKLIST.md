@@ -663,6 +663,10 @@
       File: `src/app/trainee/workouts/[id]/_content.tsx`, `tests/unit/trainee-workout-focus.test.tsx`
 - [x] **11.106** `/trainee/history`: usare progress bar verde per i programmi con `status=completed` (mantenendo il colore brand per i programmi attivi) ✅ _16 Mag 2026_  
       File: `src/app/trainee/history/_content.tsx`, `tests/unit/trainee-history.test.tsx`
+- [x] **11.107** `/trainer/programs/[id]/tests`: mostrare i commenti dei singoli esercizi nella tabella (colonna `Commenti`) e rimuovere l'elenco puntato riepilogativo sotto la tabella ✅ _18 Mag 2026_  
+      File: `src/app/trainer/programs/[id]/tests/_content.tsx`
+- [x] **11.108** `/trainer/programs/[id]/tests`: aggiungere sotto la tabella un pannello compatto con il commento complessivo del workout (`traineeNotes` del riepilogo trainee) ✅ _18 Mag 2026_  
+      File: `src/app/api/programs/[id]/test-results/route.ts`, `src/app/trainer/programs/[id]/tests/_content.tsx`, `public/locales/{it,en}/trainer.json`
 
 ---
 

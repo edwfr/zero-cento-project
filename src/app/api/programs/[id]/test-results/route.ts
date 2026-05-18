@@ -66,6 +66,7 @@ export async function GET(
                             select: {
                                 id: true,
                                 dayIndex: true,
+                                traineeNotes: true,
                                 workoutExercises: {
                                     where: {
                                         isWarmup: false,
@@ -177,6 +178,7 @@ export async function GET(
                 return {
                     workoutId: workout.id,
                     dayIndex: workout.dayIndex,
+                    workoutSummaryComment: normalizeOptionalText(workout.traineeNotes),
                     comments,
                     rows,
                 }

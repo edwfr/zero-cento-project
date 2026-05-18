@@ -14,6 +14,18 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 - **[11 Maggio 2026] Unificato calcolo 1RM su tabella RPE Mike Tuchscherer** — Aggiunto helper condiviso `normalizedOneRM(weight, reps)` in `src/lib/calculations.ts` (wrapper su `estimateOneRMFromRpeTable(w, r, 10)` con arrotondamento a 0.1 kg). Sostituite tre formule divergenti sparse nel codebase: Epley (`weight * (1 + reps/30)`) negli editor di programmi e workouts trainer e nell'endpoint review; Brzycki (`weight * 36/(37-reps)`) nel tab Massimali della pagina trainee. Ora `% rispetto 1RM` usa la stessa normalizzazione del tab Massimali in `/trainer/trainees/[id]` e della pagina `/trainer/trainees/[id]/records`, indipendentemente dalla settimana. Backend `resolveEffectiveWeight`/`calculateEffectiveWeight` ora calcolano l'1RM dal miglior PR normalizzato (RPE table) invece di richiedere obbligatoriamente un record `reps=1`. **Files modificati:** `src/lib/calculations.ts`, `src/app/trainer/programs/[id]/edit/_content.tsx`, `src/app/trainer/programs/[id]/workouts/[wId]/_content.tsx`, `src/app/trainer/programs/[id]/tests/_content.tsx`, `src/app/api/programs/[id]/review/route.ts`, `src/app/trainer/trainees/[id]/_content.tsx`, `src/app/trainer/trainees/[id]/records/_content.tsx`, `src/app/trainee/records/_content.tsx`, `src/components/PersonalRecordsExplorer.tsx`, `tests/unit/calculations.test.ts`, `tests/unit/setup.ts`, `public/locales/{it,en}/trainer.json`.
 - **[11 Maggio 2026] Widget Massimali Trainee: riga 1RM calcolato** — Nella schermata `/trainer/programs/[id]/edit`, il widget "Massimali Trainee" mostra sotto la riga `kg × rep` una seconda riga `1RM calcolato: X kg` derivata dalla tabella RPE Mike Tuchscherer (RPE 10). Nuova chiave i18n `editProgram.prHelperEstimatedOneRm` in en/it. **Files modificati:** `src/app/trainer/programs/[id]/edit/_content.tsx`, `public/locales/{it,en}/trainer.json`.
 
+### [18 Maggio 2026] — Trainer test results: commenti esercizio in tabella
+
+**Task checklist:** #11.107
+**File modificati:** `src/app/trainer/programs/[id]/tests/_content.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Nella schermata `/trainer/programs/[id]/tests` i commenti non vengono piu mostrati come elenco puntato riepilogativo sotto la tabella workout. Ogni commento ora e visualizzato direttamente nella riga dell'esercizio, in una nuova colonna `Commenti`, mantenendo il fallback `-` quando assente.
+
+### [18 Maggio 2026] — Trainer test results: pannello commento complessivo workout
+
+**Task checklist:** #11.108
+**File modificati:** `src/app/api/programs/[id]/test-results/route.ts`, `src/app/trainer/programs/[id]/tests/_content.tsx`, `public/locales/{it,en}/trainer.json`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Nella schermata `/trainer/programs/[id]/tests`, sotto ogni tabella workout e stato aggiunto un pannello compatto che mostra il commento complessivo del workout inserito dal trainee nel riepilogo finale (`Workout.traineeNotes`). L'endpoint `GET /api/programs/[id]/test-results` ora espone `workoutSummaryComment` per ogni workout. In assenza di nota viene mostrato il fallback `-`.
+
 ### [16 Maggio 2026] — Trainee current program: schema esercizi con peso e @RPE
 
 **Task checklist:** #11.104
@@ -25,6 +37,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 **Task checklist:** #11.105
 **File modificati:** `src/app/trainee/workouts/[id]/_content.tsx`, `tests/unit/trainee-workout-focus.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 **Note:** Nella schermata `/trainee/workouts/[id]` la griglia dei set e stata ridimensionata per assegnare spazio ottimizzato ai campi numerici: `kg` piu ampio, con `reps` e `RPE` allineati alla stessa larghezza (RPE ottimizzato per `10.0`). Per sfruttare meglio lo spazio orizzontale sono stati ridotti il padding laterale e il gap tra colonne, oltre ai margini delle colonne di indice set/spunta. Gli input numerici ora usano classi locali piu compatte (`px-2`, `tabular-nums`) e la cella RPE usa un bottone compatto locale espanso a tutta colonna, cosi lo spazio percepito tra `reps-kg` e `kg-rpe` risulta coerente. La logica di autosave/completamento resta invariata.
+
+### [16 Maggio 2026] — Trainee history: progress bar verde per programmi completati
+
+**Task checklist:** #11.106
+**File modificati:** `src/app/trainee/history/_content.tsx`, `tests/unit/trainee-history.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Nella schermata `/trainee/history` la progress bar della riga programma ora usa colore verde (`bg-state-success`) quando il programma ha `status=completed`; i programmi non completati continuano a usare il colore brand (`bg-brand-primary`). Aggiunto test unitario che verifica esplicitamente entrambe le varianti colore (completed/active).
 
 ### [13 Maggio 2026] — Trainee per-set RPE
 

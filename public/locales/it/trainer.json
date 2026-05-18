@@ -333,7 +333,9 @@
         "colRpe": "RPE",
         "colWeight": "Peso utilizzato",
         "colComments": "Commenti",
-        "noComments": "-"
+        "noComments": "-",
+        "workoutSummaryLabel": "Commento workout",
+        "noWorkoutSummary": "-"
     },
     "weekTypes": {
         "tecnica": "Settimana Tecnica",
