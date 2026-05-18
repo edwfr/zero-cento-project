@@ -679,6 +679,8 @@
       File: `src/lib/program-pdf-export.ts`, `src/app/trainer/programs/[id]/review/_content.tsx`, `src/app/api/programs/[id]/review/route.ts`, `src/lib/trainee-program-data.ts`, `src/app/trainee/programs/_components/ProgramDetailContent.tsx`, `public/locales/{it,en}/{trainer.json,trainee.json}`
 - [x] **11.114** `/trainee/workouts/[id]` settimana precedente: mostrare solo badge flag (`Warmup`/`JumpSet`/`SuperSet`) a destra e centrati verticalmente nella riga esercizio ✅ _18 Mag 2026_  
       File: `src/components/{WorkoutExerciseDisplayList.tsx,PrevWeekPanel.tsx}`, `tests/unit/prev-week-panel.test.tsx`
+- [x] **11.115** `/trainee/programs/current`: usare gli stessi badge flag (`Warmup`/`JumpSet`/`SuperSet`) allineati a destra per ogni esercizio nella lista workout espansa ✅ _18 Mag 2026_  
+      File: `src/app/trainee/programs/_components/ProgramDetailContent.tsx`
 
 ---
 

@@ -689,6 +689,8 @@ export default function ProgramDetailContent({
                 exerciseName: exercise.exercise.name,
                 variant: exercise.variant,
                 isWarmup: exercise.isWarmup,
+                isJumpSet: exercise.isJumpSet,
+                isSuperSet: exercise.isSuperSet,
                 scheme: buildExerciseScheme(exercise),
                 performedSets: completedSets,
                 trainerNote: exercise.notes,
@@ -919,6 +921,8 @@ export default function ProgramDetailContent({
                                                                 <WorkoutExerciseDisplayList
                                                                     items={buildExerciseDisplayItems(workout)}
                                                                     emptyText={t('currentProgram.tableNoExercises')}
+                                                                    metaBadgesMode="flags-only"
+                                                                    metaBadgesPosition="right"
                                                                 />
                                                             )}
                                                         </div>

@@ -62,6 +62,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 **File modificati:** `src/components/{WorkoutExerciseDisplayList.tsx,PrevWeekPanel.tsx}`, `tests/unit/prev-week-panel.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 **Note:** Nel pannello `Settimana precedente` di `/trainee/workouts/[id]`, la lista esercizi ora mostra solo i badge flag (`Warmup`, `JumpSet`, `SuperSet`) senza `rest` o `fundamental/accessory`. I badge sono stati spostati nella colonna destra della riga e allineati verticalmente al centro rispetto al contenuto esercizio.
 
+### [18 Maggio 2026] — Programma trainee corrente: badge flag a destra nella lista esercizi
+
+**Task checklist:** #11.115
+**File modificati:** `src/app/trainee/programs/_components/ProgramDetailContent.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Nella schermata `/trainee/programs/current` (lista esercizi nei workout espansi), `WorkoutExerciseDisplayList` ora usa la stessa configurazione introdotta in settimana precedente: badge solo flag (`Warmup`, `JumpSet`, `SuperSet`) con allineamento a destra e centratura verticale sulla riga esercizio.
+
 ### [16 Maggio 2026] — Trainee current program: schema esercizi con peso e @RPE
 
 **Task checklist:** #11.104
