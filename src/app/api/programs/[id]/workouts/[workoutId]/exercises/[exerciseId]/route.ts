@@ -36,6 +36,8 @@ export async function PUT(
             effectiveWeight,
             restTime,
             isWarmup,
+            isJumpSet,
+            isSuperSet,
         } = validation.data
 
         // Verify program exists and check ownership
@@ -99,6 +101,8 @@ export async function PUT(
                 ...(effectiveWeight !== undefined && { effectiveWeight }),
                 ...(restTime !== undefined && { restTime }),
                 ...(isWarmup !== undefined && { isWarmup }),
+                ...(isJumpSet !== undefined && { isJumpSet }),
+                ...(isSuperSet !== undefined && { isSuperSet }),
             },
             include: {
                 exercise: {

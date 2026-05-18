@@ -17,6 +17,8 @@ export interface HydratedDraftRow {
     effectiveWeight: null
     restTime: 'm2'
     isWarmup: boolean
+    isJumpSet: boolean
+    isSuperSet: boolean
     notes: null
     order: number
     isDraft: true
@@ -65,6 +67,8 @@ export function hydrateDraftRowsForWorkout({
         effectiveWeight: null,
         restTime: 'm2' as const,
         isWarmup: false,
+        isJumpSet: false,
+        isSuperSet: false,
         notes: null,
         order: startingOrder + index,
         isDraft: true as const,

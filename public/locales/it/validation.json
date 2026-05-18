@@ -70,6 +70,7 @@
         "minOneMuscleGroup": "Almeno un gruppo muscolare richiesto",
         "minExercise": "Almeno un esercizio richiesto",
         "weightRequired": "Peso è obbligatorio per i tipi percentuale",
+        "jumpSetSuperSetExclusive": "JumpSet e SuperSet non possono essere attivi insieme",
         "selectMuscleGroup": "Seleziona almeno un gruppo muscolare",
         "manualPasswordOrAuto": "Inserisci una password manuale o abilita la generazione automatica",
         "enterPassword": "Inserisci password (min 8 caratteri)",

@@ -40,6 +40,8 @@ const workoutExerciseBaseSchema = z.object({
         errorMap: () => ({ message: 'Tempo recupero non valido' }),
     }),
     isWarmup: z.boolean().default(false),
+    isJumpSet: z.boolean().default(false),
+    isSuperSet: z.boolean().default(false),
     notes: z.string().max(500).nullable().optional(),
     order: z.number().int().min(1),
 })
@@ -83,6 +85,14 @@ export const workoutExerciseSchema = workoutExerciseBaseSchema.superRefine(
                 inclusive: true,
                 message: 'validation.effectiveWeightMinZero',
                 path: ['effectiveWeight'],
+            })
+        }
+
+        if (data.isJumpSet && data.isSuperSet) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'validation.jumpSetSuperSetExclusive',
+                path: ['isSuperSet'],
             })
         }
     }
@@ -136,6 +146,13 @@ export const bulkSaveWorkoutExercisesSchema = z.object({
                             inclusive: true,
                             message: 'validation.effectiveWeightMinZero',
                             path: ['effectiveWeight'],
+                        })
+                    }
+                    if (data.isJumpSet && data.isSuperSet) {
+                        ctx.addIssue({
+                            code: z.ZodIssueCode.custom,
+                            message: 'validation.jumpSetSuperSetExclusive',
+                            path: ['isSuperSet'],
                         })
                     }
                 })

@@ -37,6 +37,8 @@ export async function POST(
             effectiveWeight,
             restTime,
             isWarmup,
+            isJumpSet,
+            isSuperSet,
         } = validation.data
 
         // Verify program exists and check ownership
@@ -115,6 +117,8 @@ export async function POST(
                 effectiveWeight: effectiveWeight ?? null,
                 restTime: restTime || 'm2',
                 isWarmup: isWarmup || false,
+                isJumpSet: isJumpSet || false,
+                isSuperSet: isSuperSet || false,
             },
             include: {
                 exercise: {

@@ -667,6 +667,8 @@
       File: `src/app/trainer/programs/[id]/tests/_content.tsx`
 - [x] **11.108** `/trainer/programs/[id]/tests`: aggiungere sotto la tabella un pannello compatto con il commento complessivo del workout (`traineeNotes` del riepilogo trainee) ✅ _18 Mag 2026_  
       File: `src/app/api/programs/[id]/test-results/route.ts`, `src/app/trainer/programs/[id]/tests/_content.tsx`, `public/locales/{it,en}/trainer.json`
+- [x] **11.109** `/trainer/programs/[id]/edit`: aggiungere colonne `JumpSet` e `SuperSet` subito dopo `Warmup`, persistite su `workout_exercises` come booleani (`isJumpSet`, `isSuperSet`) con hint icona (hover + popover click/tap) e regola di mutua esclusione ✅ _18 Mag 2026_  
+      File: `prisma/schema.prisma`, `prisma/migrations/20260518000000_add_workout_exercise_jump_superset_flags/migration.sql`, `src/schemas/workout-exercise.ts`, `src/app/api/programs/[id]/**/route.ts`, `src/app/trainer/programs/[id]/edit/{_content.tsx,transform-utils.ts,skeleton-hydration.ts}`, `public/locales/{it,en}/{trainer.json,validation.json}`, test unit/integration correlati
 
 ---
 

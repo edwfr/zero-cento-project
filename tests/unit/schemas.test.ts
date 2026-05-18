@@ -515,6 +515,8 @@ const validWorkoutExercise = {
     weightType: 'absolute' as const,
     restTime: 'm2' as const,
     isWarmup: false,
+    isJumpSet: false,
+    isSuperSet: false,
     order: 1,
 }
 
@@ -605,6 +607,15 @@ describe('workoutExerciseSchema', () => {
         const result = workoutExerciseSchema.safeParse({ ...validWorkoutExercise, targetRpe: 8.5 })
         expect(result.success).toBe(true)
     })
+
+    it('rejects rows with both jump set and super set enabled', () => {
+        const result = workoutExerciseSchema.safeParse({
+            ...validWorkoutExercise,
+            isJumpSet: true,
+            isSuperSet: true,
+        })
+        expect(result.success).toBe(false)
+    })
 })
 
 describe('updateWorkoutExerciseSchema', () => {
@@ -643,6 +654,8 @@ describe('bulkSaveWorkoutExercisesSchema', () => {
         weightType: 'absolute' as const,
         restTime: 'm2' as const,
         isWarmup: false,
+        isJumpSet: false,
+        isSuperSet: false,
         order: 1,
     }
 
@@ -667,6 +680,13 @@ describe('bulkSaveWorkoutExercisesSchema', () => {
 
     it('rejects empty exercises array', () => {
         const result = bulkSaveWorkoutExercisesSchema.safeParse({ exercises: [] })
+        expect(result.success).toBe(false)
+    })
+
+    it('rejects a row when both jump set and super set are enabled', () => {
+        const result = bulkSaveWorkoutExercisesSchema.safeParse({
+            exercises: [{ ...validRow, isJumpSet: true, isSuperSet: true }],
+        })
         expect(result.success).toBe(false)
     })
 })

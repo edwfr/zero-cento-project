@@ -42,6 +42,8 @@ const baseRow = {
     weight: 100,
     restTime: 'm2' as const,
     isWarmup: false,
+    isJumpSet: false,
+    isSuperSet: false,
     order: 1,
 }
 
@@ -85,6 +87,14 @@ describe('PUT /api/programs/[id]/workouts/[workoutId]/exercises/bulk', () => {
         expect(res.status).toBe(200)
         expect(body.data.workoutExercises).toHaveLength(2)
         expect(prisma.$transaction).toHaveBeenCalledTimes(1)
+        expect(prisma.workoutExercise.create).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({
+                    isJumpSet: false,
+                    isSuperSet: false,
+                }),
+            })
+        )
     })
 
     it('updates an existing row when id is supplied', async () => {
@@ -187,5 +197,13 @@ describe('PUT /api/programs/[id]/workouts/[workoutId]/exercises/bulk', () => {
         vi.mocked(prisma.exercise.findMany).mockResolvedValue([] as any)
         const res = await bulkPut(makePutRequest({ exercises: [baseRow] }), params(PROG, WK))
         expect(res.status).toBe(404)
+    })
+
+    it('returns 400 when jump set and super set are both true', async () => {
+        const res = await bulkPut(
+            makePutRequest({ exercises: [{ ...baseRow, isJumpSet: true, isSuperSet: true }] }),
+            params(PROG, WK)
+        )
+        expect(res.status).toBe(400)
     })
 })

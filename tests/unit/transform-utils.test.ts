@@ -17,6 +17,8 @@ function makeApiExercise(overrides: Partial<any> = {}): any {
         effectiveWeight: 100,
         restTime: 'm3',
         isWarmup: false,
+        isJumpSet: false,
+        isSuperSet: false,
         notes: null,
         exercise: {
             id: 'ex-1',
@@ -46,6 +48,8 @@ describe('transformApiExercise', () => {
         expect(result.effectiveWeight).toBe(100)
         expect(result.restTime).toBe('m3')
         expect(result.isWarmup).toBe(false)
+        expect(result.isJumpSet).toBe(false)
+        expect(result.isSuperSet).toBe(false)
         expect(result.notes).toBeNull()
         expect(result.exercise.id).toBe('ex-1')
         expect(result.exercise.name).toBe('Squat')

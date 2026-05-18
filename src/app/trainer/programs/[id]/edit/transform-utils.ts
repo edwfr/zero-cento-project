@@ -32,7 +32,9 @@ export function transformApiExercise(we: any, trainerId: string): any {
         weight: we.weight,
         effectiveWeight: we.effectiveWeight,
         restTime: we.restTime,
-        isWarmup: we.isWarmup,
+        isWarmup: Boolean(we.isWarmup),
+        isJumpSet: Boolean(we.isJumpSet),
+        isSuperSet: Boolean(we.isSuperSet),
         notes: we.notes,
         exercise: {
             id: we.exercise.id,

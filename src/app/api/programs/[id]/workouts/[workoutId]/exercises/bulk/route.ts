@@ -125,6 +125,8 @@ export async function PUT(
                 effectiveWeight: row.effectiveWeight ?? null,
                 restTime: row.restTime,
                 isWarmup: row.isWarmup,
+                isJumpSet: row.isJumpSet,
+                isSuperSet: row.isSuperSet,
             }
             if (row.id) {
                 return prisma.workoutExercise.update({ where: { id: row.id }, data })

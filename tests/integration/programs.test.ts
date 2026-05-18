@@ -381,6 +381,8 @@ const mockSourceWeek = {
                     effectiveWeight: 100,
                     restTime: 'm3',
                     isWarmup: false,
+                    isJumpSet: false,
+                    isSuperSet: false,
                     notes: null,
                     order: 0,
                 },
@@ -419,6 +421,8 @@ const mockUpdatedWeek = {
                     effectiveWeight: 100,
                     restTime: 'm3',
                     isWarmup: false,
+                    isJumpSet: false,
+                    isSuperSet: false,
                     notes: null,
                     order: 0,
                     exercise: {

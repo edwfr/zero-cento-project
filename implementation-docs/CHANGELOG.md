@@ -26,6 +26,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 **File modificati:** `src/app/api/programs/[id]/test-results/route.ts`, `src/app/trainer/programs/[id]/tests/_content.tsx`, `public/locales/{it,en}/trainer.json`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 **Note:** Nella schermata `/trainer/programs/[id]/tests`, sotto ogni tabella workout e stato aggiunto un pannello compatto che mostra il commento complessivo del workout inserito dal trainee nel riepilogo finale (`Workout.traineeNotes`). L'endpoint `GET /api/programs/[id]/test-results` ora espone `workoutSummaryComment` per ogni workout. In assenza di nota viene mostrato il fallback `-`.
 
+### [18 Maggio 2026] — Edit programma trainer: colonne JumpSet/SuperSet + hint icone
+
+**Task checklist:** #11.109
+**File modificati:** `prisma/schema.prisma`, `prisma/migrations/20260518000000_add_workout_exercise_jump_superset_flags/migration.sql`, `src/schemas/workout-exercise.ts`, `src/app/api/programs/[id]/workouts/[workoutId]/exercises/{route.ts,bulk/route.ts,[exerciseId]/route.ts}`, `src/app/api/programs/[id]/{copy-week/route.ts,copy-first-week/route.ts}`, `src/app/trainer/programs/[id]/edit/{_content.tsx,transform-utils.ts,skeleton-hydration.ts}`, `public/locales/{it,en}/{trainer.json,validation.json}`, `tests/unit/{schemas.test.ts,transform-utils.test.ts,calculations.test.ts}`, `tests/integration/{workout-exercises-bulk.test.ts,copy-week.test.ts,programs.test.ts}`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Aggiunti i campi booleani `isJumpSet` e `isSuperSet` su `workout_exercises` (default `false`) con propagazione completa su create/update/bulk e sui flussi di copia settimana (`copy-week`, `copy-first-week`). Nella schermata `/trainer/programs/[id]/edit` la tabella esercizi ora mostra le colonne `JumpSet` e `SuperSet` immediatamente dopo `Warmup`, con rendering icona in read-only e checkbox in edit. Introdotti hint per le icone `Warmup`, `JumpSet` e `SuperSet` tramite popover click/tap con fallback hover (`title`). Aggiunta regola di mutua esclusione JumpSet/SuperSet lato UI e lato validazione Zod (`validation.jumpSetSuperSetExclusive`) con copertura test aggiornata.
+
 ### [16 Maggio 2026] — Trainee current program: schema esercizi con peso e @RPE
 
 **Task checklist:** #11.104

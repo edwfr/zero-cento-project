@@ -25,11 +25,13 @@ import {
     Flame,
     GripVertical,
     Info,
+    Layers,
     Lock,
     LockOpen,
     Plus,
     Save,
     Trash2,
+    Zap,
 } from 'lucide-react'
 import {
     buildStructureRowsForWorkout,
@@ -105,6 +107,8 @@ interface WorkoutExercise {
     effectiveWeight: number | null
     restTime: RestTime
     isWarmup: boolean
+    isJumpSet: boolean
+    isSuperSet: boolean
     notes: string | null
     exercise: ExerciseReference
 }
@@ -169,6 +173,8 @@ interface EditableWorkoutExerciseRow {
     targetRpe: string
     weight: string
     isWarmup: boolean
+    isJumpSet: boolean
+    isSuperSet: boolean
     order: number
     restTime: RestTime
     notes: string | null
@@ -396,6 +402,8 @@ function buildEditableRow(
             workoutExercise.weight
         ),
         isWarmup: workoutExercise.isWarmup,
+        isJumpSet: workoutExercise.isJumpSet,
+        isSuperSet: workoutExercise.isSuperSet,
         order: workoutExercise.order,
         restTime: workoutExercise.restTime,
         notes: workoutExercise.notes,
@@ -420,6 +428,8 @@ function areEditableRowsEquivalent(
         left.targetRpe.trim() === right.targetRpe.trim() &&
         left.weight.trim() === right.weight.trim() &&
         left.isWarmup === right.isWarmup &&
+        left.isJumpSet === right.isJumpSet &&
+        left.isSuperSet === right.isSuperSet &&
         left.order === right.order &&
         left.restTime === right.restTime &&
         normalizeOptionalText(left.notes) === normalizeOptionalText(right.notes)
@@ -625,7 +635,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     } | null>(null)
     const [openHeaderHint, setOpenHeaderHint] = useState<{
         workoutId: string
-        field: 'reps' | 'weight'
+        field: 'warmup' | 'jumpSet' | 'superSet' | 'reps' | 'weight'
     } | null>(null)
 
     const [isPrHelperCollapsed, setIsPrHelperCollapsed] = useState(false)
@@ -1943,6 +1953,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 targetRpe: '',
                 weight: '',
                 isWarmup: false,
+                isJumpSet: false,
+                isSuperSet: false,
                 order: nextOrder,
                 restTime: 'm2',
                 notes: null,
@@ -1990,6 +2002,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 targetRpe: '',
                 weight: '',
                 isWarmup: false,
+                isJumpSet: false,
+                isSuperSet: false,
                 order: insertAtOrder,
                 restTime: 'm2',
                 notes: null,
@@ -2165,6 +2179,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             effectiveWeight: parsedWeight.effectiveWeight,
             restTime: row.restTime,
             isWarmup: row.isWarmup,
+            isJumpSet: row.isJumpSet,
+            isSuperSet: row.isSuperSet,
             notes: row.notes,
         }
     }
@@ -2174,6 +2190,10 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         const repsPattern = /^(\d+|\d+-\d+|\d+\/\d+|\d+"|max)$/
         const parsedSets = Number.parseInt(row.sets, 10)
         const parsedRpe = row.targetRpe.trim() === '' ? null : Number(row.targetRpe)
+
+        if (row.isJumpSet && row.isSuperSet) {
+            return t('editProgram.rowValidationExclusiveFlags')
+        }
 
         if (!row.exerciseId) {
             return t('editProgram.rowValidationExercise')
@@ -2559,6 +2579,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             targetRpe: '',
                             weight: '',
                             isWarmup: false,
+                            isJumpSet: false,
+                            isSuperSet: false,
                             order: draftRow.order,
                             restTime: 'm2',
                             notes: null,
@@ -3295,6 +3317,15 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                 })
                                                 const isWorkoutExpanded =
                                                     expandedWorkoutIds[workout.id] ?? true
+                                                const isWarmupHintOpen =
+                                                    openHeaderHint?.workoutId === workout.id &&
+                                                    openHeaderHint.field === 'warmup'
+                                                const isJumpSetHintOpen =
+                                                    openHeaderHint?.workoutId === workout.id &&
+                                                    openHeaderHint.field === 'jumpSet'
+                                                const isSuperSetHintOpen =
+                                                    openHeaderHint?.workoutId === workout.id &&
+                                                    openHeaderHint.field === 'superSet'
                                                 const isRepsHintOpen =
                                                     openHeaderHint?.workoutId === workout.id &&
                                                     openHeaderHint.field === 'reps'
@@ -3417,13 +3448,15 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                         <table className="w-full table-fixed divide-y divide-gray-200 text-sm">
                                                                     <colgroup>
                                                                         <col className="w-[1%]" />
-                                                                        <col className="w-[5%]" />
-                                                                        <col className="w-[26%]" />
-                                                                        <col className="w-[26%]" />
+                                                                        <col className="w-[3%]" />
+                                                                        <col className="w-[3%]" />
+                                                                        <col className="w-[3%]" />
+                                                                        <col className="w-[25%]" />
+                                                                        <col className="w-[25%]" />
                                                                         <col className="w-[8%]" />
                                                                         <col className="w-[8%]" />
                                                                         <col className="w-[8%]" />
-                                                                        <col className="w-[12%]" />
+                                                                        <col className="w-[10%]" />
                                                                         <col className="w-[6%]" />
                                                                     </colgroup>
                                                                     <thead className="bg-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-gray-700">
@@ -3431,17 +3464,110 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                             <th className="w-6 px-0.5 py-1">
                                                                                 <span className="sr-only">{t('editProgram.dragHandleLabel')}</span>
                                                                             </th>
-                                                                            <th className="px-1 py-1 text-center">
-                                                                                <span
-                                                                                    className="inline-flex items-center justify-center w-full"
-                                                                                    title={t('editProgram.tableWarmup')}
-                                                                                    aria-label={t('editProgram.tableWarmup')}
+                                                                            <th className="relative px-0 py-1 text-center">
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() =>
+                                                                                        setOpenHeaderHint((currentHint) =>
+                                                                                            currentHint?.workoutId === workout.id &&
+                                                                                                currentHint.field === 'warmup'
+                                                                                                ? null
+                                                                                                : {
+                                                                                                    workoutId: workout.id,
+                                                                                                    field: 'warmup',
+                                                                                                }
+                                                                                        )
+                                                                                    }
+                                                                                    data-header-hint-trigger="true"
+                                                                                    className="inline-flex items-center justify-center rounded text-week-test hover:text-week-test"
+                                                                                    title={t('editProgram.warmupHint')}
+                                                                                    aria-label={t('editProgram.warmupHint')}
+                                                                                    aria-expanded={isWarmupHintOpen}
                                                                                 >
-                                                                                    <Flame className="w-3.5 h-3.5 text-week-test" />
+                                                                                    <Flame className="h-3.5 w-3.5" />
                                                                                     <span className="sr-only">
                                                                                         {t('editProgram.tableWarmup')}
                                                                                     </span>
-                                                                                </span>
+                                                                                </button>
+                                                                                {isWarmupHintOpen && (
+                                                                                    <div
+                                                                                        data-header-hint-popover="true"
+                                                                                        className="absolute left-1 top-full mt-1 w-56 rounded-md border border-gray-200 bg-white p-2 text-[11px] normal-case tracking-normal text-gray-600 shadow-lg"
+                                                                                        style={{ zIndex: 2147483647 }}
+                                                                                    >
+                                                                                        {t('editProgram.warmupHint')}
+                                                                                    </div>
+                                                                                )}
+                                                                            </th>
+                                                                            <th className="relative px-0 py-1 text-center">
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() =>
+                                                                                        setOpenHeaderHint((currentHint) =>
+                                                                                            currentHint?.workoutId === workout.id &&
+                                                                                                currentHint.field === 'jumpSet'
+                                                                                                ? null
+                                                                                                : {
+                                                                                                    workoutId: workout.id,
+                                                                                                    field: 'jumpSet',
+                                                                                                }
+                                                                                        )
+                                                                                    }
+                                                                                    data-header-hint-trigger="true"
+                                                                                    className="inline-flex items-center justify-center rounded text-state-info hover:text-state-info"
+                                                                                    title={t('editProgram.jumpSetHint')}
+                                                                                    aria-label={t('editProgram.jumpSetHint')}
+                                                                                    aria-expanded={isJumpSetHintOpen}
+                                                                                >
+                                                                                    <Zap className="h-3.5 w-3.5" />
+                                                                                    <span className="sr-only">
+                                                                                        {t('editProgram.tableJumpSet')}
+                                                                                    </span>
+                                                                                </button>
+                                                                                {isJumpSetHintOpen && (
+                                                                                    <div
+                                                                                        data-header-hint-popover="true"
+                                                                                        className="absolute left-1 top-full mt-1 w-56 rounded-md border border-gray-200 bg-white p-2 text-[11px] normal-case tracking-normal text-gray-600 shadow-lg"
+                                                                                        style={{ zIndex: 2147483647 }}
+                                                                                    >
+                                                                                        {t('editProgram.jumpSetHint')}
+                                                                                    </div>
+                                                                                )}
+                                                                            </th>
+                                                                            <th className="relative px-0 py-1 text-center">
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() =>
+                                                                                        setOpenHeaderHint((currentHint) =>
+                                                                                            currentHint?.workoutId === workout.id &&
+                                                                                                currentHint.field === 'superSet'
+                                                                                                ? null
+                                                                                                : {
+                                                                                                    workoutId: workout.id,
+                                                                                                    field: 'superSet',
+                                                                                                }
+                                                                                        )
+                                                                                    }
+                                                                                    data-header-hint-trigger="true"
+                                                                                    className="inline-flex items-center justify-center rounded text-state-success hover:text-state-success"
+                                                                                    title={t('editProgram.superSetHint')}
+                                                                                    aria-label={t('editProgram.superSetHint')}
+                                                                                    aria-expanded={isSuperSetHintOpen}
+                                                                                >
+                                                                                    <Layers className="h-3.5 w-3.5" />
+                                                                                    <span className="sr-only">
+                                                                                        {t('editProgram.tableSuperSet')}
+                                                                                    </span>
+                                                                                </button>
+                                                                                {isSuperSetHintOpen && (
+                                                                                    <div
+                                                                                        data-header-hint-popover="true"
+                                                                                        className="absolute left-1 top-full mt-1 w-56 rounded-md border border-gray-200 bg-white p-2 text-[11px] normal-case tracking-normal text-gray-600 shadow-lg"
+                                                                                        style={{ zIndex: 2147483647 }}
+                                                                                    >
+                                                                                        {t('editProgram.superSetHint')}
+                                                                                    </div>
+                                                                                )}
                                                                             </th>
                                                                             <th className="px-1 py-1">{t('editProgram.tableExercise')}</th>
                                                                             <th className="px-1 py-1">{t('editProgram.tableVariant')}</th>
@@ -3526,7 +3652,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                         {workoutRows.length === 0 && (
                                                                             <tr>
                                                                                 <td
-                                                                                    colSpan={8}
+                                                                                    colSpan={11}
                                                                                     className="px-1 py-6 text-center text-sm text-gray-500"
                                                                                 >
                                                                                     {t('editProgram.tableNoWorkoutExercises')}
@@ -3626,7 +3752,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                 )}
                                                                                             </td>
 
-                                                                                            <td className="px-1 py-1 align-middle">
+                                                                                            <td className="px-0 py-1 align-middle">
                                                                                         {readOnly ? (
                                                                                             <div className="flex h-full w-full items-center justify-center">
                                                                                                 {row.isWarmup && <Flame className="h-4 w-4 text-week-test" />}
@@ -3639,6 +3765,58 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                     onChange={(event) =>
                                                                                                         updateRowFields(row.id, {
                                                                                                             isWarmup: event.target.checked,
+                                                                                                        })
+                                                                                                    }
+                                                                                                    disabled={rowBusy}
+                                                                                                    tabIndex={-1}
+                                                                                                    className="h-4 w-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+                                                                                                />
+                                                                                            </label>
+                                                                                        )}
+                                                                                    </td>
+
+                                                                                    <td className="px-0 py-1 align-middle">
+                                                                                        {readOnly ? (
+                                                                                            <div className="flex h-full w-full items-center justify-center">
+                                                                                                {row.isJumpSet && <Zap className="h-4 w-4 text-state-info" />}
+                                                                                            </div>
+                                                                                        ) : (
+                                                                                            <label className="flex h-full w-full items-center justify-center">
+                                                                                                <input
+                                                                                                    type="checkbox"
+                                                                                                    checked={row.isJumpSet}
+                                                                                                    onChange={(event) =>
+                                                                                                        updateRowFields(row.id, {
+                                                                                                            isJumpSet: event.target.checked,
+                                                                                                            ...(event.target.checked
+                                                                                                                ? { isSuperSet: false }
+                                                                                                                : {}),
+                                                                                                        })
+                                                                                                    }
+                                                                                                    disabled={rowBusy}
+                                                                                                    tabIndex={-1}
+                                                                                                    className="h-4 w-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+                                                                                                />
+                                                                                            </label>
+                                                                                        )}
+                                                                                    </td>
+
+                                                                                    <td className="px-0 py-1 align-middle">
+                                                                                        {readOnly ? (
+                                                                                            <div className="flex h-full w-full items-center justify-center">
+                                                                                                {row.isSuperSet && <Layers className="h-4 w-4 text-state-success" />}
+                                                                                            </div>
+                                                                                        ) : (
+                                                                                            <label className="flex h-full w-full items-center justify-center">
+                                                                                                <input
+                                                                                                    type="checkbox"
+                                                                                                    checked={row.isSuperSet}
+                                                                                                    onChange={(event) =>
+                                                                                                        updateRowFields(row.id, {
+                                                                                                            isSuperSet: event.target.checked,
+                                                                                                            ...(event.target.checked
+                                                                                                                ? { isJumpSet: false }
+                                                                                                                : {}),
                                                                                                         })
                                                                                                     }
                                                                                                     disabled={rowBusy}

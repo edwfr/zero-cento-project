@@ -62,6 +62,8 @@ const baseProgram = {
                             effectiveWeight: 100,
                             restTime: 'm3',
                             isWarmup: false,
+                            isJumpSet: false,
+                            isSuperSet: false,
                             notes: null,
                             order: 1,
                         },
@@ -230,6 +232,8 @@ describe('POST /api/programs/[id]/copy-week', () => {
                     exerciseId: 'ex-1',
                     sets: 4,
                     reps: '5',
+                    isJumpSet: false,
+                    isSuperSet: false,
                 }),
             ]),
         })
@@ -247,7 +251,7 @@ describe('POST /api/programs/[id]/copy-week', () => {
                             id: 'workout-w1-d0',
                             dayIndex: 0,
                             workoutExercises: [
-                                { exerciseId: 'ex-1', sets: 3, reps: '8', weightType: 'absolute', weight: 80, effectiveWeight: 80, restTime: 'm2', isWarmup: false, notes: null, order: 1, targetRpe: null, variant: null },
+                                { exerciseId: 'ex-1', sets: 3, reps: '8', weightType: 'absolute', weight: 80, effectiveWeight: 80, restTime: 'm2', isWarmup: false, isJumpSet: false, isSuperSet: false, notes: null, order: 1, targetRpe: null, variant: null },
                             ],
                         },
                     ],

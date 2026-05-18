@@ -275,6 +275,8 @@ model WorkoutExercise {
   effectiveWeight Float? // kg effettivi calcolati dal trainer
   restTime   RestTime
   isWarmup   Boolean    @default(false)
+  isJumpSet  Boolean    @default(false)
+  isSuperSet Boolean   @default(false)
   notes      String?
   order      Int
   isCompleted Boolean   @default(false)
