@@ -8,6 +8,8 @@ export interface ProgramPdfExercise {
     variant: string | null
     type: 'fundamental' | 'accessory'
     isWarmup: boolean
+    isJumpSet: boolean
+    isSuperSet: boolean
     sets: number
     reps: string
     targetRpe: number | null
@@ -55,6 +57,8 @@ export interface ProgramPdfLabels {
     tableWeightEffective: (weight: string) => string
     warmupYesShort: string
     warmupNoShort: string
+    jumpSetShort: string
+    superSetShort: string
     fundamentalShort: string
     accessoryShort: string
     previousExerciseShort: string
@@ -277,10 +281,15 @@ export async function exportProgramToPdf(
                         const exerciseTypeLabel = exercise.type === 'fundamental'
                             ? labels.fundamentalShort
                             : labels.accessoryShort
-                        const warmupIcon = exercise.isWarmup ? '[*]' : ''
+
+                        const metadataBadges = [
+                            exercise.isWarmup ? `[${labels.warmupYesShort}]` : '',
+                            exercise.isJumpSet ? `[${labels.jumpSetShort}]` : '',
+                            exercise.isSuperSet ? `[${labels.superSetShort}]` : '',
+                        ].filter(Boolean)
 
                         const exerciseLabel = [
-                            warmupIcon,
+                            ...metadataBadges,
                             `[${exerciseTypeLabel}] ${exercise.name}`,
                         ]
                             .filter(Boolean)

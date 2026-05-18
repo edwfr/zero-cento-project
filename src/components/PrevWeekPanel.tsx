@@ -70,6 +70,11 @@ export default function PrevWeekPanel({ workoutId }: PrevWeekPanelProps) {
     const displayItems: ExerciseDisplayItem[] = exercises.map((ex) => ({
         id: ex.id,
         exerciseName: ex.exerciseName,
+        exerciseType: ex.exerciseType,
+        restTime: ex.restTime,
+        isWarmup: ex.isWarmup,
+        isJumpSet: ex.isJumpSet,
+        isSuperSet: ex.isSuperSet,
         scheme: `${ex.targetSets} x ${ex.targetReps}`,
         performedSets: ex.sets.map((s) => ({
             setNumber: s.setNumber,
@@ -115,6 +120,8 @@ export default function PrevWeekPanel({ workoutId }: PrevWeekPanelProps) {
                         <WorkoutExerciseDisplayList
                             items={displayItems}
                             emptyText={t('workouts.prevWeekNoData')}
+                            metaBadgesMode="flags-only"
+                            metaBadgesPosition="right"
                             setRowLabel={(set, reps, weight, rpe) =>
                                 rpe != null
                                     ? t('workouts.prevWeekSetRowWithRpe', {

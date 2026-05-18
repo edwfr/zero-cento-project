@@ -48,6 +48,8 @@ const fixtureWorkout = {
             effectiveWeight: 80,
             restTime: 'm2' as const,
             isWarmup: false,
+            isJumpSet: false,
+            isSuperSet: false,
             isCompleted: false,
             notes: null,
             order: 1,
@@ -72,6 +74,8 @@ const fixtureWorkout = {
             effectiveWeight: null,
             restTime: 'm1' as const,
             isWarmup: false,
+            isJumpSet: false,
+            isSuperSet: false,
             isCompleted: false,
             notes: null,
             order: 2,
@@ -206,6 +210,54 @@ describe('Trainee workout focus mode', () => {
         expect(screen.getByText('trainer:exercises.accessory')).toBeInTheDocument()
         // Badge no longer uses abbreviated 'A'
         expect(screen.queryByText('A')).not.toBeInTheDocument()
+    })
+
+    it('renders flag icons in the badge row and opens trainer hint popovers on click', async () => {
+        const user = userEvent.setup()
+
+        const flaggedFixture = {
+            ...fixtureWorkout,
+            exercises: [
+                {
+                    ...fixtureWorkout.exercises[0],
+                    isWarmup: true,
+                    isJumpSet: false,
+                    isSuperSet: false,
+                },
+                {
+                    ...fixtureWorkout.exercises[1],
+                    isWarmup: false,
+                    isJumpSet: false,
+                    isSuperSet: true,
+                },
+            ],
+        }
+
+        ;(global.fetch as any).mockImplementation(async (url: string) => {
+            if (url.includes('/api/trainee/workouts/')) {
+                return {
+                    ok: true,
+                    json: async () => ({ data: { workout: flaggedFixture } }),
+                } as Response
+            }
+            return { ok: true, json: async () => ({}) } as Response
+        })
+
+        await renderContent()
+
+        const warmupHintButton = screen.getByRole('button', {
+            name: 'trainer:editProgram.warmupHint',
+        })
+        await user.click(warmupHintButton)
+        expect(screen.getByText('trainer:editProgram.warmupHint')).toBeInTheDocument()
+
+        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+
+        const superSetHintButton = screen.getByRole('button', {
+            name: 'trainer:editProgram.superSetHint',
+        })
+        await user.click(superSetHintButton)
+        expect(screen.getByText('trainer:editProgram.superSetHint')).toBeInTheDocument()
     })
 
     it('shows RPE target value in the targets row box', async () => {

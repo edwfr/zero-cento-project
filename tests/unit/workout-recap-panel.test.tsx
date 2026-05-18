@@ -29,6 +29,11 @@ const mockRecapResponse = {
             {
                 id: 'we-1',
                 exerciseName: 'Back Squat',
+                exerciseType: 'fundamental',
+                restTime: 'm2',
+                isWarmup: true,
+                isJumpSet: false,
+                isSuperSet: true,
                 targetSets: 3,
                 reps: '5',
                 effectiveWeight: 120,
@@ -82,6 +87,9 @@ describe('WorkoutRecapPanel', () => {
         expect(global.fetch).toHaveBeenCalled()
         expect(screen.getByText('3 × 5 × 120 kg')).toBeInTheDocument()
         expect(screen.getByText('2/3')).toBeInTheDocument()
+        expect(screen.queryByText('trainer:exercises.fundamental')).not.toBeInTheDocument()
+        expect(screen.getByLabelText('trainer:editProgram.tableWarmup')).toBeInTheDocument()
+        expect(screen.getByLabelText('trainer:editProgram.tableSuperSet')).toBeInTheDocument()
         expect(screen.queryByText('Set 1')).not.toBeInTheDocument()
         expect(screen.queryByText('Workout note')).not.toBeInTheDocument()
     })

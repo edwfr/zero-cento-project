@@ -34,6 +34,8 @@ export interface TraineeProgram {
                 effectiveWeight: number | null
                 restTime: 's30' | 'm1' | 'm1s30' | 'm2' | 'm3' | 'm5'
                 isWarmup: boolean
+                isJumpSet: boolean
+                isSuperSet: boolean
                 notes: string | null
                 order: number
                 exercise: { id: string; name: string; type: 'fundamental' | 'accessory' }
@@ -209,6 +211,8 @@ async function loadProgramTreeForTrainee(
                         effectiveWeight: we.effectiveWeight,
                         restTime: we.restTime,
                         isWarmup: we.isWarmup,
+                        isJumpSet: we.isJumpSet,
+                        isSuperSet: we.isSuperSet,
                         notes: we.notes,
                         order: we.order,
                         exercise: we.exercise,

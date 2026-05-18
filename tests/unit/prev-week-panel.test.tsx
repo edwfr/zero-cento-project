@@ -23,7 +23,12 @@ const mockExercises = [
     {
         id: 'we-1',
         exerciseName: 'Bench Press',
+        exerciseType: 'fundamental',
         order: 1,
+        restTime: 'm2',
+        isWarmup: true,
+        isJumpSet: false,
+        isSuperSet: false,
         targetSets: 3,
         targetReps: '8',
         exerciseNote: 'Felt strong',
@@ -36,7 +41,12 @@ const mockExercises = [
     {
         id: 'we-2',
         exerciseName: 'Tricep Extension',
+        exerciseType: 'accessory',
         order: 2,
+        restTime: 'm1',
+        isWarmup: false,
+        isJumpSet: true,
+        isSuperSet: false,
         targetSets: 3,
         targetReps: '12',
         exerciseNote: null,
@@ -89,6 +99,10 @@ describe('PrevWeekPanel', () => {
         expect(screen.getByText('Tricep Extension')).toBeInTheDocument()
         expect(screen.getByText('Felt strong')).toBeInTheDocument()
         expect(screen.getByText('3 x 12')).toBeInTheDocument()
+        expect(screen.queryByText('trainer:exercises.fundamental')).not.toBeInTheDocument()
+        expect(screen.queryByText('trainer:exercises.accessory')).not.toBeInTheDocument()
+        expect(screen.getByLabelText('trainer:editProgram.tableWarmup')).toBeInTheDocument()
+        expect(screen.getByLabelText('trainer:editProgram.tableJumpSet')).toBeInTheDocument()
     })
 
     it('shows error when fetch fails', async () => {

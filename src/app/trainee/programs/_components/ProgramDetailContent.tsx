@@ -44,6 +44,8 @@ interface WorkoutExercise {
     effectiveWeight: number | null
     restTime: RestTime
     isWarmup: boolean
+    isJumpSet: boolean
+    isSuperSet: boolean
     notes: string | null
     exercise: {
         id: string
@@ -555,6 +557,8 @@ export default function ProgramDetailContent({
                 t('currentProgram.tableWeightEffective', { weight }),
             warmupYesShort: t('currentProgram.warmupYesShort'),
             warmupNoShort: t('currentProgram.warmupNoShort'),
+            jumpSetShort: t('currentProgram.jumpSetShort'),
+            superSetShort: t('currentProgram.superSetShort'),
             fundamentalShort: t('currentProgram.fundamentalShort'),
             accessoryShort: t('currentProgram.accessoryShort'),
             previousExerciseShort: t('workouts.previousExerciseShort'),
@@ -587,6 +591,8 @@ export default function ProgramDetailContent({
                         variant: exercise.variant,
                         type: exercise.exercise.type,
                         isWarmup: exercise.isWarmup,
+                        isJumpSet: Boolean(exercise.isJumpSet),
+                        isSuperSet: Boolean(exercise.isSuperSet),
                         sets: exercise.sets,
                         reps: exercise.reps,
                         targetRpe: exercise.targetRpe,

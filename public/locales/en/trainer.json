@@ -610,6 +610,8 @@
         "warmupShort": "W",
         "warmupYesShort": "WARMUP",
         "warmupNoShort": "NO-WARMUP",
+        "jumpSetShort": "JSET",
+        "superSetShort": "SSET",
         "previousExerciseShort": "previous",
         "exportPdf": "Export Program PDF",
         "exportingPdf": "Generating PDF...",

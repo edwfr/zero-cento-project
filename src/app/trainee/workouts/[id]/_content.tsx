@@ -17,9 +17,12 @@ import {
     ChevronUp,
     Clock3,
     FileText,
+    Flame,
+    Layers,
     PlayCircle,
     ChevronLeft,
     ChevronRight,
+    Zap,
 } from 'lucide-react'
 import YoutubeEmbed from '@/components/YoutubeEmbed'
 import { useSwipe } from '@/lib/useSwipe'
@@ -61,6 +64,8 @@ interface WorkoutExerciseWithWeight {
     effectiveWeight: number | null
     restTime: RestTime
     isWarmup: boolean
+    isJumpSet: boolean
+    isSuperSet: boolean
     notes: string | null
     order: number
     isCompleted: boolean
@@ -149,7 +154,7 @@ const RPE_OPTIONS = [
 const SHOW_OVERALL_RPE_PANEL = false
 
 export default function WorkoutDetailContent() {
-    const { t } = useTranslation('trainee')
+    const { t } = useTranslation(['trainee', 'trainer'])
     const router = useRouter()
     const params = useParams()
     const searchParams = useSearchParams()
@@ -895,6 +900,47 @@ function ExerciseFocusCard({
     t,
 }: ExerciseFocusCardProps) {
     const [noteExpanded, setNoteExpanded] = useState(false)
+    const [openExerciseFlagHint, setOpenExerciseFlagHint] = useState<
+        'warmup' | 'jumpSet' | 'superSet' | null
+    >(null)
+
+    useEffect(() => {
+        if (!openExerciseFlagHint) {
+            return
+        }
+
+        const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+            const target = event.target
+
+            if (!(target instanceof Element)) {
+                return
+            }
+
+            const clickInsideHint = target.closest(
+                '[data-exercise-flag-hint-trigger="true"], [data-exercise-flag-hint-popover="true"]'
+            )
+
+            if (!clickInsideHint) {
+                setOpenExerciseFlagHint(null)
+            }
+        }
+
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setOpenExerciseFlagHint(null)
+            }
+        }
+
+        document.addEventListener('mousedown', handlePointerDown)
+        document.addEventListener('touchstart', handlePointerDown)
+        document.addEventListener('keydown', handleEscape)
+
+        return () => {
+            document.removeEventListener('mousedown', handlePointerDown)
+            document.removeEventListener('touchstart', handlePointerDown)
+            document.removeEventListener('keydown', handleEscape)
+        }
+    }, [openExerciseFlagHint])
 
     const trainerSettingValue = (() => {
         if (typeof we.weight !== 'number' || !Number.isFinite(we.weight)) {
@@ -937,6 +983,103 @@ function ExerciseFocusCard({
                         <p className="text-sm text-gray-600 mb-2">{we.variant}</p>
                     )}
                     <div className="flex flex-wrap gap-1.5">
+                        {(we.isWarmup || we.isJumpSet || we.isSuperSet) && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-xs font-medium text-gray-600">
+                                {we.isWarmup && (
+                                    <span className="relative">
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setOpenExerciseFlagHint((current) =>
+                                                    current === 'warmup' ? null : 'warmup'
+                                                )
+                                            }
+                                            data-exercise-flag-hint-trigger="true"
+                                            className="inline-flex items-center justify-center rounded text-week-test hover:text-week-test"
+                                            title={t('trainer:editProgram.warmupHint')}
+                                            aria-label={t('trainer:editProgram.warmupHint')}
+                                            aria-expanded={openExerciseFlagHint === 'warmup'}
+                                        >
+                                            <Flame className="h-3.5 w-3.5" />
+                                            <span className="sr-only">
+                                                {t('trainer:editProgram.tableWarmup')}
+                                            </span>
+                                        </button>
+                                        {openExerciseFlagHint === 'warmup' && (
+                                            <div
+                                                data-exercise-flag-hint-popover="true"
+                                                className="absolute left-0 top-full mt-1 w-56 rounded-md border border-gray-200 bg-white p-2 text-[11px] normal-case tracking-normal text-gray-600 shadow-lg"
+                                                style={{ zIndex: 2147483647 }}
+                                            >
+                                                {t('trainer:editProgram.warmupHint')}
+                                            </div>
+                                        )}
+                                    </span>
+                                )}
+                                {we.isJumpSet && (
+                                    <span className="relative">
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setOpenExerciseFlagHint((current) =>
+                                                    current === 'jumpSet' ? null : 'jumpSet'
+                                                )
+                                            }
+                                            data-exercise-flag-hint-trigger="true"
+                                            className="inline-flex items-center justify-center rounded text-state-info hover:text-state-info"
+                                            title={t('trainer:editProgram.jumpSetHint')}
+                                            aria-label={t('trainer:editProgram.jumpSetHint')}
+                                            aria-expanded={openExerciseFlagHint === 'jumpSet'}
+                                        >
+                                            <Zap className="h-3.5 w-3.5" />
+                                            <span className="sr-only">
+                                                {t('trainer:editProgram.tableJumpSet')}
+                                            </span>
+                                        </button>
+                                        {openExerciseFlagHint === 'jumpSet' && (
+                                            <div
+                                                data-exercise-flag-hint-popover="true"
+                                                className="absolute left-0 top-full mt-1 w-56 rounded-md border border-gray-200 bg-white p-2 text-[11px] normal-case tracking-normal text-gray-600 shadow-lg"
+                                                style={{ zIndex: 2147483647 }}
+                                            >
+                                                {t('trainer:editProgram.jumpSetHint')}
+                                            </div>
+                                        )}
+                                    </span>
+                                )}
+                                {we.isSuperSet && (
+                                    <span className="relative">
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setOpenExerciseFlagHint((current) =>
+                                                    current === 'superSet' ? null : 'superSet'
+                                                )
+                                            }
+                                            data-exercise-flag-hint-trigger="true"
+                                            className="inline-flex items-center justify-center rounded text-state-success hover:text-state-success"
+                                            title={t('trainer:editProgram.superSetHint')}
+                                            aria-label={t('trainer:editProgram.superSetHint')}
+                                            aria-expanded={openExerciseFlagHint === 'superSet'}
+                                        >
+                                            <Layers className="h-3.5 w-3.5" />
+                                            <span className="sr-only">
+                                                {t('trainer:editProgram.tableSuperSet')}
+                                            </span>
+                                        </button>
+                                        {openExerciseFlagHint === 'superSet' && (
+                                            <div
+                                                data-exercise-flag-hint-popover="true"
+                                                className="absolute left-0 top-full mt-1 w-56 rounded-md border border-gray-200 bg-white p-2 text-[11px] normal-case tracking-normal text-gray-600 shadow-lg"
+                                                style={{ zIndex: 2147483647 }}
+                                            >
+                                                {t('trainer:editProgram.superSetHint')}
+                                            </div>
+                                        )}
+                                    </span>
+                                )}
+                            </span>
+                        )}
                         <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
                             <Clock3 className="w-3 h-3" />
                             <span className="font-semibold">{t('workouts.rest')}:</span>

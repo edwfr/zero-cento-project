@@ -7,7 +7,12 @@ import type { PrevWeekExerciseItem } from '@/lib/workout-recap'
 interface PrevWeekRow {
     weId: string
     exerciseName: string
+    exerciseType: 'fundamental' | 'accessory'
     order: number
+    restTime: 's30' | 'm1' | 'm1s30' | 'm2' | 'm3' | 'm5'
+    isWarmup: boolean
+    isJumpSet: boolean
+    isSuperSet: boolean
     targetSets: number
     targetReps: string
     setNumber: number | null
@@ -48,7 +53,12 @@ export async function GET(
             SELECT
                 we.id                       AS "weId",
                 e.name                      AS "exerciseName",
+                e.type                      AS "exerciseType",
                 we.order                    AS "order",
+                we."restTime"              AS "restTime",
+                we."isWarmup"              AS "isWarmup",
+                we."isJumpSet"             AS "isJumpSet",
+                we."isSuperSet"            AS "isSuperSet",
                 we.sets                     AS "targetSets",
                 we.reps                     AS "targetReps",
                 sp."setNumber"              AS "setNumber",
@@ -78,7 +88,12 @@ export async function GET(
                 exerciseMap.set(row.weId, {
                     id: row.weId,
                     exerciseName: row.exerciseName,
+                    exerciseType: row.exerciseType,
                     order: row.order,
+                    restTime: row.restTime,
+                    isWarmup: Boolean(row.isWarmup),
+                    isJumpSet: Boolean(row.isJumpSet),
+                    isSuperSet: Boolean(row.isSuperSet),
                     targetSets: row.targetSets,
                     targetReps: row.targetReps,
                     exerciseNote: row.exerciseNote ?? null,

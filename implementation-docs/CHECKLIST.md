@@ -669,6 +669,16 @@
       File: `src/app/api/programs/[id]/test-results/route.ts`, `src/app/trainer/programs/[id]/tests/_content.tsx`, `public/locales/{it,en}/trainer.json`
 - [x] **11.109** `/trainer/programs/[id]/edit`: aggiungere colonne `JumpSet` e `SuperSet` subito dopo `Warmup`, persistite su `workout_exercises` come booleani (`isJumpSet`, `isSuperSet`) con hint icona (hover + popover click/tap) e regola di mutua esclusione ✅ _18 Mag 2026_  
       File: `prisma/schema.prisma`, `prisma/migrations/20260518000000_add_workout_exercise_jump_superset_flags/migration.sql`, `src/schemas/workout-exercise.ts`, `src/app/api/programs/[id]/**/route.ts`, `src/app/trainer/programs/[id]/edit/{_content.tsx,transform-utils.ts,skeleton-hydration.ts}`, `public/locales/{it,en}/{trainer.json,validation.json}`, test unit/integration correlati
+- [x] **11.110** `/trainee/workouts/[id]`: mostrare icone `Warmup`/`JumpSet`/`SuperSet` nella riga badge con hint popover al click (stesso testo trainer) e propagare i flag dalla API trainee ✅ _18 Mag 2026_  
+      File: `src/app/api/trainee/workouts/[id]/route.ts`, `src/app/trainee/workouts/[id]/_content.tsx`, `tests/unit/trainee-workout-focus.test.tsx`, `tests/integration/trainee-workout-detail.test.ts`
+- [x] **11.111** `/trainee/workouts/[id]`: mostrare gli stessi badge (`Warmup`/`JumpSet`/`SuperSet` + `rest` + `fundamental/accessory`) anche in `Settimana precedente` e in `Riepilogo esercizi` ✅ _18 Mag 2026_  
+      File: `src/components/{ExerciseMetaBadges.tsx,PrevWeekPanel.tsx,WorkoutRecapPanel.tsx,WorkoutExerciseDisplayList.tsx}`, `src/lib/workout-recap.ts`, `src/app/api/trainee/workouts/[id]/{prev-week/route.ts,recap/route.ts}`, `tests/unit/{prev-week-panel.test.tsx,workout-recap-panel.test.tsx,workout-recap.test.ts}`, `tests/integration/trainee-workout-prev-week.test.ts`
+- [x] **11.112** `/trainee/workouts/[id]` recap: mostrare solo badge flag (`Warmup`/`JumpSet`/`SuperSet`) e posizionarli sotto l'indicatore serie ✅ _18 Mag 2026_  
+      File: `src/components/WorkoutRecapPanel.tsx`, `tests/unit/workout-recap-panel.test.tsx`
+- [x] **11.113** Export PDF programma: includere marker `Warmup`/`JumpSet`/`SuperSet` nella colonna esercizio (trainer review + trainee current program) ✅ _18 Mag 2026_  
+      File: `src/lib/program-pdf-export.ts`, `src/app/trainer/programs/[id]/review/_content.tsx`, `src/app/api/programs/[id]/review/route.ts`, `src/lib/trainee-program-data.ts`, `src/app/trainee/programs/_components/ProgramDetailContent.tsx`, `public/locales/{it,en}/{trainer.json,trainee.json}`
+- [x] **11.114** `/trainee/workouts/[id]` settimana precedente: mostrare solo badge flag (`Warmup`/`JumpSet`/`SuperSet`) a destra e centrati verticalmente nella riga esercizio ✅ _18 Mag 2026_  
+      File: `src/components/{WorkoutExerciseDisplayList.tsx,PrevWeekPanel.tsx}`, `tests/unit/prev-week-panel.test.tsx`
 
 ---
 

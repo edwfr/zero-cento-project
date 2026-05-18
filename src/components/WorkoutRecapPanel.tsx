@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { ClipboardList, ChevronDown, ChevronUp, CheckCircle2, Circle, Clock } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { ExerciseRecapItem, ExerciseStatus } from '@/lib/workout-recap'
+import ExerciseMetaBadges from './ExerciseMetaBadges'
 
 interface WorkoutRecapPanelProps {
     workoutId: string
@@ -114,12 +115,20 @@ export default function WorkoutRecapPanel({
                                                     {exercise.effectiveWeight != null ? ` × ${exercise.effectiveWeight} kg` : ''}
                                                 </p>
                                             </div>
-                                            <span className="shrink-0 tabular-nums text-xs font-semibold text-gray-500">
-                                                {t('workouts.recapSets', {
-                                                    completed: exercise.completedSets,
-                                                    target: exercise.targetSets,
-                                                })}
-                                            </span>
+                                            <div className="shrink-0 flex flex-col items-end gap-1">
+                                                <span className="tabular-nums text-xs font-semibold text-gray-500">
+                                                    {t('workouts.recapSets', {
+                                                        completed: exercise.completedSets,
+                                                        target: exercise.targetSets,
+                                                    })}
+                                                </span>
+                                                <ExerciseMetaBadges
+                                                    isWarmup={exercise.isWarmup}
+                                                    isJumpSet={exercise.isJumpSet}
+                                                    isSuperSet={exercise.isSuperSet}
+                                                    className="justify-end"
+                                                />
+                                            </div>
                                         </button>
                                     </li>
                                 ))}

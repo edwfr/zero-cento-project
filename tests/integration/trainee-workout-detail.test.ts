@@ -68,6 +68,8 @@ describe('GET /api/trainee/workouts/[id]', () => {
                     effectiveWeight: 100,
                     restTime: 'm2',
                     isWarmup: false,
+                    isJumpSet: false,
+                    isSuperSet: false,
                     notes: null,
                     order: 1,
                     isCompleted: true,

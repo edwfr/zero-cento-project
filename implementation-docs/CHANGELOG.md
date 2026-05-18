@@ -32,6 +32,36 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 **File modificati:** `prisma/schema.prisma`, `prisma/migrations/20260518000000_add_workout_exercise_jump_superset_flags/migration.sql`, `src/schemas/workout-exercise.ts`, `src/app/api/programs/[id]/workouts/[workoutId]/exercises/{route.ts,bulk/route.ts,[exerciseId]/route.ts}`, `src/app/api/programs/[id]/{copy-week/route.ts,copy-first-week/route.ts}`, `src/app/trainer/programs/[id]/edit/{_content.tsx,transform-utils.ts,skeleton-hydration.ts}`, `public/locales/{it,en}/{trainer.json,validation.json}`, `tests/unit/{schemas.test.ts,transform-utils.test.ts,calculations.test.ts}`, `tests/integration/{workout-exercises-bulk.test.ts,copy-week.test.ts,programs.test.ts}`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 **Note:** Aggiunti i campi booleani `isJumpSet` e `isSuperSet` su `workout_exercises` (default `false`) con propagazione completa su create/update/bulk e sui flussi di copia settimana (`copy-week`, `copy-first-week`). Nella schermata `/trainer/programs/[id]/edit` la tabella esercizi ora mostra le colonne `JumpSet` e `SuperSet` immediatamente dopo `Warmup`, con rendering icona in read-only e checkbox in edit. Introdotti hint per le icone `Warmup`, `JumpSet` e `SuperSet` tramite popover click/tap con fallback hover (`title`). Aggiunta regola di mutua esclusione JumpSet/SuperSet lato UI e lato validazione Zod (`validation.jumpSetSuperSetExclusive`) con copertura test aggiornata.
 
+### [18 Maggio 2026] — Trainee workout focus: icone Warmup/JumpSet/SuperSet con hint click
+
+**Task checklist:** #11.110
+**File modificati:** `src/app/api/trainee/workouts/[id]/route.ts`, `src/app/trainee/workouts/[id]/_content.tsx`, `tests/unit/trainee-workout-focus.test.tsx`, `tests/integration/trainee-workout-detail.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Nella schermata `/trainee/workouts/[id]` la riga badge dell'`ExerciseFocusCard` ora mostra icone dedicate per `Warmup`, `JumpSet` e `SuperSet` quando i flag sono attivi sull'esercizio. Ogni icona e cliccabile e apre un popover con lo stesso contenuto hint usato nell'editor trainer (`trainer:editProgram.*Hint`), con chiusura su click esterno o `Escape` e fallback hover (`title`). L'endpoint `GET /api/trainee/workouts/[id]` ora espone anche `isJumpSet` e `isSuperSet` (normalizzati boolean) per ogni `workoutExercise`.
+
+### [18 Maggio 2026] — Badge metadati estesi a recap e settimana precedente trainee
+
+**Task checklist:** #11.111
+**File modificati:** `src/components/{ExerciseMetaBadges.tsx,PrevWeekPanel.tsx,WorkoutRecapPanel.tsx,WorkoutExerciseDisplayList.tsx}`, `src/lib/workout-recap.ts`, `src/app/api/trainee/workouts/[id]/{prev-week/route.ts,recap/route.ts}`, `tests/unit/{prev-week-panel.test.tsx,workout-recap-panel.test.tsx,workout-recap.test.ts}`, `tests/integration/trainee-workout-prev-week.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** I badge metadati esercizio usati nel focus (`Warmup`, `JumpSet`, `SuperSet`, `rest`, `fundamental/accessory`) ora sono mostrati anche nel pannello `Settimana precedente` e nel pannello `Riepilogo esercizi` di `/trainee/workouts/[id]`. Per evitare divergenze di stile e ordine e stato introdotto il componente condiviso `ExerciseMetaBadges` (ordine: flag -> rest -> tipo). Le API `prev-week` e `recap` ora includono i campi necessari (`exerciseType`, `restTime`, `isWarmup`, `isJumpSet`, `isSuperSet`) e i test unit/integration sono stati aggiornati.
+
+### [18 Maggio 2026] — Recap trainee: badge flag sotto indicatore serie
+
+**Task checklist:** #11.112
+**File modificati:** `src/components/WorkoutRecapPanel.tsx`, `tests/unit/workout-recap-panel.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Nel pannello `Riepilogo esercizi` di `/trainee/workouts/[id]` i badge metadati sono stati ulteriormente rifiniti: ora vengono mostrati solo i flag (`Warmup`, `JumpSet`, `SuperSet`) e sono posizionati nella colonna destra sotto il contatore serie completate (`completed/target`).
+
+### [18 Maggio 2026] — Export PDF programma: marker Warmup/JumpSet/SuperSet
+
+**Task checklist:** #11.113
+**File modificati:** `src/lib/program-pdf-export.ts`, `src/app/trainer/programs/[id]/review/_content.tsx`, `src/app/api/programs/[id]/review/route.ts`, `src/lib/trainee-program-data.ts`, `src/app/trainee/programs/_components/ProgramDetailContent.tsx`, `public/locales/{it,en}/{trainer.json,trainee.json}`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** L'export PDF del programma ora include anche i marker di metadato esercizio per `Warmup`, `JumpSet` e `SuperSet` nella colonna `Esercizio`, sia nel flusso trainer (`/trainer/programs/[id]/review`) sia nel flusso trainee (`/trainee/programs/current`). Il modello `ProgramPdfExercise` e stato esteso con `isJumpSet` e `isSuperSet`; i payload sorgente sono stati aggiornati in read path (review API + trainee program data) e sono state aggiunte le etichette corte i18n (`jumpSetShort`, `superSetShort`) in EN/IT.
+
+### [18 Maggio 2026] — Settimana precedente trainee: badge flag a destra, nessun altro badge
+
+**Task checklist:** #11.114
+**File modificati:** `src/components/{WorkoutExerciseDisplayList.tsx,PrevWeekPanel.tsx}`, `tests/unit/prev-week-panel.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Nel pannello `Settimana precedente` di `/trainee/workouts/[id]`, la lista esercizi ora mostra solo i badge flag (`Warmup`, `JumpSet`, `SuperSet`) senza `rest` o `fundamental/accessory`. I badge sono stati spostati nella colonna destra della riga e allineati verticalmente al centro rispetto al contenuto esercizio.
+
 ### [16 Maggio 2026] — Trainee current program: schema esercizi con peso e @RPE
 
 **Task checklist:** #11.104

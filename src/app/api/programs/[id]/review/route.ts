@@ -85,6 +85,8 @@ export async function GET(
                                             effectiveWeight: true,
                                             restTime: true,
                                             isWarmup: true,
+                                            isJumpSet: true,
+                                            isSuperSet: true,
                                             notes: true,
                                             exercise: {
                                                 select: {

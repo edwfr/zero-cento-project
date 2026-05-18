@@ -142,6 +142,8 @@
         "warmupShort": "W",
         "warmupYesShort": "WARMUP",
         "warmupNoShort": "NO-WARMUP",
+        "jumpSetShort": "JSET",
+        "superSetShort": "SSET",
         "exportPdf": "Export Program PDF",
         "exportingPdf": "Generating PDF...",
         "exportPdfError": "Failed to generate PDF",
