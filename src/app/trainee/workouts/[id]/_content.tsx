@@ -268,7 +268,24 @@ export default function WorkoutDetailContent() {
             setExerciseCompleted(initialCompleted)
             // Pre-fill workout summary from traineeNotes (not from any exercise feedback)
             setGlobalNotes(data.data.workout.traineeNotes ?? '')
-            setCurrentStep(0)
+            // Restore last step from localStorage, clamped to valid range
+            let resumeStep = 0
+            try {
+                const savedDraft = localStorage.getItem(STORAGE_KEY)
+                if (savedDraft) {
+                    const parsedDraft = JSON.parse(savedDraft) as Record<string, unknown>
+                    if (
+                        typeof parsedDraft?.currentStep === 'number' &&
+                        parsedDraft.currentStep >= 0 &&
+                        parsedDraft.currentStep <= orderedExercises.length
+                    ) {
+                        resumeStep = parsedDraft.currentStep
+                    }
+                }
+            } catch {
+                // localStorage read failed; default to step 0
+            }
+            setCurrentStep(resumeStep)
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : t('workouts.errorLoading'))
         } finally {
@@ -301,13 +318,14 @@ export default function WorkoutDetailContent() {
                     exerciseRPE,
                     exerciseNotes,
                     globalNotes,
+                    currentStep,
                     savedAt: new Date().toISOString(),
                 })
             )
         } catch {
             // localStorage write failed; in-memory state is still valid
         }
-    }, [STORAGE_KEY, exerciseRPE, exerciseNotes, feedbackData, globalNotes])
+    }, [STORAGE_KEY, exerciseRPE, exerciseNotes, feedbackData, globalNotes, currentStep])
 
     const clearLocalData = () => {
         try {
