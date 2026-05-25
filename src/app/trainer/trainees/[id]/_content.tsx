@@ -216,6 +216,7 @@ export default function TraineeDetailContent() {
     const [oneRmTimeWindow, setOneRmTimeWindow] = useState<RecordTimeWindow>('180d')
     const [sbdLiftFilters, setSbdLiftFilters] = useState<SbdLiftValue[] | null>(null)
     const [sbdTimeWindow, setSbdTimeWindow] = useState<RecordTimeWindow>('180d')
+    const [includeFutureSbdWeeks, setIncludeFutureSbdWeeks] = useState(false)
     const [collapsedPanels, setCollapsedPanels] = useState<Record<RecordsPanel, boolean>>({
         maxProgression: false,
         sbdProgression: false,
@@ -346,7 +347,7 @@ export default function TraineeDetailContent() {
             }
 
             const recordDate = new Date(record.recordDate)
-            return !Number.isNaN(recordDate.getTime()) && recordDate >= cutoffDate
+            return !Number.isNaN(recordDate.getTime()) && recordDate >= cutoffDate && recordDate <= now
         })
     }, [oneRmExerciseFilters, oneRmTimeWindow, records])
 
@@ -442,14 +443,23 @@ export default function TraineeDetailContent() {
                 : new Date(now.getTime() - daysByWindow[sbdTimeWindow] * 24 * 60 * 60 * 1000)
 
         return plannedPoints.filter((point) => {
-            if (!cutoffDate) {
-                return true
+            const pointDate = new Date(point.date)
+            if (Number.isNaN(pointDate.getTime())) {
+                return false
             }
 
-            const pointDate = new Date(point.date)
-            return !Number.isNaN(pointDate.getTime()) && pointDate >= cutoffDate
+            if (!cutoffDate) {
+                return includeFutureSbdWeeks ? true : pointDate <= now
+            }
+
+            const isWithinWindow = pointDate >= cutoffDate
+            if (!isWithinWindow) {
+                return false
+            }
+
+            return includeFutureSbdWeeks ? true : pointDate <= now
         })
-    }, [plannedPoints, sbdTimeWindow])
+    }, [includeFutureSbdWeeks, plannedPoints, sbdTimeWindow])
 
     const sbdSeries = useMemo<ChartSeries[]>(() => {
         const baseSeries: ChartSeries[] = [
@@ -527,16 +537,23 @@ export default function TraineeDetailContent() {
         return sbdKpiRows.filter((row) => activeLiftSet.has(row.lift))
     }, [sbdKpiRows, sbdLiftFilters])
 
-    const sbdKpiSummary = useMemo(() => {
-        const totalFrequency = visibleSbdKpiRows.reduce((sum, row) => sum + row.frequency, 0)
-        const totalLifts = visibleSbdKpiRows.reduce((sum, row) => sum + row.totalLifts, 0)
+    const sbdKpiRowsByLift = useMemo<Record<SbdLiftValue, SbdKpiRow>>(() => {
+        return SBD_LIFTS.reduce((accumulator, lift) => {
+            const existingRow = sbdKpiRows.find((row) => row.lift === lift)
 
-        return {
-            totalFrequency,
-            totalLifts: Number(totalLifts.toFixed(1)),
-            averageIntensity: null as number | null,
-        }
-    }, [visibleSbdKpiRows])
+            accumulator[lift] =
+                existingRow ??
+                {
+                    lift,
+                    label: t(`reports.${lift}`),
+                    frequency: 0,
+                    totalLifts: 0,
+                    averageIntensity: null,
+                }
+
+            return accumulator
+        }, {} as Record<SbdLiftValue, SbdKpiRow>)
+    }, [sbdKpiRows, t])
 
     const timeWindowOptions: Array<{ value: RecordTimeWindow; label: string }> = [
         { value: '30d', label: t('common:common.personalRecordsExplorer.window30d') },
@@ -1064,6 +1081,20 @@ export default function TraineeDetailContent() {
                                                     </option>
                                                 ))}
                                             </select>
+
+                                            <label
+                                                htmlFor="sbd-include-future-weeks"
+                                                className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-gray-700"
+                                            >
+                                                <input
+                                                    id="sbd-include-future-weeks"
+                                                    type="checkbox"
+                                                    checked={includeFutureSbdWeeks}
+                                                    onChange={(event) => setIncludeFutureSbdWeeks(event.target.checked)}
+                                                    className="h-4 w-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+                                                />
+                                                {t('athletes.reportingIncludeFutureWeeks')}
+                                            </label>
                                         </div>
 
                                         <div>
@@ -1113,23 +1144,80 @@ export default function TraineeDetailContent() {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-                                            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{t('editProgram.sbdFrq')}</p>
-                                            <p className="mt-1 text-2xl font-bold text-slate-900">{sbdKpiSummary.totalFrequency}</p>
-                                        </div>
-                                        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-                                            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{t('editProgram.sbdNbl')}</p>
-                                            <p className="mt-1 text-2xl font-bold text-slate-900">{sbdKpiSummary.totalLifts}</p>
-                                        </div>
-                                        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-                                            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{t('editProgram.sbdIm')}</p>
-                                            <p className="mt-1 text-2xl font-bold text-slate-900">
-                                                {sbdKpiSummary.averageIntensity !== null
-                                                    ? `${sbdKpiSummary.averageIntensity.toFixed(1)}%`
-                                                    : '-'}
-                                            </p>
-                                        </div>
+                                    <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                                        {SBD_LIFTS.map((lift) => {
+                                            const row = sbdKpiRowsByLift[lift]
+                                            const isLiftVisible = sbdLiftFilters === null || sbdLiftFilters.includes(lift)
+                                            const color = SBD_COLORS[lift]
+                                            const metrics = [
+                                                {
+                                                    key: 'frq',
+                                                    label: t('editProgram.sbdFrq'),
+                                                    value: String(row.frequency),
+                                                    testId: `sbd-kpi-frq-${lift}`,
+                                                },
+                                                {
+                                                    key: 'nbl',
+                                                    label: t('editProgram.sbdNbl'),
+                                                    value: row.totalLifts.toFixed(1).replace(/\.0$/, ''),
+                                                    testId: `sbd-kpi-nbl-${lift}`,
+                                                },
+                                                {
+                                                    key: 'im',
+                                                    label: t('editProgram.sbdIm'),
+                                                    value: row.averageIntensity !== null
+                                                        ? `${row.averageIntensity.toFixed(1)}%`
+                                                        : '-',
+                                                    testId: `sbd-kpi-im-${lift}`,
+                                                },
+                                            ]
+
+                                            return (
+                                                <div
+                                                    key={`sbd-kpi-${lift}`}
+                                                    data-testid={`sbd-kpi-card-${lift}`}
+                                                    className={`relative overflow-hidden rounded-xl border bg-white p-4 shadow-sm transition-all ${isLiftVisible
+                                                        ? 'opacity-100'
+                                                        : 'opacity-50'
+                                                        }`}
+                                                    style={{ borderColor: isLiftVisible ? `${color}66` : '#E2E8F0' }}
+                                                >
+                                                    <span
+                                                        className="pointer-events-none absolute inset-x-0 top-0 h-1"
+                                                        style={{ backgroundColor: color }}
+                                                    />
+
+                                                    <div className="mb-3 flex items-center gap-2">
+                                                        <span
+                                                            className="h-3 w-3 rounded-full"
+                                                            style={{ backgroundColor: color }}
+                                                        />
+                                                        <p className="text-sm font-bold uppercase tracking-wide text-slate-900">
+                                                            {row.label}
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-3 gap-2">
+                                                        {metrics.map((metric) => (
+                                                            <div
+                                                                key={metric.key}
+                                                                className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2"
+                                                            >
+                                                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                                                                    {metric.label}
+                                                                </p>
+                                                                <p
+                                                                    data-testid={metric.testId}
+                                                                    className="mt-1 text-2xl font-black leading-none text-slate-900"
+                                                                >
+                                                                    {metric.value}
+                                                                </p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )
+                                        })}
                                     </div>
 
                                     <div className="overflow-x-auto rounded-lg border border-slate-200">

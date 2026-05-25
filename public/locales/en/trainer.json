@@ -211,6 +211,7 @@
         "reportingNoVisibleData": "There is no data for the selected filters.",
         "reportingFilterByExerciseLabel": "Filter by exercise",
         "reportingFilterByFundamentalLabel": "Filter by fundamental",
+        "reportingIncludeFutureWeeks": "Include future weeks",
         "reportingSetsUnit": "sets",
         "reportsLoadError": "Error loading reporting"
     },

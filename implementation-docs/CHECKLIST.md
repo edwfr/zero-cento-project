@@ -681,6 +681,12 @@
       File: `src/components/{WorkoutExerciseDisplayList.tsx,PrevWeekPanel.tsx}`, `tests/unit/prev-week-panel.test.tsx`
 - [x] **11.115** `/trainee/programs/current`: usare gli stessi badge flag (`Warmup`/`JumpSet`/`SuperSet`) allineati a destra per ogni esercizio nella lista workout espansa ✅ _18 Mag 2026_  
       File: `src/app/trainee/programs/_components/ProgramDetailContent.tsx`
+- [x] **11.116** `/trainer/trainees/[id]` report SBD: sostituire il riepilogo KPI aggregato con tre box separati per fondamentale (`Squat`, `Panca`, `Stacco`) contenenti `FRQ`/`NBL`/`IM`, usando i dati gia filtrati dalla finestra temporale selezionata, con card KPI ridisegnate per maggiore leggibilita ✅ _25 Mag 2026_  
+      File: `src/app/trainer/trainees/[id]/_content.tsx`, `tests/unit/trainer-trainee-detail-sbd-report.test.tsx`
+- [x] **11.117** `/trainer/trainees/[id]` report SBD: nel filtro temporale (`30/90/180/365 giorni`) escludere esplicitamente i punti con data futura, limitando la finestra a `cutoff <= data <= oggi` ✅ _25 Mag 2026_  
+      File: `src/app/trainer/trainees/[id]/_content.tsx`, `tests/unit/trainer-trainee-detail-sbd-report.test.tsx`
+- [x] **11.118** `/trainer/trainees/[id]` report SBD: aggiungere flag UI `Includi settimane future` per consentire la visualizzazione dei punti futuri anche con finestre temporali limitate (`30/90/180/365`) ✅ _25 Mag 2026_  
+      File: `src/app/trainer/trainees/[id]/_content.tsx`, `public/locales/{it,en}/trainer.json`, `tests/unit/trainer-trainee-detail-sbd-report.test.tsx`
 
 ---
 

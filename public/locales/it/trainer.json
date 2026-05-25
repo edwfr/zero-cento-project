@@ -211,6 +211,7 @@
         "reportingNoVisibleData": "Non ci sono dati per i filtri selezionati.",
         "reportingFilterByExerciseLabel": "Filtra per esercizio",
         "reportingFilterByFundamentalLabel": "Filtra per fondamentale",
+        "reportingIncludeFutureWeeks": "Includi settimane future",
         "reportingSetsUnit": "Set",
         "reportsLoadError": "Errore nel caricamento della reportistica"
     },
@@ -307,7 +308,7 @@
         "lastModifiedColumn": "Ultima modifica",
         "actionsColumn": "Azioni",
         "testWeekNumber": "Sett. {{week}}",
-        "noTestWeeks": "Non previsti",
+        "noTestWeeks": "NA",
         "testsCompleted": "Completati",
         "testsPending": "Da fare",
         "testsButtonDisabledTooltip": "Il pulsante si abilita quando tutti i test previsti sono completati"

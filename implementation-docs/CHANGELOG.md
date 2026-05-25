@@ -14,6 +14,24 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 - **[11 Maggio 2026] Unificato calcolo 1RM su tabella RPE Mike Tuchscherer** — Aggiunto helper condiviso `normalizedOneRM(weight, reps)` in `src/lib/calculations.ts` (wrapper su `estimateOneRMFromRpeTable(w, r, 10)` con arrotondamento a 0.1 kg). Sostituite tre formule divergenti sparse nel codebase: Epley (`weight * (1 + reps/30)`) negli editor di programmi e workouts trainer e nell'endpoint review; Brzycki (`weight * 36/(37-reps)`) nel tab Massimali della pagina trainee. Ora `% rispetto 1RM` usa la stessa normalizzazione del tab Massimali in `/trainer/trainees/[id]` e della pagina `/trainer/trainees/[id]/records`, indipendentemente dalla settimana. Backend `resolveEffectiveWeight`/`calculateEffectiveWeight` ora calcolano l'1RM dal miglior PR normalizzato (RPE table) invece di richiedere obbligatoriamente un record `reps=1`. **Files modificati:** `src/lib/calculations.ts`, `src/app/trainer/programs/[id]/edit/_content.tsx`, `src/app/trainer/programs/[id]/workouts/[wId]/_content.tsx`, `src/app/trainer/programs/[id]/tests/_content.tsx`, `src/app/api/programs/[id]/review/route.ts`, `src/app/trainer/trainees/[id]/_content.tsx`, `src/app/trainer/trainees/[id]/records/_content.tsx`, `src/app/trainee/records/_content.tsx`, `src/components/PersonalRecordsExplorer.tsx`, `tests/unit/calculations.test.ts`, `tests/unit/setup.ts`, `public/locales/{it,en}/trainer.json`.
 - **[11 Maggio 2026] Widget Massimali Trainee: riga 1RM calcolato** — Nella schermata `/trainer/programs/[id]/edit`, il widget "Massimali Trainee" mostra sotto la riga `kg × rep` una seconda riga `1RM calcolato: X kg` derivata dalla tabella RPE Mike Tuchscherer (RPE 10). Nuova chiave i18n `editProgram.prHelperEstimatedOneRm` in en/it. **Files modificati:** `src/app/trainer/programs/[id]/edit/_content.tsx`, `public/locales/{it,en}/trainer.json`.
 
+### [25 Maggio 2026] — Dettaglio atleta trainer: KPI SBD per lift e filtro temporale
+
+**Task checklist:** #11.116
+**File modificati:** `src/app/trainer/trainees/[id]/_content.tsx`, `tests/unit/trainer-trainee-detail-sbd-report.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Nella schermata `/trainer/trainees/[id]`, pannello `Report SBD`, i box KPI sopra il grafico non mostrano piu un aggregato unico FRQ/NBL/IM. Ora sono tre box distinti per fondamentale (`Squat`, `Panca`, `Stacco`) e ciascun box espone FRQ, NBL e IM del singolo lift. I valori vengono calcolati a partire da `sbdFilteredPlannedPoints`, quindi rispettano direttamente la finestra temporale selezionata. Le card KPI sono state inoltre ridisegnate per aumentare la leggibilita: header del lift piu evidente, barra colore per fondamentale e mini-metriche FRQ/NBL/IM con numeri ad alto contrasto. Aggiunti `data-testid` ai valori KPI e un nuovo test unitario che verifica sia la segmentazione per lift sia l'aggiornamento dei KPI al cambio filtro temporale.
+
+### [25 Maggio 2026] — Dettaglio atleta trainer: filtro temporale SBD senza date future
+
+**Task checklist:** #11.117
+**File modificati:** `src/app/trainer/trainees/[id]/_content.tsx`, `tests/unit/trainer-trainee-detail-sbd-report.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Corretto il filtro temporale del pannello `Report SBD` in `/trainer/trainees/[id]`: per finestre `30/90/180/365 giorni` ora la selezione considera solo i punti nel passato recente (`cutoff <= data <= oggi`), evitando che settimane pianificate future vengano incluse nel conteggio e nei KPI FRQ/NBL/IM. Aggiornato il test unitario dedicato aggiungendo un punto nel futuro e verificando che non rientri nella finestra filtrata.
+
+### [25 Maggio 2026] — Dettaglio atleta trainer: flag include settimane future nel report SBD
+
+**Task checklist:** #11.118
+**File modificati:** `src/app/trainer/trainees/[id]/_content.tsx`, `public/locales/{it,en}/trainer.json`, `tests/unit/trainer-trainee-detail-sbd-report.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Aggiunto nel pannello `Report SBD` di `/trainer/trainees/[id]` il nuovo flag `Includi settimane future`. Con flag disattivo, le finestre temporali limitate (`30/90/180/365`) mantengono il vincolo al passato (`<= oggi`). Con flag attivo, il report include anche i punti futuri pur mantenendo il limite inferiore del periodo selezionato. Aggiornate le traduzioni EN/IT e il test unitario del pannello per coprire esplicitamente il toggle.
+
 ### [18 Maggio 2026] — Trainer test results: commenti esercizio in tabella
 
 **Task checklist:** #11.107
