@@ -52,11 +52,11 @@ export interface ProgramPdfLabels {
     tableReps: string
     tableRpe: string
     tableWeight: string
+    tableRest: string
     tableNoExercises: string
     warmupYesShort: string
     jumpSetShort: string
     superSetShort: string
-    previousExerciseShort: string
     missingValue: string
 }
 
@@ -66,6 +66,22 @@ export interface ProgramPdfExportConfig {
     locale?: string
     brandLabel?: string
 }
+
+const REST_TIME_LABELS: Record<RestTime, string> = {
+    s30: '0:30',
+    m1: '1:00',
+    m1s30: '1:30',
+    m2: '2:00',
+    m3: '3:00',
+    m5: '5:00',
+}
+
+const PDF_ROW_GRAY_TONES: [[number, number, number], [number, number, number]] = [
+    [245, 245, 245],
+    [232, 232, 232],
+]
+
+const PDF_ROW_JUMP_SUPERSET_TONE: [number, number, number] = [255, 243, 179]
 
 const formatWeightValue = (value: number): string => {
     if (!Number.isFinite(value)) {
@@ -86,7 +102,6 @@ const formatWeightKg = (value: number | null, fallback: string): string => {
 const formatAssignedWeight = (
     weightType: WeightType,
     weight: number | null,
-    previousExerciseLabel: string,
     fallback: string
 ): string => {
     if (typeof weight !== 'number' || !Number.isFinite(weight)) {
@@ -108,7 +123,7 @@ const formatAssignedWeight = (
     }
 
     const sign = weight > 0 ? '+' : ''
-    return `${sign}${formattedWeight}% ${previousExerciseLabel}`
+    return `${sign}${formattedWeight}%`
 }
 
 const sanitizeFileNamePart = (value: string): string => {
@@ -146,13 +161,13 @@ const formatPercentageWeightLabel = (
 
 type ProgramPdfExerciseRowLabels = Pick<
     ProgramPdfLabels,
-    'warmupYesShort' | 'jumpSetShort' | 'superSetShort' | 'previousExerciseShort' | 'missingValue'
+    'warmupYesShort' | 'jumpSetShort' | 'superSetShort' | 'missingValue'
 >
 
 export function buildProgramPdfExerciseRow(
     exercise: ProgramPdfExercise,
     labels: ProgramPdfExerciseRowLabels
-): [string, string, string, string, string, string] {
+): [string, string, string, string, string, string, string] {
     const assignedWeightValue =
         exercise.weightType === 'absolute'
             ? (exercise.weight ?? exercise.effectiveWeight)
@@ -161,7 +176,6 @@ export function buildProgramPdfExerciseRow(
     const assignedWeight = formatAssignedWeight(
         exercise.weightType,
         assignedWeightValue,
-        labels.previousExerciseShort,
         labels.missingValue
     )
     const calculatedWeight = formatWeightKg(exercise.effectiveWeight, labels.missingValue)
@@ -182,8 +196,30 @@ export function buildProgramPdfExerciseRow(
     const repsLabel = exercise.reps
     const rpeLabel =
         typeof exercise.targetRpe === 'number' ? String(exercise.targetRpe) : labels.missingValue
+    const restLabel = REST_TIME_LABELS[exercise.restTime] || labels.missingValue
 
-    return [exerciseLabel, variantLabel, setsLabel, repsLabel, rpeLabel, weightLabel]
+    return [exerciseLabel, variantLabel, setsLabel, repsLabel, rpeLabel, weightLabel, restLabel]
+}
+
+export function buildProgramPdfRowFillColors(
+    exercises: ProgramPdfExercise[]
+): [number, number, number][] {
+    let toneIndex = 0
+    let previousExerciseName: string | null = null
+
+    return exercises.map((exercise) => {
+        if (previousExerciseName !== null && exercise.name !== previousExerciseName) {
+            toneIndex = toneIndex === 0 ? 1 : 0
+        }
+
+        previousExerciseName = exercise.name
+
+        if (exercise.isJumpSet || exercise.isSuperSet) {
+            return PDF_ROW_JUMP_SUPERSET_TONE
+        }
+
+        return PDF_ROW_GRAY_TONES[toneIndex]
+    })
 }
 
 const loadImageAsDataUrl = async (imageUrl: string): Promise<string | null> => {
@@ -286,7 +322,9 @@ export async function exportProgramToPdf(
 
                 const bodyRows = workout.exercises.length > 0
                     ? workout.exercises.map((exercise) => buildProgramPdfExerciseRow(exercise, labels))
-                    : [[labels.tableNoExercises, '', '', '', '', '']]
+                    : [[labels.tableNoExercises, '', '', '', '', '', '']]
+                const rowFillColors =
+                    workout.exercises.length > 0 ? buildProgramPdfRowFillColors(workout.exercises) : []
 
                 autoTable(doc, {
                     startY: cursorY + 2,
@@ -299,6 +337,7 @@ export async function exportProgramToPdf(
                         labels.tableReps,
                         labels.tableRpe,
                         labels.tableWeight,
+                        labels.tableRest,
                     ]],
                     body: bodyRows,
                     styles: {
@@ -314,12 +353,25 @@ export async function exportProgramToPdf(
                         fontStyle: 'bold',
                     },
                     columnStyles: {
-                        0: { cellWidth: 56, halign: 'left' },
-                        1: { cellWidth: 40, halign: 'left' },
-                        2: { cellWidth: 14, halign: 'center' },
-                        3: { cellWidth: 18, halign: 'center' },
-                        4: { cellWidth: 14, halign: 'center' },
-                        5: { cellWidth: 40, halign: 'left' },
+                        0: { cellWidth: 50, halign: 'left' },
+                        1: { cellWidth: 36, halign: 'left' },
+                        2: { cellWidth: 12, halign: 'center' },
+                        3: { cellWidth: 14, halign: 'center' },
+                        4: { cellWidth: 12, halign: 'center' },
+                        5: { cellWidth: 24, halign: 'left' },
+                        6: { cellWidth: 34, halign: 'center' },
+                    },
+                    didParseCell: (hookData) => {
+                        if (hookData.section !== 'body') {
+                            return
+                        }
+
+                        const fillColor = rowFillColors[hookData.row.index]
+                        if (!fillColor) {
+                            return
+                        }
+
+                        hookData.cell.styles.fillColor = fillColor
                     },
                     theme: 'grid',
                     tableLineColor: [226, 226, 226],

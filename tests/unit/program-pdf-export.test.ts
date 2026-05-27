@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { buildProgramPdfExerciseRow, type ProgramPdfExercise } from '@/lib/program-pdf-export'
+import {
+    buildProgramPdfExerciseRow,
+    buildProgramPdfRowFillColors,
+    type ProgramPdfExercise,
+} from '@/lib/program-pdf-export'
 
 const labels = {
     warmupYesShort: 'RISC',
     jumpSetShort: 'JSET',
     superSetShort: 'SSET',
-    previousExerciseShort: 'precedente',
     missingValue: '-',
 }
 
@@ -34,6 +37,7 @@ describe('buildProgramPdfExerciseRow', () => {
         expect(row[2]).toBe('4')
         expect(row[3]).toBe('6-8')
         expect(row[4]).toBe('8')
+        expect(row[6]).toBe('2:00')
     })
 
     it('does not include fundamental/accessory markers in exercise name', () => {
@@ -73,6 +77,36 @@ describe('buildProgramPdfExerciseRow', () => {
             labels
         )
 
-        expect(row[5]).toBe('+5% precedente')
+        expect(row[5]).toBe('+5%')
+    })
+
+    it('alternates gray tones when exercise name changes', () => {
+        const colors = buildProgramPdfRowFillColors([
+            makeExercise({ name: 'Esercizio 1' }),
+            makeExercise({ name: 'Esercizio 1' }),
+            makeExercise({ name: 'Esercizio 2' }),
+            makeExercise({ name: 'Esercizio 3' }),
+        ])
+
+        expect(colors).toEqual([
+            [245, 245, 245],
+            [245, 245, 245],
+            [232, 232, 232],
+            [245, 245, 245],
+        ])
+    })
+
+    it('highlights jump-set and superset rows in yellow', () => {
+        const colors = buildProgramPdfRowFillColors([
+            makeExercise({ name: 'Esercizio 1' }),
+            makeExercise({ name: 'Esercizio 2', isJumpSet: true }),
+            makeExercise({ name: 'Esercizio 3', isSuperSet: true }),
+        ])
+
+        expect(colors).toEqual([
+            [245, 245, 245],
+            [255, 243, 179],
+            [255, 243, 179],
+        ])
     })
 })

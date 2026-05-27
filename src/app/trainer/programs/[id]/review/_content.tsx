@@ -537,11 +537,11 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
             tableReps: t('reviewProgram.tableReps'),
             tableRpe: t('reviewProgram.tableRpe'),
             tableWeight: t('reviewProgram.tableWeight'),
+            tableRest: t('reviewProgram.tableRest'),
             tableNoExercises: t('reviewProgram.noExercises'),
             warmupYesShort: t('reviewProgram.warmupYesShort'),
             jumpSetShort: t('reviewProgram.jumpSetShort'),
             superSetShort: t('reviewProgram.superSetShort'),
-            previousExerciseShort: t('reviewProgram.previousExerciseShort'),
             missingValue: '-',
         }),
         [t]

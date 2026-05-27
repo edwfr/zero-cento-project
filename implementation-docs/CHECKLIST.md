@@ -693,6 +693,10 @@
       File: `src/app/trainer/programs/_content.tsx`
 - [x] **11.121** `/trainee/programs/current`: export PDF con riferimento settimana accanto al titolo workout, tabella colonne `Esercizio/Variante/Set/Rep/RPE/Peso`, rimozione marker `fundamental/accessory` e per pesi `%` visualizzazione `% trainer + kg calcolati` ✅ _27 Mag 2026_  
       File: `src/lib/program-pdf-export.ts`, `src/app/trainee/programs/_components/ProgramDetailContent.tsx`, `src/app/trainer/programs/[id]/review/_content.tsx`, `public/locales/{it,en}/{trainee.json,trainer.json}`, `tests/unit/program-pdf-export.test.ts`
+- [x] **11.122** Export PDF programma: per pesi `percentage_previous` mostrare solo `+/-n%` senza suffisso testuale `precedente` ✅ _27 Mag 2026_  
+      File: `src/lib/program-pdf-export.ts`, `src/app/trainee/programs/_components/ProgramDetailContent.tsx`, `src/app/trainer/programs/[id]/review/_content.tsx`, `tests/unit/program-pdf-export.test.ts`
+- [x] **11.123** Export PDF programma: ridurre colonna `Peso`, aggiungere colonna `Recupero` dopo `Peso`, alternare due grigi per blocchi esercizio e colorare in giallo le righe `JumpSet/SuperSet` (con marker `Warmup` mantenuto) ✅ _27 Mag 2026_  
+      File: `src/lib/program-pdf-export.ts`, `src/app/trainee/programs/_components/ProgramDetailContent.tsx`, `src/app/trainer/programs/[id]/review/_content.tsx`, `tests/unit/program-pdf-export.test.ts`
 
 ---
 

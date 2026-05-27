@@ -33,6 +33,18 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 **File modificati:** `src/lib/program-pdf-export.ts`, `src/app/trainee/programs/_components/ProgramDetailContent.tsx`, `src/app/trainer/programs/[id]/review/_content.tsx`, `public/locales/{it,en}/{trainee.json,trainer.json}`, `tests/unit/program-pdf-export.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 **Note:** Aggiornato il layout del PDF esportato da `/trainee/programs/current` (utility condivisa anche con la review trainer): il riferimento settimana ora e riportato accanto al titolo di ogni workout, la tabella usa le colonne `Esercizio`, `Variante`, `Set`, `Rep`, `RPE`, `Peso`, sono stati rimossi i marker `fundamental/accessory` dalla colonna esercizio e per i pesi percentuali viene mostrato sia il valore percentuale impostato dal trainer sia il peso calcolato in kg.
 
+### [27 Maggio 2026] — Export PDF: `percentage_previous` senza suffisso `precedente`
+
+**Task checklist:** #11.122
+**File modificati:** `src/lib/program-pdf-export.ts`, `src/app/trainee/programs/_components/ProgramDetailContent.tsx`, `src/app/trainer/programs/[id]/review/_content.tsx`, `tests/unit/program-pdf-export.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Rifinita la formattazione del peso nel PDF per il caso `percentage_previous`: ora viene mostrato solo il valore percentuale (`+/-n%`) senza testo aggiuntivo (`precedente`).
+
+### [27 Maggio 2026] — Export PDF: colonna recupero e colorazione righe per esercizio
+
+**Task checklist:** #11.123
+**File modificati:** `src/lib/program-pdf-export.ts`, `src/app/trainee/programs/_components/ProgramDetailContent.tsx`, `src/app/trainer/programs/[id]/review/_content.tsx`, `tests/unit/program-pdf-export.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Nel PDF programma la colonna `Peso` e stata resa piu stretta ed e stata aggiunta la colonna `Recupero` subito dopo `Peso`. Le righe body ora usano due toni di grigio alternati a blocchi quando cambia il nome esercizio (stesso esercizio consecutivo = stesso tono), mentre le righe marcate `JumpSet` o `SuperSet` vengono evidenziate in giallo. Il marker `Warmup` resta visibile nel testo della colonna esercizio.
+
 ### [25 Maggio 2026] — Dettaglio atleta trainer: KPI SBD per lift e filtro temporale
 
 **Task checklist:** #11.116

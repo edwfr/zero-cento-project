@@ -550,11 +550,11 @@ export default function ProgramDetailContent({
             tableReps: t('currentProgram.tableReps'),
             tableRpe: t('currentProgram.tableRpe'),
             tableWeight: t('currentProgram.tableWeight'),
+            tableRest: t('currentProgram.tableRest'),
             tableNoExercises: t('currentProgram.tableNoExercises'),
             warmupYesShort: t('currentProgram.warmupYesShort'),
             jumpSetShort: t('currentProgram.jumpSetShort'),
             superSetShort: t('currentProgram.superSetShort'),
-            previousExerciseShort: t('workouts.previousExerciseShort'),
             missingValue: t('currentProgram.tableMissingValue'),
         }),
         [t]
