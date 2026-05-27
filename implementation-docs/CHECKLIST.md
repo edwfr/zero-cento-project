@@ -687,6 +687,10 @@
       File: `src/app/trainer/trainees/[id]/_content.tsx`, `tests/unit/trainer-trainee-detail-sbd-report.test.tsx`
 - [x] **11.118** `/trainer/trainees/[id]` report SBD: aggiungere flag UI `Includi settimane future` per consentire la visualizzazione dei punti futuri anche con finestre temporali limitate (`30/90/180/365`) ✅ _25 Mag 2026_  
       File: `src/app/trainer/trainees/[id]/_content.tsx`, `public/locales/{it,en}/trainer.json`, `tests/unit/trainer-trainee-detail-sbd-report.test.tsx`
+- [x] **11.119** `/trainer/programs`: trasformare la colonna `Stato test` in icona con tooltip su hover (`Test non previsti`, `Test da fare`, `Test fatti`) ✅ _27 Mag 2026_  
+      File: `src/app/trainer/programs/_content.tsx`, `public/locales/{it,en}/trainer.json`, `tests/unit/trainer-programs-content.test.tsx`
+- [x] **11.120** `/trainer/programs`: ridurre lo spacing orizzontale tra colonne nella tabella programmi (header + righe da `px-6` a `px-4`) ✅ _27 Mag 2026_  
+      File: `src/app/trainer/programs/_content.tsx`
 
 ---
 

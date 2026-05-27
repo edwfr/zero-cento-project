@@ -311,6 +311,9 @@
         "noTestWeeks": "No test weeks",
         "testsCompleted": "Completed",
         "testsPending": "Pending",
+        "testStatusNoTestsTooltip": "Tests not scheduled",
+        "testStatusPendingTooltip": "Tests pending",
+        "testStatusCompletedTooltip": "Tests completed",
         "testsButtonDisabledTooltip": "This button is enabled only when all scheduled tests are completed"
     },
     "testResults": {

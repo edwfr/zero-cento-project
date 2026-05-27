@@ -302,8 +302,8 @@
         "cloneSourceErrorForbidden": "Non hai accesso a quel programma di origine.",
         "viewTests": "Visualizza test",
         "testWeeksColumn": "Settimane test",
-        "testStatusColumn": "Stato test",
-        "plannedCompletionDateColumn": "Fine prev.",
+        "testStatusColumn": "Test",
+        "plannedCompletionDateColumn": "Fine",
         "actualCompletionDateColumn": "Fine eff.",
         "lastModifiedColumn": "Ultima modifica",
         "actionsColumn": "Azioni",
@@ -311,6 +311,9 @@
         "noTestWeeks": "NA",
         "testsCompleted": "Completati",
         "testsPending": "Da fare",
+        "testStatusNoTestsTooltip": "Test non previsti",
+        "testStatusPendingTooltip": "Test da fare",
+        "testStatusCompletedTooltip": "Test fatti",
         "testsButtonDisabledTooltip": "Il pulsante si abilita quando tutti i test previsti sono completati"
     },
     "testResults": {

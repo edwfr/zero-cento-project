@@ -8,7 +8,7 @@ import ConfirmationModal from '@/components/ConfirmationModal'
 import { formatDate } from '@/lib/date-format'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { Plus, FileEdit, CheckCircle2, Trash2, FlagTriangleRight, Eye, FlaskConical } from 'lucide-react'
+import { Plus, FileEdit, CheckCircle2, FlagTriangleRight, Clock3, Minus } from 'lucide-react'
 import { Input } from '@/components/Input'
 import { ActionIconButton, InlineActions } from '@/components'
 
@@ -279,36 +279,36 @@ export default function TrainerProgramsContent() {
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                             {t('programs.program')}
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                             {t('programs.athlete')}
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                             {t('programs.durationLabel')}
                                         </th>
                                         {showStartDateColumn && (
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                                 {t('programs.startDate')}
                                             </th>
                                         )}
                                         {showCompletionDateColumn && (
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                                 {completionDateColumnLabel}
                                             </th>
                                         )}
                                         {showTestStatusColumn && (
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                                 {t('programs.testStatusColumn')}
                                             </th>
                                         )}
                                         {showLastModifiedColumn && (
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                                 {t('programs.lastModifiedColumn')}
                                             </th>
                                         )}
-                                        <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                        <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                             {t('programs.actionsColumn')}
                                         </th>
                                     </tr>
@@ -317,10 +317,21 @@ export default function TrainerProgramsContent() {
                                     {filteredPrograms.map((program) => {
                                         const hasTestWeeks = getHasTestWeeks(program)
                                         const testsCompleted = getTestsCompleted(program)
+                                        const TestStatusIcon = !hasTestWeeks ? Minus : testsCompleted ? CheckCircle2 : Clock3
+                                        const testStatusLabel = !hasTestWeeks
+                                            ? t('programs.testStatusNoTestsTooltip')
+                                            : testsCompleted
+                                                ? t('programs.testStatusCompletedTooltip')
+                                                : t('programs.testStatusPendingTooltip')
+                                        const testStatusClasses = !hasTestWeeks
+                                            ? 'bg-gray-100 text-gray-500'
+                                            : testsCompleted
+                                                ? 'bg-green-100 text-state-success'
+                                                : 'bg-yellow-100 text-state-warning'
 
                                         return (
                                             <tr key={program.id} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-6 py-4 align-top">
+                                                <td className="px-4 py-4 align-top">
                                                     <div className="font-semibold text-gray-900 max-w-[260px] truncate">
                                                         {program.title}
                                                     </div>
@@ -332,50 +343,44 @@ export default function TrainerProgramsContent() {
                                                                 : t('programs.statusCompleted')}
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4 align-top whitespace-nowrap text-sm text-gray-700">
+                                                <td className="px-4 py-4 align-top whitespace-nowrap text-sm text-gray-700">
                                                     {program.trainee.firstName} {program.trainee.lastName}
                                                 </td>
-                                                <td className="px-6 py-4 align-top text-sm text-gray-700 whitespace-nowrap">
+                                                <td className="px-4 py-4 align-top text-sm text-gray-700 whitespace-nowrap">
                                                     <div>{t('programs.durationWeeks', { count: program.durationWeeks })}</div>
                                                     <div className="text-xs text-gray-500 mt-1">
                                                         {program.workoutsPerWeek} {t('programs.workoutsPerWeek')}
                                                     </div>
                                                 </td>
                                                 {showStartDateColumn && (
-                                                    <td className="px-6 py-4 align-top text-sm text-gray-700 whitespace-nowrap">
+                                                    <td className="px-4 py-4 align-top text-sm text-gray-700 whitespace-nowrap">
                                                         {program.startDate ? formatDate(program.startDate) : '-'}
                                                     </td>
                                                 )}
                                                 {showCompletionDateColumn && (
-                                                    <td className="px-6 py-4 align-top text-sm text-gray-700 whitespace-nowrap">
+                                                    <td className="px-4 py-4 align-top text-sm text-gray-700 whitespace-nowrap">
                                                         {activeTab === 'active'
                                                             ? formatDate(getPlannedCompletionDate(program))
                                                             : formatDate(getEffectiveCompletionDate(program))}
                                                     </td>
                                                 )}
                                                 {showTestStatusColumn && (
-                                                    <td className="px-6 py-4 align-top">
-                                                        {!hasTestWeeks ? (
-                                                            <span className="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
-                                                                {t('programs.noTestWeeks')}
-                                                            </span>
-                                                        ) : testsCompleted ? (
-                                                            <span className="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
-                                                                {t('programs.testsCompleted')}
-                                                            </span>
-                                                        ) : (
-                                                            <span className="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">
-                                                                {t('programs.testsPending')}
-                                                            </span>
-                                                        )}
+                                                    <td className="px-4 py-4 align-top">
+                                                        <span
+                                                            className={`inline-flex h-8 w-8 items-center justify-center rounded-full ${testStatusClasses}`}
+                                                            title={testStatusLabel}
+                                                            aria-label={testStatusLabel}
+                                                        >
+                                                            <TestStatusIcon className="h-4 w-4" aria-hidden="true" />
+                                                        </span>
                                                     </td>
                                                 )}
                                                 {showLastModifiedColumn && (
-                                                    <td className="px-6 py-4 align-top text-sm text-gray-700 whitespace-nowrap">
+                                                    <td className="px-4 py-4 align-top text-sm text-gray-700 whitespace-nowrap">
                                                         {formatDate(getLastModifiedDate(program))}
                                                     </td>
                                                 )}
-                                                <td className="px-6 py-4 align-top">
+                                                <td className="px-4 py-4 align-top">
                                                     <div className="flex flex-wrap items-center justify-end gap-2">
                                                         {program.status === 'draft' ? (
                                                             <InlineActions>

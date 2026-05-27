@@ -15,6 +15,18 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 - **[11 Maggio 2026] Unificato calcolo 1RM su tabella RPE Mike Tuchscherer** — Aggiunto helper condiviso `normalizedOneRM(weight, reps)` in `src/lib/calculations.ts` (wrapper su `estimateOneRMFromRpeTable(w, r, 10)` con arrotondamento a 0.1 kg). Sostituite tre formule divergenti sparse nel codebase: Epley (`weight * (1 + reps/30)`) negli editor di programmi e workouts trainer e nell'endpoint review; Brzycki (`weight * 36/(37-reps)`) nel tab Massimali della pagina trainee. Ora `% rispetto 1RM` usa la stessa normalizzazione del tab Massimali in `/trainer/trainees/[id]` e della pagina `/trainer/trainees/[id]/records`, indipendentemente dalla settimana. Backend `resolveEffectiveWeight`/`calculateEffectiveWeight` ora calcolano l'1RM dal miglior PR normalizzato (RPE table) invece di richiedere obbligatoriamente un record `reps=1`. **Files modificati:** `src/lib/calculations.ts`, `src/app/trainer/programs/[id]/edit/_content.tsx`, `src/app/trainer/programs/[id]/workouts/[wId]/_content.tsx`, `src/app/trainer/programs/[id]/tests/_content.tsx`, `src/app/api/programs/[id]/review/route.ts`, `src/app/trainer/trainees/[id]/_content.tsx`, `src/app/trainer/trainees/[id]/records/_content.tsx`, `src/app/trainee/records/_content.tsx`, `src/components/PersonalRecordsExplorer.tsx`, `tests/unit/calculations.test.ts`, `tests/unit/setup.ts`, `public/locales/{it,en}/trainer.json`.
 - **[11 Maggio 2026] Widget Massimali Trainee: riga 1RM calcolato** — Nella schermata `/trainer/programs/[id]/edit`, il widget "Massimali Trainee" mostra sotto la riga `kg × rep` una seconda riga `1RM calcolato: X kg` derivata dalla tabella RPE Mike Tuchscherer (RPE 10). Nuova chiave i18n `editProgram.prHelperEstimatedOneRm` in en/it. **Files modificati:** `src/app/trainer/programs/[id]/edit/_content.tsx`, `public/locales/{it,en}/trainer.json`.
 
+### [27 Maggio 2026] — Trainer programs: colonna stato test icon-only con tooltip
+
+**Task checklist:** #11.119
+**File modificati:** `src/app/trainer/programs/_content.tsx`, `public/locales/{it,en}/trainer.json`, `tests/unit/trainer-programs-content.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Nella schermata `/trainer/programs` la colonna `Stato test` non mostra piu badge testuali. Ora ogni riga visualizza un'icona con tooltip su hover: `Test non previsti`, `Test da fare`, `Test fatti`. Aggiunte le chiavi i18n dedicate in EN/IT e un test unitario che valida la presenza dei tre tooltip e l'assenza delle vecchie etichette testuali nella colonna.
+
+### [27 Maggio 2026] — Trainer programs: tabella piu compatta tra colonne
+
+**Task checklist:** #11.120
+**File modificati:** `src/app/trainer/programs/_content.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Nella tabella di `/trainer/programs` e stato ridotto lo spazio orizzontale tra le colonne diminuendo il padding delle celle header/body da `px-6` a `px-4`, mantenendo invariati contenuti, allineamenti e logica delle azioni.
+
 ### [25 Maggio 2026] — Dettaglio atleta trainer: KPI SBD per lift e filtro temporale
 
 **Task checklist:** #11.116
