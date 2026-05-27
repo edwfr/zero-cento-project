@@ -222,6 +222,38 @@ export function buildProgramPdfRowFillColors(
     })
 }
 
+export function buildProgramPdfTableHeadRow(
+    labels: Pick<
+        ProgramPdfLabels,
+        | 'tableExercise'
+        | 'tableVariant'
+        | 'tableSets'
+        | 'tableReps'
+        | 'tableRpe'
+        | 'tableWeight'
+        | 'tableRest'
+    >,
+    locale: string
+): [string, string, string, string, string, string, string] {
+    return [
+        labels.tableExercise,
+        labels.tableVariant,
+        labels.tableSets,
+        labels.tableReps,
+        labels.tableRpe,
+        labels.tableWeight,
+        labels.tableRest,
+    ].map((label) => label.toLocaleUpperCase(locale)) as [
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+    ]
+}
+
 const loadImageAsDataUrl = async (imageUrl: string): Promise<string | null> => {
     if (typeof window === 'undefined') {
         return null
@@ -330,15 +362,7 @@ export async function exportProgramToPdf(
                     startY: cursorY + 2,
                     margin: { left: 14, right: 14 },
                     tableWidth: 182,
-                    head: [[
-                        labels.tableExercise,
-                        labels.tableVariant,
-                        labels.tableSets,
-                        labels.tableReps,
-                        labels.tableRpe,
-                        labels.tableWeight,
-                        labels.tableRest,
-                    ]],
+                    head: [buildProgramPdfTableHeadRow(labels, locale)],
                     body: bodyRows,
                     styles: {
                         font: 'helvetica',
@@ -353,13 +377,13 @@ export async function exportProgramToPdf(
                         fontStyle: 'bold',
                     },
                     columnStyles: {
-                        0: { cellWidth: 50, halign: 'left' },
-                        1: { cellWidth: 36, halign: 'left' },
+                        0: { cellWidth: 64, halign: 'left' },
+                        1: { cellWidth: 54, halign: 'left' },
                         2: { cellWidth: 12, halign: 'center' },
-                        3: { cellWidth: 14, halign: 'center' },
+                        3: { cellWidth: 12, halign: 'center' },
                         4: { cellWidth: 12, halign: 'center' },
-                        5: { cellWidth: 24, halign: 'left' },
-                        6: { cellWidth: 34, halign: 'center' },
+                        5: { cellWidth: 16, halign: 'left' },
+                        6: { cellWidth: 12, halign: 'center' },
                     },
                     didParseCell: (hookData) => {
                         if (hookData.section !== 'body') {

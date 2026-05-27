@@ -45,6 +45,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 **File modificati:** `src/lib/program-pdf-export.ts`, `src/app/trainee/programs/_components/ProgramDetailContent.tsx`, `src/app/trainer/programs/[id]/review/_content.tsx`, `tests/unit/program-pdf-export.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 **Note:** Nel PDF programma la colonna `Peso` e stata resa piu stretta ed e stata aggiunta la colonna `Recupero` subito dopo `Peso`. Le righe body ora usano due toni di grigio alternati a blocchi quando cambia il nome esercizio (stesso esercizio consecutivo = stesso tono), mentre le righe marcate `JumpSet` o `SuperSet` vengono evidenziate in giallo. Il marker `Warmup` resta visibile nel testo della colonna esercizio.
 
+### [27 Maggio 2026] — Export PDF: header maiuscolo e bilanciamento larghezze colonne
+
+**Task checklist:** #11.124
+**File modificati:** `src/lib/program-pdf-export.ts`, `tests/unit/program-pdf-export.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** L'intestazione della tabella PDF ora viene forzata in maiuscolo. Aggiornate anche le larghezze colonne: `SET`, `REP`, `RPE` e `REST` sono uniformi; `PESO` e leggermente piu ampia; le colonne `ESERCIZIO` e `VARIANTE` hanno piu spazio per migliorare la leggibilita.
+
 ### [25 Maggio 2026] — Dettaglio atleta trainer: KPI SBD per lift e filtro temporale
 
 **Task checklist:** #11.116

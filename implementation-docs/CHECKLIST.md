@@ -697,6 +697,8 @@
       File: `src/lib/program-pdf-export.ts`, `src/app/trainee/programs/_components/ProgramDetailContent.tsx`, `src/app/trainer/programs/[id]/review/_content.tsx`, `tests/unit/program-pdf-export.test.ts`
 - [x] **11.123** Export PDF programma: ridurre colonna `Peso`, aggiungere colonna `Recupero` dopo `Peso`, alternare due grigi per blocchi esercizio e colorare in giallo le righe `JumpSet/SuperSet` (con marker `Warmup` mantenuto) ✅ _27 Mag 2026_  
       File: `src/lib/program-pdf-export.ts`, `src/app/trainee/programs/_components/ProgramDetailContent.tsx`, `src/app/trainer/programs/[id]/review/_content.tsx`, `tests/unit/program-pdf-export.test.ts`
+- [x] **11.124** Export PDF programma: intestazioni tabella in maiuscolo; colonne `SET/REP/RPE/REST` stessa larghezza; colonna `PESO` leggermente piu ampia; piu spazio alle colonne `ESERCIZIO` e `VARIANTE` ✅ _27 Mag 2026_  
+      File: `src/lib/program-pdf-export.ts`, `tests/unit/program-pdf-export.test.ts`
 
 ---
 

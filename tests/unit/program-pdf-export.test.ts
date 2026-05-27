@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
     buildProgramPdfExerciseRow,
     buildProgramPdfRowFillColors,
+    buildProgramPdfTableHeadRow,
     type ProgramPdfExercise,
 } from '@/lib/program-pdf-export'
 
@@ -108,5 +109,24 @@ describe('buildProgramPdfExerciseRow', () => {
             [255, 243, 179],
             [255, 243, 179],
         ])
+    })
+})
+
+describe('buildProgramPdfTableHeadRow', () => {
+    it('returns uppercase table headers', () => {
+        const head = buildProgramPdfTableHeadRow(
+            {
+                tableExercise: 'Esercizio',
+                tableVariant: 'Variante',
+                tableSets: 'Set',
+                tableReps: 'Rep',
+                tableRpe: 'Rpe',
+                tableWeight: 'Peso',
+                tableRest: 'Rest',
+            },
+            'it-IT'
+        )
+
+        expect(head).toEqual(['ESERCIZIO', 'VARIANTE', 'SET', 'REP', 'RPE', 'PESO', 'REST'])
     })
 })
