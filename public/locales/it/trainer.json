@@ -601,6 +601,8 @@
         "tableExercise": "Esercizio",
         "tableVariant": "Variante",
         "tableNotes": "Variante",
+        "tableSets": "Set",
+        "tableReps": "Rep",
         "tableScheme": "Set x Rep",
         "tableWeight": "Kg",
         "tableRest": "Rest",

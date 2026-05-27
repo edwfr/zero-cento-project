@@ -48,19 +48,14 @@ export interface ProgramPdfLabels {
     workoutLabel: (dayIndex: number) => string
     tableExercise: string
     tableVariant: string
-    tableScheme: string
-    tableWeight: string
-    tableRest: string
+    tableSets: string
+    tableReps: string
     tableRpe: string
+    tableWeight: string
     tableNoExercises: string
-    tableWeightAssigned: (weight: string) => string
-    tableWeightEffective: (weight: string) => string
     warmupYesShort: string
-    warmupNoShort: string
     jumpSetShort: string
     superSetShort: string
-    fundamentalShort: string
-    accessoryShort: string
     previousExerciseShort: string
     missingValue: string
 }
@@ -70,15 +65,6 @@ export interface ProgramPdfExportConfig {
     fileNamePrefix?: string
     locale?: string
     brandLabel?: string
-}
-
-const REST_TIME_LABELS: Record<RestTime, string> = {
-    s30: '0:30',
-    m1: '1:00',
-    m1s30: '1:30',
-    m2: '2:00',
-    m3: '3:00',
-    m5: '5:00',
 }
 
 const formatWeightValue = (value: number): string => {
@@ -138,26 +124,66 @@ const sanitizeCompactName = (value: string): string => {
         .replace(/[^a-z0-9]+/g, '')
 }
 
-const formatTrainerPercentageSetting = (
-    weightType: WeightType,
-    weight: number | null
-): string | null => {
-    if (typeof weight !== 'number' || !Number.isFinite(weight) || weightType === 'absolute') {
-        return null
+const formatPercentageWeightLabel = (
+    assignedWeight: string,
+    calculatedWeight: string,
+    fallback: string
+): string => {
+    if (assignedWeight === fallback && calculatedWeight === fallback) {
+        return fallback
     }
 
-    const formattedWeight = formatWeightValue(weight)
-
-    if (weightType === 'percentage_1rm') {
-        return `${formattedWeight}% 1RM`
+    if (assignedWeight === fallback) {
+        return calculatedWeight
     }
 
-    if (weightType === 'percentage_rm') {
-        return `${formattedWeight}% RM`
+    if (calculatedWeight === fallback) {
+        return assignedWeight
     }
 
-    const sign = weight > 0 ? '+' : ''
-    return `${sign}${formattedWeight}%`
+    return `${assignedWeight} (${calculatedWeight})`
+}
+
+type ProgramPdfExerciseRowLabels = Pick<
+    ProgramPdfLabels,
+    'warmupYesShort' | 'jumpSetShort' | 'superSetShort' | 'previousExerciseShort' | 'missingValue'
+>
+
+export function buildProgramPdfExerciseRow(
+    exercise: ProgramPdfExercise,
+    labels: ProgramPdfExerciseRowLabels
+): [string, string, string, string, string, string] {
+    const assignedWeightValue =
+        exercise.weightType === 'absolute'
+            ? (exercise.weight ?? exercise.effectiveWeight)
+            : exercise.weight
+
+    const assignedWeight = formatAssignedWeight(
+        exercise.weightType,
+        assignedWeightValue,
+        labels.previousExerciseShort,
+        labels.missingValue
+    )
+    const calculatedWeight = formatWeightKg(exercise.effectiveWeight, labels.missingValue)
+    const weightLabel =
+        exercise.weightType === 'absolute'
+            ? assignedWeight
+            : formatPercentageWeightLabel(assignedWeight, calculatedWeight, labels.missingValue)
+
+    const metadataBadges = [
+        exercise.isWarmup ? `[${labels.warmupYesShort}]` : '',
+        exercise.isJumpSet ? `[${labels.jumpSetShort}]` : '',
+        exercise.isSuperSet ? `[${labels.superSetShort}]` : '',
+    ].filter(Boolean)
+
+    const exerciseLabel = [...metadataBadges, exercise.name].filter(Boolean).join(' ')
+    const variantLabel = exercise.variant || labels.missingValue
+    const setsLabel = String(exercise.sets)
+    const repsLabel = exercise.reps
+    const rpeLabel =
+        typeof exercise.targetRpe === 'number' ? String(exercise.targetRpe) : labels.missingValue
+
+    return [exerciseLabel, variantLabel, setsLabel, repsLabel, rpeLabel, weightLabel]
 }
 
 const loadImageAsDataUrl = async (imageUrl: string): Promise<string | null> => {
@@ -242,14 +268,8 @@ export async function exportProgramToPdf(
         )
 
         const weekTitle = `${labels.weekLabel(week.weekNumber)} - ${labels.weekTypeLabel(week.weekType)}`
-        doc.setFillColor(255, 167, 0)
-        doc.roundedRect(14, 34, 182, 9, 2, 2, 'F')
-        doc.setTextColor(255, 255, 255)
-        doc.setFont('helvetica', 'bold')
-        doc.setFontSize(10)
-        doc.text(weekTitle, 17, 40)
 
-        cursorY = 47
+        cursorY = 39
 
         week.workouts
             .slice()
@@ -258,59 +278,14 @@ export async function exportProgramToPdf(
                 doc.setTextColor(35, 35, 35)
                 doc.setFont('helvetica', 'bold')
                 doc.setFontSize(10)
-                doc.text(labels.workoutLabel(workoutIndex + 1), 14, cursorY)
+                doc.text(
+                    `${labels.workoutLabel(workoutIndex + 1)} - ${weekTitle}`,
+                    14,
+                    cursorY
+                )
 
                 const bodyRows = workout.exercises.length > 0
-                    ? workout.exercises.map((exercise) => {
-                        const effectiveWeightValue =
-                            exercise.weightType === 'absolute'
-                                ? exercise.effectiveWeight ?? exercise.weight
-                                : exercise.effectiveWeight
-                        const effectiveWeight = formatWeightKg(
-                            effectiveWeightValue,
-                            labels.missingValue
-                        )
-                        const trainerSetting = formatTrainerPercentageSetting(
-                            exercise.weightType,
-                            exercise.weight
-                        )
-                        const weightLabel = trainerSetting
-                            ? `${effectiveWeight} (${trainerSetting})`
-                            : effectiveWeight
-
-                        const exerciseTypeLabel = exercise.type === 'fundamental'
-                            ? labels.fundamentalShort
-                            : labels.accessoryShort
-
-                        const metadataBadges = [
-                            exercise.isWarmup ? `[${labels.warmupYesShort}]` : '',
-                            exercise.isJumpSet ? `[${labels.jumpSetShort}]` : '',
-                            exercise.isSuperSet ? `[${labels.superSetShort}]` : '',
-                        ].filter(Boolean)
-
-                        const exerciseLabel = [
-                            ...metadataBadges,
-                            `[${exerciseTypeLabel}] ${exercise.name}`,
-                        ]
-                            .filter(Boolean)
-                            .join(' ')
-                        const variantLabel = exercise.variant || labels.missingValue
-
-                        const schemeLabel = `${exercise.sets} x ${exercise.reps}`
-                        const rpeLabel =
-                            typeof exercise.targetRpe === 'number'
-                                ? String(exercise.targetRpe)
-                                : labels.missingValue
-
-                        return [
-                            exerciseLabel,
-                            variantLabel,
-                            schemeLabel,
-                            weightLabel,
-                            REST_TIME_LABELS[exercise.restTime] || labels.missingValue,
-                            rpeLabel,
-                        ]
-                    })
+                    ? workout.exercises.map((exercise) => buildProgramPdfExerciseRow(exercise, labels))
                     : [[labels.tableNoExercises, '', '', '', '', '']]
 
                 autoTable(doc, {
@@ -320,10 +295,10 @@ export async function exportProgramToPdf(
                     head: [[
                         labels.tableExercise,
                         labels.tableVariant,
-                        labels.tableScheme,
-                        labels.tableWeight,
-                        labels.tableRest,
+                        labels.tableSets,
+                        labels.tableReps,
                         labels.tableRpe,
+                        labels.tableWeight,
                     ]],
                     body: bodyRows,
                     styles: {
@@ -339,12 +314,12 @@ export async function exportProgramToPdf(
                         fontStyle: 'bold',
                     },
                     columnStyles: {
-                        0: { cellWidth: 55, halign: 'left' },
-                        1: { cellWidth: 55, halign: 'left' },
-                        2: { cellWidth: 18, halign: 'center' },
+                        0: { cellWidth: 56, halign: 'left' },
+                        1: { cellWidth: 40, halign: 'left' },
+                        2: { cellWidth: 14, halign: 'center' },
                         3: { cellWidth: 18, halign: 'center' },
-                        4: { cellWidth: 18, halign: 'center' },
-                        5: { cellWidth: 18, halign: 'center' },
+                        4: { cellWidth: 14, halign: 'center' },
+                        5: { cellWidth: 40, halign: 'left' },
                     },
                     theme: 'grid',
                     tableLineColor: [226, 226, 226],

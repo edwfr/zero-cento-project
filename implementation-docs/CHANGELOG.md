@@ -27,6 +27,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 **File modificati:** `src/app/trainer/programs/_content.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 **Note:** Nella tabella di `/trainer/programs` e stato ridotto lo spazio orizzontale tra le colonne diminuendo il padding delle celle header/body da `px-6` a `px-4`, mantenendo invariati contenuti, allineamenti e logica delle azioni.
 
+### [27 Maggio 2026] — Trainee current program: layout PDF export aggiornato
+
+**Task checklist:** #11.121
+**File modificati:** `src/lib/program-pdf-export.ts`, `src/app/trainee/programs/_components/ProgramDetailContent.tsx`, `src/app/trainer/programs/[id]/review/_content.tsx`, `public/locales/{it,en}/{trainee.json,trainer.json}`, `tests/unit/program-pdf-export.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Aggiornato il layout del PDF esportato da `/trainee/programs/current` (utility condivisa anche con la review trainer): il riferimento settimana ora e riportato accanto al titolo di ogni workout, la tabella usa le colonne `Esercizio`, `Variante`, `Set`, `Rep`, `RPE`, `Peso`, sono stati rimossi i marker `fundamental/accessory` dalla colonna esercizio e per i pesi percentuali viene mostrato sia il valore percentuale impostato dal trainer sia il peso calcolato in kg.
+
 ### [25 Maggio 2026] — Dettaglio atleta trainer: KPI SBD per lift e filtro temporale
 
 **Task checklist:** #11.116

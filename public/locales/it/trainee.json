@@ -128,6 +128,8 @@
         "weekTypeDeload": "Deload",
         "tableExercise": "Esercizio",
         "tableVariant": "Variante",
+        "tableSets": "Set",
+        "tableReps": "Rep",
         "tableScheme": "Sets x Reps",
         "tableWeight": "Peso",
         "tableRest": "Rest",
