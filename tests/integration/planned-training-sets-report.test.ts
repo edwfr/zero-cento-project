@@ -54,6 +54,7 @@ describe('GET /api/users/[id]/reports/planned-training-sets', () => {
                                     {
                                         id: 'we-1',
                                         sets: 4,
+                                        reps: '5',
                                         isWarmup: false,
                                         exercise: {
                                             name: 'Back Squat',
@@ -69,6 +70,7 @@ describe('GET /api/users/[id]/reports/planned-training-sets', () => {
                                     {
                                         id: 'we-2',
                                         sets: 3,
+                                        reps: '6',
                                         isWarmup: false,
                                         exercise: {
                                             name: 'Panca Piana',
@@ -84,6 +86,7 @@ describe('GET /api/users/[id]/reports/planned-training-sets', () => {
                                     {
                                         id: 'we-3',
                                         sets: 2,
+                                        reps: '1',
                                         isWarmup: true,
                                         exercise: {
                                             name: 'Deadlift',
@@ -118,6 +121,7 @@ describe('GET /api/users/[id]/reports/planned-training-sets', () => {
                                     {
                                         id: 'we-4',
                                         sets: 5,
+                                        reps: '2',
                                         isWarmup: false,
                                         exercise: {
                                             name: 'Stacco da terra',
@@ -149,10 +153,20 @@ describe('GET /api/users/[id]/reports/planned-training-sets', () => {
             bench: 3,
             deadlift: 0,
         })
+        expect(body.data.points[0].fundamentalLifts).toEqual({
+            squat: 20,
+            bench: 18,
+            deadlift: 0,
+        })
         expect(body.data.points[1].fundamentalSets).toEqual({
             squat: 0,
             bench: 0,
             deadlift: 5,
+        })
+        expect(body.data.points[1].fundamentalLifts).toEqual({
+            squat: 0,
+            bench: 0,
+            deadlift: 10,
         })
     })
 

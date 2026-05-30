@@ -60,6 +60,11 @@ interface PlannedTrainingSetsPoint {
         bench: number
         deadlift: number
     }
+    fundamentalLifts?: {
+        squat: number
+        bench: number
+        deadlift: number
+    }
 }
 
 type RecordTimeWindow = '30d' | '90d' | '180d' | '365d' | 'all'
@@ -189,8 +194,17 @@ function getExerciseBadgeStyle(color: string | undefined, isActive: boolean) {
     }
 }
 
+function getSbdLiftCount(point: PlannedTrainingSetsPoint, lift: SbdLiftValue): number {
+    const liftValue = point.fundamentalLifts?.[lift]
+    if (typeof liftValue === 'number') {
+        return Number(liftValue || 0)
+    }
+
+    return Number(point.fundamentalSets[lift] || 0)
+}
+
 function getSbdPointMetric(point: PlannedTrainingSetsPoint, lift: SbdLiftValue): SbdPointMetric {
-    const totalLifts = Number(point.fundamentalSets[lift] || 0)
+    const totalLifts = getSbdLiftCount(point, lift)
 
     return {
         frequency: totalLifts > 0 ? 1 : 0,
@@ -481,9 +495,9 @@ export default function TraineeDetailContent() {
             .map((point) => ({
                 dateKey: point.date,
                 dateLabel: formatDate(point.date),
-                squat: Number(point.fundamentalSets.squat || 0),
-                bench: Number(point.fundamentalSets.bench || 0),
-                deadlift: Number(point.fundamentalSets.deadlift || 0),
+                squat: getSbdLiftCount(point, 'squat'),
+                bench: getSbdLiftCount(point, 'bench'),
+                deadlift: getSbdLiftCount(point, 'deadlift'),
             }))
             .sort((left, right) => left.dateKey.localeCompare(right.dateKey))
     }, [sbdFilteredPlannedPoints])
@@ -507,15 +521,15 @@ export default function TraineeDetailContent() {
         }
 
         sbdFilteredPlannedPoints.forEach((point) => {
-            aggregates.squat.totalLifts += Number(point.fundamentalSets.squat || 0)
-            aggregates.bench.totalLifts += Number(point.fundamentalSets.bench || 0)
-            aggregates.deadlift.totalLifts += Number(point.fundamentalSets.deadlift || 0)
+            aggregates.squat.totalLifts += getSbdLiftCount(point, 'squat')
+            aggregates.bench.totalLifts += getSbdLiftCount(point, 'bench')
+            aggregates.deadlift.totalLifts += getSbdLiftCount(point, 'deadlift')
         })
 
         return SBD_LIFTS.map((lift) => {
             const aggregate = aggregates[lift]
             const frequency = sbdFilteredPlannedPoints.filter(
-                (point) => Number(point.fundamentalSets[lift] || 0) > 0
+                (point) => getSbdLiftCount(point, lift) > 0
             ).length
 
             return {

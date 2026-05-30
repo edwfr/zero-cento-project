@@ -47,18 +47,22 @@ describe('TraineeDetailContent SBD report', () => {
                                 {
                                     date: isoDaysAgo(10),
                                     fundamentalSets: { squat: 2, bench: 1, deadlift: 0 },
+                                    fundamentalLifts: { squat: 10, bench: 8, deadlift: 0 },
                                 },
                                 {
                                     date: isoDaysAgo(70),
                                     fundamentalSets: { squat: 1, bench: 2, deadlift: 1 },
+                                    fundamentalLifts: { squat: 6, bench: 12, deadlift: 5 },
                                 },
                                 {
                                     date: isoDaysAgo(240),
                                     fundamentalSets: { squat: 5, bench: 5, deadlift: 5 },
+                                    fundamentalLifts: { squat: 25, bench: 25, deadlift: 25 },
                                 },
                                 {
                                     date: isoDaysAhead(14),
                                     fundamentalSets: { squat: 3, bench: 3, deadlift: 3 },
+                                    fundamentalLifts: { squat: 12, bench: 12, deadlift: 12 },
                                 },
                             ],
                         },
@@ -116,20 +120,20 @@ describe('TraineeDetailContent SBD report', () => {
         })
 
         expect(screen.getByTestId('sbd-kpi-frq-squat')).toHaveTextContent('2')
-        expect(screen.getByTestId('sbd-kpi-nbl-squat')).toHaveTextContent('3')
+        expect(screen.getByTestId('sbd-kpi-nbl-squat')).toHaveTextContent('16')
         expect(screen.getByTestId('sbd-kpi-frq-bench')).toHaveTextContent('2')
-        expect(screen.getByTestId('sbd-kpi-nbl-bench')).toHaveTextContent('3')
+        expect(screen.getByTestId('sbd-kpi-nbl-bench')).toHaveTextContent('20')
         expect(screen.getByTestId('sbd-kpi-frq-deadlift')).toHaveTextContent('1')
-        expect(screen.getByTestId('sbd-kpi-nbl-deadlift')).toHaveTextContent('1')
+        expect(screen.getByTestId('sbd-kpi-nbl-deadlift')).toHaveTextContent('5')
 
         const windowSelects = screen.getAllByRole('combobox')
         fireEvent.change(windowSelects[1], { target: { value: '30d' } })
 
         await waitFor(() => {
             expect(screen.getByTestId('sbd-kpi-frq-squat')).toHaveTextContent('1')
-            expect(screen.getByTestId('sbd-kpi-nbl-squat')).toHaveTextContent('2')
+            expect(screen.getByTestId('sbd-kpi-nbl-squat')).toHaveTextContent('10')
             expect(screen.getByTestId('sbd-kpi-frq-bench')).toHaveTextContent('1')
-            expect(screen.getByTestId('sbd-kpi-nbl-bench')).toHaveTextContent('1')
+            expect(screen.getByTestId('sbd-kpi-nbl-bench')).toHaveTextContent('8')
             expect(screen.getByTestId('sbd-kpi-frq-deadlift')).toHaveTextContent('0')
             expect(screen.getByTestId('sbd-kpi-nbl-deadlift')).toHaveTextContent('0')
         })
@@ -139,11 +143,11 @@ describe('TraineeDetailContent SBD report', () => {
 
         await waitFor(() => {
             expect(screen.getByTestId('sbd-kpi-frq-squat')).toHaveTextContent('2')
-            expect(screen.getByTestId('sbd-kpi-nbl-squat')).toHaveTextContent('5')
+            expect(screen.getByTestId('sbd-kpi-nbl-squat')).toHaveTextContent('22')
             expect(screen.getByTestId('sbd-kpi-frq-bench')).toHaveTextContent('2')
-            expect(screen.getByTestId('sbd-kpi-nbl-bench')).toHaveTextContent('4')
+            expect(screen.getByTestId('sbd-kpi-nbl-bench')).toHaveTextContent('20')
             expect(screen.getByTestId('sbd-kpi-frq-deadlift')).toHaveTextContent('1')
-            expect(screen.getByTestId('sbd-kpi-nbl-deadlift')).toHaveTextContent('3')
+            expect(screen.getByTestId('sbd-kpi-nbl-deadlift')).toHaveTextContent('12')
         })
     })
 })

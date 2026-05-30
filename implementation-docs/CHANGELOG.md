@@ -63,6 +63,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 **File modificati:** `src/lib/program-pdf-export.ts`, `tests/unit/program-pdf-export.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 **Note:** Ridotta l'altezza delle righe della tabella PDF diminuendo il `cellPadding` delle celle (`1.8` -> `1.0`) in `autoTable`, mantenendo invariati contenuto, colori e struttura colonne.
 
+### [30 Maggio 2026] — Dettaglio atleta trainer: NBL SBD allineato a set x rep
+
+**Task checklist:** #11.127
+**File modificati:** `src/app/api/users/[id]/reports/planned-training-sets/route.ts`, `src/app/trainer/trainees/[id]/_content.tsx`, `tests/integration/planned-training-sets-report.test.ts`, `tests/unit/trainer-trainee-detail-sbd-report.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Nel pannello `Report SBD` di `/trainer/trainees/[id]`, il KPI `NBL` ora usa la stessa formula della vista programma (`sets x reps`) invece della precedente somma set. Per evitare regressioni sugli altri pannelli reportistica, l'endpoint `GET /api/users/[id]/reports/planned-training-sets` mantiene `fundamentalSets` (set allenanti) e aggiunge il nuovo campo `fundamentalLifts` (alzate pianificate), consumato dal pannello SBD con fallback backward-compatible.
+
 ### [25 Maggio 2026] — Dettaglio atleta trainer: KPI SBD per lift e filtro temporale
 
 **Task checklist:** #11.116

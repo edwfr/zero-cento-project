@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { apiError, apiSuccess } from '@/lib/api-response'
 import { requireAuth } from '@/lib/auth'
-import { calculateTrainingSets } from '@/lib/calculations'
+import { calculateTrainingSets, parseReps } from '@/lib/calculations'
 import { logger } from '@/lib/logger'
 
 type Params = {
@@ -98,6 +98,7 @@ export async function GET(request: Request, { params }: Params) {
                                     select: {
                                         id: true,
                                         sets: true,
+                                        reps: true,
                                         isWarmup: true,
                                         exercise: {
                                             select: {
@@ -133,6 +134,7 @@ export async function GET(request: Request, { params }: Params) {
                 date: string
                 values: Map<string, number>
                 fundamentalValues: Record<FundamentalLift, number>
+                fundamentalLifts: Record<FundamentalLift, number>
             }
         >()
 
@@ -153,6 +155,11 @@ export async function GET(request: Request, { params }: Params) {
                         bench: 0,
                         deadlift: 0,
                     },
+                    fundamentalLifts: {
+                        squat: 0,
+                        bench: 0,
+                        deadlift: 0,
+                    },
                 }
 
                 week.workouts.forEach((workout) => {
@@ -163,21 +170,33 @@ export async function GET(request: Request, { params }: Params) {
                             workoutExercise.isWarmup
                         )
 
-                        if (
-                            baseTrainingSets > 0 &&
-                            workoutExercise.exercise.type === 'fundamental'
-                        ) {
+                        const liftCount = workoutExercise.isWarmup
+                            ? 0
+                            : workoutExercise.sets * parseReps(workoutExercise.reps)
+
+                        if (workoutExercise.exercise.type === 'fundamental') {
                             const fundamentalLift = matchFundamentalLift(
                                 workoutExercise.exercise.name
                             )
 
                             if (fundamentalLift) {
-                                timelineEntry.fundamentalValues[fundamentalLift] = Number(
-                                    (
-                                        timelineEntry.fundamentalValues[fundamentalLift] +
-                                        baseTrainingSets
-                                    ).toFixed(1)
-                                )
+                                if (baseTrainingSets > 0) {
+                                    timelineEntry.fundamentalValues[fundamentalLift] = Number(
+                                        (
+                                            timelineEntry.fundamentalValues[fundamentalLift] +
+                                            baseTrainingSets
+                                        ).toFixed(1)
+                                    )
+                                }
+
+                                if (liftCount > 0) {
+                                    timelineEntry.fundamentalLifts[fundamentalLift] = Number(
+                                        (
+                                            timelineEntry.fundamentalLifts[fundamentalLift] +
+                                            liftCount
+                                        ).toFixed(1)
+                                    )
+                                }
                             }
                         }
 
@@ -230,6 +249,11 @@ export async function GET(request: Request, { params }: Params) {
                     squat: Number(entry.fundamentalValues.squat.toFixed(1)),
                     bench: Number(entry.fundamentalValues.bench.toFixed(1)),
                     deadlift: Number(entry.fundamentalValues.deadlift.toFixed(1)),
+                },
+                fundamentalLifts: {
+                    squat: Number(entry.fundamentalLifts.squat.toFixed(1)),
+                    bench: Number(entry.fundamentalLifts.bench.toFixed(1)),
+                    deadlift: Number(entry.fundamentalLifts.deadlift.toFixed(1)),
                 },
             }))
 
