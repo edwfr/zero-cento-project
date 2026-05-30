@@ -45,6 +45,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 **File modificati:** `src/app/trainer/trainees/_content.tsx`, `src/app/api/users/route.ts`, `src/schemas/user.ts`, `tests/unit/trainer-trainees-content.test.tsx`, `tests/unit/schemas.test.ts`, `tests/integration/users.test.ts`, `tests/integration/api-contracts.test.ts`, `docs/api-contracts.md`, `docs/api-pagination.md`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 **Note:** Implementata la paginazione numerata 1..N nella schermata `/trainer/trainees` con flusso filter-first lato API: i filtri `status/search` sono applicati prima del calcolo pagina, poi il backend restituisce metadata `currentPage/totalPages/totalItems` (piu `hasMore/nextCursor` per retrocompatibilita). La UI ora usa fetch server-side con reset pagina su cambio filtro/ricerca submit, paginatore `First/Previous/Next/Last` e fallback automatico alla pagina precedente quando un toggle di stato svuota la pagina corrente. `GET /api/users` mantiene la shape legacy `{ items }` quando `page/limit` non sono presenti, evitando regressioni sui consumer esistenti.
 
+### [30 Maggio 2026] — Trainer dashboard: stato bottone `Apri risultati` allineato
+
+**Task checklist:** #11.134
+**File modificati:** `src/app/trainer/dashboard/page.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Nella sezione KPI `Settimana Test Correnti` di `/trainer/dashboard`, il link `Apri risultati` quando abilitato ora usa lo stesso stato visuale di `Vai alla scheda` (stesso trattamento `brand` con bordo/ring e hover coerenti), mantenendo invariata la variante disabilitata.
+
 ### [27 Maggio 2026] — Trainer programs: colonna stato test icon-only con tooltip
 
 **Task checklist:** #11.119
