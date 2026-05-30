@@ -69,6 +69,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 **File modificati:** `src/app/api/users/[id]/reports/planned-training-sets/route.ts`, `src/app/trainer/trainees/[id]/_content.tsx`, `tests/integration/planned-training-sets-report.test.ts`, `tests/unit/trainer-trainee-detail-sbd-report.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 **Note:** Nel pannello `Report SBD` di `/trainer/trainees/[id]`, il KPI `NBL` ora usa la stessa formula della vista programma (`sets x reps`) invece della precedente somma set. Per evitare regressioni sugli altri pannelli reportistica, l'endpoint `GET /api/users/[id]/reports/planned-training-sets` mantiene `fundamentalSets` (set allenanti) e aggiunge il nuovo campo `fundamentalLifts` (alzate pianificate), consumato dal pannello SBD con fallback backward-compatible.
 
+### [30 Maggio 2026] — Trainer test results: tabella allineata alla view programma
+
+**Task checklist:** #11.128
+**File modificati:** `src/app/trainer/programs/[id]/tests/_content.tsx`, `tests/unit/program-test-results-content.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Nella schermata `/trainer/programs/[id]/tests` il layout delle tabelle workout e stato aggiornato per riflettere lo stile della view programma (`/trainer/programs/[id]`): card con bordo e header separato, tabella compatta con `table-fixed`, intestazione `slate`, larghezze colonna definite e alternanza righe (`bianco/grigio`) per una lettura piu coerente tra le due viste.
+
 ### [25 Maggio 2026] — Dettaglio atleta trainer: KPI SBD per lift e filtro temporale
 
 **Task checklist:** #11.116

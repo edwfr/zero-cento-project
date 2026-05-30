@@ -705,6 +705,8 @@
       File: `src/lib/program-pdf-export.ts`, `tests/unit/program-pdf-export.test.ts`
 - [x] **11.127** `/trainer/trainees/[id]` report SBD: allineare NBL alla formula `sets x reps` come nella vista programma, mantenendo invariato il pannello serie fondamentali pianificate tramite nuovo campo API `fundamentalLifts` con fallback backward-compatible ✅ _30 Mag 2026_  
       File: `src/app/api/users/[id]/reports/planned-training-sets/route.ts`, `src/app/trainer/trainees/[id]/_content.tsx`, `tests/integration/planned-training-sets-report.test.ts`, `tests/unit/trainer-trainee-detail-sbd-report.test.tsx`
+- [x] **11.128** `/trainer/programs/[id]/tests`: allineare il layout della tabella workout alla view programma (`/trainer/programs/[id]`) con stile compatto (header slate, colonne fixed, righe alternate) + test unitario dedicato ✅ _30 Mag 2026_  
+      File: `src/app/trainer/programs/[id]/tests/_content.tsx`, `tests/unit/program-test-results-content.test.tsx`
 
 ---
 
