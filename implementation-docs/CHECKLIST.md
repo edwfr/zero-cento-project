@@ -725,6 +725,8 @@
       File: `src/app/trainer/programs/[id]/edit/_content.tsx`, `src/app/trainer/programs/[id]/edit/row-utils.ts`, `tests/unit/row-utils.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 - [x] **11.137** `/trainer/programs/[id]/edit`: rendere `riordina` e `drop su bidone` coerenti con il modello save-driven (nessuna API immediata; commit unico su `Salva workout`) estendendo il bulk con `deletedExerciseIds` ✅ _30 Mag 2026_  
       File: `src/app/trainer/programs/[id]/edit/_content.tsx`, `src/app/api/programs/[id]/workouts/[workoutId]/exercises/bulk/route.ts`, `src/schemas/workout-exercise.ts`, `tests/integration/workout-exercises-bulk.test.ts`, `tests/unit/{schemas.test.ts,row-utils.test.ts}`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+- [x] **11.138** `/trainer/programs/[id]/edit`: aggiungere azione one-click `Duplica riga` per clonare un esercizio nello stesso workout (inserimento sotto la riga sorgente con shift ordini e stato draft fino a `Salva workout`) + rifinitura UI con controllo sempre visibile, micro icon-only (`Copy`) prima della checkbox `Warmup` e drag handle reso nuovamente ben visibile ✅ _30 Mag 2026_  
+      File: `src/app/trainer/programs/[id]/edit/{_content.tsx,row-utils.ts}`, `public/locales/{it,en}/trainer.json`, `tests/unit/row-utils.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 
 ---
 

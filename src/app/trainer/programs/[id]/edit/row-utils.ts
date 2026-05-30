@@ -35,6 +35,43 @@ export interface EditableWorkoutExerciseRowLike {
     isDraft: boolean
 }
 
+export function duplicateEditableWorkoutExerciseRow<T extends EditableWorkoutExerciseRowLike>({
+    orderedRows,
+    sourceRowId,
+    duplicatedRowId,
+}: {
+    orderedRows: T[]
+    sourceRowId: string
+    duplicatedRowId: string
+}): { duplicatedRow: T; shiftedRows: T[] } | null {
+    const sourceRow = orderedRows.find((row) => row.id === sourceRowId)
+
+    if (!sourceRow) {
+        return null
+    }
+
+    const insertAtOrder = sourceRow.order + 1
+
+    const shiftedRows = orderedRows
+        .filter((row) => row.order >= insertAtOrder)
+        .map((row) => ({
+            ...row,
+            order: row.order + 1,
+        }))
+
+    const duplicatedRow = {
+        ...sourceRow,
+        id: duplicatedRowId,
+        order: insertAtOrder,
+        isDraft: true,
+    }
+
+    return {
+        duplicatedRow,
+        shiftedRows,
+    }
+}
+
 export function mergeDirtyPersistedRows<T extends EditableWorkoutExerciseRowLike>({
     serverRowsById,
     currentRowsById,

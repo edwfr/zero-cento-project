@@ -517,6 +517,7 @@
         "effectiveWeightPreview": "{{weight}}",
         "effectiveWeightPreviewUnavailable": "Effettivo: -",
         "saveRowTitle": "Salva workout",
+        "duplicateRowTitle": "Duplica riga",
         "deleteRowTitle": "Rimuovi riga",
         "confirmDeleteRowTitle": "Rimuovere questa riga?",
         "confirmDeleteRowMessage": "L'azione rimuove l'esercizio dal workout corrente.",
@@ -556,8 +557,10 @@
         "rowUpdateError": "Errore durante l'aggiornamento della riga",
         "rowAddedSuccess": "Esercizio aggiunto al workout",
         "rowUpdatedSuccess": "Riga aggiornata",
+        "duplicateRowSuccess": "Riga duplicata",
         "workoutRowsSavedSuccess": "Workout salvato",
         "rowSaveGenericError": "Errore durante il salvataggio",
+        "duplicateRowError": "Errore durante la duplicazione della riga",
         "rowDeleteError": "Errore durante la rimozione esercizio",
         "rowDeletedSuccess": "Esercizio rimosso",
         "rowDeleteGenericError": "Errore durante la rimozione"

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
     computeExerciseGroupColors,
+    duplicateEditableWorkoutExerciseRow,
     mergeDirtyPersistedRows,
     pruneMissingDirtyRowIds,
 } from '@/app/trainer/programs/[id]/edit/row-utils'
@@ -96,6 +97,106 @@ describe('computeExerciseGroupColors', () => {
         ])
         expect(result.has('r1')).toBe(false)
         expect(result.get('r2')).toBe('even')
+    })
+})
+
+describe('duplicateEditableWorkoutExerciseRow', () => {
+    it('duplicates a middle row and shifts following row orders', () => {
+        const rows = [
+            editableRow('r1', { order: 1, exerciseId: 'exercise-1' }),
+            editableRow('r2', {
+                order: 2,
+                exerciseId: 'exercise-2',
+                variant: 'paused',
+                reps: '6',
+            }),
+            editableRow('r3', { order: 3, exerciseId: 'exercise-3' }),
+        ]
+
+        const result = duplicateEditableWorkoutExerciseRow({
+            orderedRows: rows,
+            sourceRowId: 'r2',
+            duplicatedRowId: 'draft-r2-copy',
+        })
+
+        expect(result).not.toBeNull()
+        expect(result?.duplicatedRow).toEqual(
+            expect.objectContaining({
+                id: 'draft-r2-copy',
+                order: 3,
+                isDraft: true,
+                workoutId: 'workout-1',
+                exerciseId: 'exercise-2',
+                variant: 'paused',
+                reps: '6',
+            })
+        )
+        expect(result?.shiftedRows).toEqual([
+            expect.objectContaining({ id: 'r3', order: 4 }),
+        ])
+    })
+
+    it('duplicates the last row without shifting any other rows', () => {
+        const rows = [
+            editableRow('r1', { order: 1 }),
+            editableRow('r2', { order: 2 }),
+        ]
+
+        const result = duplicateEditableWorkoutExerciseRow({
+            orderedRows: rows,
+            sourceRowId: 'r2',
+            duplicatedRowId: 'draft-r2-copy',
+        })
+
+        expect(result).not.toBeNull()
+        expect(result?.duplicatedRow.order).toBe(3)
+        expect(result?.shiftedRows).toEqual([])
+    })
+
+    it('duplicates a draft row preserving its editable fields', () => {
+        const rows = [
+            editableRow('draft-source', {
+                order: 1,
+                isDraft: true,
+                exerciseId: 'exercise-draft',
+                weight: '-10%',
+                notes: 'tempo controlled',
+            }),
+            editableRow('r2', { order: 2, isDraft: false }),
+        ]
+
+        const result = duplicateEditableWorkoutExerciseRow({
+            orderedRows: rows,
+            sourceRowId: 'draft-source',
+            duplicatedRowId: 'draft-copy',
+        })
+
+        expect(result).not.toBeNull()
+        expect(result?.duplicatedRow).toEqual(
+            expect.objectContaining({
+                id: 'draft-copy',
+                order: 2,
+                isDraft: true,
+                exerciseId: 'exercise-draft',
+                weight: '-10%',
+                notes: 'tempo controlled',
+            })
+        )
+        expect(result?.shiftedRows).toEqual([
+            expect.objectContaining({ id: 'r2', order: 3 }),
+        ])
+    })
+
+    it('returns null when source row id does not exist', () => {
+        const rows = [editableRow('r1', { order: 1 })]
+
+        const result = duplicateEditableWorkoutExerciseRow({
+            orderedRows: rows,
+            sourceRowId: 'missing-row',
+            duplicatedRowId: 'draft-copy',
+        })
+
+        expect(result).toBeNull()
     })
 })
 

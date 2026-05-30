@@ -517,6 +517,7 @@
         "effectiveWeightPreview": "{{weight}}",
         "effectiveWeightPreviewUnavailable": "Effective: -",
         "saveRowTitle": "Save workout",
+        "duplicateRowTitle": "Duplicate row",
         "deleteRowTitle": "Remove row",
         "confirmDeleteRowTitle": "Remove this row?",
         "confirmDeleteRowMessage": "This action removes the exercise from the current workout.",
@@ -556,8 +557,10 @@
         "rowUpdateError": "Error while updating row",
         "rowAddedSuccess": "Exercise added to workout",
         "rowUpdatedSuccess": "Row updated",
+        "duplicateRowSuccess": "Row duplicated",
         "workoutRowsSavedSuccess": "Workout saved",
         "rowSaveGenericError": "Error while saving",
+        "duplicateRowError": "Error while duplicating row",
         "rowDeleteError": "Error while removing exercise",
         "rowDeletedSuccess": "Exercise removed",
         "rowDeleteGenericError": "Error while removing"

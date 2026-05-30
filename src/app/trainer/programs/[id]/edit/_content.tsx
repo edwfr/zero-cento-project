@@ -41,6 +41,7 @@ import { hydrateDraftRowsForWorkout } from './skeleton-hydration'
 import { transformApiWeek } from './transform-utils'
 import {
     computeExerciseGroupColors,
+    duplicateEditableWorkoutExerciseRow,
     mergeDirtyPersistedRows,
     pruneMissingDirtyRowIds,
 } from './row-utils'
@@ -483,7 +484,7 @@ function InsertRowSeparator({
     return (
         <tr className="group/insert-sep" style={{ lineHeight: 0 }}>
             <td
-                colSpan={10}
+                colSpan={12}
                 style={{ padding: 0, height: '4px', position: 'relative', overflow: 'visible' }}
             >
                 <div className="absolute left-4 top-1/2 z-10 hidden -translate-y-1/2 group-hover/insert-sep:flex">
@@ -1938,6 +1939,67 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         }))
     }
 
+    const duplicateWorkoutRow = (workout: Workout, sourceRowId: string) => {
+        if (readOnly || savingRowId || savingWorkoutIdsRef.current.has(workout.id)) {
+            return
+        }
+
+        const orderedRows = [...getWorkoutRows(workout)].sort((left, right) => left.order - right.order)
+        const draftRowId = `draft-${workout.id}-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+
+        const duplicationResult = duplicateEditableWorkoutExerciseRow({
+            orderedRows,
+            sourceRowId,
+            duplicatedRowId: draftRowId,
+        })
+
+        if (!duplicationResult) {
+            showToast(t('editProgram.duplicateRowError'), 'error')
+            return
+        }
+
+        const sourceVariantInputMode = customVariantInputByRowId[sourceRowId]
+
+        setRowStateById((currentRows) => {
+            const nextRows = { ...currentRows }
+
+            duplicationResult.shiftedRows.forEach((shiftedRow) => {
+                const currentRow = currentRows[shiftedRow.id] ?? shiftedRow
+
+                if (currentRow.order === shiftedRow.order) {
+                    return
+                }
+
+                nextRows[shiftedRow.id] = {
+                    ...currentRow,
+                    order: shiftedRow.order,
+                }
+
+                if (!currentRow.isDraft) {
+                    dirtyPersistedRowIdsRef.current.add(shiftedRow.id)
+                }
+            })
+
+            nextRows[draftRowId] = duplicationResult.duplicatedRow
+
+            return nextRows
+        })
+
+        setDraftRowIdsByWorkout((current) => ({
+            ...current,
+            [workout.id]: [...(current[workout.id] || []), draftRowId],
+        }))
+
+        if (typeof sourceVariantInputMode === 'boolean') {
+            setCustomVariantInputByRowId((currentModes) => ({
+                ...currentModes,
+                [draftRowId]: sourceVariantInputMode,
+            }))
+        }
+
+        showToast(t('editProgram.duplicateRowSuccess'), 'success')
+    }
+
     const removeDraftRow = (rowId: string, workoutId: string) => {
         setDraftRowIdsByWorkout((currentDraftRows) => {
             const currentWorkoutDraftRows = currentDraftRows[workoutId] || []
@@ -3387,7 +3449,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                     >
                                                                         <table className="w-full table-fixed divide-y divide-gray-200 text-sm">
                                                                     <colgroup>
-                                                                        <col className="w-[1%]" />
+                                                                        <col className="w-[2%]" />
+                                                                        <col className="w-[2%]" />
                                                                         <col className="w-[3%]" />
                                                                         <col className="w-[3%]" />
                                                                         <col className="w-[3%]" />
@@ -3403,6 +3466,9 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                         <tr>
                                                                             <th className="w-6 px-0.5 py-1">
                                                                                 <span className="sr-only">{t('editProgram.dragHandleLabel')}</span>
+                                                                            </th>
+                                                                            <th className="w-6 px-0.5 py-1 text-center">
+                                                                                <span className="sr-only">{t('editProgram.duplicateRowTitle')}</span>
                                                                             </th>
                                                                             <th className="relative px-0 py-1 text-center">
                                                                                 <button
@@ -3592,7 +3658,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                         {workoutRows.length === 0 && (
                                                                             <tr>
                                                                                 <td
-                                                                                    colSpan={11}
+                                                                                    colSpan={12}
                                                                                     className="px-1 py-6 text-center text-sm text-gray-500"
                                                                                 >
                                                                                     {t('editProgram.tableNoWorkoutExercises')}
@@ -3679,7 +3745,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                 {dragHandleProps ? (
                                                                                                     <button
                                                                                                         type="button"
-                                                                                                        className="flex h-full w-6 cursor-grab items-center justify-center text-gray-300 hover:text-gray-500 active:cursor-grabbing disabled:cursor-not-allowed"
+                                                                                                        className="flex h-full w-6 cursor-grab items-center justify-center text-gray-500 hover:text-gray-700 active:cursor-grabbing disabled:cursor-not-allowed"
                                                                                                         disabled={Boolean(rowBusy)}
                                                                                                         {...dragHandleProps}
                                                                                                         tabIndex={-1}
@@ -3689,6 +3755,26 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                     </button>
                                                                                                 ) : (
                                                                                                     <span className="block w-6" />
+                                                                                                )}
+                                                                                            </td>
+
+                                                                                            <td className="px-0 py-1 align-middle">
+                                                                                                {!readOnly ? (
+                                                                                                    <div className="flex h-full w-full items-center justify-center">
+                                                                                                        <button
+                                                                                                            type="button"
+                                                                                                            onClick={() => duplicateWorkoutRow(workout, row.id)}
+                                                                                                            disabled={Boolean(rowBusy)}
+                                                                                                            className="inline-flex h-3.5 w-3.5 items-center justify-center text-brand-primary hover:text-brand-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+                                                                                                            tabIndex={-1}
+                                                                                                            aria-label={t('editProgram.duplicateRowTitle')}
+                                                                                                            title={t('editProgram.duplicateRowTitle')}
+                                                                                                        >
+                                                                                                            <Copy className="h-2.5 w-2.5" />
+                                                                                                        </button>
+                                                                                                    </div>
+                                                                                                ) : (
+                                                                                                    <span className="block w-4" />
                                                                                                 )}
                                                                                             </td>
 
