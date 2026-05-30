@@ -500,7 +500,7 @@ export default async function TrainerDashboard() {
                                             {isTestWeekCompleted ? (
                                                 <Link
                                                     href={`/trainer/programs/${testWeek.program.id}/tests?backContext=dashboard`}
-                                                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-orange-50 px-3 py-2 font-semibold text-orange-700 shadow-sm ring-1 ring-inset ring-orange-200 transition-colors hover:bg-orange-100"
+                                                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-3 py-2 font-semibold text-brand-primary shadow-sm ring-1 ring-inset ring-brand-primary/20 transition-colors hover:bg-brand-primary/5"
                                                 >
                                                     <FlaskConical className="h-4 w-4" />
                                                     {t('trainerDashboard.openResults')}

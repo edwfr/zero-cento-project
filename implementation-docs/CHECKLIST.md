@@ -717,6 +717,8 @@
       File: `src/app/trainer/programs/_content.tsx`, `tests/unit/trainer-programs-content.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 - [x] **11.133** `/trainer/trainees`: paginazione numerata 1..N con approccio filter-first lato API (`status/search` prima della paginazione), metadata `currentPage/totalPages/totalItems`, fallback pagina vuota post-toggle e retrocompatibilita `GET /api/users` senza `page/limit` ✅ _30 Mag 2026_  
       File: `src/app/trainer/trainees/_content.tsx`, `src/app/api/users/route.ts`, `src/schemas/user.ts`, `tests/unit/trainer-trainees-content.test.tsx`, `tests/unit/schemas.test.ts`, `tests/integration/users.test.ts`, `tests/integration/api-contracts.test.ts`, `docs/api-contracts.md`, `docs/api-pagination.md`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+- [x] **11.134** `/trainer/dashboard`: nella sezione KPI `Settimana Test Correnti` allineare lo stato visuale del bottone `Apri risultati` (quando abilitato) a quello di `Vai alla scheda` ✅ _30 Mag 2026_  
+      File: `src/app/trainer/dashboard/page.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 
 ---
 
