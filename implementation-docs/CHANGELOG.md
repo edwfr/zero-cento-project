@@ -51,6 +51,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 **File modificati:** `src/app/trainer/dashboard/page.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 **Note:** Nella sezione KPI `Settimana Test Correnti` di `/trainer/dashboard`, il link `Apri risultati` quando abilitato ora usa lo stesso stato visuale di `Vai alla scheda` (stesso trattamento `brand` con bordo/ring e hover coerenti), mantenendo invariata la variante disabilitata.
 
+### [30 Maggio 2026] — Trainer programs: cambio tab invisibile con cache-first
+
+**Task checklist:** #11.135
+**File modificati:** `src/app/trainer/programs/_content.tsx`, `tests/unit/trainer-programs-content.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Nella schermata `/trainer/programs`, il cambio tab tra `Bozze`, `Attivi` e `Completati` ora evita la visualizzazione temporanea dei record del tab precedente. La lista usa cache per vista (`status+page+search`) con hydration immediata del tab target, refresh in background silenzioso e prefetch dei tab non attivi dopo il primo caricamento. Aggiunta anche protezione anti-race con abort delle richieste concorrenti, cosi solo l'ultima risposta valida aggiorna la UI.
+
 ### [27 Maggio 2026] — Trainer programs: colonna stato test icon-only con tooltip
 
 **Task checklist:** #11.119

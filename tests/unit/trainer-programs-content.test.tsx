@@ -63,29 +63,96 @@ const activePrograms = [
     },
 ]
 
+const draftPrograms = [
+    {
+        id: 'program-draft-1',
+        title: 'Bozza Programma',
+        status: 'draft',
+        durationWeeks: 4,
+        workoutsPerWeek: 3,
+        startDate: null,
+        completedAt: null,
+        lastWorkoutCompletedAt: null,
+        trainee: {
+            firstName: 'Marco',
+            lastName: 'Neri',
+        },
+        weeks: [],
+        hasTestWeeks: false,
+        testsCompleted: false,
+        createdAt: '2026-05-10T00:00:00.000Z',
+    },
+]
+
+const completedPrograms = [
+    {
+        id: 'program-completed-1',
+        title: 'Programma Completato',
+        status: 'completed',
+        durationWeeks: 6,
+        workoutsPerWeek: 2,
+        startDate: '2026-03-01',
+        completedAt: '2026-04-15',
+        lastWorkoutCompletedAt: '2026-04-15',
+        trainee: {
+            firstName: 'Sara',
+            lastName: 'Blu',
+        },
+        weeks: [],
+        hasTestWeeks: true,
+        testsCompleted: true,
+        createdAt: '2026-03-01T00:00:00.000Z',
+    },
+]
+
+const makeProgramsResponse = (items: unknown[], currentPage = 1, totalItems = 60) => ({
+    data: {
+        items,
+        statusCounts: {
+            draft: 1,
+            active: 3,
+            completed: 2,
+        },
+        pagination: {
+            nextCursor: null,
+            hasMore: currentPage < 3,
+            currentPage,
+            totalPages: 3,
+            totalItems,
+            limit: 20,
+        },
+    },
+})
+
 describe('TrainerProgramsContent', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        global.fetch = vi.fn().mockResolvedValue({
-            ok: true,
-            json: async () => ({
-                data: {
-                    items: activePrograms,
-                    statusCounts: {
-                        draft: 1,
-                        active: 3,
-                        completed: 2,
-                    },
-                    pagination: {
-                        nextCursor: null,
-                        hasMore: true,
-                        currentPage: 1,
-                        totalPages: 3,
-                        totalItems: 60,
-                        limit: 20,
-                    },
-                },
-            }),
+        global.fetch = vi.fn().mockImplementation(async (input: RequestInfo | URL) => {
+            const rawUrl = String(input)
+            const url = new URL(rawUrl, 'http://localhost')
+
+            const status = (url.searchParams.get('status') ?? 'active') as 'draft' | 'active' | 'completed'
+            const currentPage = Number(url.searchParams.get('page') ?? '1')
+            const search = (url.searchParams.get('search') ?? '').toLowerCase()
+
+            const itemsByStatus = {
+                draft: draftPrograms,
+                active: activePrograms,
+                completed: completedPrograms,
+            }
+
+            const statusItems = itemsByStatus[status]
+            const filteredItems = search.length >= 2
+                ? statusItems.filter((program) => {
+                    const traineeName = `${program.trainee.firstName} ${program.trainee.lastName}`.toLowerCase()
+                    return program.title.toLowerCase().includes(search) || traineeName.includes(search)
+                })
+                : statusItems
+
+            return {
+                ok: true,
+                json: async () => makeProgramsResponse(filteredItems, currentPage, filteredItems.length || 60),
+            }
         }) as unknown as typeof fetch
     })
 
@@ -126,11 +193,11 @@ describe('TrainerProgramsContent', () => {
         fireEvent.click(screen.getByRole('button', { name: '2' }))
 
         await waitFor(() => {
-            const calls = fetchMock.mock.calls
-            expect(calls.length).toBeGreaterThanOrEqual(2)
-            const secondCall = String(calls[calls.length - 1][0])
-            expect(secondCall).toContain('page=2')
-            expect(secondCall).toContain('status=active')
+            const hasRequestedPageTwo = fetchMock.mock.calls.some((call) => {
+                const url = String(call[0])
+                return url.includes('status=active') && url.includes('page=2')
+            })
+            expect(hasRequestedPageTwo).toBe(true)
         })
     })
 
@@ -138,7 +205,7 @@ describe('TrainerProgramsContent', () => {
         render(<TrainerProgramsContent />)
 
         await waitFor(() => {
-            expect(global.fetch).toHaveBeenCalledTimes(1)
+            expect(global.fetch).toHaveBeenCalled()
         })
 
         const fetchMock = vi.mocked(global.fetch)
@@ -147,15 +214,43 @@ describe('TrainerProgramsContent', () => {
             target: { value: 'Mario' },
         })
 
-        expect(fetchMock).toHaveBeenCalledTimes(1)
+        const hasSearchRequestBeforeSubmit = fetchMock.mock.calls.some((call) =>
+            String(call[0]).includes('search=Mario')
+        )
+        expect(hasSearchRequestBeforeSubmit).toBe(false)
 
         fireEvent.click(screen.getByRole('button', { name: /search/i }))
 
         await waitFor(() => {
-            expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(2)
-            const lastCall = String(fetchMock.mock.calls[fetchMock.mock.calls.length - 1][0])
-            expect(lastCall).toContain('search=Mario')
-            expect(lastCall).toContain('page=1')
+            const hasSubmittedSearchRequest = fetchMock.mock.calls.some((call) => {
+                const url = String(call[0])
+                return url.includes('search=Mario') && url.includes('page=1')
+            })
+
+            expect(hasSubmittedSearchRequest).toBe(true)
         })
+    })
+
+    it('switches to cached tab data immediately without rendering previous tab rows', async () => {
+        render(<TrainerProgramsContent />)
+
+        await waitFor(() => {
+            expect(screen.getByText('Programma Senza Test')).toBeInTheDocument()
+        })
+
+        const fetchMock = vi.mocked(global.fetch)
+        await waitFor(() => {
+            const hasDraftPrefetch = fetchMock.mock.calls.some((call) => {
+                const url = String(call[0])
+                return url.includes('status=draft') && url.includes('page=1')
+            })
+
+            expect(hasDraftPrefetch).toBe(true)
+        })
+
+        fireEvent.click(screen.getByRole('button', { name: /programs.tabDraft/i }))
+
+        expect(screen.queryByText('Programma Senza Test')).not.toBeInTheDocument()
+        expect(screen.getByText('Bozza Programma')).toBeInTheDocument()
     })
 })
