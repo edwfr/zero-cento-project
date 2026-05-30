@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { SkeletonTable } from '@/components'
+import { Button, SkeletonTable } from '@/components'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import { formatDate } from '@/lib/date-format'
@@ -37,14 +37,47 @@ interface Program {
     createdAt: string
 }
 
+interface ProgramsApiResponse {
+    data: {
+        items: Program[]
+        statusCounts?: {
+            draft: number
+            active: number
+            completed: number
+        }
+        pagination?: {
+            nextCursor: string | null
+            hasMore: boolean
+            currentPage?: number
+            totalPages?: number
+            totalItems?: number
+            limit?: number
+        }
+    }
+}
+
+const PAGE_SIZE = 20
+const MAX_VISIBLE_PAGES = 5
+
 export default function TrainerProgramsContent() {
-    const { t } = useTranslation('trainer')
+    const { t } = useTranslation(['trainer', 'components', 'common'])
     const { showToast } = useToast()
+    const hasLoadedOnceRef = useRef(false)
     const [programs, setPrograms] = useState<Program[]>([])
     const [loading, setLoading] = useState(true)
+    const [isRefreshing, setIsRefreshing] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [activeTab, setActiveTab] = useState<'draft' | 'active' | 'completed'>('active')
     const [searchTerm, setSearchTerm] = useState('')
+    const [appliedSearchTerm, setAppliedSearchTerm] = useState('')
+    const [currentPage, setCurrentPage] = useState(1)
+    const [totalPages, setTotalPages] = useState(1)
+    const [totalItems, setTotalItems] = useState(0)
+    const [statusCounts, setStatusCounts] = useState({
+        draft: 0,
+        active: 0,
+        completed: 0,
+    })
     const [confirmModal, setConfirmModal] = useState<{
         title: string
         message: string
@@ -53,27 +86,105 @@ export default function TrainerProgramsContent() {
         variant?: 'danger' | 'warning' | 'info' | 'success'
     } | null>(null)
 
-    const fetchPrograms = useCallback(async () => {
+    const fetchPrograms = useCallback(async (page: number, signal?: AbortSignal) => {
+        let shouldFinalizeLoad = true
+
         try {
-            setLoading(true)
-            const res = await fetch('/api/programs')
-            const data = await res.json()
+            if (hasLoadedOnceRef.current) {
+                setIsRefreshing(true)
+            }
+            setError(null)
+
+            const params = new URLSearchParams({
+                status: activeTab,
+                page: String(page),
+                limit: String(PAGE_SIZE),
+            })
+
+            const trimmedSearch = appliedSearchTerm.trim()
+            if (trimmedSearch.length >= 2) {
+                params.set('search', trimmedSearch)
+            }
+
+            const res = await fetch(`/api/programs?${params.toString()}`, { signal })
+            const data = (await res.json()) as ProgramsApiResponse
 
             if (!res.ok) {
                 throw new Error(getApiErrorMessage(data, t('programs.loadingError'), t))
             }
 
-            setPrograms(data.data.items)
+            const items = data.data.items ?? []
+            const pagination = data.data.pagination
+
+            const nextTotalPages = Math.max(1, pagination?.totalPages ?? 1)
+            const nextCurrentPage = Math.min(pagination?.currentPage ?? page, nextTotalPages)
+            const nextTotalItems = pagination?.totalItems ?? items.length
+
+            // If a mutation removed the last row of a non-first page, fallback to previous page.
+            if (items.length === 0 && nextCurrentPage > 1 && nextTotalItems > 0) {
+                setCurrentPage(nextCurrentPage - 1)
+                return
+            }
+
+            setPrograms(items)
+            setCurrentPage(nextCurrentPage)
+            setTotalPages(nextTotalPages)
+            setTotalItems(nextTotalItems)
+
+            if (data.data.statusCounts) {
+                setStatusCounts(data.data.statusCounts)
+            }
         } catch (err: unknown) {
+            if (err instanceof DOMException && err.name === 'AbortError') {
+                shouldFinalizeLoad = false
+                return
+            }
             setError(err instanceof Error ? err.message : t('programs.loadingError'))
         } finally {
-            setLoading(false)
+            if (shouldFinalizeLoad) {
+                setLoading(false)
+                hasLoadedOnceRef.current = true
+            }
+            setIsRefreshing(false)
         }
-    }, [t])
+    }, [activeTab, appliedSearchTerm, t])
 
     useEffect(() => {
-        void fetchPrograms()
-    }, [fetchPrograms])
+        const controller = new AbortController()
+        void fetchPrograms(currentPage, controller.signal)
+
+        return () => {
+            controller.abort()
+        }
+    }, [currentPage, fetchPrograms])
+
+    const handleTabChange = (tab: 'draft' | 'active' | 'completed') => {
+        setActiveTab(tab)
+        setCurrentPage(1)
+    }
+
+    const handleSearchChange = (value: string) => {
+        setSearchTerm(value)
+    }
+
+    const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault()
+
+        const nextSearch = searchTerm.trim()
+        if (nextSearch === appliedSearchTerm && currentPage === 1) {
+            return
+        }
+
+        setAppliedSearchTerm(nextSearch)
+        setCurrentPage(1)
+    }
+
+    const visiblePagesCount = Math.min(MAX_VISIBLE_PAGES, totalPages)
+    const firstVisiblePage = Math.max(
+        1,
+        Math.min(currentPage - Math.floor(visiblePagesCount / 2), totalPages - visiblePagesCount + 1)
+    )
+    const visiblePages = Array.from({ length: visiblePagesCount }, (_, idx) => firstVisiblePage + idx)
 
     const handleDelete = (id: string, title: string) => {
         setConfirmModal({
@@ -93,29 +204,12 @@ export default function TrainerProgramsContent() {
                         throw new Error(getApiErrorMessage(data, t('programs.deleteError'), t))
                     }
 
-                    void fetchPrograms()
+                    void fetchPrograms(currentPage)
                 } catch (err: unknown) {
                     showToast(err instanceof Error ? err.message : t('programs.deleteError'), 'error')
                 }
             },
         })
-    }
-
-    const filteredPrograms = programs.filter((prog) => {
-        const matchesTab = prog.status === activeTab
-        const matchesSearch =
-            prog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            `${prog.trainee.firstName} ${prog.trainee.lastName}`
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase())
-
-        return matchesTab && matchesSearch
-    })
-
-    const statusCounts = {
-        draft: programs.filter((p) => p.status === 'draft').length,
-        active: programs.filter((p) => p.status === 'active').length,
-        completed: programs.filter((p) => p.status === 'completed').length,
     }
 
     const getTestWeeks = (program: Program) => {
@@ -203,13 +297,18 @@ export default function TrainerProgramsContent() {
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
                         {/* Search */}
                         <div className="flex-1 max-w-md">
-                            <Input
-                                type="text"
-                                placeholder={t('programs.searchPlaceholder')}
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                inputSize="md"
-                            />
+                            <form className="flex items-center gap-2" onSubmit={handleSearchSubmit}>
+                                <Input
+                                    type="text"
+                                    placeholder={t('programs.searchPlaceholder')}
+                                    value={searchTerm}
+                                    onChange={(e) => handleSearchChange(e.target.value)}
+                                    inputSize="md"
+                                />
+                                <Button type="submit" variant="secondary" size="md" isLoading={isRefreshing}>
+                                    {t('common:common.search')}
+                                </Button>
+                            </form>
                         </div>
 
                         {/* New Program Button */}
@@ -234,7 +333,7 @@ export default function TrainerProgramsContent() {
                     <div className="border-b border-gray-200">
                         <nav className="-mb-px flex space-x-8">
                             <button
-                                onClick={() => setActiveTab('draft')}
+                                onClick={() => handleTabChange('draft')}
                                 className={`pb-4 px-1 border-b-2 font-semibold text-sm ${activeTab === 'draft'
                                     ? 'border-brand-primary text-brand-primary'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -243,7 +342,7 @@ export default function TrainerProgramsContent() {
                                 <FileEdit className="w-4 h-4 inline mr-1" />{t('programs.tabDraft')} ({statusCounts.draft})
                             </button>
                             <button
-                                onClick={() => setActiveTab('active')}
+                                onClick={() => handleTabChange('active')}
                                 className={`pb-4 px-1 border-b-2 font-semibold text-sm ${activeTab === 'active'
                                     ? 'border-brand-primary text-brand-primary'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -252,7 +351,7 @@ export default function TrainerProgramsContent() {
                                 <CheckCircle2 className="w-4 h-4 inline mr-1" />{t('programs.tabActive')} ({statusCounts.active})
                             </button>
                             <button
-                                onClick={() => setActiveTab('completed')}
+                                onClick={() => handleTabChange('completed')}
                                 className={`pb-4 px-1 border-b-2 font-semibold text-sm ${activeTab === 'completed'
                                     ? 'border-brand-primary text-brand-primary'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -265,10 +364,10 @@ export default function TrainerProgramsContent() {
                 </div>
 
                 {/* Programs Table */}
-                {filteredPrograms.length === 0 ? (
+                {programs.length === 0 ? (
                     <div className="bg-white rounded-lg shadow-md p-12 text-center">
                         <p className="text-gray-500 text-lg">
-                            {searchTerm
+                            {appliedSearchTerm
                                 ? t('programs.noProgramsFound')
                                 : activeTab === 'draft' ? t('programs.noDraftPrograms') : activeTab === 'active' ? t('programs.noActivePrograms') : t('programs.noCompletedPrograms')}
                         </p>
@@ -314,7 +413,7 @@ export default function TrainerProgramsContent() {
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                    {filteredPrograms.map((program) => {
+                                    {programs.map((program) => {
                                         const hasTestWeeks = getHasTestWeeks(program)
                                         const testsCompleted = getTestsCompleted(program)
                                         const TestStatusIcon = !hasTestWeeks ? Minus : testsCompleted ? CheckCircle2 : Clock3
@@ -435,6 +534,63 @@ export default function TrainerProgramsContent() {
                                 </tbody>
                             </table>
                         </div>
+
+                        {totalPages > 1 && (
+                            <div className="flex flex-col gap-3 border-t border-gray-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                                <p className="text-sm text-gray-600">
+                                    {t('components:pagination.pageOf', { current: currentPage, total: totalPages })}
+                                    <span className="ml-2 text-gray-500">({totalItems})</span>
+                                </p>
+
+                                <div className="flex flex-wrap items-center justify-end gap-2">
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => setCurrentPage(1)}
+                                        disabled={isRefreshing || currentPage === 1}
+                                    >
+                                        {t('components:pagination.first')}
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                                        disabled={isRefreshing || currentPage === 1}
+                                    >
+                                        {t('components:pagination.previous')}
+                                    </Button>
+
+                                    {visiblePages.map((pageNumber) => (
+                                        <Button
+                                            key={pageNumber}
+                                            variant={pageNumber === currentPage ? 'primary' : 'secondary'}
+                                            size="sm"
+                                            onClick={() => setCurrentPage(pageNumber)}
+                                            disabled={isRefreshing || pageNumber === currentPage}
+                                        >
+                                            {pageNumber}
+                                        </Button>
+                                    ))}
+
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                                        disabled={isRefreshing || currentPage === totalPages}
+                                    >
+                                        {t('components:pagination.next')}
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => setCurrentPage(totalPages)}
+                                        disabled={isRefreshing || currentPage === totalPages}
+                                    >
+                                        {t('components:pagination.last')}
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

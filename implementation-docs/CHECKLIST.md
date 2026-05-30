@@ -707,6 +707,14 @@
       File: `src/app/api/users/[id]/reports/planned-training-sets/route.ts`, `src/app/trainer/trainees/[id]/_content.tsx`, `tests/integration/planned-training-sets-report.test.ts`, `tests/unit/trainer-trainee-detail-sbd-report.test.tsx`
 - [x] **11.128** `/trainer/programs/[id]/tests`: allineare il layout della tabella workout alla view programma (`/trainer/programs/[id]`) con stile compatto (header slate, colonne fixed, righe alternate) + test unitario dedicato ✅ _30 Mag 2026_  
       File: `src/app/trainer/programs/[id]/tests/_content.tsx`, `tests/unit/program-test-results-content.test.tsx`
+- [x] **11.129** `/trainer/programs`: paginazione numerata 1..N con approccio filter-first lato API (`status/search` prima della paginazione), metadata `currentPage/totalPages/totalItems`, tabella allineata a query server-side e test/contract aggiornati ✅ _30 Mag 2026_  
+      File: `src/app/trainer/programs/_content.tsx`, `src/app/api/programs/route.ts`, `src/schemas/program.ts`, `tests/unit/trainer-programs-content.test.tsx`, `tests/integration/programs.test.ts`, `tests/integration/api-contracts.test.ts`, `tests/unit/schemas.test.ts`, `docs/api-contracts.md`, `docs/api-pagination.md`
+- [x] **11.130** Documentazione tecnica: creare playbook riusabile per paginazione numerata filter-first (linea guida per nuove schermate) ✅ _30 Mag 2026_  
+      File: `docs/pagination-filter-first-playbook.md`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+- [x] **11.131** `/trainer/programs`: eliminare il flash UI durante digitazione ricerca mantenendo la tabella visibile durante i refetch (debounce input + loading iniziale separato da refresh) ✅ _30 Mag 2026_  
+      File: `src/app/trainer/programs/_content.tsx`, `tests/unit/trainer-programs-content.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+- [x] **11.132** `/trainer/programs`: sostituire ricerca su digitazione con ricerca esplicita via bottone (submit/Enter), senza chiamate API durante la scrittura ✅ _30 Mag 2026_  
+      File: `src/app/trainer/programs/_content.tsx`, `tests/unit/trainer-programs-content.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 
 ---
 

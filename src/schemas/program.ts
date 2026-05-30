@@ -46,7 +46,10 @@ export const programFilterSchema = z.object({
     traineeId: z.string().uuid().optional(),
     trainerId: z.string().uuid().optional(),
     status: z.enum(['draft', 'active', 'completed']).optional(),
-    search: z.string().optional(),
+    search: z.string().trim().optional(),
+    cursor: z.string().uuid().optional(),
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(500).default(20),
 })
 
 export const completeProgramSchema = z.object({

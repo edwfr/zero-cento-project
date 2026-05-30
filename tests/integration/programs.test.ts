@@ -115,6 +115,7 @@ describe('GET /api/programs', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         vi.mocked(prisma.trainingProgram.findMany).mockResolvedValue([] as any)
+        vi.mocked(prisma.trainingProgram.count).mockResolvedValue(0)
         vi.mocked(prisma.exerciseFeedback.findMany).mockResolvedValue([] as any)
         vi.mocked(prisma.$queryRaw).mockResolvedValue([] as any)
     })
@@ -151,6 +152,58 @@ describe('GET /api/programs', () => {
                 where: expect.objectContaining({ status: 'active' }),
             })
         )
+    })
+
+    it('applies filters before pagination and returns numeric pagination metadata', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+
+        const pagedPrograms = Array.from({ length: 11 }, (_, idx) => ({
+            ...mockPrograms[0],
+            id: `prog-${idx + 1}`,
+            status: 'active',
+        }))
+
+        vi.mocked(prisma.trainingProgram.findMany).mockResolvedValue(pagedPrograms as any)
+        vi.mocked(prisma.trainingProgram.count)
+            .mockResolvedValueOnce(21)
+            .mockResolvedValueOnce(7)
+            .mockResolvedValueOnce(12)
+            .mockResolvedValueOnce(2)
+
+        const req = makeRequest('http://localhost:3000/api/programs?status=active&search=Mario&page=2&limit=10')
+        const res = await GET(req)
+        const body = await res.json()
+
+        expect(res.status).toBe(200)
+        expect(prisma.trainingProgram.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({
+                where: expect.objectContaining({
+                    trainerId: 'trainer-uuid-1',
+                    status: 'active',
+                }),
+                skip: 10,
+                take: 11,
+            })
+        )
+        expect(body.data.items).toHaveLength(10)
+        expect(body.data.pagination.currentPage).toBe(2)
+        expect(body.data.pagination.totalPages).toBe(3)
+        expect(body.data.pagination.totalItems).toBe(21)
+        expect(body.data.pagination.hasMore).toBe(true)
+        expect(body.data.statusCounts).toEqual({
+            draft: 7,
+            active: 12,
+            completed: 2,
+        })
+    })
+
+    it('returns 400 for invalid page filter', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+
+        const req = makeRequest('http://localhost:3000/api/programs?page=0')
+        const res = await GET(req)
+
+        expect(res.status).toBe(400)
     })
 
     it('keeps the stored active status in the response even when all workouts are complete', async () => {

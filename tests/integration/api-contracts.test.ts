@@ -206,12 +206,17 @@ describe('API Contract: Success response envelope', () => {
     it('GET /api/programs returns { data: { items, pagination }, meta }', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
         vi.mocked(prisma.trainingProgram.findMany).mockResolvedValue([])
+        vi.mocked(prisma.trainingProgram.count).mockResolvedValue(0)
 
         const res = await listPrograms(makeRequest('http://localhost:3000/api/programs'))
         const body = await res.json()
 
         expect(res.status).toBe(200)
         expectPaginatedList(body)
+        expect(body.data.pagination).toHaveProperty('currentPage')
+        expect(body.data.pagination).toHaveProperty('totalPages')
+        expect(body.data.pagination).toHaveProperty('totalItems')
+        expect(body.data).toHaveProperty('statusCounts')
     })
 
     it('GET /api/feedback returns { data: { items, pagination }, meta }', async () => {

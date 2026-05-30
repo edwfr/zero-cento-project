@@ -15,6 +15,30 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 - **[11 Maggio 2026] Unificato calcolo 1RM su tabella RPE Mike Tuchscherer** — Aggiunto helper condiviso `normalizedOneRM(weight, reps)` in `src/lib/calculations.ts` (wrapper su `estimateOneRMFromRpeTable(w, r, 10)` con arrotondamento a 0.1 kg). Sostituite tre formule divergenti sparse nel codebase: Epley (`weight * (1 + reps/30)`) negli editor di programmi e workouts trainer e nell'endpoint review; Brzycki (`weight * 36/(37-reps)`) nel tab Massimali della pagina trainee. Ora `% rispetto 1RM` usa la stessa normalizzazione del tab Massimali in `/trainer/trainees/[id]` e della pagina `/trainer/trainees/[id]/records`, indipendentemente dalla settimana. Backend `resolveEffectiveWeight`/`calculateEffectiveWeight` ora calcolano l'1RM dal miglior PR normalizzato (RPE table) invece di richiedere obbligatoriamente un record `reps=1`. **Files modificati:** `src/lib/calculations.ts`, `src/app/trainer/programs/[id]/edit/_content.tsx`, `src/app/trainer/programs/[id]/workouts/[wId]/_content.tsx`, `src/app/trainer/programs/[id]/tests/_content.tsx`, `src/app/api/programs/[id]/review/route.ts`, `src/app/trainer/trainees/[id]/_content.tsx`, `src/app/trainer/trainees/[id]/records/_content.tsx`, `src/app/trainee/records/_content.tsx`, `src/components/PersonalRecordsExplorer.tsx`, `tests/unit/calculations.test.ts`, `tests/unit/setup.ts`, `public/locales/{it,en}/trainer.json`.
 - **[11 Maggio 2026] Widget Massimali Trainee: riga 1RM calcolato** — Nella schermata `/trainer/programs/[id]/edit`, il widget "Massimali Trainee" mostra sotto la riga `kg × rep` una seconda riga `1RM calcolato: X kg` derivata dalla tabella RPE Mike Tuchscherer (RPE 10). Nuova chiave i18n `editProgram.prHelperEstimatedOneRm` in en/it. **Files modificati:** `src/app/trainer/programs/[id]/edit/_content.tsx`, `public/locales/{it,en}/trainer.json`.
 
+### [30 Maggio 2026] — Trainer programs: paginazione numerata filter-first
+
+**Task checklist:** #11.129
+**File modificati:** `src/app/trainer/programs/_content.tsx`, `src/app/api/programs/route.ts`, `src/schemas/program.ts`, `tests/unit/trainer-programs-content.test.tsx`, `tests/integration/programs.test.ts`, `tests/integration/api-contracts.test.ts`, `tests/unit/schemas.test.ts`, `docs/api-contracts.md`, `docs/api-pagination.md`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Implementata la paginazione numerata 1..N nella schermata `/trainer/programs` con salti diretti `First/Previous/Next/Last` e bottoni pagina. I filtri `status/search` sono ora applicati lato API prima della paginazione (filter-first): il backend filtra il dataset, calcola `totalItems/totalPages/currentPage` e poi restituisce la pagina richiesta. La risposta mantiene anche `nextCursor/hasMore` per retrocompatibilita con i consumer esistenti di `/api/programs`. Aggiornati schema query, test unit/integration/contract e documentazione contrattuale.
+
+### [30 Maggio 2026] — Playbook tecnico per paginazione filter-first riusabile
+
+**Task checklist:** #11.130
+**File modificati:** `docs/pagination-filter-first-playbook.md`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Creata una linea guida tecnica riusabile per replicare su nuove schermate lo stesso approccio usato in `/trainer/programs`: filtri lato API prima della paginazione, metadata numerati (`currentPage/totalPages/totalItems`), strategia frontend per reset pagina su cambio filtri, fallback post-delete, matrice test minima (unit/integration/contract) e checklist operativa step-by-step.
+
+### [30 Maggio 2026] — Trainer programs: ricerca senza flash durante digitazione
+
+**Task checklist:** #11.131
+**File modificati:** `src/app/trainer/programs/_content.tsx`, `tests/unit/trainer-programs-content.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Migliorata la UX della ricerca in `/trainer/programs`: la tabella non scompare piu a ogni carattere digitato. La schermata ora usa loading iniziale separato dal refresh successivo, mantiene i dati visibili durante i refetch, applica debounce sull input ricerca e mostra solo un indicatore di refresh leggero vicino al campo search. Riallineato anche `PAGE_SIZE` al valore concordato di `20`.
+
+### [30 Maggio 2026] — Trainer programs: ricerca esplicita con bottone
+
+**Task checklist:** #11.132
+**File modificati:** `src/app/trainer/programs/_content.tsx`, `tests/unit/trainer-programs-content.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Rimossa la ricerca automatica con debounce in digitazione. La query ora parte solo con submit esplicito (click sul bottone `Cerca` o pressione `Enter`), evitando chiamate API durante la scrittura. Mantenuta la paginazione server-side e il reset a pagina 1 quando viene applicato il filtro di ricerca.
+
 ### [27 Maggio 2026] — Trainer programs: colonna stato test icon-only con tooltip
 
 **Task checklist:** #11.119

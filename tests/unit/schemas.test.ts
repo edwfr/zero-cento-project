@@ -8,6 +8,7 @@ import {
     createProgramSchema,
     updateProgramSchema,
     publishProgramSchema,
+    programFilterSchema,
 } from '@/schemas/program'
 import {
     createUserSchema,
@@ -201,6 +202,51 @@ describe('updateProgramSchema', () => {
 
     it('validates fields when provided', () => {
         const result = updateProgramSchema.safeParse({ durationWeeks: 0 })
+        expect(result.success).toBe(false)
+    })
+})
+
+describe('programFilterSchema', () => {
+    it('applies defaults for page and limit', () => {
+        const result = programFilterSchema.safeParse({})
+        expect(result.success).toBe(true)
+
+        if (result.success) {
+            expect(result.data.page).toBe(1)
+            expect(result.data.limit).toBe(20)
+        }
+    })
+
+    it('accepts valid pagination and status filters', () => {
+        const result = programFilterSchema.safeParse({
+            status: 'active',
+            page: '3',
+            limit: '50',
+            search: 'Mario',
+            cursor: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+        })
+
+        expect(result.success).toBe(true)
+
+        if (result.success) {
+            expect(result.data.page).toBe(3)
+            expect(result.data.limit).toBe(50)
+            expect(result.data.status).toBe('active')
+        }
+    })
+
+    it('rejects page lower than 1', () => {
+        const result = programFilterSchema.safeParse({ page: 0 })
+        expect(result.success).toBe(false)
+    })
+
+    it('rejects limit greater than 500', () => {
+        const result = programFilterSchema.safeParse({ limit: 501 })
+        expect(result.success).toBe(false)
+    })
+
+    it('rejects non-uuid cursor', () => {
+        const result = programFilterSchema.safeParse({ cursor: 'not-a-uuid' })
         expect(result.success).toBe(false)
     })
 })

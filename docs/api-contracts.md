@@ -24,7 +24,14 @@ Tutte le risposte usano i wrapper definiti in `src/lib/api-response.ts`:
 {
   "data": {
     "items": [ ... ],
-    "pagination": { "nextCursor": "string | null", "hasMore": true }
+    "pagination": {
+      "nextCursor": "string | null",
+      "hasMore": true,
+      "currentPage": 1,
+      "totalPages": 5,
+      "totalItems": 83,
+      "limit": 20
+    }
   },
   "meta": { "timestamp": "ISO 8601" }
 }
@@ -58,9 +65,13 @@ Tutte le risposte usano i wrapper definiti in `src/lib/api-response.ts`:
 
 ### Paginazione
 
-Paginazione cursor-based per tutti gli endpoint lista. Parametri query:
+Paginazione cursor-based per endpoint lista con supporto legacy. Parametri query:
 - `cursor` — ID dell'ultimo elemento della pagina precedente
 - `limit` — Numero di elementi per pagina (default: 20, max: 100)
+
+Per `GET /api/programs` e disponibile anche paginazione numerata filter-first:
+- `page` — numero pagina richiesto (default: 1)
+- `status` e `search` sono applicati prima della paginazione
 
 ---
 
@@ -121,7 +132,7 @@ Paginazione cursor-based per tutti gli endpoint lista. Parametri query:
 
 | Method   | Path                          | Descrizione                           | Ruoli   | Schema Request                                 | Status |
 | -------- | ----------------------------- | ------------------------------------- | ------- | ---------------------------------------------- | ------ |
-| `GET`    | `/api/programs`               | Lista programmi (paginata)            | trainer | query: `?traineeId&status&search&cursor&limit` | 200    |
+| `GET`    | `/api/programs`               | Lista programmi (paginata, filter-first) | trainer | query: `?traineeId&status&search&page&limit` | 200    |
 | `POST`   | `/api/programs`               | Crea programma (draft)                | trainer | `createProgramSchema`                          | 201    |
 | `GET`    | `/api/programs/[id]`          | Dettaglio programma                   | trainer | —                                              | 200    |
 | `PUT`    | `/api/programs/[id]`          | Modifica programma (solo draft)       | trainer | `updateProgramSchema`                          | 200    |

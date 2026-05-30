@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
-import { createProgramSchema } from '@/schemas/program'
+import { createProgramSchema, programFilterSchema } from '@/schemas/program'
 import { logger } from '@/lib/logger'
 
 interface ProgramTestsSummary {
@@ -22,8 +22,8 @@ interface ProgramTestsSummary {
 
 /**
  * GET /api/programs
- * List programs with cursor-based pagination
- * Query params: trainerId, traineeId, status, search, cursor
+ * List programs with filter-first pagination
+ * Query params: trainerId, traineeId, status, search, page, limit, cursor
  * RBAC: Admin sees all, Trainer sees only own, Trainee sees only assigned
  */
 export async function GET(request: NextRequest) {
@@ -32,53 +32,105 @@ export async function GET(request: NextRequest) {
 
         const { searchParams } = new URL(request.url)
 
-        const trainerId = searchParams.get('trainerId') || undefined
-        const traineeId = searchParams.get('traineeId') || undefined
-        const status = searchParams.get('status') || undefined
-        const search = searchParams.get('search') || undefined
-        const cursor = searchParams.get('cursor') || undefined
-        const limit = parseInt(searchParams.get('limit') || '20')
+        // Parse and validate query parameters
+        const filterParams = {
+            trainerId: searchParams.get('trainerId') || undefined,
+            traineeId: searchParams.get('traineeId') || undefined,
+            status: searchParams.get('status') || undefined,
+            search: searchParams.get('search') || undefined,
+            cursor: searchParams.get('cursor') || undefined,
+            page: searchParams.get('page') || undefined,
+            limit: searchParams.get('limit') || undefined,
+        }
+
+        const validation = programFilterSchema.safeParse(filterParams)
+        if (!validation.success) {
+            return apiError('VALIDATION_ERROR', 'Invalid filter parameters', 400, validation.error.errors, 'validation.invalidFilterParams')
+        }
+
+        const { trainerId, traineeId, status, search, cursor, page, limit } = validation.data
 
         // Validate search parameter length
         if (search && (search.length < 2 || search.length > 100)) {
             return apiError('VALIDATION_ERROR', 'Search parameter must be between 2 and 100 characters', 400, undefined, 'validation.searchLength')
         }
 
+        const useCursorPagination = Boolean(cursor) && !searchParams.has('page')
+
         // Build where clause based on RBAC
-        const where: any = {}
+        const baseWhere: Prisma.TrainingProgramWhereInput = {}
 
         if (session.user.role === 'trainer') {
             // Trainers see only their own programs
-            where.trainerId = session.user.id
+            baseWhere.trainerId = session.user.id
+            if (traineeId) {
+                baseWhere.traineeId = traineeId
+            }
         } else if (session.user.role === 'trainee') {
             // Trainees see only programs assigned to them
-            where.traineeId = session.user.id
-        }
-        // Admin sees all programs (no additional filter)
+            baseWhere.traineeId = session.user.id
+        } else {
+            // Admins can filter by trainer/trainee
+            if (trainerId) {
+                baseWhere.trainerId = trainerId
+            }
 
-        // Apply additional filters
-        if (trainerId) {
-            where.trainerId = trainerId
-        }
-
-        if (traineeId) {
-            where.traineeId = traineeId
-        }
-
-        if (status === 'draft' || status === 'active' || status === 'completed') {
-            where.status = status
-        }
-
-        if (search) {
-            where.title = {
-                contains: search,
-                mode: 'insensitive',
+            if (traineeId) {
+                baseWhere.traineeId = traineeId
             }
         }
 
-        // Fetch programs with cursor pagination
+        if (search) {
+            baseWhere.OR = [
+                {
+                    title: {
+                        contains: search,
+                        mode: 'insensitive',
+                    },
+                },
+                {
+                    trainee: {
+                        firstName: {
+                            contains: search,
+                            mode: 'insensitive',
+                        },
+                    },
+                },
+                {
+                    trainee: {
+                        lastName: {
+                            contains: search,
+                            mode: 'insensitive',
+                        },
+                    },
+                },
+            ]
+        }
+
+        const listWhere: Prisma.TrainingProgramWhereInput = {
+            ...baseWhere,
+            ...(status ? { status } : {}),
+        }
+
+        const [
+            totalItems,
+            draftCount,
+            activeCount,
+            completedCount,
+        ] = await Promise.all([
+            prisma.trainingProgram.count({ where: listWhere }),
+            prisma.trainingProgram.count({ where: { ...baseWhere, status: 'draft' } }),
+            prisma.trainingProgram.count({ where: { ...baseWhere, status: 'active' } }),
+            prisma.trainingProgram.count({ where: { ...baseWhere, status: 'completed' } }),
+        ])
+
+        const totalPages = Math.max(1, Math.ceil(totalItems / limit))
+        const resolvedPage = Math.min(page, totalPages)
+        const skip = (resolvedPage - 1) * limit
+
+        // Fetch programs with pagination (filter-first)
         const programs = await prisma.trainingProgram.findMany({
-            where,
+            where: listWhere,
             include: {
                 trainer: {
                     select: {
@@ -106,19 +158,23 @@ export async function GET(request: NextRequest) {
                 },
             },
             take: limit + 1,
-            ...(cursor && {
-                skip: 1,
-                cursor: {
-                    id: cursor,
-                },
-            }),
+            ...(useCursorPagination
+                ? {
+                    skip: 1,
+                    cursor: {
+                        id: cursor,
+                    },
+                }
+                : {
+                    skip,
+                }),
             orderBy: [
                 { createdAt: 'desc' },
             ],
         })
 
         const hasMore = programs.length > limit
-        const items = hasMore ? programs.slice(0, -1) : programs
+        const items = hasMore ? programs.slice(0, limit) : programs
         const nextCursor = hasMore ? items[items.length - 1].id : null
 
         const programIds = items.map((program) => program.id)
@@ -279,9 +335,18 @@ export async function GET(request: NextRequest) {
 
         return apiSuccess({
             items: enrichedItems,
+            statusCounts: {
+                draft: draftCount,
+                active: activeCount,
+                completed: completedCount,
+            },
             pagination: {
                 nextCursor,
                 hasMore,
+                currentPage: resolvedPage,
+                totalPages,
+                totalItems,
+                limit,
             },
         })
     } catch (error: any) {

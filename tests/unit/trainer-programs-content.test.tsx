@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import TrainerProgramsContent from '@/app/trainer/programs/_content'
 
 vi.mock('@/components/ToastNotification', () => ({
@@ -71,6 +71,19 @@ describe('TrainerProgramsContent', () => {
             json: async () => ({
                 data: {
                     items: activePrograms,
+                    statusCounts: {
+                        draft: 1,
+                        active: 3,
+                        completed: 2,
+                    },
+                    pagination: {
+                        nextCursor: null,
+                        hasMore: true,
+                        currentPage: 1,
+                        totalPages: 3,
+                        totalItems: 60,
+                        limit: 20,
+                    },
                 },
             }),
         }) as unknown as typeof fetch
@@ -94,5 +107,55 @@ describe('TrainerProgramsContent', () => {
         expect(screen.queryByText('programs.noTestWeeks')).not.toBeInTheDocument()
         expect(screen.queryByText('programs.testsPending')).not.toBeInTheDocument()
         expect(screen.queryByText('programs.testsCompleted')).not.toBeInTheDocument()
+    })
+
+    it('uses server-side filters before pagination and supports numeric page navigation', async () => {
+        render(<TrainerProgramsContent />)
+
+        await waitFor(() => {
+            expect(global.fetch).toHaveBeenCalled()
+        })
+
+        const fetchMock = vi.mocked(global.fetch)
+        const firstCall = String(fetchMock.mock.calls[0][0])
+        expect(firstCall).toContain('/api/programs?')
+        expect(firstCall).toContain('status=active')
+        expect(firstCall).toContain('page=1')
+        expect(firstCall).toContain('limit=20')
+
+        fireEvent.click(screen.getByRole('button', { name: '2' }))
+
+        await waitFor(() => {
+            const calls = fetchMock.mock.calls
+            expect(calls.length).toBeGreaterThanOrEqual(2)
+            const secondCall = String(calls[calls.length - 1][0])
+            expect(secondCall).toContain('page=2')
+            expect(secondCall).toContain('status=active')
+        })
+    })
+
+    it('does not trigger search fetch while typing and fetches only on search submit', async () => {
+        render(<TrainerProgramsContent />)
+
+        await waitFor(() => {
+            expect(global.fetch).toHaveBeenCalledTimes(1)
+        })
+
+        const fetchMock = vi.mocked(global.fetch)
+
+        fireEvent.change(screen.getByPlaceholderText('programs.searchPlaceholder'), {
+            target: { value: 'Mario' },
+        })
+
+        expect(fetchMock).toHaveBeenCalledTimes(1)
+
+        fireEvent.click(screen.getByRole('button', { name: /search/i }))
+
+        await waitFor(() => {
+            expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(2)
+            const lastCall = String(fetchMock.mock.calls[fetchMock.mock.calls.length - 1][0])
+            expect(lastCall).toContain('search=Mario')
+            expect(lastCall).toContain('page=1')
+        })
     })
 })
