@@ -15,6 +15,7 @@ vi.mock('@/lib/prisma', () => ({
             findMany: vi.fn(),
             create: vi.fn(),
             update: vi.fn(),
+            deleteMany: vi.fn(),
         },
         exercise: { findMany: vi.fn() },
         $transaction: vi.fn(),
@@ -136,8 +137,50 @@ describe('PUT /api/programs/[id]/workouts/[workoutId]/exercises/bulk', () => {
         expect(body.data.workoutExercises).toHaveLength(2)
     })
 
+    it('passes deletedExerciseIds to deleteMany in the bulk transaction', async () => {
+        const res = await bulkPut(
+            makePutRequest({
+                exercises: [baseRow],
+                deletedExerciseIds: [WE_EXISTING],
+            }),
+            params(PROG, WK)
+        )
+
+        expect(res.status).toBe(200)
+        expect(prisma.workoutExercise.deleteMany).toHaveBeenCalledWith({
+            where: {
+                workoutId: WK,
+                id: { in: [WE_EXISTING] },
+            },
+        })
+    })
+
     it('rejects empty array with 400', async () => {
         const res = await bulkPut(makePutRequest({ exercises: [] }), params(PROG, WK))
+        expect(res.status).toBe(400)
+    })
+
+    it('rejects overlapping ids between exercises and deletedExerciseIds', async () => {
+        const res = await bulkPut(
+            makePutRequest({
+                exercises: [{ ...baseRow, id: WE_EXISTING }],
+                deletedExerciseIds: [WE_EXISTING],
+            }),
+            params(PROG, WK)
+        )
+
+        expect(res.status).toBe(400)
+    })
+
+    it('rejects invalid deletedExerciseIds values', async () => {
+        const res = await bulkPut(
+            makePutRequest({
+                exercises: [baseRow],
+                deletedExerciseIds: ['not-a-uuid'],
+            }),
+            params(PROG, WK)
+        )
+
         expect(res.status).toBe(400)
     })
 

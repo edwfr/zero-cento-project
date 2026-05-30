@@ -768,6 +768,16 @@ describe('bulkSaveWorkoutExercisesSchema', () => {
         expect(parsed.exercises[1].id).toBe('44444444-4444-4444-4444-444444444444')
     })
 
+    it('accepts delete-only payloads with deletedExerciseIds', () => {
+        const parsed = bulkSaveWorkoutExercisesSchema.parse({
+            exercises: [],
+            deletedExerciseIds: ['44444444-4444-4444-4444-444444444444'],
+        })
+
+        expect(parsed.exercises).toHaveLength(0)
+        expect(parsed.deletedExerciseIds).toEqual(['44444444-4444-4444-4444-444444444444'])
+    })
+
     it('rejects when id is not a uuid', () => {
         const result = bulkSaveWorkoutExercisesSchema.safeParse({
             exercises: [{ ...validRow, id: 'not-a-uuid' }],
@@ -777,6 +787,23 @@ describe('bulkSaveWorkoutExercisesSchema', () => {
 
     it('rejects empty exercises array', () => {
         const result = bulkSaveWorkoutExercisesSchema.safeParse({ exercises: [] })
+        expect(result.success).toBe(false)
+    })
+
+    it('rejects deletedExerciseIds when an id is invalid', () => {
+        const result = bulkSaveWorkoutExercisesSchema.safeParse({
+            exercises: [validRow],
+            deletedExerciseIds: ['not-a-uuid'],
+        })
+        expect(result.success).toBe(false)
+    })
+
+    it('rejects overlapping ids between exercises and deletedExerciseIds', () => {
+        const rowId = '44444444-4444-4444-4444-444444444444'
+        const result = bulkSaveWorkoutExercisesSchema.safeParse({
+            exercises: [{ ...validRow, id: rowId }],
+            deletedExerciseIds: [rowId],
+        })
         expect(result.success).toBe(false)
     })
 

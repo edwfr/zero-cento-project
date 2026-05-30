@@ -117,6 +117,18 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 **File modificati:** `src/app/trainer/programs/[id]/tests/_content.tsx`, `tests/unit/program-test-results-content.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 **Note:** Nella schermata `/trainer/programs/[id]/tests` il layout delle tabelle workout e stato aggiornato per riflettere lo stile della view programma (`/trainer/programs/[id]`): card con bordo e header separato, tabella compatta con `table-fixed`, intestazione `slate`, larghezze colonna definite e alternanza righe (`bianco/grigio`) per una lettura piu coerente tra le due viste.
 
+### [30 Maggio 2026] — Edit workout trainer: preservare modifiche non salvate durante delete/refetch
+
+**Task checklist:** #11.136
+**File modificati:** `src/app/trainer/programs/[id]/edit/_content.tsx`, `src/app/trainer/programs/[id]/edit/row-utils.ts`, `tests/unit/row-utils.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Nella schermata `/trainer/programs/[id]/edit` le modifiche non salvate sulle righe persistite (es. RPE, reps, weight, rest, varianti, flag) ora vengono preservate anche dopo operazioni che aggiornano `program` (delete row ottimistica, refetch visibilita tab, save di altri workout). Introdotto tracking dei row id dirty lato client e merge non distruttivo tra snapshot server e stato locale in fase di sincronizzazione. Al salvataggio di un workout vengono puliti solo i dirty marker del workout salvato, evitando reset involontari su altri workout ancora in lavorazione.
+
+### [30 Maggio 2026] — Edit workout trainer: reorder/delete coerenti con salvataggio esplicito
+
+**Task checklist:** #11.137
+**File modificati:** `src/app/trainer/programs/[id]/edit/_content.tsx`, `src/app/trainer/programs/[id]/edit/row-utils.ts`, `src/schemas/workout-exercise.ts`, `src/app/api/programs/[id]/workouts/[workoutId]/exercises/bulk/route.ts`, `tests/integration/workout-exercises-bulk.test.ts`, `tests/unit/schemas.test.ts`, `tests/unit/row-utils.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Nella schermata `/trainer/programs/[id]/edit` il drag `riordina` e il drop sul bidone non invocano piu API immediate. Entrambe le operazioni restano locali finche il trainer non preme `Salva workout`, mantenendo coerenza con il modello di bozza. Il commit ora avviene in un singolo `PUT` bulk che supporta anche `deletedExerciseIds` (defer delete). Aggiornata la validazione schema bulk per consentire payload di sola cancellazione, bloccare overlap `id` update/delete e mantenere gli invarianti di input.
+
 ### [25 Maggio 2026] — Dettaglio atleta trainer: KPI SBD per lift e filtro temporale
 
 **Task checklist:** #11.116

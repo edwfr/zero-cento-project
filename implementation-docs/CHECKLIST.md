@@ -721,6 +721,10 @@
       File: `src/app/trainer/dashboard/page.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 - [x] **11.135** `/trainer/programs`: rendere il cambio tab `Draft/Active/Completed` invisibile con hydration immediata da cache (`status+page+search`), refresh in background, prefetch tab non attivi e protezione anti-race su fetch concorrenti ✅ _30 Mag 2026_  
       File: `src/app/trainer/programs/_content.tsx`, `tests/unit/trainer-programs-content.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+- [x] **11.136** `/trainer/programs/[id]/edit`: preservare le modifiche non salvate sulle righe persistite durante delete row, refetch programma e salvataggi parziali workout tramite merge non distruttivo dello stato locale dirty ✅ _30 Mag 2026_  
+      File: `src/app/trainer/programs/[id]/edit/_content.tsx`, `src/app/trainer/programs/[id]/edit/row-utils.ts`, `tests/unit/row-utils.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+- [x] **11.137** `/trainer/programs/[id]/edit`: rendere `riordina` e `drop su bidone` coerenti con il modello save-driven (nessuna API immediata; commit unico su `Salva workout`) estendendo il bulk con `deletedExerciseIds` ✅ _30 Mag 2026_  
+      File: `src/app/trainer/programs/[id]/edit/_content.tsx`, `src/app/api/programs/[id]/workouts/[workoutId]/exercises/bulk/route.ts`, `src/schemas/workout-exercise.ts`, `tests/integration/workout-exercises-bulk.test.ts`, `tests/unit/{schemas.test.ts,row-utils.test.ts}`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 
 ---
 

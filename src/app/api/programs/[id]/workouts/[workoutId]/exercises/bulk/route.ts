@@ -25,7 +25,8 @@ export async function PUT(
             )
         }
 
-        const { exercises } = validation.data
+        const { exercises, deletedExerciseIds } = validation.data
+        const uniqueDeletedExerciseIds = Array.from(new Set(deletedExerciseIds))
 
         const program = await prisma.trainingProgram.findUnique({
             where: { id: programId },
@@ -79,6 +80,16 @@ export async function PUT(
             .map((row) => row.id)
             .filter((id): id is string => Boolean(id))
 
+        if (updateIds.some((id) => uniqueDeletedExerciseIds.includes(id))) {
+            return apiError(
+                'VALIDATION_ERROR',
+                'Invalid input',
+                400,
+                { deletedExerciseIds: ['validation.invalidInput'] },
+                'validation.invalidInput'
+            )
+        }
+
         if (updateIds.length > 0) {
             const existingForWorkout = await prisma.workoutExercise.findMany({
                 where: { id: { in: updateIds }, workoutId },
@@ -110,7 +121,11 @@ export async function PUT(
             )
         }
 
-        const operations = exercises.map((row) => {
+        const operations: Array<
+            | ReturnType<typeof prisma.workoutExercise.create>
+            | ReturnType<typeof prisma.workoutExercise.update>
+            | ReturnType<typeof prisma.workoutExercise.deleteMany>
+        > = exercises.map((row) => {
             const data = {
                 workoutId,
                 exerciseId: row.exerciseId,
@@ -134,6 +149,17 @@ export async function PUT(
             return prisma.workoutExercise.create({ data })
         })
 
+        if (uniqueDeletedExerciseIds.length > 0) {
+            operations.push(
+                prisma.workoutExercise.deleteMany({
+                    where: {
+                        workoutId,
+                        id: { in: uniqueDeletedExerciseIds },
+                    },
+                })
+            )
+        }
+
         await prisma.$transaction(operations)
 
         const workoutExercises = await prisma.workoutExercise.findMany({
@@ -153,6 +179,7 @@ export async function PUT(
                 programId,
                 workoutId,
                 count: exercises.length,
+                deletedCount: uniqueDeletedExerciseIds.length,
                 userId: session.user.id,
             },
             'Workout exercises bulk saved'

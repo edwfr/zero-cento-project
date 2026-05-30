@@ -107,9 +107,9 @@ export const bulkWorkoutExercisesSchema = z.object({
     exercises: z.array(workoutExerciseSchema).min(1, 'validation.atLeastOneExercise'),
 })
 
-export const bulkSaveWorkoutExercisesSchema = z.object({
-    exercises: z
-        .array(
+export const bulkSaveWorkoutExercisesSchema = z
+    .object({
+        exercises: z.array(
             workoutExerciseBaseSchema
                 .extend({ id: z.string().uuid().optional() })
                 .superRefine((data, ctx) => {
@@ -156,9 +156,34 @@ export const bulkSaveWorkoutExercisesSchema = z.object({
                         })
                     }
                 })
+        ),
+        deletedExerciseIds: z.array(z.string().uuid()).optional().default([]),
+    })
+    .superRefine((data, ctx) => {
+        if (data.exercises.length === 0 && data.deletedExerciseIds.length === 0) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'validation.atLeastOneExercise',
+                path: ['exercises'],
+            })
+        }
+
+        const updatedIds = new Set(
+            data.exercises
+                .map((exercise) => exercise.id)
+                .filter((id): id is string => Boolean(id))
         )
-        .min(1, 'validation.atLeastOneExercise'),
-})
+
+        const hasOverlap = data.deletedExerciseIds.some((id) => updatedIds.has(id))
+
+        if (hasOverlap) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'validation.invalidInput',
+                path: ['deletedExerciseIds'],
+            })
+        }
+    })
 
 export type WorkoutExerciseInput = z.infer<typeof workoutExerciseSchema>
 export type UpdateWorkoutExerciseInput = z.infer<typeof updateWorkoutExerciseSchema>

@@ -39,7 +39,11 @@ import {
 } from './structure-utils'
 import { hydrateDraftRowsForWorkout } from './skeleton-hydration'
 import { transformApiWeek } from './transform-utils'
-import { computeExerciseGroupColors } from './row-utils'
+import {
+    computeExerciseGroupColors,
+    mergeDirtyPersistedRows,
+    pruneMissingDirtyRowIds,
+} from './row-utils'
 import { resolveEffectiveWeightDisplay } from '@/app/trainer/programs/[id]/edit/effective-weight-display'
 import {
     DndContext,
@@ -601,6 +605,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const trainerIdRef = useRef('')
     const loadedPersonalRecordsTraineeIdRef = useRef<string | null>(null)
     const savingWorkoutIdsRef = useRef<Set<string>>(new Set())
+    const dirtyPersistedRowIdsRef = useRef<Set<string>>(new Set())
+    const pendingDeletedPersistedRowIdsByWorkoutRef = useRef<Record<string, Set<string>>>({})
 
     const [activeWeekId, setActiveWeekId] = useState<string | null>(null)
     const [expandedWeekIds, setExpandedWeekIds] = useState<Record<string, boolean>>({})
@@ -865,6 +871,12 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             if (
                 document.visibilityState === 'visible' &&
                 !loadingRef.current &&
+                !savingRowId &&
+                !savingWorkoutId &&
+                !Object.values(pendingDeletedPersistedRowIdsByWorkoutRef.current).some(
+                    (rowIds) => rowIds.size > 0
+                ) &&
+                savingWorkoutIdsRef.current.size === 0 &&
                 now - lastVisibilityRefreshRef.current > 30000
             ) {
                 lastVisibilityRefreshRef.current = now
@@ -877,7 +889,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         return () => {
             document.removeEventListener('visibilitychange', handleVisibilityChange)
         }
-    }, [fetchProgram])
+    }, [fetchProgram, savingRowId, savingWorkoutId])
 
     useEffect(() => {
         if (!program) {
@@ -895,12 +907,23 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         })
 
         setRowStateById((currentRows) => {
+            const mergedPersistedRows = mergeDirtyPersistedRows({
+                serverRowsById: nextRows,
+                currentRowsById: currentRows,
+                dirtyPersistedRowIds: dirtyPersistedRowIdsRef.current,
+            })
+
             const persistedDraftRows = Object.fromEntries(
                 Object.entries(currentRows).filter(([, row]) => row.isDraft)
             )
 
+            dirtyPersistedRowIdsRef.current = pruneMissingDirtyRowIds(
+                dirtyPersistedRowIdsRef.current,
+                new Set(Object.keys(nextRows))
+            )
+
             return {
-                ...nextRows,
+                ...mergedPersistedRows,
                 ...persistedDraftRows,
             }
         })
@@ -1418,7 +1441,11 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
     const getWorkoutRows = useCallback(
         (workout: Workout) => {
+            const pendingDeletedRowIds =
+                pendingDeletedPersistedRowIdsByWorkoutRef.current[workout.id] ?? new Set<string>()
+
             const persistedRows = workout.workoutExercises
+                .filter((workoutExercise) => !pendingDeletedRowIds.has(workoutExercise.id))
                 .map((workoutExercise) =>
                     rowStateById[workoutExercise.id] || buildEditableRow(workout.id, workoutExercise)
                 )
@@ -1435,7 +1462,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     )
 
     const handleDragEnd = useCallback(
-        async (event: DragEndEvent, workout: Workout) => {
+        (event: DragEndEvent, workout: Workout) => {
             const { active, over } = event
             setActiveExerciseRowDragId(null)
             setIsDragOverTrash(false)
@@ -1471,132 +1498,43 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             return
                         }
 
-                        const previousWorkoutExercises = workout.workoutExercises
-                        const previousRowState = rowStateById[rowToDelete.id]
+                        const pendingDeletedRowIds =
+                            pendingDeletedPersistedRowIdsByWorkoutRef.current[workout.id] ??
+                            new Set<string>()
+                        pendingDeletedRowIds.add(rowToDelete.id)
+                        pendingDeletedPersistedRowIdsByWorkoutRef.current[workout.id] =
+                            pendingDeletedRowIds
 
-                        const optimisticallyRemainingExercises = previousWorkoutExercises
-                            .filter((workoutExercise) => workoutExercise.id !== rowToDelete.id)
-                            .sort((left, right) => left.order - right.order)
-                            .map((workoutExercise, index) => ({
-                                ...workoutExercise,
-                                order: index + 1,
-                            }))
-
-                        setProgram((currentProgram) => {
-                            if (!currentProgram) {
-                                return currentProgram
-                            }
-
-                            return {
-                                ...currentProgram,
-                                weeks: currentProgram.weeks.map((week) => ({
-                                    ...week,
-                                    workouts: week.workouts.map((candidateWorkout) => {
-                                        if (candidateWorkout.id !== workout.id) {
-                                            return candidateWorkout
-                                        }
-
-                                        return {
-                                            ...candidateWorkout,
-                                            workoutExercises: optimisticallyRemainingExercises,
-                                        }
-                                    }),
-                                })),
-                            }
-                        })
+                        dirtyPersistedRowIdsRef.current.delete(rowToDelete.id)
 
                         setRowStateById((currentRows) => {
                             const nextRows = { ...currentRows }
                             delete nextRows[rowToDelete.id]
 
-                            Object.keys(nextRows).forEach((rowId) => {
-                                const row = nextRows[rowId]
-                                if (row.workoutId !== workout.id || row.isDraft || row.order <= rowToDelete.order) {
+                            allRows.forEach((row) => {
+                                if (
+                                    row.id === rowToDelete.id ||
+                                    row.workoutId !== workout.id ||
+                                    row.isDraft ||
+                                    row.order <= rowToDelete.order
+                                ) {
                                     return
                                 }
 
-                                nextRows[rowId] = {
-                                    ...row,
-                                    order: row.order - 1,
+                                const sourceRow = nextRows[row.id] ?? row
+
+                                nextRows[row.id] = {
+                                    ...sourceRow,
+                                    order: sourceRow.order - 1,
                                 }
+
+                                dirtyPersistedRowIdsRef.current.add(row.id)
                             })
 
                             return nextRows
                         })
 
-                        try {
-                            setSavingRowId(rowToDelete.id)
-
-                            const res = await fetch(
-                                `/api/programs/${programId}/workouts/${workout.id}/exercises/${rowToDelete.id}`,
-                                {
-                                    method: 'DELETE',
-                                }
-                            )
-
-                            if (!res.ok && res.status !== 404) {
-                                const data = await res.json().catch(() => null)
-                                throw new Error(
-                                    getApiErrorMessage(data, t('editProgram.rowDeleteError'), t)
-                                )
-                            }
-
-                            showToast(t('editProgram.rowDeletedSuccess'), 'success')
-                        } catch (err: unknown) {
-                            setProgram((currentProgram) => {
-                                if (!currentProgram) {
-                                    return currentProgram
-                                }
-
-                                return {
-                                    ...currentProgram,
-                                    weeks: currentProgram.weeks.map((week) => ({
-                                        ...week,
-                                        workouts: week.workouts.map((candidateWorkout) => {
-                                            if (candidateWorkout.id !== workout.id) {
-                                                return candidateWorkout
-                                            }
-
-                                            return {
-                                                ...candidateWorkout,
-                                                workoutExercises: previousWorkoutExercises,
-                                            }
-                                        }),
-                                    })),
-                                }
-                            })
-
-                            setRowStateById((currentRows) => {
-                                const nextRows = { ...currentRows }
-
-                                if (previousRowState) {
-                                    nextRows[rowToDelete.id] = previousRowState
-                                } else {
-                                    nextRows[rowToDelete.id] = buildEditableRow(workout.id, persistedRow)
-                                }
-
-                                previousWorkoutExercises.forEach((workoutExercise) => {
-                                    const existingRowState = nextRows[workoutExercise.id]
-                                    if (!existingRowState || existingRowState.isDraft) {
-                                        return
-                                    }
-
-                                    nextRows[workoutExercise.id] = {
-                                        ...existingRowState,
-                                        order: workoutExercise.order,
-                                    }
-                                })
-
-                                return nextRows
-                            })
-
-                            showToast(
-                                err instanceof Error ? err.message : t('editProgram.rowDeleteError'),
-                                'error'
-                            )
-                        } finally {
-                            setSavingRowId(null)
-                        }
+                        showToast(t('editProgram.rowDeletedSuccess'), 'success')
                     }
                 }
                 return
@@ -1614,57 +1552,25 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             reordered.splice(newIndex, 0, moved)
 
             // Optimistic update for all rows (including drafts)
-            const previousOrders = Object.fromEntries(allRows.map((r) => [r.id, r.order]))
             setRowStateById((current) => {
                 const next = { ...current }
                 reordered.forEach((row, i) => {
-                    next[row.id] = { ...(next[row.id] ?? row), order: i + 1 }
+                    const sourceRow = next[row.id] ?? row
+                    const nextOrder = i + 1
+
+                    next[row.id] = { ...sourceRow, order: nextOrder }
+
+                    if (!sourceRow.isDraft && sourceRow.order !== nextOrder) {
+                        dirtyPersistedRowIdsRef.current.add(row.id)
+                    }
                 })
                 return next
             })
 
-            // Only persist reorder for non-draft rows
-            const persistedReordered = reordered.filter((r) => !r.isDraft)
-            if (persistedReordered.length === 0) return
-
-            try {
-                setReorderingWorkoutId(workout.id)
-                const res = await fetch(
-                    `/api/programs/${programId}/workouts/${workout.id}/exercises/reorder`,
-                    {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            exercises: persistedReordered.map((row, i) => ({
-                                id: row.id,
-                                order: i + 1,
-                            })),
-                        }),
-                    }
-                )
-
-                if (!res.ok) {
-                    const data = await res.json()
-                    throw new Error(getApiErrorMessage(data, t('editProgram.rowReorderError'), t))
-                }
-            } catch (err) {
-                // Revert all rows to pre-drag orders
-                setRowStateById((current) => {
-                    const next = { ...current }
-                    allRows.forEach((row) => {
-                        next[row.id] = { ...(next[row.id] ?? row), order: previousOrders[row.id] }
-                    })
-                    return next
-                })
-                showToast(
-                    err instanceof Error ? err.message : t('editProgram.rowReorderError'),
-                    'error'
-                )
-            } finally {
-                setReorderingWorkoutId(null)
-            }
+            setReorderingWorkoutId(workout.id)
+            setReorderingWorkoutId(null)
         },
-        [getWorkoutRows, isDragOverTrash, programId, readOnly, rowStateById, savingRowId, showToast, t]
+        [getWorkoutRows, isDragOverTrash, readOnly, savingRowId, showToast, t]
     )
 
     const hasWorkoutUnsavedChanges = useCallback(
@@ -1719,14 +1625,28 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const updateRowFields = useCallback(
         (rowId: string, patch: Partial<EditableWorkoutExerciseRow>) => {
             setRowStateById((currentRows) => {
-                if (!currentRows[rowId]) {
+                const currentRow = currentRows[rowId]
+
+                if (!currentRow) {
                     return currentRows
+                }
+
+                const hasChanges = Object.entries(patch).some(([field, value]) => {
+                    return currentRow[field as keyof EditableWorkoutExerciseRow] !== value
+                })
+
+                if (!hasChanges) {
+                    return currentRows
+                }
+
+                if (!currentRow.isDraft) {
+                    dirtyPersistedRowIdsRef.current.add(rowId)
                 }
 
                 return {
                     ...currentRows,
                     [rowId]: {
-                        ...currentRows[rowId],
+                        ...currentRow,
                         ...patch,
                     },
                 }
@@ -2230,8 +2150,10 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         }
 
         const workoutRows = [...getWorkoutRows(workout)].sort((left, right) => left.order - right.order)
+        const pendingDeletedRowIds = pendingDeletedPersistedRowIdsByWorkoutRef.current[workout.id]
+        const deletedExerciseIds = pendingDeletedRowIds ? Array.from(pendingDeletedRowIds) : []
 
-        if (workoutRows.length === 0) {
+        if (workoutRows.length === 0 && deletedExerciseIds.length === 0) {
             showToast(t('editProgram.tableNoWorkoutExercises'), 'warning')
             return false
         }
@@ -2318,6 +2240,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     const payload = payloadByRowId[row.id]
                     return row.isDraft ? payload : { ...payload, id: row.id }
                 }),
+                deletedExerciseIds,
             }
 
             const res = await fetch(
@@ -2340,8 +2263,17 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             workoutRows.forEach((row) => {
                 if (row.isDraft) {
                     savedDraftRowIds.push(row.id)
+                    return
                 }
+
+                dirtyPersistedRowIdsRef.current.delete(row.id)
             })
+
+            deletedExerciseIds.forEach((rowId) => {
+                dirtyPersistedRowIdsRef.current.delete(rowId)
+            })
+
+            delete pendingDeletedPersistedRowIdsByWorkoutRef.current[workout.id]
 
             await fetchProgram({ showLoading: false })
 
@@ -2445,6 +2377,14 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             ? { ...week, workouts: week.workouts.filter((w) => w.id !== workoutId) }
                             : week
                     ),
+                }
+            })
+
+            delete pendingDeletedPersistedRowIdsByWorkoutRef.current[workoutId]
+
+            Object.values(rowStateById).forEach((row) => {
+                if (row.workoutId === workoutId && !row.isDraft) {
+                    dirtyPersistedRowIdsRef.current.delete(row.id)
                 }
             })
 
