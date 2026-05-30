@@ -203,6 +203,25 @@ describe('API Contract: Success response envelope', () => {
         expect(Array.isArray(body.data.items)).toBe(true)
     })
 
+    it('GET /api/users?page=1&limit=20 returns { data: { items, pagination, statusCounts }, meta }', async () => {
+        vi.mocked(requireAuth).mockResolvedValue(mockAdminSession)
+        vi.mocked(prisma.user.findMany).mockResolvedValue([])
+
+        const res = await listUsers(makeRequest('http://localhost:3000/api/users?page=1&limit=20&includeInactive=true'))
+        const body = await res.json()
+
+        expect(res.status).toBe(200)
+        expectSuccessEnvelope(body)
+        expect(body.data).toHaveProperty('items')
+        expect(Array.isArray(body.data.items)).toBe(true)
+        expect(body.data).toHaveProperty('pagination')
+        expect(body.data.pagination).toHaveProperty('currentPage')
+        expect(body.data.pagination).toHaveProperty('totalPages')
+        expect(body.data.pagination).toHaveProperty('totalItems')
+        expect(body.data.pagination).toHaveProperty('limit')
+        expect(body.data).toHaveProperty('statusCounts')
+    })
+
     it('GET /api/programs returns { data: { items, pagination }, meta }', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
         vi.mocked(prisma.trainingProgram.findMany).mockResolvedValue([])

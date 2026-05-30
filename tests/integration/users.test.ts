@@ -168,6 +168,74 @@ describe('GET /api/users', () => {
             })
         )
     })
+
+    it('applies filter-first pagination and returns metadata when page/limit are provided', async () => {
+        vi.mocked(requireAuth).mockResolvedValue(mockTrainerSession)
+
+        const trainees = [
+            {
+                id: 'trainee-1',
+                email: 'active.one@example.com',
+                firstName: 'Active',
+                lastName: 'One',
+                role: 'trainee',
+                isActive: true,
+                createdAt: new Date('2026-01-03'),
+            },
+            {
+                id: 'trainee-2',
+                email: 'inactive.one@example.com',
+                firstName: 'Inactive',
+                lastName: 'One',
+                role: 'trainee',
+                isActive: false,
+                createdAt: new Date('2026-01-02'),
+            },
+            {
+                id: 'trainee-3',
+                email: 'active.two@example.com',
+                firstName: 'Active',
+                lastName: 'Two',
+                role: 'trainee',
+                isActive: true,
+                createdAt: new Date('2026-01-01'),
+            },
+        ]
+
+        vi.mocked(prisma.trainerTrainee.findMany).mockResolvedValue(
+            trainees.map((trainee) => ({ trainee })) as any
+        )
+
+        const req = makeRequest('http://localhost:3000/api/users?role=trainee&includeInactive=true&status=all&page=2&limit=1')
+        const res = await GET(req)
+        const body = await res.json()
+
+        expect(res.status).toBe(200)
+        expect(body.data.items).toHaveLength(1)
+        expect(body.data.pagination).toEqual(
+            expect.objectContaining({
+                currentPage: 2,
+                totalPages: 3,
+                totalItems: 3,
+                limit: 1,
+                hasMore: true,
+            })
+        )
+        expect(body.data.statusCounts).toEqual({
+            all: 3,
+            active: 2,
+            inactive: 1,
+        })
+    })
+
+    it('returns 400 for invalid page filter', async () => {
+        vi.mocked(requireAuth).mockResolvedValue(mockAdminSession)
+
+        const req = makeRequest('http://localhost:3000/api/users?page=0')
+        const res = await GET(req)
+
+        expect(res.status).toBe(400)
+    })
 })
 
 // ─── POST /api/users ──────────────────────────────────────────────────────────

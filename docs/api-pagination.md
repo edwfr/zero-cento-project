@@ -13,7 +13,7 @@ Implementazione **cursor-based pagination** per endpoint con potenziale crescita
 **Endpoints paginati**:
 - ✅ `GET /api/exercises` — Lista esercizi (libreria condivisa, crescita > 500 esercizi)
 - ✅ `GET /api/programs` — Lista programmi con approccio **filter-first** e paginazione numerata (`page`, `limit`)
-- ❌ `GET /api/users` — Non paginato per MVP (max 54 utenti, crescita lenta)
+- ✅ `GET /api/users` — Lista utenti con approccio **filter-first** e paginazione numerata (`status`, `search`, `page`, `limit`) quando richiesta
 
 ---
 
@@ -82,6 +82,47 @@ GET /api/programs?status=active&search=mario&page=2&limit=20
   }
 }
 ```
+
+---
+
+## Filter-First Numeric Pagination (`GET /api/users`)
+
+Per la schermata `trainer/trainees` il backend applica i filtri (`status`, `search`) **prima** della paginazione numerata.
+
+**Schema richiesta (paginata):**
+```typescript
+GET /api/users?role=trainee&includeInactive=true&status=active&search=mario&page=2&limit=20
+```
+
+**Ordine di esecuzione**:
+1. Validazione query (`role`, `includeInactive`, `status`, `search`, `page`, `limit`)
+2. RBAC dataset (`admin` tutti gli utenti, `trainer` solo trainee assegnati)
+3. Filtri applicati lato API (`search`/`status`)
+4. Conteggio dataset filtrato (`totalItems`, `totalPages`)
+5. Query pagina (`skip`/`take` equivalente)
+
+**Response shape (quando presenti `page` o `limit`)**:
+```typescript
+{
+  items: User[],
+  statusCounts: {
+    all: number,
+    active: number,
+    inactive: number,
+  },
+  pagination: {
+    nextCursor: string | null,
+    hasMore: boolean,
+    currentPage: number,
+    totalPages: number,
+    totalItems: number,
+    limit: number,
+  }
+}
+```
+
+**Compatibilita legacy**:
+- Se `page`/`limit` non sono passati, la risposta mantiene la shape storica `{ items }`.
 
 ---
 

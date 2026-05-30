@@ -73,6 +73,10 @@ Per `GET /api/programs` e disponibile anche paginazione numerata filter-first:
 - `page` — numero pagina richiesto (default: 1)
 - `status` e `search` sono applicati prima della paginazione
 
+Per `GET /api/users` e disponibile paginazione numerata filter-first quando vengono passati `page` o `limit`:
+- query supportate: `role`, `includeInactive`, `status`, `search`, `page`, `limit`
+- compatibilita legacy: senza `page`/`limit` la response resta `{ data: { items }, meta }`
+
 ---
 
 ## Endpoint Registry
@@ -88,7 +92,7 @@ Per `GET /api/programs` e disponibile anche paginazione numerata filter-first:
 
 | Method   | Path                         | Descrizione             | Ruoli          | Schema Request                     | Status |
 | -------- | ---------------------------- | ----------------------- | -------------- | ---------------------------------- | ------ |
-| `GET`    | `/api/users`                 | Lista utenti (paginata) | admin, trainer | query: `?role&search&cursor&limit` | 200    |
+| `GET`    | `/api/users`                 | Lista utenti (filter-first) | admin, trainer | query: `?role&includeInactive&status&search&page&limit` | 200    |
 | `POST`   | `/api/users`                 | Crea utente             | admin, trainer | `createUserSchema`                 | 201    |
 | `GET`    | `/api/users/[id]`            | Dettaglio utente        | admin, trainer | —                                  | 200    |
 | `PUT`    | `/api/users/[id]`            | Modifica utente         | admin, trainer | `updateUserSchema`                 | 200    |
@@ -175,7 +179,7 @@ Per `GET /api/programs` e disponibile anche paginazione numerata filter-first:
 | ------ | ----------------------- | --------------- | ---------------- | ------------------------------ | ------ |
 | `GET`  | `/api/personal-records` | Lista massimali | trainer, trainee | query: `?traineeId&exerciseId` | 200    |
 
-> **Nota**: `/api/personal-records` e `/api/users` non implementano ancora paginazione cursor-based. Da allineare in sprint futuro.
+> **Nota**: `/api/personal-records` non implementa ancora paginazione cursor-based. Da allineare in sprint futuro.
 
 | `POST`   | `/api/personal-records`      | Aggiungi massimale  | trainer          | `personalRecordSchema`                      | 201    |
 | `GET`    | `/api/personal-records/[id]` | Dettaglio massimale | trainer, trainee | —                                           | 200    |

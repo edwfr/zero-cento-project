@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { SkeletonTable, ActionIconButton, InlineActions } from '@/components'
+import { SkeletonTable, ActionIconButton, InlineActions, Button } from '@/components'
 import { useToast } from '@/components/ToastNotification'
 import { formatDate } from '@/lib/date-format'
 import { useTranslation } from 'react-i18next'
@@ -19,36 +19,147 @@ interface Trainee {
     createdAt: string
 }
 
+interface TraineesApiResponse {
+    data: {
+        items: Trainee[]
+        statusCounts?: {
+            all: number
+            active: number
+            inactive: number
+        }
+        pagination?: {
+            nextCursor: string | null
+            hasMore: boolean
+            currentPage?: number
+            totalPages?: number
+            totalItems?: number
+            limit?: number
+        }
+    }
+}
+
+const PAGE_SIZE = 20
+const MAX_VISIBLE_PAGES = 5
+
 export default function TrainerTraineesContent() {
-    const { t } = useTranslation('trainer')
+    const { t } = useTranslation(['trainer', 'components', 'common'])
     const { showToast } = useToast()
+    const hasLoadedOnceRef = useRef(false)
     const [trainees, setTrainees] = useState<Trainee[]>([])
     const [loading, setLoading] = useState(true)
+    const [isRefreshing, setIsRefreshing] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [searchTerm, setSearchTerm] = useState('')
+    const [appliedSearchTerm, setAppliedSearchTerm] = useState('')
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('active')
+    const [currentPage, setCurrentPage] = useState(1)
+    const [totalPages, setTotalPages] = useState(1)
+    const [totalItems, setTotalItems] = useState(0)
+    const [statusCounts, setStatusCounts] = useState({
+        all: 0,
+        active: 0,
+        inactive: 0,
+    })
 
-    const fetchTrainees = useCallback(async () => {
+    const fetchTrainees = useCallback(async (page: number, signal?: AbortSignal) => {
+        let shouldFinalizeLoad = true
+
         try {
-            setLoading(true)
-            const res = await fetch('/api/users?role=trainee&includeInactive=true')
-            const data = await res.json()
+            if (hasLoadedOnceRef.current) {
+                setIsRefreshing(true)
+            }
+
+            setError(null)
+
+            const params = new URLSearchParams({
+                role: 'trainee',
+                includeInactive: 'true',
+                status: statusFilter,
+                page: String(page),
+                limit: String(PAGE_SIZE),
+            })
+
+            const trimmedSearch = appliedSearchTerm.trim()
+            if (trimmedSearch.length >= 2) {
+                params.set('search', trimmedSearch)
+            }
+
+            const res = await fetch(`/api/users?${params.toString()}`, { signal })
+            const data = (await res.json()) as TraineesApiResponse
 
             if (!res.ok) {
                 throw new Error(getApiErrorMessage(data, t('athletes.loadingError'), t))
             }
 
-            setTrainees(data.data.items)
+            const items = data.data.items ?? []
+            const pagination = data.data.pagination
+
+            const nextTotalPages = Math.max(1, pagination?.totalPages ?? 1)
+            const nextCurrentPage = Math.min(pagination?.currentPage ?? page, nextTotalPages)
+            const nextTotalItems = pagination?.totalItems ?? items.length
+
+            if (items.length === 0 && nextCurrentPage > 1 && nextTotalItems > 0) {
+                setCurrentPage(nextCurrentPage - 1)
+                return
+            }
+
+            setTrainees(items)
+            setCurrentPage(nextCurrentPage)
+            setTotalPages(nextTotalPages)
+            setTotalItems(nextTotalItems)
+
+            if (data.data.statusCounts) {
+                setStatusCounts(data.data.statusCounts)
+            }
         } catch (err: unknown) {
+            if (err instanceof DOMException && err.name === 'AbortError') {
+                shouldFinalizeLoad = false
+                return
+            }
+
             setError(err instanceof Error ? err.message : String(err))
         } finally {
-            setLoading(false)
+            if (shouldFinalizeLoad) {
+                setLoading(false)
+                hasLoadedOnceRef.current = true
+            }
+
+            setIsRefreshing(false)
         }
-    }, [t])
+    }, [appliedSearchTerm, statusFilter, t])
 
     useEffect(() => {
-        void fetchTrainees()
-    }, [fetchTrainees])
+        const controller = new AbortController()
+        void fetchTrainees(currentPage, controller.signal)
+
+        return () => {
+            controller.abort()
+        }
+    }, [currentPage, fetchTrainees])
+
+    const handleStatusChange = (value: 'all' | 'active' | 'inactive') => {
+        setStatusFilter(value)
+        setCurrentPage(1)
+    }
+
+    const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault()
+
+        const nextSearch = searchTerm.trim()
+        if (nextSearch === appliedSearchTerm && currentPage === 1) {
+            return
+        }
+
+        setAppliedSearchTerm(nextSearch)
+        setCurrentPage(1)
+    }
+
+    const visiblePagesCount = Math.min(MAX_VISIBLE_PAGES, totalPages)
+    const firstVisiblePage = Math.max(
+        1,
+        Math.min(currentPage - Math.floor(visiblePagesCount / 2), totalPages - visiblePagesCount + 1)
+    )
+    const visiblePages = Array.from({ length: visiblePagesCount }, (_, idx) => firstVisiblePage + idx)
 
     const handleToggleStatus = async (id: string, currentStatus: boolean) => {
         try {
@@ -63,25 +174,11 @@ export default function TrainerTraineesContent() {
                 throw new Error(getApiErrorMessage(data, t('athletes.statusUpdateError'), t))
             }
 
-            fetchTrainees()
+            await fetchTrainees(currentPage)
         } catch (err: unknown) {
             showToast(err instanceof Error ? err.message : String(err), 'error')
         }
     }
-
-    const filteredTrainees = trainees.filter((trainee) => {
-        const matchesSearch =
-            trainee.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            trainee.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            trainee.email.toLowerCase().includes(searchTerm.toLowerCase())
-
-        const matchesStatus =
-            statusFilter === 'all' ||
-            (statusFilter === 'active' && trainee.isActive) ||
-            (statusFilter === 'inactive' && !trainee.isActive)
-
-        return matchesSearch && matchesStatus
-    })
 
     if (loading) {
         return (
@@ -106,26 +203,36 @@ export default function TrainerTraineesContent() {
                 <div className="bg-white rounded-lg shadow-md p-6 mb-6">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
                         {/* Search */}
-                        <div className="flex-1 max-w-md">
-                            <Input
-                                type="text"
-                                placeholder={t('athletes.searchPlaceholder')}
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                inputSize="md"
-                            />
-                        </div>
+                        <form className="flex-1 max-w-md" onSubmit={handleSearchSubmit}>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    type="text"
+                                    placeholder={t('athletes.searchPlaceholder')}
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    inputSize="md"
+                                />
+                                <Button
+                                    type="submit"
+                                    variant="secondary"
+                                    size="md"
+                                    disabled={isRefreshing}
+                                >
+                                    {t('common:common.search')}
+                                </Button>
+                            </div>
+                        </form>
 
                         {/* Filters */}
                         <div className="flex items-center space-x-4">
                             <select
                                 value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value as any)}
+                                onChange={(e) => handleStatusChange(e.target.value as 'all' | 'active' | 'inactive')}
                                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                             >
-                                <option value="all">{t('athletes.allStatuses')}</option>
-                                <option value="active">{t('athletes.active')}</option>
-                                <option value="inactive">{t('athletes.deactivated')}</option>
+                                <option value="all">{t('athletes.allStatuses')} ({statusCounts.all})</option>
+                                <option value="active">{t('athletes.active')} ({statusCounts.active})</option>
+                                <option value="inactive">{t('athletes.deactivated')} ({statusCounts.inactive})</option>
                             </select>
 
                             <Link
@@ -136,6 +243,10 @@ export default function TrainerTraineesContent() {
                             </Link>
                         </div>
                     </div>
+
+                    {isRefreshing && (
+                        <p className="mt-3 text-sm text-gray-500">{t('common:common.loading')}</p>
+                    )}
                 </div>
 
                 {/* Error */}
@@ -146,10 +257,10 @@ export default function TrainerTraineesContent() {
                 )}
 
                 {/* Trainees Table */}
-                {filteredTrainees.length === 0 ? (
+                {trainees.length === 0 ? (
                     <div className="bg-white rounded-lg shadow-md p-12 text-center">
                         <p className="text-gray-500 text-lg">
-                            {searchTerm || statusFilter !== 'all'
+                            {appliedSearchTerm || statusFilter !== 'all'
                                 ? t('athletes.noAthletesFound')
                                 : t('athletes.noAthletesAssigned')}
                         </p>
@@ -177,7 +288,7 @@ export default function TrainerTraineesContent() {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {filteredTrainees.map((trainee) => (
+                                {trainees.map((trainee) => (
                                     <tr key={trainee.id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="font-semibold text-gray-900">
@@ -220,6 +331,63 @@ export default function TrainerTraineesContent() {
                                 ))}
                             </tbody>
                         </table>
+
+                        {totalPages > 1 && (
+                            <div className="flex flex-col gap-3 border-t border-gray-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                                <p className="text-sm text-gray-600">
+                                    {t('components:pagination.pageOf', { current: currentPage, total: totalPages })}
+                                    <span className="ml-2 text-gray-500">({totalItems})</span>
+                                </p>
+
+                                <div className="flex flex-wrap items-center justify-end gap-2">
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => setCurrentPage(1)}
+                                        disabled={isRefreshing || currentPage === 1}
+                                    >
+                                        {t('components:pagination.first')}
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                                        disabled={isRefreshing || currentPage === 1}
+                                    >
+                                        {t('components:pagination.previous')}
+                                    </Button>
+
+                                    {visiblePages.map((pageNumber) => (
+                                        <Button
+                                            key={pageNumber}
+                                            variant={pageNumber === currentPage ? 'primary' : 'secondary'}
+                                            size="sm"
+                                            onClick={() => setCurrentPage(pageNumber)}
+                                            disabled={isRefreshing || pageNumber === currentPage}
+                                        >
+                                            {pageNumber}
+                                        </Button>
+                                    ))}
+
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                                        disabled={isRefreshing || currentPage === totalPages}
+                                    >
+                                        {t('components:pagination.next')}
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => setCurrentPage(totalPages)}
+                                        disabled={isRefreshing || currentPage === totalPages}
+                                    >
+                                        {t('components:pagination.last')}
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

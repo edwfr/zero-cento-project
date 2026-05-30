@@ -1,11 +1,21 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { createClient, createAdminClient } from '@/lib/supabase-server'
+import { createAdminClient } from '@/lib/supabase-server'
 import { apiSuccess, apiError } from '@/lib/api-response'
-import { requireRole, requireAuth } from '@/lib/auth'
-import { createUserSchema } from '@/schemas/user'
+import { requireAuth } from '@/lib/auth'
+import { createUserSchema, userListFilterSchema } from '@/schemas/user'
 import { logger } from '@/lib/logger'
 import { syncUserMetadata } from '@/lib/sync-user-metadata'
+
+interface ListedUser {
+    id: string
+    email: string
+    firstName: string
+    lastName: string
+    role: 'admin' | 'trainer' | 'trainee'
+    isActive: boolean
+    createdAt: Date
+}
 
 /**
  * GET /api/users
@@ -17,15 +27,28 @@ export async function GET(request: NextRequest) {
     try {
         const session = await requireAuth()
         const { searchParams } = new URL(request.url)
-        const role = searchParams.get('role')
-        const includeInactive = searchParams.get('includeInactive') === 'true'
+        const filterParams = {
+            role: searchParams.get('role') || undefined,
+            includeInactive: searchParams.get('includeInactive') === 'true',
+            status: searchParams.get('status') || undefined,
+            search: searchParams.get('search') || undefined,
+            page: searchParams.get('page') || undefined,
+            limit: searchParams.get('limit') || undefined,
+        }
 
-        let users
+        const validation = userListFilterSchema.safeParse(filterParams)
+        if (!validation.success) {
+            return apiError('VALIDATION_ERROR', 'Invalid filter parameters', 400, validation.error.errors, 'validation.invalidFilterParams')
+        }
+
+        const { role, includeInactive, status, search, page, limit } = validation.data
+        const hasPaginationParams = searchParams.has('page') || searchParams.has('limit')
+
+        let users: ListedUser[] = []
 
         if (session.user.role === 'admin') {
-            // Admin sees all users (active only by default; pass includeInactive=true for full list)
-            const where: any = includeInactive ? {} : { isActive: true }
-            if (role) where.role = role
+            const where = role ? { role } : {}
+
             users = await prisma.user.findMany({
                 where,
                 select: {
@@ -42,34 +65,98 @@ export async function GET(request: NextRequest) {
                 },
             })
         } else if (session.user.role === 'trainer') {
-            // Trainer sees only own active trainees
-            const traineeAssociations = await prisma.trainerTrainee.findMany({
-                where: {
-                    trainerId: session.user.id,
-                },
-                include: {
-                    trainee: {
-                        select: {
-                            id: true,
-                            email: true,
-                            firstName: true,
-                            lastName: true,
-                            role: true,
-                            isActive: true,
-                            createdAt: true,
+            if (role && role !== 'trainee') {
+                users = []
+            } else {
+                const traineeAssociations = await prisma.trainerTrainee.findMany({
+                    where: {
+                        trainerId: session.user.id,
+                    },
+                    include: {
+                        trainee: {
+                            select: {
+                                id: true,
+                                email: true,
+                                firstName: true,
+                                lastName: true,
+                                role: true,
+                                isActive: true,
+                                createdAt: true,
+                            },
                         },
                     },
-                },
-            })
+                })
 
-            users = traineeAssociations
-                .map((assoc) => assoc.trainee)
-                .filter((trainee) => includeInactive || trainee.isActive)
+                users = traineeAssociations
+                    .map((assoc) => assoc.trainee)
+                    .sort((left, right) => right.createdAt.getTime() - left.createdAt.getTime())
+            }
         } else {
             return apiError('FORBIDDEN', 'Access denied', 403, undefined, 'auth.accessDenied')
         }
 
-        return apiSuccess({ items: users })
+        const normalizedSearch = search?.trim().toLowerCase()
+
+        const baseUsers = users.filter((user) => {
+            if (!normalizedSearch) {
+                return true
+            }
+
+            return (
+                user.firstName.toLowerCase().includes(normalizedSearch) ||
+                user.lastName.toLowerCase().includes(normalizedSearch) ||
+                user.email.toLowerCase().includes(normalizedSearch)
+            )
+        })
+
+        const listUsers = baseUsers.filter((user) => {
+            if (status === 'active') {
+                return user.isActive
+            }
+
+            if (status === 'inactive') {
+                return includeInactive && !user.isActive
+            }
+
+            return includeInactive || user.isActive
+        })
+
+        if (!hasPaginationParams) {
+            return apiSuccess({ items: listUsers })
+        }
+
+        const activeCount = baseUsers.filter((user) => user.isActive).length
+        const inactiveCount = includeInactive
+            ? baseUsers.filter((user) => !user.isActive).length
+            : 0
+        const allCount = includeInactive ? activeCount + inactiveCount : activeCount
+
+        const totalItems = listUsers.length
+        const totalPages = Math.max(1, Math.ceil(totalItems / limit))
+        const resolvedPage = Math.min(page, totalPages)
+        const skip = (resolvedPage - 1) * limit
+
+        const pageSlice = listUsers.slice(skip, skip + limit + 1)
+        const hasMore = pageSlice.length > limit
+        const items = hasMore ? pageSlice.slice(0, limit) : pageSlice
+        const nextCursor = hasMore ? items[items.length - 1]?.id ?? null : null
+
+        return apiSuccess({
+            items,
+            statusCounts: {
+                all: allCount,
+                active: activeCount,
+                inactive: inactiveCount,
+            },
+            pagination: {
+                nextCursor,
+                hasMore,
+                currentPage: resolvedPage,
+                totalPages,
+                totalItems,
+                limit,
+            },
+        })
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error fetching users')

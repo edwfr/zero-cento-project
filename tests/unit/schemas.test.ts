@@ -15,6 +15,7 @@ import {
     passwordSchema,
     changePasswordSchema,
     loginSchema,
+    userListFilterSchema,
 } from '@/schemas/user'
 
 // ─── Exercise Schema ──────────────────────────────────────────────────────────
@@ -320,6 +321,56 @@ describe('createUserSchema', () => {
         expect(createUserSchema.safeParse({ ...validUser, role: 'admin' }).success).toBe(true)
         expect(createUserSchema.safeParse({ ...validUser, role: 'trainer' }).success).toBe(true)
         expect(createUserSchema.safeParse({ ...validUser, role: 'trainee' }).success).toBe(true)
+    })
+})
+
+describe('userListFilterSchema', () => {
+    it('applies defaults for includeInactive, status, page and limit', () => {
+        const result = userListFilterSchema.safeParse({})
+        expect(result.success).toBe(true)
+
+        if (result.success) {
+            expect(result.data.includeInactive).toBe(false)
+            expect(result.data.status).toBe('all')
+            expect(result.data.page).toBe(1)
+            expect(result.data.limit).toBe(20)
+        }
+    })
+
+    it('accepts valid role, status and coerced numeric pagination values', () => {
+        const result = userListFilterSchema.safeParse({
+            role: 'trainee',
+            includeInactive: true,
+            status: 'inactive',
+            search: 'Mario',
+            page: '3',
+            limit: '50',
+        })
+
+        expect(result.success).toBe(true)
+
+        if (result.success) {
+            expect(result.data.role).toBe('trainee')
+            expect(result.data.includeInactive).toBe(true)
+            expect(result.data.status).toBe('inactive')
+            expect(result.data.page).toBe(3)
+            expect(result.data.limit).toBe(50)
+        }
+    })
+
+    it('rejects page lower than 1', () => {
+        const result = userListFilterSchema.safeParse({ page: 0 })
+        expect(result.success).toBe(false)
+    })
+
+    it('rejects limit greater than 100', () => {
+        const result = userListFilterSchema.safeParse({ limit: 101 })
+        expect(result.success).toBe(false)
+    })
+
+    it('rejects search shorter than 2 characters', () => {
+        const result = userListFilterSchema.safeParse({ search: 'a' })
+        expect(result.success).toBe(false)
     })
 })
 

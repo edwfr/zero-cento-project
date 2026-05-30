@@ -39,6 +39,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 **File modificati:** `src/app/trainer/programs/_content.tsx`, `tests/unit/trainer-programs-content.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 **Note:** Rimossa la ricerca automatica con debounce in digitazione. La query ora parte solo con submit esplicito (click sul bottone `Cerca` o pressione `Enter`), evitando chiamate API durante la scrittura. Mantenuta la paginazione server-side e il reset a pagina 1 quando viene applicato il filtro di ricerca.
 
+### [30 Maggio 2026] — Trainer trainees: paginazione numerata filter-first
+
+**Task checklist:** #11.133
+**File modificati:** `src/app/trainer/trainees/_content.tsx`, `src/app/api/users/route.ts`, `src/schemas/user.ts`, `tests/unit/trainer-trainees-content.test.tsx`, `tests/unit/schemas.test.ts`, `tests/integration/users.test.ts`, `tests/integration/api-contracts.test.ts`, `docs/api-contracts.md`, `docs/api-pagination.md`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Implementata la paginazione numerata 1..N nella schermata `/trainer/trainees` con flusso filter-first lato API: i filtri `status/search` sono applicati prima del calcolo pagina, poi il backend restituisce metadata `currentPage/totalPages/totalItems` (piu `hasMore/nextCursor` per retrocompatibilita). La UI ora usa fetch server-side con reset pagina su cambio filtro/ricerca submit, paginatore `First/Previous/Next/Last` e fallback automatico alla pagina precedente quando un toggle di stato svuota la pagina corrente. `GET /api/users` mantiene la shape legacy `{ items }` quando `page/limit` non sono presenti, evitando regressioni sui consumer esistenti.
+
 ### [27 Maggio 2026] — Trainer programs: colonna stato test icon-only con tooltip
 
 **Task checklist:** #11.119
