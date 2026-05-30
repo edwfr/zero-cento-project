@@ -321,12 +321,12 @@ export async function exportProgramToPdf(
         const textStartX = logoDataUrl ? 36 : 14
 
         doc.setFont('helvetica', 'bold')
-        doc.setFontSize(14)
+        doc.setFontSize(13)
         doc.setTextColor(25, 25, 25)
         doc.text(program.title, textStartX, cursorY + 3)
 
         doc.setFont('helvetica', 'normal')
-        doc.setFontSize(9)
+        doc.setFontSize(8)
         doc.setTextColor(85, 85, 85)
         doc.text(`${labels.trainerLabel}: ${program.trainerName}`, textStartX, cursorY + 9)
         doc.text(
@@ -345,7 +345,7 @@ export async function exportProgramToPdf(
             .forEach((workout, workoutIndex) => {
                 doc.setTextColor(35, 35, 35)
                 doc.setFont('helvetica', 'bold')
-                doc.setFontSize(10)
+                doc.setFontSize(9)
                 doc.text(
                     `${labels.workoutLabel(workoutIndex + 1)} - ${weekTitle}`,
                     14,
@@ -366,8 +366,8 @@ export async function exportProgramToPdf(
                     body: bodyRows,
                     styles: {
                         font: 'helvetica',
-                        fontSize: 7.5,
-                        cellPadding: 1.8,
+                        fontSize: 6.8,
+                        cellPadding: 1.0,
                         textColor: [45, 45, 45],
                         valign: 'middle',
                     },
@@ -408,14 +408,14 @@ export async function exportProgramToPdf(
                     doc.addPage('a4', 'portrait')
                     cursorY = 18
                     doc.setFont('helvetica', 'bold')
-                    doc.setFontSize(10)
+                    doc.setFontSize(9)
                     doc.setTextColor(45, 45, 45)
                     doc.text(weekTitle, 14, 13)
                 }
             })
 
         doc.setFont('helvetica', 'normal')
-        doc.setFontSize(8)
+        doc.setFontSize(7)
         doc.setTextColor(130, 130, 130)
         doc.text(`${labels.generatedAtLabel}: ${generatedAt}`, 14, 289)
         doc.text(brandLabel, 196, 289, { align: 'right' })

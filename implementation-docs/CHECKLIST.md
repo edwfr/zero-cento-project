@@ -699,6 +699,10 @@
       File: `src/lib/program-pdf-export.ts`, `src/app/trainee/programs/_components/ProgramDetailContent.tsx`, `src/app/trainer/programs/[id]/review/_content.tsx`, `tests/unit/program-pdf-export.test.ts`
 - [x] **11.124** Export PDF programma: intestazioni tabella in maiuscolo; colonne `SET/REP/RPE/REST` stessa larghezza; colonna `PESO` leggermente piu ampia; piu spazio alle colonne `ESERCIZIO` e `VARIANTE` ✅ _27 Mag 2026_  
       File: `src/lib/program-pdf-export.ts`, `tests/unit/program-pdf-export.test.ts`
+- [x] **11.125** Export PDF programma: ridurre la dimensione font globale (titolo, metadati, intestazioni workout, corpo tabella, footer) mantenendo leggibilita ✅ _30 Mag 2026_  
+      File: `src/lib/program-pdf-export.ts`, `tests/unit/program-pdf-export.test.ts`
+- [x] **11.126** Export PDF programma: ridurre l'altezza righe tabella diminuendo il padding celle ✅ _30 Mag 2026_  
+      File: `src/lib/program-pdf-export.ts`, `tests/unit/program-pdf-export.test.ts`
 
 ---
 

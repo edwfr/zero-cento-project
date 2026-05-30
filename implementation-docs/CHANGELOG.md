@@ -51,6 +51,18 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 **File modificati:** `src/lib/program-pdf-export.ts`, `tests/unit/program-pdf-export.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 **Note:** L'intestazione della tabella PDF ora viene forzata in maiuscolo. Aggiornate anche le larghezze colonne: `SET`, `REP`, `RPE` e `REST` sono uniformi; `PESO` e leggermente piu ampia; le colonne `ESERCIZIO` e `VARIANTE` hanno piu spazio per migliorare la leggibilita.
 
+### [30 Maggio 2026] — Export PDF: riduzione dimensione font
+
+**Task checklist:** #11.125
+**File modificati:** `src/lib/program-pdf-export.ts`, `tests/unit/program-pdf-export.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Ridotte le dimensioni font dell'export PDF in modo uniforme per ottenere una resa piu compatta: titolo scheda, metadati testata, titoli workout, testo tabella e footer. La logica di contenuto e formattazione colonne resta invariata.
+
+### [30 Maggio 2026] — Export PDF: altezza righe tabella ridotta
+
+**Task checklist:** #11.126
+**File modificati:** `src/lib/program-pdf-export.ts`, `tests/unit/program-pdf-export.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Ridotta l'altezza delle righe della tabella PDF diminuendo il `cellPadding` delle celle (`1.8` -> `1.0`) in `autoTable`, mantenendo invariati contenuto, colori e struttura colonne.
+
 ### [25 Maggio 2026] — Dettaglio atleta trainer: KPI SBD per lift e filtro temporale
 
 **Task checklist:** #11.116
