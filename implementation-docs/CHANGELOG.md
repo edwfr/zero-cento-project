@@ -11,6 +11,18 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [10 Giugno 2026] — Trainee workout: allineamento formato nel pannello Riepilogo esercizi
+
+**Task checklist:** #11.140
+**File modificati:** `src/components/WorkoutRecapPanel.tsx`, `src/lib/workout-recap.ts`, `src/app/api/trainee/workouts/[id]/recap/route.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Nel pannello inline `Riepilogo esercizi` di `/trainee/workouts/[id]` la stringa sotto il nome esercizio e ora allineata al formato richiesto `serie x rep · kg · @RPE`. Il peso viene mostrato solo se maggiore di zero (evitando `0 kg`) e `@RPE` viene mostrato solo se presente. Per supportare la visualizzazione dell'RPE pianificato, l'endpoint `GET /api/trainee/workouts/[id]/recap` e il tipo condiviso `ExerciseRecapItem` ora includono anche `targetRpe`.
+
+### [10 Giugno 2026] — Trainee workout: formato riepilogo esercizi con kg/RPE opzionali
+
+**Task checklist:** #11.139
+**File modificati:** `src/app/trainee/workouts/[id]/_content.tsx`, `public/locales/{it,en}/trainee.json`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Nella schermata `/trainee/workouts/[id]`, sezione riepilogo finale esercizi, la riga sotto il titolo esercizio ora usa il formato `serie x rep` con segmenti opzionali: `· {kg}kg` viene mostrato solo se il peso risolto e maggiore di zero, mentre `· @RPE {target}` viene mostrato solo se presente. Esempi coperti: `3 x 12`, `4 x 6 · @RPE 10`, `1 x 8 · 65kg · @RPE 10`, `2 x max · 10kg · @RPE 10`. Rimossa la chiave i18n `workouts.summaryExerciseSpec` non piu utilizzata in EN/IT.
+
 - **[30 Maggio 2026] Edit programma trainer: duplica riga esercizio one-click** — Nella schermata `/trainer/programs/[id]/edit` e stata aggiunta l'azione rapida `Duplica riga` su ogni riga esercizio: il click crea immediatamente una nuova riga draft sotto la sorgente, copia tutti i campi compilabili (esercizio, variante, set, reps, RPE, peso, flag, recupero, note) e riallinea gli ordini delle righe successive nello stato locale. La persistenza resta invariata nel modello save-driven: il clone viene confermato solo con `Salva workout` tramite bulk update esistente. Introdotta utility pura `duplicateEditableWorkoutExerciseRow` con test unitari dedicati (duplica in mezzo/fine, duplica draft, source missing) e nuove chiavi i18n EN/IT (`duplicateRowTitle`, `duplicateRowSuccess`, `duplicateRowError`). Rifinitura UX finale: il controllo `Duplica` e sempre visibile a livello riga come micro pulsante icon-only (`Copy`) in colonna dedicata subito prima della checkbox `Warmup`; il drag handle e stato reso nuovamente ben visibile per facilitare drag-and-drop verso il bidone. **Files modificati:** `src/app/trainer/programs/[id]/edit/_content.tsx`, `src/app/trainer/programs/[id]/edit/row-utils.ts`, `tests/unit/row-utils.test.ts`, `public/locales/{it,en}/trainer.json`, `implementation-docs/CHECKLIST.md`.
 
 ### [Giugno 2026] — Edit programma attivo: workout lock per esercizi iniziati + blocco copy-week su target protetta

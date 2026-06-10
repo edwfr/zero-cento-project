@@ -13,6 +13,25 @@ interface WorkoutRecapPanelProps {
     onSelectExercise?: (workoutExerciseId: string) => void
 }
 
+function formatWeightValue(value: number): string {
+    if (!Number.isFinite(value)) return ''
+    return Number.isInteger(value) ? String(value) : value.toFixed(1)
+}
+
+function buildExerciseSpec(exercise: ExerciseRecapItem): string {
+    const parts = [`${exercise.targetSets} x ${exercise.reps}`]
+
+    if (typeof exercise.effectiveWeight === 'number' && Number.isFinite(exercise.effectiveWeight) && exercise.effectiveWeight > 0) {
+        parts.push(`${formatWeightValue(exercise.effectiveWeight)}kg`)
+    }
+
+    if (typeof exercise.targetRpe === 'number' && Number.isFinite(exercise.targetRpe) && exercise.targetRpe > 0) {
+        parts.push(`@RPE ${exercise.targetRpe}`)
+    }
+
+    return parts.join(' · ')
+}
+
 export default function WorkoutRecapPanel({
     workoutId,
     closeSignal,
@@ -111,8 +130,7 @@ export default function WorkoutRecapPanel({
                                                     {exercise.exerciseName}
                                                 </p>
                                                 <p className="text-xs text-gray-400">
-                                                    {exercise.targetSets} × {exercise.reps}
-                                                    {exercise.effectiveWeight != null ? ` × ${exercise.effectiveWeight} kg` : ''}
+                                                    {buildExerciseSpec(exercise)}
                                                 </p>
                                             </div>
                                             <div className="shrink-0 flex flex-col items-end gap-1">

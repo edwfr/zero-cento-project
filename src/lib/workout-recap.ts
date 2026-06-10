@@ -21,6 +21,7 @@ export interface ExerciseRecapItem {
     targetSets: number
     completedSets: number
     reps: string
+    targetRpe: number | null
     effectiveWeight: number | null
     status: ExerciseStatus
     actualRpe: number | null

@@ -1400,7 +1400,20 @@ function FinalStep({
                             const idx = exercises.indexOf(we)
                             const sets = feedbackData[we.id] || []
                             const completedSets = sets.filter((s) => s.completed).length
-                            const weight = formatWeightKg(we.effectiveWeight ?? we.weight)
+                            const weightValue = we.effectiveWeight ?? we.weight ?? 0
+                            const hasWeight = weightValue > 0
+                            const hasTargetRpe = we.targetRpe != null && we.targetRpe > 0
+                            const exerciseSpecParts = [`${we.sets} x ${we.reps}`]
+
+                            if (hasWeight) {
+                                exerciseSpecParts.push(`${formatWeightKg(weightValue)}kg`)
+                            }
+
+                            if (hasTargetRpe) {
+                                exerciseSpecParts.push(`@RPE ${we.targetRpe}`)
+                            }
+
+                            const exerciseSpec = exerciseSpecParts.join(' · ')
 
                             return (
                                 <button
@@ -1421,11 +1434,7 @@ function FinalStep({
                                                 )}
                                             </p>
                                             <p className="mt-0.5 text-xs text-gray-500">
-                                                {t('workouts.summaryExerciseSpec', {
-                                                    sets: we.sets,
-                                                    reps: we.reps,
-                                                    weight,
-                                                })}
+                                                {exerciseSpec}
                                             </p>
                                         </div>
                                         <span className="flex-shrink-0 rounded-full px-2.5 py-1 text-xs font-bold tabular-nums bg-amber-100 text-amber-700">
