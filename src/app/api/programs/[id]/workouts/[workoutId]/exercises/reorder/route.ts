@@ -4,6 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { z } from 'zod'
+import { hasWorkoutStarted } from '@/lib/program-guards'
 
 const reorderSchema = z.object({
     exercises: z.array(
@@ -48,8 +49,8 @@ export async function PATCH(
             return apiError('FORBIDDEN', 'You can only modify your own programs', 403, undefined, 'program.modifyDenied')
         }
 
-        // Check if program is draft
-        if (session.user.role !== 'admin' && program.status !== 'draft') {
+        // Check if program is draft or active-not-started
+        if (session.user.role !== 'admin' && program.status === 'completed') {
             return apiError(
                 'FORBIDDEN',
                 'Cannot modify program: only draft programs can be edited',
@@ -57,6 +58,18 @@ export async function PATCH(
                 undefined,
                 'program.cannotModifyNonDraft'
             )
+        }
+
+        if (session.user.role !== 'admin' && program.status === 'active') {
+            if (await hasWorkoutStarted(workoutId)) {
+                return apiError(
+                    'FORBIDDEN',
+                    'Cannot modify workout: the workout has already been started by the trainee',
+                    403,
+                    undefined,
+                    'program.workoutStartedEditDenied'
+                )
+            }
         }
 
         // Verify all exercises belong to this workout

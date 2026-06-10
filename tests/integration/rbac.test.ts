@@ -63,6 +63,9 @@ vi.mock('@/lib/prisma', () => ({
             findUnique: vi.fn(),
             update: vi.fn(),
         },
+        workout: {
+            findMany: vi.fn(),
+        },
         exerciseFeedback: {
             findMany: vi.fn(),
             count: vi.fn(),
@@ -275,6 +278,7 @@ describe('RBAC Violations - Training Programs', () => {
             trainee: { id: 'trainee-a-uuid', firstName: 'Trainee', lastName: 'A' },
             weeks: [],
         } as any)
+        vi.mocked(prisma.workout.findMany).mockResolvedValue([] as any)
 
         const req = makeRequest('http://localhost:3000/api/programs/prog-a-1')
 

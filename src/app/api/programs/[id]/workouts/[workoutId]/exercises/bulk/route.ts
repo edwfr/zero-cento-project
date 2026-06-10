@@ -4,6 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { bulkSaveWorkoutExercisesSchema } from '@/schemas/workout-exercise'
 import { logger } from '@/lib/logger'
+import { hasWorkoutStarted } from '@/lib/program-guards'
 
 export async function PUT(
     request: NextRequest,
@@ -53,7 +54,7 @@ export async function PUT(
             )
         }
 
-        if (session.user.role !== 'admin' && program.status !== 'draft') {
+        if (session.user.role !== 'admin' && program.status === 'completed') {
             return apiError(
                 'FORBIDDEN',
                 'Cannot modify program: only draft programs can be edited',
@@ -61,6 +62,18 @@ export async function PUT(
                 undefined,
                 'program.cannotModifyNonDraft'
             )
+        }
+
+        if (session.user.role !== 'admin' && program.status === 'active') {
+            if (await hasWorkoutStarted(workoutId)) {
+                return apiError(
+                    'FORBIDDEN',
+                    'Cannot modify workout: the workout has already been started by the trainee',
+                    403,
+                    undefined,
+                    'program.workoutStartedEditDenied'
+                )
+            }
         }
 
         const workoutExists = program.weeks

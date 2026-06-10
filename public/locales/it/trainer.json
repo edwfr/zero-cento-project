@@ -563,7 +563,8 @@
         "duplicateRowError": "Errore durante la duplicazione della riga",
         "rowDeleteError": "Errore durante la rimozione esercizio",
         "rowDeletedSuccess": "Esercizio rimosso",
-        "rowDeleteGenericError": "Errore durante la rimozione"
+        "rowDeleteGenericError": "Errore durante la rimozione",
+        "workoutLockedStarted": "Workout iniziato - non modificabile"
     },
     "programMetadata": {
         "loadingAthletesError": "Errore caricamento atleti",

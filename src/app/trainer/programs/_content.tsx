@@ -684,6 +684,13 @@ export default function TrainerProgramsContent() {
                                                             </InlineActions>
                                                         ) : (
                                                             <InlineActions>
+                                                                {program.status === 'active' && (
+                                                                    <ActionIconButton
+                                                                        variant="edit"
+                                                                        label={t('programs.editProgramAction')}
+                                                                        href={`/trainer/programs/${program.id}/edit`}
+                                                                    />
+                                                                )}
                                                                 <ActionIconButton
                                                                     variant="view"
                                                                     label={t('programs.viewProgram')}

@@ -27,6 +27,7 @@ vi.mock('@/lib/prisma', () => {
         },
         workout: {
             createMany: vi.fn(),
+            count: vi.fn(),
         },
         user: {
             findUnique: vi.fn(),
@@ -559,11 +560,11 @@ describe('POST /api/programs/[id]/copy-week', () => {
         expect(res.status).toBe(403)
     })
 
-    it('returns 403 when program is not draft', async () => {
+    it('returns 403 when program is completed (not draft)', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
         vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
             ...mockProgramMeta,
-            status: 'active',
+            status: 'completed',
         } as any)
         vi.mocked(prisma.week.findUnique).mockResolvedValue(mockSourceWeek as any)
 
@@ -605,6 +606,7 @@ describe('POST /api/programs/[id]/copy-week', () => {
     it('returns 200 with updatedWeek on success', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
         vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue(mockProgramMeta as any)
+        vi.mocked(prisma.workout.count).mockResolvedValue(0)
         vi.mocked(prisma.week.findUnique)
             .mockResolvedValueOnce(mockSourceWeek as any)   // source week
             .mockResolvedValueOnce(mockUpdatedWeek as any)  // updatedWeek after transaction

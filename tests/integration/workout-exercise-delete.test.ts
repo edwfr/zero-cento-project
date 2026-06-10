@@ -17,6 +17,7 @@ vi.mock('@/lib/prisma', () => ({
             findMany: vi.fn(),
             update: vi.fn(),
         },
+        setPerformed: { count: vi.fn() },
         $transaction: vi.fn(),
     },
 }))
@@ -43,11 +44,11 @@ describe('DELETE /api/programs/[id]/workouts/[workoutId]/exercises/[exerciseId]'
         vi.mocked(requireRole).mockResolvedValue(mockTrainerSession as any)
     })
 
-    it('returns 403 when program is not draft status for trainer', async () => {
+    it('returns 403 when program is completed (not draft)', async () => {
         vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
             id: PROGRAM_ID,
             trainerId: mockTrainerSession.user.id,
-            status: 'active',
+            status: 'completed',
         } as any)
 
         const req = new NextRequest(
@@ -124,5 +125,47 @@ describe('DELETE /api/programs/[id]/workouts/[workoutId]/exercises/[exerciseId]'
             data: { order: 2 },
         })
         expect(prisma.$transaction).toHaveBeenCalledTimes(1)
+    })
+
+    it('returns 403 when program is active and workout is started', async () => {
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+            id: PROGRAM_ID,
+            trainerId: mockTrainerSession.user.id,
+            status: 'active',
+        } as any)
+        vi.mocked(prisma.setPerformed.count).mockResolvedValue(1)
+
+        const req = new NextRequest(
+            `http://localhost/api/programs/${PROGRAM_ID}/workouts/${WORKOUT_ID}/exercises/${EXERCISE_ID}`,
+            { method: 'DELETE' }
+        )
+        const res = await DELETE(req, withParams(PROGRAM_ID, WORKOUT_ID, EXERCISE_ID))
+        expect(res.status).toBe(403)
+        const body = await res.json()
+        expect(body.error.key).toBe('program.workoutStartedEditDenied')
+    })
+
+    it('allows delete when program is active and workout is NOT started', async () => {
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+            id: PROGRAM_ID,
+            trainerId: mockTrainerSession.user.id,
+            status: 'active',
+        } as any)
+        vi.mocked(prisma.setPerformed.count).mockResolvedValue(0)
+        vi.mocked(prisma.workoutExercise.findUnique).mockResolvedValue({
+            id: EXERCISE_ID,
+            workoutId: WORKOUT_ID,
+            order: 1,
+        } as any)
+        vi.mocked(prisma.workoutExercise.delete).mockResolvedValue({} as any)
+        vi.mocked(prisma.workoutExercise.findMany).mockResolvedValue([] as any)
+        vi.mocked(prisma.$transaction).mockResolvedValue([] as any)
+
+        const req = new NextRequest(
+            `http://localhost/api/programs/${PROGRAM_ID}/workouts/${WORKOUT_ID}/exercises/${EXERCISE_ID}`,
+            { method: 'DELETE' }
+        )
+        const res = await DELETE(req, withParams(PROGRAM_ID, WORKOUT_ID, EXERCISE_ID))
+        expect(res.status).toBe(200)
     })
 })

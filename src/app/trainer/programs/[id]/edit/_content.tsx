@@ -121,6 +121,7 @@ interface WorkoutExercise {
 interface Workout {
     id: string
     dayIndex: number
+    isStarted?: boolean
     workoutExercises: WorkoutExercise[]
 }
 
@@ -854,9 +855,14 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     }, [fetchProgram, fetchExerciseCatalog])
 
     // Auto-advance to 'details' step on initial load if exercises already exist
+    // (or always for active/completed programs — skeleton cannot be changed)
     useEffect(() => {
         if (!program || readOnly || hasSetInitialStepRef.current) return
         hasSetInitialStepRef.current = true
+        if (program.status === 'active' || program.status === 'completed') {
+            setWizardStep('details')
+            return
+        }
         const hasExercises = program.weeks.some((week) =>
             week.workouts.some((workout) => workout.workoutExercises.length > 0)
         )
@@ -2647,7 +2653,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                {!readOnly && (
+                {!readOnly && program.status === 'draft' && (
                     <div className="mb-8">
                         <div className="flex flex-wrap items-center justify-center gap-4 mb-4">
                             <div className="flex items-center">
@@ -2752,7 +2758,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     </div>
                 </div>
 
-                {!readOnly && wizardStep === 'structure' && (
+                {!readOnly && program.status === 'draft' && wizardStep === 'structure' && (
                     <section className="rounded-xl border border-gray-200 bg-white shadow-sm">
                         <div className="border-b border-gray-100 px-5 py-4">
                             <h2 className="text-xl font-bold text-gray-900">
@@ -2944,7 +2950,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     </section>
                 )}
 
-                {!readOnly && wizardStep === 'structure' && (
+                {!readOnly && program.status === 'draft' && wizardStep === 'structure' && (
                     <div className="flex space-x-4 mt-8 mb-8">
                         <button
                             type="button"
@@ -2972,7 +2978,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 )}
 
                 <div className={!readOnly && wizardStep === 'structure' ? 'hidden' : ''}>
-                    {!readOnly && (
+                    {!readOnly && program.status === 'draft' && (
                         <div className="mb-4 flex justify-end">
                             <button
                                 type="button"
@@ -3317,6 +3323,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                 const workoutLabel = t('editProgram.workoutFallback', {
                                                     number: workoutIndex + 1,
                                                 })
+                                                const workoutIsLocked =
+                                                    program.status === 'active' && (workout.isStarted ?? false)
                                                 const isWorkoutExpanded =
                                                     expandedWorkoutIds[workout.id] ?? true
                                                 const isWarmupHintOpen =
@@ -3367,7 +3375,13 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                     )}
                                                                 </span>
                                                             </button>
-                                                            {!readOnly && (
+                                                            {!readOnly && workoutIsLocked && (
+                                                                <div className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-semibold text-gray-500">
+                                                                    <Lock className="w-4 h-4" />
+                                                                    {t('editProgram.workoutLockedStarted')}
+                                                                </div>
+                                                            )}
+                                                            {!readOnly && !workoutIsLocked && (
                                                                 <div className="inline-flex items-center gap-2">
                                                                     <button
                                                                         type="button"
@@ -3444,7 +3458,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                         strategy={verticalListSortingStrategy}
                                                                         disabled={
                                                                             readOnly ||
-                                                                            reorderingWorkoutId !== null
+                                                                            reorderingWorkoutId !== null ||
+                                                                            workoutIsLocked
                                                                         }
                                                                     >
                                                                         <table className="w-full table-fixed divide-y divide-gray-200 text-sm">
@@ -3684,7 +3699,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                 'h-6 w-full rounded-lg border border-gray-300 px-1.5 text-center text-xs leading-4 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-400'
                                                                             const rowBusy =
                                                                                 savingRowId === row.id ||
-                                                                                savingWorkoutId === workout.id
+                                                                                savingWorkoutId === workout.id ||
+                                                                                workoutIsLocked
                                                                             const parsedWeightInputForPreview = parseWeightInputValue(
                                                                                 row.weight
                                                                             )
@@ -3736,7 +3752,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                 <React.Fragment key={row.id}>
                                                                                     <SortableExerciseRow
                                                                                         id={row.id}
-                                                                                        readOnly={readOnly}
+                                                                                        readOnly={readOnly || workoutIsLocked}
                                                                                         className={`border-b border-gray-100 ${rowBgClass}`}
                                                                                     >
                                                                                     {(dragHandleProps) => (

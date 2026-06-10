@@ -18,6 +18,7 @@ vi.mock('@/lib/prisma', () => ({
             deleteMany: vi.fn(),
         },
         exercise: { findMany: vi.fn() },
+        setPerformed: { count: vi.fn() },
         $transaction: vi.fn(),
     },
 }))
@@ -202,7 +203,7 @@ describe('PUT /api/programs/[id]/workouts/[workoutId]/exercises/bulk', () => {
     it('returns 403 when program is not draft (non-admin)', async () => {
         vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
             ...draftProgramOwned,
-            status: 'active',
+            status: 'completed',
         } as any)
         const res = await bulkPut(makePutRequest({ exercises: [baseRow] }), params(PROG, WK))
         expect(res.status).toBe(403)
@@ -248,5 +249,38 @@ describe('PUT /api/programs/[id]/workouts/[workoutId]/exercises/bulk', () => {
             params(PROG, WK)
         )
         expect(res.status).toBe(400)
+    })
+
+    it('returns 403 when program is active and workout is started', async () => {
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+            ...draftProgramOwned,
+            status: 'active',
+        } as any)
+        vi.mocked(prisma.setPerformed.count).mockResolvedValue(1)
+        const res = await bulkPut(makePutRequest({ exercises: [baseRow] }), params(PROG, WK))
+        expect(res.status).toBe(403)
+        const body = await res.json()
+        expect(body.error.key).toBe('program.workoutStartedEditDenied')
+    })
+
+    it('allows editing when program is active and workout is NOT started', async () => {
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+            ...draftProgramOwned,
+            status: 'active',
+        } as any)
+        vi.mocked(prisma.setPerformed.count).mockResolvedValue(0)
+        const res = await bulkPut(makePutRequest({ exercises: [baseRow] }), params(PROG, WK))
+        expect(res.status).toBe(200)
+    })
+
+    it('returns 403 when program is completed (not draft)', async () => {
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+            ...draftProgramOwned,
+            status: 'completed',
+        } as any)
+        const res = await bulkPut(makePutRequest({ exercises: [baseRow] }), params(PROG, WK))
+        expect(res.status).toBe(403)
+        const body = await res.json()
+        expect(body.error.key).toBe('program.cannotModifyNonDraft')
     })
 })

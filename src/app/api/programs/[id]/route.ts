@@ -160,6 +160,36 @@ export async function GET(
             resolvedProgram = { ...program, weeks: resolvedWeeks }
         }
 
+        // For trainer/admin viewing an active program, enrich each workout with isStarted
+        if (session.user.role !== 'trainee' && program.status === 'active') {
+            const startedWorkouts = await prisma.workout.findMany({
+                where: {
+                    week: { programId },
+                    workoutExercises: {
+                        some: {
+                            exerciseFeedbacks: {
+                                some: {
+                                    setsPerformed: { some: { completed: true } },
+                                },
+                            },
+                        },
+                    },
+                },
+                select: { id: true },
+            })
+            const startedWorkoutIds = new Set(startedWorkouts.map((w) => w.id))
+
+            const weeksWithStarted = (resolvedProgram.weeks as typeof program.weeks).map((week) => ({
+                ...week,
+                workouts: week.workouts.map((workout) => ({
+                    ...workout,
+                    isStarted: startedWorkoutIds.has(workout.id),
+                })),
+            }))
+
+            resolvedProgram = { ...resolvedProgram, weeks: weeksWithStarted } as typeof resolvedProgram
+        }
+
         const { workoutSkeletons, ...programWithoutSkeletons } = resolvedProgram as typeof resolvedProgram & { workoutSkeletons: unknown }
         return apiSuccess({ program: { ...programWithoutSkeletons, skeleton: workoutSkeletons ?? [] } })
     } catch (error: any) {

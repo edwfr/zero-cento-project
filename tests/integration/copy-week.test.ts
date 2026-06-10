@@ -14,6 +14,9 @@ vi.mock('@/lib/prisma', () => ({
             findUnique: vi.fn(),
             findFirst: vi.fn(),
         },
+        workout: {
+            count: vi.fn(),
+        },
         workoutExercise: {
             deleteMany: vi.fn(),
             createMany: vi.fn(),
@@ -106,6 +109,7 @@ describe('POST /api/programs/[id]/copy-week', () => {
             if (typeof ops === 'function') return ops(prisma)
             return Promise.all(ops)
         })
+        vi.mocked(prisma.workout.count).mockResolvedValue(0)
     })
 
     it('returns 400 when sourceWeekId is missing', async () => {
@@ -291,5 +295,49 @@ describe('POST /api/programs/[id]/copy-week', () => {
         // deleteMany is called but createMany is NOT called (no matching dayIndex)
         expect(deleteManyMock).toHaveBeenCalledWith({ where: { workoutId: 'workout-w2-d1' } })
         expect(createManyMock).not.toHaveBeenCalled()
+    })
+
+    it('returns 403 when target week contains completed workouts with exercises', async () => {
+        vi.mocked(prisma.workout.count).mockResolvedValue(1)
+        const req = makeRequest({ sourceWeekId: 'week-1' })
+        const res = await POST(req, { params: Promise.resolve({ id: 'prog-1' }) })
+        expect(res.status).toBe(403)
+        const body = await res.json()
+        expect(body.error.key).toBe('program.copyWeekTargetProtected')
+    })
+
+    it('allows copy on active program when target week has no completed workouts', async () => {
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+            ...baseProgram,
+            status: 'active',
+        } as any)
+        vi.mocked(prisma.workout.count).mockResolvedValue(0)
+
+        const deleteManyMock = vi.fn().mockResolvedValue({ count: 0 })
+        const createManyMock = vi.fn().mockResolvedValue({ count: 1 })
+        vi.mocked(prisma.$transaction).mockImplementation(async (ops: any) => {
+            if (typeof ops === 'function') {
+                return ops({
+                    workoutExercise: { deleteMany: deleteManyMock, createMany: createManyMock },
+                })
+            }
+            return Promise.all(ops)
+        })
+
+        const req = makeRequest({ sourceWeekId: 'week-1' })
+        const res = await POST(req, { params: Promise.resolve({ id: 'prog-1' }) })
+        expect(res.status).toBe(200)
+    })
+
+    it('returns 403 when program is completed (copy blocked)', async () => {
+        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+            ...baseProgram,
+            status: 'completed',
+        } as any)
+        const req = makeRequest({ sourceWeekId: 'week-1' })
+        const res = await POST(req, { params: Promise.resolve({ id: 'prog-1' }) })
+        expect(res.status).toBe(403)
+        const body = await res.json()
+        expect(body.error.key).toBe('program.cannotModifyNonDraft')
     })
 })

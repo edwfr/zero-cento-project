@@ -253,4 +253,20 @@ describe('TrainerProgramsContent', () => {
         expect(screen.queryByText('Programma Senza Test')).not.toBeInTheDocument()
         expect(screen.getByText('Bozza Programma')).toBeInTheDocument()
     })
+
+    it('shows edit button for active programs', async () => {
+        render(<TrainerProgramsContent />)
+
+        await waitFor(() => {
+            expect(screen.getByText('Programma Senza Test')).toBeInTheDocument()
+        })
+
+        const editButtons = screen.getAllByLabelText('programs.editProgramAction')
+        expect(editButtons.length).toBeGreaterThan(0)
+
+        // All active programs should have the edit button linking to /edit
+        for (const btn of editButtons) {
+            expect(btn.closest('a')).toHaveAttribute('href', expect.stringMatching(/\/edit$/))
+        }
+    })
 })

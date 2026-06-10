@@ -75,7 +75,9 @@
         "cannotPublishEmptyWorkouts": "Cannot publish: one or more workouts have no exercises",
         "cannotReduceDurationWeeks": "Cannot reduce duration below the number of already configured weeks",
         "cannotReduceWorkoutsPerWeek": "Cannot reduce workouts per week below the number of already configured workouts",
-        "noFollowingWeek": "Source week has no following week to copy into"
+        "noFollowingWeek": "Source week has no following week to copy into",
+        "workoutStartedEditDenied": "Cannot modify this workout: it has already been started by the trainee",
+        "copyWeekTargetProtected": "Cannot copy: the target week contains completed workouts"
     },
     "calculation": {
         "maxRecursionDepthExceeded": "Maximum recursion depth exceeded for percentage_previous",

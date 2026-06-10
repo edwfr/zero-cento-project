@@ -4,6 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { workoutExerciseSchema } from '@/schemas/workout-exercise'
 import { logger } from '@/lib/logger'
+import { hasWorkoutStarted } from '@/lib/program-guards'
 
 /**
  * POST /api/programs/[id]/workouts/[workoutId]/exercises
@@ -64,8 +65,8 @@ export async function POST(
             return apiError('FORBIDDEN', 'You can only modify your own programs', 403, undefined, 'program.modifyDenied')
         }
 
-        // Check if program is draft
-        if (session.user.role !== 'admin' && programwithWeeks.status !== 'draft') {
+        // Check if program is draft or active-not-started
+        if (session.user.role !== 'admin' && programwithWeeks.status === 'completed') {
             return apiError(
                 'FORBIDDEN',
                 'Cannot modify program: only draft programs can be edited',
@@ -73,6 +74,18 @@ export async function POST(
                 undefined,
                 'program.cannotModifyNonDraft'
             )
+        }
+
+        if (session.user.role !== 'admin' && programwithWeeks.status === 'active') {
+            if (await hasWorkoutStarted(workoutId)) {
+                return apiError(
+                    'FORBIDDEN',
+                    'Cannot modify workout: the workout has already been started by the trainee',
+                    403,
+                    undefined,
+                    'program.workoutStartedEditDenied'
+                )
+            }
         }
 
         // Verify workout exists in this program

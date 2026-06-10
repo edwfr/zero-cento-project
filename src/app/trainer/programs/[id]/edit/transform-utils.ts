@@ -61,6 +61,7 @@ export function transformApiWeek(week: any, trainerId: string): any {
                     typeof workout.dayIndex === 'number'
                         ? workout.dayIndex
                         : Number(workout.dayOfWeek ?? 0),
+                isStarted: Boolean(workout.isStarted),
                 workoutExercises: (workout.workoutExercises || []).map((we: any) =>
                     transformApiExercise(we, trainerId)
                 ),

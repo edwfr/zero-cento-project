@@ -80,7 +80,7 @@ export async function POST(
             return apiError('FORBIDDEN', 'You can only modify your own programs', 403, undefined, 'program.modifyDenied')
         }
 
-        if (session.user.role !== 'admin' && program.status !== 'draft') {
+        if (session.user.role !== 'admin' && program.status === 'completed') {
             return apiError(
                 'FORBIDDEN',
                 'Cannot modify program: only draft programs can be edited',
@@ -110,6 +110,25 @@ export async function POST(
 
         if (!targetWeek) {
             return apiError('VALIDATION_ERROR', 'Source week has no following week to copy into', 400, undefined, 'program.noFollowingWeek')
+        }
+
+        // Block copy if any workout in the target week is completed and has exercises
+        const targetWeekProtected = await prisma.workout.count({
+            where: {
+                weekId: targetWeek.id,
+                isCompleted: true,
+                workoutExercises: { some: {} },
+            },
+        }) > 0
+
+        if (targetWeekProtected) {
+            return apiError(
+                'FORBIDDEN',
+                'Cannot copy: the target week contains completed workouts',
+                403,
+                undefined,
+                'program.copyWeekTargetProtected'
+            )
         }
 
         const sourceWorkoutMap = new Map(
