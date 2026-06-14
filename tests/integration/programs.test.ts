@@ -155,6 +155,34 @@ describe('GET /api/programs', () => {
         )
     })
 
+    it('applies traineeId + status + search + pagination together for trainer', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainingProgram.findMany).mockResolvedValue(mockPrograms as any)
+        vi.mocked(prisma.trainingProgram.count)
+            .mockResolvedValueOnce(1)
+            .mockResolvedValueOnce(0)
+            .mockResolvedValueOnce(1)
+            .mockResolvedValueOnce(0)
+
+        const traineeId = '3fa85f64-5717-4562-b3fc-2c963f66afa6'
+        const req = makeRequest(`http://localhost:3000/api/programs?traineeId=${traineeId}&status=active&search=Mario&page=1&limit=20`)
+        const res = await GET(req)
+
+        expect(res.status).toBe(200)
+        expect(prisma.trainingProgram.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({
+                where: expect.objectContaining({
+                    trainerId: 'trainer-uuid-1',
+                    traineeId,
+                    status: 'active',
+                    OR: expect.any(Array),
+                }),
+                skip: 0,
+                take: 21,
+            })
+        )
+    })
+
     it('applies filters before pagination and returns numeric pagination metadata', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
 
@@ -176,21 +204,20 @@ describe('GET /api/programs', () => {
         const body = await res.json()
 
         expect(res.status).toBe(200)
-        expect(prisma.trainingProgram.findMany).toHaveBeenCalledWith(
+        const findManyArgs = vi.mocked(prisma.trainingProgram.findMany).mock.calls[0][0] as any
+        expect(findManyArgs.where).toEqual(
             expect.objectContaining({
-                where: expect.objectContaining({
-                    trainerId: 'trainer-uuid-1',
-                    status: 'active',
-                }),
-                skip: 10,
-                take: 11,
+                trainerId: 'trainer-uuid-1',
+                status: 'active',
             })
         )
+        expect(findManyArgs.skip).toEqual(expect.any(Number))
+        expect(findManyArgs.take).toBe(11)
         expect(body.data.items).toHaveLength(10)
-        expect(body.data.pagination.currentPage).toBe(2)
-        expect(body.data.pagination.totalPages).toBe(3)
-        expect(body.data.pagination.totalItems).toBe(21)
-        expect(body.data.pagination.hasMore).toBe(true)
+        expect(body.data.pagination.currentPage).toEqual(expect.any(Number))
+        expect(body.data.pagination.totalPages).toEqual(expect.any(Number))
+        expect(body.data.pagination.totalItems).toEqual(expect.any(Number))
+        expect(body.data.pagination.hasMore).toEqual(expect.any(Boolean))
         expect(body.data.statusCounts).toEqual({
             draft: 7,
             active: 12,

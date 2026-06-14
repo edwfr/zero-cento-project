@@ -733,6 +733,8 @@
       File: `src/components/WorkoutRecapPanel.tsx`, `src/lib/workout-recap.ts`, `src/app/api/trainee/workouts/[id]/recap/route.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 - [x] **11.141** `/api/programs` test-week completion: usare `weeks.isCompleted` come fonte di verita per `testsCompleted` (rimuovendo la query aggregate su `exercise_feedbacks`) e mantenere shape risposta invariata con test di integrazione dedicati ✅ _14 Giugno 2026_  
       File: `src/app/api/programs/route.ts`, `tests/integration/programs.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+- [x] **11.142** `/trainer/trainees/[id]` tab `Programmi`: allineare la UX alla schermata `/trainer/programs` con filtri `Draft/Active/Completed`, ricerca submit-driven, paginazione numerata, colonne dinamiche per stato e matrice azioni identica (`edit/view/clone/delete/view-test` con stesse regole di abilitazione) mantenendo il contesto trainee (`backContext=trainee`, `traineeId`) ✅ _14 Giugno 2026_  
+      File: `src/app/trainer/trainees/[id]/_content.tsx`, `tests/unit/trainer-trainee-detail-sbd-report.test.tsx`, `tests/unit/trainer-trainee-programs-tab.test.tsx`, `tests/integration/programs.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 
 ---
 

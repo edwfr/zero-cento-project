@@ -1,16 +1,34 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { useParams } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { normalizedOneRM } from '@/lib/calculations'
 import Link from 'next/link'
-import { SkeletonDetail } from '@/components'
+import {
+    ActionIconButton,
+    Button,
+    ConfirmationModal,
+    InlineActions,
+    Input,
+    SkeletonDetail,
+    SkeletonTable,
+    useToast,
+} from '@/components'
 import { formatDate } from '@/lib/date-format'
 import TraineePlannedMuscleGroupReport from '@/components/TraineePlannedMuscleGroupReport'
-import { Plus, Trophy, ChevronDown, ChevronUp } from 'lucide-react'
-import { ActionIconButton, InlineActions } from '@/components'
+import {
+    CheckCircle2,
+    ChevronDown,
+    ChevronUp,
+    Clock3,
+    FileEdit,
+    FlagTriangleRight,
+    Minus,
+    Plus,
+    Trophy,
+} from 'lucide-react'
 import {
     CartesianGrid,
     Legend,
@@ -36,9 +54,44 @@ interface Program {
     title: string
     status: 'draft' | 'active' | 'completed'
     durationWeeks: number
+    workoutsPerWeek: number
     startDate: string | null
+    completedAt?: string | null
+    lastWorkoutCompletedAt?: string | null
+    updatedAt?: string | null
     endDate: string | null
     createdAt: string
+    trainee?: {
+        firstName: string
+        lastName: string
+    }
+    weeks: Array<{
+        id: string
+        weekNumber: number
+        weekType: 'normal' | 'test' | 'deload'
+    }>
+    testWeeks?: number[]
+    hasTestWeeks?: boolean
+    testsCompleted?: boolean
+}
+
+interface ProgramsApiResponse {
+    data: {
+        items: Program[]
+        statusCounts?: {
+            draft: number
+            active: number
+            completed: number
+        }
+        pagination?: {
+            nextCursor: string | null
+            hasMore: boolean
+            currentPage?: number
+            totalPages?: number
+            totalItems?: number
+            limit?: number
+        }
+    }
 }
 
 interface PersonalRecord {
@@ -100,6 +153,31 @@ interface SbdPointMetric {
     frequency: number
     totalLifts: number
     averageIntensity: number | null
+}
+
+type ProgramStatusTab = 'draft' | 'active' | 'completed'
+
+interface ProgramStatusCounts {
+    draft: number
+    active: number
+    completed: number
+}
+
+interface ProgramListSnapshot {
+    items: Program[]
+    currentPage: number
+    totalPages: number
+    totalItems: number
+    statusCounts: ProgramStatusCounts
+}
+
+const PAGE_SIZE = 20
+const MAX_VISIBLE_PAGES = 5
+const PROGRAM_STATUS_TABS: ProgramStatusTab[] = ['draft', 'active', 'completed']
+const INITIAL_STATUS_COUNTS: ProgramStatusCounts = {
+    draft: 0,
+    active: 0,
+    completed: 0,
 }
 
 const CHART_COLORS = ['rgb(var(--brand-primary))', '#0F766E', '#2563EB', '#DC2626', '#7C3AED', '#0891B2', '#65A30D', '#EA580C']
@@ -215,13 +293,30 @@ function getSbdPointMetric(point: PlannedTrainingSetsPoint, lift: SbdLiftValue):
 
 export default function TraineeDetailContent() {
     const params = useParams<{ id: string }>()
-    const router = useRouter()
-    const { t } = useTranslation(['trainer', 'common'])
+    const { t } = useTranslation(['trainer', 'components', 'common'])
+    const { showToast } = useToast()
     const traineeId = params.id
 
     const [loading, setLoading] = useState(true)
     const [trainee, setTrainee] = useState<Trainee | null>(null)
     const [programs, setPrograms] = useState<Program[]>([])
+    const [programsLoading, setProgramsLoading] = useState(true)
+    const [isProgramsRefreshing, setIsProgramsRefreshing] = useState(false)
+    const [programsError, setProgramsError] = useState<string | null>(null)
+    const [activeProgramTab, setActiveProgramTab] = useState<ProgramStatusTab>('active')
+    const [programSearchTerm, setProgramSearchTerm] = useState('')
+    const [appliedProgramSearchTerm, setAppliedProgramSearchTerm] = useState('')
+    const [programCurrentPage, setProgramCurrentPage] = useState(1)
+    const [programTotalPages, setProgramTotalPages] = useState(1)
+    const [programTotalItems, setProgramTotalItems] = useState(0)
+    const [programStatusCounts, setProgramStatusCounts] = useState<ProgramStatusCounts>(INITIAL_STATUS_COUNTS)
+    const [confirmModal, setConfirmModal] = useState<{
+        title: string
+        message: string
+        onConfirm: () => void
+        confirmText?: string
+        variant?: 'danger' | 'warning' | 'info' | 'success'
+    } | null>(null)
     const [records, setRecords] = useState<PersonalRecord[]>([])
     const [plannedPoints, setPlannedPoints] = useState<PlannedTrainingSetsPoint[]>([])
     const [error, setError] = useState<string | null>(null)
@@ -238,21 +333,167 @@ export default function TraineeDetailContent() {
         plannedFundamentalReport: false,
         plannedMuscleReport: false,
     })
+    const hasLoadedProgramsOnceRef = useRef(false)
+    const programsCacheRef = useRef(new Map<string, ProgramListSnapshot>())
+    const activeProgramsRequestControllerRef = useRef<AbortController | null>(null)
+    const activeProgramsRequestSeqRef = useRef(0)
+    const prefetchProgramsControllersRef = useRef(new Map<string, AbortController>())
+    const programStatusCountsRef = useRef<ProgramStatusCounts>(INITIAL_STATUS_COUNTS)
+
+    const getProgramsViewCacheKey = useCallback((status: ProgramStatusTab, page: number, search: string) => {
+        const normalizedSearch = search.trim().toLowerCase()
+        return `${status}|${page}|${normalizedSearch}`
+    }, [])
+
+    const applyProgramsSnapshot = useCallback((snapshot: ProgramListSnapshot) => {
+        setPrograms(snapshot.items)
+        setProgramCurrentPage(snapshot.currentPage)
+        setProgramTotalPages(snapshot.totalPages)
+        setProgramTotalItems(snapshot.totalItems)
+        setProgramStatusCounts(snapshot.statusCounts)
+    }, [])
+
+    const clearVisibleProgramRows = useCallback(() => {
+        setPrograms([])
+        setProgramCurrentPage(1)
+        setProgramTotalPages(1)
+        setProgramTotalItems(0)
+    }, [])
+
+    const getCachedProgramsSnapshot = useCallback((status: ProgramStatusTab, page: number, search: string) => {
+        const viewKey = getProgramsViewCacheKey(status, page, search)
+        return programsCacheRef.current.get(viewKey) ?? null
+    }, [getProgramsViewCacheKey])
+
+    const fetchProgramsSnapshot = useCallback(async (
+        status: ProgramStatusTab,
+        page: number,
+        search: string,
+        signal?: AbortSignal
+    ): Promise<ProgramListSnapshot> => {
+        const params = new URLSearchParams({
+            traineeId,
+            status,
+            page: String(page),
+            limit: String(PAGE_SIZE),
+        })
+
+        const trimmedSearch = search.trim()
+        if (trimmedSearch.length >= 2) {
+            params.set('search', trimmedSearch)
+        }
+
+        const res = await fetch(`/api/programs?${params.toString()}`, { signal })
+        const data = (await res.json()) as ProgramsApiResponse
+
+        if (!res.ok) {
+            throw new Error(getApiErrorMessage(data, t('programs.loadingError'), t))
+        }
+
+        const items = data.data.items ?? []
+        const pagination = data.data.pagination
+
+        const nextTotalPages = Math.max(1, pagination?.totalPages ?? 1)
+        const nextCurrentPage = Math.min(pagination?.currentPage ?? page, nextTotalPages)
+        const nextTotalItems = pagination?.totalItems ?? items.length
+
+        return {
+            items,
+            currentPage: nextCurrentPage,
+            totalPages: nextTotalPages,
+            totalItems: nextTotalItems,
+            statusCounts: data.data.statusCounts ?? programStatusCountsRef.current,
+        }
+    }, [t, traineeId])
+
+    const runForegroundProgramsFetch = useCallback(async ({
+        status,
+        page,
+        search,
+        silent,
+    }: {
+        status: ProgramStatusTab
+        page: number
+        search: string
+        silent: boolean
+    }) => {
+        activeProgramsRequestControllerRef.current?.abort()
+        const controller = new AbortController()
+        activeProgramsRequestControllerRef.current = controller
+        const requestSeq = ++activeProgramsRequestSeqRef.current
+
+        if (hasLoadedProgramsOnceRef.current && !silent) {
+            setIsProgramsRefreshing(true)
+        } else {
+            setIsProgramsRefreshing(false)
+        }
+
+        try {
+            const snapshot = await fetchProgramsSnapshot(status, page, search, controller.signal)
+
+            if (requestSeq !== activeProgramsRequestSeqRef.current) {
+                return
+            }
+
+            if (snapshot.items.length === 0 && snapshot.currentPage > 1 && snapshot.totalItems > 0) {
+                setProgramCurrentPage(snapshot.currentPage - 1)
+                return
+            }
+
+            programsCacheRef.current.set(getProgramsViewCacheKey(status, snapshot.currentPage, search), snapshot)
+            applyProgramsSnapshot(snapshot)
+            setProgramsError(null)
+            setProgramsLoading(false)
+            hasLoadedProgramsOnceRef.current = true
+        } catch (err: unknown) {
+            if (err instanceof DOMException && err.name === 'AbortError') {
+                return
+            }
+
+            if (!silent && requestSeq === activeProgramsRequestSeqRef.current) {
+                setProgramsError(err instanceof Error ? err.message : t('programs.loadingError'))
+            }
+        } finally {
+            if (requestSeq === activeProgramsRequestSeqRef.current) {
+                setProgramsLoading(false)
+                setIsProgramsRefreshing(false)
+            }
+        }
+    }, [applyProgramsSnapshot, fetchProgramsSnapshot, getProgramsViewCacheKey, t])
+
+    const prefetchProgramsView = useCallback(async (status: ProgramStatusTab, page: number, search: string) => {
+        const viewKey = getProgramsViewCacheKey(status, page, search)
+        if (programsCacheRef.current.has(viewKey) || prefetchProgramsControllersRef.current.has(viewKey)) {
+            return
+        }
+
+        const controller = new AbortController()
+        prefetchProgramsControllersRef.current.set(viewKey, controller)
+
+        try {
+            const snapshot = await fetchProgramsSnapshot(status, page, search, controller.signal)
+            programsCacheRef.current.set(getProgramsViewCacheKey(status, snapshot.currentPage, search), snapshot)
+        } catch (err: unknown) {
+            if (!(err instanceof DOMException && err.name === 'AbortError')) {
+                return
+            }
+        } finally {
+            prefetchProgramsControllersRef.current.delete(viewKey)
+        }
+    }, [fetchProgramsSnapshot, getProgramsViewCacheKey])
 
     const fetchTraineeData = useCallback(async () => {
         try {
             setLoading(true)
 
-            const [traineeRes, programsRes, recordsRes, plannedRes] = await Promise.all([
+            const [traineeRes, recordsRes, plannedRes] = await Promise.all([
                 fetch(`/api/users/${traineeId}`),
-                fetch(`/api/programs?traineeId=${traineeId}`),
                 fetch(`/api/personal-records?traineeId=${traineeId}`),
                 fetch(`/api/users/${traineeId}/reports/planned-training-sets`),
             ])
 
-            const [traineeData, programsData, recordsData, plannedData] = await Promise.all([
+            const [traineeData, recordsData, plannedData] = await Promise.all([
                 traineeRes.json(),
-                programsRes.json(),
                 recordsRes.json(),
                 plannedRes.json(),
             ])
@@ -262,11 +503,10 @@ export default function TraineeDetailContent() {
             }
 
             setTrainee(traineeData.data.user)
-            setPrograms(programsData.data?.items || programsData.data?.programs || [])
             setRecords(recordsData.data?.items || recordsData.data?.records || [])
             setPlannedPoints(plannedRes.ok ? plannedData.data?.points || [] : [])
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : t('athletes.loadingError'))
         } finally {
             setLoading(false)
         }
@@ -275,6 +515,202 @@ export default function TraineeDetailContent() {
     useEffect(() => {
         fetchTraineeData()
     }, [fetchTraineeData])
+
+    useEffect(() => {
+        programStatusCountsRef.current = programStatusCounts
+    }, [programStatusCounts])
+
+    useEffect(() => {
+        const cachedSnapshot = getCachedProgramsSnapshot(activeProgramTab, programCurrentPage, appliedProgramSearchTerm)
+        if (cachedSnapshot) {
+            applyProgramsSnapshot(cachedSnapshot)
+            setProgramsLoading(false)
+            hasLoadedProgramsOnceRef.current = true
+        }
+
+        setProgramsError(null)
+        void runForegroundProgramsFetch({
+            status: activeProgramTab,
+            page: programCurrentPage,
+            search: appliedProgramSearchTerm,
+            silent: Boolean(cachedSnapshot),
+        })
+    }, [
+        activeProgramTab,
+        appliedProgramSearchTerm,
+        applyProgramsSnapshot,
+        getCachedProgramsSnapshot,
+        programCurrentPage,
+        runForegroundProgramsFetch,
+    ])
+
+    useEffect(() => {
+        if (programsLoading || !hasLoadedProgramsOnceRef.current) {
+            return
+        }
+
+        for (const tab of PROGRAM_STATUS_TABS) {
+            if (tab === activeProgramTab) {
+                continue
+            }
+
+            void prefetchProgramsView(tab, 1, appliedProgramSearchTerm)
+        }
+    }, [activeProgramTab, appliedProgramSearchTerm, prefetchProgramsView, programsLoading])
+
+    useEffect(() => {
+        const prefetchControllers = prefetchProgramsControllersRef.current
+
+        return () => {
+            activeProgramsRequestControllerRef.current?.abort()
+
+            for (const controller of prefetchControllers.values()) {
+                controller.abort()
+            }
+
+            prefetchControllers.clear()
+        }
+    }, [])
+
+    const handleProgramTabChange = (tab: ProgramStatusTab) => {
+        const targetPage = 1
+        if (tab === activeProgramTab && programCurrentPage === targetPage) {
+            return
+        }
+
+        const cachedSnapshot = getCachedProgramsSnapshot(tab, targetPage, appliedProgramSearchTerm)
+        if (cachedSnapshot) {
+            applyProgramsSnapshot(cachedSnapshot)
+            setProgramsLoading(false)
+            hasLoadedProgramsOnceRef.current = true
+        } else if (hasLoadedProgramsOnceRef.current) {
+            clearVisibleProgramRows()
+        }
+
+        activeProgramsRequestControllerRef.current?.abort()
+        setIsProgramsRefreshing(false)
+        setProgramsError(null)
+        setActiveProgramTab(tab)
+        setProgramCurrentPage(targetPage)
+    }
+
+    const handleProgramsSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault()
+
+        const nextSearch = programSearchTerm.trim()
+        if (nextSearch === appliedProgramSearchTerm && programCurrentPage === 1) {
+            return
+        }
+
+        const targetPage = 1
+        const cachedSnapshot = getCachedProgramsSnapshot(activeProgramTab, targetPage, nextSearch)
+        if (cachedSnapshot) {
+            applyProgramsSnapshot(cachedSnapshot)
+            setProgramsLoading(false)
+            hasLoadedProgramsOnceRef.current = true
+        } else if (hasLoadedProgramsOnceRef.current) {
+            clearVisibleProgramRows()
+        }
+
+        activeProgramsRequestControllerRef.current?.abort()
+        setIsProgramsRefreshing(false)
+        setProgramsError(null)
+        setAppliedProgramSearchTerm(nextSearch)
+        setProgramCurrentPage(targetPage)
+    }
+
+    const handleDeleteProgram = (id: string, title: string) => {
+        setConfirmModal({
+            title: t('programs.deleteProgram'),
+            message: `${t('programs.confirmDeleteProgram')} "${title}"?`,
+            confirmText: t('programs.delete'),
+            onConfirm: async () => {
+                setConfirmModal(null)
+                try {
+                    const res = await fetch(`/api/programs/${id}`, {
+                        method: 'DELETE',
+                    })
+
+                    const data = await res.json()
+
+                    if (!res.ok) {
+                        throw new Error(getApiErrorMessage(data, t('programs.deleteError'), t))
+                    }
+
+                    programsCacheRef.current.clear()
+                    void runForegroundProgramsFetch({
+                        status: activeProgramTab,
+                        page: programCurrentPage,
+                        search: appliedProgramSearchTerm,
+                        silent: false,
+                    })
+                } catch (err: unknown) {
+                    showToast(err instanceof Error ? err.message : t('programs.deleteError'), 'error')
+                }
+            },
+        })
+    }
+
+    const getTestWeeks = (program: Program) => {
+        if (program.testWeeks && program.testWeeks.length > 0) {
+            return program.testWeeks
+        }
+
+        return (program.weeks ?? [])
+            .filter((week) => week.weekType === 'test')
+            .map((week) => week.weekNumber)
+    }
+
+    const getHasTestWeeks = (program: Program) => {
+        if (typeof program.hasTestWeeks === 'boolean') {
+            return program.hasTestWeeks
+        }
+
+        return getTestWeeks(program).length > 0
+    }
+
+    const getTestsCompleted = (program: Program) => {
+        return Boolean(program.testsCompleted)
+    }
+
+    const getPlannedCompletionDate = (program: Program) => {
+        if (!program.startDate) {
+            return null
+        }
+
+        const plannedEndDate = new Date(program.startDate)
+        plannedEndDate.setDate(plannedEndDate.getDate() + program.durationWeeks * 7 - 1)
+        return plannedEndDate
+    }
+
+    const getEffectiveCompletionDate = (program: Program) => {
+        return program.lastWorkoutCompletedAt || program.completedAt || null
+    }
+
+    const getLastModifiedDate = (program: Program) => {
+        return program.updatedAt ?? null
+    }
+
+    const showStartDateColumn = activeProgramTab !== 'draft'
+    const showCompletionDateColumn = activeProgramTab === 'active' || activeProgramTab === 'completed'
+    const showTestStatusColumn = activeProgramTab !== 'draft'
+    const showLastModifiedColumn = activeProgramTab === 'draft'
+    const completionDateColumnLabel =
+        activeProgramTab === 'active'
+            ? t('programs.plannedCompletionDateColumn')
+            : t('programs.actualCompletionDateColumn')
+
+    const visiblePagesCount = Math.min(MAX_VISIBLE_PAGES, programTotalPages)
+    const firstVisiblePage = Math.max(
+        1,
+        Math.min(
+            programCurrentPage - Math.floor(visiblePagesCount / 2),
+            programTotalPages - visiblePagesCount + 1
+        )
+    )
+    const visiblePages = Array.from({ length: visiblePagesCount }, (_, idx) => firstVisiblePage + idx)
+    const totalProgramsCount =
+        programStatusCounts.draft + programStatusCounts.active + programStatusCounts.completed
 
     const latestRecords = useMemo(() => {
         const latestByExercise = new Map<string, PersonalRecord>()
@@ -606,23 +1042,6 @@ export default function TraineeDetailContent() {
         }))
     }
 
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case 'draft':
-                return 'bg-yellow-100 text-yellow-800'
-            case 'active':
-                return 'bg-green-100 text-green-800'
-            case 'completed':
-                return 'bg-gray-100 text-gray-600'
-            default:
-                return 'bg-gray-100 text-gray-600'
-        }
-    }
-
-    const getStatusLabel = (status: string) => {
-        return t(`common:common.${status}`, status)
-    }
-
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 py-8">
@@ -644,8 +1063,20 @@ export default function TraineeDetailContent() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <>
+            {confirmModal && (
+                <ConfirmationModal
+                    isOpen={true}
+                    onClose={() => setConfirmModal(null)}
+                    onConfirm={confirmModal.onConfirm}
+                    title={confirmModal.title}
+                    message={confirmModal.message}
+                    confirmText={confirmModal.confirmText ?? t('programs.confirm')}
+                    variant={confirmModal.variant ?? 'danger'}
+                />
+            )}
+            <div className="min-h-screen bg-gray-50">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">
                     <div className="flex items-center justify-between">
@@ -690,7 +1121,7 @@ export default function TraineeDetailContent() {
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
-                                {t('athletes.programsTab')} ({programs.length})
+                                {t('athletes.programsTab')} ({totalProgramsCount})
                             </button>
                             <button
                                 onClick={() => setActiveTab('records')}
@@ -717,10 +1148,86 @@ export default function TraineeDetailContent() {
                 {/* Tab Content */}
                 {activeTab === 'programs' && (
                     <div>
-                        {programs.length === 0 ? (
+                        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                                <div className="flex-1 max-w-md">
+                                    <form className="flex items-center gap-2" onSubmit={handleProgramsSearchSubmit}>
+                                        <Input
+                                            type="text"
+                                            placeholder={t('programs.searchPlaceholder')}
+                                            value={programSearchTerm}
+                                            onChange={(event) => setProgramSearchTerm(event.target.value)}
+                                            inputSize="md"
+                                        />
+                                        <Button type="submit" variant="secondary" size="md" isLoading={isProgramsRefreshing}>
+                                            {t('common:common.search')}
+                                        </Button>
+                                    </form>
+                                </div>
+
+                                <Link
+                                    href={`/trainer/programs/new?traineeId=${traineeId}`}
+                                    className="bg-brand-primary hover:bg-brand-primary-hover text-white font-semibold px-6 py-2 rounded-lg transition-colors"
+                                >
+                                    <Plus className="w-4 h-4 inline mr-2" />{t('programs.newProgram')}
+                                </Link>
+                            </div>
+                        </div>
+
+                        {programsError && (
+                            <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6">
+                                {programsError}
+                            </div>
+                        )}
+
+                        <div className="mb-6">
+                            <div className="border-b border-gray-200">
+                                <nav className="-mb-px flex space-x-8">
+                                    <button
+                                        onClick={() => handleProgramTabChange('draft')}
+                                        className={`pb-4 px-1 border-b-2 font-semibold text-sm ${activeProgramTab === 'draft'
+                                            ? 'border-brand-primary text-brand-primary'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                            }`}
+                                    >
+                                        <FileEdit className="w-4 h-4 inline mr-1" />{t('programs.tabDraft')} ({programStatusCounts.draft})
+                                    </button>
+                                    <button
+                                        onClick={() => handleProgramTabChange('active')}
+                                        className={`pb-4 px-1 border-b-2 font-semibold text-sm ${activeProgramTab === 'active'
+                                            ? 'border-brand-primary text-brand-primary'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                            }`}
+                                    >
+                                        <CheckCircle2 className="w-4 h-4 inline mr-1" />{t('programs.tabActive')} ({programStatusCounts.active})
+                                    </button>
+                                    <button
+                                        onClick={() => handleProgramTabChange('completed')}
+                                        className={`pb-4 px-1 border-b-2 font-semibold text-sm ${activeProgramTab === 'completed'
+                                            ? 'border-brand-primary text-brand-primary'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                            }`}
+                                    >
+                                        <FlagTriangleRight className="w-4 h-4 inline mr-1" />{t('programs.tabCompleted')} ({programStatusCounts.completed})
+                                    </button>
+                                </nav>
+                            </div>
+                        </div>
+
+                        {programsLoading ? (
+                            <div className="bg-white rounded-lg shadow-md p-4">
+                                <SkeletonTable rows={6} columns={7} />
+                            </div>
+                        ) : programs.length === 0 ? (
                             <div className="bg-white rounded-lg shadow-md p-12 text-center">
                                 <p className="text-gray-500 text-lg mb-4">
-                                    {t('athletes.noProgramsAssigned')}
+                                    {appliedProgramSearchTerm
+                                        ? t('programs.noProgramsFound')
+                                        : activeProgramTab === 'draft'
+                                            ? t('programs.noDraftPrograms')
+                                            : activeProgramTab === 'active'
+                                                ? t('programs.noActivePrograms')
+                                                : t('programs.noCompletedPrograms')}
                                 </p>
                                 <Link
                                     href={`/trainer/programs/new?traineeId=${traineeId}`}
@@ -731,80 +1238,230 @@ export default function TraineeDetailContent() {
                             </div>
                         ) : (
                             <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                                                {t('programs.program')}
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                                                {t('common:common.status')}
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                                                {t('common:common.duration')}
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                                                {t('athletes.creationDate')}
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
-                                                {t('programs.startDate')}
-                                            </th>
-                                            <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">
-                                                {t('common:common.actions')}
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {programs.map((program) => (
-                                            <tr key={program.id} className="hover:bg-gray-50">
-                                                <td className="px-6 py-4">
-                                                    <div className="font-semibold text-gray-900">
-                                                        {program.title}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span
-                                                        className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
-                                                            program.status
-                                                        )}`}
-                                                    >
-                                                        {getStatusLabel(program.status)}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                                    {t('programs.durationWeeks', { count: program.durationWeeks })}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                                    {formatDate(program.createdAt)}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                                    {formatDate(program.startDate)}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                    <InlineActions>
-                                                        <ActionIconButton
-                                                            variant="view"
-                                                            label={t('athletes.viewProgram')}
-                                                            href={`/trainer/programs/${program.id}?backContext=trainee&traineeId=${traineeId}`}
-                                                        />
-                                                        <ActionIconButton
-                                                            variant="clone"
-                                                            label={t('programs.cloneProgram')}
-                                                            href={`/trainer/programs/new?cloneFromProgramId=${program.id}&traineeId=${traineeId}`}
-                                                        />
-                                                        {program.status === 'draft' && (
-                                                            <ActionIconButton
-                                                                variant="edit"
-                                                                label={t('common:common.edit')}
-                                                                href={`/trainer/programs/${program.id}/edit?backContext=trainee&traineeId=${traineeId}`}
-                                                            />
-                                                        )}
-                                                    </InlineActions>
-                                                </td>
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                    {t('programs.program')}
+                                                </th>
+                                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                    {t('programs.athlete')}
+                                                </th>
+                                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                    {t('programs.durationLabel')}
+                                                </th>
+                                                {showStartDateColumn && (
+                                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                        {t('programs.startDate')}
+                                                    </th>
+                                                )}
+                                                {showCompletionDateColumn && (
+                                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                        {completionDateColumnLabel}
+                                                    </th>
+                                                )}
+                                                {showTestStatusColumn && (
+                                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                        {t('programs.testStatusColumn')}
+                                                    </th>
+                                                )}
+                                                {showLastModifiedColumn && (
+                                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                        {t('programs.lastModifiedColumn')}
+                                                    </th>
+                                                )}
+                                                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                    {t('programs.actionsColumn')}
+                                                </th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {programs.map((program) => {
+                                                const hasTestWeeks = getHasTestWeeks(program)
+                                                const testsCompleted = getTestsCompleted(program)
+                                                const TestStatusIcon = !hasTestWeeks ? Minus : testsCompleted ? CheckCircle2 : Clock3
+                                                const testStatusLabel = !hasTestWeeks
+                                                    ? t('programs.testStatusNoTestsTooltip')
+                                                    : testsCompleted
+                                                        ? t('programs.testStatusCompletedTooltip')
+                                                        : t('programs.testStatusPendingTooltip')
+                                                const testStatusClasses = !hasTestWeeks
+                                                    ? 'bg-gray-100 text-gray-500'
+                                                    : testsCompleted
+                                                        ? 'bg-green-100 text-state-success'
+                                                        : 'bg-yellow-100 text-state-warning'
+
+                                                return (
+                                                    <tr key={program.id} className="hover:bg-gray-50 transition-colors">
+                                                        <td className="px-4 py-4 align-top">
+                                                            <div className="font-semibold text-gray-900 max-w-[260px] truncate">
+                                                                {program.title}
+                                                            </div>
+                                                            <div className="mt-1 text-xs text-gray-500">
+                                                                {program.status === 'draft'
+                                                                    ? t('programs.draft')
+                                                                    : program.status === 'active'
+                                                                        ? t('programs.tabActive')
+                                                                        : t('programs.statusCompleted')}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-4 align-top whitespace-nowrap text-sm text-gray-700">
+                                                            {program.trainee?.firstName ?? trainee.firstName} {program.trainee?.lastName ?? trainee.lastName}
+                                                        </td>
+                                                        <td className="px-4 py-4 align-top text-sm text-gray-700 whitespace-nowrap">
+                                                            <div>{t('programs.durationWeeks', { count: program.durationWeeks })}</div>
+                                                            <div className="text-xs text-gray-500 mt-1">
+                                                                {program.workoutsPerWeek} {t('programs.workoutsPerWeek')}
+                                                            </div>
+                                                        </td>
+                                                        {showStartDateColumn && (
+                                                            <td className="px-4 py-4 align-top text-sm text-gray-700 whitespace-nowrap">
+                                                                {formatDate(program.startDate)}
+                                                            </td>
+                                                        )}
+                                                        {showCompletionDateColumn && (
+                                                            <td className="px-4 py-4 align-top text-sm text-gray-700 whitespace-nowrap">
+                                                                {activeProgramTab === 'active'
+                                                                    ? formatDate(getPlannedCompletionDate(program))
+                                                                    : formatDate(getEffectiveCompletionDate(program))}
+                                                            </td>
+                                                        )}
+                                                        {showTestStatusColumn && (
+                                                            <td className="px-4 py-4 align-top">
+                                                                <span
+                                                                    className={`inline-flex h-8 w-8 items-center justify-center rounded-full ${testStatusClasses}`}
+                                                                    title={testStatusLabel}
+                                                                    aria-label={testStatusLabel}
+                                                                >
+                                                                    <TestStatusIcon className="h-4 w-4" aria-hidden="true" />
+                                                                </span>
+                                                            </td>
+                                                        )}
+                                                        {showLastModifiedColumn && (
+                                                            <td className="px-4 py-4 align-top text-sm text-gray-700 whitespace-nowrap">
+                                                                {formatDate(getLastModifiedDate(program))}
+                                                            </td>
+                                                        )}
+                                                        <td className="px-4 py-4 align-top">
+                                                            <div className="flex flex-wrap items-center justify-end gap-2">
+                                                                {program.status === 'draft' ? (
+                                                                    <InlineActions>
+                                                                        <ActionIconButton
+                                                                            variant="edit"
+                                                                            label={t('programs.editProgramAction')}
+                                                                            href={`/trainer/programs/${program.id}/edit?backContext=trainee&traineeId=${traineeId}`}
+                                                                        />
+                                                                        <ActionIconButton
+                                                                            variant="view"
+                                                                            label={t('programs.viewProgram')}
+                                                                            href={`/trainer/programs/${program.id}?backContext=trainee&traineeId=${traineeId}`}
+                                                                        />
+                                                                        <ActionIconButton
+                                                                            variant="clone"
+                                                                            label={t('programs.cloneProgram')}
+                                                                            href={`/trainer/programs/new?cloneFromProgramId=${program.id}&traineeId=${traineeId}`}
+                                                                        />
+                                                                        <ActionIconButton
+                                                                            variant="delete"
+                                                                            label={t('programs.delete')}
+                                                                            onClick={() => handleDeleteProgram(program.id, program.title)}
+                                                                        />
+                                                                    </InlineActions>
+                                                                ) : (
+                                                                    <InlineActions>
+                                                                        {program.status === 'active' && (
+                                                                            <ActionIconButton
+                                                                                variant="edit"
+                                                                                label={t('programs.editProgramAction')}
+                                                                                href={`/trainer/programs/${program.id}/edit?backContext=trainee&traineeId=${traineeId}`}
+                                                                            />
+                                                                        )}
+                                                                        <ActionIconButton
+                                                                            variant="view"
+                                                                            label={t('programs.viewProgram')}
+                                                                            href={`/trainer/programs/${program.id}?backContext=trainee&traineeId=${traineeId}`}
+                                                                        />
+                                                                        <ActionIconButton
+                                                                            variant="clone"
+                                                                            label={t('programs.cloneProgram')}
+                                                                            href={`/trainer/programs/new?cloneFromProgramId=${program.id}&traineeId=${traineeId}`}
+                                                                        />
+                                                                        <ActionIconButton
+                                                                            variant="view-test"
+                                                                            label={testsCompleted ? t('programs.viewTests') : t('programs.testsButtonDisabledTooltip')}
+                                                                            href={testsCompleted
+                                                                                ? `/trainer/programs/${program.id}/tests?backContext=trainee&traineeId=${traineeId}`
+                                                                                : undefined}
+                                                                            disabled={!testsCompleted}
+                                                                        />
+                                                                    </InlineActions>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                )
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {programTotalPages > 1 && (
+                                    <div className="flex flex-col gap-3 border-t border-gray-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                                        <p className="text-sm text-gray-600">
+                                            {t('components:pagination.pageOf', { current: programCurrentPage, total: programTotalPages })}
+                                            <span className="ml-2 text-gray-500">({programTotalItems})</span>
+                                        </p>
+
+                                        <div className="flex flex-wrap items-center justify-end gap-2">
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
+                                                onClick={() => setProgramCurrentPage(1)}
+                                                disabled={isProgramsRefreshing || programCurrentPage === 1}
+                                            >
+                                                {t('components:pagination.first')}
+                                            </Button>
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
+                                                onClick={() => setProgramCurrentPage((prev) => Math.max(1, prev - 1))}
+                                                disabled={isProgramsRefreshing || programCurrentPage === 1}
+                                            >
+                                                {t('components:pagination.previous')}
+                                            </Button>
+
+                                            {visiblePages.map((pageNumber) => (
+                                                <Button
+                                                    key={pageNumber}
+                                                    variant={pageNumber === programCurrentPage ? 'primary' : 'secondary'}
+                                                    size="sm"
+                                                    onClick={() => setProgramCurrentPage(pageNumber)}
+                                                    disabled={isProgramsRefreshing || pageNumber === programCurrentPage}
+                                                >
+                                                    {pageNumber}
+                                                </Button>
+                                            ))}
+
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
+                                                onClick={() => setProgramCurrentPage((prev) => Math.min(programTotalPages, prev + 1))}
+                                                disabled={isProgramsRefreshing || programCurrentPage === programTotalPages}
+                                            >
+                                                {t('components:pagination.next')}
+                                            </Button>
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
+                                                onClick={() => setProgramCurrentPage(programTotalPages)}
+                                                disabled={isProgramsRefreshing || programCurrentPage === programTotalPages}
+                                            >
+                                                {t('components:pagination.last')}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -1423,7 +2080,8 @@ export default function TraineeDetailContent() {
                         </div>
                     </div>
                 )}
+                </div>
             </div>
-        </div>
+        </>
     )
 }

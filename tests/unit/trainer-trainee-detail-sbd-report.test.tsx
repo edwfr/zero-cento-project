@@ -25,6 +25,14 @@ vi.mock('@/components/TraineePlannedMuscleGroupReport', () => {
     }
 })
 
+vi.mock('@/components', async () => {
+    const actual = await vi.importActual<typeof import('@/components')>('@/components')
+    return {
+        ...actual,
+        useToast: () => ({ showToast: vi.fn() }),
+    }
+})
+
 import TraineeDetailContent from '@/app/trainer/trainees/[id]/_content'
 
 describe('TraineeDetailContent SBD report', () => {

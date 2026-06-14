@@ -11,6 +11,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [14 Giugno 2026] — Dettaglio atleta trainer: tab Programmi allineata a /trainer/programs
+
+**Task checklist:** #11.142
+**File modificati:** `src/app/trainer/trainees/[id]/_content.tsx`, `tests/unit/trainer-trainee-detail-sbd-report.test.tsx`, `tests/unit/trainer-trainee-programs-tab.test.tsx`, `tests/integration/programs.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Nella schermata `/trainer/trainees/[id]` la tab `Programmi` ora replica la stessa logica operativa di `/trainer/programs`: fetch server-side per stato (`draft/active/completed`) con filtro fisso `traineeId`, ricerca submit-driven (`Cerca`/Enter), paginazione numerata con metadata (`currentPage/totalPages/totalItems`), colonne dinamiche per stato (start/completion/test status/last modified) e stato test icon-only con tooltip. La colonna azioni e stata riallineata 1:1: `draft` mostra `edit/view/clone/delete`, `active` mostra `edit/view/clone/view-test`, `completed` mostra `view/clone/view-test`; il bottone `view-test` resta disabilitato quando `testsCompleted=false`. Aggiunto anche il flusso di delete con `ConfirmationModal`, stesso error handling (`getApiErrorMessage`) e refetch/caching strategy coerente con la pagina programmi. Copertura test estesa con suite unitaria dedicata alla tab programmi trainee e caso integrazione API per combinazione `traineeId+status+search+pagination`.
+
 ### [14 Giugno 2026] — Programs API: stato test week derivato da weeks.isCompleted
 
 **Task checklist:** #11.141
