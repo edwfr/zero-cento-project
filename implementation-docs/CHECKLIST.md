@@ -735,6 +735,8 @@
       File: `src/app/api/programs/route.ts`, `tests/integration/programs.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 - [x] **11.142** `/trainer/trainees/[id]` tab `Programmi`: allineare la UX alla schermata `/trainer/programs` con filtri `Draft/Active/Completed`, ricerca submit-driven, paginazione numerata, colonne dinamiche per stato e matrice azioni identica (`edit/view/clone/delete/view-test` con stesse regole di abilitazione) mantenendo il contesto trainee (`backContext=trainee`, `traineeId`) ✅ _14 Giugno 2026_  
       File: `src/app/trainer/trainees/[id]/_content.tsx`, `tests/unit/trainer-trainee-detail-sbd-report.test.tsx`, `tests/unit/trainer-trainee-programs-tab.test.tsx`, `tests/integration/programs.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+- [x] **11.143** `/trainer/programs` + `/trainer/trainees/[id]`: estrarre tabella programmi condivisa in `ProgramTraineeTable` (tabs Draft/Active/Completed, ricerca submit-driven, colonne dinamiche, paginazione e matrice azioni), integrare entrambi i consumer e rimuovere il legacy `ProgramsTable` non usato ✅ _14 Giugno 2026_  
+      File: `src/components/ProgramTraineeTable.tsx`, `src/components/index.ts`, `src/components/ProgramsTable.tsx`, `src/app/trainer/programs/_content.tsx`, `src/app/trainer/trainees/[id]/_content.tsx`, `tests/unit/trainer-programs-content.test.tsx`, `tests/unit/trainer-trainee-programs-tab.test.tsx`, `tests/integration/programs.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 
 ---
 

@@ -62,7 +62,13 @@ export { default as ErrorBoundary } from './ErrorBoundary'
 export { default as RoleGuard } from './RoleGuard'
 
 // Tables
-export { default as ProgramsTable } from './ProgramsTable'
+export { default as ProgramTraineeTable } from './ProgramTraineeTable'
+export type {
+    ProgramTraineeTableProgram,
+    ProgramTraineeTableProps,
+    ProgramTraineeTableStatusCounts,
+    ProgramStatusTab,
+} from './ProgramTraineeTable'
 
 // Layout Components (existing)
 export { default as DashboardLayout } from './DashboardLayout'

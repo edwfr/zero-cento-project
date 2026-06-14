@@ -11,6 +11,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [14 Giugno 2026] — Refactor condiviso tabella programmi trainer/trainee
+
+**Task checklist:** #11.143
+**File modificati:** `src/components/ProgramTraineeTable.tsx`, `src/components/index.ts`, `src/components/ProgramsTable.tsx`, `src/app/trainer/programs/_content.tsx`, `src/app/trainer/trainees/[id]/_content.tsx`, `tests/unit/trainer-programs-content.test.tsx`, `tests/unit/trainer-trainee-programs-tab.test.tsx`, `tests/integration/programs.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Estratta la UI condivisa della tabella programmi in `ProgramTraineeTable`, includendo tabs `Draft/Active/Completed`, ricerca submit-driven, rendering colonne dinamiche per stato, test-status icon-only, paginazione numerata e matrice azioni (`edit/view/clone/delete/view-test`) con callback contestuali per le due schermate. Integrati come consumer sia `/trainer/programs` sia la tab `Programmi` di `/trainer/trainees/[id]`, lasciando invariata la logica dati locale (cache/prefetch/refetch) nei parent. Rimosso il componente legacy `ProgramsTable` non piu referenziato e allineato il barrel export dei componenti.
+
 ### [14 Giugno 2026] — Dettaglio atleta trainer: tab Programmi allineata a /trainer/programs
 
 **Task checklist:** #11.142
