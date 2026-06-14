@@ -207,6 +207,94 @@ describe('GET /api/programs', () => {
         expect(res.status).toBe(400)
     })
 
+    it('marks testsCompleted true when all test weeks are completed', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainingProgram.findMany).mockResolvedValue([
+            {
+                ...mockPrograms[0],
+                id: 'prog-tests-complete',
+                weeks: [
+                    { id: 'w-1', weekNumber: 1, weekType: 'test', isCompleted: true },
+                    { id: 'w-2', weekNumber: 2, weekType: 'test', isCompleted: true },
+                    { id: 'w-3', weekNumber: 3, weekType: 'volume', isCompleted: false },
+                ],
+            },
+        ] as any)
+        vi.mocked(prisma.trainingProgram.count).mockResolvedValue(1)
+
+        const res = await GET(makeRequest())
+        const body = await res.json()
+
+        expect(res.status).toBe(200)
+        expect(body.data.items).toHaveLength(1)
+        expect(body.data.items[0].hasTestWeeks).toBe(true)
+        expect(body.data.items[0].testsCompleted).toBe(true)
+        expect(body.data.items[0].plannedTestsCount).toBe(2)
+        expect(body.data.items[0].completedTestsCount).toBe(2)
+        expect(body.data.items[0].testWeeks).toEqual([1, 2])
+        expect(body.data.items[0].testWeekSummaries).toEqual([
+            {
+                weekNumber: 1,
+                plannedTestsCount: 1,
+                completedTestsCount: 1,
+                completed: true,
+            },
+            {
+                weekNumber: 2,
+                plannedTestsCount: 1,
+                completedTestsCount: 1,
+                completed: true,
+            },
+        ])
+        expect(prisma.$queryRaw).toHaveBeenCalledTimes(1)
+    })
+
+    it('marks testsCompleted false when at least one test week is incomplete', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainingProgram.findMany).mockResolvedValue([
+            {
+                ...mockPrograms[0],
+                id: 'prog-tests-incomplete',
+                weeks: [
+                    { id: 'w-1', weekNumber: 1, weekType: 'test', isCompleted: true },
+                    { id: 'w-2', weekNumber: 2, weekType: 'test', isCompleted: false },
+                ],
+            },
+        ] as any)
+        vi.mocked(prisma.trainingProgram.count).mockResolvedValue(1)
+
+        const res = await GET(makeRequest())
+        const body = await res.json()
+
+        expect(res.status).toBe(200)
+        expect(body.data.items[0].hasTestWeeks).toBe(true)
+        expect(body.data.items[0].testsCompleted).toBe(false)
+        expect(body.data.items[0].plannedTestsCount).toBe(2)
+        expect(body.data.items[0].completedTestsCount).toBe(1)
+    })
+
+    it('keeps testsCompleted false when no test week exists', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainingProgram.findMany).mockResolvedValue([
+            {
+                ...mockPrograms[0],
+                id: 'prog-no-tests',
+                weeks: [{ id: 'w-1', weekNumber: 1, weekType: 'volume', isCompleted: true }],
+            },
+        ] as any)
+        vi.mocked(prisma.trainingProgram.count).mockResolvedValue(1)
+
+        const res = await GET(makeRequest())
+        const body = await res.json()
+
+        expect(res.status).toBe(200)
+        expect(body.data.items[0].hasTestWeeks).toBe(false)
+        expect(body.data.items[0].testsCompleted).toBe(false)
+        expect(body.data.items[0].plannedTestsCount).toBe(0)
+        expect(body.data.items[0].completedTestsCount).toBe(0)
+        expect(body.data.items[0].testWeekSummaries).toEqual([])
+    })
+
     it('keeps the stored active status in the response even when all workouts are complete', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
         vi.mocked(prisma.trainingProgram.findMany).mockResolvedValue([
@@ -223,21 +311,18 @@ describe('GET /api/programs', () => {
                 completedAt: null,
                 trainer: { id: 'trainer-uuid-1', firstName: 'Marco', lastName: 'Trainer' },
                 trainee: { id: 'trainee-uuid-1', firstName: 'Mario', lastName: 'Atleta' },
-                weeks: [{ id: 'week-1', weekNumber: 1, weekType: 'volume' }],
+                weeks: [{ id: 'week-1', weekNumber: 1, weekType: 'volume', isCompleted: false }],
             },
         ] as any)
-        // First $queryRaw: completion stats aggregate. Second: empty test-week aggregate.
-        vi.mocked(prisma.$queryRaw)
-            .mockResolvedValueOnce([
-                {
-                    programId: 'prog-complete',
-                    totalWorkouts: 1,
-                    completedWorkouts: 1,
-                    lastCompletedWorkoutAt: new Date('2026-03-20T10:00:00.000Z'),
-                    lastFeedbackAt: new Date('2026-03-20T10:00:00.000Z'),
-                },
-            ] as any)
-            .mockResolvedValueOnce([] as any)
+        vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([
+            {
+                programId: 'prog-complete',
+                totalWorkouts: 1,
+                completedWorkouts: 1,
+                lastCompletedWorkoutAt: new Date('2026-03-20T10:00:00.000Z'),
+                lastFeedbackAt: new Date('2026-03-20T10:00:00.000Z'),
+            },
+        ] as any)
 
         const res = await GET(makeRequest())
         const body = await res.json()
@@ -265,20 +350,18 @@ describe('GET /api/programs', () => {
                 completedAt: null,
                 trainer: { id: 'trainer-uuid-1', firstName: 'Marco', lastName: 'Trainer' },
                 trainee: { id: 'trainee-uuid-1', firstName: 'Mario', lastName: 'Atleta' },
-                weeks: [{ id: 'week-1', weekNumber: 1, weekType: 'volume' }],
+                weeks: [{ id: 'week-1', weekNumber: 1, weekType: 'volume', isCompleted: false }],
             },
         ] as any)
-        vi.mocked(prisma.$queryRaw)
-            .mockResolvedValueOnce([
-                {
-                    programId: 'prog-complete',
-                    totalWorkouts: 1,
-                    completedWorkouts: 1,
-                    lastCompletedWorkoutAt: new Date('2026-03-20T10:00:00.000Z'),
-                    lastFeedbackAt: new Date('2026-03-20T10:00:00.000Z'),
-                },
-            ] as any)
-            .mockResolvedValueOnce([] as any)
+        vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([
+            {
+                programId: 'prog-complete',
+                totalWorkouts: 1,
+                completedWorkouts: 1,
+                lastCompletedWorkoutAt: new Date('2026-03-20T10:00:00.000Z'),
+                lastFeedbackAt: new Date('2026-03-20T10:00:00.000Z'),
+            },
+        ] as any)
 
         const res = await GET(makeRequest('http://localhost:3000/api/programs?status=active'))
         const body = await res.json()
@@ -291,17 +374,15 @@ describe('GET /api/programs', () => {
     it('does not include active programs in the completed filter just because workouts are complete', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
         vi.mocked(prisma.trainingProgram.findMany).mockResolvedValue([] as any)
-        vi.mocked(prisma.$queryRaw)
-            .mockResolvedValueOnce([
-                {
-                    programId: 'prog-complete',
-                    totalWorkouts: 1,
-                    completedWorkouts: 1,
-                    lastCompletedWorkoutAt: new Date('2026-03-20T10:00:00.000Z'),
-                    lastFeedbackAt: new Date('2026-03-20T10:00:00.000Z'),
-                },
-            ] as any)
-            .mockResolvedValueOnce([] as any)
+        vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([
+            {
+                programId: 'prog-complete',
+                totalWorkouts: 1,
+                completedWorkouts: 1,
+                lastCompletedWorkoutAt: new Date('2026-03-20T10:00:00.000Z'),
+                lastFeedbackAt: new Date('2026-03-20T10:00:00.000Z'),
+            },
+        ] as any)
 
         const res = await GET(makeRequest('http://localhost:3000/api/programs?status=completed'))
         const body = await res.json()

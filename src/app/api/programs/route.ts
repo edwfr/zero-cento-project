@@ -151,6 +151,7 @@ export async function GET(request: NextRequest) {
                         id: true,
                         weekNumber: true,
                         weekType: true,
+                        isCompleted: true,
                     },
                     orderBy: {
                         weekNumber: 'asc',
@@ -183,7 +184,6 @@ export async function GET(request: NextRequest) {
             { totalWorkouts: number; completedWorkouts: number; lastCompletedWorkoutAt: Date | null }
         >()
         const lastFeedbackByProgramId = new Map<string, Date>()
-        const testsSummaryByProgramId = new Map<string, ProgramTestsSummary>()
 
         if (programIds.length > 0) {
             const programIdSql = Prisma.join(programIds.map((id) => Prisma.sql`${id}`))
@@ -232,84 +232,28 @@ export async function GET(request: NextRequest) {
                     lastFeedbackByProgramId.set(row.programId, row.lastFeedbackAt)
                 }
             }
-
-            // Single aggregate: per-week test-week stats. LEFT JOINs keep empty test weeks visible.
-            const testRows = await prisma.$queryRaw<
-                Array<{
-                    programId: string
-                    weekNumber: number
-                    plannedTestsCount: number
-                    completedTestsCount: number
-                }>
-            >`
-                WITH test_week_workout_stats AS (
-                    SELECT
-                        w."programId",
-                        w."weekNumber",
-                        wk."id" AS workout_id,
-                        COUNT(we."id") AS exercise_count,
-                        CASE
-                            WHEN COUNT(we."id") > 0
-                                AND COUNT(we."id") = COUNT(DISTINCT CASE WHEN ef."id" IS NOT NULL THEN we."id" END)
-                            THEN 1
-                            ELSE 0
-                        END AS is_complete
-                    FROM "weeks" w
-                    LEFT JOIN "workouts" wk ON wk."weekId" = w."id"
-                    LEFT JOIN "workout_exercises" we ON we."workoutId" = wk."id"
-                    LEFT JOIN "exercise_feedbacks" ef ON ef."workoutExerciseId" = we."id"
-                    WHERE w."programId" IN (${programIdSql})
-                        AND w."weekType" = 'test'
-                    GROUP BY w."programId", w."weekNumber", wk."id"
-                )
-                SELECT
-                    "programId",
-                    "weekNumber",
-                    COUNT(workout_id) FILTER (WHERE exercise_count > 0)::int AS "plannedTestsCount",
-                    COALESCE(SUM(is_complete), 0)::int AS "completedTestsCount"
-                FROM test_week_workout_stats
-                GROUP BY "programId", "weekNumber"
-                ORDER BY "programId", "weekNumber"
-            `
-
-            for (const row of testRows) {
-                let summary = testsSummaryByProgramId.get(row.programId)
-                if (!summary) {
-                    summary = {
-                        testWeeks: [],
-                        testWeekSummaries: [],
-                        hasTestWeeks: false,
-                        testsCompleted: false,
-                        plannedTestsCount: 0,
-                        completedTestsCount: 0,
-                    }
-                    testsSummaryByProgramId.set(row.programId, summary)
-                }
-                summary.testWeeks.push(row.weekNumber)
-                summary.testWeekSummaries.push({
-                    weekNumber: row.weekNumber,
-                    plannedTestsCount: row.plannedTestsCount,
-                    completedTestsCount: row.completedTestsCount,
-                    completed:
-                        row.plannedTestsCount > 0 &&
-                        row.completedTestsCount === row.plannedTestsCount,
-                })
-                summary.plannedTestsCount += row.plannedTestsCount
-                summary.completedTestsCount += row.completedTestsCount
-                summary.hasTestWeeks = true
-            }
-
-            for (const summary of testsSummaryByProgramId.values()) {
-                summary.testsCompleted =
-                    summary.testWeekSummaries.length > 0 &&
-                    summary.testWeekSummaries.every((week) => week.completed)
-            }
         }
 
         const enrichedItems = items
             .map((program) => {
                 const completionSnapshot = completionByProgramId.get(program.id)
-                const testsSummary = testsSummaryByProgramId.get(program.id)
+                const testWeeks = program.weeks.filter((week) => week.weekType === 'test')
+                const completedTestWeeksCount = testWeeks.filter((week) => week.isCompleted).length
+                const testsSummary: ProgramTestsSummary = {
+                    testWeeks: testWeeks.map((week) => week.weekNumber),
+                    testWeekSummaries: testWeeks.map((week) => ({
+                        weekNumber: week.weekNumber,
+                        plannedTestsCount: 1,
+                        completedTestsCount: week.isCompleted ? 1 : 0,
+                        completed: week.isCompleted,
+                    })),
+                    hasTestWeeks: testWeeks.length > 0,
+                    testsCompleted:
+                        testWeeks.length > 0 &&
+                        completedTestWeeksCount === testWeeks.length,
+                    plannedTestsCount: testWeeks.length,
+                    completedTestsCount: completedTestWeeksCount,
+                }
 
                 return {
                     ...program,
@@ -324,12 +268,12 @@ export async function GET(request: NextRequest) {
                         null,
                     totalWorkouts: completionSnapshot?.totalWorkouts ?? 0,
                     completedWorkouts: completionSnapshot?.completedWorkouts ?? 0,
-                    testWeeks: testsSummary?.testWeeks ?? [],
-                    testWeekSummaries: testsSummary?.testWeekSummaries ?? [],
-                    hasTestWeeks: testsSummary?.hasTestWeeks ?? false,
-                    testsCompleted: testsSummary?.testsCompleted ?? false,
-                    plannedTestsCount: testsSummary?.plannedTestsCount ?? 0,
-                    completedTestsCount: testsSummary?.completedTestsCount ?? 0,
+                    testWeeks: testsSummary.testWeeks,
+                    testWeekSummaries: testsSummary.testWeekSummaries,
+                    hasTestWeeks: testsSummary.hasTestWeeks,
+                    testsCompleted: testsSummary.testsCompleted,
+                    plannedTestsCount: testsSummary.plannedTestsCount,
+                    completedTestsCount: testsSummary.completedTestsCount,
                 }
             })
 

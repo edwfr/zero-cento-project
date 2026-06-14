@@ -11,6 +11,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [14 Giugno 2026] — Programs API: stato test week derivato da weeks.isCompleted
+
+**Task checklist:** #11.141
+**File modificati:** `src/app/api/programs/route.ts`, `tests/integration/programs.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Refactor di `GET /api/programs`: la completezza delle test week non viene piu calcolata tramite join su `exercise_feedbacks`, ma direttamente dal campo `weeks.isCompleted` gia mantenuto dalla completion cascade. La risposta mantiene la stessa shape (`testWeeks`, `testWeekSummaries`, `hasTestWeeks`, `testsCompleted`, `plannedTestsCount`, `completedTestsCount`) con semantica per-week, riducendo complessita SQL e rischi di conteggi errati con feedback multipli. Aggiornati i test di integrazione per coprire i casi: tutte le test week complete, almeno una incompleta, nessuna test week.
+
 ### [10 Giugno 2026] — Trainee workout: allineamento formato nel pannello Riepilogo esercizi
 
 **Task checklist:** #11.140

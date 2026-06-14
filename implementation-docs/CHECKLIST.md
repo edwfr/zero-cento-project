@@ -731,6 +731,8 @@
       File: `src/app/trainee/workouts/[id]/_content.tsx`, `public/locales/{it,en}/trainee.json`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 - [x] **11.140** `/trainee/workouts/[id]` pannello `Riepilogo esercizi`: allineare la riga schema esercizio al formato `serie x rep · kg · @RPE` (peso mostrato solo se > 0, RPE mostrato solo se presente) ✅ _10 Giugno 2026_  
       File: `src/components/WorkoutRecapPanel.tsx`, `src/lib/workout-recap.ts`, `src/app/api/trainee/workouts/[id]/recap/route.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+- [x] **11.141** `/api/programs` test-week completion: usare `weeks.isCompleted` come fonte di verita per `testsCompleted` (rimuovendo la query aggregate su `exercise_feedbacks`) e mantenere shape risposta invariata con test di integrazione dedicati ✅ _14 Giugno 2026_  
+      File: `src/app/api/programs/route.ts`, `tests/integration/programs.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 
 ---
 
