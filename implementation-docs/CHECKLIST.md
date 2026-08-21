@@ -743,6 +743,8 @@
       File: `src/components/ProgramTraineeTable.tsx`, `src/app/trainer/programs/_content.tsx`, `src/app/trainer/trainees/[id]/_content.tsx`, `src/app/api/programs/[id]/test-results/route.ts`, `src/app/trainer/programs/[id]/tests/_content.tsx`, `public/locales/{en,it}/trainer.json`, `tests/unit/{trainer-trainee-programs-tab.test.tsx,program-test-results-content.test.tsx}`, `tests/integration/program-test-results.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 - [x] **11.146** `/trainer/programs/[id]/tests`: rendere espandibili/collassabili i pannelli settimana e workout (default aperti) con controlli accessibili `aria-expanded`, allineando il comportamento UX al pattern gia presente lato trainee ✅ _21 Agosto 2026_  
       File: `src/app/trainer/programs/[id]/tests/_content.tsx`, `public/locales/{en,it}/trainer.json`, `tests/unit/program-test-results-content.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+- [x] **11.147** `/trainer/programs/[id]/tests`: rimuovere i conteggi di workout configurati e di esercizi dalla vista dei feedback trainee ✅ _21 Agosto 2026_  
+      File: `src/app/trainer/programs/[id]/tests/_content.tsx`, `tests/unit/program-test-results-content.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 
 ---
 

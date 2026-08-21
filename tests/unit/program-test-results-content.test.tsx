@@ -96,6 +96,8 @@ describe('ProgramTestResultsContent', () => {
         expect(bodyRows[1]).toHaveClass('bg-gray-50')
         expect(screen.getByLabelText('testResults.workoutCompletedStatus')).toBeInTheDocument()
         expect(screen.getByText('weekTypes.test')).toBeInTheDocument()
+        expect(screen.queryByText('editProgram.workoutsConfiguredShort')).not.toBeInTheDocument()
+        expect(screen.queryByText('editProgram.exercisesCount')).not.toBeInTheDocument()
     })
 
     it('supports collapsing and expanding week and workout panels', async () => {

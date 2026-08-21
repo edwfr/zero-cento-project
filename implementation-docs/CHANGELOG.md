@@ -11,6 +11,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [21 Agosto 2026] — Rimuovere conteggi configurazione dalla vista feedback workout
+
+**Task checklist:** #11.147
+**File modificati:** `src/app/trainer/programs/[id]/tests/_content.tsx`, `tests/unit/program-test-results-content.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Rimossi dalla schermata dei risultati workout gli indicatori relativi ai workout configurati per settimana e al numero di esercizi per workout, mantenendo solo le informazioni pertinenti ai feedback inseriti dal trainee.
+
 ### [21 Agosto 2026] — Risultati workout trainer: pannelli settimana/workout collassabili
 
 **Task checklist:** #11.146

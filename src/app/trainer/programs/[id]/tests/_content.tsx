@@ -338,7 +338,6 @@ export default function ProgramTestResultsContent() {
                     {data.weeks.map((week) => (
                         <section key={week.weekId} className="rounded-xl border border-gray-200 bg-white shadow-sm">
                             {(() => {
-                                const completedWorkoutsForWeek = week.workouts.filter((workout) => workout.isCompleted).length
                                 const isWeekExpanded = expandedWeeks[week.weekId] ?? true
 
                                 return (
@@ -355,12 +354,6 @@ export default function ProgramTestResultsContent() {
                                     >
                                         <span className="text-lg font-bold text-gray-900">
                                             {t('testResults.weekTitle', { week: week.weekNumber })}
-                                        </span>
-                                        <span className="text-xs font-semibold text-gray-500">
-                                            {t('editProgram.workoutsConfiguredShort', {
-                                                done: completedWorkoutsForWeek,
-                                                total: week.workouts.length,
-                                            })}
                                         </span>
                                         <WeekTypeBadge weekType={week.weekType} labels={weekTypeBadgeLabels} variant="ghost" />
                                         <span className="rounded-full border border-gray-200 bg-gray-50 p-1 text-gray-500">
@@ -412,9 +405,6 @@ export default function ProgramTestResultsContent() {
                                                         <h3 className="text-lg font-bold text-gray-900">
                                                             {t('testResults.workoutTitle', { workout: workout.dayIndex })}
                                                         </h3>
-                                                        <span className="text-xs font-semibold text-gray-500">
-                                                            {t('editProgram.exercisesCount', { count: workout.rows.length })}
-                                                        </span>
                                                         <span className="rounded-full border border-gray-200 bg-gray-50 p-1 text-gray-500">
                                                             {isWorkoutExpanded
                                                                 ? <ChevronUp className="w-4 h-4" />
