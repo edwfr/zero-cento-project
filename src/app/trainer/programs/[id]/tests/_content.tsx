@@ -337,34 +337,49 @@ export default function ProgramTestResultsContent() {
                 <div className="space-y-8">
                     {data.weeks.map((week) => (
                         <section key={week.weekId} className="rounded-xl border border-gray-200 bg-white shadow-sm">
+                            {(() => {
+                                const completedWorkoutsForWeek = week.workouts.filter((workout) => workout.isCompleted).length
+                                const isWeekExpanded = expandedWeeks[week.weekId] ?? true
+
+                                return (
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-gray-100 px-4 py-4">
                                 <div>
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <h2 className="text-xl font-bold text-gray-900">
+                                    <button
+                                        type="button"
+                                        onClick={() => toggleWeek(week.weekId)}
+                                        aria-label={isWeekExpanded
+                                            ? t('testResults.closeWeek')
+                                            : t('testResults.openWeek')}
+                                        aria-expanded={isWeekExpanded}
+                                        className="flex items-center gap-3 text-left"
+                                    >
+                                        <span className="text-lg font-bold text-gray-900">
                                             {t('testResults.weekTitle', { week: week.weekNumber })}
-                                        </h2>
+                                        </span>
+                                        <span className="text-xs font-semibold text-gray-500">
+                                            {t('editProgram.workoutsConfiguredShort', {
+                                                done: completedWorkoutsForWeek,
+                                                total: week.workouts.length,
+                                            })}
+                                        </span>
                                         <WeekTypeBadge weekType={week.weekType} labels={weekTypeBadgeLabels} variant="ghost" />
-                                    </div>
+                                        <span className="rounded-full border border-gray-200 bg-gray-50 p-1 text-gray-500">
+                                            {isWeekExpanded ? (
+                                                <ChevronUp className="w-4 h-4" />
+                                            ) : (
+                                                <ChevronDown className="w-4 h-4" />
+                                            )}
+                                        </span>
+                                    </button>
                                     <span className="text-sm text-gray-600">
                                         {week.startDate
                                             ? t('testResults.weekStartDate', { date: formatDate(week.startDate) })
                                             : t('testResults.weekDateUnavailable')}
                                     </span>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => toggleWeek(week.weekId)}
-                                    aria-label={(expandedWeeks[week.weekId] ?? true)
-                                        ? t('testResults.closeWeek')
-                                        : t('testResults.openWeek')}
-                                    aria-expanded={expandedWeeks[week.weekId] ?? true}
-                                    className="inline-flex items-center justify-center gap-1 rounded-lg px-2 py-1 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-800"
-                                >
-                                    {(expandedWeeks[week.weekId] ?? true)
-                                        ? <ChevronUp className="h-4 w-4" />
-                                        : <ChevronDown className="h-4 w-4" />}
-                                </button>
                             </div>
+                                )
+                            })()}
 
                             {(expandedWeeks[week.weekId] ?? true) && (
                                 <div className="space-y-6 p-4">
@@ -374,7 +389,15 @@ export default function ProgramTestResultsContent() {
                                         return (
                                             <div key={workout.workoutId} className="rounded-lg border border-gray-200 bg-white">
                                                 <div className="flex items-center justify-between gap-2 border-b border-gray-100 px-4 py-3">
-                                                    <div className="flex items-center gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleWorkout(workout.workoutId)}
+                                                        aria-label={isWorkoutExpanded
+                                                            ? t('testResults.closeWorkoutDetails')
+                                                            : t('testResults.openWorkoutDetails')}
+                                                        aria-expanded={isWorkoutExpanded}
+                                                        className="flex items-center gap-2 text-left"
+                                                    >
                                                         {workout.isCompleted ? (
                                                             <CheckCircle2
                                                                 className="h-5 w-5 shrink-0 text-green-500"
@@ -386,22 +409,17 @@ export default function ProgramTestResultsContent() {
                                                                 aria-label={t('testResults.workoutPendingStatus')}
                                                             />
                                                         )}
-                                                        <h3 className="text-lg font-semibold text-gray-800">
+                                                        <h3 className="text-lg font-bold text-gray-900">
                                                             {t('testResults.workoutTitle', { workout: workout.dayIndex })}
                                                         </h3>
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => toggleWorkout(workout.workoutId)}
-                                                        aria-label={isWorkoutExpanded
-                                                            ? t('testResults.closeWorkoutDetails')
-                                                            : t('testResults.openWorkoutDetails')}
-                                                        aria-expanded={isWorkoutExpanded}
-                                                        className="inline-flex items-center justify-center gap-1 rounded-lg px-2 py-1 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-800"
-                                                    >
-                                                        {isWorkoutExpanded
-                                                            ? <ChevronUp className="h-4 w-4" />
-                                                            : <ChevronDown className="h-4 w-4" />}
+                                                        <span className="text-xs font-semibold text-gray-500">
+                                                            {t('editProgram.exercisesCount', { count: workout.rows.length })}
+                                                        </span>
+                                                        <span className="rounded-full border border-gray-200 bg-gray-50 p-1 text-gray-500">
+                                                            {isWorkoutExpanded
+                                                                ? <ChevronUp className="w-4 h-4" />
+                                                                : <ChevronDown className="w-4 h-4" />}
+                                                        </span>
                                                     </button>
                                                 </div>
 
