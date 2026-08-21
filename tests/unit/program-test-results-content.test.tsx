@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 vi.mock('next/navigation', () => ({
     useParams: () => ({ id: 'program-1' }),
@@ -35,6 +35,7 @@ describe('ProgramTestResultsContent', () => {
                                 {
                                     workoutId: 'workout-1',
                                     dayIndex: 1,
+                                    isCompleted: true,
                                     workoutSummaryComment: 'Commento riepilogo',
                                     comments: [],
                                     rows: [
@@ -85,5 +86,44 @@ describe('ProgramTestResultsContent', () => {
         expect(bodyRows).toHaveLength(2)
         expect(bodyRows[0]).toHaveClass('bg-white')
         expect(bodyRows[1]).toHaveClass('bg-gray-50')
+        expect(screen.getByLabelText('testResults.workoutCompletedStatus')).toBeInTheDocument()
+    })
+
+    it('supports collapsing and expanding week and workout panels', async () => {
+        render(<ProgramTestResultsContent />)
+
+        expect(await screen.findByText('Squat')).toBeInTheDocument()
+
+        const closeWeekButton = screen.getByRole('button', {
+            name: 'testResults.closeWeek',
+        })
+        fireEvent.click(closeWeekButton)
+
+        await waitFor(() => {
+            expect(screen.queryByText('Squat')).not.toBeInTheDocument()
+        })
+
+        const openWeekButton = screen.getByRole('button', {
+            name: 'testResults.openWeek',
+        })
+        fireEvent.click(openWeekButton)
+
+        expect(await screen.findByText('Squat')).toBeInTheDocument()
+
+        const closeWorkoutButton = screen.getByRole('button', {
+            name: 'testResults.closeWorkoutDetails',
+        })
+        fireEvent.click(closeWorkoutButton)
+
+        await waitFor(() => {
+            expect(screen.queryByText('Squat')).not.toBeInTheDocument()
+        })
+
+        const openWorkoutButton = screen.getByRole('button', {
+            name: 'testResults.openWorkoutDetails',
+        })
+        fireEvent.click(openWorkoutButton)
+
+        expect(await screen.findByText('Squat')).toBeInTheDocument()
     })
 })

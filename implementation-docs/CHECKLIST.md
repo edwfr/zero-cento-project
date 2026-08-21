@@ -741,6 +741,8 @@
       File: `scripts/add-edoardo-trainee.ts`, `package.json`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 - [x] **11.145** `/trainer/programs` + `/trainer/trainees/[id]`: rendere sempre cliccabile l'azione `Visualizza test` su righe `active/completed` e aggiornare `/trainer/programs/[id]/tests` per mostrare i dati workout inseriti dal trainee su tutte le settimane (non solo settimane test), con copy i18n riallineato EN/IT e test unit/integration aggiornati ✅ _21 Agosto 2026_  
       File: `src/components/ProgramTraineeTable.tsx`, `src/app/trainer/programs/_content.tsx`, `src/app/trainer/trainees/[id]/_content.tsx`, `src/app/api/programs/[id]/test-results/route.ts`, `src/app/trainer/programs/[id]/tests/_content.tsx`, `public/locales/{en,it}/trainer.json`, `tests/unit/{trainer-trainee-programs-tab.test.tsx,program-test-results-content.test.tsx}`, `tests/integration/program-test-results.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+- [x] **11.146** `/trainer/programs/[id]/tests`: rendere espandibili/collassabili i pannelli settimana e workout (default aperti) con controlli accessibili `aria-expanded`, allineando il comportamento UX al pattern gia presente lato trainee ✅ _21 Agosto 2026_  
+      File: `src/app/trainer/programs/[id]/tests/_content.tsx`, `public/locales/{en,it}/trainer.json`, `tests/unit/program-test-results-content.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 
 ---
 

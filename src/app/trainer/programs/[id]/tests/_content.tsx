@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
-import { Plus } from 'lucide-react'
+import { CheckCircle2, ChevronDown, ChevronUp, Circle, Plus } from 'lucide-react'
 import { SkeletonTable } from '@/components'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/components/ToastNotification'
@@ -29,6 +29,7 @@ interface TestResultRow {
 interface TestResultWorkout {
     workoutId: string
     dayIndex: number
+    isCompleted: boolean
     workoutSummaryComment: string | null
     comments: string[]
     rows: TestResultRow[]
@@ -78,6 +79,8 @@ export default function ProgramTestResultsContent() {
     const [reps, setReps] = useState('')
     const [recordDate, setRecordDate] = useState(getTodayForInput())
     const [notes, setNotes] = useState('')
+    const [expandedWeeks, setExpandedWeeks] = useState<Record<string, boolean>>({})
+    const [expandedWorkouts, setExpandedWorkouts] = useState<Record<string, boolean>>({})
 
     const fetchTestResults = useCallback(async () => {
         try {
@@ -100,6 +103,45 @@ export default function ProgramTestResultsContent() {
     useEffect(() => {
         void fetchTestResults()
     }, [fetchTestResults])
+
+    useEffect(() => {
+        if (!data) {
+            return
+        }
+
+        // Keep existing expansion state where possible; default new panels to expanded.
+        setExpandedWeeks((prev) => {
+            const next: Record<string, boolean> = {}
+            for (const week of data.weeks) {
+                next[week.weekId] = prev[week.weekId] ?? true
+            }
+            return next
+        })
+
+        setExpandedWorkouts((prev) => {
+            const next: Record<string, boolean> = {}
+            for (const week of data.weeks) {
+                for (const workout of week.workouts) {
+                    next[workout.workoutId] = prev[workout.workoutId] ?? true
+                }
+            }
+            return next
+        })
+    }, [data])
+
+    const toggleWeek = useCallback((weekId: string) => {
+        setExpandedWeeks((prev) => ({
+            ...prev,
+            [weekId]: !(prev[weekId] ?? true),
+        }))
+    }, [])
+
+    const toggleWorkout = useCallback((workoutId: string) => {
+        setExpandedWorkouts((prev) => ({
+            ...prev,
+            [workoutId]: !(prev[workoutId] ?? true),
+        }))
+    }, [])
 
     const sortExercisesByName = useCallback(
         (items: Exercise[]) => {
@@ -284,110 +326,159 @@ export default function ProgramTestResultsContent() {
                     {data.weeks.map((week) => (
                         <section key={week.weekId} className="rounded-xl border border-gray-200 bg-white shadow-sm">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-gray-100 px-4 py-4">
-                                <h2 className="text-xl font-bold text-gray-900">
-                                    {t('testResults.weekTitle', { week: week.weekNumber })}
-                                </h2>
-                                <span className="text-sm text-gray-600">
-                                    {week.startDate
-                                        ? t('testResults.weekStartDate', { date: formatDate(week.startDate) })
-                                        : t('testResults.weekDateUnavailable')}
-                                </span>
+                                <div>
+                                    <h2 className="text-xl font-bold text-gray-900">
+                                        {t('testResults.weekTitle', { week: week.weekNumber })}
+                                    </h2>
+                                    <span className="text-sm text-gray-600">
+                                        {week.startDate
+                                            ? t('testResults.weekStartDate', { date: formatDate(week.startDate) })
+                                            : t('testResults.weekDateUnavailable')}
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => toggleWeek(week.weekId)}
+                                    aria-label={(expandedWeeks[week.weekId] ?? true)
+                                        ? t('testResults.closeWeek')
+                                        : t('testResults.openWeek')}
+                                    aria-expanded={expandedWeeks[week.weekId] ?? true}
+                                    className="inline-flex items-center justify-center gap-1 rounded-lg px-2 py-1 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-800"
+                                >
+                                    {(expandedWeeks[week.weekId] ?? true)
+                                        ? <ChevronUp className="h-4 w-4" />
+                                        : <ChevronDown className="h-4 w-4" />}
+                                </button>
                             </div>
 
-                            <div className="space-y-6 p-4">
-                                {week.workouts.map((workout) => {
-                                    return (
-                                        <div key={workout.workoutId} className="rounded-lg border border-gray-200 bg-white">
-                                            <div className="border-b border-gray-100 px-4 py-3">
-                                                <h3 className="text-lg font-semibold text-gray-800">
-                                                    {t('testResults.workoutTitle', { workout: workout.dayIndex })}
-                                                </h3>
-                                            </div>
+                            {(expandedWeeks[week.weekId] ?? true) && (
+                                <div className="space-y-6 p-4">
+                                    {week.workouts.map((workout) => {
+                                        const isWorkoutExpanded = expandedWorkouts[workout.workoutId] ?? true
 
-                                            {workout.rows.length === 0 ? (
-                                                <div className="rounded-b-lg border border-dashed border-gray-300 px-4 py-6 text-sm text-gray-500">
-                                                    {t('testResults.noRowsForWorkout')}
+                                        return (
+                                            <div key={workout.workoutId} className="rounded-lg border border-gray-200 bg-white">
+                                                <div className="flex items-center justify-between gap-2 border-b border-gray-100 px-4 py-3">
+                                                    <div className="flex items-center gap-2">
+                                                        {workout.isCompleted ? (
+                                                            <CheckCircle2
+                                                                className="h-5 w-5 shrink-0 text-green-500"
+                                                                aria-label={t('testResults.workoutCompletedStatus')}
+                                                                title={t('testResults.workoutCompletedStatus')}
+                                                            />
+                                                        ) : (
+                                                            <Circle
+                                                                className="h-5 w-5 shrink-0 text-gray-300"
+                                                                aria-label={t('testResults.workoutPendingStatus')}
+                                                                title={t('testResults.workoutPendingStatus')}
+                                                            />
+                                                        )}
+                                                        <h3 className="text-lg font-semibold text-gray-800">
+                                                            {t('testResults.workoutTitle', { workout: workout.dayIndex })}
+                                                        </h3>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleWorkout(workout.workoutId)}
+                                                        aria-label={isWorkoutExpanded
+                                                            ? t('testResults.closeWorkoutDetails')
+                                                            : t('testResults.openWorkoutDetails')}
+                                                        aria-expanded={isWorkoutExpanded}
+                                                        className="inline-flex items-center justify-center gap-1 rounded-lg px-2 py-1 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-800"
+                                                    >
+                                                        {isWorkoutExpanded
+                                                            ? <ChevronUp className="h-4 w-4" />
+                                                            : <ChevronDown className="h-4 w-4" />}
+                                                    </button>
                                                 </div>
-                                            ) : (
-                                                <>
-                                                    <div className="overflow-x-auto">
-                                                        <table className="min-w-[860px] w-full table-fixed divide-y divide-gray-200 text-sm">
-                                                            <colgroup>
-                                                                <col className="w-[24%]" />
-                                                                <col className="w-[8%]" />
-                                                                <col className="w-[10%]" />
-                                                                <col className="w-[10%]" />
-                                                                <col className="w-[14%]" />
-                                                                <col className="w-[34%]" />
-                                                            </colgroup>
-                                                            <thead className="bg-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-gray-700">
-                                                                <tr>
-                                                                    <th className="px-2 py-2">
-                                                                        {t('testResults.colExercise')}
-                                                                    </th>
-                                                                    <th className="px-2 py-2 text-center">
-                                                                        {t('testResults.colSets')}
-                                                                    </th>
-                                                                    <th className="px-2 py-2 text-center">
-                                                                        {t('testResults.colReps')}
-                                                                    </th>
-                                                                    <th className="px-2 py-2 text-center">
-                                                                        {t('testResults.colRpe')}
-                                                                    </th>
-                                                                    <th className="px-2 py-2">
-                                                                        {t('testResults.colWeight')}
-                                                                    </th>
-                                                                    <th className="px-2 py-2">
-                                                                        {t('testResults.colComments')}
-                                                                    </th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody className="bg-white">
-                                                                {workout.rows.map((row, rowIndex) => (
-                                                                    <tr
-                                                                        key={row.workoutExerciseId}
-                                                                        className={`border-b border-gray-100 ${
-                                                                            rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                                                                        }`}
-                                                                    >
-                                                                        <td className="px-2 py-2 text-xs font-medium text-gray-900 break-words">
-                                                                            {row.exerciseName}
-                                                                        </td>
-                                                                        <td className="px-2 py-2 text-center text-xs font-semibold text-gray-900">
-                                                                            {row.sets}
-                                                                        </td>
-                                                                        <td className="px-2 py-2 text-center text-xs font-semibold text-gray-900">
-                                                                            {row.reps}
-                                                                        </td>
-                                                                        <td className="px-2 py-2 text-center text-xs font-semibold text-gray-900">
-                                                                            {row.rpe !== null ? Number(row.rpe).toFixed(1) : '-'}
-                                                                        </td>
-                                                                        <td className="px-2 py-2 text-xs text-gray-700 whitespace-nowrap">
-                                                                            {row.weightUsed}
-                                                                        </td>
-                                                                        <td className="px-2 py-2 text-xs text-gray-700 break-words">
-                                                                            {row.comments?.trim() || t('testResults.noComments')}
-                                                                        </td>
-                                                                    </tr>
-                                                                ))}
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
 
-                                                    <div className="border-t border-gray-100 bg-gray-50 px-4 py-3">
-                                                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                                            {t('testResults.workoutSummaryLabel')}
-                                                        </p>
-                                                        <p className="mt-1 text-sm text-gray-700 break-words">
-                                                            {workout.workoutSummaryComment || t('testResults.noWorkoutSummary')}
-                                                        </p>
-                                                    </div>
-                                                </>
-                                            )}
-                                        </div>
-                                    )
-                                })}
-                            </div>
+                                                {isWorkoutExpanded && (
+                                                    workout.rows.length === 0 ? (
+                                                        <div className="rounded-b-lg border border-dashed border-gray-300 px-4 py-6 text-sm text-gray-500">
+                                                            {t('testResults.noRowsForWorkout')}
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <div className="overflow-x-auto">
+                                                                <table className="min-w-[860px] w-full table-fixed divide-y divide-gray-200 text-sm">
+                                                                    <colgroup>
+                                                                        <col className="w-[24%]" />
+                                                                        <col className="w-[8%]" />
+                                                                        <col className="w-[10%]" />
+                                                                        <col className="w-[10%]" />
+                                                                        <col className="w-[14%]" />
+                                                                        <col className="w-[34%]" />
+                                                                    </colgroup>
+                                                                    <thead className="bg-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-gray-700">
+                                                                        <tr>
+                                                                            <th className="px-2 py-2">
+                                                                                {t('testResults.colExercise')}
+                                                                            </th>
+                                                                            <th className="px-2 py-2 text-center">
+                                                                                {t('testResults.colSets')}
+                                                                            </th>
+                                                                            <th className="px-2 py-2 text-center">
+                                                                                {t('testResults.colReps')}
+                                                                            </th>
+                                                                            <th className="px-2 py-2 text-center">
+                                                                                {t('testResults.colRpe')}
+                                                                            </th>
+                                                                            <th className="px-2 py-2">
+                                                                                {t('testResults.colWeight')}
+                                                                            </th>
+                                                                            <th className="px-2 py-2">
+                                                                                {t('testResults.colComments')}
+                                                                            </th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody className="bg-white">
+                                                                        {workout.rows.map((row, rowIndex) => (
+                                                                            <tr
+                                                                                key={row.workoutExerciseId}
+                                                                                className={`border-b border-gray-100 ${
+                                                                                    rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                                                                                }`}
+                                                                            >
+                                                                                <td className="px-2 py-2 text-xs font-medium text-gray-900 break-words">
+                                                                                    {row.exerciseName}
+                                                                                </td>
+                                                                                <td className="px-2 py-2 text-center text-xs font-semibold text-gray-900">
+                                                                                    {row.sets}
+                                                                                </td>
+                                                                                <td className="px-2 py-2 text-center text-xs font-semibold text-gray-900">
+                                                                                    {row.reps}
+                                                                                </td>
+                                                                                <td className="px-2 py-2 text-center text-xs font-semibold text-gray-900">
+                                                                                    {row.rpe !== null ? Number(row.rpe).toFixed(1) : '-'}
+                                                                                </td>
+                                                                                <td className="px-2 py-2 text-xs text-gray-700 whitespace-nowrap">
+                                                                                    {row.weightUsed}
+                                                                                </td>
+                                                                                <td className="px-2 py-2 text-xs text-gray-700 break-words">
+                                                                                    {row.comments?.trim() || t('testResults.noComments')}
+                                                                                </td>
+                                                                            </tr>
+                                                                        ))}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+
+                                                            <div className="border-t border-gray-100 bg-gray-50 px-4 py-3">
+                                                                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                                    {t('testResults.workoutSummaryLabel')}
+                                                                </p>
+                                                                <p className="mt-1 text-sm text-gray-700 break-words">
+                                                                    {workout.workoutSummaryComment || t('testResults.noWorkoutSummary')}
+                                                                </p>
+                                                            </div>
+                                                        </>
+                                                    )
+                                                )}
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            )}
                         </section>
                     ))}
                 </div>
