@@ -379,13 +379,11 @@ export default function ProgramTestResultsContent() {
                                                             <CheckCircle2
                                                                 className="h-5 w-5 shrink-0 text-green-500"
                                                                 aria-label={t('testResults.workoutCompletedStatus')}
-                                                                title={t('testResults.workoutCompletedStatus')}
                                                             />
                                                         ) : (
                                                             <Circle
                                                                 className="h-5 w-5 shrink-0 text-gray-300"
                                                                 aria-label={t('testResults.workoutPendingStatus')}
-                                                                title={t('testResults.workoutPendingStatus')}
                                                             />
                                                         )}
                                                         <h3 className="text-lg font-semibold text-gray-800">
