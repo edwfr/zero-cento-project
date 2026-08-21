@@ -216,7 +216,7 @@ describe('TraineeDetailContent Programs tab', () => {
         }) as unknown as typeof fetch
     })
 
-    it('queries programs with traineeId+status and applies view-test enable/disable logic', async () => {
+    it('queries programs with traineeId+status and keeps view-test links clickable for active items', async () => {
         render(<TraineeDetailContent />)
 
         expect(await screen.findByText('Programma Active Pending')).toBeInTheDocument()
@@ -228,13 +228,17 @@ describe('TraineeDetailContent Programs tab', () => {
         expect(String(firstProgramsCall?.[0])).toContain('page=1')
         expect(String(firstProgramsCall?.[0])).toContain('limit=20')
 
-        const disabledViewTestsButton = screen.getByRole('button', {
-            name: 'programs.testsButtonDisabledTooltip',
-        })
-        expect(disabledViewTestsButton).toBeDisabled()
+        const viewTestsLinks = screen.getAllByLabelText('programs.viewTests')
+        expect(viewTestsLinks).toHaveLength(2)
 
-        const enabledViewTestsLink = screen.getByLabelText('programs.viewTests').closest('a')
-        expect(enabledViewTestsLink).toHaveAttribute(
+        const pendingProgramViewTestsLink = viewTestsLinks[0].closest('a')
+        expect(pendingProgramViewTestsLink).toHaveAttribute(
+            'href',
+            '/trainer/programs/prog-active-pending/tests?backContext=trainee&traineeId=trainee-1'
+        )
+
+        const completedProgramViewTestsLink = viewTestsLinks[1].closest('a')
+        expect(completedProgramViewTestsLink).toHaveAttribute(
             'href',
             '/trainer/programs/prog-active-done/tests?backContext=trainee&traineeId=trainee-1'
         )

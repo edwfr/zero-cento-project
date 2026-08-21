@@ -11,6 +11,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [21 Agosto 2026] — View tests sempre attivo + risultati workout su tutte le settimane
+
+**Task checklist:** #11.145
+**File modificati:** `src/components/ProgramTraineeTable.tsx`, `src/app/trainer/programs/_content.tsx`, `src/app/trainer/trainees/[id]/_content.tsx`, `src/app/api/programs/[id]/test-results/route.ts`, `src/app/trainer/programs/[id]/tests/_content.tsx`, `public/locales/en/trainer.json`, `public/locales/it/trainer.json`, `tests/unit/trainer-trainee-programs-tab.test.tsx`, `tests/unit/program-test-results-content.test.tsx`, `tests/integration/program-test-results.test.ts`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Le liste programmi trainer ora espongono sempre l'azione `Visualizza test` come link cliccabile per righe `active` e `completed` (in `/trainer/programs` e nella tab `Programmi` di `/trainer/trainees/[id]`). L'endpoint `GET /api/programs/[id]/test-results` e stato esteso per restituire tutte le settimane del programma, mantenendo RBAC invariata e alias retrocompatibile `testWeeks`. La schermata `/trainer/programs/[id]/tests` ora mostra i dati workout inseriti dal trainee su tutte le settimane e usa copy i18n riallineato alla nuova semantica (EN/IT).
+
 ### [21 Agosto 2026] — Script seed trainee per trainer Edoardo
 
 **Task checklist:** #11.144

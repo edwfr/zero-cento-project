@@ -43,6 +43,7 @@ interface Exercise {
 interface TestResultWeek {
     weekId: string
     weekNumber: number
+    weekType: 'normal' | 'test' | 'deload'
     startDate: string | null
     workouts: TestResultWorkout[]
 }
@@ -55,7 +56,7 @@ interface TestResultsData {
         firstName: string
         lastName: string
     }
-    testWeeks: TestResultWeek[]
+    weeks: TestResultWeek[]
 }
 
 export default function ProgramTestResultsContent() {
@@ -274,13 +275,13 @@ export default function ProgramTestResultsContent() {
                 </div>
             </div>
 
-            {data.testWeeks.length === 0 ? (
+            {data.weeks.length === 0 ? (
                 <div className="bg-white rounded-lg shadow-md p-10 text-center text-gray-500">
-                    {t('testResults.noTestWeeks')}
+                    {t('testResults.noWeeks')}
                 </div>
             ) : (
                 <div className="space-y-8">
-                    {data.testWeeks.map((week) => (
+                    {data.weeks.map((week) => (
                         <section key={week.weekId} className="rounded-xl border border-gray-200 bg-white shadow-sm">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-gray-100 px-4 py-4">
                                 <h2 className="text-xl font-bold text-gray-900">

@@ -25,10 +25,11 @@ describe('ProgramTestResultsContent', () => {
                         firstName: 'Mario',
                         lastName: 'Rossi',
                     },
-                    testWeeks: [
+                    weeks: [
                         {
                             weekId: 'week-1',
                             weekNumber: 1,
+                            weekType: 'test',
                             startDate: '2026-05-10',
                             workouts: [
                                 {

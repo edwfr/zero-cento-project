@@ -24,7 +24,7 @@ const normalizeOptionalText = (value: string | null | undefined): string | null 
 
 /**
  * GET /api/programs/[id]/test-results
- * Returns trainee test-week results grouped by week and workout.
+ * Returns trainee-entered workout results grouped by week and workout.
  */
 export async function GET(
     request: NextRequest,
@@ -49,15 +49,13 @@ export async function GET(
                     },
                 },
                 weeks: {
-                    where: {
-                        weekType: 'test',
-                    },
                     orderBy: {
                         weekNumber: 'asc',
                     },
                     select: {
                         id: true,
                         weekNumber: true,
+                        weekType: true,
                         startDate: true,
                         workouts: {
                             orderBy: {
@@ -129,9 +127,10 @@ export async function GET(
             return apiError('FORBIDDEN', 'You can only view programs assigned to you', 403, undefined, 'program.viewAssignedDenied')
         }
 
-        const testWeeks = program.weeks.map((week) => ({
+        const weeks = program.weeks.map((week) => ({
             weekId: week.id,
             weekNumber: week.weekNumber,
+            weekType: week.weekType,
             startDate: week.startDate,
             workouts: week.workouts.map((workout) => {
                 const rows = workout.workoutExercises.map((workoutExercise) => {
@@ -191,7 +190,9 @@ export async function GET(
             programId: program.id,
             programName: program.title,
             trainee: program.trainee,
-            testWeeks,
+            weeks,
+            // Backward-compatible alias for consumers not migrated yet.
+            testWeeks: weeks,
         })
     } catch (error: any) {
         if (error instanceof Response) return error

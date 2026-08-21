@@ -1124,9 +1124,7 @@ export default function TraineeDetailContent() {
                                 `/trainer/programs/new?cloneFromProgramId=${program.id}&traineeId=${traineeId}`
                             }
                             getViewTestsHref={(program) =>
-                                program.testsCompleted
-                                    ? `/trainer/programs/${program.id}/tests?backContext=trainee&traineeId=${traineeId}`
-                                    : undefined
+                                `/trainer/programs/${program.id}/tests?backContext=trainee&traineeId=${traineeId}`
                             }
                         />
                     </div>

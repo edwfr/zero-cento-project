@@ -64,7 +64,7 @@ export interface ProgramTraineeTableProps {
     getEditHref: (program: ProgramTraineeTableProgram) => string
     getViewHref: (program: ProgramTraineeTableProgram) => string
     getCloneHref: (program: ProgramTraineeTableProgram) => string
-    getViewTestsHref: (program: ProgramTraineeTableProgram) => string | undefined
+    getViewTestsHref: (program: ProgramTraineeTableProgram) => string
     getAthleteName?: (program: ProgramTraineeTableProgram) => string
 }
 
@@ -390,9 +390,8 @@ export default function ProgramTraineeTable({
                                                             />
                                                             <ActionIconButton
                                                                 variant="view-test"
-                                                                label={testsCompleted ? t('programs.viewTests') : t('programs.testsButtonDisabledTooltip')}
+                                                                label={t('programs.viewTests')}
                                                                 href={getViewTestsHref(program)}
-                                                                disabled={!testsCompleted}
                                                             />
                                                         </InlineActions>
                                                     )}

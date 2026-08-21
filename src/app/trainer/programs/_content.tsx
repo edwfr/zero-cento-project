@@ -431,11 +431,7 @@ export default function TrainerProgramsContent() {
                     getEditHref={(program) => `/trainer/programs/${program.id}/edit`}
                     getViewHref={(program) => `/trainer/programs/${program.id}`}
                     getCloneHref={(program) => `/trainer/programs/new?cloneFromProgramId=${program.id}`}
-                    getViewTestsHref={(program) =>
-                        program.testsCompleted
-                            ? `/trainer/programs/${program.id}/tests?backContext=programs`
-                            : undefined
-                    }
+                    getViewTestsHref={(program) => `/trainer/programs/${program.id}/tests?backContext=programs`}
                 />
             </div>
         </>
