@@ -5,7 +5,8 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { CheckCircle2, ChevronDown, ChevronUp, Circle, Plus } from 'lucide-react'
-import { SkeletonTable } from '@/components'
+import type { WeekType } from '@prisma/client'
+import { SkeletonTable, WeekTypeBadge } from '@/components'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/components/ToastNotification'
 import { getApiErrorMessage } from '@/lib/api-error'
@@ -44,7 +45,7 @@ interface Exercise {
 interface TestResultWeek {
     weekId: string
     weekNumber: number
-    weekType: 'normal' | 'test' | 'deload'
+    weekType: WeekType
     startDate: string | null
     workouts: TestResultWorkout[]
 }
@@ -142,6 +143,17 @@ export default function ProgramTestResultsContent() {
             [workoutId]: !(prev[workoutId] ?? true),
         }))
     }, [])
+
+    const weekTypeBadgeLabels: Record<WeekType, string> = {
+        tecnica: t('weekTypes.tecnica'),
+        ipertrofia: t('weekTypes.ipertrofia'),
+        volume: t('weekTypes.volume'),
+        forza_generale: t('weekTypes.forzaGenerale'),
+        intensificazione: t('weekTypes.intensificazione'),
+        picco: t('weekTypes.picco'),
+        test: t('weekTypes.test'),
+        deload: t('weekTypes.deload'),
+    }
 
     const sortExercisesByName = useCallback(
         (items: Exercise[]) => {
@@ -327,9 +339,12 @@ export default function ProgramTestResultsContent() {
                         <section key={week.weekId} className="rounded-xl border border-gray-200 bg-white shadow-sm">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-gray-100 px-4 py-4">
                                 <div>
-                                    <h2 className="text-xl font-bold text-gray-900">
-                                        {t('testResults.weekTitle', { week: week.weekNumber })}
-                                    </h2>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <h2 className="text-xl font-bold text-gray-900">
+                                            {t('testResults.weekTitle', { week: week.weekNumber })}
+                                        </h2>
+                                        <WeekTypeBadge weekType={week.weekType} labels={weekTypeBadgeLabels} variant="ghost" />
+                                    </div>
                                     <span className="text-sm text-gray-600">
                                         {week.startDate
                                             ? t('testResults.weekStartDate', { date: formatDate(week.startDate) })

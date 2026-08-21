@@ -15,7 +15,7 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 **Task checklist:** #11.146
 **File modificati:** `src/app/trainer/programs/[id]/tests/_content.tsx`, `public/locales/en/trainer.json`, `public/locales/it/trainer.json`, `tests/unit/program-test-results-content.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
-**Note:** Nella schermata `/trainer/programs/[id]/tests` i pannelli di settimana e workout sono ora espandibili/collassabili con comportamento coerente al pattern trainee: stato iniziale aperto, toggle indipendenti, preservazione dello stato durante il refresh dati e attributi `aria-expanded` per accessibilita. Aggiunte chiavi i18n dedicate per le azioni di apertura/chiusura (EN/IT) e test unitario esteso per coprire il comportamento di toggle.
+**Note:** Nella schermata `/trainer/programs/[id]/tests` i pannelli di settimana e workout sono ora espandibili/collassabili con comportamento coerente al pattern trainee: stato iniziale aperto, toggle indipendenti, preservazione dello stato durante il refresh dati e attributi `aria-expanded` per accessibilita. In ogni pannello settimana e stato aggiunto anche il badge tipo settimana (test, volume, deload, ecc.) tramite `WeekTypeBadge` con labels i18n `trainer:weekTypes.*`. Aggiunte chiavi i18n dedicate per le azioni di apertura/chiusura (EN/IT) e test unitario esteso per coprire toggle + badge.
 
 ### [21 Agosto 2026] — View tests sempre attivo + risultati workout su tutte le settimane
 

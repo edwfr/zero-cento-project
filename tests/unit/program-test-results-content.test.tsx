@@ -87,6 +87,7 @@ describe('ProgramTestResultsContent', () => {
         expect(bodyRows[0]).toHaveClass('bg-white')
         expect(bodyRows[1]).toHaveClass('bg-gray-50')
         expect(screen.getByLabelText('testResults.workoutCompletedStatus')).toBeInTheDocument()
+        expect(screen.getByText('weekTypes.test')).toBeInTheDocument()
     })
 
     it('supports collapsing and expanding week and workout panels', async () => {
