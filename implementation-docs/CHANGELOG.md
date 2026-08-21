@@ -11,6 +11,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [21 Agosto 2026] — Script seed trainee per trainer Edoardo
+
+**Task checklist:** #11.144
+**File modificati:** `scripts/add-edoardo-trainee.ts`, `package.json`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Aggiunto lo script operativo `seed:add-edoardo-trainee` per creare o riallineare l'utenza `edoardo.frati.trainee@zerocento.app` (password `Trainee1234!`) e collegarla a `edoardo.frati.coach@zerocento.app`. Lo script e idempotente: se l'utente Supabase o il link trainer-trainee esistono gia, aggiorna metadati/password e non duplica la relazione.
+
 ### [14 Giugno 2026] — Refactor condiviso tabella programmi trainer/trainee
 
 **Task checklist:** #11.143
