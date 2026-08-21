@@ -123,7 +123,7 @@ export default function ProgramTestResultsContent() {
             const next: Record<string, boolean> = {}
             for (const week of data.weeks) {
                 for (const workout of week.workouts) {
-                    next[workout.workoutId] = prev[workout.workoutId] ?? true
+                    next[workout.workoutId] = prev[workout.workoutId] ?? false
                 }
             }
             return next
@@ -369,7 +369,7 @@ export default function ProgramTestResultsContent() {
                             {(expandedWeeks[week.weekId] ?? true) && (
                                 <div className="space-y-6 p-4">
                                     {week.workouts.map((workout) => {
-                                        const isWorkoutExpanded = expandedWorkouts[workout.workoutId] ?? true
+                                        const isWorkoutExpanded = expandedWorkouts[workout.workoutId] ?? false
 
                                         return (
                                             <div key={workout.workoutId} className="rounded-lg border border-gray-200 bg-white">

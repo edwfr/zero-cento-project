@@ -72,6 +72,15 @@ describe('ProgramTestResultsContent', () => {
     it('renders table with compact view-style classes', async () => {
         render(<ProgramTestResultsContent />)
 
+        expect(screen.getByRole('button', {
+            name: 'testResults.openWorkoutDetails',
+        })).toBeInTheDocument()
+        expect(screen.queryByText('Squat')).not.toBeInTheDocument()
+
+        fireEvent.click(screen.getByRole('button', {
+            name: 'testResults.openWorkoutDetails',
+        }))
+
         await waitFor(() => {
             expect(screen.getByText('Squat')).toBeInTheDocument()
         })
@@ -92,6 +101,11 @@ describe('ProgramTestResultsContent', () => {
 
     it('supports collapsing and expanding week and workout panels', async () => {
         render(<ProgramTestResultsContent />)
+
+        const openWorkoutButton = screen.getByRole('button', {
+            name: 'testResults.openWorkoutDetails',
+        })
+        fireEvent.click(openWorkoutButton)
 
         expect(await screen.findByText('Squat')).toBeInTheDocument()
 
@@ -120,10 +134,10 @@ describe('ProgramTestResultsContent', () => {
             expect(screen.queryByText('Squat')).not.toBeInTheDocument()
         })
 
-        const openWorkoutButton = screen.getByRole('button', {
+        const reopenWorkoutButton = screen.getByRole('button', {
             name: 'testResults.openWorkoutDetails',
         })
-        fireEvent.click(openWorkoutButton)
+        fireEvent.click(reopenWorkoutButton)
 
         expect(await screen.findByText('Squat')).toBeInTheDocument()
     })
