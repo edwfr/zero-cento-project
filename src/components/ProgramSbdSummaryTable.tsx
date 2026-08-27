@@ -16,14 +16,14 @@ export default function ProgramSbdSummaryTable({
 
     return (
         <div className="overflow-x-auto">
-            <table className="min-w-[780px] w-full divide-y divide-slate-200 text-xs">
+            <table className="w-full divide-y divide-slate-200 text-xs">
                 <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
                     <tr>
-                        <th className="sticky left-0 z-10 bg-slate-50 px-3 py-2 text-left">
+                        <th className="sticky left-0 z-10 bg-slate-50 px-2 py-2 text-left w-[88px]">
                             {t('reviewProgram.sbdExerciseCol')}
                         </th>
                         {weeks.map((week) => (
-                            <th key={week.id} className="px-3 py-2 text-left whitespace-nowrap">
+                            <th key={week.id} className="px-2 py-2 text-left whitespace-nowrap w-[72px]">
                                 {t('reviewProgram.sbdWeekShort', { week: week.weekNumber })}
                             </th>
                         ))}
@@ -32,14 +32,14 @@ export default function ProgramSbdSummaryTable({
                 <tbody className="divide-y divide-slate-100 bg-white">
                     {metricsByLiftAcrossWeeks.map((liftMetric) => (
                         <tr key={liftMetric.lift}>
-                            <td className="sticky left-0 z-10 bg-white px-3 py-2 align-top text-sm font-semibold text-slate-900 whitespace-nowrap">
+                            <td className="sticky left-0 z-10 bg-white px-2 py-2 align-top text-sm font-semibold text-slate-900 whitespace-nowrap">
                                 {liftMetric.liftLabel}
                             </td>
                             {weeks.map((week) => {
                                 const metric = liftMetric.metricsByWeekId[week.id]
 
                                 return (
-                                    <td key={week.id} className="px-3 py-2 align-top">
+                                    <td key={week.id} className="px-2 py-2 align-top">
                                         {metric ? (
                                             <div className="space-y-0.5 text-[11px] text-slate-700">
                                                 <p>
