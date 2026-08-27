@@ -292,8 +292,8 @@ export default function TraineeDetailContent() {
     const [plannedPoints, setPlannedPoints] = useState<PlannedTrainingSetsPoint[]>([])
     const [error, setError] = useState<string | null>(null)
     const [activeTab, setActiveTab] = useState<'notes' | 'programs' | 'records' | 'reports'>('programs')
-    const [savedNoteDocument, setSavedNoteDocument] = useState<JSONContent | null>(null)
     const [draftNoteDocument, setDraftNoteDocument] = useState<JSONContent | null>(null)
+    const [notesDirty, setNotesDirty] = useState(false)
     const [notesUpdatedAt, setNotesUpdatedAt] = useState<string | null>(null)
     const [notesLoading, setNotesLoading] = useState(false)
     const [notesSaving, setNotesSaving] = useState(false)
@@ -502,8 +502,8 @@ export default function TraineeDetailContent() {
             }
 
             const document = (data.data.document ?? EMPTY_TRAINER_NOTE_DOCUMENT) as JSONContent
-            setSavedNoteDocument(document)
             setDraftNoteDocument(document)
+            setNotesDirty(false)
             setNotesUpdatedAt(data.data.updatedAt ?? null)
             hasLoadedNotesRef.current = true
         } catch (err: unknown) {
@@ -1008,8 +1008,8 @@ export default function TraineeDetailContent() {
             }
 
             const document = data.data.document as JSONContent
-            setSavedNoteDocument(document)
             setDraftNoteDocument(document)
+            setNotesDirty(false)
             setNotesUpdatedAt(data.data.updatedAt ?? null)
             showToast(t('athletes.notesSaved'), 'success')
         } catch (err: unknown) {
@@ -1019,8 +1019,7 @@ export default function TraineeDetailContent() {
         }
     }
 
-    const hasUnsavedNotes = savedNoteDocument !== null && draftNoteDocument !== null &&
-        JSON.stringify(savedNoteDocument) !== JSON.stringify(draftNoteDocument)
+    const hasUnsavedNotes = notesDirty && draftNoteDocument !== null
 
     if (loading) {
         return (
@@ -1183,7 +1182,10 @@ export default function TraineeDetailContent() {
                         {!notesLoading && draftNoteDocument && (
                             <TraineeNotesEditor
                                 value={draftNoteDocument}
-                                onChange={setDraftNoteDocument}
+                                onChange={(next) => {
+                                    setDraftNoteDocument(next)
+                                    setNotesDirty(true)
+                                }}
                                 disabled={notesSaving}
                                 labels={{
                                     clearFormatting: t('athletes.notesToolbarClearFormatting'),

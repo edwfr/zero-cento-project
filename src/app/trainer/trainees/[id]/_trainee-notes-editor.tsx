@@ -169,7 +169,12 @@ export default function TraineeNotesEditor({ value, onChange, disabled = false, 
             }),
             TextStyle,
             Color,
-            Table.configure({ resizable: false, allowTableNodeSelection: true }),
+            Table.configure({
+                resizable: true,
+                allowTableNodeSelection: true,
+                handleWidth: 4,
+                cellMinWidth: 60,
+            }),
             TableRow,
             TableHeader,
             TableCell,
@@ -305,7 +310,7 @@ export default function TraineeNotesEditor({ value, onChange, disabled = false, 
             </div>
             <EditorContent
                 editor={editor}
-                className="[&_.ProseMirror]:min-h-[18rem] [&_.ProseMirror_table]:my-4 [&_.ProseMirror_table]:w-full [&_.ProseMirror_table]:border-collapse [&_.ProseMirror_td]:min-w-24 [&_.ProseMirror_td]:border [&_.ProseMirror_td]:border-gray-300 [&_.ProseMirror_td]:p-2 [&_.ProseMirror_td]:align-top [&_.ProseMirror_th]:min-w-24 [&_.ProseMirror_th]:border [&_.ProseMirror_th]:border-gray-300 [&_.ProseMirror_th]:bg-gray-100 [&_.ProseMirror_th]:p-2 [&_.ProseMirror_th]:text-left [&_.ProseMirror_th]:font-semibold [&_.ProseMirror_.selectedCell]:bg-brand-primary/15"
+                className="trainee-notes-editor-content [&_.ProseMirror]:min-h-[18rem] [&_.ProseMirror_.tableWrapper]:my-4 [&_.ProseMirror_.tableWrapper]:overflow-x-auto [&_.ProseMirror_table]:w-full [&_.ProseMirror_table]:table-fixed [&_.ProseMirror_table]:border-collapse [&_.ProseMirror_td]:relative [&_.ProseMirror_td]:border [&_.ProseMirror_td]:border-gray-300 [&_.ProseMirror_td]:p-2 [&_.ProseMirror_td]:align-top [&_.ProseMirror_th]:relative [&_.ProseMirror_th]:border [&_.ProseMirror_th]:border-gray-300 [&_.ProseMirror_th]:bg-gray-100 [&_.ProseMirror_th]:p-2 [&_.ProseMirror_th]:text-left [&_.ProseMirror_th]:font-semibold [&_.ProseMirror_.selectedCell]:bg-brand-primary/15 [&_.ProseMirror_.column-resize-handle]:absolute [&_.ProseMirror_.column-resize-handle]:top-0 [&_.ProseMirror_.column-resize-handle]:right-[-2px] [&_.ProseMirror_.column-resize-handle]:bottom-[-2px] [&_.ProseMirror_.column-resize-handle]:w-[4px] [&_.ProseMirror_.column-resize-handle]:cursor-col-resize [&_.ProseMirror_.column-resize-handle]:bg-brand-primary/60 [&_.ProseMirror.resize-cursor]:cursor-col-resize"
             />
         </div>
     )
