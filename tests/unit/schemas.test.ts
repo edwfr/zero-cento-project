@@ -17,6 +17,7 @@ import {
     loginSchema,
     userListFilterSchema,
 } from '@/schemas/user'
+import { trainerTraineeNotesSchema } from '@/schemas/trainer-trainee-notes'
 import { workoutSubmitSchema } from '@/schemas/feedback'
 
 const validWorkoutSubmit = {
@@ -27,6 +28,85 @@ const validWorkoutSubmit = {
         sets: [{ setNumber: 1, completed: true, reps: 5, weight: 100, actualRpe: null }],
     }],
 }
+
+const validTrainerNoteDocument = {
+    type: 'doc',
+    content: [
+        {
+            type: 'paragraph',
+            content: [
+                { type: 'text', text: 'Important', marks: [{ type: 'bold' }] },
+                { type: 'text', text: ' note', marks: [{ type: 'textStyle', attrs: { color: '#FF0000' } }] },
+            ],
+        },
+        {
+            type: 'table',
+            content: [{
+                type: 'tableRow',
+                content: [{
+                    type: 'tableHeader',
+                    attrs: { colspan: 1, rowspan: 1, colwidth: null },
+                    content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Metric' }] }],
+                }],
+            }],
+        },
+    ],
+}
+
+describe('trainerTraineeNotesSchema', () => {
+    it('accepts formatted text and tables', () => {
+        expect(trainerTraineeNotesSchema.safeParse({ document: validTrainerNoteDocument }).success).toBe(true)
+    })
+
+    it('strips unsupported document nodes while accepting the payload', () => {
+        const result = trainerTraineeNotesSchema.safeParse({
+            document: {
+                type: 'doc',
+                content: [
+                    { type: 'image', attrs: { src: 'https://example.com/image.png' } },
+                    { type: 'paragraph', content: [{ type: 'text', text: 'Kept' }] },
+                ],
+            },
+        })
+
+        expect(result.success).toBe(true)
+        if (!result.success) return
+
+        const [firstNode] = (result.data.document as { content: Array<{ type: string; content?: unknown[] }> }).content
+        expect(firstNode.type).toBe('paragraph')
+        const kept = result.data.document as { content: Array<{ type: string; content?: Array<{ type: string; text?: string }> }> }
+        expect(kept.content.some((node) => node.content?.some((child) => child.type === 'text' && child.text === 'Kept'))).toBe(true)
+    })
+
+    it('drops color marks that are not valid hex strings', () => {
+        const result = trainerTraineeNotesSchema.safeParse({
+            document: {
+                type: 'doc',
+                content: [{
+                    type: 'paragraph',
+                    content: [{ type: 'text', text: 'Note', marks: [{ type: 'textStyle', attrs: { color: 'red' } }] }],
+                }],
+            },
+        })
+
+        expect(result.success).toBe(true)
+        if (!result.success) return
+
+        const [paragraph] = (result.data.document as { content: Array<{ content: Array<{ type: string; marks?: unknown[] }> }> }).content
+        expect(paragraph.content[0].marks).toBeUndefined()
+    })
+
+    it('rejects documents exceeding the text limit', () => {
+        const result = trainerTraineeNotesSchema.safeParse({
+            document: {
+                type: 'doc',
+                content: [{ type: 'paragraph', content: [{ type: 'text', text: 'a'.repeat(50_001) }] }],
+            },
+        })
+
+        expect(result.success).toBe(false)
+    })
+})
 
 describe('workoutSubmitSchema wellbeing ratings', () => {
     it('accepts optional ratings from 1 to 5', () => {

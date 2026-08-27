@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
+import type { JSONContent } from '@tiptap/react'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { normalizedOneRM } from '@/lib/calculations'
 import Link from 'next/link'
@@ -13,12 +14,14 @@ import {
     SkeletonDetail,
     useToast,
 } from '@/components'
-import { formatDate } from '@/lib/date-format'
+import { formatDate, formatDateTime } from '@/lib/date-format'
 import TraineePlannedMuscleGroupReport from '@/components/TraineePlannedMuscleGroupReport'
+import TraineeNotesEditor from './_trainee-notes-editor'
 import {
     ChevronDown,
     ChevronUp,
     Plus,
+    Save,
     Trophy,
 } from 'lucide-react'
 import {
@@ -177,6 +180,11 @@ const INITIAL_STATUS_COUNTS: ProgramStatusCounts = {
     completed: 0,
 }
 
+const EMPTY_TRAINER_NOTE_DOCUMENT: JSONContent = {
+    type: 'doc',
+    content: [{ type: 'paragraph' }],
+}
+
 const CHART_COLORS = ['rgb(var(--brand-primary))', '#0F766E', '#2563EB', '#DC2626', '#7C3AED', '#0891B2', '#65A30D', '#EA580C']
 
 const SBD_COLORS: Record<SbdLiftValue, string> = {
@@ -283,7 +291,13 @@ export default function TraineeDetailContent() {
     const [records, setRecords] = useState<PersonalRecord[]>([])
     const [plannedPoints, setPlannedPoints] = useState<PlannedTrainingSetsPoint[]>([])
     const [error, setError] = useState<string | null>(null)
-    const [activeTab, setActiveTab] = useState<'programs' | 'records' | 'reports'>('programs')
+    const [activeTab, setActiveTab] = useState<'notes' | 'programs' | 'records' | 'reports'>('programs')
+    const [savedNoteDocument, setSavedNoteDocument] = useState<JSONContent | null>(null)
+    const [draftNoteDocument, setDraftNoteDocument] = useState<JSONContent | null>(null)
+    const [notesUpdatedAt, setNotesUpdatedAt] = useState<string | null>(null)
+    const [notesLoading, setNotesLoading] = useState(false)
+    const [notesSaving, setNotesSaving] = useState(false)
+    const [notesError, setNotesError] = useState<string | null>(null)
     const [oneRmExerciseFilters, setOneRmExerciseFilters] = useState<string[] | null>(null)
     const [oneRmTimeWindow, setOneRmTimeWindow] = useState<RecordTimeWindow>('180d')
     const [sbdLiftFilters, setSbdLiftFilters] = useState<SbdLiftValue[] | null>(null)
@@ -302,6 +316,7 @@ export default function TraineeDetailContent() {
     const activeProgramsRequestSeqRef = useRef(0)
     const prefetchProgramsControllersRef = useRef(new Map<string, AbortController>())
     const programStatusCountsRef = useRef<ProgramStatusCounts>(INITIAL_STATUS_COUNTS)
+    const hasLoadedNotesRef = useRef(false)
 
     const getProgramsViewCacheKey = useCallback((status: ProgramStatusTab, page: number, search: string) => {
         const normalizedSearch = search.trim().toLowerCase()
@@ -475,9 +490,38 @@ export default function TraineeDetailContent() {
         }
     }, [t, traineeId])
 
+    const fetchNotes = useCallback(async () => {
+        try {
+            setNotesLoading(true)
+            setNotesError(null)
+            const response = await fetch(`/api/trainer/trainees/${traineeId}/notes`)
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(getApiErrorMessage(data, t('athletes.notesLoadingError'), t))
+            }
+
+            const document = (data.data.document ?? EMPTY_TRAINER_NOTE_DOCUMENT) as JSONContent
+            setSavedNoteDocument(document)
+            setDraftNoteDocument(document)
+            setNotesUpdatedAt(data.data.updatedAt ?? null)
+            hasLoadedNotesRef.current = true
+        } catch (err: unknown) {
+            setNotesError(err instanceof Error ? err.message : t('athletes.notesLoadingError'))
+        } finally {
+            setNotesLoading(false)
+        }
+    }, [t, traineeId])
+
     useEffect(() => {
         fetchTraineeData()
     }, [fetchTraineeData])
+
+    useEffect(() => {
+        if (activeTab === 'notes' && !hasLoadedNotesRef.current) {
+            void fetchNotes()
+        }
+    }, [activeTab, fetchNotes])
 
     useEffect(() => {
         programStatusCountsRef.current = programStatusCounts
@@ -944,6 +988,40 @@ export default function TraineeDetailContent() {
         }))
     }
 
+    const handleSaveNotes = async () => {
+        if (!draftNoteDocument) {
+            return
+        }
+
+        try {
+            setNotesSaving(true)
+            setNotesError(null)
+            const response = await fetch(`/api/trainer/trainees/${traineeId}/notes`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ document: draftNoteDocument }),
+            })
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(getApiErrorMessage(data, t('athletes.notesSaveError'), t))
+            }
+
+            const document = data.data.document as JSONContent
+            setSavedNoteDocument(document)
+            setDraftNoteDocument(document)
+            setNotesUpdatedAt(data.data.updatedAt ?? null)
+            showToast(t('athletes.notesSaved'), 'success')
+        } catch (err: unknown) {
+            setNotesError(err instanceof Error ? err.message : t('athletes.notesSaveError'))
+        } finally {
+            setNotesSaving(false)
+        }
+    }
+
+    const hasUnsavedNotes = savedNoteDocument !== null && draftNoteDocument !== null &&
+        JSON.stringify(savedNoteDocument) !== JSON.stringify(draftNoteDocument)
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 py-8">
@@ -1016,38 +1094,115 @@ export default function TraineeDetailContent() {
                 <div className="mb-6">
                     <div className="border-b border-gray-200">
                         <nav className="-mb-px flex space-x-8">
-                            <button
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => setActiveTab('notes')}
+                                aria-pressed={activeTab === 'notes'}
+                                className={`rounded-none border-b-2 bg-transparent px-1 pb-4 font-semibold shadow-none hover:bg-transparent ${activeTab === 'notes'
+                                    ? 'border-brand-primary text-brand-primary'
+                                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                                    }`}
+                            >
+                                {t('athletes.notesTab')}
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
                                 onClick={() => setActiveTab('programs')}
-                                className={`pb-4 px-1 border-b-2 font-semibold text-sm ${activeTab === 'programs'
+                                aria-pressed={activeTab === 'programs'}
+                                className={`rounded-none border-b-2 bg-transparent px-1 pb-4 font-semibold shadow-none hover:bg-transparent ${activeTab === 'programs'
                                     ? 'border-brand-primary text-brand-primary'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
                                 {t('athletes.programsTab')} ({totalProgramsCount})
-                            </button>
-                            <button
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
                                 onClick={() => setActiveTab('records')}
-                                className={`pb-4 px-1 border-b-2 font-semibold text-sm ${activeTab === 'records'
+                                aria-pressed={activeTab === 'records'}
+                                className={`rounded-none border-b-2 bg-transparent px-1 pb-4 font-semibold shadow-none hover:bg-transparent ${activeTab === 'records'
                                     ? 'border-brand-primary text-brand-primary'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
                                 {t('athletes.recordsTab')} ({latestRecords.length})
-                            </button>
-                            <button
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
                                 onClick={() => setActiveTab('reports')}
-                                className={`pb-4 px-1 border-b-2 font-semibold text-sm ${activeTab === 'reports'
+                                aria-pressed={activeTab === 'reports'}
+                                className={`rounded-none border-b-2 bg-transparent px-1 pb-4 font-semibold shadow-none hover:bg-transparent ${activeTab === 'reports'
                                     ? 'border-brand-primary text-brand-primary'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     }`}
                             >
                                 {t('athletes.reportsTab')}
-                            </button>
+                            </Button>
                         </nav>
                     </div>
                 </div>
 
                 {/* Tab Content */}
+                {activeTab === 'notes' && (
+                    <div className="space-y-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-900">{t('athletes.notesTitle')}</h2>
+                                {notesUpdatedAt && (
+                                    <p className="mt-1 text-sm text-gray-600">
+                                        {t('athletes.notesLastSaved', { date: formatDateTime(notesUpdatedAt) })}
+                                    </p>
+                                )}
+                            </div>
+                            <Button
+                                type="button"
+                                icon={<Save />}
+                                onClick={handleSaveNotes}
+                                isLoading={notesSaving}
+                                loadingText={t('common:common.saving')}
+                                disabled={notesLoading || !hasUnsavedNotes}
+                            >
+                                {t('common:common.save')}
+                            </Button>
+                        </div>
+
+                        {notesLoading && <SkeletonDetail />}
+                        {notesError && (
+                            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-state-error">
+                                {notesError}
+                            </div>
+                        )}
+                        {!notesLoading && draftNoteDocument && (
+                            <TraineeNotesEditor
+                                value={draftNoteDocument}
+                                onChange={setDraftNoteDocument}
+                                disabled={notesSaving}
+                                labels={{
+                                    clearFormatting: t('athletes.notesToolbarClearFormatting'),
+                                    italic: t('athletes.notesToolbarItalic'),
+                                    bold: t('athletes.notesToolbarBold'),
+                                    color: t('athletes.notesToolbarColor'),
+                                    colorRemove: t('athletes.notesToolbarColorRemove'),
+                                    insertTable: t('athletes.notesToolbarInsertTable'),
+                                    addRow: t('athletes.notesToolbarAddRow'),
+                                    removeRow: t('athletes.notesToolbarRemoveRow'),
+                                    addColumn: t('athletes.notesToolbarAddColumn'),
+                                    removeColumn: t('athletes.notesToolbarRemoveColumn'),
+                                    removeTable: t('athletes.notesToolbarRemoveTable'),
+                                }}
+                            />
+                        )}
+                    </div>
+                )}
+
                 {activeTab === 'programs' && (
                     <div>
                         <ProgramTraineeTable

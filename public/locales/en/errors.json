@@ -130,6 +130,12 @@
         "userMustBeTrainee": "User must have trainee role",
         "invalidCloneSourceId": "Clone source program id must be a valid UUID",
         "sourceWeekRequired": "Source week is required",
+        "invalidTrainerNoteDocument": "The notes document is invalid",
+        "invalidTrainerNoteNode": "The document contains an unsupported element",
+        "invalidTrainerNoteMark": "The document contains unsupported formatting",
+        "invalidTrainerNoteColor": "The text color is invalid",
+        "trainerNoteTooComplex": "The notes document is too complex",
+        "trainerNoteTooLong": "The notes document is too long",
         "workoutsPerWeekMismatchWithClone": "Workouts per week must match the source program."
     },
     "internal": {

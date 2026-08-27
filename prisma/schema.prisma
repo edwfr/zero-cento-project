@@ -95,10 +95,12 @@ model User {
 }
 
 model TrainerTrainee {
-  id        String   @id @default(uuid())
-  trainerId String
-  traineeId String   @unique  // UNIQUE: Un trainee ha UN SOLO trainer (relazione 1:1)
-  createdAt DateTime @default(now())
+  id                    String   @id @default(uuid())
+  trainerId             String
+  traineeId             String   @unique  // UNIQUE: Un trainee ha UN SOLO trainer (relazione 1:1)
+  trainerNotes          Json?    @map("trainer_notes")
+  trainerNotesUpdatedAt DateTime? @map("trainer_notes_updated_at")
+  createdAt             DateTime @default(now())
 
   // Relations
   trainer User @relation("TrainerAssignments", fields: [trainerId], references: [id], onDelete: Cascade)

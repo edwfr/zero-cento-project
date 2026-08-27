@@ -130,6 +130,12 @@
         "userMustBeTrainee": "L'utente deve avere il ruolo atleta",
         "invalidCloneSourceId": "L'id del programma sorgente deve essere un UUID valido",
         "sourceWeekRequired": "La settimana sorgente è obbligatoria",
+        "invalidTrainerNoteDocument": "Il documento delle note non è valido",
+        "invalidTrainerNoteNode": "Il documento contiene un elemento non supportato",
+        "invalidTrainerNoteMark": "Il documento contiene una formattazione non supportata",
+        "invalidTrainerNoteColor": "Il colore del testo non è valido",
+        "trainerNoteTooComplex": "Il documento delle note è troppo complesso",
+        "trainerNoteTooLong": "Il documento delle note è troppo lungo",
         "workoutsPerWeekMismatchWithClone": "I giorni di allenamento a settimana devono corrispondere al programma di origine."
     },
     "internal": {

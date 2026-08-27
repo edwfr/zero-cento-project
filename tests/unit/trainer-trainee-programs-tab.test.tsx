@@ -29,6 +29,23 @@ vi.mock('@/components/TraineePlannedMuscleGroupReport', () => {
     }
 })
 
+vi.mock('@/app/trainer/trainees/[id]/_trainee-notes-editor', () => {
+    const React = require('react')
+    return {
+        default: ({ onChange }: { onChange: (document: unknown) => void }) => React.createElement(
+            'button',
+            {
+                type: 'button',
+                onClick: () => onChange({
+                    type: 'doc',
+                    content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Updated note' }] }],
+                }),
+            },
+            'Edit note'
+        ),
+    }
+})
+
 vi.mock('@/components', async () => {
     const actual = await vi.importActual<typeof import('@/components')>('@/components')
     return {
@@ -132,6 +149,30 @@ describe('TraineeDetailContent Programs tab', () => {
         global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
             const url = String(input)
             const method = init?.method ?? 'GET'
+
+            if (url === '/api/trainer/trainees/trainee-1/notes') {
+                if (method === 'PUT') {
+                    return {
+                        ok: true,
+                        json: async () => ({
+                            data: {
+                                document: JSON.parse(String(init?.body)).document,
+                                updatedAt: '2026-08-27T10:00:00.000Z',
+                            },
+                        }),
+                    } as Response
+                }
+
+                return {
+                    ok: true,
+                    json: async () => ({
+                        data: {
+                            document: { type: 'doc', content: [{ type: 'paragraph' }] },
+                            updatedAt: null,
+                        },
+                    }),
+                } as Response
+            }
 
             if (method === 'DELETE' && url.includes('/api/programs/')) {
                 const programId = url.split('/api/programs/')[1]
@@ -242,6 +283,40 @@ describe('TraineeDetailContent Programs tab', () => {
             'href',
             '/trainer/programs/prog-active-done/tests?backContext=trainee&traineeId=trainee-1'
         )
+    })
+
+    it('places Notes before Programs, loads it on demand, and saves only after an edit', async () => {
+        render(<TraineeDetailContent />)
+
+        await screen.findByText('Programma Active Pending')
+        const notesTab = screen.getByRole('button', { name: 'athletes.notesTab' })
+        const programsTab = screen.getByRole('button', { name: /athletes.programsTab/i })
+
+        expect(notesTab.compareDocumentPosition(programsTab) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+        expect(vi.mocked(global.fetch).mock.calls.some((call) => String(call[0]).includes('/notes'))).toBe(false)
+
+        fireEvent.click(notesTab)
+        await screen.findByRole('button', { name: 'Edit note' })
+
+        expect(vi.mocked(global.fetch).mock.calls.some((call) => String(call[0]).includes('/notes'))).toBe(true)
+
+        const saveButton = screen.getByRole('button', { name: 'common:common.save' })
+        expect(saveButton).toBeDisabled()
+
+        fireEvent.click(screen.getByRole('button', { name: 'Edit note' }))
+
+        await waitFor(() => {
+            expect(screen.getByRole('button', { name: 'common:common.save' })).not.toBeDisabled()
+        })
+
+        fireEvent.click(screen.getByRole('button', { name: 'common:common.save' }))
+
+        await waitFor(() => {
+            const saveCall = vi.mocked(global.fetch).mock.calls.find(
+                (call) => String(call[0]).includes('/notes') && call[1]?.method === 'PUT'
+            )
+            expect(saveCall).toBeDefined()
+        })
     })
 
     it('shows draft delete flow with confirmation and refetch', async () => {

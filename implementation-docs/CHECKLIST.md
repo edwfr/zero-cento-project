@@ -747,6 +747,8 @@
       File: `src/app/trainer/programs/[id]/tests/_content.tsx`, `tests/unit/program-test-results-content.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 - [x] **11.148** Feedback workout trainee: aggiungere rating opzionali 1-5 per qualita sonno, stress e alimentazione, persisterli su `Workout` e mostrarli nella vista risultati trainer ✅ _27 Agosto 2026_  
       File: `prisma/schema.prisma`, `src/schemas/feedback.ts`, `src/app/api/trainee/workouts/[id]/submit/route.ts`, `src/app/api/programs/[id]/test-results/route.ts`, `src/app/trainee/workouts/[id]/_content.tsx`, `src/app/trainer/programs/[id]/tests/_content.tsx`, `public/locales/{en,it}/{trainee,trainer}.json`, `tests/unit/schemas.test.ts`, `tests/unit/program-test-results-content.test.tsx`, `tests/integration/trainee-workout-submit.test.ts`, `tests/integration/program-test-results.test.ts`, `implementation-docs/CHANGELOG.md`
+- [x] **11.149** `/trainer/trainees/[id]`: aggiungere una tab `Note` privata al trainer con editor WYSIWYG (grassetto, colore testo, tabelle), salvataggio esplicito e persistenza JSON validata sulla relazione trainer-trainee ✅ _27 Agosto 2026_  
+      File: `prisma/schema.prisma`, `prisma/migrations/20260827000001_add_trainer_trainee_notes/migration.sql`, `src/schemas/trainer-trainee-notes.ts`, `src/app/api/trainer/trainees/[id]/notes/route.ts`, `src/app/trainer/trainees/[id]/{_content.tsx,_trainee-notes-editor.tsx}`, `public/locales/{en,it}/{trainer,errors}.json`, `tests/unit/{schemas.test.ts,trainer-trainee-programs-tab.test.tsx}`, `tests/integration/trainer-trainee-notes.test.ts`, `implementation-docs/CHANGELOG.md`
 
 ---
 

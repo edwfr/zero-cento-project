@@ -11,6 +11,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [27 Agosto 2026] — Note ricche private per atleta
+
+**Task checklist:** #11.149
+**File modificati:** `package.json`, `package-lock.json`, `prisma/schema.prisma`, `prisma/migrations/20260827000001_add_trainer_trainee_notes/migration.sql`, `src/schemas/trainer-trainee-notes.ts`, `src/app/api/trainer/trainees/[id]/notes/route.ts`, `src/app/trainer/trainees/[id]/{_content.tsx,_trainee-notes-editor.tsx}`, `public/locales/{en,it}/{trainer,errors}.json`, `tests/unit/{schemas.test.ts,trainer-trainee-programs-tab.test.tsx}`, `tests/integration/trainer-trainee-notes.test.ts`, `implementation-docs/CHECKLIST.md`
+**Note:** Aggiunta la tab `Note` prima di `Programmi` nel dettaglio atleta. Il trainer puo comporre una singola nota strutturata con grassetto, colore testo e tabelle tramite Tiptap, quindi salvarla esplicitamente. La nota resta privata al trainer assegnato: il nuovo endpoint richiede ruolo trainer e verifica ownership sulla singola riga `TrainerTrainee`. Il contenuto e memorizzato come JSON Tiptap, non HTML, ed e validato con allow-list di nodi/mark, limiti di dimensione/profondita e colori esadecimali; questo evita rendering di HTML libero e payload arbitrari. Il tab carica le note solo alla prima apertura, conserva la bozza in caso di errore e mostra stato modifiche/ultimo salvataggio. Aggiunti test schema, API e UI del tab.
+
 ### [27 Agosto 2026] — Rating benessere nel feedback workout
 
 **Task checklist:** #11.148
