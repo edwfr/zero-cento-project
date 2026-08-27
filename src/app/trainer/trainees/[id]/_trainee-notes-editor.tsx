@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useReducer, useRef, useState } from 'react'
 import { EditorContent, useEditor, type Editor, type JSONContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Color from '@tiptap/extension-color'
@@ -195,13 +195,50 @@ export default function TraineeNotesEditor({ value, onChange, disabled = false, 
         editor.commands.setContent(value, { emitUpdate: false })
     }, [editor, value])
 
+    const [, forceToolbarUpdate] = useReducer((tick: number) => tick + 1, 0)
+
+    useEffect(() => {
+        if (!editor) return
+        editor.on('selectionUpdate', forceToolbarUpdate)
+        editor.on('transaction', forceToolbarUpdate)
+        return () => {
+            editor.off('selectionUpdate', forceToolbarUpdate)
+            editor.off('transaction', forceToolbarUpdate)
+        }
+    }, [editor])
+
     if (!editor) {
         return <div className="h-80 animate-pulse rounded-lg border border-gray-200 bg-gray-100" aria-busy="true" />
     }
 
     const insideTable = editor.isActive('table')
-    const boldActive = editor.isActive('bold')
-    const italicActive = editor.isActive('italic')
+    const hasBold = editor.isActive('bold')
+    const hasItalic = editor.isActive('italic')
+    const boldActive = hasBold && !hasItalic
+    const italicActive = hasItalic && !hasBold
+    const normalActive = !hasBold && !hasItalic
+
+    const setNormalStyle = () => editor.chain().focus().unsetBold().unsetItalic().run()
+
+    const applyItalic = () => {
+        const chain = editor.chain().focus().unsetBold()
+        if (hasItalic) {
+            chain.unsetItalic()
+        } else {
+            chain.setItalic()
+        }
+        chain.run()
+    }
+
+    const applyBold = () => {
+        const chain = editor.chain().focus().unsetItalic()
+        if (hasBold) {
+            chain.unsetBold()
+        } else {
+            chain.setBold()
+        }
+        chain.run()
+    }
 
     return (
         <div className="overflow-hidden rounded-lg border border-gray-300 bg-white focus-within:border-brand-primary focus-within:ring-2 focus-within:ring-brand-primary/20">
@@ -209,22 +246,23 @@ export default function TraineeNotesEditor({ value, onChange, disabled = false, 
                 <ToolbarButton
                     label={labels.clearFormatting}
                     icon={<RemoveFormatting />}
+                    active={normalActive}
                     disabled={disabled}
-                    onExecute={() => editor.chain().focus().unsetAllMarks().run()}
+                    onExecute={setNormalStyle}
                 />
                 <ToolbarButton
                     label={labels.italic}
                     icon={<Italic />}
                     active={italicActive}
                     disabled={disabled}
-                    onExecute={() => editor.chain().focus().toggleItalic().run()}
+                    onExecute={applyItalic}
                 />
                 <ToolbarButton
                     label={labels.bold}
                     icon={<Bold />}
                     active={boldActive}
                     disabled={disabled}
-                    onExecute={() => editor.chain().focus().toggleBold().run()}
+                    onExecute={applyBold}
                 />
                 <ColorPicker editor={editor} disabled={disabled} label={labels.color} removeLabel={labels.colorRemove} />
                 <div className="mx-1 h-6 w-px bg-gray-300" aria-hidden="true" />
