@@ -90,3 +90,12 @@ export { default as WorkoutRecapPanel } from './WorkoutRecapPanel'
 export { default as PrevWeekPanel } from './PrevWeekPanel'
 export { default as WorkoutExerciseDisplayList } from './WorkoutExerciseDisplayList'
 export type { ExerciseDisplayItem } from './WorkoutExerciseDisplayList'
+
+export { default as ProgramSbdSummaryTable } from './ProgramSbdSummaryTable'
+export { default as ProgramReportSection } from './ProgramReportSection'
+export type {
+    ProgramReportSectionWeek,
+    ProgramReportSectionWorkout,
+    ProgramReportSectionWorkoutExercise,
+} from './ProgramReportSection'
+export { default as ProgramChartsDrawer } from './ProgramChartsDrawer'

@@ -11,6 +11,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [27 Agosto 2026] — Pannello grafici flottante nello step 3 esercizi programma trainer
+
+**File modificati:** `src/lib/program-sbd-metrics.ts` (nuovo), `src/components/ProgramSbdSummaryTable.tsx` (nuovo), `src/components/ProgramReportSection.tsx` (nuovo), `src/components/ProgramChartsDrawer.tsx` (nuovo), `src/components/index.ts`, `src/app/trainer/programs/[id]/edit/_content.tsx`, `src/app/trainer/programs/[id]/review/_content.tsx`, `public/locales/en/trainer.json`, `public/locales/it/trainer.json`, `tests/unit/program-sbd-metrics.test.ts` (nuovo), `implementation-docs/CHANGELOG.md`
+**Note:** In `/trainer/programs/[id]` (readOnly) e `/trainer/programs/[id]/edit` lo step 3 "Esercizi" ora espone un FAB flottante in alto a sinistra (`BarChart3`) che apre un drawer laterale destro con lo stesso contenuto dello step 4 "Report" della pagina review: tabella riepilogativa SBD (solo per programmi SBD) + `ProgramMuscleGroupCharts` (heatmap, trend, fondamentali). La logica di calcolo metriche SBD e stata estratta in `src/lib/program-sbd-metrics.ts` (funzioni pure `computeWeekSbdMetrics`, `computeSbdMetricsByLiftAcrossWeeks`, helpers `matchFundamentalLift`, `parseRepsValue`) e la tabella in `ProgramSbdSummaryTable`; sia `review/_content.tsx` (step 4 invariato visivamente) sia `edit/_content.tsx` (helper card SBD inline invariata visivamente) consumano ora gli stessi helper condivisi, eliminando la duplicazione precedentemente presente in entrambi i file. Il FAB e nascosto durante lo step 2 "Struttura" dell'edit e sempre visibile nella view readOnly. Chiusura drawer via backdrop, tasto X o Escape. Aggiunte chiavi i18n `editProgram.floatingChartsButton|chartsPanelTitle|chartsPanelClose` (EN/IT) e 14 test unitari per la libreria condivisa.
+
 ### [21 Agosto 2026] — Rimuovere conteggi configurazione dalla vista feedback workout
 
 **Task checklist:** #11.147

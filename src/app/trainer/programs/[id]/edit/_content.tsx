@@ -47,6 +47,15 @@ import {
 } from './row-utils'
 import { resolveEffectiveWeightDisplay } from '@/app/trainer/programs/[id]/edit/effective-weight-display'
 import {
+    computeSbdMetricsByLiftAcrossWeeks,
+    computeWeekSbdMetrics,
+    parseRepsValue,
+    type LiftLabels,
+    type SbdLiftAcrossWeeks,
+} from '@/lib/program-sbd-metrics'
+import ProgramSbdSummaryTable from '@/components/ProgramSbdSummaryTable'
+import ProgramChartsDrawer from '@/components/ProgramChartsDrawer'
+import {
     DndContext,
     DragOverlay,
     closestCenter,
@@ -191,16 +200,6 @@ interface EditProgramContentProps {
     readOnly?: boolean
 }
 
-type FundamentalLift = 'squat' | 'bench' | 'deadlift'
-
-const FUNDAMENTAL_PATTERNS: Record<FundamentalLift, string[]> = {
-    squat: ['squat', 'back squat', 'front squat', 'box squat'],
-    bench: ['bench press', 'bench', 'panca'],
-    deadlift: ['deadlift', 'stacco', 'stacco da terra'],
-}
-
-const FUNDAMENTAL_LIFT_ORDER: FundamentalLift[] = ['squat', 'bench', 'deadlift']
-
 type ParsedWeightInputMode =
     | 'empty'
     | 'absolute'
@@ -228,29 +227,6 @@ type WeightInputParsingErrorCode =
 type ResolveWeightInputOutcome =
     | { parsedWeight: ParsedWeightInputResult }
     | { errorCode: WeightInputParsingErrorCode }
-
-function parseRepsValue(repsValue: string): number {
-    const match = repsValue.match(/^\d+/)
-    return match ? parseInt(match[0], 10) : 0
-}
-
-function matchFundamentalLift(exerciseName: string): FundamentalLift | null {
-    const lowerName = exerciseName.toLowerCase()
-
-    if (FUNDAMENTAL_PATTERNS.squat.some((pattern) => lowerName.includes(pattern))) {
-        return 'squat'
-    }
-
-    if (FUNDAMENTAL_PATTERNS.bench.some((pattern) => lowerName.includes(pattern))) {
-        return 'bench'
-    }
-
-    if (FUNDAMENTAL_PATTERNS.deadlift.some((pattern) => lowerName.includes(pattern))) {
-        return 'deadlift'
-    }
-
-    return null
-}
 
 function formatWeightInputFromStoredValues(weightType: WeightType, weight: number | null): string {
     if (typeof weight !== 'number') {
@@ -620,6 +596,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const [wizardStep, setWizardStep] = useState<'structure' | 'details'>(
         readOnly ? 'details' : 'structure'
     )
+    const [isChartsDrawerOpen, setIsChartsDrawerOpen] = useState(false)
     const [structureRowsByWorkoutIndex, setStructureRowsByWorkoutIndex] = useState<
         Record<number, WorkoutStructureTemplateRow[]>
     >({})
@@ -1182,153 +1159,40 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         [t]
     )
 
+    const sbdLiftLabels: LiftLabels = useMemo(
+        () => ({
+            squat: t('reports.squat'),
+            bench: t('reports.bench'),
+            deadlift: t('reports.deadlift'),
+        }),
+        [t]
+    )
+
     const weekSbdMetrics = useMemo(
         () =>
             program
-                ? program.weeks.reduce((acc, week) => {
-                    const metricsByLift = week.workouts.reduce(
-                        (weekAcc, workout) => {
-                            workout.workoutExercises
-                                .filter(
-                                    (workoutExercise) =>
-                                        workoutExercise.exercise.type === 'fundamental' &&
-                                        !workoutExercise.isWarmup
-                                )
-                                .forEach((workoutExercise) => {
-                                    const matchedLift = matchFundamentalLift(workoutExercise.exercise.name)
-                                    if (!matchedLift) {
-                                        return
-                                    }
-
-                                    const plannedReps = parseRepsValue(workoutExercise.reps)
-                                    const liftCount = workoutExercise.sets * plannedReps
-
-                                    let intensity: number | null = null
-                                    if (
-                                        workoutExercise.weightType === 'percentage_1rm' &&
-                                        typeof workoutExercise.weight === 'number'
-                                    ) {
-                                        intensity = workoutExercise.weight
-                                    } else if (
-                                        workoutExercise.weightType === 'absolute' &&
-                                        typeof workoutExercise.weight === 'number'
-                                    ) {
-                                        const normalized =
-                                            normalizedOneRMByExercise[workoutExercise.exercise.id]
-                                        if (normalized) {
-                                            intensity = (workoutExercise.weight / normalized) * 100
-                                        }
-                                    }
-
-                                    if (!weekAcc[matchedLift]) {
-                                        weekAcc[matchedLift] = {
-                                            lift: matchedLift,
-                                            workoutIds: new Set<string>(),
-                                            totalLifts: 0,
-                                            weightedIntensitySum: 0,
-                                            intensityLiftCount: 0,
-                                        }
-                                    }
-
-                                    weekAcc[matchedLift].workoutIds.add(workout.id)
-                                    weekAcc[matchedLift].totalLifts += liftCount
-
-                                    if (intensity !== null && liftCount > 0) {
-                                        weekAcc[matchedLift].weightedIntensitySum += intensity * liftCount
-                                        weekAcc[matchedLift].intensityLiftCount += liftCount
-                                    }
-                                })
-
-                            return weekAcc
-                        },
-                        {} as Record<
-                            FundamentalLift,
-                            {
-                                lift: FundamentalLift
-                                workoutIds: Set<string>
-                                totalLifts: number
-                                weightedIntensitySum: number
-                                intensityLiftCount: number
-                            }
-                        >
-                    )
-
-                    acc[week.id] = Object.values(metricsByLift)
-                        .map((metric) => ({
-                            lift: metric.lift,
-                            liftLabel:
-                                metric.lift === 'squat'
-                                    ? t('reports.squat')
-                                    : metric.lift === 'bench'
-                                        ? t('reports.bench')
-                                        : t('reports.deadlift'),
-                            frequency: metric.workoutIds.size,
-                            totalLifts: metric.totalLifts,
-                            averageIntensity:
-                                metric.intensityLiftCount > 0
-                                    ? metric.weightedIntensitySum / metric.intensityLiftCount
-                                    : null,
-                        }))
-                        .sort(
-                            (left, right) =>
-                                FUNDAMENTAL_LIFT_ORDER.indexOf(left.lift) -
-                                FUNDAMENTAL_LIFT_ORDER.indexOf(right.lift)
-                        )
-
-                    return acc
-                }, {} as Record<string, Array<{ lift: FundamentalLift; liftLabel: string; frequency: number; totalLifts: number; averageIntensity: number | null }>>)
+                ? computeWeekSbdMetrics({
+                    weeks: program.weeks,
+                    oneRmByExerciseId: normalizedOneRMByExercise,
+                    liftLabels: sbdLiftLabels,
+                })
                 : {},
-        [normalizedOneRMByExercise, program, t]
+        [normalizedOneRMByExercise, program, sbdLiftLabels]
     )
 
-    const sbdMetricsByLiftAcrossWeeks = useMemo(
+    const sbdMetricsByLiftAcrossWeeks: SbdLiftAcrossWeeks[] = useMemo(
         () =>
             program
-                ? Array.from(
-                    program.weeks.reduce((acc, week) => {
-                        ; (weekSbdMetrics[week.id] || []).forEach((metric) => {
-                            if (!acc.has(metric.lift)) {
-                                acc.set(metric.lift, {
-                                    lift: metric.lift,
-                                    liftLabel: metric.liftLabel,
-                                    metricsByWeekId: {},
-                                })
-                            }
-
-                            const currentMetric = acc.get(metric.lift)
-
-                            if (currentMetric) {
-                                currentMetric.metricsByWeekId[week.id] = metric
-                            }
-                        })
-
-                        return acc
-                    }, new Map<
-                        FundamentalLift,
-                        {
-                            lift: FundamentalLift
-                            liftLabel: string
-                            metricsByWeekId: Record<
-                                string,
-                                {
-                                    lift: FundamentalLift
-                                    liftLabel: string
-                                    frequency: number
-                                    totalLifts: number
-                                    averageIntensity: number | null
-                                }
-                            >
-                        }
-                    >())
-                        .values()
-                ).sort(
-                    (left, right) =>
-                        FUNDAMENTAL_LIFT_ORDER.indexOf(left.lift) -
-                        FUNDAMENTAL_LIFT_ORDER.indexOf(right.lift)
-                )
+                ? computeSbdMetricsByLiftAcrossWeeks({
+                    weeks: program.weeks,
+                    weekSbdMetrics,
+                    liftLabels: sbdLiftLabels,
+                })
                 : [],
-        [program, weekSbdMetrics]
+        [program, sbdLiftLabels, weekSbdMetrics]
     )
+
+    const isExercisesStepVisible = readOnly || wizardStep === 'details'
 
     const handleWeekTypeChange = async (
         weekId: string,
@@ -3119,72 +2983,10 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                 {!isSbdHelperCollapsed && (
                                     <div className="mt-4 max-h-72 overflow-y-auto">
                                         {sbdMetricsByLiftAcrossWeeks.length > 0 ? (
-                                            <div className="overflow-x-auto">
-                                                <table className="min-w-[780px] w-full divide-y divide-slate-200 text-xs">
-                                                    <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
-                                                        <tr>
-                                                            <th className="sticky left-0 z-10 bg-slate-50 px-3 py-2 text-left">
-                                                                {t('reviewProgram.sbdExerciseCol')}
-                                                            </th>
-                                                            {program.weeks.map((week) => (
-                                                                <th key={week.id} className="px-3 py-2 text-left whitespace-nowrap">
-                                                                    {t('editProgram.week')} {week.weekNumber}
-                                                                </th>
-                                                            ))}
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="divide-y divide-slate-100 bg-white">
-                                                        {sbdMetricsByLiftAcrossWeeks.map((liftMetric) => (
-                                                            <tr key={liftMetric.lift}>
-                                                                <td className="sticky left-0 z-10 bg-white px-3 py-2 align-top text-sm font-semibold text-slate-900 whitespace-nowrap">
-                                                                    {liftMetric.liftLabel}
-                                                                </td>
-                                                                {program.weeks.map((week) => {
-                                                                    const metric =
-                                                                        liftMetric.metricsByWeekId[week.id]
-
-                                                                    return (
-                                                                        <td key={week.id} className="px-3 py-2 align-top">
-                                                                            {metric ? (
-                                                                                <div className="space-y-0.5 text-[11px] text-slate-700">
-                                                                                    <p>
-                                                                                        <span className="font-semibold text-slate-500">
-                                                                                            {t('editProgram.sbdFrq')}:
-                                                                                        </span>{' '}
-                                                                                        <span className="font-semibold text-slate-900">
-                                                                                            {metric.frequency}
-                                                                                        </span>
-                                                                                    </p>
-                                                                                    <p>
-                                                                                        <span className="font-semibold text-slate-500">
-                                                                                            {t('editProgram.sbdNbl')}:
-                                                                                        </span>{' '}
-                                                                                        <span className="font-semibold text-slate-900">
-                                                                                            {metric.totalLifts}
-                                                                                        </span>
-                                                                                    </p>
-                                                                                    <p>
-                                                                                        <span className="font-semibold text-slate-500">
-                                                                                            {t('editProgram.sbdIm')}:
-                                                                                        </span>{' '}
-                                                                                        <span className="font-semibold text-slate-900">
-                                                                                            {metric.averageIntensity !== null
-                                                                                                ? `${metric.averageIntensity.toFixed(1)}%`
-                                                                                                : '-'}
-                                                                                        </span>
-                                                                                    </p>
-                                                                                </div>
-                                                                            ) : (
-                                                                                <span className="text-[11px] text-slate-400">-</span>
-                                                                            )}
-                                                                        </td>
-                                                                    )
-                                                                })}
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
+                                            <ProgramSbdSummaryTable
+                                                weeks={program.weeks}
+                                                metricsByLiftAcrossWeeks={sbdMetricsByLiftAcrossWeeks}
+                                            />
                                         ) : (
                                             <p className="text-sm text-gray-500 py-3">
                                                 {t('editProgram.sbdHelperNoData')}
@@ -4207,6 +4009,45 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                         <Trash2 className="w-6 h-6" />
                     </div>
                 )}
+
+                {isExercisesStepVisible && (
+                    <button
+                        type="button"
+                        onClick={() => setIsChartsDrawerOpen(true)}
+                        className="fixed top-24 left-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-brand-primary text-white shadow-lg transition-colors hover:bg-brand-primary-hover"
+                        aria-label={t('editProgram.floatingChartsButton')}
+                        title={t('editProgram.floatingChartsButton')}
+                    >
+                        <BarChart3 className="h-6 w-6" />
+                    </button>
+                )}
+                <ProgramChartsDrawer
+                    isOpen={isChartsDrawerOpen}
+                    onClose={() => setIsChartsDrawerOpen(false)}
+                    weeks={program.weeks.map((week) => ({
+                        id: week.id,
+                        weekNumber: week.weekNumber,
+                        workouts: week.workouts.map((workout) => ({
+                            id: workout.id,
+                            workoutExercises: workout.workoutExercises.map((workoutExercise) => ({
+                                id: workoutExercise.id,
+                                sets: workoutExercise.sets,
+                                reps: workoutExercise.reps,
+                                isWarmup: workoutExercise.isWarmup,
+                                weightType: workoutExercise.weightType,
+                                weight: workoutExercise.weight,
+                                exercise: {
+                                    id: workoutExercise.exercise.id,
+                                    name: workoutExercise.exercise.name,
+                                    type: workoutExercise.exercise.type,
+                                    exerciseMuscleGroups: workoutExercise.exercise.exerciseMuscleGroups,
+                                },
+                            })),
+                        })),
+                    }))}
+                    isSbdProgram={shouldShowSbdReporting}
+                    oneRmByExerciseId={normalizedOneRMByExercise}
+                />
 
                 <ConfirmationModal
                     isOpen={confirmCopyNextWeek !== null}
