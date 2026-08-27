@@ -6,6 +6,7 @@ import {
     parseReps,
     estimateOneRM,
     estimateOneRMFromRpeTable,
+    intensityFromRpeChart,
     normalizedOneRM,
     calculateEffectiveWeight as calculateEffectiveWeightRaw,
 } from '@/lib/calculations'
@@ -171,6 +172,37 @@ describe('estimateOneRMFromRpeTable', () => {
 
     it('falls back to Epley when reps are outside chart range', () => {
         expect(estimateOneRMFromRpeTable(100, 15, 10)).toBeCloseTo(estimateOneRM(100, 15), 5)
+    })
+})
+
+describe('intensityFromRpeChart', () => {
+    it('returns 100 for 1 rep @ RPE 10', () => {
+        expect(intensityFromRpeChart(1, 10)).toBe(100)
+    })
+
+    it('reads 6 reps @ RPE 8 as 78.6', () => {
+        expect(intensityFromRpeChart(6, 8)).toBe(78.6)
+    })
+
+    it('reads 2 reps @ RPE 8.5 as 90.7', () => {
+        expect(intensityFromRpeChart(2, 8.5)).toBe(90.7)
+    })
+
+    it('normalizes rpe to nearest 0.5 step', () => {
+        expect(intensityFromRpeChart(5, 8.4)).toBe(intensityFromRpeChart(5, 8.5))
+    })
+
+    it('returns null when reps exceed the chart (>12)', () => {
+        expect(intensityFromRpeChart(15, 10)).toBeNull()
+    })
+
+    it('returns null when RPE is below the chart (<6.5)', () => {
+        expect(intensityFromRpeChart(5, 6)).toBeNull()
+    })
+
+    it('returns null on non-finite inputs', () => {
+        expect(intensityFromRpeChart(Number.NaN, 10)).toBeNull()
+        expect(intensityFromRpeChart(5, Number.NaN)).toBeNull()
     })
 })
 

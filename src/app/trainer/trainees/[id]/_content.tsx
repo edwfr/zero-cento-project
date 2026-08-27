@@ -98,6 +98,12 @@ interface PersonalRecord {
     }
 }
 
+interface SbdPointMetric {
+    frequency: number
+    totalLifts: number
+    averageIntensity: number | null
+}
+
 interface PlannedTrainingSetsPoint {
     date: string
     fundamentalSets: {
@@ -109,6 +115,11 @@ interface PlannedTrainingSetsPoint {
         squat: number
         bench: number
         deadlift: number
+    }
+    fundamentalMetrics?: {
+        squat: SbdPointMetric | null
+        bench: SbdPointMetric | null
+        deadlift: SbdPointMetric | null
     }
 }
 
@@ -136,12 +147,6 @@ interface ChartSeries {
 interface SbdKpiRow {
     lift: SbdLiftValue
     label: string
-    frequency: number
-    totalLifts: number
-    averageIntensity: number | null
-}
-
-interface SbdPointMetric {
     frequency: number
     totalLifts: number
     averageIntensity: number | null
@@ -180,12 +185,6 @@ const SBD_COLORS: Record<SbdLiftValue, string> = {
     deadlift: '#DC2626',
 }
 
-const SBD_PATTERNS: Record<SbdLiftValue, string[]> = {
-    squat: ['squat', 'back squat', 'front squat', 'box squat'],
-    bench: ['bench press', 'bench', 'panca'],
-    deadlift: ['deadlift', 'stacco', 'stacco da terra'],
-}
-
 const SBD_LIFTS: SbdLiftValue[] = ['squat', 'bench', 'deadlift']
 
 function normalizeRecordDateKey(recordDate: string): string {
@@ -207,24 +206,6 @@ function formatWeight(weight: number): string {
     }
 
     return Number.isInteger(weight) ? String(weight) : weight.toFixed(1)
-}
-
-function matchSbdLift(exerciseName: string): SbdLiftValue | null {
-    const lowerName = exerciseName.toLowerCase()
-
-    if (SBD_PATTERNS.squat.some((pattern) => lowerName.includes(pattern))) {
-        return 'squat'
-    }
-
-    if (SBD_PATTERNS.bench.some((pattern) => lowerName.includes(pattern))) {
-        return 'bench'
-    }
-
-    if (SBD_PATTERNS.deadlift.some((pattern) => lowerName.includes(pattern))) {
-        return 'deadlift'
-    }
-
-    return null
 }
 
 function getExerciseBadgeStyle(color: string | undefined, isActive: boolean) {
@@ -271,16 +252,6 @@ function getSbdLiftCount(point: PlannedTrainingSetsPoint, lift: SbdLiftValue): n
     }
 
     return Number(point.fundamentalSets[lift] || 0)
-}
-
-function getSbdPointMetric(point: PlannedTrainingSetsPoint, lift: SbdLiftValue): SbdPointMetric {
-    const totalLifts = getSbdLiftCount(point, lift)
-
-    return {
-        frequency: totalLifts > 0 ? 1 : 0,
-        totalLifts,
-        averageIntensity: null,
-    }
 }
 
 export default function TraineeDetailContent() {
@@ -882,41 +853,29 @@ export default function TraineeDetailContent() {
     }, [sbdFilteredPlannedPoints])
 
     const sbdKpiRows = useMemo<SbdKpiRow[]>(() => {
-        const aggregates: Record<
-            SbdLiftValue,
-            {
-                totalLifts: number
-            }
-        > = {
-            squat: {
-                totalLifts: 0,
-            },
-            bench: {
-                totalLifts: 0,
-            },
-            deadlift: {
-                totalLifts: 0,
-            },
-        }
-
-        sbdFilteredPlannedPoints.forEach((point) => {
-            aggregates.squat.totalLifts += getSbdLiftCount(point, 'squat')
-            aggregates.bench.totalLifts += getSbdLiftCount(point, 'bench')
-            aggregates.deadlift.totalLifts += getSbdLiftCount(point, 'deadlift')
-        })
-
         return SBD_LIFTS.map((lift) => {
-            const aggregate = aggregates[lift]
-            const frequency = sbdFilteredPlannedPoints.filter(
-                (point) => getSbdLiftCount(point, lift) > 0
-            ).length
+            let frequency = 0
+            let totalLifts = 0
+            let weightedIntensitySum = 0
+            let intensityWeight = 0
+
+            sbdFilteredPlannedPoints.forEach((point) => {
+                const metric = point.fundamentalMetrics?.[lift]
+                if (!metric) return
+                frequency += metric.frequency
+                totalLifts += metric.totalLifts
+                if (metric.averageIntensity !== null && metric.totalLifts > 0) {
+                    weightedIntensitySum += metric.averageIntensity * metric.totalLifts
+                    intensityWeight += metric.totalLifts
+                }
+            })
 
             return {
                 lift,
                 label: t(`reports.${lift}`),
                 frequency,
-                totalLifts: Number(aggregate.totalLifts.toFixed(1)),
-                averageIntensity: null,
+                totalLifts: Number(totalLifts.toFixed(1)),
+                averageIntensity: intensityWeight > 0 ? weightedIntensitySum / intensityWeight : null,
             }
         })
     }, [sbdFilteredPlannedPoints, t])
@@ -1577,7 +1536,13 @@ export default function TraineeDetailContent() {
                                                         {sbdFilteredPlannedPoints.map((point) => (
                                                             <td key={`${row.lift}-${point.date}`} className="px-3 py-2 align-top">
                                                                 {(() => {
-                                                                    const metric = getSbdPointMetric(point, row.lift)
+                                                                    const metric = point.fundamentalMetrics?.[row.lift] ?? null
+
+                                                                    if (!metric) {
+                                                                        return (
+                                                                            <span className="text-[11px] text-slate-400">-</span>
+                                                                        )
+                                                                    }
 
                                                                     return (
                                                                 <div className="space-y-0.5 text-[11px] text-slate-700">

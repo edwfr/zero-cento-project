@@ -1,3 +1,5 @@
+import { intensityFromRpeChart } from './calculations'
+
 export type FundamentalLift = 'squat' | 'bench' | 'deadlift'
 
 export const FUNDAMENTAL_PATTERNS: Record<FundamentalLift, string[]> = {
@@ -51,6 +53,7 @@ export interface SbdMetricsWorkoutExercise {
     isWarmup: boolean
     weightType: 'absolute' | 'percentage_1rm' | 'percentage_rm' | 'percentage_previous'
     weight: number | null
+    targetRpe: number | null
     exercise: {
         id: string
         name: string
@@ -105,6 +108,15 @@ export function computeWeekSbdMetrics({
 
                         let intensity: number | null = null
                         if (
+                            typeof workoutExercise.targetRpe === 'number' &&
+                            Number.isFinite(workoutExercise.targetRpe) &&
+                            plannedReps > 0
+                        ) {
+                            intensity = intensityFromRpeChart(
+                                plannedReps,
+                                workoutExercise.targetRpe,
+                            )
+                        } else if (
                             workoutExercise.weightType === 'percentage_1rm' &&
                             typeof workoutExercise.weight === 'number'
                         ) {
@@ -201,4 +213,40 @@ export function computeSbdMetricsByLiftAcrossWeeks({
             metricsByWeekId,
         }
     }).filter((liftMetric) => Object.keys(liftMetric.metricsByWeekId).length > 0)
+}
+
+export interface AggregatedSbdMetric {
+    frequency: number
+    totalLifts: number
+    averageIntensity: number | null
+}
+
+/**
+ * Combine multiple WeekSbdMetric entries (same lift, different weeks) into a single
+ * aggregate. FRQ = Σ frequency, NBL = Σ totalLifts, IM = NBL-weighted average of
+ * averageIntensity (entries with null intensity contribute to NBL but not to IM).
+ */
+export function aggregateWeekMetrics(
+    weekMetrics: Array<Pick<WeekSbdMetric, 'frequency' | 'totalLifts' | 'averageIntensity'>>,
+): AggregatedSbdMetric {
+    let frequency = 0
+    let totalLifts = 0
+    let weightedIntensitySum = 0
+    let intensityWeight = 0
+
+    for (const metric of weekMetrics) {
+        frequency += metric.frequency
+        totalLifts += metric.totalLifts
+
+        if (metric.averageIntensity !== null && metric.totalLifts > 0) {
+            weightedIntensitySum += metric.averageIntensity * metric.totalLifts
+            intensityWeight += metric.totalLifts
+        }
+    }
+
+    return {
+        frequency,
+        totalLifts,
+        averageIntensity: intensityWeight > 0 ? weightedIntensitySum / intensityWeight : null,
+    }
 }

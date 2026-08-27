@@ -18,6 +18,7 @@ export interface ProgramReportSectionWorkoutExercise {
     isWarmup: boolean
     weightType: 'absolute' | 'percentage_1rm' | 'percentage_rm' | 'percentage_previous'
     weight: number | null
+    targetRpe: number | null
     exercise: {
         id: string
         name: string

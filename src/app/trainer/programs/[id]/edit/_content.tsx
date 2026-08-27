@@ -4036,6 +4036,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                 isWarmup: workoutExercise.isWarmup,
                                 weightType: workoutExercise.weightType,
                                 weight: workoutExercise.weight,
+                                targetRpe: workoutExercise.targetRpe,
                                 exercise: {
                                     id: workoutExercise.exercise.id,
                                     name: workoutExercise.exercise.name,

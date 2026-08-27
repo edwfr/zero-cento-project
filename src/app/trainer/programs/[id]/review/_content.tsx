@@ -896,6 +896,7 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                     isWarmup: workoutExercise.isWarmup,
                                     weightType: workoutExercise.weightType,
                                     weight: workoutExercise.weight,
+                                    targetRpe: workoutExercise.targetRpe,
                                     exercise: {
                                         id: workoutExercise.exercise.id,
                                         name: workoutExercise.exercise.name,

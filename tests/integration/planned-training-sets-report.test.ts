@@ -13,6 +13,9 @@ vi.mock('@/lib/prisma', () => ({
         trainingProgram: {
             findMany: vi.fn(),
         },
+        personalRecord: {
+            findMany: vi.fn(),
+        },
     },
 }))
 
@@ -32,6 +35,7 @@ import { prisma } from '@/lib/prisma'
 describe('GET /api/users/[id]/reports/planned-training-sets', () => {
     beforeEach(() => {
         vi.clearAllMocks()
+        vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([])
     })
 
     it('aggregates muscle groups and fundamental sets across programs', async () => {
@@ -56,7 +60,11 @@ describe('GET /api/users/[id]/reports/planned-training-sets', () => {
                                         sets: 4,
                                         reps: '5',
                                         isWarmup: false,
+                                        weightType: 'percentage_1rm',
+                                        weight: 80,
+                                        targetRpe: null,
                                         exercise: {
+                                            id: 'ex-squat',
                                             name: 'Back Squat',
                                             type: 'fundamental',
                                             exerciseMuscleGroups: [
@@ -72,7 +80,11 @@ describe('GET /api/users/[id]/reports/planned-training-sets', () => {
                                         sets: 3,
                                         reps: '6',
                                         isWarmup: false,
+                                        weightType: 'percentage_1rm',
+                                        weight: 75,
+                                        targetRpe: null,
                                         exercise: {
+                                            id: 'ex-bench',
                                             name: 'Panca Piana',
                                             type: 'fundamental',
                                             exerciseMuscleGroups: [
@@ -88,7 +100,11 @@ describe('GET /api/users/[id]/reports/planned-training-sets', () => {
                                         sets: 2,
                                         reps: '1',
                                         isWarmup: true,
+                                        weightType: 'percentage_1rm',
+                                        weight: 50,
+                                        targetRpe: null,
                                         exercise: {
+                                            id: 'ex-dl',
                                             name: 'Deadlift',
                                             type: 'fundamental',
                                             exerciseMuscleGroups: [
@@ -123,7 +139,11 @@ describe('GET /api/users/[id]/reports/planned-training-sets', () => {
                                         sets: 5,
                                         reps: '2',
                                         isWarmup: false,
+                                        weightType: 'percentage_1rm',
+                                        weight: 90,
+                                        targetRpe: null,
                                         exercise: {
+                                            id: 'ex-dl',
                                             name: 'Stacco da terra',
                                             type: 'fundamental',
                                             exerciseMuscleGroups: [
@@ -158,6 +178,17 @@ describe('GET /api/users/[id]/reports/planned-training-sets', () => {
             bench: 18,
             deadlift: 0,
         })
+        expect(body.data.points[0].fundamentalMetrics.squat).toEqual({
+            frequency: 1,
+            totalLifts: 20,
+            averageIntensity: 80,
+        })
+        expect(body.data.points[0].fundamentalMetrics.bench).toEqual({
+            frequency: 1,
+            totalLifts: 18,
+            averageIntensity: 75,
+        })
+        expect(body.data.points[0].fundamentalMetrics.deadlift).toBeNull()
         expect(body.data.points[1].fundamentalSets).toEqual({
             squat: 0,
             bench: 0,
@@ -167,6 +198,86 @@ describe('GET /api/users/[id]/reports/planned-training-sets', () => {
             squat: 0,
             bench: 0,
             deadlift: 10,
+        })
+        expect(body.data.points[1].fundamentalMetrics.deadlift).toEqual({
+            frequency: 1,
+            totalLifts: 10,
+            averageIntensity: 90,
+        })
+    })
+
+    it('counts distinct workouts per week for FRQ and derives IM from RPE table', async () => {
+        vi.mocked(requireAuth).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue({ id: 'assoc-1' } as any)
+        vi.mocked(prisma.trainingProgram.findMany).mockResolvedValue([
+            {
+                id: 'program-rpe',
+                title: 'Programma RPE',
+                startDate: new Date('2026-02-02T00:00:00.000Z'),
+                weeks: [
+                    {
+                        id: 'week-rpe-1',
+                        weekNumber: 1,
+                        startDate: new Date('2026-02-02T00:00:00.000Z'),
+                        workouts: [
+                            {
+                                id: 'workout-mon',
+                                workoutExercises: [
+                                    {
+                                        id: 'we-mon',
+                                        sets: 3,
+                                        reps: '5',
+                                        isWarmup: false,
+                                        weightType: 'absolute',
+                                        weight: 100,
+                                        targetRpe: 8,
+                                        exercise: {
+                                            id: 'ex-squat',
+                                            name: 'Back Squat',
+                                            type: 'fundamental',
+                                            exerciseMuscleGroups: [],
+                                        },
+                                    },
+                                ],
+                            },
+                            {
+                                id: 'workout-wed',
+                                workoutExercises: [
+                                    {
+                                        id: 'we-wed',
+                                        sets: 2,
+                                        reps: '5',
+                                        isWarmup: false,
+                                        weightType: 'absolute',
+                                        weight: 100,
+                                        targetRpe: 8,
+                                        exercise: {
+                                            id: 'ex-squat',
+                                            name: 'Back Squat',
+                                            type: 'fundamental',
+                                            exerciseMuscleGroups: [],
+                                        },
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ] as any)
+
+        const request = new Request('http://localhost:3000/api/users/trainee-uuid-1/reports/planned-training-sets')
+        const response = await GET(request, { params: Promise.resolve({ id: 'trainee-uuid-1' }) })
+        const body = await response.json()
+
+        expect(response.status).toBe(200)
+        expect(body.data.points).toHaveLength(1)
+        // 2 workout distinti in una settimana → FRQ = 2 (NON 1 punto)
+        // NBL = 3x5 + 2x5 = 25; IM from Tuchscherer table[5][8] = 81.1%
+        expect(body.data.points[0].fundamentalMetrics.squat).toEqual({
+            frequency: 2,
+            totalLifts: 25,
+            averageIntensity: 81.1,
         })
     })
 

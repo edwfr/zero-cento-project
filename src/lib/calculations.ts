@@ -428,6 +428,26 @@ export function estimateOneRMFromRpeTable(weight: number, reps: number, rpe = 10
 }
 
 /**
+ * Look up the % of 1RM from Mike Tuchscherer's RPE chart for a (reps, rpe) pair.
+ * Returns null when the combination is outside the chart (reps > 12, rpe < 6.5).
+ */
+export function intensityFromRpeChart(reps: number, rpe: number): number | null {
+    if (!Number.isFinite(reps) || !Number.isFinite(rpe)) return null
+
+    const normalizedReps = Math.round(reps)
+    if (normalizedReps < 1) return null
+
+    const byReps = MIKE_TUCHSCHERER_RPE_CHART[normalizedReps]
+    if (!byReps) return null
+
+    const normalizedRpe = normalizeRpeToHalfStep(rpe)
+    const percentage = byReps[toRpeChartKey(normalizedRpe)]
+    if (typeof percentage !== 'number' || percentage <= 0) return null
+
+    return percentage
+}
+
+/**
  * Canonical normalized 1RM used across the app.
  * Mike Tuchscherer RPE table at RPE 10, rounded to the nearest 0.5 kg.
  */
