@@ -269,7 +269,7 @@ export function estimateOneRM(weight: number, reps: number): number {
     return weight * (1 + reps / 30)
 }
 
-export const MIKE_TUCHSCHERER_RPE_LEVELS = [10, 9.5, 9, 8.5, 8, 7.5, 7, 6.5] as const
+export const MIKE_TUCHSCHERER_RPE_LEVELS = [10, 9.5, 9, 8.5, 8, 7.5, 7, 6.5, 6, 5.5, 5] as const
 export const MIKE_TUCHSCHERER_REP_RANGE = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const
 
 export const MIKE_TUCHSCHERER_RPE_CHART: Record<number, Record<string, number>> = {
@@ -282,6 +282,9 @@ export const MIKE_TUCHSCHERER_RPE_CHART: Record<number, Record<string, number>> 
         '7.5': 90.7,
         '7': 89.2,
         '6.5': 87.8,
+        '6': 86.3,
+        '5.5': 85,
+        '5': 83.7,
     },
     2: {
         '10': 95.5,
@@ -292,6 +295,9 @@ export const MIKE_TUCHSCHERER_RPE_CHART: Record<number, Record<string, number>> 
         '7.5': 87.8,
         '7': 86.3,
         '6.5': 85,
+        '6': 83.7,
+        '5.5': 82.4,
+        '5': 81.1,
     },
     3: {
         '10': 92.2,
@@ -302,6 +308,9 @@ export const MIKE_TUCHSCHERER_RPE_CHART: Record<number, Record<string, number>> 
         '7.5': 85,
         '7': 83.7,
         '6.5': 82.4,
+        '6': 81.1,
+        '5.5': 79.9,
+        '5': 78.6,
     },
     4: {
         '10': 89.2,
@@ -312,6 +321,9 @@ export const MIKE_TUCHSCHERER_RPE_CHART: Record<number, Record<string, number>> 
         '7.5': 82.4,
         '7': 81.1,
         '6.5': 79.9,
+        '6': 78.6,
+        '5.5': 77.4,
+        '5': 76.2,
     },
     5: {
         '10': 86.3,
@@ -322,6 +334,9 @@ export const MIKE_TUCHSCHERER_RPE_CHART: Record<number, Record<string, number>> 
         '7.5': 79.9,
         '7': 78.6,
         '6.5': 77.4,
+        '6': 76.2,
+        '5.5': 75.1,
+        '5': 73.9,
     },
     6: {
         '10': 83.7,
@@ -332,6 +347,9 @@ export const MIKE_TUCHSCHERER_RPE_CHART: Record<number, Record<string, number>> 
         '7.5': 77.4,
         '7': 76.2,
         '6.5': 75.1,
+        '6': 73.9,
+        '5.5': 72.3,
+        '5': 70.7,
     },
     7: {
         '10': 81.1,
@@ -342,6 +360,9 @@ export const MIKE_TUCHSCHERER_RPE_CHART: Record<number, Record<string, number>> 
         '7.5': 75.1,
         '7': 73.9,
         '6.5': 72.3,
+        '6': 70.7,
+        '5.5': 69.4,
+        '5': 68,
     },
     8: {
         '10': 78.6,
@@ -352,6 +373,9 @@ export const MIKE_TUCHSCHERER_RPE_CHART: Record<number, Record<string, number>> 
         '7.5': 72.3,
         '7': 70.7,
         '6.5': 69.4,
+        '6': 68,
+        '5.5': 66.7,
+        '5': 65.3,
     },
     9: {
         '10': 76.2,
@@ -362,6 +386,9 @@ export const MIKE_TUCHSCHERER_RPE_CHART: Record<number, Record<string, number>> 
         '7.5': 69.4,
         '7': 68,
         '6.5': 66.7,
+        '6': 65.3,
+        '5.5': 64,
+        '5': 62.6,
     },
     10: {
         '10': 73.9,
@@ -372,6 +399,9 @@ export const MIKE_TUCHSCHERER_RPE_CHART: Record<number, Record<string, number>> 
         '7.5': 66.7,
         '7': 65.3,
         '6.5': 64,
+        '6': 62.6,
+        '5.5': 61.3,
+        '5': 59.9,
     },
     11: {
         '10': 70.7,
@@ -382,6 +412,9 @@ export const MIKE_TUCHSCHERER_RPE_CHART: Record<number, Record<string, number>> 
         '7.5': 64,
         '7': 62.6,
         '6.5': 61.3,
+        '6': 59.9,
+        '5.5': 58.6,
+        '5': 57.2,
     },
     12: {
         '10': 68,
@@ -392,6 +425,9 @@ export const MIKE_TUCHSCHERER_RPE_CHART: Record<number, Record<string, number>> 
         '7.5': 61.3,
         '7': 59.9,
         '6.5': 58.6,
+        '6': 57.2,
+        '5.5': 55.9,
+        '5': 54.5,
     },
 }
 
@@ -429,7 +465,7 @@ export function estimateOneRMFromRpeTable(weight: number, reps: number, rpe = 10
 
 /**
  * Look up the % of 1RM from Mike Tuchscherer's RPE chart for a (reps, rpe) pair.
- * Returns null when the combination is outside the chart (reps > 12, rpe < 6.5).
+ * Returns null when the combination is outside the chart (reps > 12, rpe < 5).
  */
 export function intensityFromRpeChart(reps: number, rpe: number): number | null {
     if (!Number.isFinite(reps) || !Number.isFinite(rpe)) return null

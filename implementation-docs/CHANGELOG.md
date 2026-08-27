@@ -11,6 +11,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [27 Agosto 2026] — Tabella RPE estesa a RPE 6 / 5.5 / 5
+
+**File modificati:** `src/lib/calculations.ts`, `tests/unit/calculations.test.ts`
+**Note:** Estese `MIKE_TUCHSCHERER_RPE_LEVELS` e `MIKE_TUCHSCHERER_RPE_CHART` con tre nuove righe (RPE 6, 5.5, 5) per tutte le 12 colonne di reps. Le percentuali sono derivate dalla stessa tabella tramite l'equivalenza RIR (`reps R @ RPE Y = reps (R + 10 − Y) @ RPE 10`); per le colonne alte (reps 11–12 in RPE 5.5/5 e reps 12 in RPE 6) i valori sono estrapolati continuando il delta osservato di 1.3/1.4% per step di 0.5 RPE sulla colonna reps=12. La tabella nel componente `RPEOneRMTable` mostra automaticamente le nuove righe (è data-driven), e `estimateOneRMFromRpeTable` / `intensityFromRpeChart` ora restituiscono valori validi anche per RPE fino a 5. Aggiornato il commento del contratto di `intensityFromRpeChart` e il test che pinava `rpe < 6.5 → null`.
+
 ### [27 Agosto 2026] — Note ricche private per atleta
 
 **Task checklist:** #11.149

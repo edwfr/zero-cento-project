@@ -196,8 +196,8 @@ describe('intensityFromRpeChart', () => {
         expect(intensityFromRpeChart(15, 10)).toBeNull()
     })
 
-    it('returns null when RPE is below the chart (<6.5)', () => {
-        expect(intensityFromRpeChart(5, 6)).toBeNull()
+    it('returns null when RPE is below the chart (<5)', () => {
+        expect(intensityFromRpeChart(5, 4.5)).toBeNull()
     })
 
     it('returns null on non-finite inputs', () => {
