@@ -3957,7 +3957,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
 
 
-                    {!readOnly && (
+                    {!readOnly && program.status === 'draft' && (
                         <div className="flex space-x-4 mt-8">
                             <Link
                                 href={reviewProgramHref}
