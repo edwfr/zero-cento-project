@@ -62,7 +62,7 @@ export async function POST(
             )
         }
 
-        const { traineeNotes, exercises } = parsed.data
+        const { traineeNotes, sleepQuality, stressLevel, nutritionQuality, exercises } = parsed.data
 
         // 1. Single ownership check: workout belongs to a program owned by this trainee.
         //    Also returns the set of valid workoutExercise ids in one query.
@@ -170,7 +170,12 @@ export async function POST(
             ),
             prisma.workout.update({
                 where: { id: workoutId },
-                data: { traineeNotes: traineeNotes ?? null },
+                data: {
+                    traineeNotes: traineeNotes ?? null,
+                    sleepQuality: sleepQuality ?? null,
+                    stressLevel: stressLevel ?? null,
+                    nutritionQuality: nutritionQuality ?? null,
+                },
                 select: { id: true },
             }),
         ])

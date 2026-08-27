@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
-import { CheckCircle2, ChevronDown, ChevronUp, Circle, Plus } from 'lucide-react'
+import { CheckCircle2, ChevronDown, ChevronUp, Circle, Plus, Star } from 'lucide-react'
 import type { WeekType } from '@prisma/client'
 import { SkeletonTable, WeekTypeBadge } from '@/components'
 import LoadingSpinner from '@/components/LoadingSpinner'
@@ -32,6 +32,9 @@ interface TestResultWorkout {
     dayIndex: number
     isCompleted: boolean
     workoutSummaryComment: string | null
+    sleepQuality: number | null
+    stressLevel: number | null
+    nutritionQuality: number | null
     comments: string[]
     rows: TestResultRow[]
 }
@@ -491,6 +494,32 @@ export default function ProgramTestResultsContent() {
                                                                 <p className="mt-1 text-sm text-gray-700 break-words">
                                                                     {workout.workoutSummaryComment || t('testResults.noWorkoutSummary')}
                                                                 </p>
+                                                                <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                                                                    {([
+                                                                        ['sleepQuality', workout.sleepQuality],
+                                                                        ['stressLevel', workout.stressLevel],
+                                                                        ['nutritionQuality', workout.nutritionQuality],
+                                                                    ] as const).map(([key, value]) => (
+                                                                        <div key={key}>
+                                                                            <p className="text-xs font-semibold text-gray-600">
+                                                                                {t(`testResults.${key}`)}
+                                                                            </p>
+                                                                            <div className="mt-1 flex" aria-label={value === null
+                                                                                ? t('testResults.ratingNotProvided')
+                                                                                : t('testResults.ratingValue', { value })}>
+                                                                                {Array.from({ length: 5 }, (_, index) => (
+                                                                                    <Star
+                                                                                        key={index}
+                                                                                        aria-hidden="true"
+                                                                                        className={`h-5 w-5 ${value !== null && index < value
+                                                                                            ? 'fill-yellow-400 text-yellow-400'
+                                                                                            : 'text-gray-300'}`}
+                                                                                    />
+                                                                                ))}
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
                                                             </div>
                                                         </>
                                                     )

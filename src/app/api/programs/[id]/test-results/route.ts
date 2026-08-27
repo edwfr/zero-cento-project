@@ -66,6 +66,9 @@ export async function GET(
                                 dayIndex: true,
                                 isCompleted: true,
                                 traineeNotes: true,
+                                sleepQuality: true,
+                                stressLevel: true,
+                                nutritionQuality: true,
                                 workoutExercises: {
                                     where: {
                                         isWarmup: false,
@@ -180,6 +183,9 @@ export async function GET(
                     dayIndex: workout.dayIndex,
                     isCompleted: workout.isCompleted,
                     workoutSummaryComment: normalizeOptionalText(workout.traineeNotes),
+                    sleepQuality: workout.sleepQuality ?? null,
+                    stressLevel: workout.stressLevel ?? null,
+                    nutritionQuality: workout.nutritionQuality ?? null,
                     comments,
                     rows,
                 }

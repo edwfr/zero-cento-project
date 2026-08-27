@@ -37,6 +37,9 @@ describe('ProgramTestResultsContent', () => {
                                     dayIndex: 1,
                                     isCompleted: true,
                                     workoutSummaryComment: 'Commento riepilogo',
+                                    sleepQuality: 4,
+                                    stressLevel: null,
+                                    nutritionQuality: 2,
                                     comments: [],
                                     rows: [
                                         {
@@ -96,6 +99,11 @@ describe('ProgramTestResultsContent', () => {
         expect(bodyRows[1]).toHaveClass('bg-gray-50')
         expect(screen.getByLabelText('testResults.workoutCompletedStatus')).toBeInTheDocument()
         expect(screen.getByText('weekTypes.test')).toBeInTheDocument()
+        expect(screen.getByText('testResults.sleepQuality')).toBeInTheDocument()
+        expect(screen.getByText('testResults.stressLevel')).toBeInTheDocument()
+        expect(screen.getByText('testResults.nutritionQuality')).toBeInTheDocument()
+        expect(screen.getAllByLabelText('testResults.ratingValue')).toHaveLength(2)
+        expect(screen.getByLabelText('testResults.ratingNotProvided')).toBeInTheDocument()
         expect(screen.queryByText('editProgram.workoutsConfiguredShort')).not.toBeInTheDocument()
         expect(screen.queryByText('editProgram.exercisesCount')).not.toBeInTheDocument()
     })

@@ -22,6 +22,7 @@ import {
     PlayCircle,
     ChevronLeft,
     ChevronRight,
+    Star,
     Zap,
 } from 'lucide-react'
 import YoutubeEmbed from '@/components/YoutubeEmbed'
@@ -89,6 +90,9 @@ interface Workout {
     id: string
     dayIndex: number
     traineeNotes: string | null
+    sleepQuality: number | null
+    stressLevel: number | null
+    nutritionQuality: number | null
     weekNumber: number
     weekType: WeekType
     program: {
@@ -175,6 +179,9 @@ export default function WorkoutDetailContent() {
     const [savedExerciseNotes, setSavedExerciseNotes] = useState<Record<string, string>>({})
     const [exerciseCompleted, setExerciseCompleted] = useState<Record<string, boolean>>({})
     const [globalNotes, setGlobalNotes] = useState('')
+    const [sleepQuality, setSleepQuality] = useState<number | null>(null)
+    const [stressLevel, setStressLevel] = useState<number | null>(null)
+    const [nutritionQuality, setNutritionQuality] = useState<number | null>(null)
     const [expandedVideos, setExpandedVideos] = useState<Record<string, boolean>>({})
     const [currentStep, setCurrentStep] = useState(0)
     const [recapRefreshSignal, setRecapRefreshSignal] = useState(0)
@@ -268,6 +275,9 @@ export default function WorkoutDetailContent() {
             setExerciseCompleted(initialCompleted)
             // Pre-fill workout summary from traineeNotes (not from any exercise feedback)
             setGlobalNotes(data.data.workout.traineeNotes ?? '')
+            setSleepQuality(data.data.workout.sleepQuality ?? null)
+            setStressLevel(data.data.workout.stressLevel ?? null)
+            setNutritionQuality(data.data.workout.nutritionQuality ?? null)
             // Restore last step from localStorage, clamped to valid range
             let resumeStep = 0
             try {
@@ -302,6 +312,9 @@ export default function WorkoutDetailContent() {
             if (typeof parsed?.globalNotes === 'string') {
                 setGlobalNotes(parsed.globalNotes)
             }
+            if (typeof parsed?.sleepQuality === 'number') setSleepQuality(parsed.sleepQuality)
+            if (typeof parsed?.stressLevel === 'number') setStressLevel(parsed.stressLevel)
+            if (typeof parsed?.nutritionQuality === 'number') setNutritionQuality(parsed.nutritionQuality)
             // Do not restore feedbackData / exerciseRPE / exerciseNotes from localStorage.
             // Server state is authoritative for autosaved exercise data.
         } catch {
@@ -318,6 +331,9 @@ export default function WorkoutDetailContent() {
                     exerciseRPE,
                     exerciseNotes,
                     globalNotes,
+                    sleepQuality,
+                    stressLevel,
+                    nutritionQuality,
                     currentStep,
                     savedAt: new Date().toISOString(),
                 })
@@ -325,7 +341,7 @@ export default function WorkoutDetailContent() {
         } catch {
             // localStorage write failed; in-memory state is still valid
         }
-    }, [STORAGE_KEY, exerciseRPE, exerciseNotes, feedbackData, globalNotes, currentStep])
+    }, [STORAGE_KEY, exerciseRPE, exerciseNotes, feedbackData, globalNotes, sleepQuality, stressLevel, nutritionQuality, currentStep])
 
     const clearLocalData = () => {
         try {
@@ -355,7 +371,7 @@ export default function WorkoutDetailContent() {
         if (Object.keys(feedbackData).length > 0) {
             saveLocalData()
         }
-    }, [feedbackData, exerciseRPE, exerciseNotes, globalNotes, saveLocalData])
+    }, [feedbackData, exerciseRPE, exerciseNotes, globalNotes, sleepQuality, stressLevel, nutritionQuality, saveLocalData])
 
     const updateSet = (
         workoutExerciseId: string,
@@ -635,6 +651,9 @@ export default function WorkoutDetailContent() {
 
             const payload = {
                 traineeNotes: globalNotes.trim() || null,
+                sleepQuality,
+                stressLevel,
+                nutritionQuality,
                 exercises: workout!.exercises.map((we) => {
                     const sets = feedbackData[we.id] || []
                     return {
@@ -812,6 +831,12 @@ export default function WorkoutDetailContent() {
                             feedbackData={feedbackData}
                             globalNotes={globalNotes}
                             onNotesChange={setGlobalNotes}
+                            sleepQuality={sleepQuality}
+                            stressLevel={stressLevel}
+                            nutritionQuality={nutritionQuality}
+                            onSleepQualityChange={setSleepQuality}
+                            onStressLevelChange={setStressLevel}
+                            onNutritionQualityChange={setNutritionQuality}
                             onSelectExercise={goToStep}
                             t={t}
                         />
@@ -1360,6 +1385,12 @@ interface FinalStepProps {
     feedbackData: Record<string, SetPerformed[]>
     globalNotes: string
     onNotesChange: (notes: string) => void
+    sleepQuality: number | null
+    stressLevel: number | null
+    nutritionQuality: number | null
+    onSleepQualityChange: (value: number | null) => void
+    onStressLevelChange: (value: number | null) => void
+    onNutritionQualityChange: (value: number | null) => void
     onSelectExercise: (stepIndex: number) => void
     t: (key: string, vars?: Record<string, unknown>) => string
 }
@@ -1372,6 +1403,12 @@ function FinalStep({
     feedbackData,
     globalNotes,
     onNotesChange,
+    sleepQuality,
+    stressLevel,
+    nutritionQuality,
+    onSleepQualityChange,
+    onStressLevelChange,
+    onNutritionQualityChange,
     onSelectExercise,
     t,
 }: FinalStepProps) {
@@ -1463,6 +1500,44 @@ function FinalStep({
                         rows={4}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                     />
+                </div>
+
+                <div className="mt-6 border-t border-gray-100 pt-5">
+                    <p className="text-sm font-semibold text-gray-700 mb-3">
+                        {t('workouts.wellbeingTitle')}
+                    </p>
+                    <div className="grid gap-4 sm:grid-cols-3">
+                        {([
+                            ['sleepQuality', sleepQuality, onSleepQualityChange],
+                            ['stressLevel', stressLevel, onStressLevelChange],
+                            ['nutritionQuality', nutritionQuality, onNutritionQualityChange],
+                        ] as const).map(([key, value, onChange]) => (
+                            <div key={key}>
+                                <p className="text-sm text-gray-600 mb-2">{t(`workouts.${key}`)}</p>
+                                <div className="flex items-center gap-0.5" role="radiogroup" aria-label={t(`workouts.${key}`)}>
+                                    {Array.from({ length: 5 }, (_, index) => {
+                                        const rating = index + 1
+                                        const selected = value !== null && rating <= value
+                                        return (
+                                            <button
+                                                key={rating}
+                                                type="button"
+                                                role="radio"
+                                                aria-checked={value === rating}
+                                                aria-label={t('workouts.ratingValue', { value: rating })}
+                                                onClick={() => onChange(value === rating ? null : rating)}
+                                                className="rounded p-1 focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                                            >
+                                                <Star
+                                                    className={`h-6 w-6 ${selected ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+                                                />
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>

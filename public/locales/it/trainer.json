@@ -346,7 +346,12 @@
         "colComments": "Commenti",
         "noComments": "-",
         "workoutSummaryLabel": "Commento workout",
-        "noWorkoutSummary": "-"
+        "noWorkoutSummary": "-",
+        "sleepQuality": "Qualità sonno",
+        "stressLevel": "Stress",
+        "nutritionQuality": "Alimentazione",
+        "ratingValue": "Valutazione {{value}} su 5",
+        "ratingNotProvided": "Valutazione non inserita"
     },
     "weekTypes": {
         "tecnica": "Settimana Tecnica",

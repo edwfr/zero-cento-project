@@ -69,6 +69,9 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
 
         const body = {
             traineeNotes: 'great session',
+            sleepQuality: 4,
+            stressLevel: 2,
+            nutritionQuality: 5,
             exercises: [
                 {
                     workoutExerciseId: UUIDS.wex1,
@@ -165,6 +168,16 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
                 data: { isCompleted: true },
             })
         )
+        expect(prisma.workout.update).toHaveBeenCalledWith({
+            where: { id: UUIDS.workout },
+            data: {
+                traineeNotes: 'great session',
+                sleepQuality: 4,
+                stressLevel: 2,
+                nutritionQuality: 5,
+            },
+            select: { id: true },
+        })
         expect(prisma.workoutExercise.update).toHaveBeenNthCalledWith(
             2,
             expect.objectContaining({

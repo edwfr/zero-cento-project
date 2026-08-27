@@ -745,6 +745,8 @@
       File: `src/app/trainer/programs/[id]/tests/_content.tsx`, `public/locales/{en,it}/trainer.json`, `tests/unit/program-test-results-content.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
 - [x] **11.147** `/trainer/programs/[id]/tests`: rimuovere i conteggi di workout configurati e di esercizi dalla vista dei feedback trainee ✅ _21 Agosto 2026_  
       File: `src/app/trainer/programs/[id]/tests/_content.tsx`, `tests/unit/program-test-results-content.test.tsx`, `implementation-docs/CHECKLIST.md`, `implementation-docs/CHANGELOG.md`
+- [x] **11.148** Feedback workout trainee: aggiungere rating opzionali 1-5 per qualita sonno, stress e alimentazione, persisterli su `Workout` e mostrarli nella vista risultati trainer ✅ _27 Agosto 2026_  
+      File: `prisma/schema.prisma`, `src/schemas/feedback.ts`, `src/app/api/trainee/workouts/[id]/submit/route.ts`, `src/app/api/programs/[id]/test-results/route.ts`, `src/app/trainee/workouts/[id]/_content.tsx`, `src/app/trainer/programs/[id]/tests/_content.tsx`, `public/locales/{en,it}/{trainee,trainer}.json`, `tests/unit/schemas.test.ts`, `tests/unit/program-test-results-content.test.tsx`, `tests/integration/trainee-workout-submit.test.ts`, `tests/integration/program-test-results.test.ts`, `implementation-docs/CHANGELOG.md`
 
 ---
 

@@ -17,6 +17,46 @@ import {
     loginSchema,
     userListFilterSchema,
 } from '@/schemas/user'
+import { workoutSubmitSchema } from '@/schemas/feedback'
+
+const validWorkoutSubmit = {
+    traineeNotes: null,
+    exercises: [{
+        workoutExerciseId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+        actualRpe: null,
+        sets: [{ setNumber: 1, completed: true, reps: 5, weight: 100, actualRpe: null }],
+    }],
+}
+
+describe('workoutSubmitSchema wellbeing ratings', () => {
+    it('accepts optional ratings from 1 to 5', () => {
+        const result = workoutSubmitSchema.safeParse({
+            ...validWorkoutSubmit,
+            sleepQuality: 1,
+            stressLevel: 3,
+            nutritionQuality: 5,
+        })
+
+        expect(result.success).toBe(true)
+    })
+
+    it.each([
+        ['sleepQuality', 0],
+        ['stressLevel', 6],
+        ['nutritionQuality', 2.5],
+    ])('rejects %s=%s', (field, value) => {
+        const result = workoutSubmitSchema.safeParse({
+            ...validWorkoutSubmit,
+            [field]: value,
+        })
+
+        expect(result.success).toBe(false)
+    })
+
+    it('accepts omitted ratings for backward compatibility', () => {
+        expect(workoutSubmitSchema.safeParse(validWorkoutSubmit).success).toBe(true)
+    })
+})
 
 // ─── Exercise Schema ──────────────────────────────────────────────────────────
 

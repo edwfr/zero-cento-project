@@ -57,6 +57,9 @@ export const weekFeedbackSchema = z.object({
 
 export const workoutSubmitSchema = z.object({
     traineeNotes: z.string().max(1000, 'validation.notesTooLong').nullish(),
+    sleepQuality: z.number().int().min(1).max(5).nullish(),
+    stressLevel: z.number().int().min(1).max(5).nullish(),
+    nutritionQuality: z.number().int().min(1).max(5).nullish(),
     exercises: z
         .array(
             z.object({

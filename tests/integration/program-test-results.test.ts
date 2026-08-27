@@ -56,6 +56,9 @@ describe('GET /api/programs/[id]/test-results', () => {
                         {
                             id: 'wo-1',
                             dayIndex: 1,
+                            sleepQuality: 4,
+                            stressLevel: 2,
+                            nutritionQuality: 5,
                             traineeNotes: 'Solid session',
                             workoutExercises: [
                                 {
@@ -131,6 +134,11 @@ describe('GET /api/programs/[id]/test-results', () => {
             weightUsed: '102.5 / 102.5 / 102.5',
             rpe: 8,
             comments: 'Felt good',
+        })
+        expect(body.data.weeks[0].workouts[0]).toMatchObject({
+            sleepQuality: 4,
+            stressLevel: 2,
+            nutritionQuality: 5,
         })
 
         // Backward-compatible alias retained for existing clients.

@@ -346,7 +346,12 @@
         "colComments": "Comments",
         "noComments": "-",
         "workoutSummaryLabel": "Workout summary comment",
-        "noWorkoutSummary": "-"
+        "noWorkoutSummary": "-",
+        "sleepQuality": "Sleep quality",
+        "stressLevel": "Stress",
+        "nutritionQuality": "Nutrition",
+        "ratingValue": "Rating {{value}} out of 5",
+        "ratingNotProvided": "Rating not provided"
     },
     "weekTypes": {
         "tecnica": "Technique Week",

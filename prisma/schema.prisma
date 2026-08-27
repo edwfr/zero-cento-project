@@ -251,6 +251,9 @@ model Workout {
   weekId       String
   dayIndex     Int
   traineeNotes String? @map("trainee_notes")
+  sleepQuality Int?    @map("sleep_quality")
+  stressLevel  Int?    @map("stress_level")
+  nutritionQuality Int? @map("nutrition_quality")
   isCompleted  Boolean @default(false)
 
   // Relations

@@ -11,6 +11,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [27 Agosto 2026] — Rating benessere nel feedback workout
+
+**Task checklist:** #11.148
+**File modificati:** `prisma/schema.prisma`, `src/schemas/feedback.ts`, `src/app/api/trainee/workouts/[id]/submit/route.ts`, `src/app/api/programs/[id]/test-results/route.ts`, `src/app/trainee/workouts/[id]/_content.tsx`, `src/app/trainer/programs/[id]/tests/_content.tsx`, `public/locales/{en,it}/{trainee,trainer}.json`, `tests/unit/schemas.test.ts`, `tests/unit/program-test-results-content.test.tsx`, `tests/integration/trainee-workout-submit.test.ts`, `tests/integration/program-test-results.test.ts`
+**Note:** Aggiunti i rating opzionali 1-5 per qualita sonno, stress e alimentazione direttamente su `Workout`. Il trainee li seleziona nella schermata finale con stelle grigie/gialle; il submit li salva insieme al commento, il reload li reidrata e la vista risultati trainer li mostra sotto il commento. Le colonne `sleep_quality`, `stress_level` e `nutrition_quality` sono state aggiunte manualmente al database tramite script SQL e il client Prisma e stato rigenerato.
 ### [27 Agosto 2026] — Report SBD trainee allineato al programma (FRQ/NBL/IM) + IM da RPE Tuchscherer
 
 **File modificati:** `src/lib/calculations.ts`, `src/lib/program-sbd-metrics.ts`, `src/app/api/users/[id]/reports/planned-training-sets/route.ts`, `src/app/trainer/trainees/[id]/_content.tsx`, `src/app/trainer/programs/[id]/edit/_content.tsx`, `src/app/trainer/programs/[id]/review/_content.tsx`, `src/components/ProgramReportSection.tsx`, `src/components/ProgramChartsDrawer.tsx`, `tests/unit/program-sbd-metrics.test.ts`, `tests/integration/planned-training-sets-report.test.ts`, `tests/unit/trainer-trainee-detail-sbd-report.test.tsx`
