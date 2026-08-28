@@ -34,7 +34,7 @@ Benvenuto su ZeroCento - Completa la tua registrazione
                     <tr>
                         <td style="padding: 40px 40px 20px; text-align: center;">
                             <!-- Opzione 1: Logo da URL pubblico (consigliata) -->
-                            <img src="https://zero-cento-project.vercel.app/images/logo/logo.png"
+                            <img src="https://zerocento-bodylab.it/images/logo/logo.png"
      alt="ZeroCento Logo"
      width="80"
      height="80"
@@ -119,7 +119,7 @@ Benvenuto su ZeroCento - Completa la tua registrazione
 
 ---
 
-## 2. Template Reset Password (Magic Link)
+## 2. Template Reset Password (Reset Password)
 
 **Quando si usa**: Quando l'utente clicca "Password dimenticata?" e richiede il reset  
 **Percorso in Dashboard**: Authentication → Email Templates → **Reset Password**
@@ -148,7 +148,7 @@ Recupero password - ZeroCento
                     <!-- Header con Logo -->
                     <tr>
                         <td style="padding: 40px 40px 20px; text-align: center;">
-                            <img src="https://zero-cento-project.vercel.app/images/logo/logo.png"
+                            <img src="https://zerocento-bodylab.it/images/logo/logo.png"
                                  alt="ZeroCento Logo" 
                                  width="80" 
                                  height="80" 
@@ -222,94 +222,6 @@ Recupero password - ZeroCento
                             </p>
                             <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #9CA3AF; text-align: center;">
                                 © 2026 ZeroCento - La tua piattaforma di allenamento personalizzato
-                            </p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>
-```
-
----
-
-## 3. Template Conferma Email (opzionale)
-
-**Quando si usa**: Se abiliti la conferma email per nuovi utenti  
-**Percorso in Dashboard**: Authentication → Email Templates → **Confirm signup**
-
-### Configurazione
-
-**Subject:**
-```
-Conferma il tuo indirizzo email - ZeroCento
-```
-
-**Email Template (HTML):**
-```html
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conferma Email - ZeroCento</title>
-</head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f9fafb;">
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f9fafb;">
-        <tr>
-            <td style="padding: 40px 20px;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
-                    <!-- Header -->
-                    <tr>
-                        <td style="padding: 40px 40px 20px; text-align: center;">
-                            <img src="{{ .SiteURL }}/images/logo/logo.png" 
-                                 alt="ZeroCento Logo" 
-                                 width="80" 
-                                 height="80" 
-                                 style="display: block; margin: 0 auto 20px; max-width: 80px; height: auto;" />
-                            <h1 style="margin: 0; font-size: 28px; font-weight: 700; color: #111827; line-height: 1.2;">
-                                Conferma il tuo indirizzo email
-                            </h1>
-                        </td>
-                    </tr>
-
-                    <!-- Corpo -->
-                    <tr>
-                        <td style="padding: 20px 40px;">
-                            <p style="margin: 0 0 16px; font-size: 16px; line-height: 1.6; color: #374151;">
-                                Grazie per esserti registrato su <strong>ZeroCento</strong>!
-                            </p>
-                            <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #374151;">
-                                Clicca sul pulsante qui sotto per confermare il tuo indirizzo email:
-                            </p>
-
-                            <!-- CTA Button -->
-                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                <tr>
-                                    <td style="text-align: center; padding: 10px 0 30px;">
-                                        <a href="{{ .ConfirmationURL }}" 
-                                           style="display: inline-block; padding: 16px 40px; background-color: #FFA700; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px; border-radius: 8px; box-shadow: 0 2px 4px rgba(255, 167, 0, 0.3);">
-                                            Conferma Email
-                                        </a>
-                                    </td>
-                                </tr>
-                            </table>
-
-                            <!-- Link alternativo -->
-                            <p style="margin: 24px 0 0; font-size: 13px; line-height: 1.5; color: #6B7280;">
-                                Oppure copia questo link:<br>
-                                <a href="{{ .ConfirmationURL }}" style="color: #FFA700; word-break: break-all;">{{ .ConfirmationURL }}</a>
-                            </p>
-                        </td>
-                    </tr>
-
-                    <!-- Footer -->
-                    <tr>
-                        <td style="padding: 30px 40px; border-top: 1px solid #E5E7EB;">
-                            <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #9CA3AF; text-align: center;">
-                                Se non ti sei registrato, ignora questa email.
                             </p>
                         </td>
                     </tr>
