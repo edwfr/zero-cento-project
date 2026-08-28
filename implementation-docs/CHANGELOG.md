@@ -11,6 +11,51 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [28 Agosto 2026] — Strategia Branching test a consumo
+
+**File modificati:** `implementation-docs/go-live-deployment-plan-2026-08.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Documentata la strategia di eliminare il branch Supabase `test` quando non serve e ricrearlo solo durante le sessioni di modifica e verifica. Aggiornati i costi: il piano Pro costa $25/mese, mentre il Branching e fatturato a consumo ($0,01344/ora per branch). Chiarito inoltre che lo schema viene sincronizzato manualmente perche GitHub non e collegato a Supabase.
+
+### [28 Agosto 2026] — Costo Supabase Branching corretto
+
+**File modificati:** `implementation-docs/go-live-deployment-plan-2026-08.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Corretto il piano: i $25/mese del piano Supabase Pro non includono il costo del Database Branching. Il branch persistente `test` e fatturato a $0,01344/ora, circa $9,80/mese se attivo 24/7. Aggiunta la raccomandazione di mantenere attivo lo Spend Cap.
+
+### [28 Agosto 2026] — API key Resend dedicata al test
+
+**File modificati:** `implementation-docs/go-live-deployment-plan-2026-08.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Registrata la creazione di una seconda API key Resend dedicata all’ambiente test. La chiave non e stata inserita nel repository; resta da verificare che il branch Supabase `test` la utilizzi effettivamente.
+
+### [28 Agosto 2026] — SMTP Resend configurato anche sul branch test
+
+**File modificati:** `implementation-docs/go-live-deployment-plan-2026-08.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Registrata la configurazione Custom SMTP Resend anche sul branch Supabase `test`, oltre al branch `main` di produzione. Restano da eseguire i test di invio e di deliverability; il deployment web del dominio test resta subordinato a Vercel Pro.
+
+### [28 Agosto 2026] — DMARC configurato
+
+**File modificati:** `implementation-docs/go-live-deployment-plan-2026-08.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Registrata la configurazione del record DMARC su Aruba. Restano da attendere la propagazione DNS e la verifica finale del dominio in Resend.
+
+### [28 Agosto 2026] — Record DNS Resend obbligatori configurati
+
+**File modificati:** `implementation-docs/go-live-deployment-plan-2026-08.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Registrata la configurazione su Aruba del record DKIM TXT e dei due record CNAME necessari all’invio tramite Resend. Il record DMARC mostrato come opzionale in Resend resta da aggiungere in seguito; la verifica finale del dominio e ancora da eseguire.
+
+### [28 Agosto 2026] — Dominio aggiunto a Resend
+
+**File modificati:** `implementation-docs/go-live-deployment-plan-2026-08.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Segnato come completato l’inserimento di `zerocento-bodylab.it` in Resend. I record DNS di verifica devono essere aggiunti nella gestione DNS Aruba, non in Vercel.
+
+### [28 Agosto 2026] — Account e API key Resend creati
+
+**File modificati:** `implementation-docs/go-live-deployment-plan-2026-08.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Registrati come completati l’account Resend e la generazione della API key. La chiave non e stata inserita nel repository. Restano da aggiungere e verificare il dominio `zerocento-bodylab.it`, configurare i record DNS Aruba e attivare SMTP su Supabase.
+
+### [28 Agosto 2026] — Branching database indipendente da Vercel
+
+**File modificati:** `implementation-docs/go-live-deployment-plan-2026-08.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Chiarito che il branch Supabase `main` resta collegato alla produzione e che il branch Supabase `test`, associato al branch Git `development`, e stato creato come database test isolato. Solo la pubblicazione dell’app su `test.zerocento-bodylab.it` resta subordinata all’upgrade Vercel Pro.
+
 ### [28 Agosto 2026] — Ambienti produzione e test confermati
 
 **File modificati:** `implementation-docs/go-live-deployment-plan-2026-08.md`, `implementation-docs/CHANGELOG.md`

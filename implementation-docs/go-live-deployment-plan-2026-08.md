@@ -3,18 +3,21 @@
 **Data creazione**: 2026-08-28  
 **Ultima revisione**: 2026-08-28  
 **Stato app**: Deployata su Vercel Free + Supabase Pro  
-**Obiettivo**: configurare due ambienti, produzione e test, usando `zerocento-bodylab.it` acquistato tramite Aruba, Supabase Branching e email onboarding branded via Custom SMTP Resend
+**Obiettivo**: attivare inizialmente l’ambiente di produzione su `zerocento-bodylab.it`; preparare gia ora il database test isolato e attivare `test.zerocento-bodylab.it` in seguito, dopo l’upgrade a Vercel Pro
 
 ---
 
 ## 📋 Stato attuale
 - ✅ App deployata su Vercel Free + Supabase Pro
 - ✅ Dominio `zerocento-bodylab.it` acquistato tramite Aruba
-- ✅ Ambienti formalizzati: `zerocento-bodylab.it` (produzione) e `test.zerocento-bodylab.it` (test/staging)
+- ✅ Ambiente attivo: `zerocento-bodylab.it` (produzione)
+- ⏸️ Ambiente test applicativo pianificato: `test.zerocento-bodylab.it` (bloccato fino all’upgrade a Vercel Pro)
+- ✅ Database test creato: branch Supabase `test` (associato al branch Git `development`)
 - ⏸️ Upgrade Vercel Pro rimandato: il progetto resta temporaneamente su Vercel Free/Hobby
-- ⚠️ Email onboarding usa Supabase built-in (mittente generico `noreply@mail.app.supabase.io`) → da migrare a `noreply@zerocento-bodylab.it` via Resend SMTP
+- ⏳ Email onboarding configurata con Supabase Custom SMTP/Resend (mittente `noreply@zerocento-bodylab.it`) → da verificare con email reale
+- ✅ Custom SMTP Resend configurato sui branch Supabase `main` (produzione) e `test` (test)
 - ✅ Codice usa già `inviteUserByEmail()` in [POST /api/users](../src/app/api/users/route.ts#L212) — nessuna modifica applicativa richiesta per Resend
-- ❌ Nessun ambiente di staging isolato: dev locale scrive ancora nello stesso DB Supabase Pro
+- ⏸️ Ambiente test web non attivo: `test.zerocento-bodylab.it` richiede Vercel Pro; il branch Supabase `test` e gia disponibile
 - ❌ Nessun workflow CI (`.github/workflows/` vuoto)
 - ❌ `vercel.json` mancante
 - ⚠️ `npm run type-check` fallisce (pre-deployment-review §I6 — 50+ errori TS in test files da Next 15 async `params`)
@@ -37,17 +40,31 @@
 
 ---
 
-## Database & Ambienti — Supabase Branching (Opzione A) ✅
+## Database & Ambienti — Supabase Branching
 
-**Scenario scelto**: Supabase Pro Branching per isolare prod ↔ staging **con un solo progetto**.
+**Scenario scelto**: Supabase Pro Branching per isolare produzione e test **con un solo progetto**. Il branching database e attivo; il deployment web del test resta sospeso fino a Vercel Pro.
 
 - **Progetto Supabase unico**, region `eu-central-1` (Frankfurt) — GDPR compliant ✅
-- **Branch `main`** → database di produzione (associato a git branch `master`)
-- **Branch `development`** → database di staging (associato a git branch `development`)
-- **Isolamento reale**: migration/seed/test su `test.zerocento-bodylab.it` scrivono solo sul branch staging, **mai** sui dati prod
-- **Ambienti applicativi**: produzione su `zerocento-bodylab.it`; test/staging su `test.zerocento-bodylab.it`
-- **Costo extra**: €0 (incluso in Pro)
-- **Sync schema**: automatico da git tramite integrazione Supabase ↔ GitHub
+- **Branch Supabase `main`** → database di produzione, collegato esclusivamente a `zerocento-bodylab.it` e al git branch `master`
+- **Branch Supabase `test`** → database di test, associato al git branch `development` e destinato a `test.zerocento-bodylab.it`
+- **Isolamento**: migration/seed/test sul branch Supabase `test` scriveranno solo sul database test, **mai** sui dati prod
+- **Ambienti applicativi**: produzione attiva su `zerocento-bodylab.it`; test applicativo non ancora attivo
+- **Costo Branching**: non incluso nel canone Pro; Supabase indica $0,01344 per branch/ora. Un branch persistente `test` attivo 24/7 costa circa $9,80/mese, oltre al piano Pro e agli eventuali consumi aggiuntivi.
+- **Controllo costi**: mantenere attivo lo Spend Cap di Supabase per evitare addebiti oltre le soglie incluse
+- **Sync schema**: gestito manualmente; GitHub non e collegato a Supabase
+
+### Strategia per ridurre il costo del branch test
+
+Il branch Supabase `test` puo essere eliminato quando non serve e ricreato solo durante sessioni di modifica e verifica. In questo modo il costo del branching viene sostenuto solo per il periodo di utilizzo, invece di circa $9,80/mese continuativi. Prima di eliminarlo:
+
+- esportare o annotare le credenziali del branch solo in un password manager;
+- assicurarsi che migration e seed siano presenti nel repository;
+- considerare che un branch ricreato potrebbe non contenere i dati di test precedenti;
+- non usare mai le credenziali del branch `test` nella produzione.
+
+Alternativa senza costo cloud: usare Supabase localmente tramite Docker/Supabase CLI per lo sviluppo. Il database locale non e raggiungibile da un deployment pubblico, ma e adatto per migration, seed e test funzionali locali.
+
+Il piano Pro resta utile soprattutto per la produzione: progetto non sospeso, backup automatici, quote piu ampie, Custom SMTP e accesso al Branching. Il costo del Branching rimane comunque separato.
 
 **Perché non altre opzioni**:
 - ❌ *Un solo DB condiviso* → rischio corruzione dati prod da esperimenti staging
@@ -72,28 +89,29 @@
 
 - [x] Aruba → registrare `zerocento-bodylab.it`
   - Dominio acquistato; verificare prezzo di rinnovo e gestione DNS
-- [ ] Vercel Dashboard → Project → Settings → **Domains** → aggiungere `zerocento-bodylab.it`
+- [ ] Vercel Dashboard → Project → Settings → **Domains** → aggiungere `zerocento-bodylab.it` (produzione)
 - [ ] Assegnare i domini agli ambienti in **Settings → Domains**:
   - `zerocento-bodylab.it` → **Production** (branch `master`)
-  - `test.zerocento-bodylab.it` → **Branch domain**: `development` (staging QA)
+  - `test.zerocento-bodylab.it` → **Branch domain**: `development` (test, da attivare dopo Vercel Pro)
   - `www.zerocento-bodylab.it` → redirect verso `zerocento-bodylab.it`
 - [ ] Su Aruba creare i record DNS richiesti da Vercel per il dominio principale e i sottodomini
-- [ ] Verificare che Vercel Pro sia attivo in un secondo momento — il setup iniziale usa Vercel Free/Hobby
+- [ ] Verificare che Vercel Pro sia attivo in un secondo momento — necessario per attivare l’ambiente test
 
 ---
 
-## FASE 2-bis — Supabase Branching Setup (Giorno 1)
+## FASE 2-bis — Supabase Branching Setup (Giorno 1, completamento parziale)
 
-Sblocca l'ambiente di staging isolato scelto in Opzione A.
+Il database test isolato e stato creato. La pubblicazione dell’app su `test.zerocento-bodylab.it` resta sospesa fino all’attivazione di Vercel Pro.
 
-- [ ] Supabase Dashboard → Project → **Branches** → attivare Branching (richiede Pro attivo)
+- [x] Supabase Dashboard → Project → **Branches** → attivare Branching
 - [ ] Collegare integrazione GitHub → autorizzare accesso al repo `zero-cento-project`
 - [ ] Configurare in Supabase → Settings → Integrations → GitHub:
-  - **Production branch**: `master`
-  - **Preview branches**: `development` (creerà automaticamente branch DB su ogni push)
-- [ ] Verificare creazione branch DB `development`:
-  - Supabase Dashboard → Branches → deve comparire `development` con URL/keys separati
-  - Recuperare `NEXT_PUBLIC_SUPABASE_URL`, `ANON_KEY`, `SERVICE_ROLE_KEY`, `DATABASE_URL`, `DIRECT_URL` del branch staging
+  - **Production branch Git**: `master` (branch Supabase di produzione: `main`)
+  - **Preview branch Git**: `development` (branch Supabase test: `test`)
+- [x] Verificare creazione del branch Supabase `test`:
+  - Supabase Dashboard → Branches → compare `test`
+  - Il branch Supabase `test` corrisponde al branch Git `development`
+- [ ] Recuperare `NEXT_PUBLIC_SUPABASE_URL`, `ANON_KEY`, `SERVICE_ROLE_KEY`, `DATABASE_URL`, `DIRECT_URL` del branch test
 - [ ] Verificare region del branch = `eu-central-1` (branch eredita dalla parent)
 
 ---
@@ -102,7 +120,7 @@ Sblocca l'ambiente di staging isolato scelto in Opzione A.
 
 Vercel Dashboard → Project → Settings → Environment Variables
 
-**⚠️ Attenzione scope Preview**: senza restrizione branch, le var scope=Preview si applicano a **tutte** le PR + tutti i branch non-production. Con Vercel Pro usare **branch-specific env vars** per legare le variabili staging al solo branch `development`.
+**⚠️ Attenzione scope Preview**: senza restrizione branch, le var scope=Preview si applicano a **tutte** le PR + tutti i branch non-production. Con Vercel Pro usare **branch-specific env vars** per legare le variabili del test al branch Git `development` e al branch Supabase `test`.
 
 ### Scope: Production (branch `master`)
 ```
@@ -122,8 +140,8 @@ NEXT_PUBLIC_APP_ENV=production
 NEXT_PUBLIC_APP_URL=https://zerocento-bodylab.it
 ```
 
-### Scope: Preview → Branch `development` (staging)
-Valori dal branch Supabase `development` creato in FASE 2-bis:
+### Scope: Preview → Branch Git `development` / Supabase `test` (configurazione futura)
+Queste variabili verranno aggiunte solo dopo l’attivazione di Vercel Pro; il branch Supabase `test` e gia stato creato:
 ```
 NEXT_PUBLIC_SUPABASE_URL=(staging branch value)
 NEXT_PUBLIC_SUPABASE_ANON_KEY=(staging branch value)
@@ -151,12 +169,12 @@ NEXT_PUBLIC_APP_URL=https://test.zerocento-bodylab.it
 Dipendenza: FASE 2 completata (dominio `zerocento-bodylab.it` acquistato). Se il dominio non è ancora propagato, rimandare al Giorno 2 e usare temporaneamente Supabase built-in.
 
 ### 4.1 Account Resend + verifica dominio
-- [ ] Registrarsi su [resend.com](https://resend.com) (free tier, no carta richiesta)
-- [ ] Dashboard → **Domains** → **Add Domain** → `zerocento-bodylab.it`
-- [ ] Copiare i 3 record DNS forniti da Resend (SPF TXT, DKIM CNAME, MX opzionale)
+- [x] Registrarsi su [resend.com](https://resend.com) (free tier, no carta richiesta)
+- [x] Dashboard → **Domains** → **Add Domain** → `zerocento-bodylab.it`
+- [x] Copiare i 3 record DNS forniti da Resend (DKIM TXT + i 2 CNAME per l’invio)
 
-### 4.2 Aggiungere record DNS su Vercel
-Aruba → gestione DNS del dominio `zerocento-bodylab.it` → aggiungere i record indicati da Resend.
+### 4.2 Aggiungere record DNS su Aruba
+Aruba → area clienti → **Domini** → `zerocento-bodylab.it` → **Gestione DNS** → aggiungere i record indicati da Resend.
 
 | Tipo | Nome | Valore | Note |
 |---|---|---|---|
@@ -164,14 +182,16 @@ Aruba → gestione DNS del dominio `zerocento-bodylab.it` → aggiungere i recor
 | CNAME | `resend._domainkey` | valore fornito da Resend | DKIM |
 | TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:admin@zerocento-bodylab.it` | DMARC (partire con `p=none`, alzare a `p=quarantine` dopo 2–4 settimane) |
 
-- [ ] Attendere propagazione (5 min – 1 h di solito su Vercel DNS)
+- [ ] Attendere propagazione DNS (normalmente da pochi minuti a qualche ora)
 - [ ] Resend Dashboard → Domains → verificare stato **Verified** ✅ prima di procedere
+- [x] Record obbligatori configurati su Aruba: DKIM TXT e i 2 CNAME SPF/Sending
+- [x] DMARC opzionale configurato su Aruba con host `_dmarc`
 
 ### 4.3 Generare API key Resend
-- [ ] Resend → **API Keys** → **Create API Key**
+- [x] Resend → **API Keys** → **Create API Key**
   - Name: `zerocento-supabase-smtp`
   - Permission: **Sending access** limitato al dominio `zerocento-bodylab.it`
-- [ ] Salvare la chiave `re_...` (mostrata una sola volta) in un password manager
+- [x] Salvare la chiave `re_...` (mostrata una sola volta) in un password manager
 
 ### 4.4 Configurare SMTP su Supabase (prod branch)
 Supabase Dashboard → **Auth** → **SMTP Settings** → **Enable Custom SMTP**:
@@ -186,9 +206,10 @@ Sender name:   ZeroCento
 - [ ] Save & Test
 - [ ] Verificare che una "Test email" arrivi da `noreply@zerocento-bodylab.it`
 
-### 4.5 Configurare SMTP sul branch staging Supabase
-- [ ] Ripetere 4.4 sul branch `development` Supabase (stesso host/username, stessa API key, stesso mittente)
-- [ ] In alternativa: creare una seconda API key Resend dedicata a staging per audit separato (raccomandato)
+### 4.5 Configurare SMTP sul branch test Supabase
+- [x] Ripetere 4.4 sul branch Supabase `test`
+- [x] Creare una seconda API key Resend dedicata al test per audit separato
+- [ ] Verificare che la API key test sia quella utilizzata nella configurazione SMTP del branch Supabase `test`
 
 ### 4.6 Verifica deliverability
 - [ ] Inviare email test a un indirizzo Gmail personale
@@ -205,7 +226,7 @@ Sender name:   ZeroCento
 
 ## FASE 4-bis — Supabase Auth Config (Giorno 1) ⚠️ obbligatorio
 
-Senza questa fase i magic link di onboarding falliscono in almeno uno dei due ambienti.
+Senza questa fase i magic link di onboarding non funzioneranno correttamente nell’ambiente di produzione.
 
 - [ ] Supabase Dashboard → **Auth** → **URL Configuration**:
   - **Site URL**: `https://zerocento-bodylab.it`
@@ -221,7 +242,7 @@ Senza questa fase i magic link di onboarding falliscono in almeno uno dei due am
   - **Reset Password**
   - **Change Email Address**
   - Riferimento variabili: `{{ .ConfirmationURL }}`, `{{ .Email }}`, `{{ .SiteURL }}`
-- [ ] Ripetere la config anche sul branch staging (o verificare che sia ereditata dal parent)
+- [ ] Ripetere la configurazione sul branch test quando verra attivato
 
 ---
 
@@ -234,11 +255,11 @@ $env:DIRECT_URL="<PROD DIRECT_URL>"
 npx prisma migrate resolve --applied 20260328000000_init
 npx prisma migrate status   # deve dire: Database schema is up to date
 ```
-Ripetere lo stesso comando sul branch **staging** Supabase creato in FASE 2-bis usando il suo `DIRECT_URL`.
+La ripetizione sul branch Supabase **test** verra eseguita dopo la pubblicazione dell’ambiente test.
 
 ### 5.2 Verifica seed data
 - [ ] Verificare presenza record base (Exercise, MuscleGroup, MovementPattern) in prod via Supabase Studio
-- [ ] Se il branch staging è vuoto: `DIRECT_URL=<staging> npx ts-node prisma/seed.ts`
+- [ ] Se il branch test e vuoto: `DIRECT_URL=<test> npx ts-node prisma/seed.ts` (quando il branch sara disponibile)
 - [ ] **Non rieseguire il seed su prod** se già popolato
 
 ### 5.3 Bootstrap primo admin (produzione)
@@ -250,7 +271,7 @@ Il seed non crea utenti admin. Serve manualmente:
    VALUES (gen_random_uuid(), '<admin email>', 'Admin', 'ZeroCento', 'admin', true, now(), now());
    ```
 3. Primo login → forza reset password via `/force-change-password`
-4. Ripetere sul branch staging con account admin dedicato di test
+4. Ripetere sul branch Supabase `test` con account admin dedicato di test
 
 ---
 
@@ -280,13 +301,13 @@ Il seed non crea utenti admin. Serve manualmente:
 - [ ] **Node 20** verificato in locale (`.nvmrc`) e in CI (`node-version: '20'`).
 
 ### Deploy model scelto: Vercel Git Integration (no CLI in CI)
-Il deploy è gestito dalla GitHub App di Vercel: push su `master` → prod, push su `development` → staging. CI GitHub Actions esegue **solo test + build check**, non chiama la Vercel CLI.
+Il deploy di produzione e gestito dalla GitHub App di Vercel: push su `master` → produzione. Il deployment test sul branch `development` verra aggiunto dopo l’upgrade a Vercel Pro. CI GitHub Actions esegue **solo test + build check**, non chiama la Vercel CLI.
 
 - [ ] Creare `.github/workflows/ci.yml` con:
   - Job `test`: `npm ci` → `npm run lint` → `npm run type-check` → `npm run test:unit` (80% coverage)
   - Job `build`: `npm run build` (verifica no regressioni build; Vercel farà il vero build in deploy)
   - Job `migrate-prod` (solo push su `master`): `npm run prisma:migrate:prod` usando `PRODUCTION_DIRECT_URL`
-  - Job `e2e-staging`: dopo deploy staging → Playwright E2E su `https://test.zerocento-bodylab.it`
+  - Job `e2e-test`: da attivare dopo la pubblicazione dell’ambiente test → Playwright E2E su `https://test.zerocento-bodylab.it`
   - Success criteria: tutti i job verdi prima di merge a `master`
 
   Template partenza: [design/06-deployment.md](../design/06-deployment.md)
@@ -304,7 +325,7 @@ Il deploy è gestito dalla GitHub App di Vercel: push su `master` → prod, push
   ```
   PRODUCTION_DATABASE_URL   # secret — pooled 6543
   PRODUCTION_DIRECT_URL     # secret — direct 5432, per prisma migrate deploy
-  STAGING_URL=https://test.zerocento-bodylab.it
+  TEST_URL=https://test.zerocento-bodylab.it   # da aggiungere quando l’ambiente test sara attivo
   SENTRY_AUTH_TOKEN         # secret — source maps upload
   SENTRY_ORG=zerocento
   SENTRY_PROJECT=zerocento-web
@@ -324,7 +345,7 @@ Il deploy è gestito dalla GitHub App di Vercel: push su `master` → prod, push
 
 - [ ] **UptimeRobot** (free tier):
   - Monitor 1: `https://zerocento-bodylab.it/api/health` — ogni 5 min
-  - Monitor 2: `https://test.zerocento-bodylab.it/api/health` — ogni 5 min
+  - Monitor 2: `https://test.zerocento-bodylab.it/api/health` — da aggiungere quando l’ambiente test sara attivo
   - Alert Contacts: email team
 
 - [ ] **Vercel Analytics** (Pro, gratuito):
@@ -339,28 +360,30 @@ Il deploy è gestito dalla GitHub App di Vercel: push su `master` → prod, push
 
 ## FASE 9 — Smoke Test Go-Live (Giorno 3)
 
-**Prima di lanciare pubblicamente**, eseguire test manuale end-to-end su **entrambi** gli ambienti.
+**Prima di lanciare pubblicamente**, eseguire il test manuale end-to-end sull’ambiente di produzione. La verifica dell’ambiente test verra eseguita dopo l’upgrade a Vercel Pro.
 
-### Su `https://test.zerocento-bodylab.it` (staging)
+### Su `https://test.zerocento-bodylab.it` (test, in seguito)
+
+Questa verifica resta sospesa fino all’attivazione di Vercel Pro e del branch Supabase di test.
 - [ ] Login come admin di test
 - [ ] Admin crea nuovo trainer → email di invito arriva (mittente atteso `noreply@zerocento-bodylab.it` via Resend SMTP)
 - [ ] Verificare header email: `SPF: PASS`, `DKIM: PASS`, `DMARC: PASS`
 - [ ] Trainer clicca link → completa onboarding e imposta password
 - [ ] Trainer crea trainee → email arriva
 - [ ] Trainee clicca link → completa onboarding → vede e completa un workout
-- [ ] Feedback salvati correttamente (verifica in Supabase Studio branch `development`)
-- [ ] Verifica che i dati inseriti **non compaiano** nel branch prod (isolamento branching)
+- [ ] Feedback salvati correttamente (verifica in Supabase Studio branch `test`)
+- [ ] Verifica che i dati inseriti nel branch Supabase `test` **non compaiano** nel branch `main` di produzione (isolamento branching)
 - [ ] `GET https://test.zerocento-bodylab.it/api/health` → 200 OK, `services.database=up`, `services.auth=up`
 
-### Su `https://zerocento-bodylab.it` (produzione)
+### Su `https://zerocento-bodylab.it` (produzione, attivo)
 - [ ] Login con l'admin creato in FASE 5.3
 - [ ] Ripetere il flusso admin → trainer → trainee con **utenti reali** minimi (1 trainer + 1 trainee test)
 - [ ] `GET https://zerocento-bodylab.it/api/health` → 200 OK
 
 ### Cross-cutting
-- [ ] Sentry riceve evento di test (throw temporaneo in una rotta staging → verifica in dashboard → rollback)
-- [ ] Verifica che gli eventi Sentry siano taggati con `environment=production` vs `environment=staging`
-- [ ] UptimeRobot mostra "UP" per entrambi i monitor
+- [ ] Sentry riceve evento di test dalla produzione (throw temporaneo in una rotta → verifica in dashboard → rollback)
+- [ ] Verifica tag Sentry `environment=production`; il tag `staging` verra verificato dopo l’attivazione del test
+- [ ] UptimeRobot mostra "UP" per il monitor di produzione
 - [ ] Verifica email template ricevuta è in **italiano** (FASE 4-bis)
 
 ---
@@ -400,14 +423,15 @@ Il deploy è gestito dalla GitHub App di Vercel: push su `master` → prod, push
 | Servizio | Piano | Listino | €/mese (indicativo) | Note |
 |---|---|---|---|---|
 | Vercel | Pro | $20/mese | ~€19 | Hosting + Analytics + branch env vars |
-| Supabase | Pro | $25/mese | ~€24 | DB + daily backup + Branching (prod/staging) |
+| Supabase | Pro | $25/mese | ~€24 | DB + daily backup; il Branching e fatturato a parte |
+| Supabase Branching | 1 branch `test` | ~$0,01344/ora | a consumo | ~€9/mese solo se attivo 24/7 |
 | Resend | Free | $0 | €0 | Custom SMTP: 3.000 email/mese, 100/giorno |
 | Upstash Redis | Free | $0 | €0 | Rate limiting |
 | Sentry | Developer | $0 | €0 | Error tracking |
 | UptimeRobot | Free | $0 | €0 | Health monitoring |
 | Dominio `.it` | Aruba | variabile | variabile | Fatturato separatamente da Vercel |
-| **Totale netto** | | | **~€44/mese** | |
-| **Totale con IVA 22%** | | | **~€54/mese** | Costo reale se fatturato P.IVA italiana |
+| **Totale netto pianificato** | | | **~€44/mese + Branching a consumo** | Include Vercel Pro; il branch `test` non e attivo tutto il mese |
+| **Totale con IVA 22%** | | | **~€54/mese + Branching a consumo** | Stima indicativa se fatturato P.IVA italiana |
 
 **Trigger upgrade Resend**: superare 3.000 email/mese → Resend Pro $20/mese (~€19). Con ~50 utenti e onboarding + reset password siamo sotto il 5% del limite.
 
@@ -421,24 +445,24 @@ Il deploy è gestito dalla GitHub App di Vercel: push su `master` → prod, push
 
 ### Giorno 1
 - [ ] FASE 1: Upgrade Vercel Pro + Supabase Pro (Supabase completato; Vercel rimandato)
-- [ ] FASE 2: Collegare `zerocento-bodylab.it` e `test.zerocento-bodylab.it` ad Aruba/Vercel
-- [ ] FASE 2-bis: Attivare Supabase Branching + integrazione GitHub
-- [ ] FASE 3: Configurare env vars Vercel (Production + Preview→branch:development)
-- [ ] FASE 4: Attivare Resend + DNS + Custom SMTP su Supabase (prod + staging)
+- [ ] FASE 2: Collegare `zerocento-bodylab.it` ad Aruba/Vercel; `test.zerocento-bodylab.it` in seguito
+- [ ] FASE 2-bis: Attivare Supabase Branching + integrazione GitHub (eseguibile ora; pubblicazione app test in seguito)
+- [ ] FASE 3: Configurare env vars Vercel per la produzione; Preview/test in seguito
+- [ ] FASE 4: Attivare Resend + DNS + Custom SMTP su Supabase per produzione e test (configurazione SMTP completata; verifica email ancora da fare)
 - [ ] FASE 4-bis: Supabase Auth Site URL, Redirect URLs, template italiani
 
 ### Giorno 2
-- [ ] FASE 5.1: **Baseline Prisma su prod** e staging branch (⚠️ bloccante per CI)
-- [ ] FASE 5.2: Verifica seed staging
+- [ ] FASE 5.1: **Baseline Prisma su prod**; branch test in seguito
+- [ ] FASE 5.2: Verifica seed produzione; seed test in seguito
 - [ ] FASE 5.3: Bootstrap admin prod
 - [ ] FASE 6: Creare `vercel.json`
 
 ### Giorno 2–3
 - [ ] FASE 7: Workflow CI + branch protection + GitHub Secrets
-- [ ] FASE 8: Sentry alert rules + UptimeRobot su entrambi i domini
+- [ ] FASE 8: Sentry alert rules + UptimeRobot sulla produzione; test in seguito
 
 ### Giorno 3
-- [ ] FASE 9: Smoke test su staging **e** prod
+- [ ] FASE 9: Smoke test sulla produzione; ambiente test in seguito
 - [ ] Preparare rollback plan (FASE 9-bis) e comunicarlo al team
 - [ ] Deploy a production (merge `development` → `master`)
 
