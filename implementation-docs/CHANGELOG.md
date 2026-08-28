@@ -11,6 +11,21 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [28 Agosto 2026] — Ambienti produzione e test confermati
+
+**File modificati:** `implementation-docs/go-live-deployment-plan-2026-08.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Il piano ora prevede due soli ambienti: `zerocento-bodylab.it` per la produzione e `test.zerocento-bodylab.it` per test/staging. L’upgrade Vercel Pro e stato rimandato per il problema di pagamento; il lavoro puo proseguire temporaneamente su Vercel Free/Hobby.
+
+### [28 Agosto 2026] — Upgrade Supabase a Pro
+
+**File modificati:** `implementation-docs/go-live-deployment-plan-2026-08.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Registrato il completamento dell’upgrade del progetto Supabase da Free a Pro. Restano da verificare backup giornalieri, regione e attivazione del Branching per separare staging e produzione.
+
+### [28 Agosto 2026] — Dominio di produzione acquistato
+
+**File modificati:** `implementation-docs/go-live-deployment-plan-2026-08.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Aggiornato il piano per indicare che `zerocento-bodylab.it` e stato acquistato tramite Aruba. Restano da completare il collegamento a Vercel, la configurazione dei sottodomini e i record DNS per Resend.
+
 ### [28 Agosto 2026] — Nomenclatura domini go-live formalizzata
 
 **File modificati:** `implementation-docs/go-live-deployment-plan-2026-08.md`, `implementation-docs/CHANGELOG.md`
