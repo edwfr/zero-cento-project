@@ -182,8 +182,8 @@ Aruba → area clienti → **Domini** → `zerocento-bodylab.it` → **Gestione 
 | CNAME | `resend._domainkey` | valore fornito da Resend | DKIM |
 | TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:admin@zerocento-bodylab.it` | DMARC (partire con `p=none`, alzare a `p=quarantine` dopo 2–4 settimane) |
 
-- [ ] Attendere propagazione DNS (normalmente da pochi minuti a qualche ora)
-- [ ] Resend Dashboard → Domains → verificare stato **Verified** ✅ prima di procedere
+- [x] Attendere propagazione DNS (normalmente da pochi minuti a qualche ora)
+- [x] Resend Dashboard → Domains → verificare stato **Verified** ✅ prima di procedere
 - [x] Record obbligatori configurati su Aruba: DKIM TXT e i 2 CNAME SPF/Sending
 - [x] DMARC opzionale configurato su Aruba con host `_dmarc`
 
@@ -203,8 +203,8 @@ Password:      <API key Resend re_...>
 Sender email:  noreply@zerocento-bodylab.it
 Sender name:   ZeroCento
 ```
-- [ ] Save & Test
-- [ ] Verificare che una "Test email" arrivi da `noreply@zerocento-bodylab.it`
+- [x] Save & Test
+- [x] Verificare che una "Test email" arrivi da `noreply@zerocento-bodylab.it`
 
 ### 4.5 Configurare SMTP sul branch test Supabase
 - [x] Ripetere 4.4 sul branch Supabase `test`
@@ -212,15 +212,15 @@ Sender name:   ZeroCento
 - [ ] Verificare che la API key test sia quella utilizzata nella configurazione SMTP del branch Supabase `test`
 
 ### 4.6 Verifica deliverability
-- [ ] Inviare email test a un indirizzo Gmail personale
-- [ ] Aprire l'email → **Show original** → verificare:
+- [x] Inviare email test a un indirizzo Gmail personale
+- [x] Aprire l'email → **Show original** → verificare:
   - `SPF: PASS`
   - `DKIM: PASS`
   - `DMARC: PASS`
-- [ ] Verificare che l'email arrivi in **Inbox** e non in Spam
+- [x] Verificare che l'email arrivi in **Inbox** e non in Spam
 
 ### 4.7 Rate limit Supabase Auth
-- [ ] Supabase Dashboard → Auth → **Rate Limits** → alzare limite email da 4/h (default built-in) a 30/h (o valore desiderato, max 3.600/h con Custom SMTP)
+- [x] Supabase Dashboard → Auth → **Rate Limits** → alzare limite email da 4/h (default built-in) a 30/h (o valore desiderato, max 3.600/h con Custom SMTP)
 
 ---
 
@@ -228,7 +228,7 @@ Sender name:   ZeroCento
 
 Senza questa fase i magic link di onboarding non funzioneranno correttamente nell’ambiente di produzione.
 
-- [ ] Supabase Dashboard → **Auth** → **URL Configuration**:
+- [x] Supabase Dashboard → **Auth** → **URL Configuration**:
   - **Site URL**: `https://zerocento-bodylab.it`
   - **Additional Redirect URLs**:
     ```
@@ -236,12 +236,13 @@ Senza questa fase i magic link di onboarding non funzioneranno correttamente nel
     https://test.zerocento-bodylab.it/**
     http://localhost:3000/**
     ```
-- [ ] Supabase Dashboard → **Auth** → **Email Templates** → tradurre in italiano:
+- [x] Supabase Dashboard → **Auth** → **Email Templates** → tradurre in italiano:
   - **Invite user** (usato da `inviteUserByEmail()`)
   - **Magic Link** (login futuro)
   - **Reset Password**
   - **Change Email Address**
   - Riferimento variabili: `{{ .ConfirmationURL }}`, `{{ .Email }}`, `{{ .SiteURL }}`
+- [x] Verifica end-to-end (28 Ago 2026): email di invito ricevuta con mittente `noreply@zerocento-bodylab.it`, `{{ .ConfirmationURL }}` punta a `https://zerocento-bodylab.it/onboarding/set-password`, flusso set-password completato con successo
 - [ ] Ripetere la configurazione sul branch test quando verra attivato
 
 ---
