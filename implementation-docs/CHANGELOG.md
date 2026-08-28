@@ -11,6 +11,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [28 Agosto 2026] — Nomenclatura domini go-live formalizzata
+
+**File modificati:** `implementation-docs/go-live-deployment-plan-2026-08.md`, `implementation-docs/CHANGELOG.md`
+**Note:** Formalizzati `zerocento-bodylab.it` per la produzione, `test.zerocento-bodylab.it` per lo staging e `dev.zerocento-bodylab.it` per lo sviluppo. Il dominio verra registrato tramite Aruba, con DNS Aruba collegato a Vercel e utilizzato anche per la verifica Resend/Supabase SMTP.
+
 ### [27 Agosto 2026] — Tabella RPE estesa a RPE 6 / 5.5 / 5
 
 **File modificati:** `src/lib/calculations.ts`, `tests/unit/calculations.test.ts`

@@ -3,14 +3,14 @@
 **Data creazione**: 2026-08-28  
 **Ultima revisione**: 2026-08-28  
 **Stato app**: Deployata su Vercel Free + Supabase Free  
-**Obiettivo**: Upgrade to Pro, acquistare dominio via Vercel, separare ambienti test/prod via Supabase Branching, email onboarding branded via Custom SMTP Resend
+**Obiettivo**: Upgrade to Pro, acquistare `zerocento-bodylab.it` tramite Aruba, separare gli ambienti via Supabase Branching e configurare email onboarding branded via Custom SMTP Resend
 
 ---
 
 ## 📋 Stato attuale
 - ✅ App deployata su Vercel Free + Supabase Free
 - ❌ Dominio non acquistato
-- ⚠️ Email onboarding usa Supabase built-in (mittente generico `noreply@mail.app.supabase.io`) → da migrare a `noreply@zerocento.app` via Resend SMTP
+- ⚠️ Email onboarding usa Supabase built-in (mittente generico `noreply@mail.app.supabase.io`) → da migrare a `noreply@zerocento-bodylab.it` via Resend SMTP
 - ✅ Codice usa già `inviteUserByEmail()` in [POST /api/users](../src/app/api/users/route.ts#L212) — nessuna modifica applicativa richiesta per Resend
 - ❌ Nessun ambiente di staging isolato: dev locale scrive nello stesso DB Supabase free
 - ❌ Nessun workflow CI (`.github/workflows/` vuoto)
@@ -23,7 +23,7 @@
 
 **Opzione: Custom SMTP con Resend free tier** (raccomandata, setup ~30 min)
 - **Costo**: €0 (Resend free tier: 3.000 email/mese, 100/giorno, 1 dominio verificato)
-- **Mittente branded**: `noreply@zerocento.app` con DKIM/SPF/DMARC → deliverability professionale
+- **Mittente branded**: `noreply@zerocento-bodylab.it` con DKIM/SPF/DMARC → deliverability professionale
 - **Rate limit Auth**: 30 email/ora con Custom SMTP (vs 4/h del built-in Supabase)
 - **Flussi**: primo login (onboarding), reset password, magic link, change email
 - **Codice**: nessuna modifica — `inviteUserByEmail()` continua a funzionare identico
@@ -42,7 +42,7 @@
 - **Progetto Supabase unico**, region `eu-central-1` (Frankfurt) — GDPR compliant ✅
 - **Branch `main`** → database di produzione (associato a git branch `master`)
 - **Branch `development`** → database di staging (associato a git branch `development`)
-- **Isolamento reale**: migration/seed/test su `test.zerocento.app` scrivono solo sul branch staging, **mai** sui dati prod
+- **Isolamento reale**: migration/seed/test su `test.zerocento-bodylab.it` scrivono solo sul branch staging, **mai** sui dati prod
 - **Costo extra**: €0 (incluso in Pro)
 - **Sync schema**: automatico da git tramite integrazione Supabase ↔ GitHub
 
@@ -65,15 +65,17 @@
 
 ---
 
-## FASE 2 — Dominio via Vercel (Giorno 1)
+## FASE 2 — Dominio Aruba e collegamento Vercel (Giorno 1)
 
-- [ ] Vercel Dashboard → Project → Settings → **Domains** → **Buy Domain**
-- [ ] Comprare `zerocento.app` (o alternativa)
-  - **Costo reale**: ~$14/anno per `.app` (fatturato separatamente da Vercel, non incluso nel piano Pro)
-  - DNS gestito automaticamente da Vercel: niente record CNAME manuali
+- [ ] Aruba → registrare `zerocento-bodylab.it`
+  - Verificare prezzo di rinnovo e attivazione della gestione DNS
+- [ ] Vercel Dashboard → Project → Settings → **Domains** → aggiungere `zerocento-bodylab.it`
 - [ ] Assegnare i domini agli ambienti in **Settings → Domains**:
-  - `zerocento.app` → **Production** (branch `master`)
-  - `test.zerocento.app` → **Branch domain**: `development` (NON semplice "Preview": va assegnato esplicitamente al branch, altrimenti va in preview generico per ogni PR)
+  - `zerocento-bodylab.it` → **Production** (branch `master`)
+  - `test.zerocento-bodylab.it` → **Branch domain**: `development` (staging QA)
+  - `dev.zerocento-bodylab.it` → alias per preview/deployment di sviluppo su Vercel
+  - `www.zerocento-bodylab.it` → redirect verso `zerocento-bodylab.it`
+- [ ] Su Aruba creare i record DNS richiesti da Vercel per il dominio principale e i sottodomini
 - [ ] Verificare che Vercel Pro sia attivo — solo Pro permette **branch-specific env vars** (necessarie in FASE 3)
 
 ---
@@ -115,7 +117,7 @@ SENTRY_AUTH_TOKEN=...                                # secret
 SENTRY_ORG=zerocento
 SENTRY_PROJECT=zerocento-web
 NEXT_PUBLIC_APP_ENV=production
-NEXT_PUBLIC_APP_URL=https://zerocento.app
+NEXT_PUBLIC_APP_URL=https://zerocento-bodylab.it
 ```
 
 ### Scope: Preview → Branch `development` (staging)
@@ -134,7 +136,7 @@ SENTRY_AUTH_TOKEN=...
 SENTRY_ORG=zerocento
 SENTRY_PROJECT=zerocento-web
 NEXT_PUBLIC_APP_ENV=staging
-NEXT_PUBLIC_APP_URL=https://test.zerocento.app
+NEXT_PUBLIC_APP_URL=https://test.zerocento-bodylab.it
 ```
 
 ### Azioni nel repo
@@ -144,21 +146,21 @@ NEXT_PUBLIC_APP_URL=https://test.zerocento.app
 
 ## FASE 4 — Custom SMTP con Resend (Giorno 1, ~30 min + attesa DNS)
 
-Dipendenza: FASE 2 completata (dominio `zerocento.app` acquistato). Se il dominio non è ancora propagato, rimandare al Giorno 2 e usare temporaneamente Supabase built-in.
+Dipendenza: FASE 2 completata (dominio `zerocento-bodylab.it` acquistato). Se il dominio non è ancora propagato, rimandare al Giorno 2 e usare temporaneamente Supabase built-in.
 
 ### 4.1 Account Resend + verifica dominio
 - [ ] Registrarsi su [resend.com](https://resend.com) (free tier, no carta richiesta)
-- [ ] Dashboard → **Domains** → **Add Domain** → `zerocento.app`
+- [ ] Dashboard → **Domains** → **Add Domain** → `zerocento-bodylab.it`
 - [ ] Copiare i 3 record DNS forniti da Resend (SPF TXT, DKIM CNAME, MX opzionale)
 
 ### 4.2 Aggiungere record DNS su Vercel
-Vercel Dashboard → Project → Settings → **Domains** → `zerocento.app` → DNS Records.
+Aruba → gestione DNS del dominio `zerocento-bodylab.it` → aggiungere i record indicati da Resend.
 
 | Tipo | Nome | Valore | Note |
 |---|---|---|---|
 | TXT | `send` (o `@`, come indicato da Resend) | `v=spf1 include:_spf.resend.com ~all` | SPF |
 | CNAME | `resend._domainkey` | valore fornito da Resend | DKIM |
-| TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:admin@zerocento.app` | DMARC (partire con `p=none`, alzare a `p=quarantine` dopo 2–4 settimane) |
+| TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:admin@zerocento-bodylab.it` | DMARC (partire con `p=none`, alzare a `p=quarantine` dopo 2–4 settimane) |
 
 - [ ] Attendere propagazione (5 min – 1 h di solito su Vercel DNS)
 - [ ] Resend Dashboard → Domains → verificare stato **Verified** ✅ prima di procedere
@@ -166,7 +168,7 @@ Vercel Dashboard → Project → Settings → **Domains** → `zerocento.app` �
 ### 4.3 Generare API key Resend
 - [ ] Resend → **API Keys** → **Create API Key**
   - Name: `zerocento-supabase-smtp`
-  - Permission: **Sending access** limitato al dominio `zerocento.app`
+  - Permission: **Sending access** limitato al dominio `zerocento-bodylab.it`
 - [ ] Salvare la chiave `re_...` (mostrata una sola volta) in un password manager
 
 ### 4.4 Configurare SMTP su Supabase (prod branch)
@@ -176,11 +178,11 @@ Host:          smtp.resend.com
 Port:          465
 Username:      resend
 Password:      <API key Resend re_...>
-Sender email:  noreply@zerocento.app
+Sender email:  noreply@zerocento-bodylab.it
 Sender name:   ZeroCento
 ```
 - [ ] Save & Test
-- [ ] Verificare che una "Test email" arrivi da `noreply@zerocento.app`
+- [ ] Verificare che una "Test email" arrivi da `noreply@zerocento-bodylab.it`
 
 ### 4.5 Configurare SMTP sul branch staging Supabase
 - [ ] Ripetere 4.4 sul branch `development` Supabase (stesso host/username, stessa API key, stesso mittente)
@@ -204,11 +206,12 @@ Sender name:   ZeroCento
 Senza questa fase i magic link di onboarding falliscono in almeno uno dei due ambienti.
 
 - [ ] Supabase Dashboard → **Auth** → **URL Configuration**:
-  - **Site URL**: `https://zerocento.app`
+  - **Site URL**: `https://zerocento-bodylab.it`
   - **Additional Redirect URLs**:
     ```
-    https://zerocento.app/**
-    https://test.zerocento.app/**
+    https://zerocento-bodylab.it/**
+    https://test.zerocento-bodylab.it/**
+    https://dev.zerocento-bodylab.it/**
     http://localhost:3000/**
     ```
 - [ ] Supabase Dashboard → **Auth** → **Email Templates** → tradurre in italiano:
@@ -282,7 +285,7 @@ Il deploy è gestito dalla GitHub App di Vercel: push su `master` → prod, push
   - Job `test`: `npm ci` → `npm run lint` → `npm run type-check` → `npm run test:unit` (80% coverage)
   - Job `build`: `npm run build` (verifica no regressioni build; Vercel farà il vero build in deploy)
   - Job `migrate-prod` (solo push su `master`): `npm run prisma:migrate:prod` usando `PRODUCTION_DIRECT_URL`
-  - Job `e2e-staging`: dopo deploy staging → Playwright E2E su `https://test.zerocento.app`
+  - Job `e2e-staging`: dopo deploy staging → Playwright E2E su `https://test.zerocento-bodylab.it`
   - Success criteria: tutti i job verdi prima di merge a `master`
 
   Template partenza: [design/06-deployment.md](../design/06-deployment.md)
@@ -300,7 +303,7 @@ Il deploy è gestito dalla GitHub App di Vercel: push su `master` → prod, push
   ```
   PRODUCTION_DATABASE_URL   # secret — pooled 6543
   PRODUCTION_DIRECT_URL     # secret — direct 5432, per prisma migrate deploy
-  STAGING_URL=https://test.zerocento.app
+  STAGING_URL=https://test.zerocento-bodylab.it
   SENTRY_AUTH_TOKEN         # secret — source maps upload
   SENTRY_ORG=zerocento
   SENTRY_PROJECT=zerocento-web
@@ -319,8 +322,8 @@ Il deploy è gestito dalla GitHub App di Vercel: push su `master` → prod, push
   - Configurare Alert Rules: nuova issue level=error → email
 
 - [ ] **UptimeRobot** (free tier):
-  - Monitor 1: `https://zerocento.app/api/health` — ogni 5 min
-  - Monitor 2: `https://test.zerocento.app/api/health` — ogni 5 min
+  - Monitor 1: `https://zerocento-bodylab.it/api/health` — ogni 5 min
+  - Monitor 2: `https://test.zerocento-bodylab.it/api/health` — ogni 5 min
   - Alert Contacts: email team
 
 - [ ] **Vercel Analytics** (Pro, gratuito):
@@ -337,21 +340,21 @@ Il deploy è gestito dalla GitHub App di Vercel: push su `master` → prod, push
 
 **Prima di lanciare pubblicamente**, eseguire test manuale end-to-end su **entrambi** gli ambienti.
 
-### Su `https://test.zerocento.app` (staging)
+### Su `https://test.zerocento-bodylab.it` (staging)
 - [ ] Login come admin di test
-- [ ] Admin crea nuovo trainer → email di invito arriva (mittente atteso `noreply@zerocento.app` via Resend SMTP)
+- [ ] Admin crea nuovo trainer → email di invito arriva (mittente atteso `noreply@zerocento-bodylab.it` via Resend SMTP)
 - [ ] Verificare header email: `SPF: PASS`, `DKIM: PASS`, `DMARC: PASS`
 - [ ] Trainer clicca link → completa onboarding e imposta password
 - [ ] Trainer crea trainee → email arriva
 - [ ] Trainee clicca link → completa onboarding → vede e completa un workout
 - [ ] Feedback salvati correttamente (verifica in Supabase Studio branch `development`)
 - [ ] Verifica che i dati inseriti **non compaiano** nel branch prod (isolamento branching)
-- [ ] `GET https://test.zerocento.app/api/health` → 200 OK, `services.database=up`, `services.auth=up`
+- [ ] `GET https://test.zerocento-bodylab.it/api/health` → 200 OK, `services.database=up`, `services.auth=up`
 
-### Su `https://zerocento.app` (produzione)
+### Su `https://zerocento-bodylab.it` (produzione)
 - [ ] Login con l'admin creato in FASE 5.3
 - [ ] Ripetere il flusso admin → trainer → trainee con **utenti reali** minimi (1 trainer + 1 trainee test)
-- [ ] `GET https://zerocento.app/api/health` → 200 OK
+- [ ] `GET https://zerocento-bodylab.it/api/health` → 200 OK
 
 ### Cross-cutting
 - [ ] Sentry riceve evento di test (throw temporaneo in una rotta staging → verifica in dashboard → rollback)
@@ -366,7 +369,7 @@ Il deploy è gestito dalla GitHub App di Vercel: push su `master` → prod, push
 1. **Codice**: Vercel → Deployments → click sul deploy precedente → **Promote to Production** (< 30s).
 2. **Database prod**: Supabase → Database → Backups → ripristinare snapshot pre-migration. ⚠️ perde dati inseriti dopo il backup.
 3. **Migration Prisma rotta**: `DIRECT_URL=<prod> npx prisma migrate resolve --rolled-back <migration_name>` e ridistribuire.
-4. **DNS emergenza**: CNAME `zerocento.app` → pagina statica di manutenzione (Vercel Static).
+4. **DNS emergenza**: configurare su Aruba il dominio `zerocento-bodylab.it` verso una pagina statica di manutenzione (Vercel Static).
 5. **Comunicazione**: template email admin da inviare manualmente via Supabase Dashboard.
 
 ---
@@ -382,7 +385,7 @@ Il deploy è gestito dalla GitHub App di Vercel: push su `master` → prod, push
 
   **Task checklist**: Deployment go-live
   **File modificati**: `vercel.json`, `.github/workflows/ci.yml`, Supabase Auth config (Custom SMTP + template it), Prisma baseline prod
-  **Note**: Upgrade Vercel Free → Pro, Supabase Free → Pro con Branching attivo (prod ↔ staging isolati). Dominio `zerocento.app` acquistato via Vercel, `test.zerocento.app` legato a branch `development`. Email onboarding via Supabase Custom SMTP → Resend free tier, mittente `noreply@zerocento.app` con DKIM/SPF/DMARC verificati.
+  **Note**: Upgrade Vercel Free → Pro, Supabase Free → Pro con Branching attivo (prod ↔ staging isolati). Dominio `zerocento-bodylab.it` acquistato tramite Aruba, `test.zerocento-bodylab.it` legato al branch `development` e `dev.zerocento-bodylab.it` riservato allo sviluppo. Email onboarding via Supabase Custom SMTP → Resend free tier, mittente `noreply@zerocento-bodylab.it` con DKIM/SPF/DMARC verificati.
   ```
 - [ ] Monitorare Sentry + Resend Dashboard (delivery/bounce/complaint rate) primi 7 giorni
 - [ ] Revisare task residui Sprint 8 (PWA, indici DB, cache admin reports) — posticipare se il tempo stringe
@@ -401,7 +404,7 @@ Il deploy è gestito dalla GitHub App di Vercel: push su `master` → prod, push
 | Upstash Redis | Free | $0 | €0 | Rate limiting |
 | Sentry | Developer | $0 | €0 | Error tracking |
 | UptimeRobot | Free | $0 | €0 | Health monitoring |
-| Dominio `.app` | Vercel | ~$14/anno | ~€1.10 | Fatturato separato, **non** incluso in Pro |
+| Dominio `.it` | Aruba | variabile | variabile | Fatturato separatamente da Vercel |
 | **Totale netto** | | | **~€44/mese** | |
 | **Totale con IVA 22%** | | | **~€54/mese** | Costo reale se fatturato P.IVA italiana |
 
@@ -417,7 +420,7 @@ Il deploy è gestito dalla GitHub App di Vercel: push su `master` → prod, push
 
 ### Giorno 1
 - [ ] FASE 1: Upgrade Vercel Pro + Supabase Pro
-- [ ] FASE 2: Comprare dominio via Vercel + assegnare `test.zerocento.app` a branch `development`
+- [ ] FASE 2: Comprare `zerocento-bodylab.it` su Aruba + assegnare `test.zerocento-bodylab.it` e `dev.zerocento-bodylab.it`
 - [ ] FASE 2-bis: Attivare Supabase Branching + integrazione GitHub
 - [ ] FASE 3: Configurare env vars Vercel (Production + Preview→branch:development)
 - [ ] FASE 4: Attivare Resend + DNS + Custom SMTP su Supabase (prod + staging)
