@@ -46,6 +46,13 @@ export async function GET(
                         lastName: true,
                     },
                 },
+                updater: {
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                    },
+                },
             },
         })
 
@@ -63,7 +70,8 @@ export async function GET(
 
 /**
  * PUT /api/exercises/[id]
- * Update exercise (trainer can only update their own exercises, admin can update any)
+ * Update exercise (shared library: any trainer or admin can update any exercise).
+ * Records updatedBy/updatedAt for audit — createdBy stays as creation audit only.
  */
 export async function PUT(
     request: NextRequest,
@@ -88,11 +96,6 @@ export async function PUT(
 
         if (!existing) {
             return apiError('NOT_FOUND', 'Exercise not found', 404, undefined, 'exercise.notFound')
-        }
-
-        // Check ownership: trainers can only modify their own exercises, admins can modify any
-        if (session.user.role === 'trainer' && existing.createdBy !== session.user.id) {
-            return apiError('FORBIDDEN', 'You can only modify exercises you created', 403, undefined, 'exercise.modifyDenied')
         }
 
         // Check if new name conflicts with another exercise
@@ -157,6 +160,8 @@ export async function PUT(
                 type,
                 movementPatternId,
                 notes: notes || [],
+                updatedBy: session.user.id,
+                updatedAt: new Date(),
                 exerciseMuscleGroups: {
                     deleteMany: {}, // Delete all existing relationships
                     create: muscleGroups.map((mg) => ({
@@ -186,6 +191,13 @@ export async function PUT(
                     },
                 },
                 creator: {
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                    },
+                },
+                updater: {
                     select: {
                         id: true,
                         firstName: true,

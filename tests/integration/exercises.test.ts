@@ -369,6 +369,34 @@ describe('GET /api/exercises/[id]', () => {
         expect(ex.notes).toContain('Keep chest up')
     })
 
+    it('includes the updater in the exercise detail response', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.exercise.findUnique).mockResolvedValue({
+            ...mockExerciseWithRelations,
+            updatedBy: 'trainer-uuid-2',
+            updatedAt: new Date('2026-09-16'),
+            updater: { id: 'trainer-uuid-2', firstName: 'Luca', lastName: 'Coach' },
+        } as any)
+
+        const req = makeDetailRequest(EX_ID_1)
+        const res = await getExercise(req, withIdParam(EX_ID_1))
+        const json = await res.json()
+
+        expect(res.status).toBe(200)
+        expect(json.data.exercise.updater).toEqual({
+            id: 'trainer-uuid-2',
+            firstName: 'Luca',
+            lastName: 'Coach',
+        })
+        expect(prisma.exercise.findUnique).toHaveBeenCalledWith(
+            expect.objectContaining({
+                include: expect.objectContaining({
+                    updater: { select: { id: true, firstName: true, lastName: true } },
+                }),
+            })
+        )
+    })
+
     it('returns 404 for non-existent exercise', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
         vi.mocked(prisma.exercise.findUnique).mockResolvedValue(null)
@@ -661,13 +689,17 @@ describe('PUT /api/exercises/[id]', () => {
         )
     })
 
-    it('trainer cannot update exercise created by another trainer (403)', async () => {
+    it('trainer can update exercise created by another trainer (shared library)', async () => {
         const otherTrainerExercise = {
             ...mockExerciseWithRelations,
             createdBy: 'other-trainer-uuid',
         }
         vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
         vi.mocked(prisma.exercise.findUnique).mockResolvedValue(otherTrainerExercise as any)
+        vi.mocked(prisma.exercise.findFirst).mockResolvedValue(null)
+        vi.mocked(prisma.movementPattern.findUnique).mockResolvedValue(mockMovementPattern as any)
+        vi.mocked(prisma.muscleGroup.findMany).mockResolvedValue(mockMuscleGroups as any)
+        vi.mocked(prisma.exercise.update).mockResolvedValue(otherTrainerExercise as any)
 
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
             method: 'PUT',
@@ -676,7 +708,32 @@ describe('PUT /api/exercises/[id]', () => {
         })
         const res = await updateExercise(req, withIdParam(EX_ID_1))
 
-        expect(res.status).toBe(403)
+        expect(res.status).toBe(200)
+    })
+
+    it('records updatedBy and updatedAt when a trainer updates an exercise', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(mockExerciseWithRelations as any)
+        vi.mocked(prisma.exercise.findFirst).mockResolvedValue(null)
+        vi.mocked(prisma.movementPattern.findUnique).mockResolvedValue(mockMovementPattern as any)
+        vi.mocked(prisma.muscleGroup.findMany).mockResolvedValue(mockMuscleGroups as any)
+        vi.mocked(prisma.exercise.update).mockResolvedValue(mockExerciseWithRelations as any)
+
+        const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatePayload),
+        })
+        await updateExercise(req, withIdParam(EX_ID_1))
+
+        expect(prisma.exercise.update).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({
+                    updatedBy: 'trainer-uuid-1',
+                    updatedAt: expect.any(Date),
+                }),
+            })
+        )
     })
 
     it('admin can update any exercise regardless of creator', async () => {

@@ -11,6 +11,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [16 Settembre 2026] — Modifica esercizi aperta a tutti i trainer
+
+**File modificati:** `src/app/api/exercises/[id]/route.ts`, `tests/integration/exercises.test.ts`, `implementation-docs/CHANGELOG.md`
+**Note:** Rimosso il check di ownership sul PUT `/api/exercises/[id]`: la libreria esercizi è condivisa, qualsiasi trainer può modificare qualsiasi esercizio. Il vincolo precedente contraddiceva il commento già presente in `prisma/schema.prisma` (`createdBy` = solo audit trail, NON determina ownership) e produceva una UX rotta, perché nessun componente frontend nascondeva il bottone Modifica: il trainer cliccava e riceveva un 403. Ogni update registra ora `updatedBy` e `updatedAt`; l'`updater` è incluso nella response del GET dettaglio e del PUT, ma non nella GET lista per non aggiungere un join a una query paginata già pesante.
+
 ### [16 Settembre 2026] — Campi audit modifica su Exercise
 
 **File modificati:** `prisma/schema.prisma`, `prisma/migrations/20260916000000_add_exercise_update_audit/migration.sql`, `implementation-docs/CHANGELOG.md`
