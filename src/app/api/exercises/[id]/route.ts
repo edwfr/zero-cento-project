@@ -219,7 +219,9 @@ export async function PUT(
 
 /**
  * DELETE /api/exercises/[id]
- * Delete exercise (cannot delete if used in active WorkoutExercises)
+ * Delete exercise (shared library: any trainer or admin can delete).
+ * Only allowed when the exercise has zero references: WorkoutExercise,
+ * WorkoutSkeleton and PersonalRecord all use non-cascade FKs.
  */
 export async function DELETE(
     request: NextRequest,
@@ -229,60 +231,62 @@ export async function DELETE(
     try {
         const session = await requireRole(['admin', 'trainer'])
 
-        // Check if exercise exists
+        // Single query: existence check + reference counts.
+        // No ownership check: the exercise library is shared across all trainers.
         const exercise = await prisma.exercise.findUnique({
             where: { id: exerciseId },
+            select: {
+                id: true,
+                _count: {
+                    select: {
+                        workoutExercises: true,
+                        workoutSkeletons: true,
+                        personalRecords: true,
+                    },
+                },
+            },
         })
 
         if (!exercise) {
             return apiError('NOT_FOUND', 'Exercise not found', 404, undefined, 'exercise.notFound')
         }
 
-        // Check ownership: trainers can only delete their own exercises, admins can delete any
-        if (session.user.role === 'trainer' && exercise.createdBy !== session.user.id) {
-            return apiError('FORBIDDEN', 'You can only delete exercises you created', 403, undefined, 'exercise.deleteDenied')
-        }
+        // All three FKs are non-cascade, so any surviving reference would turn
+        // the delete into a foreign key violation. Block on every one of them.
+        const { workoutExercises, workoutSkeletons, personalRecords } = exercise._count
+        const totalReferences = workoutExercises + workoutSkeletons + personalRecords
 
-        // Check if exercise is used in any active programs
-        // We need to check if any workout exercises reference this exercise
-        // where the week belongs to an active program
-        const workoutExercisesWithProgram = await prisma.workoutExercise.findMany({
-            where: {
-                exerciseId,
-            },
-            include: {
-                workout: {
-                    include: {
-                        week: {
-                            include: {
-                                program: {
-                                    select: {
-                                        id: true,
-                                        title: true,
-                                        status: true,
-                                    },
+        if (totalReferences > 0) {
+            // Slow path, only on conflict: name one referencing program in the message
+            const sample = await prisma.workoutExercise.findFirst({
+                where: { exerciseId },
+                select: {
+                    workout: {
+                        select: {
+                            week: {
+                                select: {
+                                    program: { select: { id: true, title: true } },
                                 },
                             },
                         },
                     },
                 },
-            },
-        })
+            })
+            const program = sample?.workout?.week?.program
 
-        const activeProgram = workoutExercisesWithProgram.find(
-            (we) => we.workout.week.program.status === 'active'
-        )
-
-        if (activeProgram) {
             return apiError(
                 'CONFLICT',
-                `Cannot delete exercise: it is used in active program "${activeProgram.workout.week.program.title}"`,
+                program
+                    ? `Cannot delete exercise: it is referenced by program "${program.title}"`
+                    : 'Cannot delete exercise: it is still referenced',
                 409,
                 {
-                    programId: activeProgram.workout.week.program.id,
-                    programName: activeProgram.workout.week.program.title,
+                    workoutExercises,
+                    workoutSkeletons,
+                    personalRecords,
+                    ...(program ? { programId: program.id, programName: program.title } : {}),
                 },
-                'exercise.cannotDeleteInActiveProgram'
+                'exercise.cannotDeleteReferenced'
             )
         }
 

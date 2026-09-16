@@ -11,6 +11,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [16 Settembre 2026] — Eliminazione esercizi: aperta a tutti i trainer, bloccata se referenziato
+
+**File modificati:** `src/app/api/exercises/[id]/route.ts`, `public/locales/en/errors.json`, `public/locales/it/errors.json`, `tests/integration/exercises.test.ts`, `implementation-docs/CHANGELOG.md`
+**Note:** Rimosso il check di ownership sul DELETE `/api/exercises/[id]` e sostituito il guard "programma attivo" con un guard su tutte le referenze. Il guard precedente controllava solo i programmi con `status: 'active'` e lasciava passare l'eliminazione di esercizi usati in programmi draft o completati, negli skeleton dei programmi e nei personal record: essendo tutte FK non-cascade, la delete falliva con una violazione di chiave esterna e l'utente riceveva un 500. Ora l'eliminazione è consentita solo a zero referenze e restituisce 409 `exercise.cannotDeleteReferenced` altrimenti. Il conteggio usa una singola query `_count` invece del `findMany` con join a quattro livelli precedente; il join serve solo nel ramo di conflitto, per nominare un programma nel messaggio.
+
 ### [16 Settembre 2026] — Modifica esercizi aperta a tutti i trainer
 
 **File modificati:** `src/app/api/exercises/[id]/route.ts`, `tests/integration/exercises.test.ts`, `implementation-docs/CHANGELOG.md`

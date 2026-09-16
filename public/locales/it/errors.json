@@ -24,7 +24,8 @@
         "modifyDenied": "Puoi modificare solo gli esercizi che hai creato",
         "deleteDenied": "Puoi eliminare solo gli esercizi che hai creato",
         "deletedSuccess": "Esercizio eliminato con successo",
-        "cannotDeleteInActiveProgram": "Impossibile eliminare l'esercizio: è utilizzato in un programma attivo"
+        "cannotDeleteInActiveProgram": "Impossibile eliminare l'esercizio: è utilizzato in un programma attivo",
+        "cannotDeleteReferenced": "Impossibile eliminare questo esercizio: è ancora utilizzato in programmi o record degli atleti"
     },
     "feedback": {
         "notFound": "Feedback non trovato",

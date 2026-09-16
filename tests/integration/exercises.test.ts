@@ -33,6 +33,7 @@ vi.mock('@/lib/prisma', () => ({
         },
         workoutExercise: {
             findMany: vi.fn(),
+            findFirst: vi.fn(),
         },
     },
 }))
@@ -164,6 +165,21 @@ function makeDetailRequest(
 ) {
     const { signal, ...safeOptions } = options || {}
     return new NextRequest(url ?? `http://localhost:3000/api/exercises/${id}`, safeOptions as any)
+}
+
+/** Exercise as the DELETE handler selects it: id + reference counts. */
+function makeCountedExercise(
+    counts: Partial<{ workoutExercises: number; workoutSkeletons: number; personalRecords: number }> = {}
+) {
+    return {
+        id: EX_ID_1,
+        _count: {
+            workoutExercises: 0,
+            workoutSkeletons: 0,
+            personalRecords: 0,
+            ...counts,
+        },
+    }
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -802,10 +818,9 @@ describe('DELETE /api/exercises/[id]', () => {
         vi.clearAllMocks()
     })
 
-    it('trainer can delete their own exercise when not in active program', async () => {
+    it('trainer can delete an exercise with no references', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(mockExerciseWithRelations as any)
-        vi.mocked(prisma.workoutExercise.findMany).mockResolvedValue([]) // not used anywhere
+        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(makeCountedExercise() as any)
         vi.mocked(prisma.exercise.delete).mockResolvedValue(mockExerciseWithRelations as any)
 
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
@@ -817,54 +832,13 @@ describe('DELETE /api/exercises/[id]', () => {
         expect(prisma.exercise.delete).toHaveBeenCalledWith({ where: { id: EX_ID_1 } })
     })
 
-    it('returns 409 when exercise is used in an active program', async () => {
+    it('trainer can delete an unreferenced exercise created by another trainer', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(mockExerciseWithRelations as any)
-        // Simulate exercise used in an active program
-        vi.mocked(prisma.workoutExercise.findMany).mockResolvedValue([
-            {
-                id: '55555555-5555-5555-5555-555555555551',
-                exerciseId: EX_ID_1,
-                workout: {
-                    week: {
-                        program: {
-                            id: '66666666-6666-6666-6666-666666666661',
-                            title: 'Powerlifting Block 1',
-                            status: 'active',
-                        },
-                    },
-                },
-            },
-        ] as any)
-
-        const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
-            method: 'DELETE',
-        })
-        const res = await deleteExercise(req, withIdParam(EX_ID_1))
-
-        expect(res.status).toBe(409)
-    })
-
-    it('allows deleting exercise used only in completed/draft programs', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(mockExerciseWithRelations as any)
-        // Exercise used in a completed program — deletion should be allowed
-        vi.mocked(prisma.workoutExercise.findMany).mockResolvedValue([
-            {
-                id: '55555555-5555-5555-5555-555555555552',
-                exerciseId: EX_ID_1,
-                workout: {
-                    week: {
-                        program: {
-                            id: '66666666-6666-6666-6666-666666666662',
-                            title: 'Old Program',
-                            status: 'completed',
-                        },
-                    },
-                },
-            },
-        ] as any)
-        vi.mocked(prisma.exercise.delete).mockResolvedValue(mockExerciseWithRelations as any)
+        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(makeCountedExercise() as any)
+        vi.mocked(prisma.exercise.delete).mockResolvedValue({
+            ...mockExerciseWithRelations,
+            createdBy: 'other-trainer-uuid',
+        } as any)
 
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
             method: 'DELETE',
@@ -874,20 +848,68 @@ describe('DELETE /api/exercises/[id]', () => {
         expect(res.status).toBe(200)
     })
 
-    it('trainer cannot delete exercise created by another trainer (403)', async () => {
-        const otherTrainerExercise = {
-            ...mockExerciseWithRelations,
-            createdBy: 'other-trainer-uuid',
-        }
+    it('returns 409 when the exercise is used in a program, whatever its status', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(otherTrainerExercise as any)
+        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(
+            makeCountedExercise({ workoutExercises: 3 }) as any
+        )
+        vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue({
+            workout: {
+                week: {
+                    program: {
+                        id: '66666666-6666-6666-6666-666666666662',
+                        title: 'Old Program',
+                    },
+                },
+            },
+        } as any)
 
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
             method: 'DELETE',
         })
         const res = await deleteExercise(req, withIdParam(EX_ID_1))
+        const json = await res.json()
 
-        expect(res.status).toBe(403)
+        expect(res.status).toBe(409)
+        expect(json.error.key).toBe('exercise.cannotDeleteReferenced')
+        expect(json.error.details.programName).toBe('Old Program')
+        expect(prisma.exercise.delete).not.toHaveBeenCalled()
+    })
+
+    it('returns 409 when the exercise is only referenced by a program skeleton', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(
+            makeCountedExercise({ workoutSkeletons: 1 }) as any
+        )
+        vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(null)
+
+        const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
+            method: 'DELETE',
+        })
+        const res = await deleteExercise(req, withIdParam(EX_ID_1))
+        const json = await res.json()
+
+        expect(res.status).toBe(409)
+        expect(json.error.key).toBe('exercise.cannotDeleteReferenced')
+        expect(prisma.exercise.delete).not.toHaveBeenCalled()
+    })
+
+    it('returns 409 when the exercise is only referenced by a personal record', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(
+            makeCountedExercise({ personalRecords: 2 }) as any
+        )
+        vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(null)
+
+        const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
+            method: 'DELETE',
+        })
+        const res = await deleteExercise(req, withIdParam(EX_ID_1))
+        const json = await res.json()
+
+        expect(res.status).toBe(409)
+        expect(json.error.key).toBe('exercise.cannotDeleteReferenced')
+        expect(prisma.exercise.delete).not.toHaveBeenCalled()
     })
 
     it('returns 404 when exercise to delete does not exist', async () => {
@@ -908,8 +930,7 @@ describe('DELETE /api/exercises/[id]', () => {
             createdBy: 'other-trainer-uuid',
         }
         vi.mocked(requireRole).mockResolvedValue(mockAdminSession)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(otherTrainerExercise as any)
-        vi.mocked(prisma.workoutExercise.findMany).mockResolvedValue([])
+        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(makeCountedExercise() as any)
         vi.mocked(prisma.exercise.delete).mockResolvedValue(otherTrainerExercise as any)
 
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
