@@ -11,6 +11,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [16 Settembre 2026] — Campi audit modifica su Exercise
+
+**File modificati:** `prisma/schema.prisma`, `prisma/migrations/20260916000000_add_exercise_update_audit/migration.sql`, `implementation-docs/CHANGELOG.md`
+**Note:** Aggiunti i campi nullable `updatedBy` e `updatedAt` al model `Exercise`, con relation `updater` verso `User` e indice su `updatedBy`. Servono a tracciare chi ha modificato un esercizio e quando, prerequisito all'apertura della libreria esercizi a tutti i trainer. Migration additiva: le righe esistenti restano a `NULL` (mai modificate), nessun backfill richiesto. `updatedAt` viene settato manualmente insieme a `updatedBy` e non usa `@updatedAt`, per evitare che i due campi divergano su update che non passano dall'API. La migration è stata scritta a mano e NON è ancora stata applicata: il database di sviluppo è irraggiungibile da questo ambiente (l'host di DIRECT_URL non risolve in DNS e l'host Supabase diretto standard è raggiungibile solo via IPv6, rotta assente). Va applicata con `npm run prisma:migrate` quando la connettività è disponibile.
+
 ### [28 Agosto 2026] — Strategia Branching test a consumo
 
 **File modificati:** `implementation-docs/go-live-deployment-plan-2026-08.md`, `implementation-docs/CHANGELOG.md`

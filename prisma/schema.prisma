@@ -77,6 +77,7 @@ model User {
   createdMuscleGroups      MuscleGroup[]                @relation("CreatedMuscleGroups")
   createdMovementPatterns  MovementPattern[]            @relation("CreatedMovementPatterns")
   createdExercises         Exercise[]                   @relation("CreatedExercises")
+  updatedExercises         Exercise[]                   @relation("UpdatedExercises")
   movementPatternColors    MovementPatternColor[]       @relation("TrainerPatternColors")
   
   // Trainer relations
@@ -168,9 +169,12 @@ model Exercise {
   notes             String[]     // Array di note/varianti
   createdBy         String       // Solo audit trail, NON determina ownership
   createdAt         DateTime     @default(now())
+  updatedBy         String?      // Chi ha modificato per ultimo (null = mai modificato)
+  updatedAt         DateTime?    // Settato manualmente insieme a updatedBy, NON @updatedAt
 
   // Relations
   creator              User                   @relation("CreatedExercises", fields: [createdBy], references: [id])
+  updater              User?                  @relation("UpdatedExercises", fields: [updatedBy], references: [id])
   movementPattern      MovementPattern        @relation("PatternExercises", fields: [movementPatternId], references: [id])
   exerciseMuscleGroups ExerciseMuscleGroup[]  @relation("ExerciseMuscleGroups")
   workoutExercises     WorkoutExercise[]      @relation("ExerciseWorkouts")
@@ -180,6 +184,7 @@ model Exercise {
   @@index([type])
   @@index([movementPatternId])
   @@index([name])
+  @@index([updatedBy])
   @@map("exercises")
 }
 
