@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
@@ -290,10 +291,35 @@ export async function DELETE(
             )
         }
 
-        // Delete exercise (cascade will delete exerciseMuscleGroups relationships)
-        await prisma.exercise.delete({
-            where: { id: exerciseId },
-        })
+        // Delete exercise (cascade will delete exerciseMuscleGroups relationships).
+        // The count check above is not atomic with this delete: another request can
+        // insert a WorkoutExercise/WorkoutSkeleton/PersonalRecord in between, turning
+        // this into a foreign key violation (P2003). Catch that narrow race here and
+        // report it the same way as the pre-check above, instead of letting it fall
+        // through to the generic 500 handler.
+        try {
+            await prisma.exercise.delete({
+                where: { id: exerciseId },
+            })
+        } catch (deleteError: unknown) {
+            if (
+                deleteError instanceof Prisma.PrismaClientKnownRequestError &&
+                deleteError.code === 'P2003'
+            ) {
+                logger.warn(
+                    { exerciseId, userId: session.user.id },
+                    'Exercise delete raced with a new reference; blocking with 409'
+                )
+                return apiError(
+                    'CONFLICT',
+                    'Cannot delete exercise: it is still referenced',
+                    409,
+                    undefined,
+                    'exercise.cannotDeleteReferenced'
+                )
+            }
+            throw deleteError
+        }
 
         logger.info({ exerciseId, userId: session.user.id }, 'Exercise deleted successfully')
 

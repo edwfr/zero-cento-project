@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { mockTrainerSession, mockAdminSession, mockTraineeSession } from './fixtures'
 
 const withIdParam = (id: string) => ({ params: Promise.resolve({ id }) })
@@ -807,6 +808,22 @@ describe('PUT /api/exercises/[id]', () => {
 
         expect(res.status).toBe(404)
     })
+
+    it('trainee cannot update exercises (403)', async () => {
+        vi.mocked(requireRole).mockRejectedValue(
+            Response.json({ error: { code: 'FORBIDDEN' } }, { status: 403 })
+        )
+
+        const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatePayload),
+        })
+        const res = await updateExercise(req, withIdParam(EX_ID_1))
+
+        expect(res.status).toBe(403)
+        expect(prisma.exercise.update).not.toHaveBeenCalled()
+    })
 })
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -873,6 +890,7 @@ describe('DELETE /api/exercises/[id]', () => {
         expect(res.status).toBe(409)
         expect(json.error.key).toBe('exercise.cannotDeleteReferenced')
         expect(json.error.details.programName).toBe('Old Program')
+        expect(json.error.details.workoutExercises).toBe(3)
         expect(prisma.exercise.delete).not.toHaveBeenCalled()
     })
 
@@ -891,6 +909,7 @@ describe('DELETE /api/exercises/[id]', () => {
 
         expect(res.status).toBe(409)
         expect(json.error.key).toBe('exercise.cannotDeleteReferenced')
+        expect(json.error.details.workoutSkeletons).toBe(1)
         expect(prisma.exercise.delete).not.toHaveBeenCalled()
     })
 
@@ -909,7 +928,28 @@ describe('DELETE /api/exercises/[id]', () => {
 
         expect(res.status).toBe(409)
         expect(json.error.key).toBe('exercise.cannotDeleteReferenced')
+        expect(json.error.details.personalRecords).toBe(2)
         expect(prisma.exercise.delete).not.toHaveBeenCalled()
+    })
+
+    it('returns 409 (not 500) when the delete races with a new reference (P2003)', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(makeCountedExercise() as any)
+        vi.mocked(prisma.exercise.delete).mockRejectedValue(
+            new Prisma.PrismaClientKnownRequestError('Foreign key constraint failed', {
+                code: 'P2003',
+                clientVersion: '5.0.0',
+            })
+        )
+
+        const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
+            method: 'DELETE',
+        })
+        const res = await deleteExercise(req, withIdParam(EX_ID_1))
+        const json = await res.json()
+
+        expect(res.status).toBe(409)
+        expect(json.error.key).toBe('exercise.cannotDeleteReferenced')
     })
 
     it('returns 404 when exercise to delete does not exist', async () => {
@@ -939,5 +979,19 @@ describe('DELETE /api/exercises/[id]', () => {
         const res = await deleteExercise(req, withIdParam(EX_ID_1))
 
         expect(res.status).toBe(200)
+    })
+
+    it('trainee cannot delete exercises (403)', async () => {
+        vi.mocked(requireRole).mockRejectedValue(
+            Response.json({ error: { code: 'FORBIDDEN' } }, { status: 403 })
+        )
+
+        const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
+            method: 'DELETE',
+        })
+        const res = await deleteExercise(req, withIdParam(EX_ID_1))
+
+        expect(res.status).toBe(403)
+        expect(prisma.exercise.delete).not.toHaveBeenCalled()
     })
 })

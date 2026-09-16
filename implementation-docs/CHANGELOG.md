@@ -11,7 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
-### [16 Settembre 2026] — Pulizia chiavi i18n esercizi non più usate
+### [16 Settembre 2026] — Fix review finale: race sul DELETE esercizi, test di autorizzazione mancanti
+
+**File modificati:** `src/app/api/exercises/[id]/route.ts`, `tests/integration/exercises.test.ts`, `implementation-docs/CHANGELOG.md`
+**Note:** Tre fix dalla review finale del branch libreria esercizi condivisa. (1) Il check `_count` e la `prisma.exercise.delete` non erano atomici: un `WorkoutExercise` o `PersonalRecord` inserito nella finestra fra le due query faceva ancora fallire la delete con una violazione di FK (`P2003`), riportando lo stesso 500 che il guard doveva eliminare, solo in una race invece che nel caso comune. Aggiunto un try/catch attorno alla sola `prisma.exercise.delete` che intercetta `Prisma.PrismaClientKnownRequestError` con `code === 'P2003'` e risponde con lo stesso 409 `exercise.cannotDeleteReferenced` del guard, senza fabbricare conteggi che in quel path non sono disponibili. (2) Aggiunti due test che mockano `requireRole` in rejection (stesso schema del test POST esistente) per PUT e DELETE, verificando 403 e che `prisma.exercise.update`/`delete` non vengano chiamate: nessun test pinnava finora l'unico controllo di autorizzazione rimasto su questi due endpoint. (3) Aggiunta in ciascuno dei tre test 409 isolati l'asserzione sul conteggio (`workoutExercises`/`workoutSkeletons`/`personalRecords`) che il contratto documentato nel piano prometteva ma che i test non verificavano.
 
 **File modificati:** `public/locales/en/errors.json`, `public/locales/it/errors.json`, `implementation-docs/CHANGELOG.md`
 **Note:** Rimosse le chiavi `exercise.modifyDenied`, `exercise.deleteDenied` e `exercise.cannotDeleteInActiveProgram`, rimaste orfane dopo l'apertura della libreria esercizi a tutti i trainer e la sostituzione del guard di eliminazione. Le omonime in altri namespace (`feedback.modifyDenied`, `program.modifyDenied`) restano in uso e non sono state toccate.
