@@ -531,7 +531,7 @@
         "tableRpe": "RPE",
         "tableWeightKg": "Peso",
         "tableRest": "Rest",
-        "warmupHint": "Warmup: Serie di riscaldamento preparatoria prima delle serie allenanti.",
+        "warmupHint": "Warmup: Esercizio di riscaldamento",
         "jumpSetHint": "JumpSet: Serie in alternanza con recupero ridotto.",
         "superSetHint": "SuperSet: Due esercizi consecutivi senza recupero tra loro.",
         "tableMeta": "Info",
