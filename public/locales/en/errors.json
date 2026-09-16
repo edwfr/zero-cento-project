@@ -21,10 +21,7 @@
     "exercise": {
         "notFound": "Exercise not found",
         "nameExists": "An exercise with this name already exists",
-        "modifyDenied": "You can only modify exercises you created",
-        "deleteDenied": "You can only delete exercises you created",
         "deletedSuccess": "Exercise deleted successfully",
-        "cannotDeleteInActiveProgram": "Cannot delete exercise: it is used in an active program",
         "cannotDeleteReferenced": "Cannot delete this exercise: it is still used in programs or trainee records"
     },
     "feedback": {

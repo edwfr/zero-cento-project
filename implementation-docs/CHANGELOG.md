@@ -11,6 +11,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [16 Settembre 2026] — Pulizia chiavi i18n esercizi non più usate
+
+**File modificati:** `public/locales/en/errors.json`, `public/locales/it/errors.json`, `implementation-docs/CHANGELOG.md`
+**Note:** Rimosse le chiavi `exercise.modifyDenied`, `exercise.deleteDenied` e `exercise.cannotDeleteInActiveProgram`, rimaste orfane dopo l'apertura della libreria esercizi a tutti i trainer e la sostituzione del guard di eliminazione. Le omonime in altri namespace (`feedback.modifyDenied`, `program.modifyDenied`) restano in uso e non sono state toccate.
+
 ### [16 Settembre 2026] — Eliminazione esercizi: aperta a tutti i trainer, bloccata se referenziato
 
 **File modificati:** `src/app/api/exercises/[id]/route.ts`, `public/locales/en/errors.json`, `public/locales/it/errors.json`, `tests/integration/exercises.test.ts`, `implementation-docs/CHANGELOG.md`
