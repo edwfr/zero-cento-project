@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { mockTraineeSession, mockAdminSession } from './fixtures'
+import { mockTraineeSession, mockAdminSession, mockTrainerSession, makeTrainerSession } from './fixtures'
 
 vi.mock('@/lib/auth', () => ({
     requireAuth: vi.fn(),
@@ -12,6 +12,7 @@ vi.mock('@/lib/prisma', () => ({
     prisma: {
         trainingProgram: {
             findUnique: vi.fn(),
+            delete: vi.fn(),
         },
         personalRecord: {
             findMany: vi.fn(),
@@ -23,7 +24,7 @@ vi.mock('@/lib/logger', () => ({
     logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
 
-import { GET } from '@/app/api/programs/[id]/route'
+import { GET, DELETE } from '@/app/api/programs/[id]/route'
 import { requireRole } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
@@ -181,5 +182,82 @@ describe('GET /api/programs/[id] — admin select shape', () => {
 
         expect(exerciseInclude.movementPattern).toBeDefined()
         expect(exerciseInclude.exerciseMuscleGroups).toBeDefined()
+    })
+})
+
+describe('DELETE /api/programs/[id] — trainer deletion', () => {
+    const withIdParam = (id: string) => ({ params: Promise.resolve({ id }) })
+
+    beforeEach(() => {
+        vi.clearAllMocks()
+        ;(requireRole as any).mockResolvedValue(mockTrainerSession)
+    })
+
+    it.each(['draft', 'active', 'completed'])(
+        'lets the owning trainer delete a %s program',
+        async (status) => {
+            ;(prisma.trainingProgram.findUnique as any).mockResolvedValue({
+                id: 'prog-1',
+                trainerId: mockTrainerSession.user.id,
+                traineeId: 'trainee-uuid-1',
+                status,
+            })
+            ;(prisma.trainingProgram.delete as any).mockResolvedValue({ id: 'prog-1' })
+
+            const res = await DELETE(makeRequest(), withIdParam('prog-1'))
+            const body = await res.json()
+
+            expect(res.status).toBe(200)
+            expect(body.data.messageKey).toBe('program.deletedSuccess')
+            expect(prisma.trainingProgram.delete).toHaveBeenCalledWith({
+                where: { id: 'prog-1' },
+            })
+        }
+    )
+
+    it('rejects deletion of a program owned by another trainer', async () => {
+        ;(requireRole as any).mockResolvedValue(makeTrainerSession({ id: 'other-trainer' }))
+        ;(prisma.trainingProgram.findUnique as any).mockResolvedValue({
+            id: 'prog-1',
+            trainerId: mockTrainerSession.user.id,
+            traineeId: 'trainee-uuid-1',
+            status: 'active',
+        })
+
+        const res = await DELETE(makeRequest(), withIdParam('prog-1'))
+        const body = await res.json()
+
+        expect(res.status).toBe(403)
+        expect(body.error.key).toBe('program.deleteDenied')
+        expect(prisma.trainingProgram.delete).not.toHaveBeenCalled()
+    })
+
+    it('returns 404 when the program does not exist', async () => {
+        ;(prisma.trainingProgram.findUnique as any).mockResolvedValue(null)
+
+        const res = await DELETE(makeRequest(), withIdParam('missing'))
+        const body = await res.json()
+
+        expect(res.status).toBe(404)
+        expect(body.error.key).toBe('program.notFound')
+        expect(prisma.trainingProgram.delete).not.toHaveBeenCalled()
+    })
+
+    it('lets an admin delete any program', async () => {
+        ;(requireRole as any).mockResolvedValue(mockAdminSession)
+        ;(prisma.trainingProgram.findUnique as any).mockResolvedValue({
+            id: 'prog-1',
+            trainerId: 'someone-else',
+            traineeId: 'trainee-uuid-1',
+            status: 'completed',
+        })
+        ;(prisma.trainingProgram.delete as any).mockResolvedValue({ id: 'prog-1' })
+
+        const res = await DELETE(makeRequest(), withIdParam('prog-1'))
+
+        expect(res.status).toBe(200)
+        expect(prisma.trainingProgram.delete).toHaveBeenCalledWith({
+            where: { id: 'prog-1' },
+        })
     })
 })

@@ -276,6 +276,7 @@
         "trainer": "Trainer",
         "deleteProgram": "Delete Program",
         "confirmDeleteProgram": "Are you sure you want to delete the program",
+        "confirmDeleteProgramWarning": "All workouts, exercises, feedback and completed sets linked to this program will be permanently deleted.",
         "noProgramsFound": "No programs found with these filters",
         "workoutsPerWeek": "workouts/week",
         "weeksShort": "wks.",

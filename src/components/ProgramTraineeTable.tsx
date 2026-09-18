@@ -60,7 +60,7 @@ export interface ProgramTraineeTableProps {
     onSearchSubmit: (event: React.FormEvent<HTMLFormElement>) => void
     onTabChange: (tab: ProgramStatusTab) => void
     onPageChange: (page: number) => void
-    onDeleteProgram: (id: string, title: string) => void
+    onDeleteProgram: (id: string, title: string, status: ProgramStatusTab) => void
     getEditHref: (program: ProgramTraineeTableProgram) => string
     getViewHref: (program: ProgramTraineeTableProgram) => string
     getCloneHref: (program: ProgramTraineeTableProgram) => string
@@ -366,7 +366,7 @@ export default function ProgramTraineeTable({
                                                             <ActionIconButton
                                                                 variant="delete"
                                                                 label={t('programs.delete')}
-                                                                onClick={() => onDeleteProgram(program.id, program.title)}
+                                                                onClick={() => onDeleteProgram(program.id, program.title, program.status)}
                                                             />
                                                         </InlineActions>
                                                     ) : (
@@ -392,6 +392,11 @@ export default function ProgramTraineeTable({
                                                                 variant="view-test"
                                                                 label={t('programs.viewTests')}
                                                                 href={getViewTestsHref(program)}
+                                                            />
+                                                            <ActionIconButton
+                                                                variant="delete"
+                                                                label={t('programs.delete')}
+                                                                onClick={() => onDeleteProgram(program.id, program.title, program.status)}
                                                             />
                                                         </InlineActions>
                                                     )}

@@ -346,4 +346,63 @@ describe('TraineeDetailContent Programs tab', () => {
             expect(screen.getByText('programs.noDraftPrograms')).toBeInTheDocument()
         })
     })
+
+    it('deletes an active program after confirming the data-loss warning', async () => {
+        render(<TraineeDetailContent />)
+
+        expect(await screen.findByText('Programma Active Pending')).toBeInTheDocument()
+
+        const deleteButtons = screen.getAllByLabelText('programs.delete')
+        expect(deleteButtons.length).toBeGreaterThan(0)
+
+        fireEvent.click(deleteButtons[0])
+
+        const dialog = await screen.findByRole('dialog')
+        expect(
+            within(dialog).getByText(/programs.confirmDeleteProgramWarning/)
+        ).toBeInTheDocument()
+
+        fireEvent.click(within(dialog).getByText('programs.delete'))
+
+        await waitFor(() => {
+            const deleteCall = vi
+                .mocked(global.fetch)
+                .mock.calls.find(
+                    (call) =>
+                        String(call[0]).includes('/api/programs/prog-active-pending') &&
+                        call[1]?.method === 'DELETE'
+                )
+            expect(deleteCall).toBeDefined()
+        })
+
+        await waitFor(() => {
+            expect(screen.queryByText('Programma Active Pending')).not.toBeInTheDocument()
+        })
+    })
+
+    it('deletes a completed program from the completed tab', async () => {
+        render(<TraineeDetailContent />)
+
+        expect(await screen.findByText('Programma Active Pending')).toBeInTheDocument()
+
+        fireEvent.click(screen.getByRole('button', { name: /programs.tabCompleted/i }))
+        expect(await screen.findByText('Programma Completed')).toBeInTheDocument()
+
+        fireEvent.click(screen.getAllByLabelText('programs.delete')[0])
+
+        const dialog = await screen.findByRole('dialog')
+        fireEvent.click(within(dialog).getByText('programs.delete'))
+
+        await waitFor(() => {
+            const deleteCall = vi
+                .mocked(global.fetch)
+                .mock.calls.find(
+                    (call) =>
+                        String(call[0]).includes('/api/programs/prog-completed-1') &&
+                        call[1]?.method === 'DELETE'
+                )
+            expect(deleteCall).toBeDefined()
+        })
+    })
+
 })

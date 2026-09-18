@@ -69,7 +69,6 @@
         "alreadyPublished": "Program is already published or completed",
         "cannotCompleteDraft": "Cannot complete a draft program. Publish it first.",
         "cannotModifyNonDraft": "Cannot modify program: only draft programs can be edited",
-        "cannotDeleteNonDraft": "Cannot delete program: only draft programs can be deleted",
         "cannotPublishEmptyWorkouts": "Cannot publish: one or more workouts have no exercises",
         "cannotReduceDurationWeeks": "Cannot reduce duration below the number of already configured weeks",
         "cannotReduceWorkoutsPerWeek": "Cannot reduce workouts per week below the number of already configured workouts",

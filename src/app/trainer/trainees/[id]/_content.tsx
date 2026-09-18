@@ -626,10 +626,14 @@ export default function TraineeDetailContent() {
         setProgramCurrentPage(targetPage)
     }
 
-    const handleDeleteProgram = (id: string, title: string) => {
+    const handleDeleteProgram = (id: string, title: string, status: ProgramStatusTab) => {
+        const baseMessage = `${t('programs.confirmDeleteProgram')} "${title}"?`
         setConfirmModal({
             title: t('programs.deleteProgram'),
-            message: `${t('programs.confirmDeleteProgram')} "${title}"?`,
+            message:
+                status === 'draft'
+                    ? baseMessage
+                    : `${baseMessage}\n\n${t('programs.confirmDeleteProgramWarning')}`,
             confirmText: t('programs.delete'),
             onConfirm: async () => {
                 setConfirmModal(null)

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import TrainerProgramsContent from '@/app/trainer/programs/_content'
 
 vi.mock('@/components/ToastNotification', () => ({
@@ -127,9 +127,16 @@ const makeProgramsResponse = (items: unknown[], currentPage = 1, totalItems = 60
 describe('TrainerProgramsContent', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        global.fetch = vi.fn().mockImplementation(async (input: RequestInfo | URL) => {
+        global.fetch = vi.fn().mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
             const rawUrl = String(input)
             const url = new URL(rawUrl, 'http://localhost')
+
+            if (init?.method === 'DELETE') {
+                return {
+                    ok: true,
+                    json: async () => ({ data: { message: 'deleted' } }),
+                }
+            }
 
             const status = (url.searchParams.get('status') ?? 'active') as 'draft' | 'active' | 'completed'
             const currentPage = Number(url.searchParams.get('page') ?? '1')
@@ -269,4 +276,58 @@ describe('TrainerProgramsContent', () => {
             expect(btn.closest('a')).toHaveAttribute('href', expect.stringMatching(/\/edit$/))
         }
     })
+
+    it('deletes an active program after confirming the data-loss warning', async () => {
+        render(<TrainerProgramsContent />)
+
+        await waitFor(() => {
+            expect(screen.getByText('Programma Senza Test')).toBeInTheDocument()
+        })
+
+        const deleteButtons = screen.getAllByLabelText('programs.delete')
+        expect(deleteButtons).toHaveLength(activePrograms.length)
+
+        fireEvent.click(deleteButtons[0])
+
+        const dialog = await screen.findByRole('dialog')
+        expect(within(dialog).getByText('programs.deleteProgram')).toBeInTheDocument()
+        expect(
+            within(dialog).getByText(/programs.confirmDeleteProgramWarning/)
+        ).toBeInTheDocument()
+
+        fireEvent.click(within(dialog).getByText('programs.delete'))
+
+        await waitFor(() => {
+            const deleteCall = vi
+                .mocked(global.fetch)
+                .mock.calls.find(
+                    (call) =>
+                        String(call[0]).includes('/api/programs/program-1') &&
+                        call[1]?.method === 'DELETE'
+                )
+            expect(deleteCall).toBeDefined()
+        })
+    })
+
+    it('omits the data-loss warning when deleting a draft program', async () => {
+        render(<TrainerProgramsContent />)
+
+        await waitFor(() => {
+            expect(screen.getByText('Programma Senza Test')).toBeInTheDocument()
+        })
+
+        fireEvent.click(screen.getByRole('button', { name: /programs.tabDraft/i }))
+
+        await waitFor(() => {
+            expect(screen.getByText('Bozza Programma')).toBeInTheDocument()
+        })
+
+        fireEvent.click(screen.getAllByLabelText('programs.delete')[0])
+
+        const dialog = await screen.findByRole('dialog')
+        expect(
+            within(dialog).queryByText(/programs.confirmDeleteProgramWarning/)
+        ).not.toBeInTheDocument()
+    })
+
 })

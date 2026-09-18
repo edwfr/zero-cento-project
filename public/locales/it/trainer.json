@@ -276,6 +276,7 @@
         "trainer": "Trainer",
         "deleteProgram": "Elimina Programma",
         "confirmDeleteProgram": "Sei sicuro di voler eliminare il programma",
+        "confirmDeleteProgramWarning": "Tutti gli allenamenti, gli esercizi, i feedback e le serie completate collegati al programma saranno eliminati definitivamente.",
         "noProgramsFound": "Nessun programma trovato con questi filtri",
         "workoutsPerWeek": "allenamenti/settimana",
         "weeksShort": "sett.",

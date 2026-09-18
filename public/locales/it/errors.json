@@ -69,7 +69,6 @@
         "alreadyPublished": "Il programma è già pubblicato o completato",
         "cannotCompleteDraft": "Non puoi completare un programma in bozza. Pubblicalo prima.",
         "cannotModifyNonDraft": "Impossibile modificare il programma: solo i programmi in bozza possono essere modificati",
-        "cannotDeleteNonDraft": "Impossibile eliminare il programma: solo i programmi in bozza possono essere eliminati",
         "cannotPublishEmptyWorkouts": "Impossibile pubblicare: uno o più workout non hanno esercizi",
         "cannotReduceDurationWeeks": "Impossibile ridurre la durata al di sotto del numero di settimane già configurate",
         "cannotReduceWorkoutsPerWeek": "Impossibile ridurre i workout settimanali al di sotto del numero di workout già configurati",

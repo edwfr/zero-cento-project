@@ -471,18 +471,8 @@ export async function DELETE(
             return apiError('FORBIDDEN', 'You can only delete your own programs', 403, undefined, 'program.deleteDenied')
         }
 
-        // Check status: only draft can be deleted (unless admin)
-        if (session.user.role !== 'admin' && program.status !== 'draft') {
-            return apiError(
-                'FORBIDDEN',
-                'Cannot delete program: only draft programs can be deleted',
-                403,
-                undefined,
-                'program.cannotDeleteNonDraft'
-            )
-        }
-
-        // Delete program (cascade will delete weeks, workouts, workoutExercises)
+        // Delete program regardless of status: cascade removes weeks, workouts,
+        // workout exercises, feedbacks, performed sets and workout skeletons
         await prisma.trainingProgram.delete({
             where: { id: programId },
         })

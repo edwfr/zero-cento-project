@@ -354,10 +354,14 @@ export default function TrainerProgramsContent() {
     )
     const visiblePages = Array.from({ length: visiblePagesCount }, (_, idx) => firstVisiblePage + idx)
 
-    const handleDelete = (id: string, title: string) => {
+    const handleDelete = (id: string, title: string, status: ProgramStatusTab) => {
+        const baseMessage = `${t('programs.confirmDeleteProgram')} "${title}"?`
         setConfirmModal({
             title: t('programs.deleteProgram'),
-            message: `${t('programs.confirmDeleteProgram')} "${title}"?`,
+            message:
+                status === 'draft'
+                    ? baseMessage
+                    : `${baseMessage}\n\n${t('programs.confirmDeleteProgramWarning')}`,
             confirmText: t('programs.delete'),
             onConfirm: async () => {
                 setConfirmModal(null)

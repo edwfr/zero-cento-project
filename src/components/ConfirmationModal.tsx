@@ -150,7 +150,7 @@ export default function ConfirmationModal({
                 <h2 id={titleId} className={`text-2xl font-bold ${styles.titleColor} mb-3`}>{title}</h2>
 
                 {/* Message */}
-                <p id={messageId} className="text-gray-700 mb-6 leading-relaxed">{message}</p>
+                <p id={messageId} className="text-gray-700 mb-6 leading-relaxed whitespace-pre-line">{message}</p>
 
                 {/* Actions */}
                 <div className="flex space-x-3">
