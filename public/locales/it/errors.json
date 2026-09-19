@@ -94,6 +94,7 @@
         "cannotDeleteAdmin": "Non è possibile eliminare utenti admin",
         "activatedSuccess": "Utente attivato con successo",
         "deletedSuccess": "Utente eliminato con successo",
+        "deleteFailed": "Eliminazione utente non riuscita, riprova",
         "cannotModifyStatus": "Non è possibile modificare lo stato di questo utente",
         "canOnlyActivateTrainee": "È possibile attivare solo account atleta",
         "canOnlyDeactivateTrainee": "È possibile disattivare solo account atleta",

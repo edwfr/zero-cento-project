@@ -1,7 +1,8 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
-import { requireAuth } from '@/lib/auth'
+import { requireAuth, requireRole } from '@/lib/auth'
+import { createAdminClient } from '@/lib/supabase-server'
 import { updateUserSchema } from '@/schemas/user'
 import { logger } from '@/lib/logger'
 import { syncUserMetadata } from '@/lib/sync-user-metadata'
@@ -140,12 +141,13 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
 /**
  * DELETE /api/users/[id]
- * Delete user (physical delete with cleanup)
+ * Delete user (physical delete with cleanup).
+ * Trainees: Supabase Auth account is removed first, then all trainee data in one transaction.
  */
 export async function DELETE(request: NextRequest, { params }: Params) {
     const { id } = await params
     try {
-        const session = await requireAuth()
+        const session = await requireRole(['admin', 'trainer'])
 
         // Check user exists
         const existingUser = await prisma.user.findUnique({
@@ -176,12 +178,30 @@ export async function DELETE(request: NextRequest, { params }: Params) {
             return apiError('FORBIDDEN', 'Cannot delete admin users', 403, undefined, 'user.cannotDeleteAdmin')
         }
 
-        // Delete user (cascade delete will handle related records)
-        await prisma.user.delete({
-            where: { id },
-        })
+        if (existingUser.role === 'trainee') {
+            // Auth account first: on failure nothing is touched. A 404 means it is already
+            // gone (e.g. a previous attempt failed on the DB step), so the retry can complete.
+            const { error: authError } = await createAdminClient().auth.admin.deleteUser(id)
+            if (authError && authError.status !== 404) {
+                logger.error({ error: authError, userId: id }, 'Failed to delete Supabase auth user')
+                return apiError('INTERNAL_ERROR', 'Failed to delete user', 500, undefined, 'user.deleteFailed')
+            }
 
-        logger.info({ userId: id }, 'User deleted')
+            // Trainee relations have no onDelete: Cascade. Deleting programs cascades
+            // weeks → workouts → workoutExercises → feedbacks → setsPerformed and skeletons.
+            await prisma.$transaction([
+                prisma.trainingProgram.deleteMany({ where: { traineeId: id } }),
+                prisma.exerciseFeedback.deleteMany({ where: { traineeId: id } }),
+                prisma.personalRecord.deleteMany({ where: { traineeId: id } }),
+                prisma.user.delete({ where: { id } }),
+            ])
+        } else {
+            await prisma.user.delete({
+                where: { id },
+            })
+        }
+
+        logger.info({ userId: id, role: existingUser.role }, 'User deleted')
 
         return apiSuccess({
             message: 'User deleted successfully',

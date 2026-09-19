@@ -94,6 +94,7 @@
         "cannotDeleteAdmin": "Cannot delete admin users",
         "activatedSuccess": "User activated successfully",
         "deletedSuccess": "User deleted successfully",
+        "deleteFailed": "Failed to delete user, please try again",
         "cannotModifyStatus": "Cannot modify user status",
         "canOnlyActivateTrainee": "Can only activate trainee accounts",
         "canOnlyDeactivateTrainee": "Can only deactivate trainee accounts",
