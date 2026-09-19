@@ -48,7 +48,10 @@ describe('ProgramTestResultsContent', () => {
                                             sets: 3,
                                             reps: '5',
                                             rpe: 8,
-                                            weightUsed: '100 kg',
+                                            plannedWeight: 100,
+                                            repsDone: '5 / 5 / 4',
+                                            rpeDone: '7.5 / 8 / 9',
+                                            weightUsed: '100 / 100 / 102.5',
                                             comments: 'Prima serie',
                                             feedbackDate: '2026-05-10',
                                         },
@@ -58,7 +61,10 @@ describe('ProgramTestResultsContent', () => {
                                             sets: 4,
                                             reps: '6',
                                             rpe: 7.5,
-                                            weightUsed: '80 kg',
+                                            plannedWeight: null,
+                                            repsDone: '-',
+                                            rpeDone: '-',
+                                            weightUsed: '-',
                                             comments: null,
                                             feedbackDate: '2026-05-10',
                                         },
@@ -92,7 +98,7 @@ describe('ProgramTestResultsContent', () => {
         const bodyRows = table.querySelectorAll('tbody tr')
 
         expect(table).toHaveClass('table-fixed')
-        expect(table).toHaveClass('min-w-[860px]')
+        expect(table).toHaveClass('min-w-[1100px]')
         expect(thead).toHaveClass('bg-slate-200')
         expect(bodyRows).toHaveLength(2)
         expect(bodyRows[0]).toHaveClass('bg-white')
@@ -106,6 +112,55 @@ describe('ProgramTestResultsContent', () => {
         expect(screen.getByLabelText('testResults.ratingNotProvided')).toBeInTheDocument()
         expect(screen.queryByText('editProgram.workoutsConfiguredShort')).not.toBeInTheDocument()
         expect(screen.queryByText('editProgram.exercisesCount')).not.toBeInTheDocument()
+    })
+
+    it('renders planned and performed columns with per-set values', async () => {
+        render(<ProgramTestResultsContent />)
+
+        fireEvent.click(await screen.findByRole('button', { name: 'testResults.openWorkoutDetails' }))
+        await screen.findByText('Squat')
+
+        const headers = screen.getAllByRole('columnheader').map((header) => header.textContent)
+        expect(headers).toEqual([
+            'testResults.colExercise',
+            'testResults.colSets',
+            'testResults.colReps',
+            'testResults.colRpe',
+            'testResults.colPlannedWeight',
+            'testResults.colRepsDone',
+            'testResults.colRpeDone',
+            'testResults.colWeight',
+            'testResults.colCommentInfo',
+        ])
+
+        const squatCells = screen.getAllByRole('row')[1].querySelectorAll('td')
+        expect(Array.from(squatCells).slice(1, 8).map((cell) => cell.textContent)).toEqual([
+            '3',
+            '5',
+            '8.0',
+            '100',
+            '5 / 5 / 4',
+            '7.5 / 8 / 9',
+            '100 / 100 / 102.5',
+        ])
+
+        const benchCells = screen.getAllByRole('row')[2].querySelectorAll('td')
+        expect(Array.from(benchCells).slice(4, 8).map((cell) => cell.textContent)).toEqual(['-', '-', '-', '-'])
+    })
+
+    it('shows comment info icon only for exercises with a comment and reveals it on hover', async () => {
+        render(<ProgramTestResultsContent />)
+
+        fireEvent.click(await screen.findByRole('button', { name: 'testResults.openWorkoutDetails' }))
+        await screen.findByText('Squat')
+
+        const infoButtons = screen.getAllByRole('button', { name: 'testResults.colCommentInfo' })
+        expect(infoButtons).toHaveLength(1)
+        expect(screen.queryByText('Prima serie')).not.toBeInTheDocument()
+
+        fireEvent.mouseOver(infoButtons[0])
+
+        expect(await screen.findByRole('tooltip')).toHaveTextContent('Prima serie')
     })
 
     it('supports collapsing and expanding week and workout panels', async () => {

@@ -67,6 +67,7 @@ describe('GET /api/programs/[id]/test-results', () => {
                                     reps: '5',
                                     targetRpe: 7.5,
                                     weight: 100,
+                                    effectiveWeight: 100,
                                     notes: null,
                                     exercise: {
                                         name: 'Back Squat',
@@ -78,9 +79,10 @@ describe('GET /api/programs/[id]/test-results', () => {
                                             actualRpe: 8,
                                             notes: 'Felt good',
                                             setsPerformed: [
-                                                { setNumber: 1, reps: 5, weight: 102.5, completed: true },
-                                                { setNumber: 2, reps: 5, weight: 102.5, completed: true },
-                                                { setNumber: 3, reps: 5, weight: 102.5, completed: true },
+                                                { setNumber: 1, reps: 5, weight: 102.5, actualRpe: 7, completed: true },
+                                                { setNumber: 2, reps: 4, weight: 102.5, actualRpe: null, completed: true },
+                                                { setNumber: 3, reps: 3, weight: 105, actualRpe: 9.5, completed: true },
+                                                { setNumber: 4, reps: 1, weight: 110, actualRpe: 10, completed: false },
                                             ],
                                         },
                                     ],
@@ -106,11 +108,36 @@ describe('GET /api/programs/[id]/test-results', () => {
                                     reps: '1',
                                     targetRpe: null,
                                     weight: 140,
+                                    effectiveWeight: null,
                                     notes: null,
                                     exercise: {
                                         name: 'Deadlift',
                                     },
                                     exerciseFeedbacks: [],
+                                },
+                                {
+                                    id: 'we-3',
+                                    sets: 2,
+                                    reps: '3',
+                                    targetRpe: 8,
+                                    weight: 60,
+                                    effectiveWeight: 60,
+                                    notes: null,
+                                    exercise: {
+                                        name: 'Bench Press',
+                                    },
+                                    exerciseFeedbacks: [
+                                        {
+                                            id: 'fb-3',
+                                            date: new Date('2026-06-08'),
+                                            actualRpe: null,
+                                            notes: '  ',
+                                            setsPerformed: [
+                                                { setNumber: 1, reps: 3, weight: 60, actualRpe: null, completed: true },
+                                                { setNumber: 2, reps: 3, weight: 62.5, actualRpe: null, completed: true },
+                                            ],
+                                        },
+                                    ],
                                 },
                             ],
                         },
@@ -130,10 +157,32 @@ describe('GET /api/programs/[id]/test-results', () => {
         expect(body.data.weeks[0].workouts[0].rows[0]).toMatchObject({
             exerciseName: 'Back Squat',
             sets: 3,
-            reps: '5 / 5 / 5',
-            weightUsed: '102.5 / 102.5 / 102.5',
-            rpe: 8,
+            reps: '5',
+            rpe: 7.5,
+            plannedWeight: 100,
+            repsDone: '5 / 4 / 3',
+            rpeDone: '7 / - / 9.5',
+            weightUsed: '102.5 / 102.5 / 105',
             comments: 'Felt good',
+        })
+        expect(body.data.weeks[1].workouts[0].rows[0]).toMatchObject({
+            exerciseName: 'Deadlift',
+            sets: 1,
+            reps: '1',
+            rpe: null,
+            plannedWeight: null,
+            repsDone: '-',
+            rpeDone: '-',
+            weightUsed: '-',
+            comments: null,
+        })
+        expect(body.data.weeks[1].workouts[0].rows[1]).toMatchObject({
+            exerciseName: 'Bench Press',
+            sets: 2,
+            repsDone: '3 / 3',
+            rpeDone: '-',
+            weightUsed: '60 / 62.5',
+            comments: null,
         })
         expect(body.data.weeks[0].workouts[0]).toMatchObject({
             sleepQuality: 4,

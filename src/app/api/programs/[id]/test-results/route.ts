@@ -8,12 +8,13 @@ interface SetPerformedEntry {
     setNumber: number
     reps: number
     weight: number
+    actualRpe: number | null
     completed: boolean
 }
 
-const formatNumberList = (values: Array<number>): string => {
-    if (values.length === 0) return '-'
-    return values.map((value) => `${value}`).join(' / ')
+const formatNumberList = (values: Array<number | null>): string => {
+    if (values.every((value) => value === null)) return '-'
+    return values.map((value) => (value === null ? '-' : `${value}`)).join(' / ')
 }
 
 const normalizeOptionalText = (value: string | null | undefined): string | null => {
@@ -82,6 +83,7 @@ export async function GET(
                                         reps: true,
                                         targetRpe: true,
                                         weight: true,
+                                        effectiveWeight: true,
                                         notes: true,
                                         exercise: {
                                             select: {
@@ -105,6 +107,7 @@ export async function GET(
                                                         setNumber: true,
                                                         reps: true,
                                                         weight: true,
+                                                        actualRpe: true,
                                                         completed: true,
                                                     },
                                                 },
@@ -143,28 +146,18 @@ export async function GET(
                         (set: SetPerformedEntry) => set.completed
                     )
 
-                    const repsFromFeedback = completedSets.map((set: SetPerformedEntry) => set.reps)
-                    const weightsFromFeedback = completedSets.map((set: SetPerformedEntry) => set.weight)
-
-                    const setsCount = completedSets.length > 0 ? completedSets.length : workoutExercise.sets
-                    const repsValue =
-                        repsFromFeedback.length > 0
-                            ? formatNumberList(repsFromFeedback)
-                            : workoutExercise.reps || '-'
-                    const weightValue =
-                        weightsFromFeedback.length > 0
-                            ? formatNumberList(weightsFromFeedback)
-                            : workoutExercise.weight !== null
-                                ? `${workoutExercise.weight}`
-                                : '-'
-
+                    // Planned values come from the program; performed values are per-set lists
+                    // from the latest feedback ('-' when missing).
                     return {
                         workoutExerciseId: workoutExercise.id,
                         exerciseName: workoutExercise.exercise.name,
-                        sets: setsCount,
-                        reps: repsValue,
-                        rpe: latestFeedback?.actualRpe ?? workoutExercise.targetRpe ?? null,
-                        weightUsed: weightValue,
+                        sets: workoutExercise.sets,
+                        reps: workoutExercise.reps || '-',
+                        rpe: workoutExercise.targetRpe ?? null,
+                        plannedWeight: workoutExercise.effectiveWeight ?? null,
+                        repsDone: formatNumberList(completedSets.map((set: SetPerformedEntry) => set.reps)),
+                        rpeDone: formatNumberList(completedSets.map((set: SetPerformedEntry) => set.actualRpe)),
+                        weightUsed: formatNumberList(completedSets.map((set: SetPerformedEntry) => set.weight)),
                         comments: normalizeOptionalText(latestFeedback?.notes),
                         feedbackDate: latestFeedback?.date ?? null,
                     }

@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
-import { CheckCircle2, ChevronDown, ChevronUp, Circle, Plus, Star } from 'lucide-react'
+import { CheckCircle2, ChevronDown, ChevronUp, Circle, Info, Plus, Star } from 'lucide-react'
+import Tooltip from '@mui/material/Tooltip'
 import type { WeekType } from '@prisma/client'
 import { SkeletonTable, WeekTypeBadge } from '@/components'
 import LoadingSpinner from '@/components/LoadingSpinner'
@@ -22,6 +23,9 @@ interface TestResultRow {
     sets: number
     reps: string
     rpe: number | null
+    plannedWeight: number | null
+    repsDone: string
+    rpeDone: string
     weightUsed: string
     comments: string | null
     feedbackDate: string | null
@@ -424,14 +428,17 @@ export default function ProgramTestResultsContent() {
                                                     ) : (
                                                         <>
                                                             <div className="overflow-x-auto">
-                                                                <table className="min-w-[860px] w-full table-fixed divide-y divide-gray-200 text-sm">
+                                                                <table className="min-w-[1100px] w-full table-fixed divide-y divide-gray-200 text-sm">
                                                                     <colgroup>
-                                                                        <col className="w-[24%]" />
+                                                                        <col className="w-[20%]" />
+                                                                        <col className="w-[6%]" />
                                                                         <col className="w-[8%]" />
-                                                                        <col className="w-[10%]" />
-                                                                        <col className="w-[10%]" />
-                                                                        <col className="w-[14%]" />
-                                                                        <col className="w-[34%]" />
+                                                                        <col className="w-[7%]" />
+                                                                        <col className="w-[8%]" />
+                                                                        <col className="w-[16%]" />
+                                                                        <col className="w-[16%]" />
+                                                                        <col className="w-[15%]" />
+                                                                        <col className="w-[4%]" />
                                                                     </colgroup>
                                                                     <thead className="bg-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-gray-700">
                                                                         <tr>
@@ -447,11 +454,22 @@ export default function ProgramTestResultsContent() {
                                                                             <th className="px-2 py-2 text-center">
                                                                                 {t('testResults.colRpe')}
                                                                             </th>
+                                                                            <th className="px-2 py-2 text-center">
+                                                                                {t('testResults.colPlannedWeight')}
+                                                                            </th>
+                                                                            <th className="px-2 py-2">
+                                                                                {t('testResults.colRepsDone')}
+                                                                            </th>
+                                                                            <th className="px-2 py-2">
+                                                                                {t('testResults.colRpeDone')}
+                                                                            </th>
                                                                             <th className="px-2 py-2">
                                                                                 {t('testResults.colWeight')}
                                                                             </th>
                                                                             <th className="px-2 py-2">
-                                                                                {t('testResults.colComments')}
+                                                                                <span className="sr-only">
+                                                                                    {t('testResults.colCommentInfo')}
+                                                                                </span>
                                                                             </th>
                                                                         </tr>
                                                                     </thead>
@@ -475,11 +493,35 @@ export default function ProgramTestResultsContent() {
                                                                                 <td className="px-2 py-2 text-center text-xs font-semibold text-gray-900">
                                                                                     {row.rpe !== null ? Number(row.rpe).toFixed(1) : '-'}
                                                                                 </td>
+                                                                                <td className="px-2 py-2 text-center text-xs font-semibold text-gray-900">
+                                                                                    {row.plannedWeight !== null ? row.plannedWeight : '-'}
+                                                                                </td>
+                                                                                <td className="px-2 py-2 text-xs text-gray-700 whitespace-nowrap">
+                                                                                    {row.repsDone}
+                                                                                </td>
+                                                                                <td className="px-2 py-2 text-xs text-gray-700 whitespace-nowrap">
+                                                                                    {row.rpeDone}
+                                                                                </td>
                                                                                 <td className="px-2 py-2 text-xs text-gray-700 whitespace-nowrap">
                                                                                     {row.weightUsed}
                                                                                 </td>
-                                                                                <td className="px-2 py-2 text-xs text-gray-700 break-words">
-                                                                                    {row.comments?.trim() || t('testResults.noComments')}
+                                                                                <td className="px-2 py-2 text-center">
+                                                                                    {row.comments?.trim() && (
+                                                                                        <Tooltip
+                                                                                            title={row.comments}
+                                                                                            arrow
+                                                                                            enterTouchDelay={0}
+                                                                                            leaveTouchDelay={4000}
+                                                                                        >
+                                                                                            <button
+                                                                                                type="button"
+                                                                                                aria-label={t('testResults.colCommentInfo')}
+                                                                                                className="inline-flex items-center justify-center rounded-full p-0.5 text-gray-500 hover:text-brand-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
+                                                                                            >
+                                                                                                <Info className="h-4 w-4" aria-hidden="true" />
+                                                                                            </button>
+                                                                                        </Tooltip>
+                                                                                    )}
                                                                                 </td>
                                                                             </tr>
                                                                         ))}
