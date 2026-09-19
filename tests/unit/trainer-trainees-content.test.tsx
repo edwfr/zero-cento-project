@@ -77,7 +77,7 @@ describe('TrainerTraineesContent', () => {
     beforeEach(() => {
         vi.clearAllMocks()
 
-        global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+        global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
             const url = String(input)
 
             if (url.startsWith('/api/users?')) {
@@ -91,6 +91,13 @@ describe('TrainerTraineesContent', () => {
                 return {
                     ok: true,
                     json: async () => ({ data: { success: true } }),
+                } as Response
+            }
+
+            if (init?.method === 'DELETE' && url.startsWith('/api/users/')) {
+                return {
+                    ok: true,
+                    json: async () => ({ data: { messageKey: 'user.deletedSuccess' } }),
                 } as Response
             }
 
@@ -178,6 +185,47 @@ describe('TrainerTraineesContent', () => {
             const lastCall = String(fetchMock.mock.calls[fetchMock.mock.calls.length - 1][0])
             expect(lastCall).toContain('status=inactive')
             expect(lastCall).toContain('page=1')
+        })
+    })
+
+    it('asks for confirmation before deleting a trainee and does not call the API on cancel', async () => {
+        render(<TrainerTraineesContent />)
+
+        const deleteButtons = await screen.findAllByRole('button', { name: 'athletes.delete' })
+        fireEvent.click(deleteButtons[0])
+
+        expect(screen.getByText('athletes.deleteTitle')).toBeInTheDocument()
+        expect(screen.getByText('athletes.deleteConfirmMessage')).toBeInTheDocument()
+
+        fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }))
+
+        await waitFor(() => {
+            expect(screen.queryByText('athletes.deleteTitle')).not.toBeInTheDocument()
+        })
+        const deleteCalls = vi.mocked(global.fetch).mock.calls.filter(([, init]) => init?.method === 'DELETE')
+        expect(deleteCalls).toHaveLength(0)
+    })
+
+    it('deletes the trainee after confirmation and reloads the list', async () => {
+        render(<TrainerTraineesContent />)
+
+        const deleteButtons = await screen.findAllByRole('button', { name: 'athletes.delete' })
+        fireEvent.click(deleteButtons[0])
+
+        const fetchMock = vi.mocked(global.fetch)
+        const listCallsBefore = fetchMock.mock.calls.filter(([url]) => String(url).startsWith('/api/users?')).length
+
+        fireEvent.click(screen.getByRole('button', { name: 'common:common.delete - athletes.deleteTitle' }))
+
+        await waitFor(() => {
+            expect(fetchMock).toHaveBeenCalledWith('/api/users/trainee-1', { method: 'DELETE' })
+        })
+        await waitFor(() => {
+            const listCallsAfter = fetchMock.mock.calls.filter(([url]) => String(url).startsWith('/api/users?')).length
+            expect(listCallsAfter).toBeGreaterThan(listCallsBefore)
+        })
+        await waitFor(() => {
+            expect(screen.queryByText('athletes.deleteTitle')).not.toBeInTheDocument()
         })
     })
 })

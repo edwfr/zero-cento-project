@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { Plus } from 'lucide-react'
 import { Input } from '@/components/Input'
+import ConfirmationModal from '@/components/ConfirmationModal'
 
 interface Trainee {
     id: string
@@ -60,6 +61,8 @@ export default function TrainerTraineesContent() {
         active: 0,
         inactive: 0,
     })
+    const [traineeToDelete, setTraineeToDelete] = useState<Trainee | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
 
     const fetchTrainees = useCallback(async (page: number, signal?: AbortSignal) => {
         let shouldFinalizeLoad = true
@@ -177,6 +180,29 @@ export default function TrainerTraineesContent() {
             await fetchTrainees(currentPage)
         } catch (err: unknown) {
             showToast(err instanceof Error ? err.message : String(err), 'error')
+        }
+    }
+
+    const handleConfirmDelete = async () => {
+        if (!traineeToDelete) return
+        const name = `${traineeToDelete.firstName} ${traineeToDelete.lastName}`
+
+        setIsDeleting(true)
+        try {
+            const res = await fetch(`/api/users/${traineeToDelete.id}`, { method: 'DELETE' })
+            const data = await res.json()
+
+            if (!res.ok) {
+                throw new Error(getApiErrorMessage(data, t('athletes.deleteError'), t))
+            }
+
+            setTraineeToDelete(null)
+            showToast(t('athletes.deleteSuccess', { name }), 'success')
+            await fetchTrainees(currentPage)
+        } catch (err: unknown) {
+            showToast(err instanceof Error ? err.message : String(err), 'error')
+        } finally {
+            setIsDeleting(false)
         }
     }
 
@@ -325,6 +351,11 @@ export default function TrainerTraineesContent() {
                                                     label={trainee.isActive ? t('athletes.deactivate') : t('athletes.activate')}
                                                     onClick={() => handleToggleStatus(trainee.id, trainee.isActive)}
                                                 />
+                                                <ActionIconButton
+                                                    variant="delete"
+                                                    label={t('athletes.delete')}
+                                                    onClick={() => setTraineeToDelete(trainee)}
+                                                />
                                             </InlineActions>
                                         </td>
                                     </tr>
@@ -390,6 +421,21 @@ export default function TrainerTraineesContent() {
                         )}
                     </div>
                 )}
+
+                <ConfirmationModal
+                    isOpen={traineeToDelete !== null}
+                    onClose={() => {
+                        if (!isDeleting) setTraineeToDelete(null)
+                    }}
+                    onConfirm={handleConfirmDelete}
+                    title={t('athletes.deleteTitle')}
+                    message={t('athletes.deleteConfirmMessage', {
+                        name: traineeToDelete ? `${traineeToDelete.firstName} ${traineeToDelete.lastName}` : '',
+                    })}
+                    confirmText={t('common:common.delete')}
+                    variant="danger"
+                    isLoading={isDeleting}
+                />
             </div>
         </div>
     )
