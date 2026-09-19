@@ -50,7 +50,7 @@ export interface ExerciseTypeMeta {
     labelKey: string   // 'common:exerciseTypes.postural.label'
     pluralKey: string  // 'common:exerciseTypes.postural.plural'
     shortKey: string   // 'common:exerciseTypes.postural.short'
-    abbrevKey: string  // 'common:exerciseTypes.postural.abbrev'
+    formLabelKey: string // radio label; fundamental → 'trainer:exercises.fundamentalSBD'
     badgeClass: string // 'border-emerald-200 bg-emerald-100 text-emerald-800'
     sortOrder: number
 }
@@ -58,7 +58,7 @@ export interface ExerciseTypeMeta {
 export const EXERCISE_TYPE_META: Record<ExerciseType, ExerciseTypeMeta>
 export const DEFAULT_EXERCISE_TYPE: ExerciseType = 'accessory'
 export function isExerciseType(value: unknown): value is ExerciseType
-export function compareExerciseType(a: ExerciseType, b: ExerciseType): number
+export function compareExerciseType(a: string | null | undefined, b: string | null | undefined): number // unknown last
 ```
 
 Rules:
@@ -68,6 +68,11 @@ Rules:
   - fundamental: `border-red-200 bg-red-100 text-red-800`
   - accessory: `border-blue-200 bg-blue-100 text-blue-800`
   - postural: `border-emerald-200 bg-emerald-100 text-emerald-800`
+
+### 1b. Shared components
+
+- `src/components/ExerciseTypeBadge.tsx` — `{ type, variant?: 'short' | 'label', className? }`; colors from meta, caller passes layout classes. `short` shows letter with full label as `title`/`aria-label`.
+- `src/components/ExerciseTypeRadioGroup.tsx` — `{ value, onChange, disabled?, name? }`; one radio per `EXERCISE_TYPES`, label from `formLabelKey`.
 
 ### 2. Database
 
@@ -84,13 +89,13 @@ New canonical keys in `public/locales/{en,it}/common.json`:
 
 ```json
 "exerciseTypes": {
-  "fundamental": { "label": "Fondamentale", "plural": "Fondamentali", "short": "F", "abbrev": "Fond." },
-  "accessory":   { "label": "Accessorio",   "plural": "Accessori",    "short": "A", "abbrev": "Acc." },
-  "postural":    { "label": "Posturale",    "plural": "Posturali",    "short": "P", "abbrev": "Post." }
+  "fundamental": { "label": "Fondamentale", "plural": "Fondamentali", "short": "F" },
+  "accessory":   { "label": "Accessorio",   "plural": "Accessori",    "short": "A" },
+  "postural":    { "label": "Posturale",    "plural": "Posturali",    "short": "P" }
 }
 ```
 
-English: Fundamental/Fundamentals/F/Fund., Accessory/Accessories/A/Acc., Postural/Postural/P/Post.
+English: Fundamental/Fundamentals/F, Accessory/Accessories/A, Postural/Postural/P.
 
 After all usages are migrated, remove the now-duplicated keys:
 `trainer:exercises.{fundamental,accessory,fundamentalPlural,accessoryPlural}`, `trainee:workouts.{fundamentalShort,accessoryShort,tagFundamental,tagAccessory,tagFundamentalShort,tagAccessoryShort}`, `trainee:records.{typeFundamental,typeAccessory,tagFundamental,tagAccessory}`.
@@ -111,7 +116,7 @@ Every hand-written `'fundamental' | 'accessory'` union, binary ternary and type 
 - `src/components/ExercisesTable.tsx`
 - `src/app/trainee/records/_content.tsx`
 
-**Badges / labels** (`badgeClass` + label/short/abbrev key):
+**Badges / labels** (`ExerciseTypeBadge` / label key):
 - `src/components/ExerciseMetaBadges.tsx`
 - `src/components/ExercisesTable.tsx`
 - `src/app/trainer/exercises/_content.tsx`
