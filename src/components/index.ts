@@ -29,6 +29,8 @@ export type { AutocompleteOption } from './AutocompleteSearch'
 // Display Components
 export { default as ExerciseCard } from './ExerciseCard'
 export { default as MovementPatternTag } from './MovementPatternTag'
+export { default as ExerciseTypeBadge } from './ExerciseTypeBadge'
+export { default as ExerciseTypeRadioGroup } from './ExerciseTypeRadioGroup'
 export { default as YoutubeEmbed } from './YoutubeEmbed'
 export { default as WeekTypeBadge } from './WeekTypeBadge'
 export { default as WeekTypeBanner } from './WeekTypeBanner'

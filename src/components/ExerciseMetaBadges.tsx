@@ -2,6 +2,7 @@
 
 import { Clock3, Flame, Layers, Zap } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import ExerciseTypeBadge from './ExerciseTypeBadge'
 import type { ExerciseType } from '@/lib/exercise-type'
 
 type RestTimeValue = 's30' | 'm1' | 'm1s30' | 'm2' | 'm3' | 'm5'
@@ -82,17 +83,11 @@ export default function ExerciseMetaBadges({
                 </span>
             )}
             {exerciseType && (
-                <span
-                    className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${
-                        exerciseType === 'fundamental'
-                            ? 'border-red-200 bg-red-100 text-red-700'
-                            : 'border-blue-200 bg-blue-100 text-blue-700'
-                    }`}
-                >
-                    {exerciseType === 'fundamental'
-                        ? t('trainer:exercises.fundamental')
-                        : t('trainer:exercises.accessory')}
-                </span>
+                <ExerciseTypeBadge
+                    type={exerciseType}
+                    variant="label"
+                    className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium"
+                />
             )}
         </div>
     )

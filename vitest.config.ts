@@ -24,6 +24,8 @@ export default defineConfig({
                 'src/components/ProgressBar.tsx',
                 'src/components/LoadingSpinner.tsx',
                 'src/components/MovementPatternTag.tsx',
+                'src/components/ExerciseTypeBadge.tsx',
+                'src/components/ExerciseTypeRadioGroup.tsx',
                 'src/components/RoleGuard.tsx',
                 'src/components/ActionIconButton.tsx',
                 'src/components/DashboardLayout.tsx',
