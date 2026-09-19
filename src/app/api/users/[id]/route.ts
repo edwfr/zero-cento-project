@@ -189,12 +189,17 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
             // Trainee relations have no onDelete: Cascade. Deleting programs cascades
             // weeks → workouts → workoutExercises → feedbacks → setsPerformed and skeletons.
-            await prisma.$transaction([
-                prisma.trainingProgram.deleteMany({ where: { traineeId: id } }),
-                prisma.exerciseFeedback.deleteMany({ where: { traineeId: id } }),
-                prisma.personalRecord.deleteMany({ where: { traineeId: id } }),
-                prisma.user.delete({ where: { id } }),
-            ])
+            try {
+                await prisma.$transaction([
+                    prisma.trainingProgram.deleteMany({ where: { traineeId: id } }),
+                    prisma.exerciseFeedback.deleteMany({ where: { traineeId: id } }),
+                    prisma.personalRecord.deleteMany({ where: { traineeId: id } }),
+                    prisma.user.delete({ where: { id } }),
+                ])
+            } catch (error) {
+                logger.error({ error, userId: id }, 'Trainee data deletion failed after auth account removal — retry to complete')
+                return apiError('INTERNAL_ERROR', 'Failed to delete user', 500, undefined, 'user.deleteFailed')
+            }
         } else {
             await prisma.user.delete({
                 where: { id },

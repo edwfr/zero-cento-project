@@ -158,7 +158,7 @@
         "delete": "Elimina",
         "deleteTitle": "Elimina atleta",
         "deleteConfirmMessage": "Vuoi eliminare definitivamente {{name}}?\nVerranno cancellati schede, workout, feedback, massimali e account di accesso.\nQuesta operazione è irreversibile.",
-        "deleteSuccess": "{{name}} eliminato",
+        "deleteSuccess": "Eliminazione di {{name}} completata",
         "deleteError": "Errore nell'eliminazione dell'atleta",
         "newAthleteTitle": "Nuovo Atleta",
         "newAthleteDescription": "Aggiungi un nuovo atleta al tuo roster",

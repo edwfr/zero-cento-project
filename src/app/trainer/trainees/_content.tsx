@@ -63,6 +63,7 @@ export default function TrainerTraineesContent() {
     })
     const [traineeToDelete, setTraineeToDelete] = useState<Trainee | null>(null)
     const [isDeleting, setIsDeleting] = useState(false)
+    const isDeletingRef = useRef(false)
 
     const fetchTrainees = useCallback(async (page: number, signal?: AbortSignal) => {
         let shouldFinalizeLoad = true
@@ -185,6 +186,8 @@ export default function TrainerTraineesContent() {
 
     const handleConfirmDelete = async () => {
         if (!traineeToDelete) return
+        if (isDeletingRef.current) return
+        isDeletingRef.current = true
         const name = `${traineeToDelete.firstName} ${traineeToDelete.lastName}`
 
         setIsDeleting(true)
@@ -203,6 +206,7 @@ export default function TrainerTraineesContent() {
             showToast(err instanceof Error ? err.message : String(err), 'error')
         } finally {
             setIsDeleting(false)
+            isDeletingRef.current = false
         }
     }
 

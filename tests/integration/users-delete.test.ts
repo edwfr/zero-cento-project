@@ -80,6 +80,11 @@ describe('DELETE /api/users/[id]', () => {
     })
 
     it('admin deletes a trainee: auth account first, then all trainee data in one transaction', async () => {
+        vi.mocked(prisma.trainingProgram.deleteMany).mockReturnValue('op-programs' as any)
+        vi.mocked(prisma.exerciseFeedback.deleteMany).mockReturnValue('op-feedback' as any)
+        vi.mocked(prisma.personalRecord.deleteMany).mockReturnValue('op-records' as any)
+        vi.mocked(prisma.user.delete).mockReturnValue('op-user' as any)
+
         const res = await callDelete()
 
         expect(res.status).toBe(200)
@@ -89,6 +94,7 @@ describe('DELETE /api/users/[id]', () => {
         expect(prisma.personalRecord.deleteMany).toHaveBeenCalledWith({ where: { traineeId: trainee.id } })
         expect(prisma.user.delete).toHaveBeenCalledWith({ where: { id: trainee.id } })
         expect(prisma.$transaction).toHaveBeenCalledTimes(1)
+        expect(prisma.$transaction).toHaveBeenCalledWith(['op-programs', 'op-feedback', 'op-records', 'op-user'])
         expect(deleteUserMock.mock.invocationCallOrder[0]).toBeLessThan(
             vi.mocked(prisma.$transaction).mock.invocationCallOrder[0]
         )
@@ -160,8 +166,10 @@ describe('DELETE /api/users/[id]', () => {
         vi.mocked(prisma.$transaction).mockRejectedValue(new Error('db down'))
 
         const res = await callDelete()
+        const body = await res.json()
 
         expect(res.status).toBe(500)
+        expect(body.error.key).toBe('user.deleteFailed')
     })
 
     it('keeps plain delete for non-trainee targets (no Supabase call, no transaction)', async () => {

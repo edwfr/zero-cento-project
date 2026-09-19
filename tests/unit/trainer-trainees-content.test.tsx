@@ -2,8 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import TrainerTraineesContent from '@/app/trainer/trainees/_content'
 
+const { showToastMock } = vi.hoisted(() => ({ showToastMock: vi.fn() }))
+
 vi.mock('@/components/ToastNotification', () => ({
-    useToast: () => ({ showToast: vi.fn() }),
+    useToast: () => ({ showToast: showToastMock }),
 }))
 
 interface MockTrainee {
@@ -227,5 +229,68 @@ describe('TrainerTraineesContent', () => {
         await waitFor(() => {
             expect(screen.queryByText('athletes.deleteTitle')).not.toBeInTheDocument()
         })
+    })
+
+    it('prevents a double-click on confirm from firing the DELETE request twice', async () => {
+        render(<TrainerTraineesContent />)
+
+        const deleteButtons = await screen.findAllByRole('button', { name: 'athletes.delete' })
+        fireEvent.click(deleteButtons[0])
+
+        const confirmButton = screen.getByRole('button', { name: 'common:common.delete - athletes.deleteTitle' })
+        fireEvent.click(confirmButton)
+        fireEvent.click(confirmButton)
+
+        await waitFor(() => {
+            expect(screen.queryByText('athletes.deleteTitle')).not.toBeInTheDocument()
+        })
+
+        const deleteCalls = vi.mocked(global.fetch).mock.calls.filter(([, init]) => init?.method === 'DELETE')
+        expect(deleteCalls).toHaveLength(1)
+    })
+
+    it('keeps the modal open and does not reload the list when delete fails', async () => {
+        global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+            const url = String(input)
+
+            if (url.startsWith('/api/users?')) {
+                return {
+                    ok: true,
+                    json: async () => buildUsersResponse(url),
+                } as Response
+            }
+
+            if (init?.method === 'DELETE' && url.startsWith('/api/users/')) {
+                return {
+                    ok: false,
+                    json: async () => ({ error: { message: 'boom' } }),
+                } as Response
+            }
+
+            return {
+                ok: false,
+                json: async () => ({ error: { message: 'Unexpected request' } }),
+            } as Response
+        }) as unknown as typeof fetch
+
+        render(<TrainerTraineesContent />)
+
+        const deleteButtons = await screen.findAllByRole('button', { name: 'athletes.delete' })
+        fireEvent.click(deleteButtons[0])
+
+        const fetchMock = vi.mocked(global.fetch)
+        const listCallsBefore = fetchMock.mock.calls.filter(([url]) => String(url).startsWith('/api/users?')).length
+
+        fireEvent.click(screen.getByRole('button', { name: 'common:common.delete - athletes.deleteTitle' }))
+
+        await waitFor(() => {
+            expect(fetchMock).toHaveBeenCalledWith('/api/users/trainee-1', { method: 'DELETE' })
+        })
+
+        expect(screen.getByText('athletes.deleteTitle')).toBeInTheDocument()
+
+        const listCallsAfter = fetchMock.mock.calls.filter(([url]) => String(url).startsWith('/api/users?')).length
+        expect(listCallsAfter).toBe(listCallsBefore)
+        expect(showToastMock).toHaveBeenCalledWith('athletes.deleteError', 'error')
     })
 })
