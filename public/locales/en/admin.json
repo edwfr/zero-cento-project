@@ -52,7 +52,7 @@
         "passwordOnce": "This password will be shown only once",
         "mustChange": "User must change it on first login",
         "confirmDelete": "Are you sure you want to delete this user?",
-        "deleteWarning": "This action is permanent and will delete all associated data",
+        "deleteWarning": "This action is permanent: for athletes, programs, workouts, feedback, personal records and the login account will be deleted",
         "activateUsers": "Activate Users",
         "deactivateUsers": "Deactivate Users",
         "activateAll": "Activate all",

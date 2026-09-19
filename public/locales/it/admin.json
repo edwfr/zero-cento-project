@@ -52,7 +52,7 @@
         "passwordOnce": "Questa password verrà mostrata solo una volta",
         "mustChange": "L'utente dovrà cambiarla al primo accesso",
         "confirmDelete": "Sei sicuro di voler eliminare questo utente?",
-        "deleteWarning": "Questa azione è permanente e cancellerà tutti i dati associati",
+        "deleteWarning": "Questa azione è permanente: per gli atleti verranno cancellati schede, workout, feedback, massimali e account di accesso",
         "activateUsers": "Attiva Utenti",
         "deactivateUsers": "Disattiva Utenti",
         "activateAll": "Attiva tutti",
