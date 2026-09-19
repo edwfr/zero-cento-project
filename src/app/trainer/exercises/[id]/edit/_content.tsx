@@ -11,6 +11,8 @@ import { Trash2 } from 'lucide-react'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
 import { FormLabel } from '@/components/FormLabel'
+import ExerciseTypeRadioGroup from '@/components/ExerciseTypeRadioGroup'
+import { DEFAULT_EXERCISE_TYPE, type ExerciseType } from '@/lib/exercise-type'
 
 interface MuscleGroup {
     id: string
@@ -32,7 +34,7 @@ interface Exercise {
     name: string
     description?: string
     youtubeUrl?: string
-    type: 'fundamental' | 'accessory'
+    type: ExerciseType
     movementPatternId: string
     notes: string[]
     exerciseMuscleGroups: Array<{
@@ -60,7 +62,7 @@ export default function EditExerciseContent() {
     // Form state
     const [name, setName] = useState('')
     const [youtubeUrl, setYoutubeUrl] = useState('')
-    const [type, setType] = useState<'fundamental' | 'accessory'>('accessory')
+    const [type, setType] = useState<ExerciseType>(DEFAULT_EXERCISE_TYPE)
     const [movementPatternId, setMovementPatternId] = useState('')
     const [variants, setVariants] = useState<string[]>([])
     const [selectedMuscleGroups, setSelectedMuscleGroups] = useState<MuscleGroupInput[]>([])
@@ -294,30 +296,7 @@ export default function EditExerciseContent() {
                     {/* Type */}
                     <div>
                         <FormLabel>{t('exercises.typeLabel')}</FormLabel>
-                        <div className="flex space-x-4">
-                            <label className="flex items-center">
-                                <input
-                                    type="radio"
-                                    value="fundamental"
-                                    checked={type === 'fundamental'}
-                                    onChange={(e) => setType('fundamental')}
-                                    disabled={saving}
-                                    className="mr-2 disabled:cursor-not-allowed"
-                                />
-                                <span>{t('exercises.fundamentalSBD')}</span>
-                            </label>
-                            <label className="flex items-center">
-                                <input
-                                    type="radio"
-                                    value="accessory"
-                                    checked={type === 'accessory'}
-                                    onChange={(e) => setType('accessory')}
-                                    disabled={saving}
-                                    className="mr-2 disabled:cursor-not-allowed"
-                                />
-                                <span>{t('exercises.accessory')}</span>
-                            </label>
-                        </div>
+                        <ExerciseTypeRadioGroup value={type} onChange={setType} disabled={saving} />
                     </div>
 
                     {/* Movement Pattern */}

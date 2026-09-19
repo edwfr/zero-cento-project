@@ -6,6 +6,7 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
 import { FormLabel } from '@/components/FormLabel'
+import { DEFAULT_EXERCISE_TYPE, EXERCISE_TYPES, EXERCISE_TYPE_META, isExerciseType, type ExerciseType } from '@/lib/exercise-type'
 
 interface MuscleGroup {
     id: string
@@ -37,7 +38,7 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
         name: '',
         description: '',
         youtubeUrl: '',
-        type: 'accessory' as 'fundamental' | 'accessory',
+        type: DEFAULT_EXERCISE_TYPE as ExerciseType,
         movementPatternId: '',
     })
     const [selectedMuscleGroups, setSelectedMuscleGroups] = useState<MuscleGroupAssignment[]>([])
@@ -255,13 +256,20 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                             <select
                                 id="type"
                                 value={formData.type}
-                                onChange={(e) => setFormData({ ...formData, type: e.target.value as 'fundamental' | 'accessory' })}
+                                onChange={(e) => {
+                                    if (isExerciseType(e.target.value)) {
+                                        setFormData({ ...formData, type: e.target.value })
+                                    }
+                                }}
                                 disabled={loading}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                 required
                             >
-                                <option value="fundamental" className="text-gray-900">{t('exercises.fundamental')}</option>
-                                <option value="accessory" className="text-gray-900">{t('exercises.accessory')}</option>
+                                {EXERCISE_TYPES.map((type) => (
+                                    <option key={type} value={type} className="text-gray-900">
+                                        {t(EXERCISE_TYPE_META[type].labelKey)}
+                                    </option>
+                                ))}
                             </select>
                         </div>
 
