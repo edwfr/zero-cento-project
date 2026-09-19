@@ -1,6 +1,6 @@
 'use client'
 
-import { ExerciseType } from '@prisma/client'
+import { EXERCISE_TYPE_META, type ExerciseType } from '@/lib/exercise-type'
 import { useTranslation } from 'react-i18next'
 import MovementPatternTag from './MovementPatternTag'
 
@@ -39,16 +39,6 @@ export default function ExerciseCard({
 }: ExerciseCardProps) {
     const { t } = useTranslation(['trainer', 'common'])
 
-    const typeColors = {
-        fundamental: 'bg-red-100 text-red-700 border-red-300',
-        accessory: 'bg-blue-100 text-blue-700 border-blue-300',
-    }
-
-    const typeLabels = {
-        fundamental: t('trainer:exercises.fundamental'),
-        accessory: t('trainer:exercises.accessory'),
-    }
-
     return (
         <div
             className={`
@@ -67,10 +57,10 @@ export default function ExerciseCard({
                     </h3>
                     <div className="mt-1 flex flex-wrap gap-2">
                         <span
-                            className={`rounded-full border px-2 py-0.5 text-xs font-medium ${typeColors[type]
+                            className={`rounded-full border px-2 py-0.5 text-xs font-medium ${EXERCISE_TYPE_META[type].badgeClass
                                 }`}
                         >
-                            {typeLabels[type]}
+                            {t(EXERCISE_TYPE_META[type].labelKey)}
                         </span>
                         {movementPattern && (
                             <MovementPatternTag

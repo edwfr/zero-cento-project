@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { EXERCISE_TYPES } from '@/lib/exercise-type'
 
 /**
  * Exercise Validation Schemas
@@ -23,7 +24,7 @@ export const exerciseSchema = z.object({
         .url('validation.invalidUrl')
         .regex(/(youtube\.com|youtu\.be)/, 'validation.mustBeYoutube')
         .optional(),
-    type: z.enum(['fundamental', 'accessory'], {
+    type: z.enum(EXERCISE_TYPES, {
         errorMap: () => ({ message: 'validation.invalidExerciseType' }),
     }),
     movementPatternId: z.string().uuid('validation.invalidMovementPatternId'),
@@ -37,7 +38,7 @@ export const exerciseSchema = z.object({
 export const updateExerciseSchema = exerciseSchema.partial()
 
 export const exerciseFilterSchema = z.object({
-    type: z.enum(['fundamental', 'accessory']).optional(),
+    type: z.enum(EXERCISE_TYPES).optional(),
     movementPatternId: z.string().uuid().optional(),
     muscleGroupId: z.string().uuid().optional(),
     search: z.string().optional(),

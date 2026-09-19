@@ -256,6 +256,21 @@ describe('GET /api/exercises', () => {
         )
     })
 
+    it('filters by type=postural and passes where clause to prisma', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.exercise.findMany).mockResolvedValue([] as any)
+
+        const req = makeListRequest('http://localhost:3000/api/exercises?type=postural')
+        const res = await listExercises(req)
+
+        expect(res.status).toBe(200)
+        expect(prisma.exercise.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({
+                where: expect.objectContaining({ type: 'postural' }),
+            })
+        )
+    })
+
     it('filters by movementPatternId and passes where clause to prisma', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
         vi.mocked(prisma.exercise.findMany).mockResolvedValue([mockExerciseWithRelations] as any)
@@ -490,6 +505,35 @@ describe('POST /api/exercises', () => {
                         ],
                     },
                 }),
+            })
+        )
+    })
+
+    it('trainer creates a postural exercise', async () => {
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        vi.mocked(prisma.exercise.findFirst).mockResolvedValue(null)
+        vi.mocked(prisma.movementPattern.findUnique).mockResolvedValue(mockMovementPattern as any)
+        vi.mocked(prisma.muscleGroup.findMany).mockResolvedValue(mockMuscleGroups as any)
+        vi.mocked(prisma.exercise.create).mockResolvedValue({
+            ...mockExerciseWithRelations,
+            id: 'new-postural-uuid',
+            name: 'Dead Bug',
+            type: 'postural',
+        } as any)
+
+        const req = makeListRequest('http://localhost:3000/api/exercises', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...validPayload, name: 'Dead Bug', type: 'postural' }),
+        })
+        const res = await createExercise(req)
+        const body = await res.json()
+
+        expect(res.status).toBe(201)
+        expect(body.data.exercise.type).toBe('postural')
+        expect(prisma.exercise.create).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({ type: 'postural' }),
             })
         )
     })

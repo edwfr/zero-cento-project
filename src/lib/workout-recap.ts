@@ -1,5 +1,7 @@
+import type { ExerciseType } from '@/lib/exercise-type'
+
 export type ExerciseStatus = 'not_started' | 'in_progress' | 'done'
-export type WorkoutExerciseType = 'fundamental' | 'accessory'
+export type WorkoutExerciseType = ExerciseType
 export type WorkoutRestTimeValue = 's30' | 'm1' | 'm1s30' | 'm2' | 'm3' | 'm5'
 
 export interface SetRecap {

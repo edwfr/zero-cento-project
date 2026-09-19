@@ -2,12 +2,13 @@
 
 import { FileText, MessageSquare } from 'lucide-react'
 import ExerciseMetaBadges from './ExerciseMetaBadges'
+import type { ExerciseType } from '@/lib/exercise-type'
 
 export interface ExerciseDisplayItem {
     id: string
     exerciseName: string
     variant?: string | null
-    exerciseType?: 'fundamental' | 'accessory'
+    exerciseType?: ExerciseType
     restTime?: 's30' | 'm1' | 'm1s30' | 'm2' | 'm3' | 'm5'
     isWarmup?: boolean
     isJumpSet?: boolean

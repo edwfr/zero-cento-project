@@ -10,6 +10,7 @@ import {
     computeWeekSbdMetrics,
     type LiftLabels,
 } from '@/lib/program-sbd-metrics'
+import type { ExerciseType } from '@/lib/exercise-type'
 
 export interface ProgramReportSectionWorkoutExercise {
     id: string
@@ -22,7 +23,7 @@ export interface ProgramReportSectionWorkoutExercise {
     exercise: {
         id: string
         name: string
-        type: 'fundamental' | 'accessory'
+        type: ExerciseType
         exerciseMuscleGroups: Array<{
             coefficient: number
             muscleGroup: {

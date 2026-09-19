@@ -3,11 +3,12 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import type { PrevWeekExerciseItem } from '@/lib/workout-recap'
+import type { ExerciseType } from '@/lib/exercise-type'
 
 interface PrevWeekRow {
     weId: string
     exerciseName: string
-    exerciseType: 'fundamental' | 'accessory'
+    exerciseType: ExerciseType
     order: number
     restTime: 's30' | 'm1' | 'm1s30' | 'm2' | 'm3' | 'm5'
     isWarmup: boolean

@@ -3,6 +3,7 @@ import {
     exerciseSchema,
     updateExerciseSchema,
     muscleGroupAssignmentSchema,
+    exerciseFilterSchema,
 } from '@/schemas/exercise'
 import {
     createProgramSchema,
@@ -230,6 +231,11 @@ describe('exerciseSchema', () => {
         const result = exerciseSchema.safeParse({ ...validExercise, type: 'accessory' })
         expect(result.success).toBe(true)
     })
+
+    it('accepts "postural" type', () => {
+        const result = exerciseSchema.safeParse({ ...validExercise, type: 'postural' })
+        expect(result.success).toBe(true)
+    })
 })
 
 describe('updateExerciseSchema', () => {
@@ -240,6 +246,16 @@ describe('updateExerciseSchema', () => {
     it('accepts partial update with just name', () => {
         const result = updateExerciseSchema.safeParse({ name: 'Deadlift' })
         expect(result.success).toBe(true)
+    })
+})
+
+describe('exerciseFilterSchema', () => {
+    it('accepts type=postural', () => {
+        expect(exerciseFilterSchema.safeParse({ type: 'postural' }).success).toBe(true)
+    })
+
+    it('rejects unknown type', () => {
+        expect(exerciseFilterSchema.safeParse({ type: 'compound' }).success).toBe(false)
     })
 })
 

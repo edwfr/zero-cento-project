@@ -16,6 +16,7 @@ import {
     XAxis,
     YAxis,
 } from 'recharts'
+import type { ExerciseType } from '@/lib/exercise-type'
 
 const PRIMARY_COLOR = 'var(--brand-primary)'
 const MUSCLE_GROUP_CHART_COLORS = [
@@ -43,7 +44,7 @@ interface ProgramWorkoutExerciseForCharts {
     isWarmup: boolean
     exercise: {
         name: string
-        type: 'fundamental' | 'accessory'
+        type: ExerciseType
         exerciseMuscleGroups: WorkoutExerciseMuscleGroup[]
     }
 }

@@ -1,5 +1,6 @@
 import { prisma } from './prisma'
 import type { WeekType } from '@prisma/client'
+import type { ExerciseType } from '@/lib/exercise-type'
 import { loadTraineePrMap, resolveEffectiveWeight } from './calculations'
 import { logger } from './logger'
 
@@ -38,7 +39,7 @@ export interface TraineeProgram {
                 isSuperSet: boolean
                 notes: string | null
                 order: number
-                exercise: { id: string; name: string; type: 'fundamental' | 'accessory' }
+                exercise: { id: string; name: string; type: ExerciseType }
             }>
         }>
     }>

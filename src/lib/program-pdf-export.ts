@@ -1,4 +1,5 @@
 import type { RestTime, WeekType } from '@prisma/client'
+import type { ExerciseType } from '@/lib/exercise-type'
 
 type WeightType = 'absolute' | 'percentage_1rm' | 'percentage_rm' | 'percentage_previous'
 
@@ -6,7 +7,7 @@ export interface ProgramPdfExercise {
     id: string
     name: string
     variant: string | null
-    type: 'fundamental' | 'accessory'
+    type: ExerciseType
     isWarmup: boolean
     isJumpSet: boolean
     isSuperSet: boolean

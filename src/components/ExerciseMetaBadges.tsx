@@ -2,13 +2,13 @@
 
 import { Clock3, Flame, Layers, Zap } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import type { ExerciseType } from '@/lib/exercise-type'
 
 type RestTimeValue = 's30' | 'm1' | 'm1s30' | 'm2' | 'm3' | 'm5'
-type ExerciseTypeValue = 'fundamental' | 'accessory'
 
 interface ExerciseMetaBadgesProps {
     restTime?: RestTimeValue | null
-    exerciseType?: ExerciseTypeValue | null
+    exerciseType?: ExerciseType | null
     isWarmup?: boolean
     isJumpSet?: boolean
     isSuperSet?: boolean

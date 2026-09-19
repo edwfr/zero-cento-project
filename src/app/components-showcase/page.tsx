@@ -669,6 +669,13 @@ function ComponentShowcase() {
                             muscleGroups={[{ id: '3', name: 'Ischiocrurali' }]}
                         />
                         <ExerciseCard
+                            id="4"
+                            name="Dead Bug"
+                            type="postural"
+                            movementPattern={{ id: '4', name: 'Core', color: '#10b981' }}
+                            muscleGroups={[{ id: '6', name: 'Addominali' }]}
+                        />
+                        <ExerciseCard
                             id="3"
                             name="Bench Press"
                             type="fundamental"

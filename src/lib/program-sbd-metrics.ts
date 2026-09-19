@@ -1,4 +1,5 @@
 import { intensityFromRpeChart } from './calculations'
+import type { ExerciseType } from '@/lib/exercise-type'
 
 export type FundamentalLift = 'squat' | 'bench' | 'deadlift'
 
@@ -57,7 +58,7 @@ export interface SbdMetricsWorkoutExercise {
     exercise: {
         id: string
         name: string
-        type: 'fundamental' | 'accessory'
+        type: ExerciseType
     }
 }
 
