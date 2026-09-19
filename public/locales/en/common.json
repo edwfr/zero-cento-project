@@ -138,6 +138,11 @@
         "trainer": "Trainer",
         "trainee": "Trainee"
     },
+    "exerciseTypes": {
+        "fundamental": { "label": "Fundamental", "plural": "Fundamentals", "short": "F" },
+        "accessory": { "label": "Accessory", "plural": "Accessories", "short": "A" },
+        "postural": { "label": "Postural", "plural": "Postural", "short": "P" }
+    },
     "errors": {
         "generic": "An error occurred",
         "tryLater": "Try again later",

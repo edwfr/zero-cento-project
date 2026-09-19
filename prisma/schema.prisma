@@ -25,6 +25,7 @@ enum Role {
 enum ExerciseType {
   fundamental  // Squat, Bench, Deadlift
   accessory    // Assistenza e complementari
+  postural     // Posturali, mobilità, core
 }
 
 enum ProgramStatus {

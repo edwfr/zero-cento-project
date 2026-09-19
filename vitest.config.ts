@@ -18,6 +18,7 @@ export default defineConfig({
                 'src/lib/password-utils.ts',
                 'src/lib/date-format.ts',
                 'src/lib/useSwipe.ts',
+                'src/lib/exercise-type.ts',
                 'src/schemas/**',
                 'src/components/StatCard.tsx',
                 'src/components/ProgressBar.tsx',
