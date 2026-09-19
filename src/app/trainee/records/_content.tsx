@@ -14,8 +14,10 @@ import {
 import { getApiErrorMessage } from '@/lib/api-error'
 import { normalizedOneRM } from '@/lib/calculations'
 import { Button, Card, FormLabel, Input, NavigationLoadingOverlay } from '@/components'
+import ExerciseTypeBadge from '@/components/ExerciseTypeBadge'
 import { BarChart2, ChevronDown, ChevronUp, Search, X } from 'lucide-react'
 import { formatDate } from '@/lib/date-format'
+import { EXERCISE_TYPES, EXERCISE_TYPE_META, type ExerciseType } from '@/lib/exercise-type'
 
 interface PersonalRecord {
     id: string
@@ -25,7 +27,7 @@ interface PersonalRecord {
     exercise: {
         id: string
         name: string
-        type: 'fundamental' | 'accessory'
+        type: ExerciseType
     }
 }
 
@@ -62,7 +64,7 @@ export default function PersonalRecordsContent() {
     const [records, setRecords] = useState<PersonalRecord[]>([])
     const [error, setError] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState('')
-    const [typeFilter, setTypeFilter] = useState<'all' | 'fundamental' | 'accessory'>('all')
+    const [typeFilter, setTypeFilter] = useState<'all' | ExerciseType>('all')
     const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set())
 
     const fetchRecords = useCallback(async () => {
@@ -244,15 +246,15 @@ export default function PersonalRecordsContent() {
                                 </FormLabel>
                                 <div className="flex flex-wrap gap-1.5">
                                     {[
-                                        { value: 'all', label: t('records.typeAll') },
-                                        { value: 'fundamental', label: t('records.typeFundamental') },
-                                        { value: 'accessory', label: t('records.typeAccessory') },
+                                        { value: 'all' as const, label: t('records.typeAll') },
+                                        ...EXERCISE_TYPES.map((type) => ({
+                                            value: type,
+                                            label: t(EXERCISE_TYPE_META[type].pluralKey),
+                                        })),
                                     ].map((option) => (
                                         <Button
                                             key={option.value}
-                                            onClick={() =>
-                                                setTypeFilter(option.value as typeof typeFilter)
-                                            }
+                                            onClick={() => setTypeFilter(option.value)}
                                             variant={typeFilter === option.value ? 'primary' : 'secondary'}
                                             size="sm"
                                             className="min-w-[94px]"
@@ -311,26 +313,10 @@ export default function PersonalRecordsContent() {
                                                             <h3 className="truncate text-lg font-bold text-gray-900">
                                                                 {pr.exercise.name}
                                                             </h3>
-                                                            <span
-                                                                className={`inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold ${pr.exercise.type === 'fundamental'
-                                                                    ? 'bg-red-100 text-red-800'
-                                                                    : 'bg-blue-100 text-blue-800'
-                                                                    }`}
-                                                                title={
-                                                                    pr.exercise.type === 'fundamental'
-                                                                        ? t('workouts.tagFundamental')
-                                                                        : t('workouts.tagAccessory')
-                                                                }
-                                                                aria-label={
-                                                                    pr.exercise.type === 'fundamental'
-                                                                        ? t('records.tagFundamental')
-                                                                        : t('records.tagAccessory')
-                                                                }
-                                                            >
-                                                                {pr.exercise.type === 'fundamental'
-                                                                    ? t('workouts.tagFundamentalShort')
-                                                                    : t('workouts.tagAccessoryShort')}
-                                                            </span>
+                                                            <ExerciseTypeBadge
+                                                                type={pr.exercise.type}
+                                                                className="inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold"
+                                                            />
                                                         </div>
                                                         <p className="mt-1 text-xs text-gray-600">
                                                             {t('records.achievedOn')} {formatDate(pr.recordDate)}

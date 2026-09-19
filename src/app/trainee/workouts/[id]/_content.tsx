@@ -31,12 +31,14 @@ import { useToast } from '@/components/ToastNotification'
 import { Input } from '@/components/Input'
 import WorkoutRecapPanel from '@/components/WorkoutRecapPanel'
 import PrevWeekPanel from '@/components/PrevWeekPanel'
+import ExerciseTypeBadge from '@/components/ExerciseTypeBadge'
+import type { ExerciseType } from '@/lib/exercise-type'
 
 interface Exercise {
     id: string
     name: string
     description: string | null
-    type: 'fundamental' | 'accessory'
+    type: ExerciseType
     youtubeUrl: string | null
     notes: string | null
 }
@@ -1128,17 +1130,11 @@ function ExerciseFocusCard({
                             <span className="font-semibold">{t('workouts.rest')}:</span>
                             {formatRestTime(we.restTime)}
                         </span>
-                        <span
-                            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${
-                                we.exercise.type === 'fundamental'
-                                    ? 'border-red-200 bg-red-100 text-red-700'
-                                    : 'border-blue-200 bg-blue-100 text-blue-700'
-                            }`}
-                        >
-                            {we.exercise.type === 'fundamental'
-                                ? t('trainer:exercises.fundamental')
-                                : t('trainer:exercises.accessory')}
-                        </span>
+                        <ExerciseTypeBadge
+                            type={we.exercise.type}
+                            variant="label"
+                            className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium"
+                        />
                     </div>
                 </div>
 

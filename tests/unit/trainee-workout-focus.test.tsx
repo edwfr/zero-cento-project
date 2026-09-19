@@ -195,7 +195,7 @@ describe('Trainee workout focus mode', () => {
         await renderContent()
 
         expect(screen.getByText('Bench Press')).toBeInTheDocument()
-        expect(screen.getByText('trainer:exercises.fundamental')).toBeInTheDocument()
+        expect(screen.getByText('common:exerciseTypes.fundamental.label')).toBeInTheDocument()
         // Badge no longer uses abbreviated 'F'
         expect(screen.queryByText('F')).not.toBeInTheDocument()
     })
@@ -207,7 +207,7 @@ describe('Trainee workout focus mode', () => {
         await user.click(screen.getByRole('button', { name: /next|avanti/i }))
 
         expect(screen.getByText('Tricep Extension')).toBeInTheDocument()
-        expect(screen.getByText('trainer:exercises.accessory')).toBeInTheDocument()
+        expect(screen.getByText('common:exerciseTypes.accessory.label')).toBeInTheDocument()
         // Badge no longer uses abbreviated 'A'
         expect(screen.queryByText('A')).not.toBeInTheDocument()
     })
