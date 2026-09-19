@@ -16,6 +16,7 @@ import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react'
 import { ActionIconButton, InlineActions } from '@/components/ActionIconButton'
 import { formatDate } from '@/lib/date-format'
 import { normalizedOneRM } from '@/lib/calculations'
+import { compareExerciseType } from '@/lib/exercise-type'
 
 const CHART_COLORS = ['rgb(var(--brand-primary))', '#0F766E', '#2563EB', '#DC2626', '#7C3AED', '#0891B2', '#65A30D', '#EA580C']
 
@@ -137,8 +138,9 @@ export default function PersonalRecordsExplorer({
                 }
             })
             .sort((left, right) => {
-                if (left.exercise.type !== right.exercise.type) {
-                    return left.exercise.type === 'fundamental' ? -1 : 1
+                const typeOrder = compareExerciseType(left.exercise.type, right.exercise.type)
+                if (typeOrder !== 0) {
+                    return typeOrder
                 }
 
                 return left.exercise.name.localeCompare(right.exercise.name, 'it', { sensitivity: 'base' })

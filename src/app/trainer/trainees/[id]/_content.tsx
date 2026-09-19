@@ -15,6 +15,7 @@ import {
     useToast,
 } from '@/components'
 import { formatDate, formatDateTime } from '@/lib/date-format'
+import { compareExerciseType, EXERCISE_TYPE_META, type ExerciseType } from '@/lib/exercise-type'
 import TraineePlannedMuscleGroupReport from '@/components/TraineePlannedMuscleGroupReport'
 import TraineeNotesEditor from './_trainee-notes-editor'
 import {
@@ -97,7 +98,7 @@ interface PersonalRecord {
     exercise: {
         id: string
         name: string
-        type: 'fundamental' | 'accessory'
+        type: ExerciseType
     }
 }
 
@@ -694,8 +695,9 @@ export default function TraineeDetailContent() {
         })
 
         return Array.from(latestByExercise.values()).sort((left, right) => {
-            if (left.exercise.type !== right.exercise.type) {
-                return left.exercise.type === 'fundamental' ? -1 : 1
+            const typeOrder = compareExerciseType(left.exercise.type, right.exercise.type)
+            if (typeOrder !== 0) {
+                return typeOrder
             }
 
             return left.exercise.name.localeCompare(right.exercise.name, 'it', { sensitivity: 'base' })
@@ -712,8 +714,9 @@ export default function TraineeDetailContent() {
         })
 
         return Array.from(exerciseById.values()).sort((left, right) => {
-            if (left.type !== right.type) {
-                return left.type === 'fundamental' ? -1 : 1
+            const typeOrder = compareExerciseType(left.type, right.type)
+            if (typeOrder !== 0) {
+                return typeOrder
             }
 
             return left.name.localeCompare(right.name, 'it', { sensitivity: 'base' })
@@ -1321,9 +1324,7 @@ export default function TraineeDetailContent() {
                                                                     {record.exercise.name}
                                                                 </div>
                                                                 <div className="text-xs text-gray-500">
-                                                                    {record.exercise.type === 'fundamental'
-                                                                        ? t('exercises.fundamental')
-                                                                        : t('exercises.accessory')}
+                                                                    {t(EXERCISE_TYPE_META[record.exercise.type].labelKey)}
                                                                 </div>
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">

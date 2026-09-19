@@ -15,6 +15,7 @@ import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
 import { FormLabel } from '@/components/FormLabel'
 import AutocompleteSearch, { type AutocompleteOption } from '@/components/AutocompleteSearch'
+import { EXERCISE_TYPE_META, type ExerciseType } from '@/lib/exercise-type'
 
 interface Trainee {
     id: string
@@ -25,7 +26,7 @@ interface Trainee {
 interface Exercise {
     id: string
     name: string
-    type: 'fundamental' | 'accessory'
+    type: ExerciseType
 }
 
 interface PersonalRecordExercise {
@@ -335,7 +336,7 @@ export default function TraineeRecordsContent() {
                                         options={exercises.map((ex): AutocompleteOption => ({
                                             id: ex.id,
                                             label: ex.name,
-                                            sublabel: ex.type === 'fundamental' ? t('exercises.fundamental') : t('exercises.accessory'),
+                                            sublabel: t(EXERCISE_TYPE_META[ex.type].labelKey),
                                         }))}
                                         value={selectedExerciseId}
                                         onSelect={(opt) => setSelectedExerciseId(opt?.id ?? '')}

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import PersonalRecordsExplorer from '@/components/PersonalRecordsExplorer'
 
@@ -66,6 +66,51 @@ describe('PersonalRecordsExplorer action buttons', () => {
             expect(button).toHaveClass('bg-green-600')
             expect(button).not.toHaveClass('text-blue-600')
         })
+    })
+
+    it('orders exercise groups fundamental, accessory, postural before alphabetical', () => {
+        const onEdit = vi.fn()
+        const onDelete = vi.fn()
+
+        const typedRecords = [
+            {
+                id: 'rec-postural',
+                weight: 0,
+                reps: 20,
+                recordDate: '2026-01-12',
+                notes: null,
+                exercise: { id: 'ex-postural', name: 'Addome Plank', type: 'postural' },
+            },
+            {
+                id: 'rec-accessory',
+                weight: 60,
+                reps: 8,
+                recordDate: '2026-01-12',
+                notes: null,
+                exercise: { id: 'ex-accessory', name: 'Bench', type: 'accessory' },
+            },
+            {
+                id: 'rec-fundamental',
+                weight: 140,
+                reps: 3,
+                recordDate: '2026-01-12',
+                notes: null,
+                exercise: { id: 'ex-fundamental', name: 'Squat', type: 'fundamental' },
+            },
+        ]
+
+        render(
+            <PersonalRecordsExplorer
+                records={typedRecords}
+                onEditRecord={onEdit}
+                onDeleteRecord={onDelete}
+            />
+        )
+
+        const names = within(screen.getByRole('table'))
+            .getAllByText(/^(Squat|Bench|Addome Plank)$/)
+            .map((el) => el.textContent)
+        expect(names).toEqual(['Squat', 'Bench', 'Addome Plank'])
     })
 
     it('calls onDeleteRecord when dropping a dragged row on trash zone', () => {
