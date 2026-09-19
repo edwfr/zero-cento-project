@@ -13,6 +13,7 @@ import { useToast } from '@/components/ToastNotification'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { normalizedOneRM } from '@/lib/calculations'
 import { formatDate, getTodayForInput } from '@/lib/date-format'
+import { EXERCISE_TYPE_META, type ExerciseType } from '@/lib/exercise-type'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
 import { FormLabel } from '@/components/FormLabel'
@@ -46,7 +47,7 @@ interface TestResultWorkout {
 interface Exercise {
     id: string
     name: string
-    type: 'fundamental' | 'accessory'
+    type: ExerciseType
 }
 
 interface TestResultWeek {
@@ -602,7 +603,7 @@ export default function ProgramTestResultsContent() {
                                 >
                                     {exercises.map((exercise) => (
                                         <option key={exercise.id} value={exercise.id}>
-                                            {exercise.name} ({exercise.type === 'fundamental' ? t('exercises.fundamental') : t('exercises.accessory')})
+                                            {exercise.name} ({t(EXERCISE_TYPE_META[exercise.type].labelKey)})
                                         </option>
                                     ))}
                                 </select>

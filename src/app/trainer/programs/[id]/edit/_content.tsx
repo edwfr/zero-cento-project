@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { RestTime, WeightType, WeekType } from '@prisma/client'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { normalizedOneRM } from '@/lib/calculations'
+import { EXERCISE_TYPE_META, type ExerciseType } from '@/lib/exercise-type'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import { useToast } from '@/components/ToastNotification'
@@ -14,6 +15,7 @@ import EditProgramMetadata from './EditProgramMetadata'
 import MovementPatternTag from '@/components/MovementPatternTag'
 import WeekTypeBadge from '@/components/WeekTypeBadge'
 import AutocompleteSearch from '@/components/AutocompleteSearch'
+import ExerciseTypeBadge from '@/components/ExerciseTypeBadge'
 import { Input } from '@/components/Input'
 import {
     BarChart3,
@@ -97,7 +99,7 @@ interface MovementPattern {
 interface ExerciseReference {
     id: string
     name: string
-    type: 'fundamental' | 'accessory'
+    type: ExerciseType
     notes: string[]
     movementPattern: MovementPattern | null
     exerciseMuscleGroups: Array<{
@@ -166,14 +168,14 @@ interface PersonalRecord {
     exercise?: {
         id: string
         name: string
-        type: 'fundamental' | 'accessory'
+        type: ExerciseType
     }
 }
 
 interface ExerciseCatalogItem {
     id: string
     name: string
-    type: 'fundamental' | 'accessory'
+    type: ExerciseType
     notes: string[]
     movementPattern: MovementPattern | null
 }
@@ -1063,10 +1065,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const autocompleteExerciseOptions = useMemo(
         () =>
             Array.from(exerciseLookupById.values()).map((exercise) => {
-                const typeLabel =
-                    exercise.type === 'fundamental'
-                        ? t('exercises.fundamental')
-                        : t('exercises.accessory')
+                const typeLabel = t(EXERCISE_TYPE_META[exercise.type].labelKey)
                 const sublabel = exercise.movementPattern
                     ? `${exercise.movementPattern.name} · ${typeLabel}`
                     : typeLabel
@@ -2728,11 +2727,10 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                     </button>
 
                                                                                     {selectedExercise && (
-                                                                                        <span
-                                                                                            className={`inline-flex shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${selectedExercise.type === 'fundamental' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}
-                                                                                        >
-                                                                                            {selectedExercise.type === 'fundamental' ? 'F' : 'A'}
-                                                                                        </span>
+                                                                                        <ExerciseTypeBadge
+                                                                                            type={selectedExercise.type}
+                                                                                            className="inline-flex shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                                                                                        />
                                                                                     )}
 
                                                                                     <AutocompleteSearch
@@ -2798,11 +2796,10 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                 </div>
                                                 {draggedExercise && (
                                                     <div className="mt-1.5 flex items-center gap-1.5">
-                                                        <span
-                                                            className={`inline-flex w-fit rounded-full px-2 py-0.5 text-[10px] font-semibold ${draggedExercise.type === 'fundamental' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}
-                                                        >
-                                                            {draggedExercise.type === 'fundamental' ? 'F' : 'A'}
-                                                        </span>
+                                                        <ExerciseTypeBadge
+                                                            type={draggedExercise.type}
+                                                            className="inline-flex w-fit rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                                                        />
                                                     </div>
                                                 )}
                                             </div>
@@ -2898,7 +2895,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                     exerciseNameById[record.exerciseId] ||
                                                     t('editProgram.tableExercise')
 
-                                                const type =
+                                                const type: ExerciseType =
                                                     record.exercise?.type ||
                                                     exerciseLookupById.get(record.exerciseId)?.type ||
                                                     'accessory'
@@ -2928,14 +2925,10 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                     })}
                                                                 </p>
                                                             </div>
-                                                            <span
-                                                                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${type === 'fundamental'
-                                                                    ? 'bg-red-100 text-red-700'
-                                                                    : 'bg-blue-100 text-blue-700'
-                                                                    }`}
-                                                            >
-                                                                {type === 'fundamental' ? 'F' : 'A'}
-                                                            </span>
+                                                            <ExerciseTypeBadge
+                                                                type={type}
+                                                                className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                                                            />
                                                         </div>
                                                     </div>
                                                 )

@@ -11,6 +11,8 @@ import { WeightType, RestTime } from '@prisma/client'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { normalizedOneRM } from '@/lib/calculations'
+import type { ExerciseType } from '@/lib/exercise-type'
+import ExerciseTypeBadge from '@/components/ExerciseTypeBadge'
 import { Trash2, Dumbbell, GripVertical, ChevronLeft, ChevronRight, BarChart3, FileText, MessageSquare } from 'lucide-react'
 import {
     DndContext,
@@ -31,7 +33,7 @@ import { CSS } from '@dnd-kit/utilities'
 interface Exercise {
     id: string
     name: string
-    type: 'fundamental' | 'accessory'
+    type: ExerciseType
     notes?: string[] // Array of variants/notes
     movementPattern: {
         id: string
@@ -92,7 +94,7 @@ interface PersonalRecord {
     exercise: {
         id: string
         name: string
-        type: 'fundamental' | 'accessory'
+        type: ExerciseType
     }
 }
 
@@ -550,14 +552,10 @@ export default function WorkoutDetailContent() {
                                                         })}
                                                     </p>
                                                 </div>
-                                                <span
-                                                    className={`px-2 py-0.5 text-xs font-medium rounded-full ${pr.exercise.type === 'fundamental'
-                                                        ? 'bg-red-50 text-red-700'
-                                                        : 'bg-blue-50 text-blue-700'
-                                                        }`}
-                                                >
-                                                    {pr.exercise.type === 'fundamental' ? 'F' : 'A'}
-                                                </span>
+                                                <ExerciseTypeBadge
+                                                    type={pr.exercise.type}
+                                                    className="px-2 py-0.5 text-xs font-medium rounded-full"
+                                                />
                                             </div>
                                         </div>
                                     ))}
@@ -611,16 +609,11 @@ export default function WorkoutDetailContent() {
                                                             <span className="text-gray-600 font-normal ml-2">({we.variant})</span>
                                                         )}
                                                     </h3>
-                                                    <span
-                                                        className={`rounded-full border px-2 py-0.5 text-xs font-medium ${we.exercise.type === 'fundamental'
-                                                            ? 'bg-red-100 text-red-700 border-red-300'
-                                                            : 'bg-blue-100 text-blue-700 border-blue-300'
-                                                            }`}
-                                                    >
-                                                        {we.exercise.type === 'fundamental'
-                                                            ? t('exercises.fundamental')
-                                                            : t('exercises.accessory')}
-                                                    </span>
+                                                    <ExerciseTypeBadge
+                                                        type={we.exercise.type}
+                                                        variant="label"
+                                                        className="rounded-full border px-2 py-0.5 text-xs font-medium"
+                                                    />
                                                     <MovementPatternTag
                                                         name={we.exercise.movementPattern.name}
                                                         color={we.exercise.movementPattern.color}

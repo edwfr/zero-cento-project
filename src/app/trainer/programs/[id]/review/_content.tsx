@@ -14,6 +14,8 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import ProgramPdfExportButton from '@/components/ProgramPdfExportButton'
 import { ProgramPdfData, ProgramPdfLabels } from '@/lib/program-pdf-export'
 import { parseRepsValue } from '@/lib/program-sbd-metrics'
+import type { ExerciseType } from '@/lib/exercise-type'
+import ExerciseTypeBadge from '@/components/ExerciseTypeBadge'
 
 const PRIMARY_COLOR = 'rgb(var(--brand-primary))'
 type RestTimeValue = 's30' | 'm1' | 'm1s30' | 'm2' | 'm3' | 'm5'
@@ -46,7 +48,7 @@ interface WorkoutExerciseSummary {
     exercise: {
         id: string
         name: string
-        type: 'fundamental' | 'accessory'
+        type: ExerciseType
         movementPattern: MovementPatternSummary | null
         exerciseMuscleGroups: {
             coefficient: number
@@ -642,15 +644,10 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                                         >
                                                             <div className="flex items-center justify-between gap-2">
                                                                 <div className="flex min-w-0 items-center gap-2">
-                                                                    <span
-                                                                        className={`inline-flex shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${exercise.type ===
-                                                                            'fundamental'
-                                                                            ? 'bg-red-100 text-red-700'
-                                                                            : 'bg-blue-100 text-blue-700'
-                                                                            }`}
-                                                                    >
-                                                                        {exercise.type === 'fundamental' ? 'F' : 'A'}
-                                                                    </span>
+                                                                    <ExerciseTypeBadge
+                                                                        type={exercise.type}
+                                                                        className="inline-flex shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                                                                    />
                                                                     <span className="truncate text-sm font-medium text-gray-800">
                                                                         {exercise.name}
                                                                     </span>
@@ -770,18 +767,10 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                                                         <tr key={workoutExercise.id}>
                                                                             <td className="px-3 py-3 align-top">
                                                                                 <div className="flex items-center gap-2">
-                                                                                    <span
-                                                                                        className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${workoutExercise.exercise.type ===
-                                                                                            'fundamental'
-                                                                                            ? 'bg-red-100 text-red-700'
-                                                                                            : 'bg-blue-100 text-blue-700'
-                                                                                            }`}
-                                                                                    >
-                                                                                        {workoutExercise.exercise.type ===
-                                                                                            'fundamental'
-                                                                                            ? 'F'
-                                                                                            : 'A'}
-                                                                                    </span>
+                                                                                    <ExerciseTypeBadge
+                                                                                        type={workoutExercise.exercise.type}
+                                                                                        className="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                                                                                    />
                                                                                     <span className="font-medium text-gray-900">
                                                                                         {workoutExercise.exercise.name}
                                                                                     </span>
