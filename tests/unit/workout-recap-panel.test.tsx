@@ -87,7 +87,7 @@ describe('WorkoutRecapPanel', () => {
         expect(global.fetch).toHaveBeenCalled()
         expect(screen.getByText('3 × 5 × 120 kg')).toBeInTheDocument()
         expect(screen.getByText('2/3')).toBeInTheDocument()
-        expect(screen.queryByText('trainer:exercises.fundamental')).not.toBeInTheDocument()
+        expect(screen.queryByText('common:exerciseTypes.fundamental.label')).not.toBeInTheDocument()
         expect(screen.getByLabelText('trainer:editProgram.tableWarmup')).toBeInTheDocument()
         expect(screen.getByLabelText('trainer:editProgram.tableSuperSet')).toBeInTheDocument()
         expect(screen.queryByText('Set 1')).not.toBeInTheDocument()

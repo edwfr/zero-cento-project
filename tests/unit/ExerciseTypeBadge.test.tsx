@@ -24,4 +24,9 @@ describe('ExerciseTypeBadge', () => {
         expect(badge.className).toContain('bg-blue-100')
         expect(badge.className).toContain('px-2 text-xs')
     })
+
+    it('renders nothing for an unknown type', () => {
+        const { container } = render(<ExerciseTypeBadge type={'unknown' as never} />)
+        expect(container.firstChild).toBeNull()
+    })
 })

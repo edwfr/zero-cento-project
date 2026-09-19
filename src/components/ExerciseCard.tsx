@@ -1,7 +1,8 @@
 'use client'
 
-import { EXERCISE_TYPE_META, type ExerciseType } from '@/lib/exercise-type'
+import type { ExerciseType } from '@/lib/exercise-type'
 import { useTranslation } from 'react-i18next'
+import ExerciseTypeBadge from './ExerciseTypeBadge'
 import MovementPatternTag from './MovementPatternTag'
 
 interface ExerciseCardProps {
@@ -56,12 +57,11 @@ export default function ExerciseCard({
                         {name}
                     </h3>
                     <div className="mt-1 flex flex-wrap gap-2">
-                        <span
-                            className={`rounded-full border px-2 py-0.5 text-xs font-medium ${EXERCISE_TYPE_META[type].badgeClass
-                                }`}
-                        >
-                            {t(EXERCISE_TYPE_META[type].labelKey)}
-                        </span>
+                        <ExerciseTypeBadge
+                            type={type}
+                            variant="label"
+                            className="rounded-full border px-2 py-0.5 text-xs font-medium"
+                        />
                         {movementPattern && (
                             <MovementPatternTag
                                 name={movementPattern.name}

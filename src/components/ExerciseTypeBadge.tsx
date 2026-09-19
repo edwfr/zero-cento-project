@@ -14,6 +14,7 @@ interface ExerciseTypeBadgeProps {
 export default function ExerciseTypeBadge({ type, variant = 'short', className = '' }: ExerciseTypeBadgeProps) {
     const { t } = useTranslation('common')
     const meta = EXERCISE_TYPE_META[type]
+    if (!meta) return null
     const label = t(meta.labelKey)
     const isShort = variant === 'short'
 

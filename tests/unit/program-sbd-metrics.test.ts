@@ -9,6 +9,7 @@ import {
     type SbdMetricsWeek,
     type WeekSbdMetric,
 } from '@/lib/program-sbd-metrics'
+import type { ExerciseType } from '@/lib/exercise-type'
 
 const LIFT_LABELS: LiftLabels = {
     squat: 'Squat',
@@ -20,7 +21,7 @@ function makeExercise(
     overrides: Partial<{
         id: string
         name: string
-        type: 'fundamental' | 'accessory'
+        type: ExerciseType
         sets: number
         reps: string
         isWarmup: boolean
@@ -151,6 +152,25 @@ describe('computeWeekSbdMetrics', () => {
                 workoutExercises: [
                     makeExercise({ isWarmup: true }),
                     makeExercise({ type: 'accessory', name: 'Back Squat' }),
+                ],
+            },
+        ])
+
+        const result = computeWeekSbdMetrics({
+            weeks: [week],
+            oneRmByExerciseId: {},
+            liftLabels: LIFT_LABELS,
+        })
+
+        expect(result['week-1'] ?? []).toHaveLength(0)
+    })
+
+    it('excludes postural exercises', () => {
+        const week = buildWeek([
+            {
+                id: 'w1',
+                workoutExercises: [
+                    makeExercise({ type: 'postural', name: 'Back Squat' }),
                 ],
             },
         ])
