@@ -147,6 +147,7 @@ Il backport su `development` **non è opzionale**: senza, il branch resta indiet
 
 ---
 
+
 ## Regole
 
 | Regola | Motivo |
