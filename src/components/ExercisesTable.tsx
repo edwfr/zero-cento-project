@@ -7,6 +7,8 @@ import ExerciseCreateModal from './ExerciseCreateModal'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
 import { FormLabel } from '@/components/FormLabel'
+import ExerciseTypeBadge from '@/components/ExerciseTypeBadge'
+import { EXERCISE_TYPES, EXERCISE_TYPE_META, type ExerciseType } from '@/lib/exercise-type'
 
 interface MuscleGroupAssignment {
     muscleGroup: {
@@ -21,7 +23,7 @@ interface Exercise {
     name: string
     description: string | null
     youtubeUrl: string
-    type: 'fundamental' | 'accessory'
+    type: ExerciseType
     movementPattern: {
         id: string
         name: string
@@ -74,39 +76,6 @@ export default function ExercisesTable() {
         void fetchExercises()
     }, [fetchExercises])
 
-    const getTypeLabel = (type: string) => {
-        switch (type) {
-            case 'fundamental':
-                return t('trainer:exercises.fundamental')
-            case 'accessory':
-                return t('trainer:exercises.accessory')
-            default:
-                return type
-        }
-    }
-
-    const getFilterOptionLabel = (type: string) => {
-        switch (type) {
-            case 'fundamental':
-                return t('trainer:exercises.fundamentalPlural')
-            case 'accessory':
-                return t('trainer:exercises.accessoryPlural')
-            default:
-                return type
-        }
-    }
-
-    const getTypeBadgeColor = (type: string) => {
-        switch (type) {
-            case 'fundamental':
-                return 'bg-purple-100 text-purple-800'
-            case 'accessory':
-                return 'bg-blue-100 text-blue-800'
-            default:
-                return 'bg-gray-100 text-gray-800'
-        }
-    }
-
     const formatMuscleGroups = (muscleGroups: MuscleGroupAssignment[]) => {
         return muscleGroups
             .map((mg) => `${mg.muscleGroup.name} (${Math.round(mg.coefficient * 100)}%)`)
@@ -142,8 +111,11 @@ export default function ExercisesTable() {
                             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary text-gray-900"
                         >
                             <option value="all" className="text-gray-900">{t('common:common.all')}</option>
-                            <option value="fundamental" className="text-gray-900">{getFilterOptionLabel('fundamental')}</option>
-                            <option value="accessory" className="text-gray-900">{getFilterOptionLabel('accessory')}</option>
+                            {EXERCISE_TYPES.map((type) => (
+                                <option key={type} value={type} className="text-gray-900">
+                                    {t(EXERCISE_TYPE_META[type].pluralKey)}
+                                </option>
+                            ))}
                         </select>
                     </div>
 
@@ -220,13 +192,11 @@ export default function ExercisesTable() {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <span
-                                            className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getTypeBadgeColor(
-                                                exercise.type
-                                            )}`}
-                                        >
-                                            {getTypeLabel(exercise.type)}
-                                        </span>
+                                        <ExerciseTypeBadge
+                                            type={exercise.type}
+                                            variant="label"
+                                            className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                        />
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm text-gray-900">

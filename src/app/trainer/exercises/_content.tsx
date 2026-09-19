@@ -12,11 +12,13 @@ import { useTranslation } from 'react-i18next'
 import '@/lib/i18n/client'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { Input } from '@/components/Input'
+import ExerciseTypeBadge from '@/components/ExerciseTypeBadge'
+import { EXERCISE_TYPES, EXERCISE_TYPE_META, isExerciseType, type ExerciseType } from '@/lib/exercise-type'
 
 interface Exercise {
     id: string
     name: string
-    type: 'fundamental' | 'accessory'
+    type: ExerciseType
     youtubeUrl: string | null
     movementPattern: {
         id: string
@@ -52,7 +54,7 @@ export default function TrainerExercisesContent() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [searchTerm, setSearchTerm] = useState('')
-    const [typeFilter, setTypeFilter] = useState<'all' | 'fundamental' | 'accessory'>('all')
+    const [typeFilter, setTypeFilter] = useState<'all' | ExerciseType>('all')
     const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
     const [confirmModal, setConfirmModal] = useState<{
         title: string
@@ -115,13 +117,6 @@ export default function TrainerExercisesContent() {
         const matchesType = typeFilter === 'all' || ex.type === typeFilter
         return matchesSearch && matchesType
     })
-
-    const getTypeShortLabel = (type: Exercise['type']) => (type === 'fundamental' ? 'F' : 'A')
-
-    const getTypeFullLabel = (type: Exercise['type']) => (type === 'fundamental' ? 'Fondamentale' : 'Accessorio')
-
-    const getTypeBadgeClasses = (type: Exercise['type']) =>
-        type === 'fundamental' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
 
     const sortMuscleGroups = (muscleGroups: Exercise['exerciseMuscleGroups']) =>
         [...muscleGroups].sort((a, b) => b.coefficient - a.coefficient)
@@ -203,12 +198,15 @@ export default function TrainerExercisesContent() {
 
                             <select
                                 value={typeFilter}
-                                onChange={(e) => setTypeFilter(e.target.value as any)}
+                                onChange={(e) => setTypeFilter(isExerciseType(e.target.value) ? e.target.value : 'all')}
                                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                             >
                                 <option value="all">{t('exercises.allTypes')}</option>
-                                <option value="fundamental">{t('exercises.fundamentalPlural')}</option>
-                                <option value="accessory">{t('exercises.accessoryPlural')}</option>
+                                {EXERCISE_TYPES.map((type) => (
+                                    <option key={type} value={type}>
+                                        {t(EXERCISE_TYPE_META[type].pluralKey)}
+                                    </option>
+                                ))}
                             </select>
 
                             <Link
@@ -266,15 +264,10 @@ export default function TrainerExercisesContent() {
                                             {exercise.name}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span
-                                                className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${getTypeBadgeClasses(
-                                                    exercise.type
-                                                )}`}
-                                                title={getTypeFullLabel(exercise.type)}
-                                                aria-label={getTypeFullLabel(exercise.type)}
-                                            >
-                                                {getTypeShortLabel(exercise.type)}
-                                            </span>
+                                            <ExerciseTypeBadge
+                                                type={exercise.type}
+                                                className="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold"
+                                            />
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             <MovementPatternTag
@@ -337,15 +330,10 @@ export default function TrainerExercisesContent() {
                                         <h3 className="text-base font-semibold text-gray-900">
                                             {exercise.name}
                                         </h3>
-                                        <span
-                                            className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${getTypeBadgeClasses(
-                                                exercise.type
-                                            )}`}
-                                            title={getTypeFullLabel(exercise.type)}
-                                            aria-label={getTypeFullLabel(exercise.type)}
-                                        >
-                                            {getTypeShortLabel(exercise.type)}
-                                        </span>
+                                        <ExerciseTypeBadge
+                                            type={exercise.type}
+                                            className="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold"
+                                        />
                                     </div>
 
                                     {/* Movement Pattern */}
