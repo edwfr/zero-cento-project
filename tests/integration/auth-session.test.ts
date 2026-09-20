@@ -91,12 +91,12 @@ describe('getSession', () => {
                     error: null,
                 }),
             },
-        } as any)
+        } as never)
 
         const session = await getSession()
 
         expect(session).toBeNull()
-        expect(prisma.user.findUnique).not.toHaveBeenCalled()
+        expect(prismaMock.user.findUnique).not.toHaveBeenCalled()
     })
 
     it('ignores a role the user injected into user_metadata', async () => {
@@ -116,7 +116,7 @@ describe('getSession', () => {
                     error: null,
                 }),
             },
-        } as any)
+        } as never)
 
         const session = await getSession()
 
