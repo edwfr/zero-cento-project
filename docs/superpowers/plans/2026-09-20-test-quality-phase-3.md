@@ -10,10 +10,10 @@
 
 **Spec:** `docs/superpowers/specs/2026-09-19-test-quality-design.md` (§8 Fase 3)
 
-## Stato al 2026-09-20 — gruppi `lib` e `schemas` chiusi, area API in sospeso
+## Stato al 2026-09-20 — fase chiusa, tutti e tre i gruppi oltre l'80%
 
-Branch: `chore/test-quality-coverage`, creato da `chore/test-quality-auth` (Fase 2). Nessuno dei due branch è
-ancora stato pushato o integrato in `development`.
+I task 1-8 vivono su `chore/test-quality-coverage`, già integrato in `development`. I task 9-12 stanno su
+`chore/test-quality-api`, creato da `development` e **non ancora pushato**.
 
 | Task | Stato | Esito |
 |---|---|---|
@@ -25,21 +25,24 @@ ancora stato pushato o integrato in `development`.
 | 6 — chiusura `src/lib/**` | ✅ fatto (`c7e9f8a`) | gruppo 76/75/75/73 → **94/94/97/88**; soglia globale 38/37/30/35 → **40/39/32/36** |
 | 7 — esercizi del workout | ✅ fatto (`20de2c2`) | le tre route da 0-37% a **94.6 / 81.4 / 81.8** righe |
 | 8 — report e ciclo di vita | ✅ fatto (`28614e5`, `02b2c71`) | `reports` 0% → **84%**, `review` e `complete` → **100%**, `copy-first-week` → **89%** |
-| 9 — dati di riferimento, utenti, azioni admin | ⏸️ **da fare** | `movement-patterns/[id]`, `muscle-groups/[id]`, i due `archive`, `movement-pattern-colors`, `users/[id]/activate` e `deactivate`, `admin/programs/[id]/override`, `admin/trainees/[traineeId]/reassign` |
-| 10 — auth, settimane, note, recap, health | 🟡 **parziale** (`cde6c7c`) | fatti `auth/activate`, `auth/force-change-password`, `auth/me`, `weeks/[id]`, `health`; **restano** `programs/[id]/workouts/[workoutId]/trainee-notes` e `trainee/workouts/[id]/recap` |
-| 11 — chiusura `src/app/api/**` | ⏸️ **da fare** | dipende dai task 9 e 10 |
-| 12 — soglia globale, skill, CHANGELOG, merge | ⏸️ **da fare** | la soglia `src/app/api/**` è ancora quella di partenza (57/56/63/54) |
+| 9 — dati di riferimento, utenti, azioni admin | ✅ fatto (`81f3a36`, `a692656`, `2df7c61`) | `movement-patterns/[id]`, `muscle-groups/[id]`, i due `archive`, `movement-pattern-colors`, `users/[id]/activate` e `deactivate`, `admin/programs/[id]/override`, `admin/trainees/[traineeId]/reassign` |
+| 10 — auth, settimane, note, recap, health | ✅ fatto (`cde6c7c`, `6d835b8`) | fatti `auth/activate`, `auth/force-change-password`, `auth/me`, `weeks/[id]`, `health`; **restano** `programs/[id]/workouts/[workoutId]/trainee-notes` e `trainee/workouts/[id]/recap` |
+| 11 — chiusura `src/app/api/**` | ✅ fatto (`deef60b`, `68c1d65`) | dipende dai task 9 e 10 |
+| 12 — soglia globale, skill, CHANGELOG, merge | ✅ fatto (`41d2bdb`), resta solo l'integrazione | la soglia `src/app/api/**` è ancora quella di partenza (57/56/63/54) |
 
 Suite: **1175 test verdi** (era 874 a fine Fase 1). `npm run lint` e `npm run type-check` puliti.
 
-Coverage misurata il 2026-09-20 dopo il Task 10 parziale:
+Coverage finale della fase, misurata il 2026-09-20 su `chore/test-quality-api` con 1324 test verdi:
 
-| Gruppo | Righe | Rami | Per arrivare all'80% |
-|---|---|---|---|
-| `src/schemas/**` | 95.5% | 87.6% | — chiuso |
-| `src/lib/**` | 94.8% | 89.0% | — chiuso |
-| `src/app/api/**` | 74.7% | 71.8% | **~101 righe, ~115 rami** |
-| totale | 43.6% | 40.4% | — |
+| Gruppo | Righe | Statements | Funzioni | Rami |
+|---|---|---|---|---|
+| `src/schemas/**` | 95.5% | 95.5% | 100% | 87.6% |
+| `src/lib/**` | 94.8% | 94.6% | 97.8% | 89.0% |
+| `src/app/api/**` | 92.1% | 91.6% | 95.7% | 87.1% |
+| totale | 47.2% | 46.9% | 35.9% | 43.4% |
+
+Soglie in `vitest.config.ts`: globale 47/46/35/43, `src/lib/**` 94/94/97/88, `src/schemas/**` 95/95/96/87,
+`src/app/api/**` 92/91/95/87.
 
 Fuori dal perimetro originale, sono stati corretti due bug trovati scrivendo i test (commit `69edf7e` e `888f781`):
 il de-dup dei set eseguiti in `trainee-program-data.ts`, che riportava anche le righe dei feedback vecchi, e il
@@ -47,7 +50,10 @@ ramo irraggiungibile che calcolava l'ordine in `POST .../workouts/[workoutId]/ex
 
 ### Da sapere per riprendere
 
-- I task 9, 10 (parte residua) e 11 sono l'unico lavoro rimasto sulla coverage, tutto nell'area API.
+- Resta solo l'integrazione (Task 12, Step 7): merge fast-forward di `chore/test-quality-api` in `development`
+  dopo che la CI è verde. Nient'altro della fase è aperto.
+- Rami ancora scoperti, se una fase futura vuole salire oltre: `programs/route.ts`, `users/route.ts`,
+  `trainee/workouts/[id]`, `personal-records/[id]`, `programs/[id]/progress`, `trainer/trainees/[id]/notes`.
 - La ricetta da seguire è quella in fondo a questa sezione introduttiva: mock dell'auth con `authModuleMock()`,
   `prismaMock` per Prisma, un caso per ciascuno di 200/201, 400, 401, 403 di ruolo, 403 di appartenenza, 404,
   più `toHaveBeenCalledWith` su ogni scrittura Prisma.
@@ -1176,7 +1182,7 @@ reports/route.ts was the largest uncovered file in the API area."
 
 ---
 
-### Task 9 ⏸️ DA FARE: Dati di riferimento, utenti e azioni admin
+### Task 9 ✅ FATTO: Dati di riferimento, utenti e azioni admin
 
 Tre gruppi di route piccole ma del tutto scoperte: dati di riferimento (`movement-patterns/[id]` 17%, `muscle-groups/[id]` 17%, i due `archive` 0%, `movement-pattern-colors` 0% — 103 righe), attivazione utenti (`users/[id]/activate` 0%, `deactivate` 53%, rami di `users/[id]` — 49 righe), azioni admin (`override` 0%, `reassign` 0% — 45 righe).
 
@@ -1336,7 +1342,7 @@ git commit -m "test(admin): cover program override and trainee reassignment"
 
 ---
 
-### Task 10 🟡 PARZIALE (restano trainee-notes e recap): Route di autenticazione, settimane, note e recap, health
+### Task 10 ✅ FATTO: Route di autenticazione, settimane, note e recap, health
 
 L'ultimo blocco di route scoperte: `auth/activate` (9 righe), `auth/force-change-password` (24), `auth/me` (poche righe), `weeks/[id]` (21), `programs/[id]/workouts/[workoutId]/trainee-notes` (17), `trainee/workouts/[id]/recap` (17), `health` (12).
 
@@ -1446,7 +1452,7 @@ git commit -m "test(api): cover workout trainee notes and workout recap"
 
 ---
 
-### Task 11 ⏸️ DA FARE: Chiudere `src/app/api/**` all'80% e alzare la soglia
+### Task 11 ✅ FATTO: Chiudere `src/app/api/**` all'80% e alzare la soglia
 
 Dopo i task 7-10 restano i rami sparsi nei file già coperti: `exercises/[id]` (B70), `personal-records/[id]` (B76.5), `trainee/workouts/[id]` (B65.7), `users/[id]/reports/planned-training-sets` (B59.6), `programs/[id]/copy-first-week` (B68.2), `admin/reports/global`, `trainee/active-program`, `movement-patterns`, `muscle-groups`.
 
@@ -1498,7 +1504,7 @@ git commit -m "test(api): close the remaining branches and raise the threshold t
 
 ---
 
-### Task 12 ⏸️ DA FARE: Soglia globale, skill, CHANGELOG e integrazione
+### Task 12 ✅ FATTO (manca l'integrazione): Soglia globale, skill, CHANGELOG e integrazione
 
 **Files:**
 - Modify: `vitest.config.ts` (soglia globale)
