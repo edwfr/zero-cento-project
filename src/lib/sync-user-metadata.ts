@@ -7,8 +7,17 @@ export interface UserMetadataFields {
     firstName?: string
     lastName?: string
     isActive?: boolean
+    mustChangePassword?: boolean
 }
 
+/**
+ * Sync user fields to Supabase Auth metadata.
+ *
+ * Authorization data (role, isActive, mustChangePassword) goes to app_metadata,
+ * which only the service role can write. user_metadata is writable by the user
+ * themselves with the anon key (supabase.auth.updateUser), so it must never
+ * carry anything the server trusts for access control — display names only.
+ */
 export async function syncUserMetadata(userId: string, fields: UserMetadataFields): Promise<void> {
     const adminClient = createAdminClient()
 
@@ -21,14 +30,35 @@ export async function syncUserMetadata(userId: string, fields: UserMetadataField
         return
     }
 
-    const currentMeta = existing.user.user_metadata ?? {}
+    const { role, isActive, mustChangePassword, firstName, lastName } = fields
 
-    const { error } = await adminClient.auth.admin.updateUserById(userId, {
-        user_metadata: {
-            ...currentMeta,
-            ...fields,
-        },
-    })
+    const payload: {
+        app_metadata?: Record<string, unknown>
+        user_metadata?: Record<string, unknown>
+    } = {}
+
+    if (role !== undefined || isActive !== undefined || mustChangePassword !== undefined) {
+        payload.app_metadata = {
+            ...(existing.user.app_metadata ?? {}),
+            ...(role !== undefined && { role }),
+            ...(isActive !== undefined && { isActive }),
+            ...(mustChangePassword !== undefined && { mustChangePassword }),
+        }
+    }
+
+    if (firstName !== undefined || lastName !== undefined) {
+        payload.user_metadata = {
+            ...(existing.user.user_metadata ?? {}),
+            ...(firstName !== undefined && { firstName }),
+            ...(lastName !== undefined && { lastName }),
+        }
+    }
+
+    if (Object.keys(payload).length === 0) {
+        return
+    }
+
+    const { error } = await adminClient.auth.admin.updateUserById(userId, payload)
 
     if (error) {
         throw new Error(`syncUserMetadata failed for ${userId}: ${error.message}`)
