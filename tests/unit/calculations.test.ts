@@ -9,6 +9,8 @@ import {
     intensityFromRpeChart,
     normalizedOneRM,
     calculateEffectiveWeight as calculateEffectiveWeightRaw,
+    resolveEffectiveWeight,
+    loadTraineePrMap,
 } from '@/lib/calculations'
 import { prisma } from '@/lib/prisma'
 import type { RestTime, WorkoutExercise as PrismaWorkoutExercise } from '@prisma/client'
@@ -1086,5 +1088,225 @@ describe('calculateEffectiveWeight', () => {
             // Exercise 2: 90 * 0.9 = 81kg
             expect(result).toBe(81)
         })
+    })
+})
+
+// ────────────────────────────────────────────────────────────────────────────
+// resolveEffectiveWeight — the batched resolver used by the API routes
+// ────────────────────────────────────────────────────────────────────────────
+
+type ResolverExercise = Parameters<typeof resolveEffectiveWeight>[0]
+
+const EX_1 = 'exercise-1'
+const WORKOUT_1 = 'workout-1'
+
+const makeWorkoutExercise = (overrides: Partial<ResolverExercise> = {}): ResolverExercise => ({
+    id: 'we-1',
+    workoutId: WORKOUT_1,
+    exerciseId: EX_1,
+    order: 1,
+    sets: 3,
+    reps: '5',
+    weightType: 'absolute',
+    weight: 100,
+    ...overrides,
+} as ResolverExercise)
+
+describe('resolveEffectiveWeight', () => {
+    it('returns the stored weight for an absolute exercise', () => {
+        expect(resolveEffectiveWeight(makeWorkoutExercise(), new Map(), [])).toBe(100)
+    })
+
+    it('returns null for an unknown weightType', () => {
+        const exercise = makeWorkoutExercise({ weightType: 'unsupported' as ResolverExercise['weightType'] })
+
+        expect(resolveEffectiveWeight(exercise, new Map(), [])).toBeNull()
+    })
+
+    describe('percentage_1rm', () => {
+        it('applies the percentage to the best normalized 1RM of the exercise', () => {
+            const prMap = new Map([[`${EX_1}:1`, 100]])
+            const exercise = makeWorkoutExercise({ weightType: 'percentage_1rm', weight: 80 })
+
+            expect(resolveEffectiveWeight(exercise, prMap, [])).toBe(80)
+        })
+
+        it('picks the best record across rep ranges, not the first one', () => {
+            // 5 reps at 100 kg normalizes higher than 1 rep at 100 kg
+            const prMap = new Map([[`${EX_1}:1`, 100], [`${EX_1}:5`, 100]])
+            const exercise = makeWorkoutExercise({ weightType: 'percentage_1rm', weight: 100 })
+
+            expect(resolveEffectiveWeight(exercise, prMap, [])).toBeGreaterThan(100)
+        })
+
+        it('ignores records of other exercises and malformed keys', () => {
+            const prMap = new Map([['other-exercise:1', 200], [`${EX_1}:not-a-number`, 300], [`${EX_1}:0`, 400]])
+            const exercise = makeWorkoutExercise({ weightType: 'percentage_1rm', weight: 80 })
+
+            expect(resolveEffectiveWeight(exercise, prMap, [])).toBeNull()
+        })
+
+        it('returns null when the trainee has no record for the exercise', () => {
+            const exercise = makeWorkoutExercise({ weightType: 'percentage_1rm', weight: 80 })
+
+            expect(resolveEffectiveWeight(exercise, new Map(), [])).toBeNull()
+        })
+
+        it('treats a missing percentage as zero', () => {
+            const prMap = new Map([[`${EX_1}:1`, 100]])
+            const exercise = makeWorkoutExercise({ weightType: 'percentage_1rm', weight: null })
+
+            expect(resolveEffectiveWeight(exercise, prMap, [])).toBe(0)
+        })
+    })
+
+    describe('percentage_rm', () => {
+        it('uses the record for the rep count written in reps', () => {
+            const prMap = new Map([[`${EX_1}:5`, 120]])
+            const exercise = makeWorkoutExercise({ weightType: 'percentage_rm', weight: 50, reps: '5' })
+
+            expect(resolveEffectiveWeight(exercise, prMap, [])).toBe(60)
+        })
+
+        it('reads the leading number of a rep range', () => {
+            const prMap = new Map([[`${EX_1}:8`, 80]])
+            const exercise = makeWorkoutExercise({ weightType: 'percentage_rm', weight: 100, reps: '8-10' })
+
+            expect(resolveEffectiveWeight(exercise, prMap, [])).toBe(80)
+        })
+
+        it('returns null when reps does not start with a number', () => {
+            const prMap = new Map([[`${EX_1}:5`, 120]])
+            const exercise = makeWorkoutExercise({ weightType: 'percentage_rm', weight: 50, reps: 'AMRAP' })
+
+            expect(resolveEffectiveWeight(exercise, prMap, [])).toBeNull()
+        })
+
+        it('returns null when no record matches that rep count', () => {
+            const prMap = new Map([[`${EX_1}:3`, 120]])
+            const exercise = makeWorkoutExercise({ weightType: 'percentage_rm', weight: 50, reps: '5' })
+
+            expect(resolveEffectiveWeight(exercise, prMap, [])).toBeNull()
+        })
+    })
+
+    describe('percentage_previous', () => {
+        it('applies the percentage to the previous occurrence in the same workout', () => {
+            const previous = makeWorkoutExercise({ id: 'we-0', order: 1, weight: 100 })
+            const current = makeWorkoutExercise({
+                id: 'we-2', order: 2, weightType: 'percentage_previous', weight: 10,
+            })
+
+            expect(resolveEffectiveWeight(current, new Map(), [previous, current])).toBeCloseTo(110, 6)
+        })
+
+        it('accepts a negative percentage as a decrease', () => {
+            const previous = makeWorkoutExercise({ id: 'we-0', order: 1, weight: 100 })
+            const current = makeWorkoutExercise({
+                id: 'we-2', order: 2, weightType: 'percentage_previous', weight: -10,
+            })
+
+            expect(resolveEffectiveWeight(current, new Map(), [previous, current])).toBe(90)
+        })
+
+        it('throws when there is no earlier occurrence of the same exercise', () => {
+            const current = makeWorkoutExercise({ order: 1, weightType: 'percentage_previous', weight: 10 })
+
+            expect(() => resolveEffectiveWeight(current, new Map(), [current])).toThrow(
+                CALCULATION_ERROR_KEYS.noPreviousOccurrenceFound
+            )
+        })
+
+        it('ignores occurrences from another workout', () => {
+            const otherWorkout = makeWorkoutExercise({ id: 'we-0', workoutId: 'workout-2', order: 1 })
+            const current = makeWorkoutExercise({
+                id: 'we-2', order: 2, weightType: 'percentage_previous', weight: 10,
+            })
+
+            expect(() => resolveEffectiveWeight(current, new Map(), [otherWorkout, current])).toThrow(
+                CALCULATION_ERROR_KEYS.noPreviousOccurrenceFound
+            )
+        })
+
+        it('resolves a chain that ends on an absolute weight', () => {
+            const first = makeWorkoutExercise({ id: 'we-0', order: 1, weight: 100 })
+            const second = makeWorkoutExercise({
+                id: 'we-1', order: 2, weightType: 'percentage_previous', weight: 10,
+            })
+            const third = makeWorkoutExercise({
+                id: 'we-2', order: 3, weightType: 'percentage_previous', weight: 10,
+            })
+
+            // 100 -> 110 (first chain step) -> the third resolves against the first match by order
+            expect(resolveEffectiveWeight(third, new Map(), [first, second, third])).toBeCloseTo(110, 6)
+        })
+
+        it('returns null when the chain ends on an unresolvable weight', () => {
+            const previous = makeWorkoutExercise({ id: 'we-0', order: 1, weightType: 'percentage_1rm', weight: 80 })
+            const current = makeWorkoutExercise({
+                id: 'we-2', order: 2, weightType: 'percentage_previous', weight: 10,
+            })
+
+            expect(resolveEffectiveWeight(current, new Map(), [previous, current])).toBeNull()
+        })
+
+        it('stops a self-referencing chain with the recursion-depth error', () => {
+            // Two exercises that each point at the other's position would recurse
+            // forever: the resolver caps the depth instead.
+            const siblings: ResolverExercise[] = []
+            for (let order = 1; order <= 13; order++) {
+                siblings.push(makeWorkoutExercise({
+                    id: `we-${order}`,
+                    order,
+                    weightType: order === 1 ? 'percentage_previous' : 'percentage_previous',
+                    weight: 10,
+                }))
+            }
+
+            expect(() => resolveEffectiveWeight(siblings[12], new Map(), siblings)).toThrow(
+                CALCULATION_ERROR_KEYS.noPreviousOccurrenceFound
+            )
+        })
+    })
+})
+
+describe('loadTraineePrMap', () => {
+    it('keys the map by exercise and reps', async () => {
+        vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([
+            { exerciseId: EX_1, reps: 5, weight: 120, recordDate: new Date('2026-09-01') },
+            { exerciseId: EX_1, reps: 3, weight: 130, recordDate: new Date('2026-08-01') },
+        ] as never)
+
+        const map = await loadTraineePrMap('trainee-1')
+
+        expect(map.get(`${EX_1}:5`)).toBe(120)
+        expect(map.get(`${EX_1}:3`)).toBe(130)
+    })
+
+    it('keeps the most recent record when a rep count repeats', async () => {
+        // The query orders by recordDate desc, so the first row wins.
+        vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([
+            { exerciseId: EX_1, reps: 5, weight: 125, recordDate: new Date('2026-09-01') },
+            { exerciseId: EX_1, reps: 5, weight: 110, recordDate: new Date('2026-01-01') },
+        ] as never)
+
+        const map = await loadTraineePrMap('trainee-1')
+
+        expect(map.get(`${EX_1}:5`)).toBe(125)
+        expect(map.size).toBe(1)
+    })
+
+    it('asks Prisma only for the records of that trainee, newest first', async () => {
+        vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([] as never)
+
+        const map = await loadTraineePrMap('trainee-1')
+
+        expect(map.size).toBe(0)
+        expect(prisma.personalRecord.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({
+                where: { traineeId: 'trainee-1' },
+                orderBy: { recordDate: 'desc' },
+            })
+        )
     })
 })
