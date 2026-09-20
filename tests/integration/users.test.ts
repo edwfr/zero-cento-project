@@ -46,9 +46,10 @@ vi.mock('@/lib/logger', () => ({
 }))
 
 import { GET, POST } from '@/app/api/users/route'
+import { GET as getUser, PUT as updateUser } from '@/app/api/users/[id]/route'
 import { prismaMock } from '../helpers/prisma-mock'
 import { mockTrainerSession, mockAdminSession } from '../helpers/sessions'
-import { asTrainer, asAdmin } from '../helpers/auth-mock'
+import { asTrainer, asAdmin, asUnauthenticated } from '../helpers/auth-mock'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { syncUserMetadata } from '@/lib/sync-user-metadata'
@@ -367,5 +368,227 @@ describe('POST /api/users', () => {
         expect(prismaMock.trainerTrainee.create).toHaveBeenCalledWith({
             data: { trainerId: mockTrainerSession.user.id, traineeId: 'trainee-new' },
         })
+    })
+})
+
+// ─── User detail ──────────────────────────────────────────────────────────────
+
+const DETAIL_ID = 'user-1'
+
+const detailParams = () => ({ params: Promise.resolve({ id: DETAIL_ID }) })
+
+const detailUser = {
+    id: DETAIL_ID,
+    email: 'mario.rossi@example.com',
+    firstName: 'Mario',
+    lastName: 'Rossi',
+    role: 'trainee',
+    isActive: true,
+    createdAt: new Date('2026-01-01'),
+}
+
+function detailRequest(options?: RequestInit) {
+    return makeRequest(`http://localhost:3000/api/users/${DETAIL_ID}`, options)
+}
+
+function updateRequest(body: unknown) {
+    return detailRequest({
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    })
+}
+
+describe('GET /api/users/[id]', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+        asAdmin()
+        prismaMock.user.findUnique.mockResolvedValue(detailUser as never)
+    })
+
+    it('returns the user for an admin without checking associations', async () => {
+        const res = await getUser(detailRequest(), detailParams())
+        const body = await res.json()
+
+        expect(res.status).toBe(200)
+        expect(body.data.user).toMatchObject({ id: DETAIL_ID, email: 'mario.rossi@example.com' })
+        expect(prismaMock.trainerTrainee.findFirst).not.toHaveBeenCalled()
+    })
+
+    it('returns the user for a trainer who owns the trainee', async () => {
+        asTrainer()
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue({
+            trainerId: mockTrainerSession.user.id,
+            traineeId: DETAIL_ID,
+        } as never)
+
+        const res = await getUser(detailRequest(), detailParams())
+
+        expect(res.status).toBe(200)
+        expect(prismaMock.trainerTrainee.findFirst).toHaveBeenCalledWith({
+            where: { trainerId: mockTrainerSession.user.id, traineeId: DETAIL_ID },
+        })
+    })
+
+    it('returns 403 for a trainer who does not own the trainee', async () => {
+        asTrainer()
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue(null)
+
+        const res = await getUser(detailRequest(), detailParams())
+        const body = await res.json()
+
+        expect(res.status).toBe(403)
+        expect(body.error.key).toBe('auth.accessDenied')
+    })
+
+    it('returns 404 when the user does not exist', async () => {
+        prismaMock.user.findUnique.mockResolvedValue(null)
+
+        const res = await getUser(detailRequest(), detailParams())
+        const body = await res.json()
+
+        expect(res.status).toBe(404)
+        expect(body.error.key).toBe('user.notFound')
+    })
+
+    it('returns 401 when not authenticated', async () => {
+        asUnauthenticated()
+
+        const res = await getUser(detailRequest(), detailParams())
+
+        expect(res.status).toBe(401)
+        expect(prismaMock.user.findUnique).not.toHaveBeenCalled()
+    })
+
+    it('returns 500 when the query fails', async () => {
+        prismaMock.user.findUnique.mockRejectedValue(new Error('db down'))
+
+        const res = await getUser(detailRequest(), detailParams())
+        const body = await res.json()
+
+        expect(res.status).toBe(500)
+        expect(body.error.key).toBe('internal.default')
+    })
+})
+
+describe('PUT /api/users/[id]', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+        asAdmin()
+        prismaMock.user.findUnique.mockResolvedValue(detailUser as never)
+        prismaMock.user.update.mockResolvedValue({ ...detailUser, firstName: 'Marco' } as never)
+    })
+
+    it('updates the name and syncs it to the metadata cache', async () => {
+        const res = await updateUser(updateRequest({ firstName: 'Marco' }), detailParams())
+        const body = await res.json()
+
+        expect(res.status).toBe(200)
+        expect(body.data.user).toMatchObject({ id: DETAIL_ID, firstName: 'Marco' })
+        expect(prismaMock.user.update).toHaveBeenCalledWith(
+            expect.objectContaining({ where: { id: DETAIL_ID }, data: { firstName: 'Marco' } })
+        )
+        expect(vi.mocked(syncUserMetadata)).toHaveBeenCalledWith(DETAIL_ID, { firstName: 'Marco' })
+    })
+
+    it('syncs the last name too when both change', async () => {
+        prismaMock.user.update.mockResolvedValue({ ...detailUser, firstName: 'Marco', lastName: 'Bianchi' } as never)
+
+        await updateUser(updateRequest({ firstName: 'Marco', lastName: 'Bianchi' }), detailParams())
+
+        expect(vi.mocked(syncUserMetadata)).toHaveBeenCalledWith(DETAIL_ID, { firstName: 'Marco', lastName: 'Bianchi' })
+    })
+
+    it('skips the metadata sync when no name changes', async () => {
+        prismaMock.user.update.mockResolvedValue({ ...detailUser, isActive: false } as never)
+
+        const res = await updateUser(updateRequest({ isActive: false }), detailParams())
+
+        expect(res.status).toBe(200)
+        expect(prismaMock.user.update).toHaveBeenCalledWith(
+            expect.objectContaining({ where: { id: DETAIL_ID }, data: { isActive: false } })
+        )
+        expect(vi.mocked(syncUserMetadata)).not.toHaveBeenCalled()
+    })
+
+    it('lets a trainer update a trainee they own', async () => {
+        asTrainer()
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue({
+            trainerId: mockTrainerSession.user.id,
+            traineeId: DETAIL_ID,
+        } as never)
+
+        const res = await updateUser(updateRequest({ firstName: 'Marco' }), detailParams())
+
+        expect(res.status).toBe(200)
+        expect(prismaMock.user.update).toHaveBeenCalledWith(
+            expect.objectContaining({ where: { id: DETAIL_ID }, data: { firstName: 'Marco' } })
+        )
+    })
+
+    it('returns 403 for a trainer who does not own the trainee', async () => {
+        asTrainer()
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue(null)
+
+        const res = await updateUser(updateRequest({ firstName: 'Marco' }), detailParams())
+        const body = await res.json()
+
+        expect(res.status).toBe(403)
+        expect(body.error.key).toBe('auth.accessDenied')
+        expect(prismaMock.user.update).not.toHaveBeenCalled()
+    })
+
+    it('forbids a trainer from changing the account status', async () => {
+        asTrainer()
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue({
+            trainerId: mockTrainerSession.user.id,
+            traineeId: DETAIL_ID,
+        } as never)
+
+        const res = await updateUser(updateRequest({ isActive: false }), detailParams())
+        const body = await res.json()
+
+        expect(res.status).toBe(403)
+        expect(body.error.key).toBe('user.cannotModifyStatus')
+        expect(prismaMock.user.update).not.toHaveBeenCalled()
+    })
+
+    it('returns 400 when the email is invalid', async () => {
+        const res = await updateUser(updateRequest({ email: 'not-an-email' }), detailParams())
+        const body = await res.json()
+
+        expect(res.status).toBe(400)
+        expect(body.error.key).toBe('validation.invalidInput')
+        expect(prismaMock.user.update).not.toHaveBeenCalled()
+    })
+
+    it('returns 404 when the user does not exist', async () => {
+        prismaMock.user.findUnique.mockResolvedValue(null)
+
+        const res = await updateUser(updateRequest({ firstName: 'Marco' }), detailParams())
+        const body = await res.json()
+
+        expect(res.status).toBe(404)
+        expect(body.error.key).toBe('user.notFound')
+        expect(prismaMock.user.update).not.toHaveBeenCalled()
+    })
+
+    it('returns 401 when not authenticated', async () => {
+        asUnauthenticated()
+
+        const res = await updateUser(updateRequest({ firstName: 'Marco' }), detailParams())
+
+        expect(res.status).toBe(401)
+        expect(prismaMock.user.update).not.toHaveBeenCalled()
+    })
+
+    it('returns 500 when the update fails', async () => {
+        prismaMock.user.update.mockRejectedValue(new Error('db down'))
+
+        const res = await updateUser(updateRequest({ firstName: 'Marco' }), detailParams())
+        const body = await res.json()
+
+        expect(res.status).toBe(500)
+        expect(body.error.key).toBe('internal.default')
     })
 })
