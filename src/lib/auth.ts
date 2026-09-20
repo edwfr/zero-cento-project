@@ -13,6 +13,21 @@ const AUTH_ERROR_KEYS = {
     userNotFound: 'user.notFound',
 } as const
 
+/**
+ * Authorization data lives in app_metadata, which only the service role can
+ * write (see src/lib/sync-user-metadata.ts). user_metadata is writable by the
+ * user themselves with the anon key, so it may only carry display data.
+ */
+function readAuthMetadata(supabaseUser: SupabaseUser): { role?: Role; isActive?: boolean } {
+    const meta = supabaseUser.app_metadata as { role?: Role; isActive?: boolean } | undefined
+    return { role: meta?.role, isActive: meta?.isActive }
+}
+
+function readDisplayMetadata(supabaseUser: SupabaseUser): { firstName?: string; lastName?: string } {
+    const meta = supabaseUser.user_metadata as { firstName?: string; lastName?: string } | undefined
+    return { firstName: meta?.firstName, lastName: meta?.lastName }
+}
+
 export interface AuthSession {
     user: {
         id: string
@@ -44,23 +59,26 @@ export const getSession = cache(async (): Promise<AuthSession | null> => {
         return null
     }
 
-    // Fast path: all fields in JWT metadata — skip Prisma call
-    const meta = supabaseUser.user_metadata
+    // Fast path: authorization from app_metadata (service-role only), display
+    // names from user_metadata. Never trust user_metadata for role/isActive:
+    // the user can write it themselves with the anon key.
+    const authMeta = readAuthMetadata(supabaseUser)
+    const displayMeta = readDisplayMetadata(supabaseUser)
     if (
-        meta?.role &&
-        meta?.firstName &&
-        meta?.lastName &&
-        meta?.isActive !== undefined
+        authMeta.role &&
+        authMeta.isActive !== undefined &&
+        displayMeta.firstName &&
+        displayMeta.lastName
     ) {
-        if (!meta.isActive) return null
+        if (!authMeta.isActive) return null
         return {
             user: {
                 id: supabaseUser.id,
                 email: supabaseUser.email!,
-                firstName: meta.firstName as string,
-                lastName: meta.lastName as string,
-                role: meta.role as Role,
-                isActive: meta.isActive as boolean,
+                firstName: displayMeta.firstName,
+                lastName: displayMeta.lastName,
+                role: authMeta.role,
+                isActive: authMeta.isActive,
             },
             supabaseUser,
         }
@@ -106,22 +124,23 @@ export const getSessionIncludingInactive = cache(async (): Promise<AuthSession |
         return null
     }
 
-    // Fast path: all fields in JWT metadata
-    const meta = supabaseUser.user_metadata
+    // Fast path: authorization from app_metadata, display names from user_metadata
+    const authMeta = readAuthMetadata(supabaseUser)
+    const displayMeta = readDisplayMetadata(supabaseUser)
     if (
-        meta?.role &&
-        meta?.firstName &&
-        meta?.lastName &&
-        meta?.isActive !== undefined
+        authMeta.role &&
+        authMeta.isActive !== undefined &&
+        displayMeta.firstName &&
+        displayMeta.lastName
     ) {
         return {
             user: {
                 id: supabaseUser.id,
                 email: supabaseUser.email!,
-                firstName: meta.firstName as string,
-                lastName: meta.lastName as string,
-                role: meta.role as Role,
-                isActive: meta.isActive as boolean,
+                firstName: displayMeta.firstName,
+                lastName: displayMeta.lastName,
+                role: authMeta.role,
+                isActive: authMeta.isActive,
             },
             supabaseUser,
         }

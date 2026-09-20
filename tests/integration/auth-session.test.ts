@@ -25,23 +25,30 @@ import { getSession } from '@/lib/auth'
 import { createClient } from '@/lib/supabase-server'
 import { prisma } from '@/lib/prisma'
 
+// Authorization lives in app_metadata (service-role only); user_metadata holds
+// display data. See src/lib/auth.ts.
 const mockSupabaseUserWithFullMeta = {
     id: 'user-uuid-1',
     email: 'test@example.com',
-    user_metadata: {
+    app_metadata: {
         role: 'trainer',
+        isActive: true,
+    },
+    user_metadata: {
         firstName: 'Mario',
         lastName: 'Rossi',
-        isActive: true,
     },
 }
 
 const mockSupabaseUserWithPartialMeta = {
     id: 'user-uuid-2',
     email: 'legacy@example.com',
-    user_metadata: {
+    app_metadata: {
         role: 'trainee',
-        // missing firstName, lastName, isActive
+        // missing isActive
+    },
+    user_metadata: {
+        // missing firstName, lastName
     },
 }
 
@@ -83,7 +90,7 @@ describe('getSession', () => {
                     data: {
                         user: {
                             ...mockSupabaseUserWithFullMeta,
-                            user_metadata: { ...mockSupabaseUserWithFullMeta.user_metadata, isActive: false },
+                            app_metadata: { ...mockSupabaseUserWithFullMeta.app_metadata, isActive: false },
                         },
                     },
                     error: null,
@@ -95,6 +102,30 @@ describe('getSession', () => {
 
         expect(session).toBeNull()
         expect(prisma.user.findUnique).not.toHaveBeenCalled()
+    })
+
+    it('ignores a role the user injected into user_metadata', async () => {
+        vi.mocked(createClient).mockResolvedValue({
+            auth: {
+                getUser: vi.fn().mockResolvedValue({
+                    data: {
+                        user: {
+                            ...mockSupabaseUserWithFullMeta,
+                            user_metadata: {
+                                ...mockSupabaseUserWithFullMeta.user_metadata,
+                                role: 'admin',
+                                isActive: true,
+                            },
+                        },
+                    },
+                    error: null,
+                }),
+            },
+        } as any)
+
+        const session = await getSession()
+
+        expect(session?.user.role).toBe('trainer')
     })
 
     it('falls back to Prisma when metadata is incomplete', async () => {
