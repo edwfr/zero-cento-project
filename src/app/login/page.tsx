@@ -28,10 +28,10 @@ export default function LoginPage() {
                 } = await supabase.auth.getUser()
 
                 if (user) {
-                    let role = user.user_metadata?.role as string | undefined
+                    let role = (user.app_metadata as { role?: string } | undefined)?.role
 
                     if (!role) {
-                        // Fallback for users created before role was stored in JWT metadata
+                        // Fallback for users whose metadata has not been migrated yet
                         const response = await fetch('/api/auth/me', { credentials: 'include' })
                         if (response.ok) {
                             const userData = await response.json()
@@ -77,10 +77,10 @@ export default function LoginPage() {
                     return
                 }
 
-                let role = data.user.user_metadata?.role as string | undefined
+                let role = (data.user.app_metadata as { role?: string } | undefined)?.role
 
                 if (!role) {
-                    // Fallback for users created before role was stored in JWT metadata
+                    // Fallback for users whose metadata has not been migrated yet
                     const response = await fetch('/api/auth/me', { credentials: 'include' })
                     if (!response.ok) throw new Error('Failed to fetch user data')
                     const userData = await response.json()

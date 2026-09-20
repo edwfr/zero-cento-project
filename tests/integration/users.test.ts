@@ -54,6 +54,10 @@ vi.mock('@/lib/supabase-server', () => ({
     })),
 }))
 
+vi.mock('@/lib/sync-user-metadata', () => ({
+    syncUserMetadata: vi.fn().mockResolvedValue(undefined),
+}))
+
 vi.mock('@/lib/logger', () => ({
     logger: {
         info: vi.fn(),
@@ -66,6 +70,7 @@ vi.mock('@/lib/logger', () => ({
 import { GET, POST } from '@/app/api/users/route'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { syncUserMetadata } from '@/lib/sync-user-metadata'
 
 const mockUsers = [
     {
@@ -270,6 +275,12 @@ describe('POST /api/users', () => {
 
         const res = await POST(req)
         expect(res.status).toBe(201)
+        // Authorization data must reach app_metadata (syncUserMetadata), not the
+        // invite payload, which only fills user_metadata.
+        expect(vi.mocked(syncUserMetadata)).toHaveBeenCalledWith('new-user-id', {
+            role: 'trainer',
+            isActive: false,
+        })
     })
 
     it('returns 409 when email already exists', async () => {

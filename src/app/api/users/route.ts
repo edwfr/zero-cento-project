@@ -239,7 +239,9 @@ export async function POST(request: NextRequest) {
             },
         })
 
-        await syncUserMetadata(user.id, { isActive: false })
+        // inviteUserByEmail only fills user_metadata; authorization data has to be
+        // written to app_metadata with the service role.
+        await syncUserMetadata(user.id, { role, isActive: false })
 
         // If trainee and created by trainer, create trainer-trainee association
         if (role === 'trainee' && session.user.role === 'trainer') {

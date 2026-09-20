@@ -49,8 +49,9 @@ export default function SetPasswordPage() {
 
                     // For invited users, email_confirmed_at is set by the invite link
                     // But they still need to set a password. Only redirect if they've
-                    // already completed onboarding (check isActive in metadata or if they have a real password)
-                    const isOnboardingComplete = data.user?.user_metadata?.isActive === true
+                    // already completed onboarding (isActive lives in app_metadata)
+                    const isOnboardingComplete =
+                        (data.user?.app_metadata as { isActive?: boolean } | undefined)?.isActive === true
 
                     if (isOnboardingComplete) {
                         router.push('/login')
@@ -70,8 +71,9 @@ export default function SetPasswordPage() {
                         return
                     }
 
-                    // Check if already completed onboarding
-                    const isOnboardingComplete = user.user_metadata?.isActive === true
+                    // Check if already completed onboarding (isActive lives in app_metadata)
+                    const isOnboardingComplete =
+                        (user.app_metadata as { isActive?: boolean } | undefined)?.isActive === true
 
                     if (isOnboardingComplete) {
                         router.push('/login')
@@ -127,8 +129,20 @@ export default function SetPasswordPage() {
                 throw new Error(t('auth:setPassword.errorActivateUser'))
             }
 
-            // Redirect to role-based dashboard
-            const role = userData.user_metadata.role
+            // Redirect to role-based dashboard (role lives in app_metadata)
+            let role = (userData.app_metadata as { role?: string } | undefined)?.role
+
+            if (!role) {
+                // Fallback for users whose metadata has not been migrated yet
+                const response = await fetch('/api/auth/me', { credentials: 'include' })
+                if (response.ok) {
+                    const me = await response.json()
+                    role = me.data.role
+                }
+            }
+
+            if (!role) throw new Error(t('auth:setPassword.errorGeneric'))
+
             router.push(`/${role}/dashboard`)
         } catch (err: any) {
             Sentry.captureException(err)
