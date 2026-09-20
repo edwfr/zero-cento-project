@@ -37,6 +37,7 @@ const mockRecapResponse = {
                 targetSets: 3,
                 reps: '5',
                 effectiveWeight: 120,
+                targetRpe: 8,
                 completedSets: 2,
                 status: 'in_progress',
                 actualRpe: 8,
@@ -85,7 +86,7 @@ describe('WorkoutRecapPanel', () => {
         await user.click(screen.getByRole('button', { name: 'Workout Recap' }))
         await waitFor(() => expect(screen.getByText('Back Squat')).toBeInTheDocument())
         expect(global.fetch).toHaveBeenCalled()
-        expect(screen.getByText('3 × 5 × 120 kg')).toBeInTheDocument()
+        expect(screen.getByText('3 x 5 · 120kg · @RPE 8')).toBeInTheDocument()
         expect(screen.getByText('2/3')).toBeInTheDocument()
         expect(screen.queryByText('common:exerciseTypes.fundamental.label')).not.toBeInTheDocument()
         expect(screen.getByLabelText('trainer:editProgram.tableWarmup')).toBeInTheDocument()
@@ -232,5 +233,54 @@ describe('WorkoutRecapPanel', () => {
 
         expect(onSelectExercise).toHaveBeenCalledWith('we-1')
         await waitFor(() => expect(screen.queryByText('Back Squat')).not.toBeInTheDocument())
+    })
+    it('omits weight and rpe from the spec when they are absent', async () => {
+        global.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                data: {
+                    exercises: [
+                        {
+                            ...mockRecapResponse.data.exercises[0],
+                            effectiveWeight: 0,
+                            targetRpe: null,
+                        },
+                    ],
+                    workoutNote: null,
+                },
+            }),
+        }) as unknown as typeof fetch
+
+        const user = userEvent.setup()
+        render(<WorkoutRecapPanel workoutId="w1" />)
+
+        await user.click(screen.getByRole('button', { name: 'Workout Recap' }))
+        await waitFor(() => expect(screen.getByText('Back Squat')).toBeInTheDocument())
+        expect(screen.getByText('3 x 5')).toBeInTheDocument()
+    })
+
+    it('formats a fractional weight with one decimal', async () => {
+        global.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                data: {
+                    exercises: [
+                        {
+                            ...mockRecapResponse.data.exercises[0],
+                            effectiveWeight: 102.5,
+                            targetRpe: null,
+                        },
+                    ],
+                    workoutNote: null,
+                },
+            }),
+        }) as unknown as typeof fetch
+
+        const user = userEvent.setup()
+        render(<WorkoutRecapPanel workoutId="w1" />)
+
+        await user.click(screen.getByRole('button', { name: 'Workout Recap' }))
+        await waitFor(() => expect(screen.getByText('Back Squat')).toBeInTheDocument())
+        expect(screen.getByText('3 x 5 · 102.5kg')).toBeInTheDocument()
     })
 })
