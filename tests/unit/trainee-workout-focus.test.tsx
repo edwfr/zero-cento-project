@@ -21,6 +21,15 @@ vi.mock('@/lib/useSwipe', () => ({
     useSwipe: () => ({ handlers: {} }),
 }))
 
+// '@/components' loads all 53 components (MUI, recharts): ~48s under jsdom.
+vi.mock('@/components', () => ({
+    RPESelector: ({ value }: { value?: number }) => <div data-testid="rpe-selector">{value ?? ''}</div>,
+    SkeletonDetail: () => <div data-testid="skeleton-detail" />,
+    WeekTypeBanner: ({ weekType }: { weekType?: string }) => <div data-testid="week-type-banner">{weekType}</div>,
+}))
+
+import WorkoutDetailContent from '@/app/trainee/workouts/[id]/_content'
+
 const fixtureWorkout = {
     id: 'workout-1',
     dayIndex: 3,
@@ -132,14 +141,16 @@ beforeEach(() => {
 })
 
 const renderContent = async () => {
-    const { default: WorkoutDetailContent } = await import(
-        '@/app/trainee/workouts/[id]/_content'
-    )
     const utils = render(<WorkoutDetailContent />)
     // Wait for fetch to resolve and render the first exercise
     await screen.findByText('Bench Press')
     return utils
 }
+
+// The bottom nav is the only <nav>; match the i18n key exactly, since the
+// react-i18next mock in setup.ts returns the key itself.
+const nextButton = () =>
+    within(screen.getByRole('navigation')).getByRole('button', { name: 'workouts.next' })
 
 describe('Trainee workout focus mode', () => {
     it('shows only the current exercise card', async () => {
@@ -151,7 +162,7 @@ describe('Trainee workout focus mode', () => {
     it('advances to the next exercise via the bottom-nav Next button', async () => {
         const user = userEvent.setup()
         await renderContent()
-        const nextBtn = screen.getByRole('button', { name: /next|avanti/i })
+        const nextBtn = nextButton()
         await user.click(nextBtn)
         expect(screen.getByText('Tricep Extension')).toBeInTheDocument()
         expect(screen.queryByText('Bench Press')).not.toBeInTheDocument()
@@ -160,7 +171,7 @@ describe('Trainee workout focus mode', () => {
     it('returns to the previous exercise via the bottom-nav Back button', async () => {
         const user = userEvent.setup()
         await renderContent()
-        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+        await user.click(nextButton())
         expect(screen.getByText('Tricep Extension')).toBeInTheDocument()
         await user.click(screen.getByRole('button', { name: /^workouts\.prev$|\bback\b|indietro/i }))
         expect(screen.getByText('Bench Press')).toBeInTheDocument()
@@ -170,9 +181,9 @@ describe('Trainee workout focus mode', () => {
         const user = userEvent.setup()
         await renderContent()
         // step 0 -> 1 (Tricep Extension)
-        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+        await user.click(nextButton())
         // step 1 -> 2 (final)
-        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+        await user.click(nextButton())
         expect(screen.getAllByText(/summary|riepilogo/i).length).toBeGreaterThan(0)
         expect(screen.getByRole('button', { name: /completeShort|complete workout|completa allenamento/i })).toBeInTheDocument()
     })
@@ -204,7 +215,7 @@ describe('Trainee workout focus mode', () => {
         const user = userEvent.setup()
         await renderContent()
 
-        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+        await user.click(nextButton())
 
         expect(screen.getByText('Tricep Extension')).toBeInTheDocument()
         expect(screen.getByText('common:exerciseTypes.accessory.label')).toBeInTheDocument()
@@ -251,7 +262,7 @@ describe('Trainee workout focus mode', () => {
         await user.click(warmupHintButton)
         expect(screen.getByText('trainer:editProgram.warmupHint')).toBeInTheDocument()
 
-        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+        await user.click(nextButton())
 
         const superSetHintButton = screen.getByRole('button', {
             name: 'trainer:editProgram.superSetHint',
@@ -475,8 +486,8 @@ describe('Trainee workout focus mode', () => {
     it('shows warning cards on the final step when no sets are completed', async () => {
         const user = userEvent.setup()
         await renderContent()
-        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
-        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+        await user.click(nextButton())
+        await user.click(nextButton())
         // On final step. No sets done in either exercise.
         expect(screen.getByRole('button', { name: /Bench Press/i })).toBeInTheDocument()
         expect(screen.getByRole('button', { name: /Tricep Extension/i })).toBeInTheDocument()
@@ -485,8 +496,8 @@ describe('Trainee workout focus mode', () => {
     it('returns to the selected exercise when a missing-data warning is clicked', async () => {
         const user = userEvent.setup()
         await renderContent()
-        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
-        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+        await user.click(nextButton())
+        await user.click(nextButton())
 
         await user.click(screen.getByRole('button', { name: /Tricep Extension/i }))
 
@@ -501,8 +512,8 @@ describe('Trainee workout focus mode', () => {
         const checkButtons = screen.getAllByRole('button', { name: /workouts\.markSetDone/i })
         await user.click(checkButtons[0])
 
-        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
-        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+        await user.click(nextButton())
+        await user.click(nextButton())
 
         expect(screen.getByRole('button', { name: /Bench Press/i })).toBeInTheDocument()
     })
@@ -514,8 +525,8 @@ describe('Trainee workout focus mode', () => {
         const checkButtons = screen.getAllByRole('button', { name: /workouts\.markSetDone/i })
         await user.click(checkButtons[0])
 
-        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
-        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+        await user.click(nextButton())
+        await user.click(nextButton())
         await user.click(screen.getByRole('button', { name: /Bench Press/i }))
 
         expect(screen.getByText('Bench Press')).toBeInTheDocument()
@@ -527,8 +538,8 @@ describe('Trainee workout focus mode', () => {
         searchParamsValue = 'from=current&programId=program-1'
 
         await renderContent()
-        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
-        await user.click(screen.getByRole('button', { name: /next|avanti/i }))
+        await user.click(nextButton())
+        await user.click(nextButton())
         await user.click(
             screen.getByRole('button', {
                 name: /completeShort|complete workout|completa allenamento/i,
