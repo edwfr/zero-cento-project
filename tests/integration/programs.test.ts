@@ -18,7 +18,7 @@ import { POST as copyFirstWeekPOST } from '@/app/api/programs/[id]/copy-first-we
 import { POST as publishPOST } from '@/app/api/programs/[id]/publish/route'
 import type { User } from '@prisma/client'
 import { prismaMock } from '../helpers/prisma-mock'
-import { asTrainer, asAdmin, asTrainee, asUnauthenticated, asForbidden } from '../helpers/auth-mock'
+import { asTrainer, asAdmin, asUnauthenticated } from '../helpers/auth-mock'
 
 const mockPrograms = [
     {
