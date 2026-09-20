@@ -1,21 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { mockTraineeSession } from './fixtures'
 
-vi.mock('@/lib/auth', () => ({
-    requireRole: vi.fn(),
-}))
-
-vi.mock('@/lib/prisma', () => ({
-    prisma: {
-        workout: {
-            findUnique: vi.fn(),
-        },
-        exerciseFeedback: {
-            findMany: vi.fn(),
-        },
-    },
-}))
+vi.mock('@/lib/auth', async () => (await import('../helpers/auth-module-mock')).authModuleMock())
 
 vi.mock('@/lib/calculations', () => ({
     loadTraineePrMap: vi.fn(),
@@ -27,9 +13,10 @@ vi.mock('@/lib/logger', () => ({
 }))
 
 import { GET } from '@/app/api/trainee/workouts/[id]/route'
-import { requireRole } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
 import { loadTraineePrMap, resolveEffectiveWeight } from '@/lib/calculations'
+import { prismaMock } from '../helpers/prisma-mock'
+import { mockTraineeSession } from '../helpers/sessions'
+import { asTrainee } from '../helpers/auth-mock'
 
 function makeRequest(url = 'http://localhost:3000/api/trainee/workouts/workout-1') {
     return new NextRequest(url)
@@ -38,10 +25,10 @@ function makeRequest(url = 'http://localhost:3000/api/trainee/workouts/workout-1
 describe('GET /api/trainee/workouts/[id]', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
+        asTrainee()
         vi.mocked(loadTraineePrMap).mockResolvedValue(new Map())
         vi.mocked(resolveEffectiveWeight).mockReturnValue(100)
-        vi.mocked(prisma.workout.findUnique).mockResolvedValue({
+        prismaMock.workout.findUnique.mockResolvedValue({
             id: 'workout-1',
             dayIndex: 1,
             notes: 'Workout notes',
@@ -83,11 +70,11 @@ describe('GET /api/trainee/workouts/[id]', () => {
                     },
                 },
             ],
-        } as any)
+        } as never)
     })
 
     it('hydrates the latest feedback for each exercise even when it was saved before today', async () => {
-        vi.mocked(prisma.exerciseFeedback.findMany).mockResolvedValue([
+        prismaMock.exerciseFeedback.findMany.mockResolvedValue([
             {
                 id: 'fb-latest',
                 workoutExerciseId: 'we-1',
@@ -112,13 +99,13 @@ describe('GET /api/trainee/workouts/[id]', () => {
                     { setNumber: 2, completed: false, reps: 0, weight: 100, actualRpe: null },
                 ],
             },
-        ] as any)
+        ] as never)
 
         const res = await GET(makeRequest(), { params: Promise.resolve({ id: 'workout-1' }) })
         const json = await res.json()
 
         expect(res.status).toBe(200)
-        expect(prisma.exerciseFeedback.findMany).toHaveBeenCalledWith({
+        expect(prismaMock.exerciseFeedback.findMany).toHaveBeenCalledWith({
             where: {
                 workoutExerciseId: { in: ['we-1'] },
                 traineeId: mockTraineeSession.user.id,
@@ -142,7 +129,7 @@ describe('GET /api/trainee/workouts/[id]', () => {
     })
 
     it('preserves completed sets from older feedback rows when a newer snapshot is incomplete', async () => {
-        vi.mocked(prisma.exerciseFeedback.findMany).mockResolvedValue([
+        prismaMock.exerciseFeedback.findMany.mockResolvedValue([
             {
                 id: 'fb-newer-incomplete',
                 workoutExerciseId: 'we-1',
@@ -169,7 +156,7 @@ describe('GET /api/trainee/workouts/[id]', () => {
                     { setNumber: 2, completed: true, reps: 5, weight: 100, actualRpe: 8.5 },
                 ],
             },
-        ] as any)
+        ] as never)
 
         const res = await GET(makeRequest(), { params: Promise.resolve({ id: 'workout-1' }) })
         const json = await res.json()
