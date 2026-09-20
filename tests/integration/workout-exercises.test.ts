@@ -83,7 +83,7 @@ describe('POST /api/programs/[id]/workouts/[workoutId]/exercises', () => {
     // workoutExerciseSchema makes `order` required, so that branch cannot be
     // reached through the API: a body without it is rejected at validation.
     it('rejects a body without an order instead of computing one', async () => {
-        const { order, ...bodyWithoutOrder } = validBody
+        const bodyWithoutOrder = { ...validBody, order: undefined }
 
         const res = await addExercise(
             makeRequest(bodyWithoutOrder),

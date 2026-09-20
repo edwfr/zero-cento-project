@@ -679,6 +679,57 @@ describe('POST /api/programs/[id]/copy-first-week', () => {
         vi.clearAllMocks()
     })
 
+    it('returns zero when the source week does not exist', async () => {
+        asTrainer()
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(mockProgramMeta as never)
+        prismaMock.week.findFirst.mockResolvedValue(null)
+
+        const res = await copyFirstWeekPOST(
+            makeCopyFirstWeekRequest('prog-1'),
+            { params: Promise.resolve({ id: 'prog-1' }) }
+        )
+        const body = callArg(await res.json())
+
+        expect(res.status).toBe(200)
+        expect(body.data).toEqual({ updatedWeeks: 0, updatedWorkouts: 0 })
+    })
+
+    it('returns 400 when the source week has no exercises', async () => {
+        asTrainer()
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(mockProgramMeta as never)
+        prismaMock.week.findFirst.mockResolvedValue({
+            ...mockSourceWeek,
+            workouts: [{ id: 'workout-src-1', dayIndex: 1, workoutExercises: [] }],
+        } as never)
+
+        const res = await copyFirstWeekPOST(
+            makeCopyFirstWeekRequest('prog-1'),
+            { params: Promise.resolve({ id: 'prog-1' }) }
+        )
+        const body = await res.json()
+
+        expect(res.status).toBe(400)
+        expect(body.error.key).toBe('program.copyFirstWeekEmpty')
+    })
+
+    it('returns 403 when a trainer copies from a non-draft program', async () => {
+        asTrainer()
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
+            ...mockProgramMeta,
+            status: 'active',
+        } as never)
+        prismaMock.week.findFirst.mockResolvedValue(mockSourceWeek as never)
+
+        const res = await copyFirstWeekPOST(
+            makeCopyFirstWeekRequest('prog-1'),
+            { params: Promise.resolve({ id: 'prog-1' }) }
+        )
+        const body = await res.json()
+
+        expect(res.status).toBe(403)
+        expect(body.error.key).toBe('program.cannotModifyNonDraft')
+    })
+
     it('returns 404 when program not found', async () => {
         asTrainer()
         prismaMock.trainingProgram.findUnique.mockResolvedValue(null)
@@ -737,6 +788,14 @@ describe('POST /api/programs/[id]/copy-first-week', () => {
         const body = callArg(await res.json())
         expect(res.status).toBe(200)
         expect(body.data.updatedWeeks).toBe(2)
+        expect(prismaMock.workoutExercise.deleteMany).toHaveBeenCalledWith({
+            where: { workoutId: 'wo-2' },
+        })
+        expect(prismaMock.workoutExercise.createMany).toHaveBeenCalledWith({
+            data: expect.arrayContaining([
+                expect.objectContaining({ workoutId: 'wo-2', exerciseId: 'ex-1', order: 0 }),
+            ]),
+        })
     })
 })
 
