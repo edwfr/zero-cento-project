@@ -122,9 +122,11 @@ export default function TrainerExercisesContent() {
         [...muscleGroups].sort((a, b) => b.coefficient - a.coefficient)
 
     const formatMuscleGroups = (muscleGroups: Exercise['exerciseMuscleGroups']) =>
-        sortMuscleGroups(muscleGroups)
-            .map((emg) => `${emg.muscleGroup.name} (${Math.round(emg.coefficient * 100)}%)`)
-            .join(', ')
+        muscleGroups.length === 0
+            ? '\u2014'
+            : sortMuscleGroups(muscleGroups)
+                  .map((emg) => `${emg.muscleGroup.name} (${Math.round(emg.coefficient * 100)}%)`)
+                  .join(', ')
 
     if (loading) {
         return (

@@ -106,8 +106,8 @@
         "youtubeUrlPlaceholder": "https://www.youtube.com/watch?v=...",
         "typeLabel": "Tipo *",
         "muscleGroupsTotal": "Gruppi Muscolari * (Totale: {{total}} / 1.0)",
-        "muscleGroupsLabel": "Gruppi Muscolari (Totale: {{total}} / 1.0)",
-        "muscleGroupsRangeLabel": "Gruppi Muscolari * (min 1, max 5)",
+        "muscleGroupsLabel": "Gruppi Muscolari (Totale: {{total}})",
+        "muscleGroupsRangeLabel": "Gruppi Muscolari",
         "addButton": "+ Aggiungi",
         "selectMuscleGroup": "Seleziona gruppo...",
         "notesVariantsLabel": "Varianti",
@@ -121,9 +121,8 @@
         "coefficientHint": "Il coefficiente indica l'intensità di coinvolgimento (0.0 = minimo, 1.0 = massimo)",
         "createError": "Errore nella creazione esercizio",
         "loadingDataError": "Errore nel caricamento dati",
-        "editMuscleGroupsTotal": "Gruppi Muscolari * (Totale: {{total}} / 3.0)",
-        "saveChanges": "Salva Modifiche",
-        "coefficientRangeError": "La somma dei coefficienti deve essere tra 0.1 e 3.0"
+        "editMuscleGroupsTotal": "Gruppi Muscolari (Totale: {{total}})",
+        "saveChanges": "Salva Modifiche"
     },
     "athletes": {
         "title": "I Tuoi Atleti",

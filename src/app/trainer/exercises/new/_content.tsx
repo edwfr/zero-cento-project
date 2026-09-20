@@ -114,11 +114,6 @@ export default function NewExerciseContent() {
             return
         }
 
-        if (selectedMuscleGroups.length > 0 && (totalCoefficient < 0.1 || totalCoefficient > 3.0)) {
-            setError(t('exercises.coefficientRangeError'))
-            return
-        }
-
         try {
             setLoading(true)
 

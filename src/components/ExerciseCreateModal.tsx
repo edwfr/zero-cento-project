@@ -123,12 +123,10 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
     }, [])
 
     const handleAddMuscleGroup = () => {
-        if (selectedMuscleGroups.length < 5) {
-            setSelectedMuscleGroups([
-                ...selectedMuscleGroups,
-                { muscleGroupId: '', coefficient: 0.5 },
-            ])
-        }
+        setSelectedMuscleGroups([
+            ...selectedMuscleGroups,
+            { muscleGroupId: '', coefficient: 0.5 },
+        ])
     }
 
     const handleRemoveMuscleGroup = (index: number) => {
@@ -303,7 +301,7 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                             <button
                                 type="button"
                                 onClick={handleAddMuscleGroup}
-                                disabled={selectedMuscleGroups.length >= 5 || loading}
+                                disabled={loading}
                                 className="text-sm px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {t('exercises.addButton')}

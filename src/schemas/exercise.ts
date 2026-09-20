@@ -28,10 +28,7 @@ export const exerciseSchema = z.object({
         errorMap: () => ({ message: 'validation.invalidExerciseType' }),
     }),
     movementPatternId: z.string().uuid('validation.invalidMovementPatternId'),
-    muscleGroups: z
-        .array(muscleGroupAssignmentSchema)
-        .min(1, 'validation.minOneMuscleGroup')
-        .max(5, 'validation.maxMuscleGroups'),
+    muscleGroups: z.array(muscleGroupAssignmentSchema).default([]),
     notes: z.array(z.string().max(200)).optional(),
 })
 

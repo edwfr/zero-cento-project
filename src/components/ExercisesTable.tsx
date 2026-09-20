@@ -77,6 +77,7 @@ export default function ExercisesTable() {
     }, [fetchExercises])
 
     const formatMuscleGroups = (muscleGroups: MuscleGroupAssignment[]) => {
+        if (muscleGroups.length === 0) return '\u2014'
         return muscleGroups
             .map((mg) => `${mg.muscleGroup.name} (${Math.round(mg.coefficient * 100)}%)`)
             .join(', ')

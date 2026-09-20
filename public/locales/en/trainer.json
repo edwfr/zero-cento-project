@@ -59,8 +59,8 @@
         "youtubeUrlPlaceholder": "https://www.youtube.com/watch?v=...",
         "typeLabel": "Type *",
         "muscleGroupsTotal": "Muscle Groups * (Total: {{total}} / 1.0)",
-        "muscleGroupsLabel": "Muscle Groups (Total: {{total}} / 1.0)",
-        "muscleGroupsRangeLabel": "Muscle Groups * (min 1, max 5)",
+        "muscleGroupsLabel": "Muscle Groups (Total: {{total}})",
+        "muscleGroupsRangeLabel": "Muscle Groups",
         "addButton": "+ Add",
         "selectMuscleGroup": "Select muscle group...",
         "notesVariantsLabel": "Variants",
@@ -74,9 +74,8 @@
         "coefficientHint": "The coefficient indicates engagement intensity (0.0 = minimum, 1.0 = maximum)",
         "createError": "Error creating exercise",
         "loadingDataError": "Error loading data",
-        "editMuscleGroupsTotal": "Muscle Groups * (Total: {{total}} / 3.0)",
-        "saveChanges": "Save Changes",
-        "coefficientRangeError": "The sum of coefficients must be between 0.1 and 3.0"
+        "editMuscleGroupsTotal": "Muscle Groups (Total: {{total}})",
+        "saveChanges": "Save Changes"
     },
     "trainerDashboard": {
         "headerTitle": "Trainer Dashboard",

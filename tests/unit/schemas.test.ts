@@ -222,9 +222,29 @@ describe('exerciseSchema', () => {
         expect(result.success).toBe(false)
     })
 
-    it('rejects empty muscleGroups array', () => {
+    it('accepts empty muscleGroups array', () => {
         const result = exerciseSchema.safeParse({ ...validExercise, muscleGroups: [] })
-        expect(result.success).toBe(false)
+        expect(result.success).toBe(true)
+    })
+
+    it('defaults muscleGroups to an empty array when the field is omitted', () => {
+        const { muscleGroups: _omitted, ...withoutMuscleGroups } = validExercise
+        const result = exerciseSchema.safeParse(withoutMuscleGroups)
+        expect(result.success).toBe(true)
+        expect(result.success && result.data.muscleGroups).toEqual([])
+    })
+
+    it('accepts more than 5 muscle groups with a total coefficient above 3', () => {
+        const manyMuscleGroups = Array.from({ length: 8 }, (_, index) => ({
+            muscleGroupId: `3fa85f64-5717-4562-b3fc-2c963f66af${String(index).padStart(2, '0')}`,
+            coefficient: 0.6,
+        }))
+        const result = exerciseSchema.safeParse({
+            ...validExercise,
+            muscleGroups: manyMuscleGroups,
+        })
+        expect(result.success).toBe(true)
+        expect(result.success && result.data.muscleGroups).toHaveLength(8)
     })
 
     it('accepts "accessory" type', () => {

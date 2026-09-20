@@ -553,38 +553,52 @@ describe('POST /api/exercises', () => {
         expect(res.status).toBe(404)
     })
 
-    it('returns 400 when total coefficient exceeds 3.0', async () => {
+    it('creates an exercise with n muscle groups and no cap on the coefficient total', async () => {
         asTrainer()
         prismaMock.exercise.findFirst.mockResolvedValue(null)
         prismaMock.movementPattern.findUnique.mockResolvedValue(mockMovementPattern as never)
-        // Return 3 muscle groups to allow building a payload whose total > 3.0
-        const thirdMG = { id: '22222222-2222-2222-2222-222222222223', name: 'Bicipiti', createdBy: 'trainer-uuid-1', isActive: true, createdAt: new Date() }
-        prismaMock.muscleGroup.findMany.mockResolvedValue([...mockMuscleGroups, thirdMG] as never)
 
-        // 1.0 + 1.0 + 1.1 = 3.1 > 3.0  — schema allows each ≤ 1.0, so use a split across more entries
-        // Since per-item max is 1.0, to get total > 3.0 we need at least 4 entries
-        // (4 × 0.8 = 3.2). Use 4 muscle groups.
-        const fourthMG = { id: '22222222-2222-2222-2222-222222222224', name: 'Tricipiti', createdBy: 'trainer-uuid-1', isActive: true, createdAt: new Date() }
-        prismaMock.muscleGroup.findMany.mockResolvedValue([...mockMuscleGroups, thirdMG, fourthMG] as never)
+        const extraMuscleGroups = Array.from({ length: 6 }, (_, index) => ({
+            id: `22222222-2222-2222-2222-22222222223${index}`,
+            name: `Gruppo ${index}`,
+            createdBy: 'trainer-uuid-1',
+            isActive: true,
+            createdAt: new Date(),
+        }))
+        prismaMock.muscleGroup.findMany.mockResolvedValue([
+            ...mockMuscleGroups,
+            ...extraMuscleGroups,
+        ] as never)
 
-        const overPayload = {
-            ...validPayload,
-            muscleGroups: [
-                { muscleGroupId: MG_ID_1, coefficient: 1.0 },
-                { muscleGroupId: MG_ID_2, coefficient: 1.0 },
-                { muscleGroupId: '22222222-2222-2222-2222-222222222223', coefficient: 1.0 },
-                { muscleGroupId: '22222222-2222-2222-2222-222222222224', coefficient: 0.5 },
-            ],
-        }
-        // Total = 3.5 > 3.0 — route should return 400
+        // 8 muscle groups, total coefficient 6.4 — both the old max of 5 entries
+        // and the old total cap of 3.0 are gone.
+        const manyMuscleGroups = [
+            { muscleGroupId: MG_ID_1, coefficient: 0.8 },
+            { muscleGroupId: MG_ID_2, coefficient: 0.8 },
+            ...extraMuscleGroups.map((mg) => ({ muscleGroupId: mg.id, coefficient: 0.8 })),
+        ]
+
+        prismaMock.exercise.create.mockResolvedValue({
+            ...mockExerciseWithRelations,
+            id: 'many-groups-uuid',
+            name: 'Romanian Deadlift',
+        } as never)
+
         const req = makeListRequest('http://localhost:3000/api/exercises', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(overPayload),
+            body: JSON.stringify({ ...validPayload, muscleGroups: manyMuscleGroups }),
         })
         const res = await createExercise(req)
 
-        expect(res.status).toBe(400)
+        expect(res.status).toBe(201)
+        expect(prismaMock.exercise.create).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({
+                    exerciseMuscleGroups: { create: manyMuscleGroups },
+                }),
+            })
+        )
     })
 
     it('returns 400 for invalid YouTube URL', async () => {
@@ -616,8 +630,16 @@ describe('POST /api/exercises', () => {
         expect(res.status).toBe(400)
     })
 
-    it('returns 400 when muscleGroups array is empty', async () => {
+    it('creates an exercise with 0 muscle groups', async () => {
         asTrainer()
+        prismaMock.exercise.findFirst.mockResolvedValue(null)
+        prismaMock.movementPattern.findUnique.mockResolvedValue(mockMovementPattern as never)
+        prismaMock.exercise.create.mockResolvedValue({
+            ...mockExerciseWithRelations,
+            id: 'no-groups-uuid',
+            name: 'Romanian Deadlift',
+            exerciseMuscleGroups: [],
+        } as never)
 
         const req = makeListRequest('http://localhost:3000/api/exercises', {
             method: 'POST',
@@ -625,8 +647,46 @@ describe('POST /api/exercises', () => {
             body: JSON.stringify({ ...validPayload, muscleGroups: [] }),
         })
         const res = await createExercise(req)
+        const body = await res.json()
 
-        expect(res.status).toBe(400)
+        expect(res.status).toBe(201)
+        expect(body.data.exercise.exerciseMuscleGroups).toEqual([])
+        expect(prismaMock.muscleGroup.findMany).not.toHaveBeenCalled()
+        expect(prismaMock.exercise.create).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({
+                    exerciseMuscleGroups: { create: [] },
+                }),
+            })
+        )
+    })
+
+    it('creates an exercise when the muscleGroups field is omitted', async () => {
+        asTrainer()
+        prismaMock.exercise.findFirst.mockResolvedValue(null)
+        prismaMock.movementPattern.findUnique.mockResolvedValue(mockMovementPattern as never)
+        prismaMock.exercise.create.mockResolvedValue({
+            ...mockExerciseWithRelations,
+            id: 'omitted-groups-uuid',
+            exerciseMuscleGroups: [],
+        } as never)
+
+        const { muscleGroups: _omitted, ...payloadWithoutMuscleGroups } = validPayload
+        const req = makeListRequest('http://localhost:3000/api/exercises', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payloadWithoutMuscleGroups),
+        })
+        const res = await createExercise(req)
+
+        expect(res.status).toBe(201)
+        expect(prismaMock.exercise.create).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({
+                    exerciseMuscleGroups: { create: [] },
+                }),
+            })
+        )
     })
 
     it('trainee cannot create exercises (403)', async () => {
@@ -712,6 +772,81 @@ describe('PUT /api/exercises/[id]', () => {
                             { muscleGroupId: MG_ID_1, coefficient: 0.7 },
                         ]),
                     }),
+                }),
+            })
+        )
+    })
+
+    it('trainer can clear all muscle groups from an exercise', async () => {
+        asTrainer()
+        prismaMock.exercise.findUnique.mockResolvedValue(mockExerciseWithRelations as never)
+        prismaMock.exercise.findFirst.mockResolvedValue(null)
+        prismaMock.movementPattern.findUnique.mockResolvedValue(mockMovementPattern as never)
+        prismaMock.exercise.update.mockResolvedValue({
+            ...mockExerciseWithRelations,
+            name: 'Squat Updated',
+            exerciseMuscleGroups: [],
+        } as never)
+
+        const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...updatePayload, muscleGroups: [] }),
+        })
+        const res = await updateExercise(req, withIdParam(EX_ID_1))
+        const body = await res.json()
+
+        expect(res.status).toBe(200)
+        expect(body.data.exercise.exerciseMuscleGroups).toEqual([])
+        expect(prismaMock.muscleGroup.findMany).not.toHaveBeenCalled()
+        expect(prismaMock.exercise.update).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({
+                    exerciseMuscleGroups: { deleteMany: {}, create: [] },
+                }),
+            })
+        )
+    })
+
+    it('trainer can assign n muscle groups with no cap on the coefficient total', async () => {
+        asTrainer()
+        prismaMock.exercise.findUnique.mockResolvedValue(mockExerciseWithRelations as never)
+        prismaMock.exercise.findFirst.mockResolvedValue(null)
+        prismaMock.movementPattern.findUnique.mockResolvedValue(mockMovementPattern as never)
+
+        const extraMuscleGroups = Array.from({ length: 6 }, (_, index) => ({
+            id: `22222222-2222-2222-2222-22222222224${index}`,
+            name: `Gruppo ${index}`,
+            createdBy: 'trainer-uuid-1',
+            isActive: true,
+            createdAt: new Date(),
+        }))
+        prismaMock.muscleGroup.findMany.mockResolvedValue([
+            ...mockMuscleGroups,
+            ...extraMuscleGroups,
+        ] as never)
+
+        // 8 muscle groups, total coefficient 8.0
+        const manyMuscleGroups = [
+            { muscleGroupId: MG_ID_1, coefficient: 1.0 },
+            { muscleGroupId: MG_ID_2, coefficient: 1.0 },
+            ...extraMuscleGroups.map((mg) => ({ muscleGroupId: mg.id, coefficient: 1.0 })),
+        ]
+
+        prismaMock.exercise.update.mockResolvedValue(mockExerciseWithRelations as never)
+
+        const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...updatePayload, muscleGroups: manyMuscleGroups }),
+        })
+        const res = await updateExercise(req, withIdParam(EX_ID_1))
+
+        expect(res.status).toBe(200)
+        expect(prismaMock.exercise.update).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({
+                    exerciseMuscleGroups: { deleteMany: {}, create: manyMuscleGroups },
                 }),
             })
         )

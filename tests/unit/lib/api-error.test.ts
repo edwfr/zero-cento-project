@@ -9,8 +9,8 @@ const createMockT = () => vi.fn((key: string, options?: { defaultValue?: string 
         'errors:user.notFound': 'Utente non trovato',
         'errors:program.createDenied': 'Puoi creare programmi solo per i tuoi atleti',
         'errors:feedback.modifyDenied': 'Puoi modificare solo il tuo feedback',
-        'errors:validation.minOneMuscleGroup': 'Almeno un gruppo muscolare richiesto',
-        'validation:validation.minOneMuscleGroup': 'Almeno un gruppo muscolare richiesto',
+        'errors:validation.invalidMuscleGroupId': 'ID gruppo muscolare non valido',
+        'validation:validation.invalidMuscleGroupId': 'ID gruppo muscolare non valido',
     }
 
     return translations[key] ?? options?.defaultValue ?? key
@@ -97,8 +97,8 @@ describe('getApiErrorMessage', () => {
                 key: 'validation.invalidInput',
                 details: [
                     {
-                        message: 'validation.minOneMuscleGroup',
-                        path: ['muscleGroups']
+                        message: 'validation.invalidMuscleGroupId',
+                        path: ['muscleGroups', 0, 'muscleGroupId']
                     }
                 ]
             }
@@ -106,7 +106,7 @@ describe('getApiErrorMessage', () => {
 
         const result = getApiErrorMessage(apiResponse, 'Errore generico', mockT as unknown as TFunction)
 
-        expect(result).toBe('Almeno un gruppo muscolare richiesto')
+        expect(result).toBe('ID gruppo muscolare non valido')
     })
 
     it('should return details message as-is when no translation exists', () => {
