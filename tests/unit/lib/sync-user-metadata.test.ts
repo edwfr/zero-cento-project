@@ -8,7 +8,7 @@ vi.mock('@/lib/supabase-server', () => ({
 }))
 
 vi.mock('@/lib/logger', () => ({
-    logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
+    logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
 
 import { syncUserMetadata } from '@/lib/sync-user-metadata'
@@ -18,44 +18,43 @@ describe('syncUserMetadata', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         getUserById.mockResolvedValue({
-            data: {
-                user: {
-                    id: 'u-1',
-                    app_metadata: { role: 'trainee' },
-                    user_metadata: { firstName: 'Mario' },
-                },
-            },
+            data: { user: { id: 'u-1', app_metadata: { role: 'trainee' }, user_metadata: { firstName: 'Mario' } } },
         })
         updateUserById.mockResolvedValue({ error: null })
     })
 
-    it('writes authorization fields to app_metadata', async () => {
-        await syncUserMetadata('u-1', { role: 'trainer', isActive: false })
+    it('warns and returns when the user does not exist in Supabase Auth', async () => {
+        getUserById.mockResolvedValue({ data: { user: null } })
+
+        await expect(syncUserMetadata('u-missing', { role: 'trainee' })).resolves.toBeUndefined()
+
+        expect(logger.warn).toHaveBeenCalled()
+        expect(updateUserById).not.toHaveBeenCalled()
+    })
+
+    it('does not call update when there is nothing to sync', async () => {
+        await syncUserMetadata('u-1', {})
+
+        expect(updateUserById).not.toHaveBeenCalled()
+    })
+
+    it('writes authorization fields to app_metadata only', async () => {
+        await syncUserMetadata('u-1', { role: 'trainer', isActive: true, mustChangePassword: false })
 
         expect(updateUserById).toHaveBeenCalledWith('u-1', {
-            app_metadata: { role: 'trainer', isActive: false },
+            app_metadata: { role: 'trainer', isActive: true, mustChangePassword: false },
         })
     })
 
-    it('writes display fields to user_metadata', async () => {
-        await syncUserMetadata('u-1', { firstName: 'Luigi' })
+    it('writes display names to user_metadata only', async () => {
+        await syncUserMetadata('u-1', { firstName: 'Luigi', lastName: 'Verdi' })
 
         expect(updateUserById).toHaveBeenCalledWith('u-1', {
-            user_metadata: { firstName: 'Luigi' },
+            user_metadata: { firstName: 'Luigi', lastName: 'Verdi' },
         })
     })
 
-    it('preserves existing metadata it does not touch', async () => {
-        getUserById.mockResolvedValue({
-            data: {
-                user: {
-                    id: 'u-1',
-                    app_metadata: { role: 'trainee', isActive: true },
-                    user_metadata: { locale: 'it', firstName: 'Mario' },
-                },
-            },
-        })
-
+    it('merges into the metadata the user already has', async () => {
         await syncUserMetadata('u-1', { isActive: false })
 
         expect(updateUserById).toHaveBeenCalledWith('u-1', {
@@ -63,41 +62,22 @@ describe('syncUserMetadata', () => {
         })
     })
 
-    it('never writes role or isActive into user_metadata', async () => {
-        await syncUserMetadata('u-1', { role: 'admin', isActive: true, firstName: 'Anna' })
+    it('tolerates a user without any metadata yet', async () => {
+        getUserById.mockResolvedValue({ data: { user: { id: 'u-2' } } })
 
-        const payload = updateUserById.mock.calls[0][1]
-        expect(payload.user_metadata ?? {}).not.toHaveProperty('role')
-        expect(payload.user_metadata ?? {}).not.toHaveProperty('isActive')
-        expect(payload.app_metadata).toMatchObject({ role: 'admin', isActive: true })
-        expect(payload.user_metadata).toMatchObject({ firstName: 'Anna' })
-    })
+        await syncUserMetadata('u-2', { role: 'admin', firstName: 'Admin' })
 
-    it('writes mustChangePassword to app_metadata', async () => {
-        await syncUserMetadata('u-1', { mustChangePassword: true })
-
-        expect(updateUserById).toHaveBeenCalledWith('u-1', {
-            app_metadata: { role: 'trainee', mustChangePassword: true },
+        expect(updateUserById).toHaveBeenCalledWith('u-2', {
+            app_metadata: { role: 'admin' },
+            user_metadata: { firstName: 'Admin' },
         })
     })
 
-    it('does not call the update when there is nothing to write', async () => {
-        await syncUserMetadata('u-1', {})
-
-        expect(updateUserById).not.toHaveBeenCalled()
-    })
-
-    it('logs a warning and returns when the Supabase user does not exist', async () => {
-        getUserById.mockResolvedValue({ data: { user: null } })
-
-        await expect(syncUserMetadata('missing', { isActive: true })).resolves.toBeUndefined()
-        expect(updateUserById).not.toHaveBeenCalled()
-        expect(logger.warn).toHaveBeenCalled()
-    })
-
-    it('throws when the update fails', async () => {
+    it('throws when Supabase rejects the update', async () => {
         updateUserById.mockResolvedValue({ error: { message: 'boom' } })
 
-        await expect(syncUserMetadata('u-1', { isActive: true })).rejects.toThrow(/boom/)
+        await expect(syncUserMetadata('u-1', { role: 'trainer' })).rejects.toThrow(
+            /syncUserMetadata failed for u-1/
+        )
     })
 })
