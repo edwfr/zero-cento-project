@@ -224,7 +224,7 @@ describe('exportProgramToPdf', () => {
     })
 
     it('writes the program heading and saves a slugged file name', async () => {
-        await exportProgramToPdf(makeProgram([makeWeek(1, 'normal')]), exportLabels)
+        await exportProgramToPdf(makeProgram([makeWeek(1, 'volume')]), exportLabels)
 
         expect(writtenText()).toContain('Blocco Forza')
         expect(writtenText()).toContain('Trainer: Marco Trainer')
@@ -232,7 +232,7 @@ describe('exportProgramToPdf', () => {
     })
 
     it('renders one table per workout', async () => {
-        await exportProgramToPdf(makeProgram([makeWeek(1, 'normal')]), exportLabels)
+        await exportProgramToPdf(makeProgram([makeWeek(1, 'volume')]), exportLabels)
 
         expect(autoTableMock).toHaveBeenCalledTimes(1)
         const [, options] = autoTableMock.mock.calls[0] as [unknown, { body: string[][] }]
@@ -240,17 +240,17 @@ describe('exportProgramToPdf', () => {
     })
 
     it('falls back to a placeholder row when a workout has no exercises', async () => {
-        await exportProgramToPdf(makeProgram([makeWeek(1, 'normal', [])]), exportLabels)
+        await exportProgramToPdf(makeProgram([makeWeek(1, 'volume', [])]), exportLabels)
 
         const [, options] = autoTableMock.mock.calls[0] as [unknown, { body: string[][] }]
         expect(options.body).toEqual([['Nessun esercizio', '', '', '', '', '', '']])
     })
 
     it.each<[ProgramPdfWeek['weekType'], string]>([
-        ['normal', 'tipo:normal'],
+        ['volume', 'tipo:volume'],
         ['test', 'tipo:test'],
         ['deload', 'tipo:deload'],
-    ])('labels a %s week in the workout heading', async (weekType, expected) => {
+    ])('labels a %s week in the workout heading', async (weekType: ProgramPdfWeek['weekType'], expected: string) => {
         await exportProgramToPdf(makeProgram([makeWeek(1, weekType)]), exportLabels)
 
         expect(writtenText()).toContain(expected)
@@ -258,7 +258,7 @@ describe('exportProgramToPdf', () => {
 
     it('starts a new page for every week after the first', async () => {
         await exportProgramToPdf(
-            makeProgram([makeWeek(1, 'normal'), makeWeek(2, 'deload'), makeWeek(3, 'test')]),
+            makeProgram([makeWeek(1, 'volume'), makeWeek(2, 'deload'), makeWeek(3, 'test')]),
             exportLabels
         )
 
@@ -266,7 +266,7 @@ describe('exportProgramToPdf', () => {
     })
 
     it('does not add the logo when the image cannot be loaded', async () => {
-        await exportProgramToPdf(makeProgram([makeWeek(1, 'normal')]), exportLabels)
+        await exportProgramToPdf(makeProgram([makeWeek(1, 'volume')]), exportLabels)
 
         expect(docCalls.addImage).not.toHaveBeenCalled()
     })
@@ -289,14 +289,14 @@ describe('exportProgramToPdf', () => {
         }
         const createElement = vi.spyOn(document, 'createElement').mockReturnValue(canvas as unknown as HTMLCanvasElement)
 
-        await exportProgramToPdf(makeProgram([makeWeek(1, 'normal')]), exportLabels)
+        await exportProgramToPdf(makeProgram([makeWeek(1, 'volume')]), exportLabels)
 
         expect(docCalls.addImage).toHaveBeenCalledWith('data:image/png;base64,AAA', 'PNG', 14, 10, 18, 18)
         createElement.mockRestore()
     })
 
     it('honours the file name prefix and the brand label from the config', async () => {
-        await exportProgramToPdf(makeProgram([makeWeek(1, 'normal')]), exportLabels, {
+        await exportProgramToPdf(makeProgram([makeWeek(1, 'volume')]), exportLabels, {
             fileNamePrefix: 'scheda',
             brandLabel: 'Altro Brand',
         })

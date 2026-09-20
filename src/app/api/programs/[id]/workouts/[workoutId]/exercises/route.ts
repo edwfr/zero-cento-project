@@ -103,24 +103,13 @@ export async function POST(
             return apiError('NOT_FOUND', 'Exercise not found', 404, undefined, 'exercise.notFound')
         }
 
-        // If no order provided, add to end
-        let finalOrder = order
-        if (finalOrder === undefined) {
-            const maxOrder = await prisma.workoutExercise.findFirst({
-                where: { workoutId },
-                orderBy: { order: 'desc' },
-                select: { order: true },
-            })
-            finalOrder = (maxOrder?.order || 0) + 1
-        }
-
         // Create workout exercise
         const workoutExercise = await prisma.workoutExercise.create({
             data: {
                 workoutId,
                 exerciseId,
                 variant: variant || null,
-                order: finalOrder,
+                order,
                 sets: sets || 1,
                 reps: typeof reps === 'number' ? reps.toString() : reps || '8',
                 notes: notes || null,

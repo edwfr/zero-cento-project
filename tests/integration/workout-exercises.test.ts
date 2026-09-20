@@ -20,7 +20,7 @@ const EXERCISE_ID = '33333333-3333-3333-3333-333333333331'
 const WE_ID = '77777777-7777-7777-7777-777777777771'
 const WE_ID_2 = '77777777-7777-7777-7777-777777777772'
 
-const withParams = (params: Record<string, string>) => ({ params: Promise.resolve(params) })
+const withParams = <T extends Record<string, string>>(params: T) => ({ params: Promise.resolve(params) })
 
 function makeRequest(body?: unknown, method = 'POST') {
     return new NextRequest(`http://localhost:3000/api/programs/${PROGRAM_ID}/workouts/${WORKOUT_ID}/exercises`, {
@@ -55,7 +55,6 @@ describe('POST /api/programs/[id]/workouts/[workoutId]/exercises', () => {
         asTrainer()
         prismaMock.trainingProgram.findUnique.mockResolvedValue(draftProgram as never)
         prismaMock.exercise.findUnique.mockResolvedValue({ id: EXERCISE_ID, name: 'Squat' } as never)
-        prismaMock.workoutExercise.findFirst.mockResolvedValue({ order: 2 } as never)
         prismaMock.workoutExercise.create.mockResolvedValue({ id: WE_ID, order: 1 } as never)
         prismaMock.setPerformed.count.mockResolvedValue(0 as never)
     })
@@ -79,10 +78,9 @@ describe('POST /api/programs/[id]/workouts/[workoutId]/exercises', () => {
         )
     })
 
-    // The route computes a fallback order from the highest existing one, but
-    // workoutExerciseSchema makes `order` required, so that branch cannot be
-    // reached through the API: a body without it is rejected at validation.
-    it('rejects a body without an order instead of computing one', async () => {
+    // `order` is required by workoutExerciseSchema, so the request is rejected
+    // at validation: the route no longer carries a fallback that computed one.
+    it('rejects a body without an order', async () => {
         const bodyWithoutOrder = { ...validBody, order: undefined }
 
         const res = await addExercise(
@@ -93,7 +91,7 @@ describe('POST /api/programs/[id]/workouts/[workoutId]/exercises', () => {
 
         expect(res.status).toBe(400)
         expect(body.error.key).toBe('validation.invalidInput')
-        expect(prismaMock.workoutExercise.findFirst).not.toHaveBeenCalled()
+        expect(prismaMock.workoutExercise.create).not.toHaveBeenCalled()
     })
 
     it('returns 400 when the body does not match the schema', async () => {
