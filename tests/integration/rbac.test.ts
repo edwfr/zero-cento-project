@@ -80,6 +80,7 @@ describe('RBAC Violations - Personal Records', () => {
         const res = await getPersonalRecords(req)
         const body = await res.json()
 
+        expect(vi.mocked(requireRole)).toHaveBeenCalledWith(['admin', 'trainer', 'trainee'])
         expect(res.status).toBe(403)
         expect(body.error.code).toBe('FORBIDDEN')
     })
@@ -97,6 +98,7 @@ describe('RBAC Violations - Personal Records', () => {
         const res = await getPersonalRecords(req)
         const body = await res.json()
 
+        expect(vi.mocked(requireRole)).toHaveBeenCalledWith(['admin', 'trainer', 'trainee'])
         expect(res.status).toBe(403)
         expect(body.error.code).toBe('FORBIDDEN')
     })
@@ -127,6 +129,7 @@ describe('RBAC Violations - Personal Records', () => {
 
         const res = await getPersonalRecords(req)
 
+        expect(vi.mocked(requireRole)).toHaveBeenCalledWith(['admin', 'trainer', 'trainee'])
         expect(res.status).toBe(200)
     })
 
@@ -149,6 +152,7 @@ describe('RBAC Violations - Personal Records', () => {
 
         const res = await getPersonalRecords(req)
 
+        expect(vi.mocked(requireRole)).toHaveBeenCalledWith(['admin', 'trainer', 'trainee'])
         expect(res.status).toBe(200)
     })
 })
@@ -175,6 +179,7 @@ describe('RBAC Violations - Training Programs', () => {
         const res = await getProgram(req, withIdParam('prog-b-1'))
         const body = await res.json()
 
+        expect(vi.mocked(requireRole)).toHaveBeenCalledWith(['admin', 'trainer', 'trainee'])
         expect(res.status).toBe(403)
         expect(body.error.code).toBe('FORBIDDEN')
     })
@@ -196,6 +201,7 @@ describe('RBAC Violations - Training Programs', () => {
         const res = await getProgram(req, withIdParam('prog-b-1'))
         const body = await res.json()
 
+        expect(vi.mocked(requireRole)).toHaveBeenCalledWith(['admin', 'trainer', 'trainee'])
         expect(res.status).toBe(403)
         expect(body.error.code).toBe('FORBIDDEN')
     })
@@ -221,6 +227,7 @@ describe('RBAC Violations - Training Programs', () => {
         const res = await updateProgram(req, withIdParam('prog-b-1'))
         const body = await res.json()
 
+        expect(vi.mocked(requireRole)).toHaveBeenCalledWith(['admin', 'trainer'])
         expect(res.status).toBe(403)
         expect(body.error.code).toBe('FORBIDDEN')
     })
@@ -245,6 +252,7 @@ describe('RBAC Violations - Training Programs', () => {
 
         const res = await getProgram(req, withIdParam('prog-a-1'))
 
+        expect(vi.mocked(requireRole)).toHaveBeenCalledWith(['admin', 'trainer', 'trainee'])
         expect(res.status).toBe(200)
     })
 
@@ -267,6 +275,7 @@ describe('RBAC Violations - Training Programs', () => {
 
         const res = await getProgram(req, withIdParam('prog-a-1'))
 
+        expect(vi.mocked(requireRole)).toHaveBeenCalledWith(['admin', 'trainer', 'trainee'])
         expect(res.status).toBe(200)
     })
 
@@ -291,6 +300,7 @@ describe('RBAC Violations - Training Programs', () => {
 
         const res = await getProgram(req, withIdParam('prog-b-1'))
 
+        expect(vi.mocked(requireRole)).toHaveBeenCalledWith(['admin', 'trainer', 'trainee'])
         expect(res.status).toBe(200)
     })
 })
@@ -312,6 +322,7 @@ describe('RBAC Violations - Feedback', () => {
         const body = await res.json()
 
         // Should return empty due to RBAC filtering
+        expect(vi.mocked(requireRole)).toHaveBeenCalledWith(['admin', 'trainer', 'trainee'])
         expect(res.status).toBe(200)
         expect(body.data.items).toHaveLength(0)
     })
@@ -332,6 +343,7 @@ describe('RBAC Violations - Feedback', () => {
 
         const res = await getFeedback(req)
 
+        expect(vi.mocked(requireRole)).toHaveBeenCalledWith(['admin', 'trainer', 'trainee'])
         expect(res.status).toBe(200)
     })
 })
@@ -361,6 +373,7 @@ describe('RBAC Violations - Users', () => {
         const res = await getUser(req, withIdParam('trainee-b-uuid'))
         const body = await res.json()
 
+        expect(vi.mocked(requireAuth)).toHaveBeenCalled()
         expect(res.status).toBe(403)
         expect(body.error.code).toBe('FORBIDDEN')
     })
@@ -389,6 +402,7 @@ describe('RBAC Violations - Users', () => {
         const res = await updateUser(req, withIdParam('trainee-b-uuid'))
         const body = await res.json()
 
+        expect(vi.mocked(requireAuth)).toHaveBeenCalled()
         expect(res.status).toBe(403)
         expect(body.error.code).toBe('FORBIDDEN')
     })
@@ -415,6 +429,7 @@ describe('RBAC Violations - Users', () => {
         const res = await deactivateUser(req, withIdParam('trainee-b-uuid'))
         const body = await res.json()
 
+        expect(vi.mocked(requireAuth)).toHaveBeenCalled()
         expect(res.status).toBe(403)
         expect(body.error.code).toBe('FORBIDDEN')
     })
@@ -443,6 +458,7 @@ describe('RBAC Violations - Users', () => {
 
         const res = await getUser(req, withIdParam('trainee-a-uuid'))
 
+        expect(vi.mocked(requireAuth)).toHaveBeenCalled()
         expect(res.status).toBe(200)
     })
 
@@ -463,6 +479,7 @@ describe('RBAC Violations - Users', () => {
 
         const res = await getUser(req, withIdParam('trainee-b-uuid'))
 
+        expect(vi.mocked(requireAuth)).toHaveBeenCalled()
         expect(res.status).toBe(200)
     })
 })
