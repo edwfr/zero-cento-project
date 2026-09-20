@@ -2,6 +2,11 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
+// The suite must not depend on the machine's timezone: CI runs UTC, local
+// machines do not. Tests that care about a timezone set it themselves with
+// vi.stubEnv('TZ', ...) plus vi.useFakeTimers().
+process.env.TZ = 'UTC'
+
 export default defineConfig({
     plugins: [react()],
     test: {
