@@ -1136,3 +1136,128 @@ describe('DELETE /api/exercises/[id]', () => {
         expect(prismaMock.exercise.delete).not.toHaveBeenCalled()
     })
 })
+
+// ────────────────────────────────────────────────────────────────────────────
+// Error paths of /api/exercises/[id]
+// ────────────────────────────────────────────────────────────────────────────
+
+describe('/api/exercises/[id] — error paths', () => {
+    const validPayload = {
+        name: 'Squat Updated',
+        description: 'Updated description',
+        youtubeUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        type: 'fundamental',
+        movementPatternId: MP_ID,
+        muscleGroups: [{ muscleGroupId: MG_ID_1, coefficient: 1 }],
+        notes: [],
+    }
+
+    const putRequest = (body: unknown) =>
+        makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        })
+
+    beforeEach(() => {
+        vi.clearAllMocks()
+        asTrainer()
+    })
+
+    it('returns 401 on the detail endpoint when not authenticated', async () => {
+        asUnauthenticated()
+
+        const res = await getExercise(makeDetailRequest(EX_ID_1), withIdParam(EX_ID_1))
+
+        expect(res.status).toBe(401)
+        expect(prismaMock.exercise.findUnique).not.toHaveBeenCalled()
+    })
+
+    it('returns 500 when the detail query fails', async () => {
+        prismaMock.exercise.findUnique.mockRejectedValue(new Error('db down'))
+
+        const res = await getExercise(makeDetailRequest(EX_ID_1), withIdParam(EX_ID_1))
+        const json = await res.json()
+
+        expect(res.status).toBe(500)
+        expect(json.error.key).toBe('internal.default')
+    })
+
+    it('returns 400 when the update payload is invalid', async () => {
+        const res = await updateExercise(putRequest({ ...validPayload, name: 'ab' }), withIdParam(EX_ID_1))
+        const json = await res.json()
+
+        expect(res.status).toBe(400)
+        expect(json.error.key).toBe('validation.invalidInput')
+        expect(prismaMock.exercise.update).not.toHaveBeenCalled()
+    })
+
+    it('returns 404 when the movement pattern of the update does not exist', async () => {
+        prismaMock.exercise.findUnique.mockResolvedValue({ id: EX_ID_1, name: 'Squat Updated' } as never)
+        prismaMock.movementPattern.findUnique.mockResolvedValue(null)
+
+        const res = await updateExercise(putRequest(validPayload), withIdParam(EX_ID_1))
+        const json = await res.json()
+
+        expect(res.status).toBe(404)
+        expect(json.error.key).toBe('movementPattern.notFound')
+        expect(prismaMock.exercise.update).not.toHaveBeenCalled()
+    })
+
+    it('returns 404 when a muscle group of the update does not exist', async () => {
+        prismaMock.exercise.findUnique.mockResolvedValue({ id: EX_ID_1, name: 'Squat Updated' } as never)
+        prismaMock.movementPattern.findUnique.mockResolvedValue({ id: MP_ID } as never)
+        prismaMock.muscleGroup.findMany.mockResolvedValue([] as never)
+
+        const res = await updateExercise(putRequest(validPayload), withIdParam(EX_ID_1))
+        const json = await res.json()
+
+        expect(res.status).toBe(404)
+        expect(json.error.key).toBe('muscleGroup.someNotFound')
+        expect(prismaMock.exercise.update).not.toHaveBeenCalled()
+    })
+
+    it('returns 500 when the update fails', async () => {
+        prismaMock.exercise.findUnique.mockResolvedValue({ id: EX_ID_1, name: 'Squat Updated' } as never)
+        prismaMock.movementPattern.findUnique.mockResolvedValue({ id: MP_ID } as never)
+        prismaMock.muscleGroup.findMany.mockResolvedValue([{ id: MG_ID_1 }] as never)
+        prismaMock.exercise.update.mockRejectedValue(new Error('db down'))
+
+        const res = await updateExercise(putRequest(validPayload), withIdParam(EX_ID_1))
+        const json = await res.json()
+
+        expect(res.status).toBe(500)
+        expect(json.error.key).toBe('internal.default')
+    })
+
+    it('reports the conflict without a program name when no workout references it', async () => {
+        prismaMock.exercise.findUnique.mockResolvedValue(makeCountedExercise({ personalRecords: 1 }) as never)
+        prismaMock.workoutExercise.findFirst.mockResolvedValue(null)
+
+        const res = await deleteExercise(
+            makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, { method: 'DELETE' }),
+            withIdParam(EX_ID_1)
+        )
+        const json = await res.json()
+
+        expect(res.status).toBe(409)
+        expect(json.error.key).toBe('exercise.cannotDeleteReferenced')
+        expect(json.error.details).toMatchObject({ personalRecords: 1 })
+        expect(json.error.details.programId).toBeUndefined()
+        expect(prismaMock.exercise.delete).not.toHaveBeenCalled()
+    })
+
+    it('returns 500 when the delete fails for any other reason', async () => {
+        prismaMock.exercise.findUnique.mockResolvedValue(makeCountedExercise() as never)
+        prismaMock.exercise.delete.mockRejectedValue(new Error('db down'))
+
+        const res = await deleteExercise(
+            makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, { method: 'DELETE' }),
+            withIdParam(EX_ID_1)
+        )
+        const json = await res.json()
+
+        expect(res.status).toBe(500)
+        expect(json.error.key).toBe('internal.default')
+    })
+})
