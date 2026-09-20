@@ -57,13 +57,14 @@ export async function POST(request: Request) {
             return apiError('INTERNAL_ERROR', 'Failed to update password', 500, undefined, 'internal.default')
         }
 
-        // Get current user metadata to preserve existing values
+        // Get current metadata to preserve existing values
         const { data: userData } = await adminClient.auth.admin.getUserById(session.user.id)
 
-        // Remove mustChangePassword flag from user metadata while preserving other metadata
+        // Clear the flag in app_metadata (service-role only), preserving the rest.
+        // It must not live in user_metadata: the user could clear it themselves.
         const { error: metadataError } = await adminClient.auth.admin.updateUserById(session.user.id, {
-            user_metadata: {
-                ...userData.user?.user_metadata,
+            app_metadata: {
+                ...(userData.user?.app_metadata ?? {}),
                 mustChangePassword: false,
             },
         })

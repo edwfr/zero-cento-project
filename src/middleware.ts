@@ -208,7 +208,9 @@ export async function middleware(request: NextRequest) {
 
     // Check if user must change password (except for force-change-password page)
     if (!pathname.startsWith('/force-change-password')) {
-        const mustChangePassword = user.user_metadata?.mustChangePassword
+        // app_metadata only: user_metadata is writable by the user with the anon key
+        const mustChangePassword = (user.app_metadata as { mustChangePassword?: boolean } | undefined)
+            ?.mustChangePassword
         if (mustChangePassword) {
             const url = request.nextUrl.clone()
             url.pathname = '/force-change-password'

@@ -69,7 +69,8 @@ export default function LoginPage() {
             if (signInError) throw signInError
 
             if (data.session) {
-                const mustChangePassword = data.user.user_metadata?.mustChangePassword
+                const mustChangePassword = (data.user.app_metadata as { mustChangePassword?: boolean } | undefined)
+                    ?.mustChangePassword
 
                 if (mustChangePassword) {
                     router.push('/force-change-password')
