@@ -36,7 +36,7 @@ function jsonRequest(url: string, method: string, body: unknown) {
     })
 }
 
-const withParams = (params: Record<string, string>) => ({ params: Promise.resolve(params) })
+const withParams = <T extends Record<string, string>>(params: T) => ({ params: Promise.resolve(params) })
 
 // ─── Movement Patterns ────────────────────────────────────────────────────────
 

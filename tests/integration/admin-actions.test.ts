@@ -16,7 +16,7 @@ const PROGRAM_ID = 'program-uuid-1'
 const TRAINEE_ID = 'trainee-uuid-1'
 const NEW_TRAINER_ID = 'trainer-uuid-2'
 
-const withParams = (params: Record<string, string>) => ({ params: Promise.resolve(params) })
+const withParams = <T extends Record<string, string>>(params: T) => ({ params: Promise.resolve(params) })
 
 function jsonRequest(url: string, method: string, body: unknown) {
     return new NextRequest(url, {

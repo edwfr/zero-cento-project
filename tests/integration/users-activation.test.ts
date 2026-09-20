@@ -20,7 +20,7 @@ import { mockTrainerSession } from '../helpers/sessions'
 
 const TRAINEE_ID = 'trainee-uuid-1'
 
-const withParams = (params: Record<string, string>) => ({ params: Promise.resolve(params) })
+const withParams = <T extends Record<string, string>>(params: T) => ({ params: Promise.resolve(params) })
 
 function makeRequest(path: string) {
     return new NextRequest(`http://localhost:3000/api/users/${TRAINEE_ID}/${path}`, { method: 'PATCH' })
