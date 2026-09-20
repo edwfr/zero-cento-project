@@ -5,6 +5,7 @@ vi.mock('@/lib/logger', () => ({
 }))
 
 import { prismaMock } from '../../helpers/prisma-mock'
+import { logger } from '@/lib/logger'
 import {
     loadTraineeProgramView,
     loadActiveProgramId,
@@ -250,5 +251,149 @@ describe('loadProgressAggregates – SQL uses DISTINCT for exerciseCount', () =>
 
         expect(result.nextWorkout?.id).toBe('wk-todo')
         expect(result.nextWorkout?.started).toBe(false)
+    })
+})
+
+describe('loadTraineeProgramView effective weights', () => {
+    const makeProgramWith = (workoutExercises: unknown[]) => ({
+        id: 'p1',
+        traineeId,
+        trainerId: 't1',
+        status: 'active',
+        title: 'My Program',
+        startDate: new Date('2026-04-01'),
+        durationWeeks: 1,
+        weeks: [{
+            weekNumber: 1,
+            weekType: 'normal',
+            workouts: [{ id: 'wk-1', dayIndex: 0, workoutExercises }],
+        }],
+        trainer: { firstName: 'A', lastName: 'B' },
+        trainee: { firstName: 'C', lastName: 'D' },
+    })
+
+    const makeExercise = (overrides: Record<string, unknown> = {}) => ({
+        id: 'we-1',
+        workoutId: 'wk-1',
+        exerciseId: 'ex-1',
+        variant: null,
+        sets: 3,
+        reps: '5',
+        targetRpe: null,
+        weightType: 'absolute',
+        weight: 100,
+        effectiveWeight: null,
+        restTime: 'm2',
+        isWarmup: false,
+        isJumpSet: false,
+        isSuperSet: false,
+        notes: null,
+        order: 1,
+        exercise: { id: 'ex-1', name: 'Squat' },
+        ...overrides,
+    })
+
+    it('keeps an effective weight that is already stored', async () => {
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(
+            makeProgramWith([makeExercise({ effectiveWeight: 95, weightType: 'percentage_1rm', weight: 80 })]) as never
+        )
+
+        const result = await loadTraineeProgramView({ programId: 'p1', traineeId })
+
+        expect(result!.program.weeks[0].workouts[0].workoutExercises[0].effectiveWeight).toBe(95)
+    })
+
+    it('uses the assigned weight for an absolute exercise without loading records', async () => {
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(
+            makeProgramWith([makeExercise()]) as never
+        )
+
+        const result = await loadTraineeProgramView({ programId: 'p1', traineeId })
+
+        expect(result!.program.weeks[0].workouts[0].workoutExercises[0].effectiveWeight).toBe(100)
+        expect(prismaMock.personalRecord.findMany).not.toHaveBeenCalled()
+    })
+
+    it('loads the personal records only when a relative weight is present', async () => {
+        prismaMock.personalRecord.findMany.mockResolvedValue([
+            { exerciseId: 'ex-1', reps: 1, weight: 200, recordDate: new Date('2026-01-01') },
+        ] as never)
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(
+            makeProgramWith([makeExercise({ weightType: 'percentage_1rm', weight: 50 })]) as never
+        )
+
+        const result = await loadTraineeProgramView({ programId: 'p1', traineeId })
+
+        expect(prismaMock.personalRecord.findMany).toHaveBeenCalled()
+        expect(result!.program.weeks[0].workouts[0].workoutExercises[0].effectiveWeight).toBe(100)
+    })
+
+    it('reports a null weight and warns when the chain cannot be resolved', async () => {
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(
+            makeProgramWith([makeExercise({ weightType: 'percentage_previous', weight: 10, order: 1 })]) as never
+        )
+
+        const result = await loadTraineeProgramView({ programId: 'p1', traineeId })
+
+        expect(result!.program.weeks[0].workouts[0].workoutExercises[0].effectiveWeight).toBeNull()
+        expect(logger.warn).toHaveBeenCalledWith(
+            expect.objectContaining({ workoutExerciseId: 'we-1' }),
+            'Failed to resolve effective weight'
+        )
+    })
+})
+
+describe('loadProgressAggregates performed sets', () => {
+    beforeEach(() => {
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
+            id: 'p1',
+            title: 'Test',
+            status: 'active',
+            startDate: new Date('2026-04-01'),
+            durationWeeks: 4,
+        } as never)
+        prismaMock.workout.findMany.mockResolvedValue([
+            { id: 'wk-1', dayIndex: 0, week: { weekNumber: 1, weekType: 'normal' } },
+        ] as never)
+        prismaMock.$queryRaw.mockResolvedValue([] as never)
+    })
+
+    // BUG: the loop fills `seenWorkoutExerciseIds` but never uses it to skip the
+    // rows of older feedbacks, so an exercise submitted twice reports both sets
+    // of rows. The code's own comment says it keeps only the most recent one.
+    // Documented here as it behaves today; fixing it is a production change.
+    it('collects the performed sets of an exercise, sorted by set number', async () => {
+        prismaMock.setPerformed.findMany.mockResolvedValue([
+            { setNumber: 2, reps: 5, weight: 100, feedback: { workoutExerciseId: 'we-1', workoutExercise: { workoutId: 'wk-1' } } },
+            { setNumber: 1, reps: 5, weight: 100, feedback: { workoutExerciseId: 'we-1', workoutExercise: { workoutId: 'wk-1' } } },
+            // an older feedback for the same exercise: its rows must be ignored
+            { setNumber: 1, reps: 3, weight: 80, feedback: { workoutExerciseId: 'we-1', workoutExercise: { workoutId: 'wk-1' } } },
+        ] as never)
+        prismaMock.exerciseFeedback.findMany.mockResolvedValue([
+            { workoutExerciseId: 'we-1', notes: 'Sensazioni buone' },
+            { workoutExerciseId: 'we-1', notes: 'Nota vecchia' },
+        ] as never)
+
+        const progress = await loadProgressAggregates('p1')
+        const workout = progress.workouts.find((w) => w.id === 'wk-1')
+        const performed = workout!.exercisesPerformed[0]
+
+        expect(performed.workoutExerciseId).toBe('we-1')
+        expect(performed.performedSets.map((set) => set.setNumber)).toEqual([1, 1, 2])
+        expect(performed.traineeNote).toBe('Sensazioni buone')
+    })
+
+    it('reports no note when the latest feedback carries none', async () => {
+        prismaMock.setPerformed.findMany.mockResolvedValue([
+            { setNumber: 1, reps: 5, weight: 100, feedback: { workoutExerciseId: 'we-2', workoutExercise: { workoutId: 'wk-1' } } },
+        ] as never)
+        prismaMock.exerciseFeedback.findMany.mockResolvedValue([
+            { workoutExerciseId: 'we-2', notes: null },
+        ] as never)
+
+        const progress = await loadProgressAggregates('p1')
+        const workout = progress.workouts.find((w) => w.id === 'wk-1')
+
+        expect(workout!.exercisesPerformed[0].traineeNote).toBeNull()
     })
 })
