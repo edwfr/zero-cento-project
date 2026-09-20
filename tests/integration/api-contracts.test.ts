@@ -12,17 +12,12 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { mockTrainerSession, mockAdminSession, mockTraineeSession } from './fixtures'
 
 // ────────────────────────────────────────────────────────────────────────────
 // Mocks
 // ────────────────────────────────────────────────────────────────────────────
 
-vi.mock('@/lib/auth', () => ({
-    requireAuth: vi.fn(),
-    requireRole: vi.fn(),
-    getSession: vi.fn(),
-}))
+vi.mock('@/lib/auth', async () => (await import('../helpers/auth-module-mock')).authModuleMock())
 
 vi.mock('@supabase/supabase-js', () => ({
     createClient: vi.fn(),
@@ -39,32 +34,6 @@ vi.mock('@/lib/supabase-server', () => ({
     })),
 }))
 
-vi.mock('@/lib/prisma', () => ({
-    prisma: {
-        exercise: { findMany: vi.fn(), findUnique: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), count: vi.fn() },
-        movementPattern: { findMany: vi.fn(), findUnique: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
-        muscleGroup: { findMany: vi.fn(), findUnique: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
-        user: { findMany: vi.fn(), findUnique: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), count: vi.fn() },
-        program: { findMany: vi.fn(), findUnique: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), count: vi.fn() },
-        trainingProgram: { findMany: vi.fn(), findUnique: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), count: vi.fn() },
-        week: { findMany: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
-        workout: { findMany: vi.fn(), findUnique: vi.fn() },
-        workoutExercise: { findMany: vi.fn(), findUnique: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), updateMany: vi.fn() },
-        feedback: { findMany: vi.fn(), findUnique: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), count: vi.fn() },
-        exerciseFeedback: { findMany: vi.fn(), findUnique: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), count: vi.fn() },
-        personalRecord: { findMany: vi.fn(), findUnique: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), count: vi.fn() },
-        trainerTrainee: { findFirst: vi.fn(), findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(), delete: vi.fn(), deleteMany: vi.fn() },
-        $transaction: vi.fn((cb: any) => cb({
-            exercise: { findMany: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
-            movementPattern: { findMany: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
-            muscleGroup: { findMany: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
-            user: { findMany: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
-            trainerTrainee: { create: vi.fn(), delete: vi.fn(), deleteMany: vi.fn() },
-            workoutExercise: { updateMany: vi.fn() },
-        })),
-    },
-}))
-
 vi.mock('@/lib/logger', () => ({
     logger: {
         info: vi.fn(),
@@ -78,8 +47,6 @@ vi.mock('@/lib/logger', () => ({
 // Imports (after mocks)
 // ────────────────────────────────────────────────────────────────────────────
 
-import { requireAuth, requireRole } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
 
 // Route handlers
 import { GET as listExercises, POST as createExercise } from '@/app/api/exercises/route'
@@ -93,6 +60,10 @@ import { GET as getUser, PUT as updateUser, DELETE as deleteUser } from '@/app/a
 import { GET as listPrograms, POST as createProgram } from '@/app/api/programs/route'
 import { GET as listFeedback } from '@/app/api/feedback/route'
 import { GET as listPersonalRecords, POST as createPersonalRecord } from '@/app/api/personal-records/route'
+import { prismaMock } from '../helpers/prisma-mock'
+import { mockTrainerSession } from '../helpers/sessions'
+import { asTrainer, asAdmin } from '../helpers/auth-mock'
+import { requireRole } from '@/lib/auth'
 
 // ────────────────────────────────────────────────────────────────────────────
 // Contract shape validators
@@ -141,7 +112,7 @@ function expectPaginatedList(body: any) {
 
 function makeRequest(url: string, options?: RequestInit) {
     const { signal, ...safeOptions } = options || {}
-    return new NextRequest(url, safeOptions as any)
+    return new NextRequest(url, safeOptions as never)
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -154,8 +125,8 @@ describe('API Contract: Success response envelope', () => {
     })
 
     it('GET /api/exercises returns { data: { items, pagination }, meta }', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findMany).mockResolvedValue([])
+        asTrainer()
+        prismaMock.exercise.findMany.mockResolvedValue([])
 
         const res = await listExercises(makeRequest('http://localhost:3000/api/exercises'))
         const body = await res.json()
@@ -165,8 +136,8 @@ describe('API Contract: Success response envelope', () => {
     })
 
     it('GET /api/muscle-groups returns { data: { items, pagination }, meta }', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.muscleGroup.findMany).mockResolvedValue([])
+        asTrainer()
+        prismaMock.muscleGroup.findMany.mockResolvedValue([])
 
         const res = await listMuscleGroups(makeRequest('http://localhost:3000/api/muscle-groups'))
         const body = await res.json()
@@ -178,8 +149,8 @@ describe('API Contract: Success response envelope', () => {
     })
 
     it('GET /api/movement-patterns returns { data: { items, pagination }, meta }', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.movementPattern.findMany).mockResolvedValue([])
+        asTrainer()
+        prismaMock.movementPattern.findMany.mockResolvedValue([])
 
         const res = await listMovementPatterns(makeRequest('http://localhost:3000/api/movement-patterns'))
         const body = await res.json()
@@ -191,8 +162,8 @@ describe('API Contract: Success response envelope', () => {
     })
 
     it('GET /api/users returns { data: { items }, meta }', async () => {
-        vi.mocked(requireAuth).mockResolvedValue(mockAdminSession)
-        vi.mocked(prisma.user.findMany).mockResolvedValue([])
+        asAdmin()
+        prismaMock.user.findMany.mockResolvedValue([])
 
         const res = await listUsers(makeRequest('http://localhost:3000/api/users'))
         const body = await res.json()
@@ -204,8 +175,8 @@ describe('API Contract: Success response envelope', () => {
     })
 
     it('GET /api/users?page=1&limit=20 returns { data: { items, pagination, statusCounts }, meta }', async () => {
-        vi.mocked(requireAuth).mockResolvedValue(mockAdminSession)
-        vi.mocked(prisma.user.findMany).mockResolvedValue([])
+        asAdmin()
+        prismaMock.user.findMany.mockResolvedValue([])
 
         const res = await listUsers(makeRequest('http://localhost:3000/api/users?page=1&limit=20&includeInactive=true'))
         const body = await res.json()
@@ -223,9 +194,9 @@ describe('API Contract: Success response envelope', () => {
     })
 
     it('GET /api/programs returns { data: { items, pagination }, meta }', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.trainingProgram.findMany).mockResolvedValue([])
-        vi.mocked(prisma.trainingProgram.count).mockResolvedValue(0)
+        asTrainer()
+        prismaMock.trainingProgram.findMany.mockResolvedValue([])
+        prismaMock.trainingProgram.count.mockResolvedValue(0)
 
         const res = await listPrograms(makeRequest('http://localhost:3000/api/programs'))
         const body = await res.json()
@@ -239,8 +210,8 @@ describe('API Contract: Success response envelope', () => {
     })
 
     it('GET /api/feedback returns { data: { items, pagination }, meta }', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exerciseFeedback.findMany).mockResolvedValue([])
+        asTrainer()
+        prismaMock.exerciseFeedback.findMany.mockResolvedValue([])
 
         const res = await listFeedback(makeRequest('http://localhost:3000/api/feedback'))
         const body = await res.json()
@@ -250,9 +221,9 @@ describe('API Contract: Success response envelope', () => {
     })
 
     it('GET /api/personal-records returns { data: { items }, meta }', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.trainerTrainee.findMany).mockResolvedValue([])
-        vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([])
+        asTrainer()
+        prismaMock.trainerTrainee.findMany.mockResolvedValue([])
+        prismaMock.personalRecord.findMany.mockResolvedValue([])
 
         const res = await listPersonalRecords(makeRequest('http://localhost:3000/api/personal-records'))
         const body = await res.json()
@@ -285,8 +256,8 @@ describe('API Contract: Error response envelope', () => {
     })
 
     it('GET /api/exercises/[id] not found returns standard error envelope', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(null)
+        asTrainer()
+        prismaMock.exercise.findUnique.mockResolvedValue(null)
 
         const res = await getExercise(
             makeRequest('http://localhost:3000/api/exercises/nonexistent-id'),
@@ -300,8 +271,8 @@ describe('API Contract: Error response envelope', () => {
     })
 
     it('GET /api/muscle-groups/[id] not found returns standard error envelope', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.muscleGroup.findUnique).mockResolvedValue(null)
+        asTrainer()
+        prismaMock.muscleGroup.findUnique.mockResolvedValue(null)
 
         const res = await getMuscleGroup(
             makeRequest('http://localhost:3000/api/muscle-groups/nonexistent-id'),
@@ -315,8 +286,8 @@ describe('API Contract: Error response envelope', () => {
     })
 
     it('GET /api/movement-patterns/[id] not found returns standard error envelope', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.movementPattern.findUnique).mockResolvedValue(null)
+        asTrainer()
+        prismaMock.movementPattern.findUnique.mockResolvedValue(null)
 
         const res = await getMovementPattern(
             makeRequest('http://localhost:3000/api/movement-patterns/nonexistent-id'),
@@ -330,7 +301,7 @@ describe('API Contract: Error response envelope', () => {
     })
 
     it('POST /api/exercises with invalid body returns VALIDATION_ERROR', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        asTrainer()
 
         const res = await createExercise(
             makeRequest('http://localhost:3000/api/exercises', {
@@ -347,7 +318,7 @@ describe('API Contract: Error response envelope', () => {
     })
 
     it('POST /api/users with invalid body returns VALIDATION_ERROR', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockAdminSession)
+        asAdmin()
 
         const res = await createUser(
             makeRequest('http://localhost:3000/api/users', {
@@ -379,21 +350,21 @@ describe('API Contract: Pagination shape consistency', () => {
             handler: listExercises,
             url: 'http://localhost:3000/api/exercises',
             session: mockTrainerSession,
-            mockSetup: () => vi.mocked(prisma.exercise.findMany).mockResolvedValue([]),
+            mockSetup: () => prismaMock.exercise.findMany.mockResolvedValue([]),
         },
         {
             name: 'GET /api/programs',
             handler: listPrograms,
             url: 'http://localhost:3000/api/programs',
             session: mockTrainerSession,
-            mockSetup: () => vi.mocked(prisma.trainingProgram.findMany).mockResolvedValue([]),
+            mockSetup: () => prismaMock.trainingProgram.findMany.mockResolvedValue([]),
         },
         {
             name: 'GET /api/feedback',
             handler: listFeedback,
             url: 'http://localhost:3000/api/feedback',
             session: mockTrainerSession,
-            mockSetup: () => vi.mocked(prisma.exerciseFeedback.findMany).mockResolvedValue([]),
+            mockSetup: () => prismaMock.exerciseFeedback.findMany.mockResolvedValue([]),
         },
 
     ]
@@ -423,8 +394,8 @@ describe('API Contract: meta.timestamp validity', () => {
     })
 
     it('all success responses include valid ISO 8601 timestamp', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findMany).mockResolvedValue([])
+        asTrainer()
+        prismaMock.exercise.findMany.mockResolvedValue([])
 
         const res = await listExercises(makeRequest('http://localhost:3000/api/exercises'))
         const body = await res.json()
@@ -455,8 +426,8 @@ describe('API Contract: Error codes are canonical', () => {
     })
 
     it('404 uses NOT_FOUND code', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(null)
+        asTrainer()
+        prismaMock.exercise.findUnique.mockResolvedValue(null)
 
         const res = await getExercise(
             makeRequest('http://localhost:3000/api/exercises/missing'),
@@ -469,7 +440,7 @@ describe('API Contract: Error codes are canonical', () => {
     })
 
     it('400 uses VALIDATION_ERROR code', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        asTrainer()
 
         const res = await createExercise(
             makeRequest('http://localhost:3000/api/exercises', {

@@ -1,35 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { mockTrainerSession, mockAdminSession } from './fixtures'
 
-vi.mock('@/lib/auth', () => ({
-    requireAuth: vi.fn(),
-    requireRole: vi.fn(),
-    getSession: vi.fn(),
-}))
-
-vi.mock('@/lib/prisma', () => ({
-    prisma: {
-        trainingProgram: { findUnique: vi.fn() },
-        workoutExercise: {
-            findMany: vi.fn(),
-            create: vi.fn(),
-            update: vi.fn(),
-            deleteMany: vi.fn(),
-        },
-        exercise: { findMany: vi.fn() },
-        setPerformed: { count: vi.fn() },
-        $transaction: vi.fn(),
-    },
-}))
+vi.mock('@/lib/auth', async () => (await import('../helpers/auth-module-mock')).authModuleMock())
 
 vi.mock('@/lib/logger', () => ({
     logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
 }))
 
 import { PUT as bulkPut } from '@/app/api/programs/[id]/workouts/[workoutId]/exercises/bulk/route'
-import { requireRole } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { prismaMock } from '../helpers/prisma-mock'
+import { mockTrainerSession } from '../helpers/sessions'
+import { asTrainer, asAdmin } from '../helpers/auth-mock'
 
 const PROG = '11111111-1111-1111-1111-111111111111'
 const WK = '22222222-2222-2222-2222-222222222222'
@@ -52,7 +33,7 @@ const baseRow = {
 function makePutRequest(body: unknown) {
     return new NextRequest(
         `http://localhost:3000/api/programs/${PROG}/workouts/${WK}/exercises/bulk`,
-        { method: 'PUT', body: JSON.stringify(body) } as any
+        { method: 'PUT', body: JSON.stringify(body) } as never
     )
 }
 
@@ -70,14 +51,14 @@ const draftProgramOwned = {
 describe('PUT /api/programs/[id]/workouts/[workoutId]/exercises/bulk', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession as any)
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue(draftProgramOwned as any)
-        vi.mocked(prisma.exercise.findMany).mockResolvedValue([{ id: EX }] as any)
-        vi.mocked(prisma.workoutExercise.findMany).mockResolvedValue([
+        asTrainer()
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(draftProgramOwned as never)
+        prismaMock.exercise.findMany.mockResolvedValue([{ id: EX }] as never)
+        prismaMock.workoutExercise.findMany.mockResolvedValue([
             { id: 'new-1', order: 1 },
             { id: 'new-2', order: 2 },
-        ] as any)
-        vi.mocked(prisma.$transaction).mockResolvedValue([])
+        ] as never)
+        prismaMock.$transaction.mockResolvedValue([])
     })
 
     it('creates all rows and returns the updated list', async () => {
@@ -88,8 +69,8 @@ describe('PUT /api/programs/[id]/workouts/[workoutId]/exercises/bulk', () => {
         const body = await res.json()
         expect(res.status).toBe(200)
         expect(body.data.workoutExercises).toHaveLength(2)
-        expect(prisma.$transaction).toHaveBeenCalledTimes(1)
-        expect(prisma.workoutExercise.create).toHaveBeenCalledWith(
+        expect(prismaMock.$transaction).toHaveBeenCalledTimes(1)
+        expect(prismaMock.workoutExercise.create).toHaveBeenCalledWith(
             expect.objectContaining({
                 data: expect.objectContaining({
                     isJumpSet: false,
@@ -100,9 +81,9 @@ describe('PUT /api/programs/[id]/workouts/[workoutId]/exercises/bulk', () => {
     })
 
     it('updates an existing row when id is supplied', async () => {
-        vi.mocked(prisma.workoutExercise.findMany)
-            .mockResolvedValueOnce([{ id: WE_EXISTING }] as any) // ownership check
-            .mockResolvedValueOnce([{ id: WE_EXISTING, order: 1 }] as any) // final fetch
+        prismaMock.workoutExercise.findMany
+            .mockResolvedValueOnce([{ id: WE_EXISTING }] as never) // ownership check
+            .mockResolvedValueOnce([{ id: WE_EXISTING, order: 1 }] as never) // final fetch
 
         const res = await bulkPut(
             makePutRequest({
@@ -112,16 +93,16 @@ describe('PUT /api/programs/[id]/workouts/[workoutId]/exercises/bulk', () => {
         )
 
         expect(res.status).toBe(200)
-        expect(prisma.$transaction).toHaveBeenCalledTimes(1)
+        expect(prismaMock.$transaction).toHaveBeenCalledTimes(1)
     })
 
     it('handles mixed creates and updates in one call', async () => {
-        vi.mocked(prisma.workoutExercise.findMany)
-            .mockResolvedValueOnce([{ id: WE_EXISTING }] as any)
+        prismaMock.workoutExercise.findMany
+            .mockResolvedValueOnce([{ id: WE_EXISTING }] as never)
             .mockResolvedValueOnce([
                 { id: WE_EXISTING, order: 1 },
                 { id: 'new-1', order: 2 },
-            ] as any)
+            ] as never)
 
         const res = await bulkPut(
             makePutRequest({
@@ -148,7 +129,7 @@ describe('PUT /api/programs/[id]/workouts/[workoutId]/exercises/bulk', () => {
         )
 
         expect(res.status).toBe(200)
-        expect(prisma.workoutExercise.deleteMany).toHaveBeenCalledWith({
+        expect(prismaMock.workoutExercise.deleteMany).toHaveBeenCalledWith({
             where: {
                 workoutId: WK,
                 id: { in: [WE_EXISTING] },
@@ -186,50 +167,50 @@ describe('PUT /api/programs/[id]/workouts/[workoutId]/exercises/bulk', () => {
     })
 
     it('returns 404 when program does not exist', async () => {
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue(null as any)
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(null as never)
         const res = await bulkPut(makePutRequest({ exercises: [baseRow] }), params(PROG, WK))
         expect(res.status).toBe(404)
     })
 
     it('returns 403 when trainer does not own the program', async () => {
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             ...draftProgramOwned,
             trainerId: 'other-trainer',
-        } as any)
+        } as never)
         const res = await bulkPut(makePutRequest({ exercises: [baseRow] }), params(PROG, WK))
         expect(res.status).toBe(403)
     })
 
     it('returns 403 when program is not draft (non-admin)', async () => {
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             ...draftProgramOwned,
             status: 'completed',
-        } as any)
+        } as never)
         const res = await bulkPut(makePutRequest({ exercises: [baseRow] }), params(PROG, WK))
         expect(res.status).toBe(403)
     })
 
     it('allows admin to save against a non-draft program', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockAdminSession as any)
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+        asAdmin()
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             ...draftProgramOwned,
             status: 'active',
-        } as any)
+        } as never)
         const res = await bulkPut(makePutRequest({ exercises: [baseRow] }), params(PROG, WK))
         expect(res.status).toBe(200)
     })
 
     it('returns 404 when workout does not belong to program', async () => {
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             ...draftProgramOwned,
             weeks: [{ workouts: [] }],
-        } as any)
+        } as never)
         const res = await bulkPut(makePutRequest({ exercises: [baseRow] }), params(PROG, WK))
         expect(res.status).toBe(404)
     })
 
     it('returns 404 when an update id is not in the workout', async () => {
-        vi.mocked(prisma.workoutExercise.findMany).mockResolvedValueOnce([] as any)
+        prismaMock.workoutExercise.findMany.mockResolvedValueOnce([] as never)
         const res = await bulkPut(
             makePutRequest({ exercises: [{ ...baseRow, id: WE_EXISTING }] }),
             params(PROG, WK)
@@ -238,7 +219,7 @@ describe('PUT /api/programs/[id]/workouts/[workoutId]/exercises/bulk', () => {
     })
 
     it('returns 404 when a referenced exerciseId does not exist', async () => {
-        vi.mocked(prisma.exercise.findMany).mockResolvedValue([] as any)
+        prismaMock.exercise.findMany.mockResolvedValue([] as never)
         const res = await bulkPut(makePutRequest({ exercises: [baseRow] }), params(PROG, WK))
         expect(res.status).toBe(404)
     })
@@ -252,11 +233,11 @@ describe('PUT /api/programs/[id]/workouts/[workoutId]/exercises/bulk', () => {
     })
 
     it('returns 403 when program is active and workout is started', async () => {
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             ...draftProgramOwned,
             status: 'active',
-        } as any)
-        vi.mocked(prisma.setPerformed.count).mockResolvedValue(1)
+        } as never)
+        prismaMock.setPerformed.count.mockResolvedValue(1)
         const res = await bulkPut(makePutRequest({ exercises: [baseRow] }), params(PROG, WK))
         expect(res.status).toBe(403)
         const body = await res.json()
@@ -264,20 +245,20 @@ describe('PUT /api/programs/[id]/workouts/[workoutId]/exercises/bulk', () => {
     })
 
     it('allows editing when program is active and workout is NOT started', async () => {
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             ...draftProgramOwned,
             status: 'active',
-        } as any)
-        vi.mocked(prisma.setPerformed.count).mockResolvedValue(0)
+        } as never)
+        prismaMock.setPerformed.count.mockResolvedValue(0)
         const res = await bulkPut(makePutRequest({ exercises: [baseRow] }), params(PROG, WK))
         expect(res.status).toBe(200)
     })
 
     it('returns 403 when program is completed (not draft)', async () => {
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             ...draftProgramOwned,
             status: 'completed',
-        } as any)
+        } as never)
         const res = await bulkPut(makePutRequest({ exercises: [baseRow] }), params(PROG, WK))
         expect(res.status).toBe(403)
         const body = await res.json()
