@@ -20,6 +20,7 @@
         "prisma:studio": "prisma studio",
         "prisma:seed": "tsx prisma/seed.ts",
         "seed:add-edoardo-trainee": "tsx scripts/add-edoardo-trainee.ts",
+        "migrate:auth-metadata": "tsx scripts/migrate-auth-metadata.ts",
         "postinstall": "prisma generate"
     },
     "dependencies": {
