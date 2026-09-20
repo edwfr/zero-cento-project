@@ -41,7 +41,7 @@ export default defineConfig({
                 // They only go up: every phase raises them to the level it reaches.
                 lines: 38, statements: 37, functions: 30, branches: 35,
                 'src/lib/**': { lines: 76, statements: 75, functions: 75, branches: 73 },
-                'src/schemas/**': { lines: 79, statements: 79, functions: 80, branches: 68 },
+                'src/schemas/**': { lines: 95, statements: 95, functions: 96, branches: 87 },
                 'src/app/api/**': { lines: 57, statements: 56, functions: 63, branches: 54 },
             },
         },

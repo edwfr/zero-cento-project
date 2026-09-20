@@ -950,3 +950,335 @@ describe('bulkSaveWorkoutExercisesSchema', () => {
         expect(result.success).toBe(false)
     })
 })
+
+import { personalRecordSchema, updatePersonalRecordSchema } from '@/schemas/personal-record'
+
+describe('personalRecordSchema', () => {
+    const validRecord = {
+        exerciseId: '33333333-3333-3333-3333-333333333331',
+        reps: 3,
+        weight: 100,
+        recordDate: '2026-09-01',
+    }
+
+    it('accepts a record without notes', () => {
+        expect(personalRecordSchema.safeParse(validRecord).success).toBe(true)
+    })
+
+    it('accepts a record with notes', () => {
+        expect(personalRecordSchema.safeParse({ ...validRecord, notes: 'PR di giornata' }).success).toBe(true)
+    })
+
+    it('rejects notes longer than 500 characters', () => {
+        expect(personalRecordSchema.safeParse({ ...validRecord, notes: 'a'.repeat(501) }).success).toBe(false)
+    })
+
+    it('parses a date string into a Date', () => {
+        const parsed = personalRecordSchema.parse(validRecord)
+        expect(parsed.recordDate).toBeInstanceOf(Date)
+        expect(parsed.recordDate.toISOString()).toContain('2026-09-01')
+    })
+
+    it('accepts a Date instance as recordDate', () => {
+        const parsed = personalRecordSchema.parse({ ...validRecord, recordDate: new Date('2026-09-01') })
+        expect(parsed.recordDate).toBeInstanceOf(Date)
+    })
+
+    it('rejects a record dated in the future', () => {
+        const future = new Date()
+        future.setFullYear(future.getFullYear() + 1)
+        expect(personalRecordSchema.safeParse({ ...validRecord, recordDate: future }).success).toBe(false)
+    })
+
+    it.each([
+        ['zero reps', { reps: 0 }],
+        ['more than 100 reps', { reps: 101 }],
+        ['fractional reps', { reps: 2.5 }],
+        ['zero weight', { weight: 0 }],
+        ['more than 1000 kg', { weight: 1001 }],
+        ['a non-uuid exercise', { exerciseId: 'not-a-uuid' }],
+    ])('rejects %s', (_label, override) => {
+        expect(personalRecordSchema.safeParse({ ...validRecord, ...override }).success).toBe(false)
+    })
+
+    it('lets the partial update schema omit every field', () => {
+        expect(updatePersonalRecordSchema.safeParse({}).success).toBe(true)
+    })
+
+    it('still validates the fields the partial update does carry', () => {
+        expect(updatePersonalRecordSchema.safeParse({ reps: 0 }).success).toBe(false)
+    })
+})
+
+describe('publishProgramSchema date handling', () => {
+    it('parses a date string into a Date', () => {
+        const parsed = publishProgramSchema.parse({ week1StartDate: '2026-03-02' })
+        expect(parsed.week1StartDate).toBeInstanceOf(Date)
+    })
+
+    it('accepts a Date instance unchanged', () => {
+        const date = new Date('2026-03-02')
+        expect(publishProgramSchema.parse({ week1StartDate: date }).week1StartDate).toEqual(date)
+    })
+
+    it('rejects a start date that is not a real date', () => {
+        expect(() => publishProgramSchema.parse({ week1StartDate: 'non-una-data' })).toThrow()
+    })
+})
+
+describe('workoutExerciseSchema weight rules per weightType', () => {
+    const base = {
+        exerciseId: '33333333-3333-3333-3333-333333333331',
+        sets: 3,
+        reps: '8',
+        restTime: 'm2' as const,
+        isWarmup: false,
+        isJumpSet: false,
+        isSuperSet: false,
+        order: 1,
+    }
+
+    it('accepts an absolute weight', () => {
+        expect(workoutExerciseSchema.safeParse({ ...base, weightType: 'absolute', weight: 100 }).success).toBe(true)
+    })
+
+    it.each(['percentage_1rm', 'percentage_rm', 'percentage_previous'])(
+        'requires a weight when weightType is %s',
+        (weightType) => {
+            const result = workoutExerciseSchema.safeParse({ ...base, weightType })
+            expect(result.success).toBe(false)
+            if (result.success) return
+            expect(result.error.issues.some((issue) => issue.message === 'validation.weightRequiredForPercentage')).toBe(true)
+        }
+    )
+
+    it.each(['percentage_1rm', 'percentage_rm', 'percentage_previous'])(
+        'accepts %s when the weight is present',
+        (weightType) => {
+            expect(workoutExerciseSchema.safeParse({ ...base, weightType, weight: 80 }).success).toBe(true)
+        }
+    )
+
+    it('rejects a negative weight for a non-relative weightType', () => {
+        const result = workoutExerciseSchema.safeParse({ ...base, weightType: 'absolute', weight: -1 })
+        expect(result.success).toBe(false)
+        if (result.success) return
+        expect(result.error.issues.some((issue) => issue.message === 'validation.weightMinZero')).toBe(true)
+    })
+
+    it('allows a negative weight for percentage_previous, which is a delta', () => {
+        expect(workoutExerciseSchema.safeParse({ ...base, weightType: 'percentage_previous', weight: -5 }).success).toBe(true)
+    })
+
+    it('rejects a negative effectiveWeight', () => {
+        const result = workoutExerciseSchema.safeParse({
+            ...base, weightType: 'absolute', weight: 100, effectiveWeight: -10,
+        })
+        expect(result.success).toBe(false)
+        if (result.success) return
+        expect(result.error.issues.some((issue) => issue.message === 'validation.effectiveWeightMinZero')).toBe(true)
+    })
+
+    it('rejects an exercise that is both a jump set and a super set', () => {
+        const result = workoutExerciseSchema.safeParse({
+            ...base, weightType: 'absolute', weight: 100, isJumpSet: true, isSuperSet: true,
+        })
+        expect(result.success).toBe(false)
+        if (result.success) return
+        expect(result.error.issues.some((issue) => issue.message === 'validation.jumpSetSuperSetExclusive')).toBe(true)
+    })
+})
+
+describe('trainerTraineeNotesSchema sanitizer branches', () => {
+    const parse = (document: unknown) => trainerTraineeNotesSchema.safeParse({ document })
+    const docOf = (result: ReturnType<typeof parse>) => {
+        if (!result.success) throw new Error('expected the document to parse')
+        return result.data.document as { content: Array<Record<string, unknown>> }
+    }
+
+    it('keeps bold and italic marks', () => {
+        const result = parse({
+            type: 'doc',
+            content: [{
+                type: 'paragraph',
+                content: [
+                    { type: 'text', text: 'grassetto', marks: [{ type: 'bold' }] },
+                    { type: 'text', text: 'corsivo', marks: [{ type: 'italic' }] },
+                ],
+            }],
+        })
+
+        const paragraph = docOf(result).content[0] as { content: Array<{ marks?: Array<{ type: string }> }> }
+        expect(paragraph.content[0].marks).toEqual([{ type: 'bold' }])
+        expect(paragraph.content[1].marks).toEqual([{ type: 'italic' }])
+    })
+
+    it('drops marks that are not objects or carry no type', () => {
+        const result = parse({
+            type: 'doc',
+            content: [{
+                type: 'paragraph',
+                content: [{ type: 'text', text: 'Nota', marks: ['bold', { attrs: {} }] }],
+            }],
+        })
+
+        const paragraph = docOf(result).content[0] as { content: Array<{ marks?: unknown[] }> }
+        expect(paragraph.content[0].marks).toBeUndefined()
+    })
+
+    it('ignores a marks value that is not an array', () => {
+        const result = parse({
+            type: 'doc',
+            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Nota', marks: 'bold' }] }],
+        })
+
+        const paragraph = docOf(result).content[0] as { content: Array<{ marks?: unknown[] }> }
+        expect(paragraph.content[0].marks).toBeUndefined()
+    })
+
+    it('drops an empty text node', () => {
+        const result = parse({
+            type: 'doc',
+            content: [{ type: 'paragraph', content: [{ type: 'text', text: '' }, { type: 'text', text: 'Resta' }] }],
+        })
+
+        const paragraph = docOf(result).content[0] as { content: Array<{ text?: string }> }
+        expect(paragraph.content).toHaveLength(1)
+        expect(paragraph.content[0].text).toBe('Resta')
+    })
+
+    it('drops a node that is not an object or has no type', () => {
+        const result = parse({ type: 'doc', content: ['testo', { content: [] }, { type: 'paragraph', content: [{ type: 'text', text: 'Resta' }] }] })
+
+        expect(docOf(result).content).toHaveLength(1)
+    })
+
+    it('turns an unknown block with content into a paragraph', () => {
+        const result = parse({
+            type: 'doc',
+            content: [{ type: 'blockquote', content: [{ type: 'text', text: 'Citazione' }] }],
+        })
+
+        const [node] = docOf(result).content as Array<{ type: string; content: Array<{ text?: string }> }>
+        expect(node.type).toBe('paragraph')
+        expect(node.content[0].text).toBe('Citazione')
+    })
+
+    it('drops an unknown block without content', () => {
+        const result = parse({
+            type: 'doc',
+            content: [
+                { type: 'image', attrs: { src: 'x.png' } },
+                { type: 'paragraph', content: [{ type: 'text', text: 'Resta' }] },
+            ],
+        })
+
+        expect(docOf(result).content).toHaveLength(1)
+    })
+
+    it('keeps valid colspan and rowspan on a table cell', () => {
+        const result = parse({
+            type: 'doc',
+            content: [{
+                type: 'table',
+                content: [{
+                    type: 'tableRow',
+                    content: [{
+                        type: 'tableCell',
+                        attrs: { colspan: 2, rowspan: 3, colwidth: [120, 240] },
+                        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Cella' }] }],
+                    }],
+                }],
+            }],
+        })
+
+        const table = docOf(result).content[0] as { content: Array<{ content: Array<{ attrs?: Record<string, unknown> }> }> }
+        expect(table.content[0].content[0].attrs).toMatchObject({ colspan: 2, rowspan: 3, colwidth: [120, 240] })
+    })
+
+    it('discards out-of-range colspan and rowspan', () => {
+        const result = parse({
+            type: 'doc',
+            content: [{
+                type: 'table',
+                content: [{
+                    type: 'tableRow',
+                    content: [{
+                        type: 'tableCell',
+                        attrs: { colspan: 99, rowspan: 0, colwidth: null },
+                        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Cella' }] }],
+                    }],
+                }],
+            }],
+        })
+
+        const table = docOf(result).content[0] as { content: Array<{ content: Array<{ attrs?: Record<string, unknown> }> }> }
+        const attrs = table.content[0].content[0].attrs
+        expect(attrs).toEqual({ colwidth: null })
+    })
+
+    it('nulls a colwidth list that contains an invalid width', () => {
+        const result = parse({
+            type: 'doc',
+            content: [{
+                type: 'table',
+                content: [{
+                    type: 'tableRow',
+                    content: [{
+                        type: 'tableCell',
+                        attrs: { colspan: 1, colwidth: [120, 5000] },
+                        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Cella' }] }],
+                    }],
+                }],
+            }],
+        })
+
+        const table = docOf(result).content[0] as { content: Array<{ content: Array<{ attrs?: Record<string, unknown> }> }> }
+        expect(table.content[0].content[0].attrs).toMatchObject({ colwidth: null })
+    })
+
+    it('keeps a valid start on an ordered list and drops an invalid one', () => {
+        const withStart = parse({
+            type: 'doc',
+            content: [{
+                type: 'orderedList',
+                attrs: { start: 3 },
+                content: [{ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Uno' }] }] }],
+            }],
+        })
+        expect((docOf(withStart).content[0] as { attrs?: Record<string, unknown> }).attrs).toEqual({ start: 3 })
+
+        const withoutStart = parse({
+            type: 'doc',
+            content: [{
+                type: 'orderedList',
+                attrs: { start: 0 },
+                content: [{ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Uno' }] }] }],
+            }],
+        })
+        expect((docOf(withoutStart).content[0] as { attrs?: Record<string, unknown> }).attrs).toBeUndefined()
+    })
+
+    it('rejects a document nested deeper than the limit', () => {
+        let node: Record<string, unknown> = { type: 'text', text: 'fondo' }
+        for (let i = 0; i < 20; i++) {
+            node = { type: 'paragraph', content: [node] }
+        }
+
+        expect(parse({ type: 'doc', content: [node] }).success).toBe(false)
+    })
+
+    it('rejects a document with more nodes than the limit', () => {
+        const content = Array.from({ length: 501 }, () => ({
+            type: 'paragraph',
+            content: [{ type: 'text', text: 'x' }],
+        }))
+
+        expect(parse({ type: 'doc', content }).success).toBe(false)
+    })
+
+    it('returns an empty paragraph for a document that is not a record', () => {
+        const result = parse('non un documento')
+        expect(docOf(result).content).toEqual([{ type: 'paragraph' }])
+    })
+})
