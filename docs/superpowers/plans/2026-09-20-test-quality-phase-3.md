@@ -32,6 +32,19 @@ ancora stato pushato o integrato in `development`.
 
 Suite: **1175 test verdi** (era 874 a fine Fase 1). `npm run lint` e `npm run type-check` puliti.
 
+Coverage misurata il 2026-09-20 dopo il Task 10 parziale:
+
+| Gruppo | Righe | Rami | Per arrivare all'80% |
+|---|---|---|---|
+| `src/schemas/**` | 95.5% | 87.6% | — chiuso |
+| `src/lib/**` | 94.8% | 89.0% | — chiuso |
+| `src/app/api/**` | 74.7% | 71.8% | **~101 righe, ~115 rami** |
+| totale | 43.6% | 40.4% | — |
+
+Fuori dal perimetro originale, sono stati corretti due bug trovati scrivendo i test (commit `69edf7e` e `888f781`):
+il de-dup dei set eseguiti in `trainee-program-data.ts`, che riportava anche le righe dei feedback vecchi, e il
+ramo irraggiungibile che calcolava l'ordine in `POST .../workouts/[workoutId]/exercises`.
+
 ### Da sapere per riprendere
 
 - I task 9, 10 (parte residua) e 11 sono l'unico lavoro rimasto sulla coverage, tutto nell'area API.
