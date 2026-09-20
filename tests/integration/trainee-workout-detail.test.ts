@@ -13,10 +13,11 @@ vi.mock('@/lib/logger', () => ({
 }))
 
 import { GET } from '@/app/api/trainee/workouts/[id]/route'
+import { GET as getRecap } from '@/app/api/trainee/workouts/[id]/recap/route'
 import { loadTraineePrMap, resolveEffectiveWeight } from '@/lib/calculations'
 import { prismaMock } from '../helpers/prisma-mock'
 import { mockTraineeSession } from '../helpers/sessions'
-import { asTrainee } from '../helpers/auth-mock'
+import { asTrainee, asForbidden } from '../helpers/auth-mock'
 
 function makeRequest(url = 'http://localhost:3000/api/trainee/workouts/workout-1') {
     return new NextRequest(url)
@@ -168,5 +169,171 @@ describe('GET /api/trainee/workouts/[id]', () => {
             { setNumber: 1, completed: true, reps: 5, weight: 100, actualRpe: 8 },
             { setNumber: 2, completed: true, reps: 5, weight: 100, actualRpe: 8.5 },
         ])
+    })
+})
+
+// ─── Workout recap ────────────────────────────────────────────────────────────
+
+const recapParams = () => ({ params: Promise.resolve({ id: 'workout-1' }) })
+
+describe('GET /api/trainee/workouts/[id]/recap', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+        asTrainee()
+        prismaMock.workout.findFirst.mockResolvedValue({
+            traineeNotes: 'Sessione buona',
+            workoutExercises: [
+                {
+                    id: 'we-1',
+                    order: 1,
+                    isCompleted: true,
+                    isWarmup: null,
+                    isJumpSet: null,
+                    isSuperSet: null,
+                    sets: 3,
+                    reps: '8',
+                    targetRpe: 8,
+                    restTime: 'm2',
+                    effectiveWeight: 100,
+                    exercise: { name: 'Panca piana', type: 'strength' },
+                    exerciseFeedbacks: [
+                        {
+                            actualRpe: 9,
+                            notes: 'Ultima serie dura',
+                            setsPerformed: [
+                                { setNumber: 1, reps: 8, weight: 100, completed: true },
+                                { setNumber: 2, reps: 7, weight: 100, completed: false },
+                            ],
+                        },
+                    ],
+                },
+                {
+                    id: 'we-2',
+                    order: 2,
+                    isCompleted: false,
+                    isWarmup: true,
+                    isJumpSet: false,
+                    isSuperSet: false,
+                    sets: 2,
+                    reps: '10',
+                    targetRpe: null,
+                    restTime: 'm1',
+                    effectiveWeight: null,
+                    exercise: { name: 'Squat', type: 'strength' },
+                    exerciseFeedbacks: [],
+                },
+            ],
+        } as never)
+    })
+
+    it('returns every exercise with its performed sets and status', async () => {
+        const res = await getRecap(makeRequest(), recapParams())
+        const body = await res.json()
+
+        expect(res.status).toBe(200)
+        expect(body.data.workoutNote).toBe('Sessione buona')
+        expect(body.data.exercises).toHaveLength(2)
+        expect(body.data.exercises[0]).toMatchObject({
+            id: 'we-1',
+            exerciseName: 'Panca piana',
+            targetSets: 3,
+            completedSets: 1,
+            status: 'done',
+            actualRpe: 9,
+            exerciseNote: 'Ultima serie dura',
+            isWarmup: false,
+        })
+        expect(body.data.exercises[0].sets).toEqual([
+            { setNumber: 1, reps: 8, weight: 100, completed: true },
+            { setNumber: 2, reps: 7, weight: 100, completed: false },
+        ])
+        expect(prismaMock.workout.findFirst).toHaveBeenCalledWith(
+            expect.objectContaining({
+                where: {
+                    id: 'workout-1',
+                    week: { program: { traineeId: mockTraineeSession.user.id } },
+                },
+            })
+        )
+    })
+
+    it('reports an exercise without feedback as not started', async () => {
+        const res = await getRecap(makeRequest(), recapParams())
+        const body = await res.json()
+
+        expect(body.data.exercises[1]).toMatchObject({
+            id: 'we-2',
+            status: 'not_started',
+            completedSets: 0,
+            actualRpe: null,
+            exerciseNote: null,
+            isWarmup: true,
+            effectiveWeight: null,
+        })
+        expect(body.data.exercises[1].sets).toEqual([])
+    })
+
+    it('reports an exercise with some completed sets as in progress', async () => {
+        prismaMock.workout.findFirst.mockResolvedValue({
+            traineeNotes: null,
+            workoutExercises: [
+                {
+                    id: 'we-3',
+                    order: 1,
+                    isCompleted: false,
+                    isWarmup: false,
+                    isJumpSet: false,
+                    isSuperSet: false,
+                    sets: 3,
+                    reps: '5',
+                    targetRpe: 7,
+                    restTime: 'm3',
+                    effectiveWeight: 80,
+                    exercise: { name: 'Stacco', type: 'strength' },
+                    exerciseFeedbacks: [
+                        {
+                            actualRpe: null,
+                            notes: null,
+                            setsPerformed: [{ setNumber: 1, reps: 5, weight: 80, completed: true }],
+                        },
+                    ],
+                },
+            ],
+        } as never)
+
+        const res = await getRecap(makeRequest(), recapParams())
+        const body = await res.json()
+
+        expect(body.data.workoutNote).toBeNull()
+        expect(body.data.exercises[0]).toMatchObject({ status: 'in_progress', completedSets: 1 })
+    })
+
+    it('returns 404 when the workout does not belong to the trainee', async () => {
+        prismaMock.workout.findFirst.mockResolvedValue(null)
+
+        const res = await getRecap(makeRequest(), recapParams())
+        const body = await res.json()
+
+        expect(res.status).toBe(404)
+        expect(body.error.key).toBe('workout.notFound')
+    })
+
+    it('returns 403 for a caller that is not a trainee', async () => {
+        asForbidden()
+
+        const res = await getRecap(makeRequest(), recapParams())
+
+        expect(res.status).toBe(403)
+        expect(prismaMock.workout.findFirst).not.toHaveBeenCalled()
+    })
+
+    it('returns 500 when the query fails', async () => {
+        prismaMock.workout.findFirst.mockRejectedValue(new Error('db down'))
+
+        const res = await getRecap(makeRequest(), recapParams())
+        const body = await res.json()
+
+        expect(res.status).toBe(500)
+        expect(body.error.key).toBe('internal.default')
     })
 })

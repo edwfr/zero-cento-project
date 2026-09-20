@@ -11,9 +11,10 @@ vi.mock('@/lib/logger', () => ({
 }))
 
 import { GET, PUT } from '@/app/api/trainer/trainees/[id]/notes/route'
+import { GET as getWorkoutTraineeNotes } from '@/app/api/programs/[id]/workouts/[workoutId]/trainee-notes/route'
 import { prismaMock } from '../helpers/prisma-mock'
 import { mockTrainerSession } from '../helpers/sessions'
-import { asTrainer, asUnauthenticated } from '../helpers/auth-mock'
+import { asTrainer, asAdmin, asUnauthenticated } from '../helpers/auth-mock'
 import { requireRole } from '@/lib/auth'
 
 const traineeId = 'trainee-uuid-1'
@@ -158,5 +159,112 @@ describe('trainer trainee notes API', () => {
         const response = await GET(makeRequest(), withIdParam())
 
         expect(response.status).toBe(401)
+    })
+})
+
+// ─── Trainee notes of a single workout (trainer-facing) ───────────────────────
+
+const programId = 'program-uuid-1'
+const workoutId = 'workout-uuid-1'
+
+const workoutNotesParams = () => ({ params: Promise.resolve({ id: programId, workoutId }) })
+
+function workoutNotesRequest() {
+    return new NextRequest(`http://localhost/api/programs/${programId}/workouts/${workoutId}/trainee-notes`)
+}
+
+describe('GET /api/programs/[id]/workouts/[workoutId]/trainee-notes', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+        asTrainer()
+        prismaMock.trainingProgram.findFirst.mockResolvedValue({ id: programId } as never)
+        prismaMock.workout.findFirst.mockResolvedValue({
+            traineeNotes: 'Giornata pesante',
+            workoutExercises: [
+                { id: 'we-1', exercise: { name: 'Panca piana' }, exerciseFeedbacks: [{ notes: 'Spalla ok' }] },
+                { id: 'we-2', exercise: { name: 'Squat' }, exerciseFeedbacks: [{ notes: null }] },
+                { id: 'we-3', exercise: { name: 'Stacco' }, exerciseFeedbacks: [] },
+            ],
+        } as never)
+    })
+
+    it('returns the workout note and only the exercises that carry one', async () => {
+        const response = await getWorkoutTraineeNotes(workoutNotesRequest(), workoutNotesParams())
+        const body = await response.json()
+
+        expect(response.status).toBe(200)
+        expect(body.data).toEqual({
+            workoutNote: 'Giornata pesante',
+            exercises: [{ workoutExerciseId: 'we-1', exerciseName: 'Panca piana', note: 'Spalla ok' }],
+        })
+        expect(prismaMock.trainingProgram.findFirst).toHaveBeenCalledWith({
+            where: { id: programId, trainerId: mockTrainerSession.user.id },
+            select: { id: true },
+        })
+    })
+
+    it('reports a null note when the workout has none', async () => {
+        prismaMock.workout.findFirst.mockResolvedValue({
+            traineeNotes: null,
+            workoutExercises: [],
+        } as never)
+
+        const response = await getWorkoutTraineeNotes(workoutNotesRequest(), workoutNotesParams())
+        const body = await response.json()
+
+        expect(response.status).toBe(200)
+        expect(body.data).toEqual({ workoutNote: null, exercises: [] })
+    })
+
+    it('lets an admin read the notes of any program', async () => {
+        asAdmin()
+
+        const response = await getWorkoutTraineeNotes(workoutNotesRequest(), workoutNotesParams())
+
+        expect(response.status).toBe(200)
+        expect(prismaMock.trainingProgram.findFirst).toHaveBeenCalledWith({
+            where: { id: programId },
+            select: { id: true },
+        })
+    })
+
+    it('returns 403 when the program is not the trainer own', async () => {
+        prismaMock.trainingProgram.findFirst.mockResolvedValue(null)
+
+        const response = await getWorkoutTraineeNotes(workoutNotesRequest(), workoutNotesParams())
+        const body = await response.json()
+
+        expect(response.status).toBe(403)
+        expect(body.error.key).toBe('auth.accessDenied')
+        expect(prismaMock.workout.findFirst).not.toHaveBeenCalled()
+    })
+
+    it('returns 404 when the workout does not belong to the program', async () => {
+        prismaMock.workout.findFirst.mockResolvedValue(null)
+
+        const response = await getWorkoutTraineeNotes(workoutNotesRequest(), workoutNotesParams())
+        const body = await response.json()
+
+        expect(response.status).toBe(404)
+        expect(body.error.key).toBe('workout.notFound')
+    })
+
+    it('returns 401 when not authenticated', async () => {
+        asUnauthenticated()
+
+        const response = await getWorkoutTraineeNotes(workoutNotesRequest(), workoutNotesParams())
+
+        expect(response.status).toBe(401)
+        expect(prismaMock.trainingProgram.findFirst).not.toHaveBeenCalled()
+    })
+
+    it('returns 500 when the query fails', async () => {
+        prismaMock.workout.findFirst.mockRejectedValue(new Error('db down'))
+
+        const response = await getWorkoutTraineeNotes(workoutNotesRequest(), workoutNotesParams())
+        const body = await response.json()
+
+        expect(response.status).toBe(500)
+        expect(body.error.key).toBe('internal.default')
     })
 })
