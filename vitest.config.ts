@@ -37,10 +37,10 @@ export default defineConfig({
                 'src/**/*.d.ts',
             ],
             thresholds: {
-                // Baseline floors measured on chore/test-quality-auth, 2026-09-20.
+                // Baseline floors measured on chore/test-quality-coverage, 2026-09-20.
                 // They only go up: every phase raises them to the level it reaches.
-                lines: 38, statements: 37, functions: 30, branches: 35,
-                'src/lib/**': { lines: 76, statements: 75, functions: 75, branches: 73 },
+                lines: 40, statements: 39, functions: 32, branches: 36,
+                'src/lib/**': { lines: 94, statements: 94, functions: 97, branches: 88 },
                 'src/schemas/**': { lines: 95, statements: 95, functions: 96, branches: 87 },
                 'src/app/api/**': { lines: 57, statements: 56, functions: 63, branches: 54 },
             },
