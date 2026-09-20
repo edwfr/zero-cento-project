@@ -1,49 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { mockTrainerSession, mockAdminSession, mockTraineeSession } from './fixtures'
 
 const withIdParam = (id: string) => ({ params: Promise.resolve({ id }) })
 
-// ─── File-specific fixtures ───────────────────────────────────────────────────
-
-const mockTraineeOtherSession = {
-    user: {
-        id: 'trainee-uuid-2',
-        email: 'luigi@zerocento.it',
-        firstName: 'Luigi',
-        lastName: 'Atleta',
-        role: 'trainee' as const,
-        isActive: true,
-    },
-    supabaseUser: {} as any,
-}
-
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
-vi.mock('@/lib/auth', () => ({
-    requireAuth: vi.fn(),
-    requireRole: vi.fn(),
-    getSession: vi.fn(),
-}))
-
-vi.mock('@/lib/prisma', () => ({
-    prisma: {
-        exerciseFeedback: {
-            findMany: vi.fn(),
-            findUnique: vi.fn(),
-            findFirst: vi.fn(),
-            create: vi.fn(),
-            update: vi.fn(),
-            delete: vi.fn(),
-        },
-        setPerformed: {
-            deleteMany: vi.fn(),
-        },
-        workoutExercise: {
-            findUnique: vi.fn(),
-        },
-    },
-}))
+vi.mock('@/lib/auth', async () => (await import('../helpers/auth-module-mock')).authModuleMock())
 
 vi.mock('@/lib/logger', () => ({
     logger: {
@@ -56,8 +18,9 @@ vi.mock('@/lib/logger', () => ({
 
 import { GET } from '@/app/api/feedback/route'
 import { GET as GET_ID } from '@/app/api/feedback/[id]/route'
-import { requireRole } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { prismaMock } from '../helpers/prisma-mock'
+import { makeTrainerSession, makeTraineeSession } from '../helpers/sessions'
+import { asTrainer, asAdmin, asTrainee, asUnauthenticated } from '../helpers/auth-mock'
 
 // ─── Fixture data ─────────────────────────────────────────────────────────────
 
@@ -130,7 +93,7 @@ const mockFeedback = {
 // Helper to build a NextRequest without the problematic AbortSignal
 function makeRequest(url = 'http://localhost:3000/api/feedback', options?: RequestInit) {
     const { signal, ...safeOptions } = options || {}
-    return new NextRequest(url, safeOptions as any)
+    return new NextRequest(url, safeOptions as never)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -143,10 +106,10 @@ describe('GET /api/feedback', () => {
     })
 
     it('returns feedback list for trainee (own only)', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
+        asTrainee()
 
         const paginatedFeedback = [mockFeedback]
-        vi.mocked(prisma.exerciseFeedback.findMany).mockResolvedValue(paginatedFeedback as any)
+        prismaMock.exerciseFeedback.findMany.mockResolvedValue(paginatedFeedback as never)
 
         const req = makeRequest()
         const res = await GET(req)
@@ -156,13 +119,13 @@ describe('GET /api/feedback', () => {
         expect(body.data.items).toHaveLength(1)
 
         // Trainee filter should scope to their own traineeId
-        const callArgs = vi.mocked(prisma.exerciseFeedback.findMany).mock.calls[0][0] as any
+        const callArgs = prismaMock.exerciseFeedback.findMany.mock.calls[0][0] as never
         expect(callArgs.where.workoutExercise.workout.week.program.traineeId).toBe('trainee-uuid-1')
     })
 
     it('returns feedback list for trainer (own trainees only)', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exerciseFeedback.findMany).mockResolvedValue([mockFeedback] as any)
+        asTrainer()
+        prismaMock.exerciseFeedback.findMany.mockResolvedValue([mockFeedback] as never)
 
         const req = makeRequest()
         const res = await GET(req)
@@ -170,67 +133,67 @@ describe('GET /api/feedback', () => {
         expect(res.status).toBe(200)
 
         // Trainer filter should scope to their trainerId
-        const callArgs = vi.mocked(prisma.exerciseFeedback.findMany).mock.calls[0][0] as any
+        const callArgs = prismaMock.exerciseFeedback.findMany.mock.calls[0][0] as never
         expect(callArgs.where.workoutExercise.workout.week.program.trainerId).toBe('trainer-uuid-1')
     })
 
     it('admin sees all feedback without RBAC filter', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockAdminSession)
-        vi.mocked(prisma.exerciseFeedback.findMany).mockResolvedValue([mockFeedback] as any)
+        asAdmin()
+        prismaMock.exerciseFeedback.findMany.mockResolvedValue([mockFeedback] as never)
 
         const req = makeRequest()
         const res = await GET(req)
 
         expect(res.status).toBe(200)
 
-        const callArgs = vi.mocked(prisma.exerciseFeedback.findMany).mock.calls[0][0] as any
+        const callArgs = prismaMock.exerciseFeedback.findMany.mock.calls[0][0] as never
         // Admin: no RBAC scoping on the where clause
         expect(callArgs.where.workoutExercise).toBeUndefined()
     })
 
     it('filters by traineeId query param', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exerciseFeedback.findMany).mockResolvedValue([mockFeedback] as any)
+        asTrainer()
+        prismaMock.exerciseFeedback.findMany.mockResolvedValue([mockFeedback] as never)
 
         const req = makeRequest('http://localhost:3000/api/feedback?traineeId=trainee-uuid-1')
         await GET(req)
 
-        const callArgs = vi.mocked(prisma.exerciseFeedback.findMany).mock.calls[0][0] as any
+        const callArgs = prismaMock.exerciseFeedback.findMany.mock.calls[0][0] as never
         expect(callArgs.where.workoutExercise.workout.week.program.traineeId).toBe('trainee-uuid-1')
     })
 
     it('filters by exerciseId query param', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exerciseFeedback.findMany).mockResolvedValue([mockFeedback] as any)
+        asTrainer()
+        prismaMock.exerciseFeedback.findMany.mockResolvedValue([mockFeedback] as never)
 
         const req = makeRequest('http://localhost:3000/api/feedback?exerciseId=exercise-uuid-1')
         await GET(req)
 
-        const callArgs = vi.mocked(prisma.exerciseFeedback.findMany).mock.calls[0][0] as any
+        const callArgs = prismaMock.exerciseFeedback.findMany.mock.calls[0][0] as never
         expect(callArgs.where.workoutExercise.exerciseId).toBe('exercise-uuid-1')
     })
 
     it('uses cursor pagination when cursor param provided', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
-        vi.mocked(prisma.exerciseFeedback.findMany).mockResolvedValue([mockFeedback] as any)
+        asTrainee()
+        prismaMock.exerciseFeedback.findMany.mockResolvedValue([mockFeedback] as never)
 
         const cursor = UUIDS.feedbackPrev
         const req = makeRequest(`http://localhost:3000/api/feedback?cursor=${cursor}`)
         await GET(req)
 
-        const callArgs = vi.mocked(prisma.exerciseFeedback.findMany).mock.calls[0][0] as any
+        const callArgs = prismaMock.exerciseFeedback.findMany.mock.calls[0][0] as never
         expect(callArgs.cursor).toEqual({ id: UUIDS.feedbackPrev })
         expect(callArgs.skip).toBe(1)
     })
 
     it('returns pagination.hasMore=true when more items exist', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
+        asTrainee()
         // Return limit+1 items to trigger hasMore
         const extraItems = Array.from({ length: 21 }, (_, i) => ({
             ...mockFeedback,
             id: `${String(i).padStart(8, '0')}-0000-0000-0000-000000000000`,
         }))
-        vi.mocked(prisma.exerciseFeedback.findMany).mockResolvedValue(extraItems as any)
+        prismaMock.exerciseFeedback.findMany.mockResolvedValue(extraItems as never)
 
         const req = makeRequest()
         const res = await GET(req)
@@ -242,10 +205,7 @@ describe('GET /api/feedback', () => {
         expect(body.data.pagination.nextCursor).toMatch(/^[0-9a-f-]{36}$/)
     })
 
-    it('returns 401 when not authenticated', async () => {
-        vi.mocked(requireRole).mockRejectedValue(
-            Response.json({ error: { code: 'UNAUTHORIZED' } }, { status: 401 })
-        )
+    it('returns 401 when not authenticated', async () => {asUnauthenticated()
 
         const req = makeRequest()
         const res = await GET(req)
@@ -263,8 +223,8 @@ describe('GET /api/feedback/[id]', () => {
     })
 
     it('returns feedback detail for the owning trainee', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
-        vi.mocked(prisma.exerciseFeedback.findUnique).mockResolvedValue(mockFeedback as any)
+        asTrainee()
+        prismaMock.exerciseFeedback.findUnique.mockResolvedValue(mockFeedback as never)
 
         const req = makeRequest(`http://localhost:3000/api/feedback/${UUIDS.feedback}`);
         const res = await GET_ID(req, withIdParam(UUIDS.feedback))
@@ -276,8 +236,8 @@ describe('GET /api/feedback/[id]', () => {
     })
 
     it('returns feedback detail for the responsible trainer', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exerciseFeedback.findUnique).mockResolvedValue(mockFeedback as any)
+        asTrainer()
+        prismaMock.exerciseFeedback.findUnique.mockResolvedValue(mockFeedback as never)
 
         const req = makeRequest(`http://localhost:3000/api/feedback/${UUIDS.feedback}`)
         const res = await GET_ID(req, withIdParam(UUIDS.feedback))
@@ -286,8 +246,8 @@ describe('GET /api/feedback/[id]', () => {
     })
 
     it('returns feedback detail for admin', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockAdminSession)
-        vi.mocked(prisma.exerciseFeedback.findUnique).mockResolvedValue(mockFeedback as any)
+        asAdmin()
+        prismaMock.exerciseFeedback.findUnique.mockResolvedValue(mockFeedback as never)
 
         const req = makeRequest(`http://localhost:3000/api/feedback/${UUIDS.feedback}`)
         const res = await GET_ID(req, withIdParam(UUIDS.feedback))
@@ -296,8 +256,8 @@ describe('GET /api/feedback/[id]', () => {
     })
 
     it('returns 403 when trainee requests feedback of another trainee', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTraineeOtherSession) // different trainee
-        vi.mocked(prisma.exerciseFeedback.findUnique).mockResolvedValue(mockFeedback as any) // belongs to trainee-uuid-1
+        asTrainee(makeTraineeSession({ id: 'trainee-uuid-2', email: 'luigi@zerocento.it', firstName: 'Luigi', lastName: 'Atleta' })) // different trainee
+        prismaMock.exerciseFeedback.findUnique.mockResolvedValue(mockFeedback as never) // belongs to trainee-uuid-1
 
         const req = makeRequest(`http://localhost:3000/api/feedback/${UUIDS.feedback}`)
         const res = await GET_ID(req, withIdParam(UUIDS.feedback))
@@ -306,19 +266,8 @@ describe('GET /api/feedback/[id]', () => {
     })
 
     it('returns 403 when trainer requests feedback of another trainer\'s trainee', async () => {
-        const otherTrainerSession = {
-            user: {
-                id: 'trainer-uuid-999',
-                email: 'other@zerocento.it',
-                firstName: 'Other',
-                lastName: 'Trainer',
-                role: 'trainer' as const,
-                isActive: true,
-            },
-            supabaseUser: {} as any,
-        }
-        vi.mocked(requireRole).mockResolvedValue(otherTrainerSession)
-        vi.mocked(prisma.exerciseFeedback.findUnique).mockResolvedValue(mockFeedback as any) // trainer-uuid-1 owns this
+        asTrainer(makeTrainerSession({ id: 'trainer-uuid-999', email: 'other@zerocento.it', firstName: 'Other', lastName: 'Trainer' }))
+        prismaMock.exerciseFeedback.findUnique.mockResolvedValue(mockFeedback as never) // trainer-uuid-1 owns this
 
         const req = makeRequest(`http://localhost:3000/api/feedback/${UUIDS.feedback}`)
         const res = await GET_ID(req, withIdParam(UUIDS.feedback))
@@ -327,8 +276,8 @@ describe('GET /api/feedback/[id]', () => {
     })
 
     it('returns 404 when feedback not found', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
-        vi.mocked(prisma.exerciseFeedback.findUnique).mockResolvedValue(null)
+        asTrainee()
+        prismaMock.exerciseFeedback.findUnique.mockResolvedValue(null)
 
         const req = makeRequest(`http://localhost:3000/api/feedback/aaaaaaaa-0000-0000-0000-000000000000`)
         const res = await GET_ID(req, withIdParam('aaaaaaaa-0000-0000-0000-000000000000'))
@@ -336,10 +285,7 @@ describe('GET /api/feedback/[id]', () => {
         expect(res.status).toBe(404)
     })
 
-    it('returns 401 when not authenticated', async () => {
-        vi.mocked(requireRole).mockRejectedValue(
-            Response.json({ error: { code: 'UNAUTHORIZED' } }, { status: 401 })
-        )
+    it('returns 401 when not authenticated', async () => {asUnauthenticated()
 
         const req = makeRequest(`http://localhost:3000/api/feedback/${UUIDS.feedback}`)
         const res = await GET_ID(req, withIdParam(UUIDS.feedback))

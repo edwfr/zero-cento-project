@@ -1,21 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { mockTraineeSession } from './fixtures'
 
 const withIdParam = (id: string) => ({ params: Promise.resolve({ id }) })
 
-vi.mock('@/lib/auth', () => ({
-    requireRole: vi.fn(),
-}))
-
-vi.mock('@/lib/prisma', () => ({
-    prisma: {
-        workout: { findFirst: vi.fn(), update: vi.fn() },
-        workoutExercise: { update: vi.fn() },
-        exerciseFeedback: { upsert: vi.fn() },
-        $transaction: vi.fn(),
-    },
-}))
+vi.mock('@/lib/auth', async () => (await import('../helpers/auth-module-mock')).authModuleMock())
 
 vi.mock('@/lib/logger', () => ({
     logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
@@ -27,9 +15,9 @@ vi.mock('@/lib/completion-service', () => ({
 }))
 
 import { POST } from '@/app/api/trainee/workouts/[id]/submit/route'
-import { requireRole } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
 import { cascadeCompletion, cascadeWorkoutCompletion } from '@/lib/completion-service'
+import { prismaMock } from '../helpers/prisma-mock'
+import { asTrainee } from '../helpers/auth-mock'
 
 const UUIDS = {
     workout: '11111111-1111-1111-1111-111111111111',
@@ -42,11 +30,11 @@ const UUIDS = {
 describe('POST /api/trainee/workouts/[id]/submit', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        ;(requireRole as any).mockResolvedValue(mockTraineeSession)
+        asTrainee()
     })
 
     it('upserts feedback and updates isCompleted for all exercises in a single transaction, no per-exercise cascade', async () => {
-        ;(prisma.workout.findFirst as any).mockResolvedValue({
+        prismaMock.workout.findFirst.mockResolvedValue({
             id: UUIDS.workout,
             workoutExercises: [
                 { id: UUIDS.wex1, sets: 1 },
@@ -54,14 +42,14 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
             ],
         })
         // transaction returns 4 items: 2 feedback upserts + 2 workoutExercise updates
-        ;(prisma.$transaction as any).mockResolvedValue([
+        prismaMock.$transaction.mockResolvedValue([
             { id: UUIDS.feedback1, workoutExerciseId: UUIDS.wex1, actualRpe: 8, notes: 'great session', date: '2026-05-02' },
             { id: UUIDS.feedback2, workoutExerciseId: UUIDS.wex2, actualRpe: 7.5, notes: 'great session', date: '2026-05-02' },
             { id: UUIDS.wex1 },
             { id: UUIDS.wex2 },
             { id: UUIDS.workout },
         ])
-        ;(cascadeWorkoutCompletion as any).mockResolvedValue({
+        vi.mocked(cascadeWorkoutCompletion).mockResolvedValue({
             workout: { id: UUIDS.workout, isCompleted: true },
             week: { id: 'week-1', weekNumber: 2, isCompleted: true },
             program: { id: 'program-1', status: 'completed' },
@@ -97,9 +85,9 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
 
         expect(res.status).toBe(200)
         expect(json.data.feedbacks).toHaveLength(2)
-        expect(prisma.workout.findFirst).toHaveBeenCalledTimes(1)
-        expect(prisma.$transaction).toHaveBeenCalledTimes(1)
-        expect(prisma.exerciseFeedback.upsert).toHaveBeenNthCalledWith(
+        expect(prismaMock.workout.findFirst).toHaveBeenCalledTimes(1)
+        expect(prismaMock.$transaction).toHaveBeenCalledTimes(1)
+        expect(prismaMock.exerciseFeedback.upsert).toHaveBeenNthCalledWith(
             1,
             expect.objectContaining({
                 create: expect.objectContaining({
@@ -130,7 +118,7 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
                 }),
             })
         )
-        expect(prisma.exerciseFeedback.upsert).toHaveBeenNthCalledWith(
+        expect(prismaMock.exerciseFeedback.upsert).toHaveBeenNthCalledWith(
             2,
             expect.objectContaining({
                 create: expect.objectContaining({
@@ -161,14 +149,14 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
                 }),
             })
         )
-        expect(prisma.workoutExercise.update).toHaveBeenNthCalledWith(
+        expect(prismaMock.workoutExercise.update).toHaveBeenNthCalledWith(
             1,
             expect.objectContaining({
                 where: { id: UUIDS.wex1 },
                 data: { isCompleted: true },
             })
         )
-        expect(prisma.workout.update).toHaveBeenCalledWith({
+        expect(prismaMock.workout.update).toHaveBeenCalledWith({
             where: { id: UUIDS.workout },
             data: {
                 traineeNotes: 'great session',
@@ -178,7 +166,7 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
             },
             select: { id: true },
         })
-        expect(prisma.workoutExercise.update).toHaveBeenNthCalledWith(
+        expect(prismaMock.workoutExercise.update).toHaveBeenNthCalledWith(
             2,
             expect.objectContaining({
                 where: { id: UUIDS.wex2 },
@@ -196,17 +184,17 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
     })
 
     it('marks workout completed even when some exercise sets incomplete, no per-exercise cascade', async () => {
-        ;(prisma.workout.findFirst as any).mockResolvedValue({
+        prismaMock.workout.findFirst.mockResolvedValue({
             id: UUIDS.workout,
             workoutExercises: [{ id: UUIDS.wex1, sets: 2 }],
         })
         // transaction returns 2 items: 1 feedback upsert + 1 workoutExercise update
-        ;(prisma.$transaction as any).mockResolvedValue([
+        prismaMock.$transaction.mockResolvedValue([
             { id: UUIDS.feedback1, workoutExerciseId: UUIDS.wex1, actualRpe: null, notes: 'partial session', date: '2026-05-02' },
             { id: UUIDS.wex1 },
             { id: UUIDS.workout },
         ])
-        ;(cascadeWorkoutCompletion as any).mockResolvedValue({
+        vi.mocked(cascadeWorkoutCompletion).mockResolvedValue({
             workout: { id: UUIDS.workout, isCompleted: true },
             week: { id: 'week-1', weekNumber: 4, isCompleted: true },
             program: { id: 'program-1', status: 'completed' },
@@ -236,7 +224,7 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
         const json = await res.json()
 
         expect(res.status).toBe(200)
-        expect(prisma.workoutExercise.update).toHaveBeenCalledWith(
+        expect(prismaMock.workoutExercise.update).toHaveBeenCalledWith(
             expect.objectContaining({
                 where: { id: UUIDS.wex1 },
                 data: { isCompleted: false },
@@ -253,11 +241,11 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
     })
 
     it('keeps exercise incomplete when payload omits planned sets', async () => {
-        ;(prisma.workout.findFirst as any).mockResolvedValue({
+        prismaMock.workout.findFirst.mockResolvedValue({
             id: UUIDS.workout,
             workoutExercises: [{ id: UUIDS.wex1, sets: 3 }],
         })
-        ;(prisma.$transaction as any).mockResolvedValue([
+        prismaMock.$transaction.mockResolvedValue([
             {
                 id: UUIDS.feedback1,
                 workoutExerciseId: UUIDS.wex1,
@@ -268,7 +256,7 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
             { id: UUIDS.wex1 },
             { id: UUIDS.workout },
         ])
-        ;(cascadeWorkoutCompletion as any).mockResolvedValue({
+        vi.mocked(cascadeWorkoutCompletion).mockResolvedValue({
             workout: { id: UUIDS.workout, isCompleted: true },
             week: { id: 'week-1', weekNumber: 2, isCompleted: true },
             program: { id: 'program-1', status: 'completed' },
@@ -295,7 +283,7 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
         const res = await POST(request, withIdParam(UUIDS.workout))
 
         expect(res.status).toBe(200)
-        expect(prisma.workoutExercise.update).toHaveBeenCalledWith(
+        expect(prismaMock.workoutExercise.update).toHaveBeenCalledWith(
             expect.objectContaining({
                 where: { id: UUIDS.wex1 },
                 data: { isCompleted: false },
@@ -304,7 +292,7 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
     })
 
     it('returns 404 when trainee does not own the workout', async () => {
-        ;(prisma.workout.findFirst as any).mockResolvedValue(null)
+        prismaMock.workout.findFirst.mockResolvedValue(null)
 
         const body = {
             traineeNotes: null,
@@ -325,11 +313,11 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
 
         const res = await POST(request, withIdParam(UUIDS.workout))
         expect(res.status).toBe(404)
-        expect(prisma.$transaction).not.toHaveBeenCalled()
+        expect(prismaMock.$transaction).not.toHaveBeenCalled()
     })
 
     it('returns 400 when an exercise in body is not in the workout', async () => {
-        ;(prisma.workout.findFirst as any).mockResolvedValue({
+        prismaMock.workout.findFirst.mockResolvedValue({
             id: UUIDS.workout,
             workoutExercises: [{ id: UUIDS.wex1, sets: 1 }],
         })
@@ -353,7 +341,7 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
 
         const res = await POST(request, withIdParam(UUIDS.workout))
         expect(res.status).toBe(400)
-        expect(prisma.$transaction).not.toHaveBeenCalled()
+        expect(prismaMock.$transaction).not.toHaveBeenCalled()
     })
 
     it('returns 400 on schema validation error (empty exercises)', async () => {
