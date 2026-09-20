@@ -224,3 +224,152 @@ describe('GET /api/programs/[id]/reports', () => {
         expect(body.error.key).toBe('internal.default')
     })
 })
+
+describe('GET /api/programs/[id]/reports — lift matching, intensity and RPE buckets', () => {
+    const benchExercise = () => makeWorkoutExercise({
+        id: 'we-bench',
+        exercise: {
+            id: 'ex-bench',
+            name: 'Bench Press',
+            type: 'fundamental',
+            movementPattern: { id: MP_ID, name: 'Spinta Orizzontale' },
+            exerciseMuscleGroups: [{ coefficient: 0.5, muscleGroup: { id: MG_ID, name: 'Pettorali' } }],
+        },
+    })
+
+    const deadliftExercise = () => makeWorkoutExercise({
+        id: 'we-dl',
+        exercise: {
+            id: 'ex-dl',
+            name: 'Stacco da terra',
+            type: 'fundamental',
+            movementPattern: { id: MP_ID, name: 'Tirata' },
+            exerciseMuscleGroups: [{ coefficient: 1, muscleGroup: { id: MG_ID, name: 'Dorsali' } }],
+        },
+    })
+
+    beforeEach(() => {
+        vi.clearAllMocks()
+        asTrainer()
+        prismaMock.personalRecord.findMany.mockResolvedValue([] as never)
+    })
+
+    it('files the bench and the deadlift in their own slots', async () => {
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(
+            makeProgram([benchExercise(), deadliftExercise()]) as never
+        )
+
+        const res = await getReports(makeRequest(), withIdParam(PROGRAM_ID))
+        const body = await res.json()
+
+        expect(body.data.sbd.bench.trainingSets).toBe(2)
+        expect(body.data.sbd.deadlift.trainingSets).toBe(2)
+        expect(body.data.sbd.squat.trainingSets).toBe(0)
+    })
+
+    it('averages the intensity against the single-rep record', async () => {
+        prismaMock.personalRecord.findMany.mockResolvedValue([
+            { exerciseId: 'ex-1', reps: 1, weight: 200, exercise: { id: 'ex-1', name: 'Back Squat' } },
+        ] as never)
+        // the handler reads the flat exerciseId of the workout exercise, not exercise.id
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(
+            makeProgram([makeWorkoutExercise({ exerciseId: 'ex-1' })]) as never
+        )
+
+        const res = await getReports(makeRequest(), withIdParam(PROGRAM_ID))
+        const body = await res.json()
+
+        // both sets at 100 kg against a 200 kg single
+        expect(body.data.sbd.squat.avgIntensity).toBe(50)
+        expect(body.data.sbd.squat.avgRPE).toBe(8)
+    })
+
+    it('leaves the intensity empty when only a multi-rep record exists', async () => {
+        prismaMock.personalRecord.findMany.mockResolvedValue([
+            { exerciseId: 'ex-1', reps: 5, weight: 180, exercise: { id: 'ex-1', name: 'Back Squat' } },
+        ] as never)
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(
+            makeProgram([makeWorkoutExercise({ exerciseId: 'ex-1' })]) as never
+        )
+
+        const res = await getReports(makeRequest(), withIdParam(PROGRAM_ID))
+        const body = await res.json()
+
+        expect(body.data.sbd.squat.avgIntensity).toBeNull()
+    })
+
+    it('leaves the average RPE empty when no feedback records one', async () => {
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(
+            makeProgram([makeWorkoutExercise({
+                exerciseFeedbacks: [{ actualRpe: null, setsPerformed: [{ reps: 5, weight: 100, completed: true }] }],
+            })]) as never
+        )
+
+        const res = await getReports(makeRequest(), withIdParam(PROGRAM_ID))
+        const body = await res.json()
+
+        expect(body.data.sbd.squat.avgRPE).toBeNull()
+        expect(body.data.rpeDistribution.every((item: { count: number }) => item.count === 0)).toBe(true)
+    })
+
+    it('fills each RPE bucket from the feedback that lands in it', async () => {
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(
+            makeProgram([
+                makeWorkoutExercise({
+                    id: 'we-a',
+                    exerciseFeedbacks: [{ actualRpe: 6.5, setsPerformed: [{ reps: 5, weight: 100, completed: true }] }],
+                }),
+                makeWorkoutExercise({
+                    id: 'we-b',
+                    exerciseFeedbacks: [{ actualRpe: 7.5, setsPerformed: [{ reps: 5, weight: 100, completed: true }] }],
+                }),
+                makeWorkoutExercise({
+                    id: 'we-c',
+                    exerciseFeedbacks: [{ actualRpe: 9.5, setsPerformed: [{ reps: 5, weight: 100, completed: true }] }],
+                }),
+                makeWorkoutExercise({
+                    id: 'we-d',
+                    exerciseFeedbacks: [{ actualRpe: 5, setsPerformed: [{ reps: 5, weight: 100, completed: true }] }],
+                }),
+            ]) as never
+        )
+
+        const res = await getReports(makeRequest(), withIdParam(PROGRAM_ID))
+        const body = await res.json()
+
+        const counts = Object.fromEntries(
+            body.data.rpeDistribution.map((item: { range: string; count: number }) => [item.range, item.count])
+        )
+        expect(counts).toEqual({ '6.0-6.5': 1, '7.0-7.5': 1, '8.0-8.5': 0, '9.0-10.0': 1 })
+    })
+
+    it('counts the planned sets of an exercise nobody performed', async () => {
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(
+            makeProgram([makeWorkoutExercise({ sets: 4, exerciseFeedbacks: [] })]) as never
+        )
+
+        const res = await getReports(makeRequest(), withIdParam(PROGRAM_ID))
+        const body = await res.json()
+
+        expect(body.data.muscleGroups).toContainEqual(
+            expect.objectContaining({ muscleGroupId: MG_ID, trainingSets: 4 })
+        )
+        expect(body.data.movementPatterns).toContainEqual(
+            expect.objectContaining({ movementPatternId: MP_ID, volume: 0, percentage: 0 })
+        )
+    })
+
+    it('weighs a muscle group by its coefficient and sorts by volume', async () => {
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(
+            makeProgram([makeWorkoutExercise(), benchExercise()]) as never
+        )
+
+        const res = await getReports(makeRequest(), withIdParam(PROGRAM_ID))
+        const body = await res.json()
+
+        // 2 performed sets on the squat at coefficient 1, 2 on the bench at 0.5
+        expect(body.data.muscleGroups).toEqual([
+            expect.objectContaining({ muscleGroupId: MG_ID, trainingSets: 3, percentage: 100 }),
+        ])
+    })
+})

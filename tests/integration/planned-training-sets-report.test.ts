@@ -13,7 +13,7 @@ vi.mock('@/lib/logger', () => ({
 
 import { GET } from '@/app/api/users/[id]/reports/planned-training-sets/route'
 import { prismaMock } from '../helpers/prisma-mock'
-import { asTrainer, asTrainee } from '../helpers/auth-mock'
+import { asTrainer, asTrainee, asAdmin, asUnauthenticated } from '../helpers/auth-mock'
 
 describe('GET /api/users/[id]/reports/planned-training-sets', () => {
     beforeEach(() => {
@@ -281,5 +281,147 @@ describe('GET /api/users/[id]/reports/planned-training-sets', () => {
         const response = await GET(request, { params: Promise.resolve({ id: 'trainee-uuid-2' }) })
 
         expect(response.status).toBe(403)
+    })
+})
+
+describe('GET /api/users/[id]/reports/planned-training-sets — week dates and PRs', () => {
+    const traineeId = 'trainee-uuid-1'
+
+    const reportRequest = () =>
+        new Request(`http://localhost:3000/api/users/${traineeId}/reports/planned-training-sets`)
+
+    const withTraineeParam = () => ({ params: Promise.resolve({ id: traineeId }) })
+
+    const squatExercise = {
+        id: 'we-1',
+        sets: 3,
+        reps: '5',
+        isWarmup: false,
+        weightType: 'percentage_1rm',
+        weight: 80,
+        targetRpe: null,
+        exercise: {
+            id: 'ex-squat',
+            name: 'Back Squat',
+            type: 'fundamental',
+            exerciseMuscleGroups: [{ coefficient: 1, muscleGroup: { id: 'mg-legs', name: 'Legs' } }],
+        },
+    }
+
+    beforeEach(() => {
+        vi.clearAllMocks()
+        asAdmin()
+        prismaMock.personalRecord.findMany.mockResolvedValue([] as never)
+    })
+
+    it('answers with an empty report when the trainee has no program', async () => {
+        prismaMock.trainingProgram.findMany.mockResolvedValue([] as never)
+
+        const response = await GET(reportRequest(), withTraineeParam())
+        const body = await response.json()
+
+        expect(response.status).toBe(200)
+        expect(body.data).toEqual({ traineeId, muscleGroups: [], points: [] })
+        expect(prismaMock.trainerTrainee.findFirst).not.toHaveBeenCalled()
+    })
+
+    it('derives a week start date from the program start when the week has none', async () => {
+        prismaMock.trainingProgram.findMany.mockResolvedValue([
+            {
+                id: 'program-1',
+                title: 'Programma A',
+                startDate: new Date('2026-01-06T00:00:00.000Z'),
+                weeks: [
+                    {
+                        id: 'week-2',
+                        weekNumber: 2,
+                        startDate: null,
+                        workouts: [{ id: 'workout-1', workoutExercises: [squatExercise] }],
+                    },
+                ],
+            },
+        ] as never)
+
+        const response = await GET(reportRequest(), withTraineeParam())
+        const body = await response.json()
+
+        expect(response.status).toBe(200)
+        expect(body.data.points).toHaveLength(1)
+        // week 2 of a program starting on 2026-01-06 falls seven days later
+        expect(body.data.points[0].date).toBe('2026-01-13')
+    })
+
+    it('skips a week with no date when the program has none either', async () => {
+        prismaMock.trainingProgram.findMany.mockResolvedValue([
+            {
+                id: 'program-1',
+                title: 'Programma A',
+                startDate: null,
+                weeks: [
+                    {
+                        id: 'week-1',
+                        weekNumber: 1,
+                        startDate: null,
+                        workouts: [{ id: 'workout-1', workoutExercises: [squatExercise] }],
+                    },
+                ],
+            },
+        ] as never)
+
+        const response = await GET(reportRequest(), withTraineeParam())
+        const body = await response.json()
+
+        expect(response.status).toBe(200)
+        expect(body.data.points).toEqual([])
+        // the muscle-group catalog is filled while walking the weeks: a skipped week adds nothing
+        expect(body.data.muscleGroups).toEqual([])
+    })
+
+    it('keeps the highest normalized 1RM per exercise', async () => {
+        prismaMock.personalRecord.findMany.mockResolvedValue([
+            { exerciseId: 'ex-squat', reps: 1, weight: 150, recordDate: new Date('2026-02-01') },
+            { exerciseId: 'ex-squat', reps: 5, weight: 140, recordDate: new Date('2026-01-01') },
+        ] as never)
+        prismaMock.trainingProgram.findMany.mockResolvedValue([
+            {
+                id: 'program-1',
+                title: 'Programma A',
+                startDate: new Date('2026-01-06T00:00:00.000Z'),
+                weeks: [
+                    {
+                        id: 'week-1',
+                        weekNumber: 1,
+                        startDate: new Date('2026-01-06T00:00:00.000Z'),
+                        workouts: [{ id: 'workout-1', workoutExercises: [squatExercise] }],
+                    },
+                ],
+            },
+        ] as never)
+
+        const response = await GET(reportRequest(), withTraineeParam())
+        const body = await response.json()
+
+        expect(response.status).toBe(200)
+        // the 5-rep PR normalizes above the single: it is the one that survives
+        expect(body.data.points[0].fundamentalMetrics.squat.averageIntensity).toBeGreaterThan(0)
+    })
+
+    it('returns 401 when not authenticated', async () => {
+        asUnauthenticated()
+
+        const response = await GET(reportRequest(), withTraineeParam())
+
+        expect(response.status).toBe(401)
+        expect(prismaMock.trainingProgram.findMany).not.toHaveBeenCalled()
+    })
+
+    it('returns 500 when the query fails', async () => {
+        prismaMock.trainingProgram.findMany.mockRejectedValue(new Error('db down'))
+
+        const response = await GET(reportRequest(), withTraineeParam())
+        const body = await response.json()
+
+        expect(response.status).toBe(500)
+        expect(body.error.key).toBe('internal.default')
     })
 })
