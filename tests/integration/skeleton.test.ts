@@ -1,35 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { mockTrainerSession, makeTrainerSession } from './fixtures'
 
-vi.mock('@/lib/auth', () => ({
-    requireTrainerProgramOwnership: vi.fn(),
-}))
-
-vi.mock('@/lib/prisma', () => ({
-    prisma: {
-        trainingProgram: {
-            findUnique: vi.fn(),
-        },
-        exercise: {
-            findMany: vi.fn(),
-        },
-        workoutSkeleton: {
-            deleteMany: vi.fn(),
-            createMany: vi.fn(),
-            findMany: vi.fn(),
-        },
-        $transaction: vi.fn(),
-    },
-}))
+vi.mock('@/lib/auth', async () => (await import('../helpers/auth-module-mock')).authModuleMock())
 
 vi.mock('@/lib/logger', () => ({
     logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
 
 import { PUT } from '@/app/api/programs/[id]/skeleton/route'
-import { requireTrainerProgramOwnership } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { prismaMock } from '../helpers/prisma-mock'
+import { asTrainer, asForbidden } from '../helpers/auth-mock'
 
 function makePutRequest(
     body: unknown,
@@ -60,21 +40,15 @@ const skeletonRows = [
 describe('PUT /api/programs/[id]/skeleton', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        ;(requireTrainerProgramOwnership as any).mockResolvedValue(mockTrainerSession)
-        ;(prisma.trainingProgram.findUnique as any).mockResolvedValue(draftProgram)
-        ;(prisma.exercise.findMany as any).mockResolvedValue([
+        asTrainer()
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(draftProgram as never)
+        prismaMock.exercise.findMany.mockResolvedValue([
             { id: EX_1 },
             { id: EX_2 },
-        ])
-        ;(prisma.$transaction as any).mockImplementation(async (fn: any) =>
-            fn({
-                workoutSkeleton: {
-                    deleteMany: vi.fn().mockResolvedValue({}),
-                    createMany: vi.fn().mockResolvedValue({}),
-                    findMany: vi.fn().mockResolvedValue(skeletonRows),
-                },
-            })
-        )
+        ] as never)
+        prismaMock.workoutSkeleton.deleteMany.mockResolvedValue({ count: 0 } as never)
+        prismaMock.workoutSkeleton.createMany.mockResolvedValue({ count: 2 } as never)
+        prismaMock.workoutSkeleton.findMany.mockResolvedValue(skeletonRows as never)
     })
 
     it('returns 200 and the new skeleton on success', async () => {
@@ -96,15 +70,7 @@ describe('PUT /api/programs/[id]/skeleton', () => {
     })
 
     it('returns 200 with empty skeleton when rows is empty', async () => {
-        ;(prisma.$transaction as any).mockImplementation(async (fn: any) =>
-            fn({
-                workoutSkeleton: {
-                    deleteMany: vi.fn().mockResolvedValue({}),
-                    createMany: vi.fn().mockResolvedValue({}),
-                    findMany: vi.fn().mockResolvedValue([]),
-                },
-            })
-        )
+        prismaMock.workoutSkeleton.findMany.mockResolvedValue([] as never)
 
         const res = await PUT(makePutRequest({ rows: [] }), {
             params: Promise.resolve({ id: 'prog-1' }),
@@ -116,7 +82,7 @@ describe('PUT /api/programs/[id]/skeleton', () => {
     })
 
     it('returns 403 when program status is not draft', async () => {
-        ;(prisma.trainingProgram.findUnique as any).mockResolvedValue({
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             ...draftProgram,
             status: 'active',
         })
@@ -133,7 +99,7 @@ describe('PUT /api/programs/[id]/skeleton', () => {
     })
 
     it('returns 404 when program is not found', async () => {
-        ;(prisma.trainingProgram.findUnique as any).mockResolvedValue(null)
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(null)
 
         const res = await PUT(
             makePutRequest({ rows: [] }),
@@ -158,7 +124,7 @@ describe('PUT /api/programs/[id]/skeleton', () => {
     })
 
     it('returns 404 when an exerciseId does not exist', async () => {
-        ;(prisma.exercise.findMany as any).mockResolvedValue([{ id: EX_1 }]) // only 1 of 2
+        prismaMock.exercise.findMany.mockResolvedValue([{ id: EX_1 }] as never) // only 1 of 2
 
         const res = await PUT(
             makePutRequest({
@@ -188,9 +154,7 @@ describe('PUT /api/programs/[id]/skeleton', () => {
     })
 
     it('returns 403 when ownership check fails', async () => {
-        ;(requireTrainerProgramOwnership as any).mockRejectedValue(
-            new Response(JSON.stringify({ error: { code: 'FORBIDDEN' } }), { status: 403 })
-        )
+        asForbidden()
 
         const res = await PUT(makePutRequest({ rows: [] }), {
             params: Promise.resolve({ id: 'prog-1' }),
