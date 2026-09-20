@@ -1,30 +1,63 @@
-import { render, screen, fireEvent } from '@testing-library/react'
-import { describe, it, expect, vi } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
-vi.mock('next/navigation', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('next/navigation')>()
-    return {
-        ...actual,
-        useParams: () => ({ id: 'trainee-1' }),
-        useRouter: () => ({ push: vi.fn() }),
-    }
-})
+// Stub the three heavy components the page renders: PersonalRecordsExplorer
+// and RPEOneRMTable pull in MUI and recharts, which costs seconds under jsdom.
+vi.mock('@/components/PersonalRecordsExplorer', () => ({ default: () => <div data-testid="records-explorer" /> }))
+vi.mock('@/components/RPEOneRMTable', () => ({ default: () => <div data-testid="rpe-table" /> }))
+vi.mock('@/components/Skeleton', () => ({ SkeletonTable: () => <div data-testid="skeleton-table" /> }))
+
+// Redeclared on purpose: the global mock in tests/unit/setup.ts returns
+// useParams: () => ({}), while this page needs the trainee id.
+vi.mock('next/navigation', () => ({
+    useParams: () => ({ id: 'trainee-1' }),
+    useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn(), back: vi.fn() }),
+    usePathname: () => '/trainer/trainees/trainee-1/records',
+    useSearchParams: () => new URLSearchParams(),
+    redirect: vi.fn(),
+}))
 
 vi.mock('@/components/ToastNotification', () => ({
     useToast: () => ({ showToast: vi.fn() }),
 }))
 
-global.fetch = vi.fn().mockResolvedValue({
-    ok: true,
-    json: async () => ({ data: { items: [] } }),
-}) as unknown as typeof fetch
+import TraineeRecordsContent from '@/app/trainer/trainees/[id]/records/_content'
+
+const trainee = { id: 'trainee-1', firstName: 'Mario', lastName: 'Rossi' }
+const exercises = [
+    { id: 'ex-1', name: 'Panca Piana', type: 'fundamental' },
+    { id: 'ex-2', name: 'Squat', type: 'fundamental' },
+]
+
+function mockFetchByUrl() {
+    return vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input)
+        if (url.startsWith('/api/users/')) {
+            return { ok: true, json: async () => ({ data: { user: trainee } }) } as Response
+        }
+        if (url.startsWith('/api/personal-records')) {
+            return { ok: true, json: async () => ({ data: { items: [] } }) } as Response
+        }
+        if (url.startsWith('/api/exercises')) {
+            return { ok: true, json: async () => ({ data: { items: exercises } }) } as Response
+        }
+        throw new Error(`Unexpected fetch call: ${url}`)
+    })
+}
 
 describe('TraineeRecordsContent modal exercise field', () => {
-    it('renders an input field (AutocompleteSearch) not a native select for exercise', async () => {
-        const { default: TraineeRecordsContent } = await import(
-            '@/app/trainer/trainees/[id]/records/_content'
-        )
+    const originalFetch = global.fetch
 
+    beforeEach(() => {
+        global.fetch = mockFetchByUrl() as unknown as typeof fetch
+    })
+
+    afterEach(() => {
+        global.fetch = originalFetch
+        vi.clearAllMocks()
+    })
+
+    it('renders an input field (AutocompleteSearch) not a native select for exercise', async () => {
         const { container } = render(<TraineeRecordsContent />)
 
         const addButton = await screen.findByRole('button', { name: /aggiungi massimale/i })
@@ -32,7 +65,17 @@ describe('TraineeRecordsContent modal exercise field', () => {
 
         expect(container.querySelector('select')).toBeNull()
 
-        const exerciseInput = screen.getByLabelText(/personalRecords\.exercise/i)
+        const exerciseInput = screen.getByRole('combobox')
         expect(exerciseInput.tagName).toBe('INPUT')
-    }, 15000)
+    })
+
+    it('loads the trainee and the exercise list on mount', async () => {
+        render(<TraineeRecordsContent />)
+
+        await waitFor(() => expect(screen.getByText('Mario Rossi')).toBeInTheDocument())
+
+        expect(global.fetch).toHaveBeenCalledWith('/api/users/trainee-1')
+        expect(global.fetch).toHaveBeenCalledWith('/api/personal-records?traineeId=trainee-1')
+        expect(global.fetch).toHaveBeenCalledWith('/api/exercises?limit=500')
+    })
 })

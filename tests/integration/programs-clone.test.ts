@@ -1,39 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { mockTrainerSession } from './fixtures'
 
-vi.mock('@/lib/auth', () => ({
-    requireRole: vi.fn(),
-}))
-
-vi.mock('@/lib/prisma', () => ({
-    prisma: {
-        trainingProgram: {
-            findUnique: vi.fn(),
-            create: vi.fn(),
-        },
-        user: {
-            findUnique: vi.fn(),
-        },
-        trainerTrainee: {
-            findFirst: vi.fn(),
-            findUnique: vi.fn(),
-        },
-        workoutSkeleton: {
-            findMany: vi.fn(),
-            createMany: vi.fn(),
-        },
-        $transaction: vi.fn(),
-    },
-}))
+vi.mock('@/lib/auth', async () => (await import('../helpers/auth-module-mock')).authModuleMock())
 
 vi.mock('@/lib/logger', () => ({
     logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
 
 import { POST } from '@/app/api/programs/route'
-import { requireRole } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { prismaMock } from '../helpers/prisma-mock'
+import { asTrainer } from '../helpers/auth-mock'
 
 const TRAINEE_ID = '3fa85f64-5717-4562-b3fc-2c963f66afa6'
 const SOURCE_PROGRAM_ID = '00000000-0000-0000-0000-000000000099'
@@ -51,48 +27,51 @@ function makePostRequest(body: unknown): NextRequest {
 describe('POST /api/programs - clone branch', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        asTrainer()
+        prismaMock.user.findUnique.mockResolvedValue({
             id: TRAINEE_ID,
             role: 'trainee',
-        } as any)
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue({
+        } as never)
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue({
             trainerId: 'trainer-uuid-1',
             traineeId: TRAINEE_ID,
-        } as any)
-    })
-
-    it('clones skeleton rows in the same transaction as program creation', async () => {
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
-            id: SOURCE_PROGRAM_ID,
-            trainerId: 'trainer-uuid-1',
-            workoutsPerWeek: 3,
-            status: 'draft',
-        } as any)
-
-        const skeletonCreateMany = vi.fn().mockResolvedValue({ count: 2 })
-        const skeletonFindMany = vi.fn().mockResolvedValue([
-            { dayIndex: 0, order: 0, exerciseId: EX_1 },
-            { dayIndex: 1, order: 0, exerciseId: EX_2 },
-        ])
-        const programCreate = vi.fn().mockResolvedValue({
+        } as never)
+        // Defaults for the clone transaction: the shared $transaction runs the
+        // callback against prismaMock, so the tx calls land on these.
+        prismaMock.trainingProgram.create.mockResolvedValue({
             id: 'new-prog-id',
             trainerId: 'trainer-uuid-1',
             traineeId: TRAINEE_ID,
             trainer: { id: 'trainer-uuid-1', firstName: 'M', lastName: 'T' },
             trainee: { id: TRAINEE_ID, firstName: 'Mario', lastName: 'Atleta' },
             weeks: [],
-        })
+        } as never)
+        prismaMock.workoutSkeleton.findMany.mockResolvedValue([] as never)
+        prismaMock.workoutSkeleton.createMany.mockResolvedValue({ count: 0 } as never)
+    })
 
-        vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) =>
-            fn({
-                trainingProgram: { create: programCreate },
-                workoutSkeleton: {
-                    findMany: skeletonFindMany,
-                    createMany: skeletonCreateMany,
-                },
-            })
-        )
+    it('clones skeleton rows in the same transaction as program creation', async () => {
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
+            id: SOURCE_PROGRAM_ID,
+            trainerId: 'trainer-uuid-1',
+            workoutsPerWeek: 3,
+            status: 'draft',
+        } as never)
+
+        prismaMock.workoutSkeleton.createMany.mockResolvedValue({ count: 2 } as never)
+        prismaMock.workoutSkeleton.findMany.mockResolvedValue([
+            { dayIndex: 0, order: 0, exerciseId: EX_1 },
+            { dayIndex: 1, order: 0, exerciseId: EX_2 },
+        ] as never)
+        prismaMock.trainingProgram.create.mockResolvedValue({
+            id: 'new-prog-id',
+            trainerId: 'trainer-uuid-1',
+            traineeId: TRAINEE_ID,
+            trainer: { id: 'trainer-uuid-1', firstName: 'M', lastName: 'T' },
+            trainee: { id: TRAINEE_ID, firstName: 'Mario', lastName: 'Atleta' },
+            weeks: [],
+        } as never)
+
 
         const res = await POST(
             makePostRequest({
@@ -106,12 +85,12 @@ describe('POST /api/programs - clone branch', () => {
         )
 
         expect(res.status).toBe(201)
-        expect(programCreate).toHaveBeenCalledOnce()
-        expect(skeletonFindMany).toHaveBeenCalledWith({
+        expect(prismaMock.trainingProgram.create).toHaveBeenCalledOnce()
+        expect(prismaMock.workoutSkeleton.findMany).toHaveBeenCalledWith({
             where: { programId: SOURCE_PROGRAM_ID },
             select: { dayIndex: true, order: true, exerciseId: true },
         })
-        expect(skeletonCreateMany).toHaveBeenCalledWith({
+        expect(prismaMock.workoutSkeleton.createMany).toHaveBeenCalledWith({
             data: [
                 { programId: 'new-prog-id', dayIndex: 0, order: 0, exerciseId: EX_1 },
                 { programId: 'new-prog-id', dayIndex: 1, order: 0, exerciseId: EX_2 },
@@ -120,32 +99,23 @@ describe('POST /api/programs - clone branch', () => {
     })
 
     it('creates program with empty skeleton when source has no rows', async () => {
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             id: SOURCE_PROGRAM_ID,
             trainerId: 'trainer-uuid-1',
             workoutsPerWeek: 3,
             status: 'draft',
-        } as any)
+        } as never)
 
-        const skeletonCreateMany = vi.fn()
-        const programCreate = vi.fn().mockResolvedValue({
+        prismaMock.workoutSkeleton.createMany.mockResolvedValue({ count: 0 } as never)
+        prismaMock.trainingProgram.create.mockResolvedValue({
             id: 'new-prog-id',
             trainerId: 'trainer-uuid-1',
             traineeId: TRAINEE_ID,
             trainer: { id: 'trainer-uuid-1', firstName: 'M', lastName: 'T' },
             trainee: { id: TRAINEE_ID, firstName: 'Mario', lastName: 'Atleta' },
             weeks: [],
-        })
+        } as never)
 
-        vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) =>
-            fn({
-                trainingProgram: { create: programCreate },
-                workoutSkeleton: {
-                    findMany: vi.fn().mockResolvedValue([]),
-                    createMany: skeletonCreateMany,
-                },
-            })
-        )
 
         const res = await POST(
             makePostRequest({
@@ -159,11 +129,11 @@ describe('POST /api/programs - clone branch', () => {
         )
 
         expect(res.status).toBe(201)
-        expect(skeletonCreateMany).not.toHaveBeenCalled()
+        expect(prismaMock.workoutSkeleton.createMany).not.toHaveBeenCalled()
     })
 
     it('returns 404 when cloneFromProgramId is unknown', async () => {
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue(null)
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(null)
 
         const res = await POST(
             makePostRequest({
@@ -182,12 +152,12 @@ describe('POST /api/programs - clone branch', () => {
     })
 
     it('returns 403 when trainer does not own the source program', async () => {
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             id: SOURCE_PROGRAM_ID,
             trainerId: 'other-trainer-uuid',
             workoutsPerWeek: 3,
             status: 'draft',
-        } as any)
+        } as never)
 
         const res = await POST(
             makePostRequest({
@@ -206,12 +176,12 @@ describe('POST /api/programs - clone branch', () => {
     })
 
     it('returns 400 when workoutsPerWeek differs from source', async () => {
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             id: SOURCE_PROGRAM_ID,
             trainerId: 'trainer-uuid-1',
             workoutsPerWeek: 4,
             status: 'draft',
-        } as any)
+        } as never)
 
         const res = await POST(
             makePostRequest({
@@ -230,31 +200,13 @@ describe('POST /api/programs - clone branch', () => {
     })
 
     it('allows cloning from an active source program', async () => {
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             id: SOURCE_PROGRAM_ID,
             trainerId: 'trainer-uuid-1',
             workoutsPerWeek: 3,
             status: 'active',
-        } as any)
+        } as never)
 
-        vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) =>
-            fn({
-                trainingProgram: {
-                    create: vi.fn().mockResolvedValue({
-                        id: 'new-prog-id',
-                        trainerId: 'trainer-uuid-1',
-                        traineeId: TRAINEE_ID,
-                        trainer: { id: 'trainer-uuid-1', firstName: 'M', lastName: 'T' },
-                        trainee: { id: TRAINEE_ID, firstName: 'Mario', lastName: 'Atleta' },
-                        weeks: [],
-                    }),
-                },
-                workoutSkeleton: {
-                    findMany: vi.fn().mockResolvedValue([]),
-                    createMany: vi.fn(),
-                },
-            })
-        )
 
         const res = await POST(
             makePostRequest({
@@ -271,31 +223,13 @@ describe('POST /api/programs - clone branch', () => {
     })
 
     it('allows cloning from a completed source program', async () => {
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             id: SOURCE_PROGRAM_ID,
             trainerId: 'trainer-uuid-1',
             workoutsPerWeek: 3,
             status: 'completed',
-        } as any)
+        } as never)
 
-        vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) =>
-            fn({
-                trainingProgram: {
-                    create: vi.fn().mockResolvedValue({
-                        id: 'new-prog-id',
-                        trainerId: 'trainer-uuid-1',
-                        traineeId: TRAINEE_ID,
-                        trainer: { id: 'trainer-uuid-1', firstName: 'M', lastName: 'T' },
-                        trainee: { id: TRAINEE_ID, firstName: 'Mario', lastName: 'Atleta' },
-                        weeks: [],
-                    }),
-                },
-                workoutSkeleton: {
-                    findMany: vi.fn().mockResolvedValue([]),
-                    createMany: vi.fn(),
-                },
-            })
-        )
 
         const res = await POST(
             makePostRequest({
@@ -312,16 +246,16 @@ describe('POST /api/programs - clone branch', () => {
     })
 
     it('rolls back creation when skeleton copy fails', async () => {
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             id: SOURCE_PROGRAM_ID,
             trainerId: 'trainer-uuid-1',
             workoutsPerWeek: 3,
             status: 'draft',
-        } as any)
+        } as never)
 
         const persistedPrograms: string[] = []
 
-        vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
+        prismaMock.$transaction.mockImplementation((async (fn: (tx: unknown) => unknown) => {
             try {
                 return await fn({
                     trainingProgram: {
@@ -346,7 +280,7 @@ describe('POST /api/programs - clone branch', () => {
                 persistedPrograms.length = 0
                 throw error
             }
-        })
+        }) as never)
 
         const res = await POST(
             makePostRequest({

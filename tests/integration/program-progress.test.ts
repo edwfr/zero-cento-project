@@ -1,22 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { mockTraineeSession } from './fixtures'
 
-vi.mock('@/lib/auth', () => ({
-    requireAuth: vi.fn(),
-    requireRole: vi.fn(),
-    getSession: vi.fn(),
-}))
-
-vi.mock('@/lib/prisma', () => ({
-    prisma: {
-        trainingProgram: { findUnique: vi.fn() },
-        workout: { findMany: vi.fn() },
-        exerciseFeedback: { aggregate: vi.fn() },
-        setPerformed: { findMany: vi.fn() },
-        $queryRaw: vi.fn(),
-    },
-}))
+vi.mock('@/lib/auth', async () => (await import('../helpers/auth-module-mock')).authModuleMock())
 
 vi.mock('@/lib/logger', () => ({
     logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
@@ -27,9 +12,11 @@ vi.mock('@/lib/trainee-program-data', () => ({
 }))
 
 import { GET } from '@/app/api/programs/[id]/progress/route'
-import { requireRole } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
 import { loadProgressAggregates } from '@/lib/trainee-program-data'
+import { prismaMock } from '../helpers/prisma-mock'
+import { mockTraineeSession } from '../helpers/sessions'
+import { asTrainee } from '../helpers/auth-mock'
+import { callArg } from '../helpers/call-args'
 
 function makeRequest(url = 'http://localhost:3000/api/programs/prog-1/progress') {
     return new NextRequest(url)
@@ -47,13 +34,13 @@ const programMeta = {
 
 beforeEach(() => {
     vi.clearAllMocks()
-    ;(requireRole as any).mockResolvedValue(mockTraineeSession)
-    ;(prisma.trainingProgram.findUnique as any).mockResolvedValue(programMeta)
+    ;asTrainee()
+    ;prismaMock.trainingProgram.findUnique.mockResolvedValue(programMeta as never)
 })
 
 describe('GET /api/programs/[id]/progress', () => {
     it('does not load full program tree (no nested workoutExercises include)', async () => {
-        ;(loadProgressAggregates as any).mockResolvedValue({
+        ;vi.mocked(loadProgressAggregates).mockResolvedValue({
             programId: 'prog-1',
             programName: 'Test',
             status: 'active',
@@ -67,11 +54,11 @@ describe('GET /api/programs/[id]/progress', () => {
             nextWorkout: null,
             workouts: [],
             weeklyStats: [],
-        })
+        } as never)
 
         await GET(makeRequest(), { params: Promise.resolve({ id: 'prog-1' }) })
 
-        const call = (prisma.trainingProgram.findUnique as any).mock.calls[0][0]
+        const call = callArg(prismaMock.trainingProgram.findUnique.mock.calls[0][0])
         // metadata fetch must use `select`, never `include` with weeks
         expect(call.include).toBeUndefined()
         expect(call.select).toBeDefined()
@@ -79,7 +66,7 @@ describe('GET /api/programs/[id]/progress', () => {
     })
 
     it('returns the documented response shape with zero data', async () => {
-        ;(loadProgressAggregates as any).mockResolvedValue({
+        ;vi.mocked(loadProgressAggregates).mockResolvedValue({
             programId: 'prog-1',
             programName: 'Test',
             status: 'active',
@@ -93,7 +80,7 @@ describe('GET /api/programs/[id]/progress', () => {
             nextWorkout: null,
             workouts: [],
             weeklyStats: [],
-        })
+        } as never)
 
         const res = await GET(makeRequest(), { params: Promise.resolve({ id: 'prog-1' }) })
         const json = await res.json()
@@ -116,7 +103,7 @@ describe('GET /api/programs/[id]/progress', () => {
     })
 
     it('aggregates completion counts per workout from $queryRaw rows', async () => {
-        ;(loadProgressAggregates as any).mockResolvedValue({
+        ;vi.mocked(loadProgressAggregates).mockResolvedValue({
             programId: 'prog-1',
             programName: 'Test',
             status: 'active',
@@ -165,7 +152,7 @@ describe('GET /api/programs/[id]/progress', () => {
                     feedbackCount: 5,
                 },
             ],
-        })
+        } as never)
 
         const res = await GET(makeRequest(), { params: Promise.resolve({ id: 'prog-1' }) })
         const json = await res.json()
@@ -194,7 +181,7 @@ describe('GET /api/programs/[id]/progress', () => {
     })
 
     it('populates exercisesPerformed from latest completed feedback set rows', async () => {
-        ;(loadProgressAggregates as any).mockResolvedValue({
+        ;vi.mocked(loadProgressAggregates).mockResolvedValue({
             programId: 'prog-1',
             programName: 'Test',
             status: 'active',
@@ -229,7 +216,7 @@ describe('GET /api/programs/[id]/progress', () => {
                 },
             ],
             weeklyStats: [],
-        })
+        } as never)
 
         const res = await GET(makeRequest(), { params: Promise.resolve({ id: 'prog-1' }) })
         const json = await res.json()

@@ -12,4 +12,17 @@ export default [
       "import/no-anonymous-default-export": "off",
     },
   },
+  {
+    files: ["tests/**/*.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "error",
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "CallExpression[callee.name='require']",
+          message: "Use static ESM imports in tests (see zero-cento-testing skill).",
+        },
+      ],
+    },
+  },
 ];

@@ -1,29 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { mockAdminSession, mockTrainerSession } from './fixtures'
 
-vi.mock('@/lib/auth', () => ({
-    requireAuth: vi.fn(),
-    requireRole: vi.fn(),
-    getSession: vi.fn(),
-}))
-
-vi.mock('@/lib/prisma', () => ({
-    prisma: {
-        user: {
-            findMany: vi.fn(),
-            findUnique: vi.fn(),
-            create: vi.fn(),
-            update: vi.fn(),
-            delete: vi.fn(),
-            count: vi.fn(),
-        },
-        trainerTrainee: {
-            findMany: vi.fn(),
-            create: vi.fn(),
-        },
-    },
-}))
+vi.mock('@/lib/auth', async () => (await import('../helpers/auth-module-mock')).authModuleMock())
 
 vi.mock('@/lib/password-utils', () => ({
     generateSecurePassword: vi.fn().mockReturnValue('TempPass123!'),
@@ -68,6 +46,9 @@ vi.mock('@/lib/logger', () => ({
 }))
 
 import { GET, POST } from '@/app/api/users/route'
+import { prismaMock } from '../helpers/prisma-mock'
+import { mockTrainerSession, mockAdminSession } from '../helpers/sessions'
+import { asTrainer, asAdmin } from '../helpers/auth-mock'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { syncUserMetadata } from '@/lib/sync-user-metadata'
@@ -95,7 +76,7 @@ const mockUsers = [
 
 function makeRequest(url = 'http://localhost:3000/api/users', options?: RequestInit) {
     const { signal, ...safeOptions } = options || {}
-    return new NextRequest(url, safeOptions as any)
+    return new NextRequest(url, safeOptions as never)
 }
 
 describe('GET /api/users', () => {
@@ -104,8 +85,8 @@ describe('GET /api/users', () => {
     })
 
     it('returns all users for admin', async () => {
-        vi.mocked(requireAuth).mockResolvedValue(mockAdminSession)
-        vi.mocked(prisma.user.findMany).mockResolvedValue(mockUsers as any)
+        asAdmin()
+        prismaMock.user.findMany.mockResolvedValue(mockUsers as never)
 
         const req = makeRequest()
         const res = await GET(req)
@@ -117,8 +98,8 @@ describe('GET /api/users', () => {
     })
 
     it('filters by role when query param provided', async () => {
-        vi.mocked(requireAuth).mockResolvedValue(mockAdminSession)
-        vi.mocked(prisma.user.findMany).mockResolvedValue([mockUsers[1]] as any)
+        asAdmin()
+        prismaMock.user.findMany.mockResolvedValue([mockUsers[1]] as never)
 
         const req = makeRequest('http://localhost:3000/api/users?role=trainer')
         const res = await GET(req)
@@ -126,7 +107,7 @@ describe('GET /api/users', () => {
 
         expect(res.status).toBe(200)
         // Prisma should have been called with role filter (isActive may also be present)
-        expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect(prismaMock.user.findMany).toHaveBeenCalledWith(
             expect.objectContaining({
                 where: expect.objectContaining({ role: 'trainer' }),
             })
@@ -156,10 +137,10 @@ describe('GET /api/users', () => {
     })
 
     it('trainer sees own trainees via TrainerTrainee association', async () => {
-        vi.mocked(requireAuth).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.trainerTrainee.findMany).mockResolvedValue([
+        asTrainer()
+        prismaMock.trainerTrainee.findMany.mockResolvedValue([
             { trainee: mockUsers[0] },
-        ] as any)
+        ] as never)
 
         const req = makeRequest()
         const res = await GET(req)
@@ -167,7 +148,7 @@ describe('GET /api/users', () => {
 
         expect(res.status).toBe(200)
         expect(body.data.items).toHaveLength(1)
-        expect(prisma.trainerTrainee.findMany).toHaveBeenCalledWith(
+        expect(prismaMock.trainerTrainee.findMany).toHaveBeenCalledWith(
             expect.objectContaining({
                 where: { trainerId: 'trainer-uuid-1' },
             })
@@ -175,7 +156,7 @@ describe('GET /api/users', () => {
     })
 
     it('applies filter-first pagination and returns metadata when page/limit are provided', async () => {
-        vi.mocked(requireAuth).mockResolvedValue(mockTrainerSession)
+        asTrainer()
 
         const trainees = [
             {
@@ -207,8 +188,8 @@ describe('GET /api/users', () => {
             },
         ]
 
-        vi.mocked(prisma.trainerTrainee.findMany).mockResolvedValue(
-            trainees.map((trainee) => ({ trainee })) as any
+        prismaMock.trainerTrainee.findMany.mockResolvedValue(
+            trainees.map((trainee) => ({ trainee })) as never
         )
 
         const req = makeRequest('http://localhost:3000/api/users?role=trainee&includeInactive=true&status=all&page=2&limit=1')
@@ -234,7 +215,7 @@ describe('GET /api/users', () => {
     })
 
     it('returns 400 for invalid page filter', async () => {
-        vi.mocked(requireAuth).mockResolvedValue(mockAdminSession)
+        asAdmin()
 
         const req = makeRequest('http://localhost:3000/api/users?page=0')
         const res = await GET(req)
@@ -251,16 +232,16 @@ describe('POST /api/users', () => {
     })
 
     it('admin creates a trainer user successfully', async () => {
-        vi.mocked(requireAuth).mockResolvedValue(mockAdminSession)
-        vi.mocked(prisma.user.findUnique).mockResolvedValue(null)
-        vi.mocked(prisma.user.create).mockResolvedValue({
+        asAdmin()
+        prismaMock.user.findUnique.mockResolvedValue(null)
+        prismaMock.user.create.mockResolvedValue({
             id: 'new-user-id',
             email: 'nuovo.trainer@example.com',
             firstName: 'Nuovo',
             lastName: 'Trainer',
             role: 'trainer',
             isActive: true,
-        } as any)
+        } as never)
 
         const req = makeRequest('http://localhost:3000/api/users', {
             method: 'POST',
@@ -284,8 +265,8 @@ describe('POST /api/users', () => {
     })
 
     it('returns 409 when email already exists', async () => {
-        vi.mocked(requireAuth).mockResolvedValue(mockAdminSession)
-        vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUsers[0] as any)
+        asAdmin()
+        prismaMock.user.findUnique.mockResolvedValue(mockUsers[0] as never)
 
         const req = makeRequest('http://localhost:3000/api/users', {
             method: 'POST',
@@ -303,7 +284,7 @@ describe('POST /api/users', () => {
     })
 
     it('returns 403 when trying to create an admin user', async () => {
-        vi.mocked(requireAuth).mockResolvedValue(mockAdminSession)
+        asAdmin()
 
         const req = makeRequest('http://localhost:3000/api/users', {
             method: 'POST',
@@ -321,7 +302,7 @@ describe('POST /api/users', () => {
     })
 
     it('returns 403 when trainer tries to create another trainer', async () => {
-        vi.mocked(requireAuth).mockResolvedValue(mockTrainerSession)
+        asTrainer()
 
         const req = makeRequest('http://localhost:3000/api/users', {
             method: 'POST',
@@ -339,7 +320,7 @@ describe('POST /api/users', () => {
     })
 
     it('returns 400 for invalid email', async () => {
-        vi.mocked(requireAuth).mockResolvedValue(mockAdminSession)
+        asAdmin()
 
         const req = makeRequest('http://localhost:3000/api/users', {
             method: 'POST',
@@ -357,8 +338,8 @@ describe('POST /api/users', () => {
     })
 
     it('trainer creates trainee and establishes association', async () => {
-        vi.mocked(requireAuth).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.user.findUnique).mockResolvedValue(null)
+        asTrainer()
+        prismaMock.user.findUnique.mockResolvedValue(null)
         const createdTrainee = {
             id: 'trainee-new',
             email: 'new.trainee@example.com',
@@ -367,13 +348,8 @@ describe('POST /api/users', () => {
             role: 'trainee',
             isActive: true,
         }
-        vi.mocked(prisma.user.create).mockResolvedValue(createdTrainee as any)
-        // Mock for trainerTrainee.create
-        const mockTrainerTraineeCreate = vi.fn().mockResolvedValue({})
-            ; (prisma as any).trainerTrainee = {
-                ...(prisma as any).trainerTrainee,
-                create: mockTrainerTraineeCreate,
-            }
+        prismaMock.user.create.mockResolvedValue(createdTrainee as never)
+        prismaMock.trainerTrainee.create.mockResolvedValue({} as never)
 
         const req = makeRequest('http://localhost:3000/api/users', {
             method: 'POST',
@@ -388,6 +364,8 @@ describe('POST /api/users', () => {
 
         const res = await POST(req)
         expect(res.status).toBe(201)
-        expect(mockTrainerTraineeCreate).toHaveBeenCalled()
+        expect(prismaMock.trainerTrainee.create).toHaveBeenCalledWith({
+            data: { trainerId: mockTrainerSession.user.id, traineeId: 'trainee-new' },
+        })
     })
 })

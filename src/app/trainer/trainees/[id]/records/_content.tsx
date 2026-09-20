@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
-import { PersonalRecordsExplorer, RPEOneRMTable, SkeletonTable } from '@/components'
+import PersonalRecordsExplorer from '@/components/PersonalRecordsExplorer'
+import RPEOneRMTable from '@/components/RPEOneRMTable'
+import { SkeletonTable } from '@/components/Skeleton'
 import { Plus, Dumbbell } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/components/ToastNotification'

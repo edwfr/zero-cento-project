@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom'
-import { vi } from 'vitest'
+import { vi, beforeEach } from 'vitest'
+import type { ReactNode } from 'react'
 
 // Mock Next.js router
 vi.mock('next/navigation', () => ({
@@ -15,13 +16,15 @@ vi.mock('next/navigation', () => ({
     redirect: vi.fn(),
 }))
 
-// Mock Next.js Link
-vi.mock('next/link', () => ({
-    default: ({ children, href, ...props }: any) => {
-        const React = require('react')
-        return React.createElement('a', { href, ...props }, children)
-    },
-}))
+// Mock Next.js Link. The factory is async so React is imported as a module
+// (this file is .ts, so no JSX) instead of being pulled in with require().
+vi.mock('next/link', async () => {
+    const React = await import('react')
+    return {
+        default: ({ children, href, ...props }: { children?: ReactNode; href: string }) =>
+            React.createElement('a', { href, ...props }, children),
+    }
+})
 
 // Mock Supabase clients
 vi.mock('@/lib/supabase-client', () => ({
@@ -56,33 +59,69 @@ vi.mock('react-i18next', () => {
     }
 })
 
-vi.mock('@/lib/prisma', () => ({
-    prisma: {
-        user: {
-            findMany: vi.fn(),
-            findFirst: vi.fn(),
-            findUnique: vi.fn(),
-            create: vi.fn(),
-            update: vi.fn(),
-            delete: vi.fn(),
-            count: vi.fn(),
+// Shared, fully typed Prisma mock (tests/helpers/prisma-mock.ts).
+// The factory is async so the helper module is loaded after vi.mock hoisting.
+vi.mock('@/lib/prisma', async () => {
+    const { prismaMock } = await import('../helpers/prisma-mock')
+    return { prisma: prismaMock }
+})
+
+beforeEach(async () => {
+    const { resetPrismaMock } = await import('../helpers/prisma-mock')
+    resetPrismaMock()
+})
+
+// Node >= 25 ships a native localStorage that shadows jsdom's and throws on
+// access unless --localstorage-file is set. Install an in-memory Storage
+// whenever the ambient one is missing or unusable, so tests behave the same
+// on Node 20 (CI) and Node 26 (local).
+function createMemoryStorage(): Storage {
+    let store = new Map<string, string>()
+    return {
+        get length() {
+            return store.size
         },
-        program: {
-            findMany: vi.fn(),
-            findFirst: vi.fn(),
-            findUnique: vi.fn(),
-            create: vi.fn(),
-            update: vi.fn(),
-            delete: vi.fn(),
-            count: vi.fn(),
+        clear() {
+            store = new Map()
         },
-        workoutExercise: {
-            findFirst: vi.fn(),
+        getItem(key: string) {
+            return store.has(key) ? store.get(key)! : null
         },
-        personalRecord: {
-            findFirst: vi.fn(),
-            findMany: vi.fn(),
+        key(index: number) {
+            return Array.from(store.keys())[index] ?? null
         },
-        $transaction: vi.fn((fn: any) => fn()),
-    },
-}))
+        removeItem(key: string) {
+            store.delete(key)
+        },
+        setItem(key: string, value: string) {
+            store.set(key, String(value))
+        },
+    } as Storage
+}
+
+function isUsableStorage(candidate: unknown): boolean {
+    try {
+        const storage = candidate as Storage | undefined
+        if (!storage || typeof storage.clear !== 'function') return false
+        storage.setItem('__probe__', '1')
+        storage.removeItem('__probe__')
+        return true
+    } catch {
+        return false
+    }
+}
+
+for (const name of ['localStorage', 'sessionStorage'] as const) {
+    if (!isUsableStorage((globalThis as Record<string, unknown>)[name])) {
+        const storage = createMemoryStorage()
+        Object.defineProperty(globalThis, name, { value: storage, configurable: true, writable: true })
+        if (typeof window !== 'undefined' && window !== (globalThis as unknown as Window)) {
+            Object.defineProperty(window, name, { value: storage, configurable: true, writable: true })
+        }
+    }
+}
+
+beforeEach(() => {
+    localStorage.clear()
+    sessionStorage.clear()
+})

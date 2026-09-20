@@ -38,7 +38,7 @@ describe('NewProgramContent - clone source prefill', () => {
         global.fetch = vi.fn().mockResolvedValue({
             ok: true,
             json: async () => ({ data: { program: { id: 'new-1' } } }),
-        }) as any
+        }) as unknown as typeof fetch
     })
 
     it('prefills trainee, isSbdProgram, and workoutsPerWeek with lock', () => {
@@ -102,8 +102,8 @@ describe('NewProgramContent - clone source prefill', () => {
             expect(global.fetch).toHaveBeenCalledTimes(1)
         })
 
-        const requestOptions = (global.fetch as any).mock.calls[0][1]
-        const body = JSON.parse(requestOptions.body)
+        const requestOptions = vi.mocked(global.fetch).mock.calls[0][1] as RequestInit
+        const body = JSON.parse(String(requestOptions.body))
 
         expect(body.cloneFromProgramId).toBe('00000000-0000-0000-0000-000000000111')
         expect(body.workoutsPerWeek).toBe(4)

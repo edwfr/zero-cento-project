@@ -1,21 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-vi.mock('@/lib/prisma', () => ({
-    prisma: {
-        trainingProgram: { findUnique: vi.fn(), findFirst: vi.fn() },
-        workout: { findMany: vi.fn() },
-        exerciseFeedback: { aggregate: vi.fn(), findMany: vi.fn() },
-        setPerformed: { findMany: vi.fn() },
-        personalRecord: { findMany: vi.fn() },
-        $queryRaw: vi.fn(),
-    },
-}))
-
 vi.mock('@/lib/logger', () => ({
     logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
 
-import { prisma } from '@/lib/prisma'
+import { prismaMock } from '../../helpers/prisma-mock'
 import {
     loadTraineeProgramView,
     loadActiveProgramId,
@@ -25,31 +14,31 @@ const traineeId = 'trainee-1'
 
 beforeEach(() => {
     vi.clearAllMocks()
-    ;(prisma.workout.findMany as any).mockResolvedValue([])
-    ;(prisma.$queryRaw as any).mockResolvedValue([])
-    ;(prisma.exerciseFeedback.aggregate as any).mockResolvedValue({
+    prismaMock.workout.findMany.mockResolvedValue([] as never)
+    prismaMock.$queryRaw.mockResolvedValue([] as never)
+    prismaMock.exerciseFeedback.aggregate.mockResolvedValue({
         _avg: { actualRpe: null },
         _count: { _all: 0 },
-    })
-    ;(prisma.exerciseFeedback.findMany as any).mockResolvedValue([])
-    ;(prisma.setPerformed.findMany as any).mockResolvedValue([])
-    ;(prisma.personalRecord.findMany as any).mockResolvedValue([])
+    } as never)
+    prismaMock.exerciseFeedback.findMany.mockResolvedValue([] as never)
+    prismaMock.setPerformed.findMany.mockResolvedValue([] as never)
+    prismaMock.personalRecord.findMany.mockResolvedValue([] as never)
 })
 
 describe('loadTraineeProgramView', () => {
     it('returns null when program does not exist', async () => {
         let callCount = 0
-        ;(prisma.trainingProgram.findUnique as any).mockImplementation(async () => {
+        prismaMock.trainingProgram.findUnique.mockImplementation((async () => {
             callCount++
             // Both calls (tree and progress) return null when program doesn't exist
             return null
-        })
+        }) as never)
         const result = await loadTraineeProgramView({ programId: 'p1', traineeId })
         expect(result).toBeNull()
     })
 
     it('returns null when program belongs to another trainee', async () => {
-        ;(prisma.trainingProgram.findUnique as any).mockResolvedValue({
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             id: 'p1',
             traineeId: 'other-trainee',
             trainerId: 't1',
@@ -59,13 +48,13 @@ describe('loadTraineeProgramView', () => {
             weeks: [],
             trainer: { firstName: 'A', lastName: 'B' },
             trainee: { firstName: 'C', lastName: 'D' },
-        })
+        } as never)
         const result = await loadTraineeProgramView({ programId: 'p1', traineeId })
         expect(result).toBeNull()
     })
 
     it('returns combined { program, progress } for the trainee', async () => {
-        ;(prisma.trainingProgram.findUnique as any).mockResolvedValue({
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             id: 'p1',
             traineeId,
             trainerId: 't1',
@@ -76,7 +65,7 @@ describe('loadTraineeProgramView', () => {
             weeks: [],
             trainer: { firstName: 'A', lastName: 'B' },
             trainee: { firstName: 'C', lastName: 'D' },
-        })
+        } as never)
 
         const result = await loadTraineeProgramView({ programId: 'p1', traineeId })
         expect(result).not.toBeNull()
@@ -88,35 +77,35 @@ describe('loadTraineeProgramView', () => {
 
 describe('loadActiveProgramId', () => {
     it('returns the id when active program exists', async () => {
-        ;(prisma.trainingProgram.findFirst as any).mockResolvedValue({ id: 'p1' })
+        prismaMock.trainingProgram.findFirst.mockResolvedValue({ id: 'p1' } as never)
         await expect(loadActiveProgramId(traineeId)).resolves.toBe('p1')
     })
 
     it('returns the preferred id when it is active for the trainee', async () => {
-        ;(prisma.trainingProgram.findFirst as any)
-            .mockResolvedValueOnce({ id: 'preferred-program' })
+        prismaMock.trainingProgram.findFirst
+            .mockResolvedValueOnce({ id: 'preferred-program' } as never)
 
         await expect(loadActiveProgramId(traineeId, 'preferred-program')).resolves.toBe('preferred-program')
 
-        expect(prisma.trainingProgram.findFirst).toHaveBeenCalledTimes(1)
-        expect(prisma.trainingProgram.findFirst).toHaveBeenCalledWith({
+        expect(prismaMock.trainingProgram.findFirst).toHaveBeenCalledTimes(1)
+        expect(prismaMock.trainingProgram.findFirst).toHaveBeenCalledWith({
             where: { id: 'preferred-program', traineeId, status: 'active' },
             select: { id: true },
         })
     })
 
     it('falls back to the default active lookup when preferred id is not active', async () => {
-        ;(prisma.trainingProgram.findFirst as any)
+        prismaMock.trainingProgram.findFirst
             .mockResolvedValueOnce(null)
-            .mockResolvedValueOnce({ id: 'fallback-program' })
+            .mockResolvedValueOnce({ id: 'fallback-program' } as never)
 
         await expect(loadActiveProgramId(traineeId, 'stale-program')).resolves.toBe('fallback-program')
 
-        expect(prisma.trainingProgram.findFirst).toHaveBeenNthCalledWith(1, {
+        expect(prismaMock.trainingProgram.findFirst).toHaveBeenNthCalledWith(1, {
             where: { id: 'stale-program', traineeId, status: 'active' },
             select: { id: true },
         })
-        expect(prisma.trainingProgram.findFirst).toHaveBeenNthCalledWith(2, {
+        expect(prismaMock.trainingProgram.findFirst).toHaveBeenNthCalledWith(2, {
             where: { traineeId, status: 'active' },
             select: { id: true },
             orderBy: { startDate: 'desc' },
@@ -124,7 +113,7 @@ describe('loadActiveProgramId', () => {
     })
 
     it('returns null otherwise', async () => {
-        ;(prisma.trainingProgram.findFirst as any).mockResolvedValue(null)
+        prismaMock.trainingProgram.findFirst.mockResolvedValue(null)
         await expect(loadActiveProgramId(traineeId)).resolves.toBeNull()
     })
 })
@@ -133,37 +122,37 @@ import { loadProgressAggregates } from '@/lib/trainee-program-data'
 
 describe('loadProgressAggregates – SQL uses DISTINCT for exerciseCount', () => {
     beforeEach(() => {
-        ;(prisma.trainingProgram.findUnique as any).mockResolvedValue({
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             id: 'p1',
             title: 'Test',
             status: 'active',
             startDate: new Date('2026-04-01'),
             durationWeeks: 4,
-        })
+        } as never)
     })
 
     it('uses COUNT(DISTINCT we.id) so multiple feedbacks per exercise do not inflate exerciseCount', async () => {
-        ;(prisma.workout.findMany as any).mockResolvedValue([])
-        ;(prisma.$queryRaw as any).mockResolvedValue([])
+        prismaMock.workout.findMany.mockResolvedValue([] as never)
+        prismaMock.$queryRaw.mockResolvedValue([] as never)
 
         await loadProgressAggregates('p1')
 
         // Verify the completion SQL uses DISTINCT to avoid overcounting when an exercise
         // has multiple ExerciseFeedback rows (e.g. draft on day 1, final submit on day 2).
-        const firstCall = (prisma.$queryRaw as any).mock.calls[0]
-        const sqlParts: string[] = Array.from(firstCall[0])
+        const firstCall = prismaMock.$queryRaw.mock.calls[0]
+        const sqlParts: string[] = Array.from(firstCall[0] as Iterable<string>)
         const sql = sqlParts.join('')
         expect(sql).toContain('COUNT(DISTINCT we."id")')
     })
 
     it('marks workout as completed when the workout completion flag is true', async () => {
         const workoutId = 'wk-1'
-        ;(prisma.workout.findMany as any).mockResolvedValue([{
+        prismaMock.workout.findMany.mockResolvedValue([{
             id: workoutId,
             dayIndex: 1,
             week: { weekNumber: 1, weekType: 'normal' },
-        }])
-        ;(prisma.$queryRaw as any)
+        }] as never)
+        prismaMock.$queryRaw
             .mockResolvedValueOnce([{
                 workoutId,
                 weekNumber: 1,
@@ -181,7 +170,7 @@ describe('loadProgressAggregates – SQL uses DISTINCT for exerciseCount', () =>
     })
 
     it('ignores empty workouts when calculating totals and next workout', async () => {
-        ;(prisma.workout.findMany as any).mockResolvedValue([
+        prismaMock.workout.findMany.mockResolvedValue([
             {
                 id: 'wk-empty',
                 dayIndex: 1,
@@ -192,8 +181,8 @@ describe('loadProgressAggregates – SQL uses DISTINCT for exerciseCount', () =>
                 dayIndex: 2,
                 week: { weekNumber: 1, weekType: 'normal' },
             },
-        ])
-        ;(prisma.$queryRaw as any)
+        ] as never)
+        prismaMock.$queryRaw
             .mockResolvedValueOnce([
                 {
                     workoutId: 'wk-empty',
@@ -225,7 +214,7 @@ describe('loadProgressAggregates – SQL uses DISTINCT for exerciseCount', () =>
     })
 
     it('returns the first incomplete workout in order even if a later workout is already started', async () => {
-        ;(prisma.workout.findMany as any).mockResolvedValue([
+        prismaMock.workout.findMany.mockResolvedValue([
             {
                 id: 'wk-todo',
                 dayIndex: 1,
@@ -236,8 +225,8 @@ describe('loadProgressAggregates – SQL uses DISTINCT for exerciseCount', () =>
                 dayIndex: 2,
                 week: { weekNumber: 1, weekType: 'normal' },
             },
-        ])
-        ;(prisma.$queryRaw as any)
+        ] as never)
+        prismaMock.$queryRaw
             .mockResolvedValueOnce([
                 {
                     workoutId: 'wk-todo',

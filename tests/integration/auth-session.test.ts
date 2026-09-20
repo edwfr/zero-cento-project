@@ -1,3 +1,6 @@
+// This file exercises the real auth implementation (getSession), not a route
+// handler: '@/lib/auth' is deliberately NOT mocked here. Only Prisma and
+// Supabase are.
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // React's `cache` is a Server Components API unavailable in jsdom — stub it as passthrough
@@ -5,17 +8,9 @@ vi.mock('react', async (importOriginal) => {
     const actual = await importOriginal() as Record<string, unknown>
     return {
         ...actual,
-        cache: (fn: (...args: any[]) => any) => fn,
+        cache: <T>(fn: T) => fn,
     }
 })
-
-vi.mock('@/lib/prisma', () => ({
-    prisma: {
-        user: {
-            findUnique: vi.fn(),
-        },
-    },
-}))
 
 vi.mock('@/lib/supabase-server', () => ({
     createClient: vi.fn(),
@@ -23,7 +18,7 @@ vi.mock('@/lib/supabase-server', () => ({
 
 import { getSession } from '@/lib/auth'
 import { createClient } from '@/lib/supabase-server'
-import { prisma } from '@/lib/prisma'
+import { prismaMock } from '../helpers/prisma-mock'
 
 // Authorization lives in app_metadata (service-role only); user_metadata holds
 // display data. See src/lib/auth.ts.
@@ -65,7 +60,7 @@ describe('getSession', () => {
                     error: null,
                 }),
             },
-        } as any)
+        } as never)
 
         const session = await getSession()
 
@@ -80,7 +75,7 @@ describe('getSession', () => {
             },
             supabaseUser: mockSupabaseUserWithFullMeta,
         })
-        expect(prisma.user.findUnique).not.toHaveBeenCalled()
+        expect(prismaMock.user.findUnique).not.toHaveBeenCalled()
     })
 
     it('returns null without calling Prisma when metadata shows isActive=false', async () => {
@@ -136,20 +131,20 @@ describe('getSession', () => {
                     error: null,
                 }),
             },
-        } as any)
+        } as never)
 
-        vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        prismaMock.user.findUnique.mockResolvedValue({
             id: 'user-uuid-2',
             email: 'legacy@example.com',
             firstName: 'Legacy',
             lastName: 'User',
             role: 'trainee',
             isActive: true,
-        } as any)
+        } as never)
 
         const session = await getSession()
 
-        expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
             where: { email: 'legacy@example.com' },
             select: {
                 id: true,

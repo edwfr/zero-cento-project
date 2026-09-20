@@ -1,27 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { mockTraineeSession } from './fixtures'
 
 const withIdParam = (id: string) => ({ params: Promise.resolve({ id }) })
 
-vi.mock('@/lib/auth', () => ({
-    requireRole: vi.fn(),
-}))
-
-vi.mock('@/lib/prisma', () => ({
-    prisma: {
-        workoutExercise: {
-            findFirst: vi.fn(),
-        },
-        exerciseFeedback: {
-            upsert: vi.fn(),
-        },
-        setPerformed: {
-            upsert: vi.fn(),
-            count: vi.fn(),
-        },
-    },
-}))
+vi.mock('@/lib/auth', async () => (await import('../helpers/auth-module-mock')).authModuleMock())
 
 vi.mock('@/lib/completion-service', () => ({
     cascadeCompletion: vi.fn(),
@@ -32,9 +14,9 @@ vi.mock('@/lib/logger', () => ({
 }))
 
 import { PATCH } from '@/app/api/trainee/workout-exercises/[id]/feedback/route'
-import { requireRole } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
 import { cascadeCompletion } from '@/lib/completion-service'
+import { prismaMock } from '../helpers/prisma-mock'
+import { asTrainee, asUnauthenticated } from '../helpers/auth-mock'
 
 const UUIDS = {
     workoutExercise: '11111111-1111-1111-1111-111111111111',
@@ -54,21 +36,21 @@ const makeRequest = (body: Record<string, unknown>) =>
 describe('PATCH /api/trainee/workout-exercises/[id]/feedback', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
-        vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue({
+        asTrainee()
+        prismaMock.workoutExercise.findFirst.mockResolvedValue({
             id: UUIDS.workoutExercise,
             sets: 1,
-        } as any)
-        vi.mocked(prisma.exerciseFeedback.upsert).mockResolvedValue({
+        } as never)
+        prismaMock.exerciseFeedback.upsert.mockResolvedValue({
             id: UUIDS.feedback,
             workoutExerciseId: UUIDS.workoutExercise,
             actualRpe: 8,
             notes: null,
             date: new Date('2026-04-29T00:00:00.000Z'),
             updatedAt: new Date('2026-04-29T12:00:00.000Z'),
-        } as any)
-        vi.mocked(prisma.setPerformed.upsert).mockResolvedValue({ setNumber: 1 } as any)
-        vi.mocked(prisma.setPerformed.count)
+        } as never)
+        prismaMock.setPerformed.upsert.mockResolvedValue({ setNumber: 1 } as never)
+        prismaMock.setPerformed.count
             .mockResolvedValueOnce(1) // completed planned sets
             .mockResolvedValueOnce(0) // incomplete planned sets
         vi.mocked(cascadeCompletion).mockResolvedValue({
@@ -76,7 +58,7 @@ describe('PATCH /api/trainee/workout-exercises/[id]/feedback', () => {
             workout: { id: 'workout-1', isCompleted: true },
             week: { id: 'week-1', isCompleted: false, weekNumber: 2 },
             program: { id: 'program-1', status: 'active' },
-        } as any)
+        } as never)
     })
 
     it('upserts feedback and set, cascades completion when set is completed', async () => {
@@ -89,10 +71,10 @@ describe('PATCH /api/trainee/workout-exercises/[id]/feedback', () => {
         const json = await res.json()
 
         expect(res.status).toBe(200)
-        expect(prisma.workoutExercise.findFirst).toHaveBeenCalledTimes(1)
-        expect(prisma.exerciseFeedback.upsert).toHaveBeenCalledTimes(1)
-        expect(prisma.setPerformed.upsert).toHaveBeenCalledTimes(1)
-        expect(prisma.setPerformed.upsert).toHaveBeenCalledWith(
+        expect(prismaMock.workoutExercise.findFirst).toHaveBeenCalledTimes(1)
+        expect(prismaMock.exerciseFeedback.upsert).toHaveBeenCalledTimes(1)
+        expect(prismaMock.setPerformed.upsert).toHaveBeenCalledTimes(1)
+        expect(prismaMock.setPerformed.upsert).toHaveBeenCalledWith(
             expect.objectContaining({
                 create: expect.objectContaining({
                     feedbackId: UUIDS.feedback,
@@ -124,7 +106,7 @@ describe('PATCH /api/trainee/workout-exercises/[id]/feedback', () => {
         const res = await PATCH(request, withIdParam(UUIDS.workoutExercise))
 
         expect(res.status).toBe(200)
-        expect(prisma.setPerformed.upsert).toHaveBeenCalledWith(
+        expect(prismaMock.setPerformed.upsert).toHaveBeenCalledWith(
             expect.objectContaining({
                 create: expect.objectContaining({ actualRpe: null }),
                 update: expect.objectContaining({ actualRpe: null }),
@@ -133,11 +115,11 @@ describe('PATCH /api/trainee/workout-exercises/[id]/feedback', () => {
     })
 
     it('marks exercise incomplete when at least one set is not completed', async () => {
-        vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue({
+        prismaMock.workoutExercise.findFirst.mockResolvedValue({
             id: UUIDS.workoutExercise,
             sets: 2,
-        } as any)
-        vi.mocked(prisma.setPerformed.count)
+        } as never)
+        prismaMock.setPerformed.count
             .mockReset()
             .mockResolvedValueOnce(1) // completed planned sets
             .mockResolvedValueOnce(1) // incomplete planned sets
@@ -154,11 +136,11 @@ describe('PATCH /api/trainee/workout-exercises/[id]/feedback', () => {
     })
 
     it('keeps exercise incomplete when not all planned sets are saved yet', async () => {
-        vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue({
+        prismaMock.workoutExercise.findFirst.mockResolvedValue({
             id: UUIDS.workoutExercise,
             sets: 3,
-        } as any)
-        vi.mocked(prisma.setPerformed.count)
+        } as never)
+        prismaMock.setPerformed.count
             .mockReset()
             .mockResolvedValueOnce(1) // completed planned sets
             .mockResolvedValueOnce(0) // incomplete planned sets
@@ -175,7 +157,7 @@ describe('PATCH /api/trainee/workout-exercises/[id]/feedback', () => {
     })
 
     it('skips setPerformed upsert when no set provided', async () => {
-        vi.mocked(prisma.setPerformed.count)
+        prismaMock.setPerformed.count
             .mockReset()
             .mockResolvedValueOnce(0)  // total sets
             .mockResolvedValueOnce(0) // incomplete sets
@@ -185,7 +167,7 @@ describe('PATCH /api/trainee/workout-exercises/[id]/feedback', () => {
         const res = await PATCH(request, withIdParam(UUIDS.workoutExercise))
 
         expect(res.status).toBe(200)
-        expect(prisma.setPerformed.upsert).not.toHaveBeenCalled()
+        expect(prismaMock.setPerformed.upsert).not.toHaveBeenCalled()
         expect(cascadeCompletion).toHaveBeenCalledWith(UUIDS.workoutExercise, false)
     })
 
@@ -197,7 +179,7 @@ describe('PATCH /api/trainee/workout-exercises/[id]/feedback', () => {
 
         expect(res.status).toBe(400)
         expect(json.error.code).toBe('VALIDATION_ERROR')
-        expect(prisma.exerciseFeedback.upsert).not.toHaveBeenCalled()
+        expect(prismaMock.exerciseFeedback.upsert).not.toHaveBeenCalled()
     })
 
     it('returns 400 when set actualRpe is invalid', async () => {
@@ -211,11 +193,11 @@ describe('PATCH /api/trainee/workout-exercises/[id]/feedback', () => {
 
         expect(res.status).toBe(400)
         expect(json.error.code).toBe('VALIDATION_ERROR')
-        expect(prisma.exerciseFeedback.upsert).not.toHaveBeenCalled()
+        expect(prismaMock.exerciseFeedback.upsert).not.toHaveBeenCalled()
     })
 
     it('returns 404 when trainee does not own the workout exercise', async () => {
-        vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(null as any)
+        prismaMock.workoutExercise.findFirst.mockResolvedValue(null as never)
 
         const request = makeRequest({
             actualRpe: null,
@@ -227,13 +209,10 @@ describe('PATCH /api/trainee/workout-exercises/[id]/feedback', () => {
 
         expect(res.status).toBe(404)
         expect(json.error.code).toBe('NOT_FOUND')
-        expect(prisma.exerciseFeedback.upsert).not.toHaveBeenCalled()
+        expect(prismaMock.exerciseFeedback.upsert).not.toHaveBeenCalled()
     })
 
-    it('returns the auth response when unauthenticated', async () => {
-        vi.mocked(requireRole).mockRejectedValue(
-            new Response(JSON.stringify({ error: { code: 'UNAUTHORIZED' } }), { status: 401 })
-        )
+    it('returns the auth response when unauthenticated', async () => {asUnauthenticated()
 
         const request = makeRequest({
             actualRpe: null,

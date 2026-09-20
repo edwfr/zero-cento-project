@@ -1,13 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import type { ReactNode } from 'react'
 
 vi.mock('recharts', () => {
-    const React = require('react')
-
-    const Wrapper = ({ children, ...props }: any) => React.createElement('div', props, children)
+    const Wrapper = ({ children, ...props }: { children?: ReactNode }) => <div {...props}>{children}</div>
 
     return {
-        ResponsiveContainer: ({ children }: any) => React.createElement('div', { 'data-testid': 'recharts-responsive-container' }, children),
+        ResponsiveContainer: ({ children }: { children?: ReactNode }) => (
+            <div data-testid="recharts-responsive-container">{children}</div>
+        ),
         LineChart: Wrapper,
         Line: () => null,
         CartesianGrid: () => null,
@@ -18,12 +19,9 @@ vi.mock('recharts', () => {
     }
 })
 
-vi.mock('@/components/TraineePlannedMuscleGroupReport', () => {
-    const React = require('react')
-    return {
-        default: () => React.createElement('div', { 'data-testid': 'planned-muscle-report' }),
-    }
-})
+vi.mock('@/components/TraineePlannedMuscleGroupReport', () => ({
+    default: () => <div data-testid="planned-muscle-report" />,
+}))
 
 vi.mock('@/components', async () => {
     const actual = await vi.importActual<typeof import('@/components')>('@/components')

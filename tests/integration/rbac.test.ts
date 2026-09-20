@@ -1,6 +1,8 @@
+// Wiring test: it checks that each route calls the right guard with the right
+// arguments. The guards' own logic is covered by tests/unit/lib/auth.test.ts.
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { mockAdminSession, makeTrainerSession } from './fixtures'
+import { makeTrainerSession, makeTraineeSession } from '../helpers/sessions'
 
 const withIdParam = (id: string) => ({ params: Promise.resolve({ id }) })
 
@@ -19,63 +21,21 @@ const mockTrainerBSession = makeTrainerSession({
     lastName: 'B',
 })
 
-const mockTraineeASession = {
-    user: {
-        id: 'trainee-a-uuid',
-        email: 'trainee.a@zerocento.it',
-        firstName: 'Trainee',
-        lastName: 'A',
-        role: 'trainee' as const,
-        isActive: true,
-    },
-    supabaseUser: {} as any,
-}
+const mockTraineeASession = makeTraineeSession({
+    id: 'trainee-a-uuid',
+    email: 'trainee.a@zerocento.it',
+    firstName: 'Trainee',
+    lastName: 'A',
+})
 
-const mockTraineeBSession = {
-    user: {
-        id: 'trainee-b-uuid',
-        email: 'trainee.b@zerocento.it',
-        firstName: 'Trainee',
-        lastName: 'B',
-        role: 'trainee' as const,
-        isActive: true,
-    },
-    supabaseUser: {} as any,
-}
+const mockTraineeBSession = makeTraineeSession({
+    id: 'trainee-b-uuid',
+    email: 'trainee.b@zerocento.it',
+    firstName: 'Trainee',
+    lastName: 'B',
+})
 
-vi.mock('@/lib/auth', () => ({
-    requireAuth: vi.fn(),
-    requireRole: vi.fn(),
-    getSession: vi.fn(),
-}))
-
-vi.mock('@/lib/prisma', () => ({
-    prisma: {
-        personalRecord: {
-            findMany: vi.fn(),
-        },
-        trainerTrainee: {
-            findMany: vi.fn(),
-            findUnique: vi.fn(),
-            findFirst: vi.fn(),
-        },
-        trainingProgram: {
-            findUnique: vi.fn(),
-            update: vi.fn(),
-        },
-        workout: {
-            findMany: vi.fn(),
-        },
-        exerciseFeedback: {
-            findMany: vi.fn(),
-            count: vi.fn(),
-        },
-        user: {
-            findUnique: vi.fn(),
-            update: vi.fn(),
-        },
-    },
-}))
+vi.mock('@/lib/auth', async () => (await import('../helpers/auth-module-mock')).authModuleMock())
 
 vi.mock('@/lib/logger', () => ({
     logger: {
@@ -93,12 +53,13 @@ import { GET as getFeedback } from '@/app/api/feedback/route'
 import { GET as getUser } from '@/app/api/users/[id]/route'
 import { PUT as updateUser } from '@/app/api/users/[id]/route'
 import { PATCH as deactivateUser } from '@/app/api/users/[id]/deactivate/route'
+import { prismaMock } from '../helpers/prisma-mock'
+import { asAdmin } from '../helpers/auth-mock'
 import { requireRole, requireAuth } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
 
 function makeRequest(url = 'http://localhost:3000', options?: RequestInit) {
     const { signal, ...safeOptions } = options || {}
-    return new NextRequest(url, safeOptions as any)
+    return new NextRequest(url, safeOptions as never)
 }
 
 describe('RBAC Violations - Personal Records', () => {
@@ -110,7 +71,7 @@ describe('RBAC Violations - Personal Records', () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerASession)
 
         // findFirst returns null: trainer A does not manage trainee B
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue(null)
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue(null)
 
         const req = makeRequest(
             'http://localhost:3000/api/personal-records?traineeId=trainee-b-uuid'
@@ -127,7 +88,7 @@ describe('RBAC Violations - Personal Records', () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerBSession)
 
         // findFirst returns null: trainer B does not manage trainee A
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue(null)
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue(null)
 
         const req = makeRequest(
             'http://localhost:3000/api/personal-records?traineeId=trainee-a-uuid'
@@ -144,13 +105,13 @@ describe('RBAC Violations - Personal Records', () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerASession)
 
         // findFirst returns the relationship: trainer A manages trainee A
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue({
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue({
             trainerId: 'trainer-a-uuid',
             traineeId: 'trainee-a-uuid',
             assignedAt: new Date(),
-        } as any)
+        } as never)
 
-        vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([
+        prismaMock.personalRecord.findMany.mockResolvedValue([
             {
                 id: 'pr-1',
                 traineeId: 'trainee-a-uuid',
@@ -158,7 +119,7 @@ describe('RBAC Violations - Personal Records', () => {
                 oneRM: 100,
                 recordDate: new Date(),
             },
-        ] as any)
+        ] as never)
 
         const req = makeRequest(
             'http://localhost:3000/api/personal-records?traineeId=trainee-a-uuid'
@@ -170,9 +131,9 @@ describe('RBAC Violations - Personal Records', () => {
     })
 
     it('allows admin to access any trainee personal records', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockAdminSession)
+        asAdmin()
 
-        vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([
+        prismaMock.personalRecord.findMany.mockResolvedValue([
             {
                 id: 'pr-1',
                 traineeId: 'trainee-b-uuid',
@@ -180,7 +141,7 @@ describe('RBAC Violations - Personal Records', () => {
                 oneRM: 100,
                 recordDate: new Date(),
             },
-        ] as any)
+        ] as never)
 
         const req = makeRequest(
             'http://localhost:3000/api/personal-records?traineeId=trainee-b-uuid'
@@ -201,13 +162,13 @@ describe('RBAC Violations - Training Programs', () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerASession)
 
         // Program belongs to trainer B
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             id: 'prog-b-1',
             trainerId: 'trainer-b-uuid',
             traineeId: 'trainee-b-uuid',
             title: 'Program B',
             status: 'active',
-        } as any)
+        } as never)
 
         const req = makeRequest('http://localhost:3000/api/programs/prog-b-1')
 
@@ -222,13 +183,13 @@ describe('RBAC Violations - Training Programs', () => {
         vi.mocked(requireRole).mockResolvedValue(mockTraineeASession)
 
         // Program assigned to trainee B
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             id: 'prog-b-1',
             trainerId: 'trainer-b-uuid',
             traineeId: 'trainee-b-uuid',
             title: 'Program B',
             status: 'active',
-        } as any)
+        } as never)
 
         const req = makeRequest('http://localhost:3000/api/programs/prog-b-1')
 
@@ -243,13 +204,13 @@ describe('RBAC Violations - Training Programs', () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerASession)
 
         // Program belongs to trainer B
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             id: 'prog-b-1',
             trainerId: 'trainer-b-uuid',
             traineeId: 'trainee-b-uuid',
             title: 'Program B',
             status: 'draft',
-        } as any)
+        } as never)
 
         const req = makeRequest('http://localhost:3000/api/programs/prog-b-1', {
             method: 'PUT',
@@ -268,7 +229,7 @@ describe('RBAC Violations - Training Programs', () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerASession)
 
         // Program belongs to trainer A
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             id: 'prog-a-1',
             trainerId: 'trainer-a-uuid',
             traineeId: 'trainee-a-uuid',
@@ -277,8 +238,8 @@ describe('RBAC Violations - Training Programs', () => {
             trainer: { id: 'trainer-a-uuid', firstName: 'Trainer', lastName: 'A' },
             trainee: { id: 'trainee-a-uuid', firstName: 'Trainee', lastName: 'A' },
             weeks: [],
-        } as any)
-        vi.mocked(prisma.workout.findMany).mockResolvedValue([] as any)
+        } as never)
+        prismaMock.workout.findMany.mockResolvedValue([] as never)
 
         const req = makeRequest('http://localhost:3000/api/programs/prog-a-1')
 
@@ -291,7 +252,7 @@ describe('RBAC Violations - Training Programs', () => {
         vi.mocked(requireRole).mockResolvedValue(mockTraineeASession)
 
         // Program assigned to trainee A
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             id: 'prog-a-1',
             trainerId: 'trainer-a-uuid',
             traineeId: 'trainee-a-uuid',
@@ -300,7 +261,7 @@ describe('RBAC Violations - Training Programs', () => {
             trainer: { id: 'trainer-a-uuid', firstName: 'Trainer', lastName: 'A' },
             trainee: { id: 'trainee-a-uuid', firstName: 'Trainee', lastName: 'A' },
             weeks: [],
-        } as any)
+        } as never)
 
         const req = makeRequest('http://localhost:3000/api/programs/prog-a-1')
 
@@ -310,9 +271,9 @@ describe('RBAC Violations - Training Programs', () => {
     })
 
     it('allows admin to access any program', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockAdminSession)
+        asAdmin()
 
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             id: 'prog-b-1',
             trainerId: 'trainer-b-uuid',
             traineeId: 'trainee-b-uuid',
@@ -321,7 +282,10 @@ describe('RBAC Violations - Training Programs', () => {
             trainer: { id: 'trainer-b-uuid', firstName: 'Trainer', lastName: 'B' },
             trainee: { id: 'trainee-b-uuid', firstName: 'Trainee', lastName: 'B' },
             weeks: [],
-        } as any)
+        } as never)
+        // Explicit: before the shared mock this test relied on the stub left
+        // behind by the previous one (clearAllMocks keeps implementations).
+        prismaMock.workout.findMany.mockResolvedValue([] as never)
 
         const req = makeRequest('http://localhost:3000/api/programs/prog-b-1')
 
@@ -340,7 +304,7 @@ describe('RBAC Violations - Feedback', () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerASession)
 
         // Trainer A tries to access feedback from trainee B (who belongs to trainer B)
-        vi.mocked(prisma.exerciseFeedback.findMany).mockResolvedValue([])
+        prismaMock.exerciseFeedback.findMany.mockResolvedValue([] as never)
 
         const req = makeRequest('http://localhost:3000/api/feedback?traineeId=trainee-b-uuid')
 
@@ -355,14 +319,14 @@ describe('RBAC Violations - Feedback', () => {
     it('allows trainer A to access own trainee feedback', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerASession)
 
-        vi.mocked(prisma.exerciseFeedback.findMany).mockResolvedValue([
+        prismaMock.exerciseFeedback.findMany.mockResolvedValue([
             {
                 id: 'fb-1',
                 workoutExerciseId: 'we-1',
                 completed: true,
                 actualRpe: 8,
             },
-        ] as any)
+        ] as never)
 
         const req = makeRequest('http://localhost:3000/api/feedback?traineeId=trainee-a-uuid')
 
@@ -380,17 +344,17 @@ describe('RBAC Violations - Users', () => {
     it('denies trainer A access to trainer B trainee details', async () => {
         vi.mocked(requireAuth).mockResolvedValue(mockTrainerASession)
 
-        vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        prismaMock.user.findUnique.mockResolvedValue({
             id: 'trainee-b-uuid',
             email: 'trainee.b@zerocento.it',
             firstName: 'Trainee',
             lastName: 'B',
             role: 'trainee',
             isActive: true,
-        } as any)
+        } as never)
 
         // Trainer A does not own trainee B
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue(null)
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue(null)
 
         const req = makeRequest('http://localhost:3000/api/users/trainee-b-uuid')
 
@@ -404,17 +368,17 @@ describe('RBAC Violations - Users', () => {
     it('denies trainer A updating trainer B trainee', async () => {
         vi.mocked(requireAuth).mockResolvedValue(mockTrainerASession)
 
-        vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        prismaMock.user.findUnique.mockResolvedValue({
             id: 'trainee-b-uuid',
             email: 'trainee.b@zerocento.it',
             firstName: 'Trainee',
             lastName: 'B',
             role: 'trainee',
             isActive: true,
-        } as any)
+        } as never)
 
         // Trainer A does not own trainee B
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue(null)
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue(null)
 
         const req = makeRequest('http://localhost:3000/api/users/trainee-b-uuid', {
             method: 'PUT',
@@ -432,17 +396,17 @@ describe('RBAC Violations - Users', () => {
     it('denies trainer A deactivating trainer B trainee', async () => {
         vi.mocked(requireAuth).mockResolvedValue(mockTrainerASession)
 
-        vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        prismaMock.user.findUnique.mockResolvedValue({
             id: 'trainee-b-uuid',
             email: 'trainee.b@zerocento.it',
             firstName: 'Trainee',
             lastName: 'B',
             role: 'trainee',
             isActive: true,
-        } as any)
+        } as never)
 
         // Trainer A does not own trainee B
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue(null)
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue(null)
 
         const req = makeRequest('http://localhost:3000/api/users/trainee-b-uuid/deactivate', {
             method: 'PATCH',
@@ -458,7 +422,7 @@ describe('RBAC Violations - Users', () => {
     it('allows trainer A to access own trainee details', async () => {
         vi.mocked(requireAuth).mockResolvedValue(mockTrainerASession)
 
-        vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        prismaMock.user.findUnique.mockResolvedValue({
             id: 'trainee-a-uuid',
             email: 'trainee.a@zerocento.it',
             firstName: 'Trainee',
@@ -466,14 +430,14 @@ describe('RBAC Violations - Users', () => {
             role: 'trainee',
             isActive: true,
             createdAt: new Date(),
-        } as any)
+        } as never)
 
         // Trainer A owns trainee A
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue({
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue({
             trainerId: 'trainer-a-uuid',
             traineeId: 'trainee-a-uuid',
             assignedAt: new Date(),
-        } as any)
+        } as never)
 
         const req = makeRequest('http://localhost:3000/api/users/trainee-a-uuid')
 
@@ -483,9 +447,9 @@ describe('RBAC Violations - Users', () => {
     })
 
     it('allows admin to access any user', async () => {
-        vi.mocked(requireAuth).mockResolvedValue(mockAdminSession)
+        asAdmin()
 
-        vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        prismaMock.user.findUnique.mockResolvedValue({
             id: 'trainee-b-uuid',
             email: 'trainee.b@zerocento.it',
             firstName: 'Trainee',
@@ -493,7 +457,7 @@ describe('RBAC Violations - Users', () => {
             role: 'trainee',
             isActive: true,
             createdAt: new Date(),
-        } as any)
+        } as never)
 
         const req = makeRequest('http://localhost:3000/api/users/trainee-b-uuid')
 

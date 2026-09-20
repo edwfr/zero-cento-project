@@ -1,24 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { mockAdminSession, mockTrainerSession } from './fixtures'
 
 const { deleteUserMock } = vi.hoisted(() => ({ deleteUserMock: vi.fn() }))
 
-vi.mock('@/lib/auth', () => ({
-    requireAuth: vi.fn(),
-    requireRole: vi.fn(),
-}))
-
-vi.mock('@/lib/prisma', () => ({
-    prisma: {
-        user: { findUnique: vi.fn(), delete: vi.fn() },
-        trainerTrainee: { findFirst: vi.fn() },
-        trainingProgram: { deleteMany: vi.fn() },
-        exerciseFeedback: { deleteMany: vi.fn() },
-        personalRecord: { deleteMany: vi.fn() },
-        $transaction: vi.fn(),
-    },
-}))
+vi.mock('@/lib/auth', async () => (await import('../helpers/auth-module-mock')).authModuleMock())
 
 vi.mock('@/lib/supabase-server', () => ({
     createAdminClient: vi.fn(() => ({
@@ -33,8 +18,10 @@ vi.mock('@/lib/logger', () => ({
 }))
 
 import { DELETE } from '@/app/api/users/[id]/route'
+import { prismaMock } from '../helpers/prisma-mock'
+import { mockTrainerSession } from '../helpers/sessions'
+import { asTrainer, asAdmin } from '../helpers/auth-mock'
 import { requireRole } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
 
 const trainee = {
     id: 'trainee-uuid-9',
@@ -56,9 +43,9 @@ function callDelete(id = trainee.id) {
 describe('DELETE /api/users/[id]', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        vi.mocked(requireRole).mockResolvedValue(mockAdminSession as any)
-        vi.mocked(prisma.user.findUnique).mockResolvedValue(trainee as any)
-        vi.mocked(prisma.$transaction).mockResolvedValue([] as any)
+        asAdmin()
+        prismaMock.user.findUnique.mockResolvedValue(trainee as never)
+        prismaMock.$transaction.mockResolvedValue([] as never)
         deleteUserMock.mockResolvedValue({ data: {}, error: null })
     })
 
@@ -76,56 +63,56 @@ describe('DELETE /api/users/[id]', () => {
 
         expect(res.status).toBe(403)
         expect(deleteUserMock).not.toHaveBeenCalled()
-        expect(prisma.$transaction).not.toHaveBeenCalled()
+        expect(prismaMock.$transaction).not.toHaveBeenCalled()
     })
 
     it('admin deletes a trainee: auth account first, then all trainee data in one transaction', async () => {
-        vi.mocked(prisma.trainingProgram.deleteMany).mockReturnValue('op-programs' as any)
-        vi.mocked(prisma.exerciseFeedback.deleteMany).mockReturnValue('op-feedback' as any)
-        vi.mocked(prisma.personalRecord.deleteMany).mockReturnValue('op-records' as any)
-        vi.mocked(prisma.user.delete).mockReturnValue('op-user' as any)
+        prismaMock.trainingProgram.deleteMany.mockReturnValue('op-programs' as never)
+        prismaMock.exerciseFeedback.deleteMany.mockReturnValue('op-feedback' as never)
+        prismaMock.personalRecord.deleteMany.mockReturnValue('op-records' as never)
+        prismaMock.user.delete.mockReturnValue('op-user' as never)
 
         const res = await callDelete()
 
         expect(res.status).toBe(200)
         expect(deleteUserMock).toHaveBeenCalledWith(trainee.id)
-        expect(prisma.trainingProgram.deleteMany).toHaveBeenCalledWith({ where: { traineeId: trainee.id } })
-        expect(prisma.exerciseFeedback.deleteMany).toHaveBeenCalledWith({ where: { traineeId: trainee.id } })
-        expect(prisma.personalRecord.deleteMany).toHaveBeenCalledWith({ where: { traineeId: trainee.id } })
-        expect(prisma.user.delete).toHaveBeenCalledWith({ where: { id: trainee.id } })
-        expect(prisma.$transaction).toHaveBeenCalledTimes(1)
-        expect(prisma.$transaction).toHaveBeenCalledWith(['op-programs', 'op-feedback', 'op-records', 'op-user'])
+        expect(prismaMock.trainingProgram.deleteMany).toHaveBeenCalledWith({ where: { traineeId: trainee.id } })
+        expect(prismaMock.exerciseFeedback.deleteMany).toHaveBeenCalledWith({ where: { traineeId: trainee.id } })
+        expect(prismaMock.personalRecord.deleteMany).toHaveBeenCalledWith({ where: { traineeId: trainee.id } })
+        expect(prismaMock.user.delete).toHaveBeenCalledWith({ where: { id: trainee.id } })
+        expect(prismaMock.$transaction).toHaveBeenCalledTimes(1)
+        expect(prismaMock.$transaction).toHaveBeenCalledWith(['op-programs', 'op-feedback', 'op-records', 'op-user'])
         expect(deleteUserMock.mock.invocationCallOrder[0]).toBeLessThan(
-            vi.mocked(prisma.$transaction).mock.invocationCallOrder[0]
+            prismaMock.$transaction.mock.invocationCallOrder[0]
         )
     })
 
     it('trainer deletes own trainee', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession as any)
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue({ id: 'tt-1' } as any)
+        asTrainer()
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue({ id: 'tt-1' } as never)
 
         const res = await callDelete()
 
         expect(res.status).toBe(200)
-        expect(prisma.trainerTrainee.findFirst).toHaveBeenCalledWith({
+        expect(prismaMock.trainerTrainee.findFirst).toHaveBeenCalledWith({
             where: { trainerId: mockTrainerSession.user.id, traineeId: trainee.id },
         })
-        expect(prisma.$transaction).toHaveBeenCalledTimes(1)
+        expect(prismaMock.$transaction).toHaveBeenCalledTimes(1)
     })
 
     it('trainer cannot delete a trainee they do not own', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession as any)
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue(null)
+        asTrainer()
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue(null)
 
         const res = await callDelete()
 
         expect(res.status).toBe(403)
         expect(deleteUserMock).not.toHaveBeenCalled()
-        expect(prisma.$transaction).not.toHaveBeenCalled()
+        expect(prismaMock.$transaction).not.toHaveBeenCalled()
     })
 
     it('cannot delete an admin', async () => {
-        vi.mocked(prisma.user.findUnique).mockResolvedValue({ ...trainee, role: 'admin' } as any)
+        prismaMock.user.findUnique.mockResolvedValue({ ...trainee, role: 'admin' } as never)
 
         const res = await callDelete()
 
@@ -134,7 +121,7 @@ describe('DELETE /api/users/[id]', () => {
     })
 
     it('returns 404 when the user does not exist', async () => {
-        vi.mocked(prisma.user.findUnique).mockResolvedValue(null)
+        prismaMock.user.findUnique.mockResolvedValue(null)
 
         const res = await callDelete()
 
@@ -150,7 +137,7 @@ describe('DELETE /api/users/[id]', () => {
 
         expect(res.status).toBe(500)
         expect(body.error.key).toBe('user.deleteFailed')
-        expect(prisma.$transaction).not.toHaveBeenCalled()
+        expect(prismaMock.$transaction).not.toHaveBeenCalled()
     })
 
     it('proceeds when the Supabase user is already gone (idempotent retry)', async () => {
@@ -159,11 +146,11 @@ describe('DELETE /api/users/[id]', () => {
         const res = await callDelete()
 
         expect(res.status).toBe(200)
-        expect(prisma.$transaction).toHaveBeenCalledTimes(1)
+        expect(prismaMock.$transaction).toHaveBeenCalledTimes(1)
     })
 
     it('returns 500 when the DB transaction fails', async () => {
-        vi.mocked(prisma.$transaction).mockRejectedValue(new Error('db down'))
+        prismaMock.$transaction.mockRejectedValue(new Error('db down') as never)
 
         const res = await callDelete()
         const body = await res.json()
@@ -173,13 +160,13 @@ describe('DELETE /api/users/[id]', () => {
     })
 
     it('keeps plain delete for non-trainee targets (no Supabase call, no transaction)', async () => {
-        vi.mocked(prisma.user.findUnique).mockResolvedValue({ ...trainee, role: 'trainer' } as any)
+        prismaMock.user.findUnique.mockResolvedValue({ ...trainee, role: 'trainer' } as never)
 
         const res = await callDelete()
 
         expect(res.status).toBe(200)
-        expect(prisma.user.delete).toHaveBeenCalledWith({ where: { id: trainee.id } })
+        expect(prismaMock.user.delete).toHaveBeenCalledWith({ where: { id: trainee.id } })
         expect(deleteUserMock).not.toHaveBeenCalled()
-        expect(prisma.$transaction).not.toHaveBeenCalled()
+        expect(prismaMock.$transaction).not.toHaveBeenCalled()
     })
 })

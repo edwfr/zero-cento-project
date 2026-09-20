@@ -1,18 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { NextRequest } from 'next/server'
-import { mockTrainerSession, mockTraineeSession } from './fixtures'
 
-vi.mock('@/lib/auth', () => ({
-    requireRole: vi.fn(),
-}))
-
-vi.mock('@/lib/prisma', () => ({
-    prisma: {
-        trainingProgram: {
-            findUnique: vi.fn(),
-        },
-    },
-}))
+vi.mock('@/lib/auth', async () => (await import('../helpers/auth-module-mock')).authModuleMock())
 
 vi.mock('@/lib/logger', () => ({
     logger: {
@@ -22,8 +11,8 @@ vi.mock('@/lib/logger', () => ({
 }))
 
 import { GET } from '@/app/api/programs/[id]/test-results/route'
-import { requireRole } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { prismaMock } from '../helpers/prisma-mock'
+import { asTrainer, asTrainee } from '../helpers/auth-mock'
 
 function makeRequest(url = 'http://localhost:3000/api/programs/prog-1/test-results') {
     return new NextRequest(url)
@@ -35,8 +24,8 @@ describe('GET /api/programs/[id]/test-results', () => {
     })
 
     it('returns workout results for all weeks (not only test weeks)', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+        asTrainer()
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             id: 'prog-1',
             title: 'Block A',
             trainerId: 'trainer-uuid-1',
@@ -144,7 +133,7 @@ describe('GET /api/programs/[id]/test-results', () => {
                     ],
                 },
             ],
-        } as any)
+        } as never)
 
         const res = await GET(makeRequest(), { params: Promise.resolve({ id: 'prog-1' }) })
         const body = await res.json()
@@ -195,8 +184,8 @@ describe('GET /api/programs/[id]/test-results', () => {
     })
 
     it('returns 404 when program does not exist', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue(null)
+        asTrainer()
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(null)
 
         const res = await GET(makeRequest(), { params: Promise.resolve({ id: 'missing-program' }) })
 
@@ -204,8 +193,8 @@ describe('GET /api/programs/[id]/test-results', () => {
     })
 
     it('returns 403 when trainer tries to access another trainer program', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+        asTrainer()
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             id: 'prog-2',
             title: 'Other Program',
             trainerId: 'other-trainer',
@@ -216,7 +205,7 @@ describe('GET /api/programs/[id]/test-results', () => {
                 lastName: 'Atleta',
             },
             weeks: [],
-        } as any)
+        } as never)
 
         const res = await GET(makeRequest('http://localhost:3000/api/programs/prog-2/test-results'), {
             params: Promise.resolve({ id: 'prog-2' }),
@@ -226,8 +215,8 @@ describe('GET /api/programs/[id]/test-results', () => {
     })
 
     it('returns 403 when trainee tries to access a program not assigned to them', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
-        vi.mocked(prisma.trainingProgram.findUnique).mockResolvedValue({
+        asTrainee()
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
             id: 'prog-3',
             title: 'Another Program',
             trainerId: 'trainer-uuid-1',
@@ -238,7 +227,7 @@ describe('GET /api/programs/[id]/test-results', () => {
                 lastName: 'Rossi',
             },
             weeks: [],
-        } as any)
+        } as never)
 
         const res = await GET(makeRequest('http://localhost:3000/api/programs/prog-3/test-results'), {
             params: Promise.resolve({ id: 'prog-3' }),

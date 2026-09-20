@@ -1,52 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { mockTrainerSession, mockTraineeSession } from './fixtures'
 
 const withIdParam = (id: string) => ({ params: Promise.resolve({ id }) })
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
-vi.mock('@/lib/auth', () => ({
-    requireRole: vi.fn(),
-    requireAuth: vi.fn(),
-}))
-
-vi.mock('@/lib/prisma', () => ({
-    prisma: {
-        workoutExercise: {
-            findFirst: vi.fn(),
-            update: vi.fn(),
-        },
-        $transaction: vi.fn((fn: any) => fn({
-            workoutExercise: {
-                findFirst: vi.fn(),
-                update: vi.fn(),
-                count: vi.fn(),
-            },
-            workout: {
-                findUnique: vi.fn(),
-                count: vi.fn(),
-            },
-            week: {
-                findUnique: vi.fn(),
-                count: vi.fn(),
-            },
-            trainingProgram: {
-                findUnique: vi.fn(),
-                update: vi.fn(),
-            },
-        })),
-    },
-}))
+vi.mock('@/lib/auth', async () => (await import('../helpers/auth-module-mock')).authModuleMock())
 
 vi.mock('@/lib/completion-service', () => ({
     cascadeCompletion: vi.fn(),
 }))
 
 import { PATCH } from '@/app/api/trainee/workout-exercises/[id]/complete/route'
-import { requireRole } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
 import { cascadeCompletion } from '@/lib/completion-service'
+import { prismaMock } from '../helpers/prisma-mock'
+import { asTrainee } from '../helpers/auth-mock'
+import { requireRole } from '@/lib/auth'
 
 // ─── Fixture UUIDs ────────────────────────────────────────────────────────────
 
@@ -67,7 +36,7 @@ const mockTraineeOtherSession = {
         role: 'trainee' as const,
         isActive: true,
     },
-    supabaseUser: {} as any,
+    supabaseUser: {} as never,
 }
 
 const mockCascadeResult = {
@@ -98,7 +67,7 @@ const mockWorkoutExercise = {
 // Helper to build a NextRequest
 function makeRequest(url = `http://localhost:3000/api/trainee/workout-exercises/${UUIDS.we}/complete`, options?: RequestInit) {
     const { signal, ...safeOptions } = options || {}
-    return new NextRequest(url, safeOptions as any)
+    return new NextRequest(url, safeOptions as never)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -110,12 +79,12 @@ describe('PATCH /api/trainee/workout-exercises/[id]/complete', () => {
         vi.clearAllMocks()
 
         // Default: ownership check passes unless a test overrides it.
-        vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue({ id: UUIDS.we } as any)
+        prismaMock.workoutExercise.findFirst.mockResolvedValue({ id: UUIDS.we } as never)
         vi.mocked(cascadeCompletion).mockResolvedValue(mockCascadeResult)
     })
 
     it('returns 200 OK with cascade result when exercise is marked complete', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
+        asTrainee()
 
         const req = makeRequest(
             `http://localhost:3000/api/trainee/workout-exercises/${UUIDS.we}/complete`,
@@ -134,7 +103,7 @@ describe('PATCH /api/trainee/workout-exercises/[id]/complete', () => {
     })
 
     it('returns 400 when validation fails (missing isCompleted)', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
+        asTrainee()
 
         const req = makeRequest(
             `http://localhost:3000/api/trainee/workout-exercises/${UUIDS.we}/complete`,
@@ -153,7 +122,7 @@ describe('PATCH /api/trainee/workout-exercises/[id]/complete', () => {
     })
 
     it('returns 400 when isCompleted is not a boolean', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
+        asTrainee()
 
         const req = makeRequest(
             `http://localhost:3000/api/trainee/workout-exercises/${UUIDS.we}/complete`,
@@ -196,7 +165,7 @@ describe('PATCH /api/trainee/workout-exercises/[id]/complete', () => {
     it('returns 403 when trainee does not own the exercise', async () => {
         vi.mocked(requireRole).mockResolvedValue(mockTraineeOtherSession)
 
-        vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(null) // Different trainee
+        prismaMock.workoutExercise.findFirst.mockResolvedValue(null) // Different trainee
 
         const req = makeRequest(
             `http://localhost:3000/api/trainee/workout-exercises/${UUIDS.we}/complete`,
@@ -215,9 +184,9 @@ describe('PATCH /api/trainee/workout-exercises/[id]/complete', () => {
     })
 
     it('returns 404 when workout exercise not found', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
+        asTrainee()
 
-        vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(null)
+        prismaMock.workoutExercise.findFirst.mockResolvedValue(null)
 
         const req = makeRequest(
             `http://localhost:3000/api/trainee/workout-exercises/${UUIDS.we}/complete`,
@@ -236,7 +205,7 @@ describe('PATCH /api/trainee/workout-exercises/[id]/complete', () => {
     })
 
     it('handles toggle from true to false (de-completion)', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
+        asTrainee()
 
         const mockDecompletionResult = {
             workoutExercise: { id: UUIDS.we, isCompleted: false },
@@ -264,10 +233,10 @@ describe('PATCH /api/trainee/workout-exercises/[id]/complete', () => {
     })
 
     it('performs ownership check before updating', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
+        asTrainee()
 
         const verifyCall = vi.fn().mockResolvedValue(mockWorkoutExercise)
-        vi.mocked(prisma.workoutExercise.findFirst).mockImplementation(verifyCall)
+        prismaMock.workoutExercise.findFirst.mockImplementation(verifyCall)
 
         const req = makeRequest(
             `http://localhost:3000/api/trainee/workout-exercises/${UUIDS.we}/complete`,

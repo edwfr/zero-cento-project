@@ -1,13 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { cascadeCompletion, cascadeWorkoutCompletion } from '@/lib/completion-service'
-import { prisma } from '@/lib/prisma'
-
-// Mock the prisma module
-vi.mock('@/lib/prisma', () => ({
-    prisma: {
-        $transaction: vi.fn(),
-    },
-}))
+import { prismaMock } from '../helpers/prisma-mock'
 
 describe('cascadeCompletion', () => {
     const mockWorkoutExerciseId = 'we-1'
@@ -79,7 +72,7 @@ describe('cascadeCompletion', () => {
             },
         }
 
-        vi.mocked(prisma.$transaction).mockImplementation((fn: any) => fn(mockTx))
+        prismaMock.$transaction.mockImplementation(((fn: (tx: unknown) => unknown) => fn(mockTx)) as never)
 
         const result = await cascadeCompletion(mockWorkoutExerciseId, true)
 
@@ -157,7 +150,7 @@ describe('cascadeCompletion', () => {
             },
         }
 
-        vi.mocked(prisma.$transaction).mockImplementation((fn: any) => fn(mockTx))
+        prismaMock.$transaction.mockImplementation(((fn: (tx: unknown) => unknown) => fn(mockTx)) as never)
 
         const result = await cascadeCompletion(mockWorkoutExerciseId, true)
 
@@ -228,7 +221,7 @@ describe('cascadeCompletion', () => {
             },
         }
 
-        vi.mocked(prisma.$transaction).mockImplementation((fn: any) => fn(mockTx))
+        prismaMock.$transaction.mockImplementation(((fn: (tx: unknown) => unknown) => fn(mockTx)) as never)
 
         const result = await cascadeCompletion(mockWorkoutExerciseId, false)
 
@@ -256,7 +249,7 @@ describe('cascadeCompletion', () => {
             },
         }
 
-        vi.mocked(prisma.$transaction).mockImplementation((fn: any) => fn(mockTx))
+        prismaMock.$transaction.mockImplementation(((fn: (tx: unknown) => unknown) => fn(mockTx)) as never)
 
         await expect(cascadeCompletion(mockWorkoutExerciseId, true)).rejects.toThrow(
             'Workout not found'
@@ -313,7 +306,7 @@ describe('cascadeCompletion', () => {
             },
         }
 
-        vi.mocked(prisma.$transaction).mockImplementation((fn: any) => fn(mockTx))
+        prismaMock.$transaction.mockImplementation(((fn: (tx: unknown) => unknown) => fn(mockTx)) as never)
 
         const result = await cascadeCompletion(mockWorkoutExerciseId, true)
 
@@ -368,7 +361,7 @@ describe('cascadeCompletion', () => {
             },
         }
 
-        vi.mocked(prisma.$transaction).mockImplementation((fn: any) => fn(mockTx))
+        prismaMock.$transaction.mockImplementation(((fn: (tx: unknown) => unknown) => fn(mockTx)) as never)
 
         const result = await cascadeCompletion(mockWorkoutExerciseId, true)
 
@@ -432,7 +425,7 @@ describe('cascadeCompletion', () => {
             },
         }
 
-        vi.mocked(prisma.$transaction).mockImplementation((fn: any) => fn(mockTx))
+        prismaMock.$transaction.mockImplementation(((fn: (tx: unknown) => unknown) => fn(mockTx)) as never)
 
         const result = await cascadeCompletion(mockWorkoutExerciseId, true)
 
@@ -502,7 +495,7 @@ describe('cascadeCompletion', () => {
             },
         }
 
-        vi.mocked(prisma.$transaction).mockImplementation((fn: any) => fn(mockTx))
+        prismaMock.$transaction.mockImplementation(((fn: (tx: unknown) => unknown) => fn(mockTx)) as never)
 
         const result = await cascadeWorkoutCompletion(mockWorkoutId, true)
 

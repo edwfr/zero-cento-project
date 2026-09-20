@@ -1,23 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mockTrainerSession, mockTraineeSession } from './fixtures'
 
-vi.mock('@/lib/auth', () => ({
-    requireAuth: vi.fn(),
-}))
-
-vi.mock('@/lib/prisma', () => ({
-    prisma: {
-        trainerTrainee: {
-            findFirst: vi.fn(),
-        },
-        trainingProgram: {
-            findMany: vi.fn(),
-        },
-        personalRecord: {
-            findMany: vi.fn(),
-        },
-    },
-}))
+vi.mock('@/lib/auth', async () => (await import('../helpers/auth-module-mock')).authModuleMock())
 
 vi.mock('@/lib/logger', () => ({
     logger: {
@@ -29,19 +12,19 @@ vi.mock('@/lib/logger', () => ({
 }))
 
 import { GET } from '@/app/api/users/[id]/reports/planned-training-sets/route'
-import { requireAuth } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { prismaMock } from '../helpers/prisma-mock'
+import { asTrainer, asTrainee } from '../helpers/auth-mock'
 
 describe('GET /api/users/[id]/reports/planned-training-sets', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([])
+        prismaMock.personalRecord.findMany.mockResolvedValue([] as never)
     })
 
     it('aggregates muscle groups and fundamental sets across programs', async () => {
-        vi.mocked(requireAuth).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue({ id: 'assoc-1' } as any)
-        vi.mocked(prisma.trainingProgram.findMany).mockResolvedValue([
+        asTrainer()
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue({ id: 'assoc-1' } as never)
+        prismaMock.trainingProgram.findMany.mockResolvedValue([
             {
                 id: 'program-1',
                 title: 'Programma A',
@@ -160,7 +143,7 @@ describe('GET /api/users/[id]/reports/planned-training-sets', () => {
                     },
                 ],
             },
-        ] as any)
+        ] as never)
 
         const request = new Request('http://localhost:3000/api/users/trainee-uuid-1/reports/planned-training-sets')
         const response = await GET(request, { params: Promise.resolve({ id: 'trainee-uuid-1' }) })
@@ -207,9 +190,9 @@ describe('GET /api/users/[id]/reports/planned-training-sets', () => {
     })
 
     it('counts distinct workouts per week for FRQ and derives IM from RPE table', async () => {
-        vi.mocked(requireAuth).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue({ id: 'assoc-1' } as any)
-        vi.mocked(prisma.trainingProgram.findMany).mockResolvedValue([
+        asTrainer()
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue({ id: 'assoc-1' } as never)
+        prismaMock.trainingProgram.findMany.mockResolvedValue([
             {
                 id: 'program-rpe',
                 title: 'Programma RPE',
@@ -264,7 +247,7 @@ describe('GET /api/users/[id]/reports/planned-training-sets', () => {
                     },
                 ],
             },
-        ] as any)
+        ] as never)
 
         const request = new Request('http://localhost:3000/api/users/trainee-uuid-1/reports/planned-training-sets')
         const response = await GET(request, { params: Promise.resolve({ id: 'trainee-uuid-1' }) })
@@ -282,8 +265,8 @@ describe('GET /api/users/[id]/reports/planned-training-sets', () => {
     })
 
     it('returns 403 when trainer is not associated with trainee', async () => {
-        vi.mocked(requireAuth).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue(null)
+        asTrainer()
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue(null)
 
         const request = new Request('http://localhost:3000/api/users/trainee-uuid-1/reports/planned-training-sets')
         const response = await GET(request, { params: Promise.resolve({ id: 'trainee-uuid-1' }) })
@@ -292,7 +275,7 @@ describe('GET /api/users/[id]/reports/planned-training-sets', () => {
     })
 
     it('returns 403 when trainee requests another trainee id', async () => {
-        vi.mocked(requireAuth).mockResolvedValue(mockTraineeSession)
+        asTrainee()
 
         const request = new Request('http://localhost:3000/api/users/trainee-uuid-2/reports/planned-training-sets')
         const response = await GET(request, { params: Promise.resolve({ id: 'trainee-uuid-2' }) })

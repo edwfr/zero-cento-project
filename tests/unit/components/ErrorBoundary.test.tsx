@@ -5,7 +5,7 @@ import React from 'react'
 // Mock Sentry before importing component
 vi.mock('@sentry/nextjs', () => ({
     captureException: vi.fn(),
-    withScope: vi.fn((callback: (scope: any) => void) => callback({ setContext: vi.fn() })),
+    withScope: vi.fn((callback: (scope: { setContext: () => void }) => void) => callback({ setContext: vi.fn() })),
 }))
 
 // Mock i18n
