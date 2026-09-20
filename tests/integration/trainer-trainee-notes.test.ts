@@ -1,19 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { NextRequest } from 'next/server'
-import { mockTrainerSession } from './fixtures'
 
-vi.mock('@/lib/auth', () => ({
-    requireRole: vi.fn(),
-}))
-
-vi.mock('@/lib/prisma', () => ({
-    prisma: {
-        trainerTrainee: {
-            findFirst: vi.fn(),
-            update: vi.fn(),
-        },
-    },
-}))
+vi.mock('@/lib/auth', async () => (await import('../helpers/auth-module-mock')).authModuleMock())
 
 vi.mock('@/lib/logger', () => ({
     logger: {
@@ -23,8 +11,10 @@ vi.mock('@/lib/logger', () => ({
 }))
 
 import { GET, PUT } from '@/app/api/trainer/trainees/[id]/notes/route'
+import { prismaMock } from '../helpers/prisma-mock'
+import { mockTrainerSession } from '../helpers/sessions'
+import { asTrainer, asUnauthenticated } from '../helpers/auth-mock'
 import { requireRole } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
 
 const traineeId = 'trainee-uuid-1'
 const validDocument = {
@@ -47,14 +37,14 @@ function makeRequest(method = 'GET', body?: unknown) {
 describe('trainer trainee notes API', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        asTrainer()
     })
 
     it('returns an empty document for an owned trainee without a note', async () => {
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue({
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue({
             trainerNotes: null,
             trainerNotesUpdatedAt: null,
-        } as any)
+        } as never)
 
         const response = await GET(makeRequest(), withIdParam())
         const body = await response.json()
@@ -63,7 +53,7 @@ describe('trainer trainee notes API', () => {
         expect(body.data.document).toEqual({ type: 'doc', content: [{ type: 'paragraph' }] })
         expect(body.data.updatedAt).toBeNull()
         expect(requireRole).toHaveBeenCalledWith(['trainer'])
-        expect(prisma.trainerTrainee.findFirst).toHaveBeenCalledWith({
+        expect(prismaMock.trainerTrainee.findFirst).toHaveBeenCalledWith({
             where: { trainerId: mockTrainerSession.user.id, traineeId },
             select: { trainerNotes: true, trainerNotesUpdatedAt: true },
         })
@@ -71,10 +61,10 @@ describe('trainer trainee notes API', () => {
 
     it('returns the saved document for an owned trainee', async () => {
         const updatedAt = new Date('2026-08-27T10:00:00.000Z')
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue({
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue({
             trainerNotes: validDocument,
             trainerNotesUpdatedAt: updatedAt,
-        } as any)
+        } as never)
 
         const response = await GET(makeRequest(), withIdParam())
         const body = await response.json()
@@ -86,11 +76,11 @@ describe('trainer trainee notes API', () => {
 
     it('saves a valid document for an owned trainee', async () => {
         const updatedAt = new Date('2026-08-27T10:00:00.000Z')
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue({ id: 'assignment-1' } as any)
-        vi.mocked(prisma.trainerTrainee.update).mockResolvedValue({
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue({ id: 'assignment-1' } as never)
+        prismaMock.trainerTrainee.update.mockResolvedValue({
             trainerNotes: validDocument,
             trainerNotesUpdatedAt: updatedAt,
-        } as any)
+        } as never)
 
         const response = await PUT(makeRequest('PUT', { document: validDocument }), withIdParam())
         const body = await response.json()
@@ -98,11 +88,11 @@ describe('trainer trainee notes API', () => {
         expect(response.status).toBe(200)
         expect(body.data.document).toEqual(validDocument)
         expect(body.data.updatedAt).toBe(updatedAt.toISOString())
-        expect(prisma.trainerTrainee.findFirst).toHaveBeenCalledWith({
+        expect(prismaMock.trainerTrainee.findFirst).toHaveBeenCalledWith({
             where: { trainerId: mockTrainerSession.user.id, traineeId },
             select: { id: true },
         })
-        expect(prisma.trainerTrainee.update).toHaveBeenCalledWith(expect.objectContaining({
+        expect(prismaMock.trainerTrainee.update).toHaveBeenCalledWith(expect.objectContaining({
             where: { id: 'assignment-1' },
             data: expect.objectContaining({ trainerNotes: validDocument }),
         }))
@@ -120,7 +110,7 @@ describe('trainer trainee notes API', () => {
 
         expect(response.status).toBe(400)
         expect(body.error.code).toBe('VALIDATION_ERROR')
-        expect(prisma.trainerTrainee.findFirst).not.toHaveBeenCalled()
+        expect(prismaMock.trainerTrainee.findFirst).not.toHaveBeenCalled()
     })
 
     it('silently strips unknown nodes when saving', async () => {
@@ -129,11 +119,11 @@ describe('trainer trainee notes API', () => {
             type: 'doc',
             content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Coach note' }] }],
         }
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue({ id: 'assignment-1' } as any)
-        vi.mocked(prisma.trainerTrainee.update).mockResolvedValue({
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue({ id: 'assignment-1' } as never)
+        prismaMock.trainerTrainee.update.mockResolvedValue({
             trainerNotes: sanitizedDocument,
             trainerNotesUpdatedAt: updatedAt,
-        } as any)
+        } as never)
 
         const response = await PUT(makeRequest('PUT', {
             document: {
@@ -148,13 +138,13 @@ describe('trainer trainee notes API', () => {
 
         expect(response.status).toBe(200)
         expect(body.data.document).toEqual(sanitizedDocument)
-        expect(prisma.trainerTrainee.update).toHaveBeenCalledWith(expect.objectContaining({
+        expect(prismaMock.trainerTrainee.update).toHaveBeenCalledWith(expect.objectContaining({
             data: expect.objectContaining({ trainerNotes: sanitizedDocument }),
         }))
     })
 
     it('rejects access to a trainee assigned to another trainer', async () => {
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue(null)
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue(null)
 
         const response = await GET(makeRequest(), withIdParam())
         const body = await response.json()
@@ -163,10 +153,7 @@ describe('trainer trainee notes API', () => {
         expect(body.error.code).toBe('FORBIDDEN')
     })
 
-    it('passes through unauthenticated responses', async () => {
-        vi.mocked(requireRole).mockRejectedValue(
-            Response.json({ error: { code: 'UNAUTHORIZED' } }, { status: 401 })
-        )
+    it('passes through unauthenticated responses', async () => {asUnauthenticated()
 
         const response = await GET(makeRequest(), withIdParam())
 
