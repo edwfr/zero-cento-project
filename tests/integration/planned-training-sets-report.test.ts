@@ -18,7 +18,7 @@ import { asTrainer, asTrainee } from '../helpers/auth-mock'
 describe('GET /api/users/[id]/reports/planned-training-sets', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        prismaMock.personalRecord.findMany.mockResolvedValue([])
+        prismaMock.personalRecord.findMany.mockResolvedValue([] as never)
     })
 
     it('aggregates muscle groups and fundamental sets across programs', async () => {

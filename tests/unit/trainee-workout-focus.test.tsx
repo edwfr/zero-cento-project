@@ -244,7 +244,7 @@ describe('Trainee workout focus mode', () => {
             ],
         }
 
-        ;(global.fetch as any).mockImplementation(async (url: string) => {
+        vi.mocked(global.fetch).mockImplementation((async (url: string) => {
             if (url.includes('/api/trainee/workouts/')) {
                 return {
                     ok: true,
@@ -252,7 +252,7 @@ describe('Trainee workout focus mode', () => {
                 } as Response
             }
             return { ok: true, json: async () => ({}) } as Response
-        })
+        }) as never)
 
         await renderContent()
 
@@ -345,17 +345,18 @@ describe('Trainee workout focus mode', () => {
         await user.click(checkButtons[0])
 
         await waitFor(() => {
-            const call = (global.fetch as any).mock.calls.find(
-                ([url, init]: [string, RequestInit]) =>
+            const call = vi.mocked(global.fetch).mock.calls.find(
+                ([url, init]) =>
                     typeof url === 'string'
                     && url.endsWith('/api/trainee/workout-exercises/ex-1/feedback')
                     && init?.method === 'PATCH'
             )
 
             expect(call).toBeTruthy()
-            expect(call[1].keepalive).toBe(true)
+            const init = call?.[1] as RequestInit
+            expect(init.keepalive).toBe(true)
 
-            const body = JSON.parse(call[1].body as string)
+            const body = JSON.parse(init.body as string)
             expect(body).toHaveProperty('set')
             expect(body.set).toHaveProperty('actualRpe')
             expect(body.set.actualRpe).toBeNull()
@@ -387,12 +388,12 @@ describe('Trainee workout focus mode', () => {
             ],
         }
 
-        ;(global.fetch as any).mockImplementation(async (url: string) => {
+        vi.mocked(global.fetch).mockImplementation((async (url: string) => {
             if (url.includes('/api/trainee/workouts/')) {
                 return { ok: true, json: async () => ({ data: { workout: partialFixture } }) } as Response
             }
             return { ok: true, json: async () => ({}) } as Response
-        })
+        }) as never)
 
         await renderContent()
 
@@ -428,7 +429,7 @@ describe('Trainee workout focus mode', () => {
             ],
         }
 
-        ;(global.fetch as any).mockImplementation(async (url: string) => {
+        vi.mocked(global.fetch).mockImplementation((async (url: string) => {
             if (url.includes('/api/trainee/workouts/')) {
                 return {
                     ok: true,
@@ -436,7 +437,7 @@ describe('Trainee workout focus mode', () => {
                 } as Response
             }
             return { ok: true, json: async () => ({}) } as Response
-        })
+        }) as never)
 
         await renderContent()
 

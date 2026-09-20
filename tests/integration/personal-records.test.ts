@@ -30,6 +30,7 @@ import { PATCH, DELETE } from '@/app/api/personal-records/[id]/route'
 import { prismaMock } from '../helpers/prisma-mock'
 import { mockTrainerSession, makeTrainerSession } from '../helpers/sessions'
 import { asTrainer, asAdmin, asTrainee, asUnauthenticated, asForbidden } from '../helpers/auth-mock'
+import { callArg } from '../helpers/call-args'
 
 // ─── Fixtures ──────────────────────────────────────────────────────────────
 
@@ -161,7 +162,7 @@ describe('GET /api/personal-records', () => {
         expect(body.data.items).toHaveLength(2)
 
         // Admin: no traineeId constraint in where
-        const callArgs = prismaMock.personalRecord.findMany.mock.calls[0][0] as never
+        const callArgs = callArg(prismaMock.personalRecord.findMany.mock.calls[0][0])
         expect(callArgs.where?.traineeId).toBeUndefined()
     })
 
@@ -218,7 +219,7 @@ describe('GET /api/personal-records', () => {
             trainerId: mockTrainerSession.user.id,
             traineeId: TRAINEE_ID,
         } as never)
-        prismaMock.personalRecord.findMany.mockResolvedValue([])
+        prismaMock.personalRecord.findMany.mockResolvedValue([] as never)
 
         const req = makeRequest(`http://localhost:3000/api/personal-records?traineeId=${TRAINEE_ID}`)
         const res = await GET(req)

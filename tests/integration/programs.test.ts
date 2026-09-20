@@ -19,6 +19,7 @@ import { POST as publishPOST } from '@/app/api/programs/[id]/publish/route'
 import type { User } from '@prisma/client'
 import { prismaMock } from '../helpers/prisma-mock'
 import { asTrainer, asAdmin, asUnauthenticated } from '../helpers/auth-mock'
+import { callArg } from '../helpers/call-args'
 
 const mockPrograms = [
     {
@@ -47,7 +48,7 @@ describe('GET /api/programs', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         prismaMock.trainingProgram.findMany.mockResolvedValue([] as never)
-        prismaMock.trainingProgram.count.mockResolvedValue(0)
+        prismaMock.trainingProgram.count.mockResolvedValue(0 as never)
         prismaMock.exerciseFeedback.findMany.mockResolvedValue([] as never)
         prismaMock.$queryRaw.mockResolvedValue([] as never)
     })
@@ -55,7 +56,7 @@ describe('GET /api/programs', () => {
     it('returns programs for trainer with RBAC filter', async () => {
         asTrainer()
         prismaMock.trainingProgram.findMany.mockResolvedValue(mockPrograms as never)
-        prismaMock.trainingProgram.count.mockResolvedValue(1)
+        prismaMock.trainingProgram.count.mockResolvedValue(1 as never)
 
         const req = makeRequest()
         const res = await GET(req)
@@ -74,7 +75,7 @@ describe('GET /api/programs', () => {
     it('filters by status when query param provided', async () => {
         asTrainer()
         prismaMock.trainingProgram.findMany.mockResolvedValue(mockPrograms as never)
-        prismaMock.trainingProgram.count.mockResolvedValue(1)
+        prismaMock.trainingProgram.count.mockResolvedValue(1 as never)
 
         const req = makeRequest('http://localhost:3000/api/programs?status=active')
         await GET(req)
@@ -135,7 +136,7 @@ describe('GET /api/programs', () => {
         const body = await res.json()
 
         expect(res.status).toBe(200)
-        const findManyArgs = prismaMock.trainingProgram.findMany.mock.calls[0][0] as never
+        const findManyArgs = callArg(prismaMock.trainingProgram.findMany.mock.calls[0][0])
         expect(findManyArgs.where).toEqual(
             expect.objectContaining({
                 trainerId: 'trainer-uuid-1',
@@ -178,7 +179,7 @@ describe('GET /api/programs', () => {
                 ],
             },
         ] as never)
-        prismaMock.trainingProgram.count.mockResolvedValue(1)
+        prismaMock.trainingProgram.count.mockResolvedValue(1 as never)
 
         const res = await GET(makeRequest())
         const body = await res.json()
@@ -219,7 +220,7 @@ describe('GET /api/programs', () => {
                 ],
             },
         ] as never)
-        prismaMock.trainingProgram.count.mockResolvedValue(1)
+        prismaMock.trainingProgram.count.mockResolvedValue(1 as never)
 
         const res = await GET(makeRequest())
         const body = await res.json()
@@ -240,7 +241,7 @@ describe('GET /api/programs', () => {
                 weeks: [{ id: 'w-1', weekNumber: 1, weekType: 'volume', isCompleted: true }],
             },
         ] as never)
-        prismaMock.trainingProgram.count.mockResolvedValue(1)
+        prismaMock.trainingProgram.count.mockResolvedValue(1 as never)
 
         const res = await GET(makeRequest())
         const body = await res.json()
@@ -360,14 +361,14 @@ describe('GET /api/programs', () => {
     it('admin sees all programs without trainer filter', async () => {
         asAdmin()
         prismaMock.trainingProgram.findMany.mockResolvedValue(mockPrograms as never)
-        prismaMock.trainingProgram.count.mockResolvedValue(5)
+        prismaMock.trainingProgram.count.mockResolvedValue(5 as never)
 
         const req = makeRequest()
         const res = await GET(req)
 
         expect(res.status).toBe(200)
         // Admin should NOT have trainerId filter applied
-        const callArgs = prismaMock.trainingProgram.findMany.mock.calls[0][0] as never
+        const callArgs = callArg(prismaMock.trainingProgram.findMany.mock.calls[0][0])
         expect(callArgs.where?.trainerId).toBeUndefined()
     })
 
@@ -643,7 +644,7 @@ describe('POST /api/programs/[id]/copy-week', () => {
     it('returns 200 with updatedWeek on success', async () => {
         asTrainer()
         prismaMock.trainingProgram.findUnique.mockResolvedValue(mockProgramMeta as never)
-        prismaMock.workout.count.mockResolvedValue(0)
+        prismaMock.workout.count.mockResolvedValue(0 as never)
         prismaMock.week.findUnique
             .mockResolvedValueOnce(mockSourceWeek as never)   // source week
             .mockResolvedValueOnce(mockUpdatedWeek as never)  // updatedWeek after transaction
@@ -655,7 +656,7 @@ describe('POST /api/programs/[id]/copy-week', () => {
         )
 
         expect(res.status).toBe(200)
-        const body = (await res.json()) as never
+        const body = callArg(await res.json())
         expect(body.data.updatedWeek).toBeDefined()
         expect(body.data.updatedWeek.id).toBe('week-2')
     })
@@ -694,13 +695,13 @@ describe('POST /api/programs/[id]/copy-first-week', () => {
         asTrainer()
         prismaMock.trainingProgram.findUnique.mockResolvedValue(mockProgramMeta as never)
         prismaMock.week.findFirst.mockResolvedValue(mockSourceWeek as never)
-        prismaMock.week.findMany.mockResolvedValue([])
+        prismaMock.week.findMany.mockResolvedValue([] as never)
 
         const res = await copyFirstWeekPOST(
             makeCopyFirstWeekRequest('prog-1'),
             { params: Promise.resolve({ id: 'prog-1' }) }
         )
-        const body = (await res.json()) as never
+        const body = callArg(await res.json())
         expect(res.status).toBe(200)
         expect(body.data.updatedWeeks).toBe(0)
     })
@@ -733,7 +734,7 @@ describe('POST /api/programs/[id]/copy-first-week', () => {
             makeCopyFirstWeekRequest('prog-1'),
             { params: Promise.resolve({ id: 'prog-1' }) }
         )
-        const body = (await res.json()) as never
+        const body = callArg(await res.json())
         expect(res.status).toBe(200)
         expect(body.data.updatedWeeks).toBe(2)
     })

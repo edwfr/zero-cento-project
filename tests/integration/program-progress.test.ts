@@ -16,6 +16,7 @@ import { loadProgressAggregates } from '@/lib/trainee-program-data'
 import { prismaMock } from '../helpers/prisma-mock'
 import { mockTraineeSession } from '../helpers/sessions'
 import { asTrainee } from '../helpers/auth-mock'
+import { callArg } from '../helpers/call-args'
 
 function makeRequest(url = 'http://localhost:3000/api/programs/prog-1/progress') {
     return new NextRequest(url)
@@ -34,12 +35,12 @@ const programMeta = {
 beforeEach(() => {
     vi.clearAllMocks()
     ;asTrainee()
-    ;prismaMock.trainingProgram.findUnique.mockResolvedValue(programMeta)
+    ;prismaMock.trainingProgram.findUnique.mockResolvedValue(programMeta as never)
 })
 
 describe('GET /api/programs/[id]/progress', () => {
     it('does not load full program tree (no nested workoutExercises include)', async () => {
-        ;(loadProgressAggregates as never).mockResolvedValue({
+        ;vi.mocked(loadProgressAggregates).mockResolvedValue({
             programId: 'prog-1',
             programName: 'Test',
             status: 'active',
@@ -53,11 +54,11 @@ describe('GET /api/programs/[id]/progress', () => {
             nextWorkout: null,
             workouts: [],
             weeklyStats: [],
-        })
+        } as never)
 
         await GET(makeRequest(), { params: Promise.resolve({ id: 'prog-1' }) })
 
-        const call = prismaMock.trainingProgram.findUnique.mock.calls[0][0]
+        const call = callArg(prismaMock.trainingProgram.findUnique.mock.calls[0][0])
         // metadata fetch must use `select`, never `include` with weeks
         expect(call.include).toBeUndefined()
         expect(call.select).toBeDefined()
@@ -65,7 +66,7 @@ describe('GET /api/programs/[id]/progress', () => {
     })
 
     it('returns the documented response shape with zero data', async () => {
-        ;(loadProgressAggregates as never).mockResolvedValue({
+        ;vi.mocked(loadProgressAggregates).mockResolvedValue({
             programId: 'prog-1',
             programName: 'Test',
             status: 'active',
@@ -79,7 +80,7 @@ describe('GET /api/programs/[id]/progress', () => {
             nextWorkout: null,
             workouts: [],
             weeklyStats: [],
-        })
+        } as never)
 
         const res = await GET(makeRequest(), { params: Promise.resolve({ id: 'prog-1' }) })
         const json = await res.json()
@@ -102,7 +103,7 @@ describe('GET /api/programs/[id]/progress', () => {
     })
 
     it('aggregates completion counts per workout from $queryRaw rows', async () => {
-        ;(loadProgressAggregates as never).mockResolvedValue({
+        ;vi.mocked(loadProgressAggregates).mockResolvedValue({
             programId: 'prog-1',
             programName: 'Test',
             status: 'active',
@@ -151,7 +152,7 @@ describe('GET /api/programs/[id]/progress', () => {
                     feedbackCount: 5,
                 },
             ],
-        })
+        } as never)
 
         const res = await GET(makeRequest(), { params: Promise.resolve({ id: 'prog-1' }) })
         const json = await res.json()
@@ -180,7 +181,7 @@ describe('GET /api/programs/[id]/progress', () => {
     })
 
     it('populates exercisesPerformed from latest completed feedback set rows', async () => {
-        ;(loadProgressAggregates as never).mockResolvedValue({
+        ;vi.mocked(loadProgressAggregates).mockResolvedValue({
             programId: 'prog-1',
             programName: 'Test',
             status: 'active',
@@ -215,7 +216,7 @@ describe('GET /api/programs/[id]/progress', () => {
                 },
             ],
             weeklyStats: [],
-        })
+        } as never)
 
         const res = await GET(makeRequest(), { params: Promise.resolve({ id: 'prog-1' }) })
         const json = await res.json()

@@ -4,7 +4,7 @@ import { transformApiExercise, transformApiWeek } from '@/app/trainer/programs/[
 const TRAINER_ID = 'trainer-1'
 const PRIMARY_COLOR = 'rgb(var(--brand-primary))'
 
-function makeApiExercise(overrides: Partial<any> = {}): any {
+function makeApiExercise(overrides: Record<string, unknown> = {}): Record<string, unknown> {
     return {
         id: 'we-1',
         order: 0,
@@ -185,7 +185,7 @@ describe('transformApiWeek', () => {
             ],
         }
         const result = transformApiWeek(week, TRAINER_ID)
-        expect(result.workouts.map((w: any) => w.id)).toEqual(['wo-1', 'wo-2', 'wo-3'])
+        expect(result.workouts.map((w: { id: string }) => w.id)).toEqual(['wo-1', 'wo-2', 'wo-3'])
     })
 
     it('transforms each workoutExercise via transformApiExercise', () => {

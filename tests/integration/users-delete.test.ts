@@ -150,7 +150,7 @@ describe('DELETE /api/users/[id]', () => {
     })
 
     it('returns 500 when the DB transaction fails', async () => {
-        prismaMock.$transaction.mockRejectedValue(new Error('db down'))
+        prismaMock.$transaction.mockRejectedValue(new Error('db down') as never)
 
         const res = await callDelete()
         const body = await res.json()

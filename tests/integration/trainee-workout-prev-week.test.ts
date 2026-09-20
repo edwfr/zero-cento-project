@@ -77,7 +77,7 @@ describe('GET /api/trainee/workouts/[id]/prev-week', () => {
                 setCompleted: null,
                 setActualRpe: null,
             },
-        ])
+        ] as never)
 
         const res = await GET(makeRequest(), withIdParam('workout-1'))
         const json = await res.json()
@@ -121,7 +121,7 @@ describe('GET /api/trainee/workouts/[id]/prev-week', () => {
     })
 
     it('returns an empty exercises array when previous week does not exist', async () => {
-        prismaMock.$queryRaw.mockResolvedValue([])
+        prismaMock.$queryRaw.mockResolvedValue([] as never)
 
         const res = await GET(makeRequest(), withIdParam('workout-1'))
         const json = await res.json()

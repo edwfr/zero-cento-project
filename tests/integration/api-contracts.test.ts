@@ -64,21 +64,22 @@ import { prismaMock } from '../helpers/prisma-mock'
 import { mockTrainerSession } from '../helpers/sessions'
 import { asTrainer, asAdmin } from '../helpers/auth-mock'
 import { requireRole } from '@/lib/auth'
+import { callArg, type CallArg } from '../helpers/call-args'
 
 // ────────────────────────────────────────────────────────────────────────────
 // Contract shape validators
 // ────────────────────────────────────────────────────────────────────────────
 
-function expectSuccessEnvelope(body: any) {
+function expectSuccessEnvelope(body: CallArg) {
     expect(body).toHaveProperty('data')
     expect(body).toHaveProperty('meta')
     expect(body.meta).toHaveProperty('timestamp')
     expect(typeof body.meta.timestamp).toBe('string')
     // Should be valid ISO date
-    expect(new Date(body.meta.timestamp).toISOString()).toBe(body.meta.timestamp)
+    expect(new Date(String(body.meta.timestamp)).toISOString()).toBe(body.meta.timestamp)
 }
 
-function expectErrorEnvelope(body: any) {
+function expectErrorEnvelope(body: CallArg) {
     expect(body).toHaveProperty('error')
     expect(body.error).toHaveProperty('code')
     expect(body.error).toHaveProperty('message')
@@ -96,8 +97,8 @@ function expectErrorEnvelope(body: any) {
     ]).toContain(body.error.code)
 }
 
-function expectPaginatedList(body: any) {
-    expectSuccessEnvelope(body)
+function expectPaginatedList(body: CallArg) {
+    expectSuccessEnvelope(callArg(body))
     expect(body.data).toHaveProperty('items')
     expect(Array.isArray(body.data.items)).toBe(true)
     expect(body.data).toHaveProperty('pagination')
@@ -126,63 +127,63 @@ describe('API Contract: Success response envelope', () => {
 
     it('GET /api/exercises returns { data: { items, pagination }, meta }', async () => {
         asTrainer()
-        prismaMock.exercise.findMany.mockResolvedValue([])
+        prismaMock.exercise.findMany.mockResolvedValue([] as never)
 
         const res = await listExercises(makeRequest('http://localhost:3000/api/exercises'))
         const body = await res.json()
 
         expect(res.status).toBe(200)
-        expectPaginatedList(body)
+        expectPaginatedList(callArg(body))
     })
 
     it('GET /api/muscle-groups returns { data: { items, pagination }, meta }', async () => {
         asTrainer()
-        prismaMock.muscleGroup.findMany.mockResolvedValue([])
+        prismaMock.muscleGroup.findMany.mockResolvedValue([] as never)
 
         const res = await listMuscleGroups(makeRequest('http://localhost:3000/api/muscle-groups'))
         const body = await res.json()
 
         expect(res.status).toBe(200)
-        expectSuccessEnvelope(body)
+        expectSuccessEnvelope(callArg(body))
         expect(body.data).toHaveProperty('items')
         expect(Array.isArray(body.data.items)).toBe(true)
     })
 
     it('GET /api/movement-patterns returns { data: { items, pagination }, meta }', async () => {
         asTrainer()
-        prismaMock.movementPattern.findMany.mockResolvedValue([])
+        prismaMock.movementPattern.findMany.mockResolvedValue([] as never)
 
         const res = await listMovementPatterns(makeRequest('http://localhost:3000/api/movement-patterns'))
         const body = await res.json()
 
         expect(res.status).toBe(200)
-        expectSuccessEnvelope(body)
+        expectSuccessEnvelope(callArg(body))
         expect(body.data).toHaveProperty('items')
         expect(Array.isArray(body.data.items)).toBe(true)
     })
 
     it('GET /api/users returns { data: { items }, meta }', async () => {
         asAdmin()
-        prismaMock.user.findMany.mockResolvedValue([])
+        prismaMock.user.findMany.mockResolvedValue([] as never)
 
         const res = await listUsers(makeRequest('http://localhost:3000/api/users'))
         const body = await res.json()
 
         expect(res.status).toBe(200)
-        expectSuccessEnvelope(body)
+        expectSuccessEnvelope(callArg(body))
         expect(body.data).toHaveProperty('items')
         expect(Array.isArray(body.data.items)).toBe(true)
     })
 
     it('GET /api/users?page=1&limit=20 returns { data: { items, pagination, statusCounts }, meta }', async () => {
         asAdmin()
-        prismaMock.user.findMany.mockResolvedValue([])
+        prismaMock.user.findMany.mockResolvedValue([] as never)
 
         const res = await listUsers(makeRequest('http://localhost:3000/api/users?page=1&limit=20&includeInactive=true'))
         const body = await res.json()
 
         expect(res.status).toBe(200)
-        expectSuccessEnvelope(body)
+        expectSuccessEnvelope(callArg(body))
         expect(body.data).toHaveProperty('items')
         expect(Array.isArray(body.data.items)).toBe(true)
         expect(body.data).toHaveProperty('pagination')
@@ -195,14 +196,14 @@ describe('API Contract: Success response envelope', () => {
 
     it('GET /api/programs returns { data: { items, pagination }, meta }', async () => {
         asTrainer()
-        prismaMock.trainingProgram.findMany.mockResolvedValue([])
-        prismaMock.trainingProgram.count.mockResolvedValue(0)
+        prismaMock.trainingProgram.findMany.mockResolvedValue([] as never)
+        prismaMock.trainingProgram.count.mockResolvedValue(0 as never)
 
         const res = await listPrograms(makeRequest('http://localhost:3000/api/programs'))
         const body = await res.json()
 
         expect(res.status).toBe(200)
-        expectPaginatedList(body)
+        expectPaginatedList(callArg(body))
         expect(body.data.pagination).toHaveProperty('currentPage')
         expect(body.data.pagination).toHaveProperty('totalPages')
         expect(body.data.pagination).toHaveProperty('totalItems')
@@ -211,25 +212,25 @@ describe('API Contract: Success response envelope', () => {
 
     it('GET /api/feedback returns { data: { items, pagination }, meta }', async () => {
         asTrainer()
-        prismaMock.exerciseFeedback.findMany.mockResolvedValue([])
+        prismaMock.exerciseFeedback.findMany.mockResolvedValue([] as never)
 
         const res = await listFeedback(makeRequest('http://localhost:3000/api/feedback'))
         const body = await res.json()
 
         expect(res.status).toBe(200)
-        expectPaginatedList(body)
+        expectPaginatedList(callArg(body))
     })
 
     it('GET /api/personal-records returns { data: { items }, meta }', async () => {
         asTrainer()
-        prismaMock.trainerTrainee.findMany.mockResolvedValue([])
-        prismaMock.personalRecord.findMany.mockResolvedValue([])
+        prismaMock.trainerTrainee.findMany.mockResolvedValue([] as never)
+        prismaMock.personalRecord.findMany.mockResolvedValue([] as never)
 
         const res = await listPersonalRecords(makeRequest('http://localhost:3000/api/personal-records'))
         const body = await res.json()
 
         expect(res.status).toBe(200)
-        expectSuccessEnvelope(body)
+        expectSuccessEnvelope(callArg(body))
         expect(body.data).toHaveProperty('items')
         expect(Array.isArray(body.data.items)).toBe(true)
     })
@@ -252,7 +253,7 @@ describe('API Contract: Error response envelope', () => {
         const body = await res.json()
 
         expect(res.status).toBeGreaterThanOrEqual(400)
-        expectErrorEnvelope(body)
+        expectErrorEnvelope(callArg(body))
     })
 
     it('GET /api/exercises/[id] not found returns standard error envelope', async () => {
@@ -266,7 +267,7 @@ describe('API Contract: Error response envelope', () => {
         const body = await res.json()
 
         expect(res.status).toBe(404)
-        expectErrorEnvelope(body)
+        expectErrorEnvelope(callArg(body))
         expect(body.error.code).toBe('NOT_FOUND')
     })
 
@@ -281,7 +282,7 @@ describe('API Contract: Error response envelope', () => {
         const body = await res.json()
 
         expect(res.status).toBe(404)
-        expectErrorEnvelope(body)
+        expectErrorEnvelope(callArg(body))
         expect(body.error.code).toBe('NOT_FOUND')
     })
 
@@ -296,7 +297,7 @@ describe('API Contract: Error response envelope', () => {
         const body = await res.json()
 
         expect(res.status).toBe(404)
-        expectErrorEnvelope(body)
+        expectErrorEnvelope(callArg(body))
         expect(body.error.code).toBe('NOT_FOUND')
     })
 
@@ -313,7 +314,7 @@ describe('API Contract: Error response envelope', () => {
         const body = await res.json()
 
         expect(res.status).toBe(400)
-        expectErrorEnvelope(body)
+        expectErrorEnvelope(callArg(body))
         expect(body.error.code).toBe('VALIDATION_ERROR')
     })
 
@@ -330,7 +331,7 @@ describe('API Contract: Error response envelope', () => {
         const body = await res.json()
 
         expect(res.status).toBe(400)
-        expectErrorEnvelope(body)
+        expectErrorEnvelope(callArg(body))
         expect(body.error.code).toBe('VALIDATION_ERROR')
     })
 })
@@ -350,21 +351,21 @@ describe('API Contract: Pagination shape consistency', () => {
             handler: listExercises,
             url: 'http://localhost:3000/api/exercises',
             session: mockTrainerSession,
-            mockSetup: () => prismaMock.exercise.findMany.mockResolvedValue([]),
+            mockSetup: () => prismaMock.exercise.findMany.mockResolvedValue([] as never),
         },
         {
             name: 'GET /api/programs',
             handler: listPrograms,
             url: 'http://localhost:3000/api/programs',
             session: mockTrainerSession,
-            mockSetup: () => prismaMock.trainingProgram.findMany.mockResolvedValue([]),
+            mockSetup: () => prismaMock.trainingProgram.findMany.mockResolvedValue([] as never),
         },
         {
             name: 'GET /api/feedback',
             handler: listFeedback,
             url: 'http://localhost:3000/api/feedback',
             session: mockTrainerSession,
-            mockSetup: () => prismaMock.exerciseFeedback.findMany.mockResolvedValue([]),
+            mockSetup: () => prismaMock.exerciseFeedback.findMany.mockResolvedValue([] as never),
         },
 
     ]
@@ -379,7 +380,7 @@ describe('API Contract: Pagination shape consistency', () => {
             const body = await res.json()
 
             expect(res.status).toBe(200)
-            expectPaginatedList(body)
+            expectPaginatedList(callArg(body))
         }
     )
 })
@@ -395,7 +396,7 @@ describe('API Contract: meta.timestamp validity', () => {
 
     it('all success responses include valid ISO 8601 timestamp', async () => {
         asTrainer()
-        prismaMock.exercise.findMany.mockResolvedValue([])
+        prismaMock.exercise.findMany.mockResolvedValue([] as never)
 
         const res = await listExercises(makeRequest('http://localhost:3000/api/exercises'))
         const body = await res.json()

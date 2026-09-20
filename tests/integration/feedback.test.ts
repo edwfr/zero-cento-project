@@ -21,6 +21,7 @@ import { GET as GET_ID } from '@/app/api/feedback/[id]/route'
 import { prismaMock } from '../helpers/prisma-mock'
 import { makeTrainerSession, makeTraineeSession } from '../helpers/sessions'
 import { asTrainer, asAdmin, asTrainee, asUnauthenticated } from '../helpers/auth-mock'
+import { callArg } from '../helpers/call-args'
 
 // ─── Fixture data ─────────────────────────────────────────────────────────────
 
@@ -119,7 +120,7 @@ describe('GET /api/feedback', () => {
         expect(body.data.items).toHaveLength(1)
 
         // Trainee filter should scope to their own traineeId
-        const callArgs = prismaMock.exerciseFeedback.findMany.mock.calls[0][0] as never
+        const callArgs = callArg(prismaMock.exerciseFeedback.findMany.mock.calls[0][0])
         expect(callArgs.where.workoutExercise.workout.week.program.traineeId).toBe('trainee-uuid-1')
     })
 
@@ -133,7 +134,7 @@ describe('GET /api/feedback', () => {
         expect(res.status).toBe(200)
 
         // Trainer filter should scope to their trainerId
-        const callArgs = prismaMock.exerciseFeedback.findMany.mock.calls[0][0] as never
+        const callArgs = callArg(prismaMock.exerciseFeedback.findMany.mock.calls[0][0])
         expect(callArgs.where.workoutExercise.workout.week.program.trainerId).toBe('trainer-uuid-1')
     })
 
@@ -146,7 +147,7 @@ describe('GET /api/feedback', () => {
 
         expect(res.status).toBe(200)
 
-        const callArgs = prismaMock.exerciseFeedback.findMany.mock.calls[0][0] as never
+        const callArgs = callArg(prismaMock.exerciseFeedback.findMany.mock.calls[0][0])
         // Admin: no RBAC scoping on the where clause
         expect(callArgs.where.workoutExercise).toBeUndefined()
     })
@@ -158,7 +159,7 @@ describe('GET /api/feedback', () => {
         const req = makeRequest('http://localhost:3000/api/feedback?traineeId=trainee-uuid-1')
         await GET(req)
 
-        const callArgs = prismaMock.exerciseFeedback.findMany.mock.calls[0][0] as never
+        const callArgs = callArg(prismaMock.exerciseFeedback.findMany.mock.calls[0][0])
         expect(callArgs.where.workoutExercise.workout.week.program.traineeId).toBe('trainee-uuid-1')
     })
 
@@ -169,7 +170,7 @@ describe('GET /api/feedback', () => {
         const req = makeRequest('http://localhost:3000/api/feedback?exerciseId=exercise-uuid-1')
         await GET(req)
 
-        const callArgs = prismaMock.exerciseFeedback.findMany.mock.calls[0][0] as never
+        const callArgs = callArg(prismaMock.exerciseFeedback.findMany.mock.calls[0][0])
         expect(callArgs.where.workoutExercise.exerciseId).toBe('exercise-uuid-1')
     })
 
@@ -181,7 +182,7 @@ describe('GET /api/feedback', () => {
         const req = makeRequest(`http://localhost:3000/api/feedback?cursor=${cursor}`)
         await GET(req)
 
-        const callArgs = prismaMock.exerciseFeedback.findMany.mock.calls[0][0] as never
+        const callArgs = callArg(prismaMock.exerciseFeedback.findMany.mock.calls[0][0])
         expect(callArgs.cursor).toEqual({ id: UUIDS.feedbackPrev })
         expect(callArgs.skip).toBe(1)
     })

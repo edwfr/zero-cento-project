@@ -127,7 +127,7 @@ const mockAccessoryExercise = {
 
 function makeListRequest(url = 'http://localhost:3000/api/exercises', options?: RequestInit) {
     const { signal, ...safeOptions } = options || {}
-    return new NextRequest(url, safeOptions as RequestInit)
+    return new NextRequest(url, safeOptions as ConstructorParameters<typeof NextRequest>[1])
 }
 
 function makeDetailRequest(
@@ -136,7 +136,7 @@ function makeDetailRequest(
     options?: RequestInit
 ) {
     const { signal, ...safeOptions } = options || {}
-    return new NextRequest(url ?? `http://localhost:3000/api/exercises/${id}`, safeOptions as RequestInit)
+    return new NextRequest(url ?? `http://localhost:3000/api/exercises/${id}`, safeOptions as ConstructorParameters<typeof NextRequest>[1])
 }
 
 /** Exercise as the DELETE handler selects it: id + reference counts. */
@@ -948,8 +948,7 @@ describe('DELETE /api/exercises/[id]', () => {
             new Prisma.PrismaClientKnownRequestError('Foreign key constraint failed', {
                 code: 'P2003',
                 clientVersion: '5.0.0',
-            })
-        )
+            }) as never)
 
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
             method: 'DELETE',

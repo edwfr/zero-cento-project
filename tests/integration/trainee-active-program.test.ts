@@ -22,7 +22,7 @@ beforeEach(() => {
 describe('GET /api/trainee/active-program', () => {
     it('returns 200 with id when active program exists', async () => {
         asTrainee()
-        prismaMock.trainingProgram.findFirst.mockResolvedValue({ id: 'prog-1' })
+        prismaMock.trainingProgram.findFirst.mockResolvedValue({ id: 'prog-1' } as never)
 
         const res = await GET(makeRequest())
         const json = await res.json()

@@ -1,30 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
-const mockAdminSession = {
-    user: {
-        id: 'admin-uuid-1',
-        email: 'admin@zerocento.it',
-        firstName: 'Admin',
-        lastName: 'User',
-        role: 'admin' as const,
-        isActive: true,
-    },
-    supabaseUser: {} as never,
-}
-
-const mockTrainerSession = {
-    user: {
-        id: 'trainer-uuid-1',
-        email: 'trainer@zerocento.it',
-        firstName: 'Marco',
-        lastName: 'Trainer',
-        role: 'trainer' as const,
-        isActive: true,
-    },
-    supabaseUser: {} as never,
-}
-
 vi.mock('@/lib/auth', async () => (await import('../helpers/auth-module-mock')).authModuleMock())
 
 vi.mock('@/lib/logger', () => ({

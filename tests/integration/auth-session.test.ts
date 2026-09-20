@@ -8,7 +8,7 @@ vi.mock('react', async (importOriginal) => {
     const actual = await importOriginal() as Record<string, unknown>
     return {
         ...actual,
-        cache: (fn: (...args: any[]) => any) => fn,
+        cache: <T>(fn: T) => fn,
     }
 })
 

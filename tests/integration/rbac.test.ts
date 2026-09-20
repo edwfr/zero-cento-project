@@ -304,7 +304,7 @@ describe('RBAC Violations - Feedback', () => {
         vi.mocked(requireRole).mockResolvedValue(mockTrainerASession)
 
         // Trainer A tries to access feedback from trainee B (who belongs to trainer B)
-        prismaMock.exerciseFeedback.findMany.mockResolvedValue([])
+        prismaMock.exerciseFeedback.findMany.mockResolvedValue([] as never)
 
         const req = makeRequest('http://localhost:3000/api/feedback?traineeId=trainee-b-uuid')
 

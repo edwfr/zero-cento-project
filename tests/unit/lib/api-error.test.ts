@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { getApiErrorMessage } from '@/lib/api-error'
+import type { TFunction } from 'i18next'
 
+// The fake t only needs the (key, options) overload getApiErrorMessage uses.
 const createMockT = () => vi.fn((key: string, options?: { defaultValue?: string }) => {
     const translations: Record<string, string> = {
         'errors:exercise.nameExists': 'Un esercizio con questo nome esiste gia',
@@ -26,7 +28,7 @@ describe('getApiErrorMessage', () => {
             }
         }
 
-        const result = getApiErrorMessage(apiResponse, 'Errore generico', mockT as any)
+        const result = getApiErrorMessage(apiResponse, 'Errore generico', mockT as unknown as TFunction)
 
         expect(mockT).toHaveBeenCalledWith('errors:exercise.nameExists', { defaultValue: 'Errore generico' })
         expect(result).toBe('Un esercizio con questo nome esiste gia')
@@ -42,7 +44,7 @@ describe('getApiErrorMessage', () => {
             }
         }
 
-        const result = getApiErrorMessage(apiResponse, 'Errore generico', mockT as any)
+        const result = getApiErrorMessage(apiResponse, 'Errore generico', mockT as unknown as TFunction)
 
         expect(mockT).not.toHaveBeenCalled()
         expect(result).toBe('Errore generico')
@@ -51,9 +53,9 @@ describe('getApiErrorMessage', () => {
     it('should return fallback when data is not an error object', () => {
         const mockT = vi.fn()
 
-        const result1 = getApiErrorMessage(null, 'Errore generico', mockT as any)
-        const result2 = getApiErrorMessage(undefined, 'Errore generico', mockT as any)
-        const result3 = getApiErrorMessage({ data: 'success' }, 'Errore generico', mockT as any)
+        const result1 = getApiErrorMessage(null, 'Errore generico', mockT as unknown as TFunction)
+        const result2 = getApiErrorMessage(undefined, 'Errore generico', mockT as unknown as TFunction)
+        const result3 = getApiErrorMessage({ data: 'success' }, 'Errore generico', mockT as unknown as TFunction)
 
         expect(mockT).not.toHaveBeenCalled()
         expect(result1).toBe('Errore generico')
@@ -80,7 +82,7 @@ describe('getApiErrorMessage', () => {
         ]
 
         testCases.forEach(({ response, expected }) => {
-            const result = getApiErrorMessage(response, 'Fallback', mockT as any)
+            const result = getApiErrorMessage(response, 'Fallback', mockT as unknown as TFunction)
             expect(result).toBe(expected)
         })
     })
@@ -102,7 +104,7 @@ describe('getApiErrorMessage', () => {
             }
         }
 
-        const result = getApiErrorMessage(apiResponse, 'Errore generico', mockT as any)
+        const result = getApiErrorMessage(apiResponse, 'Errore generico', mockT as unknown as TFunction)
 
         expect(result).toBe('Almeno un gruppo muscolare richiesto')
     })
@@ -122,7 +124,7 @@ describe('getApiErrorMessage', () => {
             }
         }
 
-        const result = getApiErrorMessage(apiResponse, 'Errore generico', mockT as any)
+        const result = getApiErrorMessage(apiResponse, 'Errore generico', mockT as unknown as TFunction)
 
         expect(result).toBe('validation.unknownKey')
     })

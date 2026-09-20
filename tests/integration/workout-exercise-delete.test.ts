@@ -115,7 +115,7 @@ describe('DELETE /api/programs/[id]/workouts/[workoutId]/exercises/[exerciseId]'
             trainerId: mockTrainerSession.user.id,
             status: 'active',
         } as never)
-        prismaMock.setPerformed.count.mockResolvedValue(1)
+        prismaMock.setPerformed.count.mockResolvedValue(1 as never)
 
         const req = new NextRequest(
             `http://localhost/api/programs/${PROGRAM_ID}/workouts/${WORKOUT_ID}/exercises/${EXERCISE_ID}`,
@@ -133,7 +133,7 @@ describe('DELETE /api/programs/[id]/workouts/[workoutId]/exercises/[exerciseId]'
             trainerId: mockTrainerSession.user.id,
             status: 'active',
         } as never)
-        prismaMock.setPerformed.count.mockResolvedValue(0)
+        prismaMock.setPerformed.count.mockResolvedValue(0 as never)
         prismaMock.workoutExercise.findUnique.mockResolvedValue({
             id: EXERCISE_ID,
             workoutId: WORKOUT_ID,

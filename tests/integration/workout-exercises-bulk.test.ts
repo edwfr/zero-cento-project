@@ -58,7 +58,7 @@ describe('PUT /api/programs/[id]/workouts/[workoutId]/exercises/bulk', () => {
             { id: 'new-1', order: 1 },
             { id: 'new-2', order: 2 },
         ] as never)
-        prismaMock.$transaction.mockResolvedValue([])
+        prismaMock.$transaction.mockResolvedValue([] as never)
     })
 
     it('creates all rows and returns the updated list', async () => {
@@ -237,7 +237,7 @@ describe('PUT /api/programs/[id]/workouts/[workoutId]/exercises/bulk', () => {
             ...draftProgramOwned,
             status: 'active',
         } as never)
-        prismaMock.setPerformed.count.mockResolvedValue(1)
+        prismaMock.setPerformed.count.mockResolvedValue(1 as never)
         const res = await bulkPut(makePutRequest({ exercises: [baseRow] }), params(PROG, WK))
         expect(res.status).toBe(403)
         const body = await res.json()
@@ -249,7 +249,7 @@ describe('PUT /api/programs/[id]/workouts/[workoutId]/exercises/bulk', () => {
             ...draftProgramOwned,
             status: 'active',
         } as never)
-        prismaMock.setPerformed.count.mockResolvedValue(0)
+        prismaMock.setPerformed.count.mockResolvedValue(0 as never)
         const res = await bulkPut(makePutRequest({ exercises: [baseRow] }), params(PROG, WK))
         expect(res.status).toBe(200)
     })

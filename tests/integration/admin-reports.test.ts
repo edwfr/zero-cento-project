@@ -11,20 +11,21 @@ import { GET } from '@/app/api/admin/reports/global/route'
 import { prismaMock } from '../helpers/prisma-mock'
 import { asAdmin } from '../helpers/auth-mock'
 import { requireRole } from '@/lib/auth'
+import { callArg } from '../helpers/call-args'
 
 function makeRequest() {
     return new NextRequest('http://localhost/api/admin/reports/global')
 }
 
 function mockAllCounts() {
-    prismaMock.user.count.mockResolvedValue(10)
-    prismaMock.trainingProgram.count.mockResolvedValue(5)
-    prismaMock.exercise.count.mockResolvedValue(20)
-    prismaMock.exerciseFeedback.count.mockResolvedValue(100)
-    prismaMock.personalRecord.count.mockResolvedValue(50)
-    prismaMock.user.findMany.mockResolvedValue([])
-    prismaMock.trainingProgram.findMany.mockResolvedValue([])
-    prismaMock.$queryRaw.mockResolvedValue([{ total: BigInt(150000) }])
+    prismaMock.user.count.mockResolvedValue(10 as never)
+    prismaMock.trainingProgram.count.mockResolvedValue(5 as never)
+    prismaMock.exercise.count.mockResolvedValue(20 as never)
+    prismaMock.exerciseFeedback.count.mockResolvedValue(100 as never)
+    prismaMock.personalRecord.count.mockResolvedValue(50 as never)
+    prismaMock.user.findMany.mockResolvedValue([] as never)
+    prismaMock.trainingProgram.findMany.mockResolvedValue([] as never)
+    prismaMock.$queryRaw.mockResolvedValue([{ total: BigInt(150000) }] as never)
 }
 
 describe('GET /api/admin/reports/global', () => {
@@ -45,7 +46,7 @@ describe('GET /api/admin/reports/global', () => {
         mockAllCounts()
 
         const res = await GET(makeRequest())
-        const body = (await res.json()) as never
+        const body = callArg(await res.json())
 
         expect(res.status).toBe(200)
         expect(body.data.users.total).toBe(10)
@@ -62,7 +63,7 @@ describe('GET /api/admin/reports/global', () => {
         expect(prismaMock.$queryRaw).toHaveBeenCalledTimes(1)
         // findMany should NOT be called for setPerformed (eliminated full table scan)
         // $queryRaw replaces it — verify it was called with a tagged template
-        const call = prismaMock.$queryRaw.mock.calls[0]
+        const call = callArg(prismaMock.$queryRaw.mock.calls[0])
         // Tagged template literal produces a TemplateStringsArray as first arg
         expect(Array.isArray(call[0])).toBe(true)
     })
@@ -70,10 +71,10 @@ describe('GET /api/admin/reports/global', () => {
     it('returns correct totalVolume from $queryRaw result', async () => {
         asAdmin()
         mockAllCounts()
-        prismaMock.$queryRaw.mockResolvedValue([{ total: BigInt(250000) }])
+        prismaMock.$queryRaw.mockResolvedValue([{ total: BigInt(250000) }] as never)
 
         const res = await GET(makeRequest())
-        const body = (await res.json()) as never
+        const body = callArg(await res.json())
 
         expect(body.data.volume.total).toBe(250000)
     })
@@ -81,10 +82,10 @@ describe('GET /api/admin/reports/global', () => {
     it('handles zero volume when setPerformed is empty', async () => {
         asAdmin()
         mockAllCounts()
-        prismaMock.$queryRaw.mockResolvedValue([{ total: BigInt(0) }])
+        prismaMock.$queryRaw.mockResolvedValue([{ total: BigInt(0) }] as never)
 
         const res = await GET(makeRequest())
-        const body = (await res.json()) as never
+        const body = callArg(await res.json())
 
         expect(body.data.volume.total).toBe(0)
     })

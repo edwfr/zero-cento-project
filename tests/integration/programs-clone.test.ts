@@ -70,7 +70,7 @@ describe('POST /api/programs - clone branch', () => {
             trainer: { id: 'trainer-uuid-1', firstName: 'M', lastName: 'T' },
             trainee: { id: TRAINEE_ID, firstName: 'Mario', lastName: 'Atleta' },
             weeks: [],
-        })
+        } as never)
 
 
         const res = await POST(
@@ -114,7 +114,7 @@ describe('POST /api/programs - clone branch', () => {
             trainer: { id: 'trainer-uuid-1', firstName: 'M', lastName: 'T' },
             trainee: { id: TRAINEE_ID, firstName: 'Mario', lastName: 'Atleta' },
             weeks: [],
-        })
+        } as never)
 
 
         const res = await POST(
@@ -255,7 +255,7 @@ describe('POST /api/programs - clone branch', () => {
 
         const persistedPrograms: string[] = []
 
-        prismaMock.$transaction.mockImplementation(async (fn: any) => {
+        prismaMock.$transaction.mockImplementation((async (fn: (tx: unknown) => unknown) => {
             try {
                 return await fn({
                     trainingProgram: {
@@ -280,7 +280,7 @@ describe('POST /api/programs - clone branch', () => {
                 persistedPrograms.length = 0
                 throw error
             }
-        })
+        }) as never)
 
         const res = await POST(
             makePostRequest({

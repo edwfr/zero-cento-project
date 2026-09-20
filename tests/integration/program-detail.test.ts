@@ -11,6 +11,7 @@ import { GET, DELETE } from '@/app/api/programs/[id]/route'
 import { prismaMock } from '../helpers/prisma-mock'
 import { mockTrainerSession, mockTraineeSession, makeTrainerSession } from '../helpers/sessions'
 import { asTrainer, asAdmin, asTrainee } from '../helpers/auth-mock'
+import { callArg } from '../helpers/call-args'
 
 function makeRequest(url = 'http://localhost:3000/api/programs/prog-1') {
     return new NextRequest(url)
@@ -63,7 +64,7 @@ describe('GET /api/programs/[id] — trainee branch', () => {
             ],
             trainer: { id: 'trainer-1', firstName: 'T', lastName: 'R' },
             trainee: { id: mockTraineeSession.user.id, firstName: 'M', lastName: 'A' },
-        })
+        } as never)
 
         const res = await GET(makeRequest(), { params: Promise.resolve({ id: 'prog-1' }) })
         const json = await res.json()
@@ -98,10 +99,10 @@ describe('GET /api/programs/[id] — trainee branch', () => {
             ],
             trainer: { id: 'trainer-1', firstName: 'T', lastName: 'R' },
             trainee: { id: mockTraineeSession.user.id, firstName: 'M', lastName: 'A' },
-        })
+        } as never)
         ;prismaMock.personalRecord.findMany.mockResolvedValue([
             { exerciseId: 'ex-1', reps: 1, weight: 150, recordDate: new Date() },
-        ])
+        ] as never)
 
         const res = await GET(makeRequest(), { params: Promise.resolve({ id: 'prog-1' }) })
         const json = await res.json()
@@ -126,13 +127,13 @@ describe('GET /api/programs/[id] — trainee select shape', () => {
             weeks: [],
             trainer: { id: 'trainer-1', firstName: 'T', lastName: 'R' },
             trainee: { id: mockTraineeSession.user.id, firstName: 'M', lastName: 'A' },
-        })
+        } as never)
     })
 
     it('does not include movementPattern/exerciseMuscleGroups when role is trainee', async () => {
         await GET(makeRequest(), { params: Promise.resolve({ id: 'prog-1' }) })
 
-        const call = prismaMock.trainingProgram.findUnique.mock.calls[0][0]
+        const call = callArg(prismaMock.trainingProgram.findUnique.mock.calls[0][0])
         const exerciseInclude = call.include.weeks.include.workouts.include.workoutExercises.include.exercise
 
         // Trainee branch must use `select`, not `include` with movementPattern.
@@ -155,13 +156,13 @@ describe('GET /api/programs/[id] — admin select shape', () => {
             weeks: [],
             trainer: { id: 'trainer-1', firstName: 'T', lastName: 'R' },
             trainee: { id: 'trainee-1', firstName: 'M', lastName: 'A' },
-        })
+        } as never)
     })
 
     it('keeps full movementPattern + exerciseMuscleGroups include', async () => {
         await GET(makeRequest(), { params: Promise.resolve({ id: 'prog-1' }) })
 
-        const call = prismaMock.trainingProgram.findUnique.mock.calls[0][0]
+        const call = callArg(prismaMock.trainingProgram.findUnique.mock.calls[0][0])
         const exerciseInclude = call.include.weeks.include.workouts.include.workoutExercises.include.exercise.include
 
         expect(exerciseInclude.movementPattern).toBeDefined()
@@ -185,8 +186,8 @@ describe('DELETE /api/programs/[id] — trainer deletion', () => {
                 trainerId: mockTrainerSession.user.id,
                 traineeId: 'trainee-uuid-1',
                 status,
-            })
-            ;prismaMock.trainingProgram.delete.mockResolvedValue({ id: 'prog-1' })
+            } as never)
+            ;prismaMock.trainingProgram.delete.mockResolvedValue({ id: 'prog-1' } as never)
 
             const res = await DELETE(makeRequest(), withIdParam('prog-1'))
             const body = await res.json()
@@ -234,8 +235,8 @@ describe('DELETE /api/programs/[id] — trainer deletion', () => {
             trainerId: 'someone-else',
             traineeId: 'trainee-uuid-1',
             status: 'completed',
-        })
-        ;prismaMock.trainingProgram.delete.mockResolvedValue({ id: 'prog-1' })
+        } as never)
+        ;prismaMock.trainingProgram.delete.mockResolvedValue({ id: 'prog-1' } as never)
 
         const res = await DELETE(makeRequest(), withIdParam('prog-1'))
 

@@ -80,11 +80,7 @@ describe('POST /api/programs/[id]/copy-week', () => {
             ...baseProgram.weeks[1],
             programId: 'prog-1',
         } as never)
-        prismaMock.$transaction.mockImplementation(async (ops: any) => {
-            if (typeof ops === 'function') return ops(prisma)
-            return Promise.all(ops)
-        })
-        prismaMock.workout.count.mockResolvedValue(0)
+        prismaMock.workout.count.mockResolvedValue(0 as never)
     })
 
     it('returns 400 when sourceWeekId is missing', async () => {
@@ -178,7 +174,7 @@ describe('POST /api/programs/[id]/copy-week', () => {
             programId: 'prog-1',
         } as never)
 
-        prismaMock.$transaction.mockImplementation(async (ops: any) => {
+        prismaMock.$transaction.mockImplementation((async (ops: unknown) => {
             if (typeof ops === 'function') {
                 return ops({
                     workoutExercise: {
@@ -187,8 +183,8 @@ describe('POST /api/programs/[id]/copy-week', () => {
                     },
                 })
             }
-            return Promise.all(ops)
-        })
+            return Promise.all(ops as Promise<unknown>[])
+        }) as never)
 
         const req = makeRequest({ sourceWeekId: 'week-1' })
         const res = await POST(req, { params: Promise.resolve({ id: 'prog-1' }) })
@@ -256,13 +252,14 @@ describe('POST /api/programs/[id]/copy-week', () => {
 
         const deleteManyMock = vi.fn().mockResolvedValue({ count: 0 })
         const createManyMock = vi.fn().mockResolvedValue({ count: 0 })
-        prismaMock.$transaction.mockImplementation(async (ops: any) => {
+        prismaMock.$transaction.mockImplementation((async (ops: unknown) => {
             if (typeof ops === 'function') {
                 return ops({
                     workoutExercise: { deleteMany: deleteManyMock, createMany: createManyMock },
                 })
             }
-        })
+            return Promise.all(ops as Promise<unknown>[])
+        }) as never)
 
         const req = makeRequest({ sourceWeekId: 'week-1' })
         const res = await POST(req, { params: Promise.resolve({ id: 'prog-1' }) })
@@ -273,7 +270,7 @@ describe('POST /api/programs/[id]/copy-week', () => {
     })
 
     it('returns 403 when target week contains completed workouts with exercises', async () => {
-        prismaMock.workout.count.mockResolvedValue(1)
+        prismaMock.workout.count.mockResolvedValue(1 as never)
         const req = makeRequest({ sourceWeekId: 'week-1' })
         const res = await POST(req, { params: Promise.resolve({ id: 'prog-1' }) })
         expect(res.status).toBe(403)
@@ -286,18 +283,18 @@ describe('POST /api/programs/[id]/copy-week', () => {
             ...baseProgram,
             status: 'active',
         } as never)
-        prismaMock.workout.count.mockResolvedValue(0)
+        prismaMock.workout.count.mockResolvedValue(0 as never)
 
         const deleteManyMock = vi.fn().mockResolvedValue({ count: 0 })
         const createManyMock = vi.fn().mockResolvedValue({ count: 1 })
-        prismaMock.$transaction.mockImplementation(async (ops: any) => {
+        prismaMock.$transaction.mockImplementation((async (ops: unknown) => {
             if (typeof ops === 'function') {
                 return ops({
                     workoutExercise: { deleteMany: deleteManyMock, createMany: createManyMock },
                 })
             }
-            return Promise.all(ops)
-        })
+            return Promise.all(ops as Promise<unknown>[])
+        }) as never)
 
         const req = makeRequest({ sourceWeekId: 'week-1' })
         const res = await POST(req, { params: Promise.resolve({ id: 'prog-1' }) })

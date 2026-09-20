@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom'
 import { vi, beforeEach } from 'vitest'
+import type { ReactNode } from 'react'
 
 // Mock Next.js router
 vi.mock('next/navigation', () => ({
@@ -15,13 +16,15 @@ vi.mock('next/navigation', () => ({
     redirect: vi.fn(),
 }))
 
-// Mock Next.js Link
-vi.mock('next/link', () => ({
-    default: ({ children, href, ...props }: any) => {
-        const React = require('react')
-        return React.createElement('a', { href, ...props }, children)
-    },
-}))
+// Mock Next.js Link. The factory is async so React is imported as a module
+// (this file is .ts, so no JSX) instead of being pulled in with require().
+vi.mock('next/link', async () => {
+    const React = await import('react')
+    return {
+        default: ({ children, href, ...props }: { children?: ReactNode; href: string }) =>
+            React.createElement('a', { href, ...props }, children),
+    }
+})
 
 // Mock Supabase clients
 vi.mock('@/lib/supabase-client', () => ({

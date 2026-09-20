@@ -40,7 +40,7 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
                 { id: UUIDS.wex1, sets: 1 },
                 { id: UUIDS.wex2, sets: 1 },
             ],
-        })
+        } as never)
         // transaction returns 4 items: 2 feedback upserts + 2 workoutExercise updates
         prismaMock.$transaction.mockResolvedValue([
             { id: UUIDS.feedback1, workoutExerciseId: UUIDS.wex1, actualRpe: 8, notes: 'great session', date: '2026-05-02' },
@@ -48,7 +48,7 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
             { id: UUIDS.wex1 },
             { id: UUIDS.wex2 },
             { id: UUIDS.workout },
-        ])
+        ] as never)
         vi.mocked(cascadeWorkoutCompletion).mockResolvedValue({
             workout: { id: UUIDS.workout, isCompleted: true },
             week: { id: 'week-1', weekNumber: 2, isCompleted: true },
@@ -187,13 +187,13 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
         prismaMock.workout.findFirst.mockResolvedValue({
             id: UUIDS.workout,
             workoutExercises: [{ id: UUIDS.wex1, sets: 2 }],
-        })
+        } as never)
         // transaction returns 2 items: 1 feedback upsert + 1 workoutExercise update
         prismaMock.$transaction.mockResolvedValue([
             { id: UUIDS.feedback1, workoutExerciseId: UUIDS.wex1, actualRpe: null, notes: 'partial session', date: '2026-05-02' },
             { id: UUIDS.wex1 },
             { id: UUIDS.workout },
-        ])
+        ] as never)
         vi.mocked(cascadeWorkoutCompletion).mockResolvedValue({
             workout: { id: UUIDS.workout, isCompleted: true },
             week: { id: 'week-1', weekNumber: 4, isCompleted: true },
@@ -244,7 +244,7 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
         prismaMock.workout.findFirst.mockResolvedValue({
             id: UUIDS.workout,
             workoutExercises: [{ id: UUIDS.wex1, sets: 3 }],
-        })
+        } as never)
         prismaMock.$transaction.mockResolvedValue([
             {
                 id: UUIDS.feedback1,
@@ -255,7 +255,7 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
             },
             { id: UUIDS.wex1 },
             { id: UUIDS.workout },
-        ])
+        ] as never)
         vi.mocked(cascadeWorkoutCompletion).mockResolvedValue({
             workout: { id: UUIDS.workout, isCompleted: true },
             week: { id: 'week-1', weekNumber: 2, isCompleted: true },
@@ -320,7 +320,7 @@ describe('POST /api/trainee/workouts/[id]/submit', () => {
         prismaMock.workout.findFirst.mockResolvedValue({
             id: UUIDS.workout,
             workoutExercises: [{ id: UUIDS.wex1, sets: 1 }],
-        })
+        } as never)
 
         const body = {
             traineeNotes: null,

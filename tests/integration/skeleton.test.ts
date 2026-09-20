@@ -85,7 +85,7 @@ describe('PUT /api/programs/[id]/skeleton', () => {
         prismaMock.trainingProgram.findUnique.mockResolvedValue({
             ...draftProgram,
             status: 'active',
-        })
+        } as never)
 
         const res = await PUT(
             makePutRequest({ rows: [{ dayIndex: 0, order: 0, exerciseId: 'ex-1' }] }),
