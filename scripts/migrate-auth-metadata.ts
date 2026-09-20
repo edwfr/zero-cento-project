@@ -44,17 +44,37 @@ async function main() {
     let missing = 0
     let tampered = 0
 
-    for (const user of users) {
-        const { data: existing } = await supabase.auth.admin.getUserById(user.id)
+    // Legacy rows can have a Prisma id that does not match the Supabase one
+    // (getSession falls back to a lookup by email, so they still work). Index
+    // the auth users by email so those accounts are migrated too.
+    const authUsersByEmail = new Map<string, { id: string; app_metadata: unknown; user_metadata: unknown }>()
+    for (let page = 1; ; page++) {
+        const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 1000 })
+        if (error) throw error
+        for (const authUser of data.users) {
+            if (authUser.email) authUsersByEmail.set(authUser.email.toLowerCase(), authUser)
+        }
+        if (data.users.length < 1000) break
+    }
 
-        if (!existing.user) {
+    for (const user of users) {
+        const { data: byId } = await supabase.auth.admin.getUserById(user.id)
+        const authUser = byId.user ?? authUsersByEmail.get(user.email.toLowerCase())
+
+        if (!authUser) {
             console.warn(`SKIP  ${user.email}: not found in Supabase Auth`)
             missing++
             continue
         }
 
-        const appMeta = (existing.user.app_metadata ?? {}) as Record<string, unknown>
-        const userMeta = (existing.user.user_metadata ?? {}) as Record<string, unknown>
+        if (!byId.user) {
+            console.warn(
+                `NOTE  ${user.email}: matched by email, Supabase id ${authUser.id} != Prisma id ${user.id}`
+            )
+        }
+
+        const appMeta = (authUser.app_metadata ?? {}) as Record<string, unknown>
+        const userMeta = (authUser.user_metadata ?? {}) as Record<string, unknown>
 
         // A user_metadata role that disagrees with the database is a sign the
         // user wrote it themselves with the anon key (the bug this fixes).
@@ -85,7 +105,7 @@ async function main() {
             continue
         }
 
-        const { error } = await supabase.auth.admin.updateUserById(user.id, { app_metadata: next })
+        const { error } = await supabase.auth.admin.updateUserById(authUser.id, { app_metadata: next })
 
         if (error) {
             console.error(`FAIL  ${user.email}: ${error.message}`)
