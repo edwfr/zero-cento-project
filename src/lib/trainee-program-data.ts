@@ -105,6 +105,7 @@ interface PerformedSetRow {
     weight: number
     completed: boolean
     feedback: {
+        id: string
         workoutExerciseId: string
         workoutExercise: { workoutId: string }
     }
@@ -337,6 +338,7 @@ export async function loadProgressAggregates(programId: string): Promise<Trainee
             completed: true,
             feedback: {
                 select: {
+                    id: true,
                     workoutExerciseId: true,
                     workoutExercise: { select: { workoutId: true } },
                 },
@@ -364,26 +366,32 @@ export async function loadProgressAggregates(programId: string): Promise<Trainee
         }
     }
 
-    // De-dup: keep set rows from the most recent completed feedback per workoutExerciseId.
+    // De-dup: keep set rows from the most recent completed feedback per
+    // workoutExerciseId. Rows arrive ordered by feedback date desc, so the first
+    // feedback id seen for an exercise is the one to keep; rows belonging to an
+    // older feedback of the same exercise are dropped.
     const exercisesPerformedMap = new Map<string, Map<string, { setNumber: number; reps: number; weight: number }[]>>()
-    const seenWorkoutExerciseIds = new Set<string>()
+    const keptFeedbackIdByWeId = new Map<string, string>()
     for (const row of performedRows) {
         const weId = row.feedback.workoutExerciseId
         const workoutId = row.feedback.workoutExercise.workoutId
 
-        if (seenWorkoutExerciseIds.has(weId) === false) {
+        if (!keptFeedbackIdByWeId.has(weId)) {
+            keptFeedbackIdByWeId.set(weId, row.feedback.id)
             if (!exercisesPerformedMap.has(workoutId)) {
                 exercisesPerformedMap.set(workoutId, new Map())
             }
             exercisesPerformedMap.get(workoutId)!.set(weId, [])
         }
 
-        // Continue collecting only if this is the first feedback we saw for this exercise.
-        const map = exercisesPerformedMap.get(workoutId)!.get(weId)
-        if (map) {
-            map.push({ setNumber: row.setNumber, reps: row.reps, weight: row.weight })
+        if (keptFeedbackIdByWeId.get(weId) !== row.feedback.id) {
+            continue
         }
-        seenWorkoutExerciseIds.add(weId)
+
+        exercisesPerformedMap
+            .get(workoutId)!
+            .get(weId)!
+            .push({ setNumber: row.setNumber, reps: row.reps, weight: row.weight })
     }
     // Sort sets per (workout, exercise) by setNumber ascending.
     for (const exMap of exercisesPerformedMap.values()) {

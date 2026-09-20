@@ -358,16 +358,13 @@ describe('loadProgressAggregates performed sets', () => {
         prismaMock.$queryRaw.mockResolvedValue([] as never)
     })
 
-    // BUG: the loop fills `seenWorkoutExerciseIds` but never uses it to skip the
-    // rows of older feedbacks, so an exercise submitted twice reports both sets
-    // of rows. The code's own comment says it keeps only the most recent one.
-    // Documented here as it behaves today; fixing it is a production change.
-    it('collects the performed sets of an exercise, sorted by set number', async () => {
+    it('keeps only the sets of the most recent feedback, sorted by set number', async () => {
+        // Rows arrive ordered by feedback date desc: fb-2 is the latest submit,
+        // fb-1 an older one for the same exercise, whose rows must be dropped.
         prismaMock.setPerformed.findMany.mockResolvedValue([
-            { setNumber: 2, reps: 5, weight: 100, feedback: { workoutExerciseId: 'we-1', workoutExercise: { workoutId: 'wk-1' } } },
-            { setNumber: 1, reps: 5, weight: 100, feedback: { workoutExerciseId: 'we-1', workoutExercise: { workoutId: 'wk-1' } } },
-            // an older feedback for the same exercise: its rows must be ignored
-            { setNumber: 1, reps: 3, weight: 80, feedback: { workoutExerciseId: 'we-1', workoutExercise: { workoutId: 'wk-1' } } },
+            { setNumber: 2, reps: 5, weight: 100, feedback: { id: 'fb-2', workoutExerciseId: 'we-1', workoutExercise: { workoutId: 'wk-1' } } },
+            { setNumber: 1, reps: 5, weight: 100, feedback: { id: 'fb-2', workoutExerciseId: 'we-1', workoutExercise: { workoutId: 'wk-1' } } },
+            { setNumber: 1, reps: 3, weight: 80, feedback: { id: 'fb-1', workoutExerciseId: 'we-1', workoutExercise: { workoutId: 'wk-1' } } },
         ] as never)
         prismaMock.exerciseFeedback.findMany.mockResolvedValue([
             { workoutExerciseId: 'we-1', notes: 'Sensazioni buone' },
@@ -379,13 +376,14 @@ describe('loadProgressAggregates performed sets', () => {
         const performed = workout!.exercisesPerformed[0]
 
         expect(performed.workoutExerciseId).toBe('we-1')
-        expect(performed.performedSets.map((set) => set.setNumber)).toEqual([1, 1, 2])
+        expect(performed.performedSets.map((set) => set.setNumber)).toEqual([1, 2])
+        expect(performed.performedSets.every((set) => set.weight === 100)).toBe(true)
         expect(performed.traineeNote).toBe('Sensazioni buone')
     })
 
     it('reports no note when the latest feedback carries none', async () => {
         prismaMock.setPerformed.findMany.mockResolvedValue([
-            { setNumber: 1, reps: 5, weight: 100, feedback: { workoutExerciseId: 'we-2', workoutExercise: { workoutId: 'wk-1' } } },
+            { setNumber: 1, reps: 5, weight: 100, feedback: { id: 'fb-3', workoutExerciseId: 'we-2', workoutExercise: { workoutId: 'wk-1' } } },
         ] as never)
         prismaMock.exerciseFeedback.findMany.mockResolvedValue([
             { workoutExerciseId: 'we-2', notes: null },
