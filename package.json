@@ -95,7 +95,8 @@
         "tsx": "^4.16.5",
         "typescript": "^5.5.4",
         "vite": "^8.0.8",
-        "vitest": "^4.1.4"
+        "vitest": "^4.1.4",
+        "vitest-mock-extended": "^5.1.1"
     },
     "engines": {
         "node": ">=20.0.0"

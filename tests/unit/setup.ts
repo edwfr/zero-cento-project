@@ -56,36 +56,17 @@ vi.mock('react-i18next', () => {
     }
 })
 
-vi.mock('@/lib/prisma', () => ({
-    prisma: {
-        user: {
-            findMany: vi.fn(),
-            findFirst: vi.fn(),
-            findUnique: vi.fn(),
-            create: vi.fn(),
-            update: vi.fn(),
-            delete: vi.fn(),
-            count: vi.fn(),
-        },
-        program: {
-            findMany: vi.fn(),
-            findFirst: vi.fn(),
-            findUnique: vi.fn(),
-            create: vi.fn(),
-            update: vi.fn(),
-            delete: vi.fn(),
-            count: vi.fn(),
-        },
-        workoutExercise: {
-            findFirst: vi.fn(),
-        },
-        personalRecord: {
-            findFirst: vi.fn(),
-            findMany: vi.fn(),
-        },
-        $transaction: vi.fn((fn: any) => fn()),
-    },
-}))
+// Shared, fully typed Prisma mock (tests/helpers/prisma-mock.ts).
+// The factory is async so the helper module is loaded after vi.mock hoisting.
+vi.mock('@/lib/prisma', async () => {
+    const { prismaMock } = await import('../helpers/prisma-mock')
+    return { prisma: prismaMock }
+})
+
+beforeEach(async () => {
+    const { resetPrismaMock } = await import('../helpers/prisma-mock')
+    resetPrismaMock()
+})
 
 // Node >= 25 ships a native localStorage that shadows jsdom's and throws on
 // access unless --localstorage-file is set. Install an in-memory Storage
