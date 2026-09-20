@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { mockTrainerSession, mockAdminSession, mockTraineeSession, makeTrainerSession } from './fixtures'
 
 const withIdParam = (id: string) => ({ params: Promise.resolve({ id }) })
 
@@ -15,34 +14,7 @@ const mockOtherTrainerSession = makeTrainerSession({
 
 // ─── Mocks ─────────────────────────────────────────────────────────────────
 
-vi.mock('@/lib/auth', () => ({
-    requireAuth: vi.fn(),
-    requireRole: vi.fn(),
-    getSession: vi.fn(),
-}))
-
-vi.mock('@/lib/prisma', () => ({
-    prisma: {
-        personalRecord: {
-            findMany: vi.fn(),
-            findUnique: vi.fn(),
-            create: vi.fn(),
-            update: vi.fn(),
-            delete: vi.fn(),
-        },
-        trainerTrainee: {
-            findMany: vi.fn(),
-            findUnique: vi.fn(),
-            findFirst: vi.fn(),
-        },
-        user: {
-            findUnique: vi.fn(),
-        },
-        exercise: {
-            findUnique: vi.fn(),
-        },
-    },
-}))
+vi.mock('@/lib/auth', async () => (await import('../helpers/auth-module-mock')).authModuleMock())
 
 vi.mock('@/lib/logger', () => ({
     logger: {
@@ -55,8 +27,9 @@ vi.mock('@/lib/logger', () => ({
 
 import { GET, POST } from '@/app/api/personal-records/route'
 import { PATCH, DELETE } from '@/app/api/personal-records/[id]/route'
-import { requireRole } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { prismaMock } from '../helpers/prisma-mock'
+import { mockTrainerSession, makeTrainerSession } from '../helpers/sessions'
+import { asTrainer, asAdmin, asTrainee, asUnauthenticated, asForbidden } from '../helpers/auth-mock'
 
 // ─── Fixtures ──────────────────────────────────────────────────────────────
 
@@ -111,7 +84,7 @@ const mockRecord2 = {
 
 function makeRequest(url = 'http://localhost:3000/api/personal-records', options?: RequestInit) {
     const { signal, ...safeOptions } = options || {}
-    return new NextRequest(url, safeOptions as any)
+    return new NextRequest(url, safeOptions as never)
 }
 
 function makeIdRequest(
@@ -120,7 +93,7 @@ function makeIdRequest(
     options?: RequestInit
 ) {
     const { signal, ...safeOptions } = options || {}
-    return new NextRequest(url, safeOptions as any)
+    return new NextRequest(url, safeOptions as never)
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -133,8 +106,8 @@ describe('GET /api/personal-records', () => {
     })
 
     it('returns own records for trainee', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
-        vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([mockRecord] as any)
+        asTrainee()
+        prismaMock.personalRecord.findMany.mockResolvedValue([mockRecord] as never)
 
         const req = makeRequest()
         const res = await GET(req)
@@ -145,7 +118,7 @@ describe('GET /api/personal-records', () => {
         expect(body.data.items[0].id).toBe(RECORD_ID_1)
 
         // Trainee filter: where.traineeId === own id
-        expect(prisma.personalRecord.findMany).toHaveBeenCalledWith(
+        expect(prismaMock.personalRecord.findMany).toHaveBeenCalledWith(
             expect.objectContaining({
                 where: expect.objectContaining({ traineeId: TRAINEE_ID }),
             })
@@ -153,11 +126,11 @@ describe('GET /api/personal-records', () => {
     })
 
     it('returns records for trainer filtered to own trainees', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.trainerTrainee.findMany).mockResolvedValue([
+        asTrainer()
+        prismaMock.trainerTrainee.findMany.mockResolvedValue([
             { traineeId: TRAINEE_ID },
-        ] as any)
-        vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([mockRecord, mockRecord2] as any)
+        ] as never)
+        prismaMock.personalRecord.findMany.mockResolvedValue([mockRecord, mockRecord2] as never)
 
         const req = makeRequest()
         const res = await GET(req)
@@ -167,7 +140,7 @@ describe('GET /api/personal-records', () => {
         expect(body.data.items).toHaveLength(2)
 
         // Trainer filter: where.traineeId = { in: [...] }
-        expect(prisma.personalRecord.findMany).toHaveBeenCalledWith(
+        expect(prismaMock.personalRecord.findMany).toHaveBeenCalledWith(
             expect.objectContaining({
                 where: expect.objectContaining({
                     traineeId: { in: [TRAINEE_ID] },
@@ -177,8 +150,8 @@ describe('GET /api/personal-records', () => {
     })
 
     it('returns all records for admin without trainee filter', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockAdminSession)
-        vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([mockRecord, mockRecord2] as any)
+        asAdmin()
+        prismaMock.personalRecord.findMany.mockResolvedValue([mockRecord, mockRecord2] as never)
 
         const req = makeRequest()
         const res = await GET(req)
@@ -188,20 +161,20 @@ describe('GET /api/personal-records', () => {
         expect(body.data.items).toHaveLength(2)
 
         // Admin: no traineeId constraint in where
-        const callArgs = vi.mocked(prisma.personalRecord.findMany).mock.calls[0][0] as any
+        const callArgs = prismaMock.personalRecord.findMany.mock.calls[0][0] as never
         expect(callArgs.where?.traineeId).toBeUndefined()
     })
 
     it('filters by exerciseId query parameter', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
-        vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([mockRecord] as any)
+        asTrainee()
+        prismaMock.personalRecord.findMany.mockResolvedValue([mockRecord] as never)
 
         const req = makeRequest(
             'http://localhost:3000/api/personal-records?exerciseId=exercise-uuid-1'
         )
         await GET(req)
 
-        expect(prisma.personalRecord.findMany).toHaveBeenCalledWith(
+        expect(prismaMock.personalRecord.findMany).toHaveBeenCalledWith(
             expect.objectContaining({
                 where: expect.objectContaining({ exerciseId: 'exercise-uuid-1' }),
             })
@@ -209,13 +182,13 @@ describe('GET /api/personal-records', () => {
     })
 
     it('trainer can filter by own traineeId', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue({
+        asTrainer()
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue({
             trainerId: 'trainer-uuid-1',
             traineeId: 'trainee-uuid-1',
             assignedAt: new Date(),
-        } as any)
-        vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([mockRecord] as any)
+        } as never)
+        prismaMock.personalRecord.findMany.mockResolvedValue([mockRecord] as never)
 
         const req = makeRequest(
             'http://localhost:3000/api/personal-records?traineeId=trainee-uuid-1'
@@ -226,8 +199,8 @@ describe('GET /api/personal-records', () => {
     })
 
     it('returns 403 when trainer requests records of another trainer\'s trainee', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockOtherTrainerSession)
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue(null)
+        asTrainer(mockOtherTrainerSession)
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue(null)
 
         const req = makeRequest(
             'http://localhost:3000/api/personal-records?traineeId=trainee-uuid-1'
@@ -240,26 +213,26 @@ describe('GET /api/personal-records', () => {
     })
 
     it('trainer with traineeId: uses single findFirst ownership check (not findMany + findUnique)', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue({
+        asTrainer()
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue({
             trainerId: mockTrainerSession.user.id,
             traineeId: TRAINEE_ID,
-        } as any)
-        vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([])
+        } as never)
+        prismaMock.personalRecord.findMany.mockResolvedValue([])
 
         const req = makeRequest(`http://localhost:3000/api/personal-records?traineeId=${TRAINEE_ID}`)
         const res = await GET(req)
 
         expect(res.status).toBe(200)
-        expect(prisma.trainerTrainee.findFirst).toHaveBeenCalledWith({
+        expect(prismaMock.trainerTrainee.findFirst).toHaveBeenCalledWith({
             where: { trainerId: mockTrainerSession.user.id, traineeId: TRAINEE_ID },
         })
-        expect(prisma.trainerTrainee.findMany).not.toHaveBeenCalled()
+        expect(prismaMock.trainerTrainee.findMany).not.toHaveBeenCalled()
     })
 
     it('trainer with traineeId: returns 403 when trainee not managed', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue(null)
+        asTrainer()
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue(null)
 
         const req = makeRequest('http://localhost:3000/api/personal-records?traineeId=trainee-uuid-999')
         const res = await GET(req)
@@ -267,10 +240,7 @@ describe('GET /api/personal-records', () => {
         expect(res.status).toBe(403)
     })
 
-    it('returns 401 when not authenticated', async () => {
-        vi.mocked(requireRole).mockRejectedValue(
-            Response.json({ error: { code: 'UNAUTHORIZED' } }, { status: 401 })
-        )
+    it('returns 401 when not authenticated', async () => {asUnauthenticated()
 
         const req = makeRequest()
         const res = await GET(req)
@@ -296,10 +266,7 @@ describe('POST /api/personal-records', () => {
         notes: 'PB squat',
     }
 
-    it('returns 403 when trainee tries to create own personal record', async () => {
-        vi.mocked(requireRole).mockRejectedValue(
-            Response.json({ error: { code: 'FORBIDDEN' } }, { status: 403 })
-        )
+    it('returns 403 when trainee tries to create own personal record', async () => {asForbidden()
 
         const req = makeRequest('http://localhost:3000/api/personal-records', {
             method: 'POST',
@@ -309,18 +276,18 @@ describe('POST /api/personal-records', () => {
 
         const res = await POST(req)
         expect(res.status).toBe(403)
-        expect(prisma.personalRecord.create).not.toHaveBeenCalled()
+        expect(prismaMock.personalRecord.create).not.toHaveBeenCalled()
     })
 
     it('trainer creates record for own trainee', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue({
+        asTrainer()
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue({
             trainerId: 'trainer-uuid-1',
             traineeId: 'trainee-uuid-1',
-        } as any)
-        vi.mocked(prisma.user.findUnique).mockResolvedValue(mockTraineeUser as any)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(mockExercise as any)
-        vi.mocked(prisma.personalRecord.create).mockResolvedValue(mockRecord as any)
+        } as never)
+        prismaMock.user.findUnique.mockResolvedValue(mockTraineeUser as never)
+        prismaMock.exercise.findUnique.mockResolvedValue(mockExercise as never)
+        prismaMock.personalRecord.create.mockResolvedValue(mockRecord as never)
 
         const req = makeRequest('http://localhost:3000/api/personal-records', {
             method: 'POST',
@@ -334,14 +301,14 @@ describe('POST /api/personal-records', () => {
     })
 
     it('POST: trainer ownership check uses findFirst with trainerId + traineeId', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue({
+        asTrainer()
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue({
             trainerId: mockTrainerSession.user.id,
             traineeId: TRAINEE_ID,
-        } as any)
-        vi.mocked(prisma.user.findUnique).mockResolvedValue(mockTraineeUser as any)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(mockExercise as any)
-        vi.mocked(prisma.personalRecord.create).mockResolvedValue(mockRecord as any)
+        } as never)
+        prismaMock.user.findUnique.mockResolvedValue(mockTraineeUser as never)
+        prismaMock.exercise.findUnique.mockResolvedValue(mockExercise as never)
+        prismaMock.personalRecord.create.mockResolvedValue(mockRecord as never)
 
         const req = makeRequest('http://localhost:3000/api/personal-records', {
             method: 'POST',
@@ -351,17 +318,17 @@ describe('POST /api/personal-records', () => {
         const res = await POST(req)
 
         expect(res.status).toBe(201)
-        expect(prisma.trainerTrainee.findFirst).toHaveBeenCalledWith({
+        expect(prismaMock.trainerTrainee.findFirst).toHaveBeenCalledWith({
             where: { trainerId: mockTrainerSession.user.id, traineeId: TRAINEE_ID },
         })
-        expect(prisma.trainerTrainee.findUnique).not.toHaveBeenCalled()
+        expect(prismaMock.trainerTrainee.findUnique).not.toHaveBeenCalled()
     })
 
     it('admin creates record specifying any traineeId', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockAdminSession)
-        vi.mocked(prisma.user.findUnique).mockResolvedValue(mockTraineeUser as any)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(mockExercise as any)
-        vi.mocked(prisma.personalRecord.create).mockResolvedValue(mockRecord as any)
+        asAdmin()
+        prismaMock.user.findUnique.mockResolvedValue(mockTraineeUser as never)
+        prismaMock.exercise.findUnique.mockResolvedValue(mockExercise as never)
+        prismaMock.personalRecord.create.mockResolvedValue(mockRecord as never)
 
         const req = makeRequest('http://localhost:3000/api/personal-records', {
             method: 'POST',
@@ -373,13 +340,13 @@ describe('POST /api/personal-records', () => {
 
         expect(res.status).toBe(201)
         // Admin skips trainer–trainee ownership check
-        expect(prisma.trainerTrainee.findFirst).not.toHaveBeenCalled()
-        expect(prisma.trainerTrainee.findUnique).not.toHaveBeenCalled()
+        expect(prismaMock.trainerTrainee.findFirst).not.toHaveBeenCalled()
+        expect(prismaMock.trainerTrainee.findUnique).not.toHaveBeenCalled()
     })
 
     it('returns 403 when trainer creates record for another trainer\'s trainee', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockOtherTrainerSession)
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue(null)
+        asTrainer(mockOtherTrainerSession)
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue(null)
 
         const req = makeRequest('http://localhost:3000/api/personal-records', {
             method: 'POST',
@@ -395,7 +362,7 @@ describe('POST /api/personal-records', () => {
     })
 
     it('returns 400 when traineeId is missing for trainer', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        asTrainer()
 
         const req = makeRequest('http://localhost:3000/api/personal-records', {
             method: 'POST',
@@ -411,13 +378,13 @@ describe('POST /api/personal-records', () => {
     })
 
     it('returns 404 when exercise does not exist', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.trainerTrainee.findFirst).mockResolvedValue({
+        asTrainer()
+        prismaMock.trainerTrainee.findFirst.mockResolvedValue({
             trainerId: 'trainer-uuid-1',
             traineeId: 'trainee-uuid-1',
-        } as any)
-        vi.mocked(prisma.user.findUnique).mockResolvedValue(mockTraineeUser as any)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(null)
+        } as never)
+        prismaMock.user.findUnique.mockResolvedValue(mockTraineeUser as never)
+        prismaMock.exercise.findUnique.mockResolvedValue(null)
 
         const req = makeRequest('http://localhost:3000/api/personal-records', {
             method: 'POST',
@@ -433,7 +400,7 @@ describe('POST /api/personal-records', () => {
     })
 
     it('returns 400 for weight exceeding 1000 kg', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockAdminSession)
+        asAdmin()
 
         const req = makeRequest('http://localhost:3000/api/personal-records', {
             method: 'POST',
@@ -449,7 +416,7 @@ describe('POST /api/personal-records', () => {
     })
 
     it('returns 400 for reps exceeding 100', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockAdminSession)
+        asAdmin()
 
         const req = makeRequest('http://localhost:3000/api/personal-records', {
             method: 'POST',
@@ -465,7 +432,7 @@ describe('POST /api/personal-records', () => {
     })
 
     it('returns 400 for future recordDate', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockAdminSession)
+        asAdmin()
 
         const futureDate = new Date()
         futureDate.setFullYear(futureDate.getFullYear() + 1)
@@ -483,10 +450,7 @@ describe('POST /api/personal-records', () => {
         expect(body.error.code).toBe('VALIDATION_ERROR')
     })
 
-    it('returns 401 when not authenticated', async () => {
-        vi.mocked(requireRole).mockRejectedValue(
-            Response.json({ error: { code: 'UNAUTHORIZED' } }, { status: 401 })
-        )
+    it('returns 401 when not authenticated', async () => {asUnauthenticated()
 
         const req = makeRequest('http://localhost:3000/api/personal-records', {
             method: 'POST',
@@ -510,19 +474,19 @@ describe('PATCH /api/personal-records/[id]', () => {
     })
 
     it('trainer updates record belonging to own trainee', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.personalRecord.findUnique).mockResolvedValue({
+        asTrainer()
+        prismaMock.personalRecord.findUnique.mockResolvedValue({
             ...mockRecord,
             trainee: mockTraineeUser,
-        } as any)
-        vi.mocked(prisma.trainerTrainee.findUnique).mockResolvedValue({
+        } as never)
+        prismaMock.trainerTrainee.findUnique.mockResolvedValue({
             trainerId: 'trainer-uuid-1',
             traineeId: 'trainee-uuid-1',
-        } as any)
-        vi.mocked(prisma.personalRecord.update).mockResolvedValue({
+        } as never)
+        prismaMock.personalRecord.update.mockResolvedValue({
             ...mockRecord,
             weight: 105,
-        } as any)
+        } as never)
 
         const req = makeIdRequest('record-uuid-1', undefined, {
             method: 'PATCH',
@@ -538,15 +502,15 @@ describe('PATCH /api/personal-records/[id]', () => {
     })
 
     it('admin updates any record', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockAdminSession)
-        vi.mocked(prisma.personalRecord.findUnique).mockResolvedValue({
+        asAdmin()
+        prismaMock.personalRecord.findUnique.mockResolvedValue({
             ...mockRecord,
             trainee: mockTraineeUser,
-        } as any)
-        vi.mocked(prisma.personalRecord.update).mockResolvedValue({
+        } as never)
+        prismaMock.personalRecord.update.mockResolvedValue({
             ...mockRecord,
             notes: 'Updated by admin',
-        } as any)
+        } as never)
 
         const req = makeIdRequest('record-uuid-1', undefined, {
             method: 'PATCH',
@@ -558,16 +522,16 @@ describe('PATCH /api/personal-records/[id]', () => {
 
         expect(res.status).toBe(200)
         // Admin skips trainer-trainee check
-        expect(prisma.trainerTrainee.findUnique).not.toHaveBeenCalled()
+        expect(prismaMock.trainerTrainee.findUnique).not.toHaveBeenCalled()
     })
 
     it('returns 403 when trainer tries to update record of another trainer\'s trainee', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockOtherTrainerSession)
-        vi.mocked(prisma.personalRecord.findUnique).mockResolvedValue({
+        asTrainer(mockOtherTrainerSession)
+        prismaMock.personalRecord.findUnique.mockResolvedValue({
             ...mockRecord,
             trainee: mockTraineeUser,
-        } as any)
-        vi.mocked(prisma.trainerTrainee.findUnique).mockResolvedValue(null) // no relation
+        } as never)
+        prismaMock.trainerTrainee.findUnique.mockResolvedValue(null) // no relation
 
         const req = makeIdRequest('record-uuid-1', undefined, {
             method: 'PATCH',
@@ -583,8 +547,8 @@ describe('PATCH /api/personal-records/[id]', () => {
     })
 
     it('returns 404 when record does not exist', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.personalRecord.findUnique).mockResolvedValue(null)
+        asTrainer()
+        prismaMock.personalRecord.findUnique.mockResolvedValue(null)
 
         const req = makeIdRequest('non-existent-id', undefined, {
             method: 'PATCH',
@@ -600,15 +564,15 @@ describe('PATCH /api/personal-records/[id]', () => {
     })
 
     it('returns 400 for invalid partial data (weight > 1000)', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.personalRecord.findUnique).mockResolvedValue({
+        asTrainer()
+        prismaMock.personalRecord.findUnique.mockResolvedValue({
             ...mockRecord,
             trainee: mockTraineeUser,
-        } as any)
-        vi.mocked(prisma.trainerTrainee.findUnique).mockResolvedValue({
+        } as never)
+        prismaMock.trainerTrainee.findUnique.mockResolvedValue({
             trainerId: 'trainer-uuid-1',
             traineeId: 'trainee-uuid-1',
-        } as any)
+        } as never)
 
         const req = makeIdRequest('record-uuid-1', undefined, {
             method: 'PATCH',
@@ -634,48 +598,48 @@ describe('DELETE /api/personal-records/[id]', () => {
     })
 
     it('trainer deletes record belonging to own trainee', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.personalRecord.findUnique).mockResolvedValue({
+        asTrainer()
+        prismaMock.personalRecord.findUnique.mockResolvedValue({
             ...mockRecord,
             trainee: mockTraineeUser,
-        } as any)
-        vi.mocked(prisma.trainerTrainee.findUnique).mockResolvedValue({
+        } as never)
+        prismaMock.trainerTrainee.findUnique.mockResolvedValue({
             trainerId: 'trainer-uuid-1',
             traineeId: 'trainee-uuid-1',
-        } as any)
-        vi.mocked(prisma.personalRecord.delete).mockResolvedValue(mockRecord as any)
+        } as never)
+        prismaMock.personalRecord.delete.mockResolvedValue(mockRecord as never)
 
         const req = makeIdRequest('record-uuid-1', undefined, { method: 'DELETE' })
         const res = await DELETE(req, withIdParam('record-uuid-1'))
 
         expect(res.status).toBe(200)
-        expect(prisma.personalRecord.delete).toHaveBeenCalledWith(
+        expect(prismaMock.personalRecord.delete).toHaveBeenCalledWith(
             expect.objectContaining({ where: { id: 'record-uuid-1' } })
         )
     })
 
     it('admin deletes any record', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockAdminSession)
-        vi.mocked(prisma.personalRecord.findUnique).mockResolvedValue({
+        asAdmin()
+        prismaMock.personalRecord.findUnique.mockResolvedValue({
             ...mockRecord,
             trainee: mockTraineeUser,
-        } as any)
-        vi.mocked(prisma.personalRecord.delete).mockResolvedValue(mockRecord as any)
+        } as never)
+        prismaMock.personalRecord.delete.mockResolvedValue(mockRecord as never)
 
         const req = makeIdRequest('record-uuid-1', undefined, { method: 'DELETE' })
         const res = await DELETE(req, withIdParam('record-uuid-1'))
 
         expect(res.status).toBe(200)
-        expect(prisma.trainerTrainee.findUnique).not.toHaveBeenCalled()
+        expect(prismaMock.trainerTrainee.findUnique).not.toHaveBeenCalled()
     })
 
     it('returns 403 when trainer tries to delete record of another trainer\'s trainee', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockOtherTrainerSession)
-        vi.mocked(prisma.personalRecord.findUnique).mockResolvedValue({
+        asTrainer(mockOtherTrainerSession)
+        prismaMock.personalRecord.findUnique.mockResolvedValue({
             ...mockRecord,
             trainee: mockTraineeUser,
-        } as any)
-        vi.mocked(prisma.trainerTrainee.findUnique).mockResolvedValue(null)
+        } as never)
+        prismaMock.trainerTrainee.findUnique.mockResolvedValue(null)
 
         const req = makeIdRequest('record-uuid-1', undefined, { method: 'DELETE' })
         const res = await DELETE(req, withIdParam('record-uuid-1'))
@@ -686,8 +650,8 @@ describe('DELETE /api/personal-records/[id]', () => {
     })
 
     it('returns 404 when record does not exist', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.personalRecord.findUnique).mockResolvedValue(null)
+        asTrainer()
+        prismaMock.personalRecord.findUnique.mockResolvedValue(null)
 
         const req = makeIdRequest('non-existent-id', undefined, { method: 'DELETE' })
         const res = await DELETE(req, withIdParam('non-existent-id'))
@@ -697,10 +661,7 @@ describe('DELETE /api/personal-records/[id]', () => {
         expect(body.error.code).toBe('NOT_FOUND')
     })
 
-    it('returns 401 when not authenticated', async () => {
-        vi.mocked(requireRole).mockRejectedValue(
-            Response.json({ error: { code: 'UNAUTHORIZED' } }, { status: 401 })
-        )
+    it('returns 401 when not authenticated', async () => {asUnauthenticated()
 
         const req = makeIdRequest('record-uuid-1', undefined, { method: 'DELETE' })
         const res = await DELETE(req, withIdParam('record-uuid-1'))
