@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 import { Prisma } from '@prisma/client'
-import { mockTrainerSession, mockAdminSession, mockTraineeSession } from './fixtures'
 
 const withIdParam = (id: string) => ({ params: Promise.resolve({ id }) })
 
@@ -9,35 +8,7 @@ const withIdParam = (id: string) => ({ params: Promise.resolve({ id }) })
 // Mocks
 // ────────────────────────────────────────────────────────────────────────────
 
-vi.mock('@/lib/auth', () => ({
-    requireAuth: vi.fn(),
-    requireRole: vi.fn(),
-    getSession: vi.fn(),
-}))
-
-vi.mock('@/lib/prisma', () => ({
-    prisma: {
-        exercise: {
-            findMany: vi.fn(),
-            findUnique: vi.fn(),
-            findFirst: vi.fn(),
-            create: vi.fn(),
-            update: vi.fn(),
-            delete: vi.fn(),
-            count: vi.fn(),
-        },
-        movementPattern: {
-            findUnique: vi.fn(),
-        },
-        muscleGroup: {
-            findMany: vi.fn(),
-        },
-        workoutExercise: {
-            findMany: vi.fn(),
-            findFirst: vi.fn(),
-        },
-    },
-}))
+vi.mock('@/lib/auth', async () => (await import('../helpers/auth-module-mock')).authModuleMock())
 
 vi.mock('@/lib/logger', () => ({
     logger: {
@@ -54,8 +25,8 @@ vi.mock('@/lib/logger', () => ({
 
 import { GET as listExercises, POST as createExercise } from '@/app/api/exercises/route'
 import { GET as getExercise, PUT as updateExercise, DELETE as deleteExercise } from '@/app/api/exercises/[id]/route'
-import { requireRole } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { prismaMock } from '../helpers/prisma-mock'
+import { asTrainer, asAdmin, asTrainee, asUnauthenticated, asForbidden } from '../helpers/auth-mock'
 
 // ────────────────────────────────────────────────────────────────────────────
 // Fixture data  (all IDs are valid UUIDs to pass schema validation)
@@ -156,7 +127,7 @@ const mockAccessoryExercise = {
 
 function makeListRequest(url = 'http://localhost:3000/api/exercises', options?: RequestInit) {
     const { signal, ...safeOptions } = options || {}
-    return new NextRequest(url, safeOptions as any)
+    return new NextRequest(url, safeOptions as RequestInit)
 }
 
 function makeDetailRequest(
@@ -165,7 +136,7 @@ function makeDetailRequest(
     options?: RequestInit
 ) {
     const { signal, ...safeOptions } = options || {}
-    return new NextRequest(url ?? `http://localhost:3000/api/exercises/${id}`, safeOptions as any)
+    return new NextRequest(url ?? `http://localhost:3000/api/exercises/${id}`, safeOptions as RequestInit)
 }
 
 /** Exercise as the DELETE handler selects it: id + reference counts. */
@@ -193,8 +164,8 @@ describe('GET /api/exercises', () => {
     })
 
     it('returns exercise list with nested movementPattern and muscleGroups', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findMany).mockResolvedValue([mockExerciseWithRelations] as any)
+        asTrainer()
+        prismaMock.exercise.findMany.mockResolvedValue([mockExerciseWithRelations] as never)
 
         const req = makeListRequest()
         const res = await listExercises(req)
@@ -216,8 +187,8 @@ describe('GET /api/exercises', () => {
             id: `ex-uuid-${i + 1}`,
             name: `Squat ${i + 1}`,
         }))
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findMany).mockResolvedValue(manyExercises as any)
+        asTrainer()
+        prismaMock.exercise.findMany.mockResolvedValue(manyExercises as never)
 
         const req = makeListRequest('http://localhost:3000/api/exercises?limit=20')
         const res = await listExercises(req)
@@ -230,8 +201,8 @@ describe('GET /api/exercises', () => {
     })
 
     it('returns hasMore=false and nextCursor=null when results fit in one page', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findMany).mockResolvedValue([mockExerciseWithRelations] as any)
+        asTrainer()
+        prismaMock.exercise.findMany.mockResolvedValue([mockExerciseWithRelations] as never)
 
         const req = makeListRequest()
         const res = await listExercises(req)
@@ -243,13 +214,13 @@ describe('GET /api/exercises', () => {
     })
 
     it('filters by type=fundamental and passes where clause to prisma', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findMany).mockResolvedValue([mockExerciseWithRelations] as any)
+        asTrainer()
+        prismaMock.exercise.findMany.mockResolvedValue([mockExerciseWithRelations] as never)
 
         const req = makeListRequest('http://localhost:3000/api/exercises?type=fundamental')
         await listExercises(req)
 
-        expect(prisma.exercise.findMany).toHaveBeenCalledWith(
+        expect(prismaMock.exercise.findMany).toHaveBeenCalledWith(
             expect.objectContaining({
                 where: expect.objectContaining({ type: 'fundamental' }),
             })
@@ -257,14 +228,14 @@ describe('GET /api/exercises', () => {
     })
 
     it('filters by type=postural and passes where clause to prisma', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findMany).mockResolvedValue([] as any)
+        asTrainer()
+        prismaMock.exercise.findMany.mockResolvedValue([] as never)
 
         const req = makeListRequest('http://localhost:3000/api/exercises?type=postural')
         const res = await listExercises(req)
 
         expect(res.status).toBe(200)
-        expect(prisma.exercise.findMany).toHaveBeenCalledWith(
+        expect(prismaMock.exercise.findMany).toHaveBeenCalledWith(
             expect.objectContaining({
                 where: expect.objectContaining({ type: 'postural' }),
             })
@@ -272,15 +243,15 @@ describe('GET /api/exercises', () => {
     })
 
     it('filters by movementPatternId and passes where clause to prisma', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findMany).mockResolvedValue([mockExerciseWithRelations] as any)
+        asTrainer()
+        prismaMock.exercise.findMany.mockResolvedValue([mockExerciseWithRelations] as never)
 
         const req = makeListRequest(
             `http://localhost:3000/api/exercises?movementPatternId=${MP_ID}`
         )
         await listExercises(req)
 
-        expect(prisma.exercise.findMany).toHaveBeenCalledWith(
+        expect(prismaMock.exercise.findMany).toHaveBeenCalledWith(
             expect.objectContaining({
                 where: expect.objectContaining({ movementPatternId: MP_ID }),
             })
@@ -288,15 +259,15 @@ describe('GET /api/exercises', () => {
     })
 
     it('filters by muscleGroupId using nested some query', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findMany).mockResolvedValue([mockExerciseWithRelations] as any)
+        asTrainer()
+        prismaMock.exercise.findMany.mockResolvedValue([mockExerciseWithRelations] as never)
 
         const req = makeListRequest(
             `http://localhost:3000/api/exercises?muscleGroupId=${MG_ID_1}`
         )
         await listExercises(req)
 
-        expect(prisma.exercise.findMany).toHaveBeenCalledWith(
+        expect(prismaMock.exercise.findMany).toHaveBeenCalledWith(
             expect.objectContaining({
                 where: expect.objectContaining({
                     exerciseMuscleGroups: { some: { muscleGroupId: MG_ID_1 } },
@@ -306,13 +277,13 @@ describe('GET /api/exercises', () => {
     })
 
     it('performs case-insensitive search across name and description', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findMany).mockResolvedValue([mockExerciseWithRelations] as any)
+        asTrainer()
+        prismaMock.exercise.findMany.mockResolvedValue([mockExerciseWithRelations] as never)
 
         const req = makeListRequest('http://localhost:3000/api/exercises?search=squat')
         await listExercises(req)
 
-        expect(prisma.exercise.findMany).toHaveBeenCalledWith(
+        expect(prismaMock.exercise.findMany).toHaveBeenCalledWith(
             expect.objectContaining({
                 where: expect.objectContaining({
                     OR: [
@@ -325,7 +296,7 @@ describe('GET /api/exercises', () => {
     })
 
     it('returns 400 when search param is too short (< 2 chars)', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        asTrainer()
 
         const req = makeListRequest('http://localhost:3000/api/exercises?search=x')
         const res = await listExercises(req)
@@ -334,7 +305,7 @@ describe('GET /api/exercises', () => {
     })
 
     it('returns 400 when search param is too long (> 100 chars)', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        asTrainer()
 
         const longSearch = 'a'.repeat(101)
         const req = makeListRequest(`http://localhost:3000/api/exercises?search=${longSearch}`)
@@ -344,8 +315,8 @@ describe('GET /api/exercises', () => {
     })
 
     it('trainee can list exercises (READ access allowed)', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
-        vi.mocked(prisma.exercise.findMany).mockResolvedValue([mockExerciseWithRelations] as any)
+        asTrainee()
+        prismaMock.exercise.findMany.mockResolvedValue([mockExerciseWithRelations] as never)
 
         const req = makeListRequest()
         const res = await listExercises(req)
@@ -354,9 +325,7 @@ describe('GET /api/exercises', () => {
     })
 
     it('returns 401 when unauthenticated', async () => {
-        vi.mocked(requireRole).mockRejectedValue(
-            Response.json({ error: { code: 'UNAUTHORIZED' } }, { status: 401 })
-        )
+        asUnauthenticated()
 
         const req = makeListRequest()
         const res = await listExercises(req)
@@ -375,8 +344,8 @@ describe('GET /api/exercises/[id]', () => {
     })
 
     it('returns single exercise with all nested relations', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(mockExerciseWithRelations as any)
+        asTrainer()
+        prismaMock.exercise.findUnique.mockResolvedValue(mockExerciseWithRelations as never)
 
         const req = makeDetailRequest(EX_ID_1)
         const res = await getExercise(req, withIdParam(EX_ID_1))
@@ -402,13 +371,13 @@ describe('GET /api/exercises/[id]', () => {
     })
 
     it('includes the updater in the exercise detail response', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue({
+        asTrainer()
+        prismaMock.exercise.findUnique.mockResolvedValue({
             ...mockExerciseWithRelations,
             updatedBy: 'trainer-uuid-2',
             updatedAt: new Date('2026-09-16'),
             updater: { id: 'trainer-uuid-2', firstName: 'Luca', lastName: 'Coach' },
-        } as any)
+        } as never)
 
         const req = makeDetailRequest(EX_ID_1)
         const res = await getExercise(req, withIdParam(EX_ID_1))
@@ -420,7 +389,7 @@ describe('GET /api/exercises/[id]', () => {
             firstName: 'Luca',
             lastName: 'Coach',
         })
-        expect(prisma.exercise.findUnique).toHaveBeenCalledWith(
+        expect(prismaMock.exercise.findUnique).toHaveBeenCalledWith(
             expect.objectContaining({
                 include: expect.objectContaining({
                     updater: { select: { id: true, firstName: true, lastName: true } },
@@ -430,8 +399,8 @@ describe('GET /api/exercises/[id]', () => {
     })
 
     it('returns 404 for non-existent exercise', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(null)
+        asTrainer()
+        prismaMock.exercise.findUnique.mockResolvedValue(null)
 
         const req = makeDetailRequest(EX_ID_1)
         const res = await getExercise(req, withIdParam(EX_ID_1))
@@ -440,8 +409,8 @@ describe('GET /api/exercises/[id]', () => {
     })
 
     it('trainee can fetch exercise detail (READ access allowed)', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTraineeSession)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(mockExerciseWithRelations as any)
+        asTrainee()
+        prismaMock.exercise.findUnique.mockResolvedValue(mockExerciseWithRelations as never)
 
         const req = makeDetailRequest(EX_ID_1)
         const res = await getExercise(req, withIdParam(EX_ID_1))
@@ -473,15 +442,15 @@ describe('POST /api/exercises', () => {
     }
 
     it('trainer creates exercise with movement pattern and muscle group relations', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findFirst).mockResolvedValue(null) // no duplicate
-        vi.mocked(prisma.movementPattern.findUnique).mockResolvedValue(mockMovementPattern as any)
-        vi.mocked(prisma.muscleGroup.findMany).mockResolvedValue(mockMuscleGroups as any)
-        vi.mocked(prisma.exercise.create).mockResolvedValue({
+        asTrainer()
+        prismaMock.exercise.findFirst.mockResolvedValue(null) // no duplicate
+        prismaMock.movementPattern.findUnique.mockResolvedValue(mockMovementPattern as never)
+        prismaMock.muscleGroup.findMany.mockResolvedValue(mockMuscleGroups as never)
+        prismaMock.exercise.create.mockResolvedValue({
             ...mockExerciseWithRelations,
             id: 'new-ex-uuid',
             name: 'Romanian Deadlift',
-        } as any)
+        } as never)
 
         const req = makeListRequest('http://localhost:3000/api/exercises', {
             method: 'POST',
@@ -494,7 +463,7 @@ describe('POST /api/exercises', () => {
         expect(res.status).toBe(201)
         expect(body.data.exercise.name).toBe('Romanian Deadlift')
         // Verify prisma.create was called with nested muscleGroups
-        expect(prisma.exercise.create).toHaveBeenCalledWith(
+        expect(prismaMock.exercise.create).toHaveBeenCalledWith(
             expect.objectContaining({
                 data: expect.objectContaining({
                     createdBy: 'trainer-uuid-1',
@@ -510,16 +479,16 @@ describe('POST /api/exercises', () => {
     })
 
     it('trainer creates a postural exercise', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findFirst).mockResolvedValue(null)
-        vi.mocked(prisma.movementPattern.findUnique).mockResolvedValue(mockMovementPattern as any)
-        vi.mocked(prisma.muscleGroup.findMany).mockResolvedValue(mockMuscleGroups as any)
-        vi.mocked(prisma.exercise.create).mockResolvedValue({
+        asTrainer()
+        prismaMock.exercise.findFirst.mockResolvedValue(null)
+        prismaMock.movementPattern.findUnique.mockResolvedValue(mockMovementPattern as never)
+        prismaMock.muscleGroup.findMany.mockResolvedValue(mockMuscleGroups as never)
+        prismaMock.exercise.create.mockResolvedValue({
             ...mockExerciseWithRelations,
             id: 'new-postural-uuid',
             name: 'Dead Bug',
             type: 'postural',
-        } as any)
+        } as never)
 
         const req = makeListRequest('http://localhost:3000/api/exercises', {
             method: 'POST',
@@ -531,7 +500,7 @@ describe('POST /api/exercises', () => {
 
         expect(res.status).toBe(201)
         expect(body.data.exercise.type).toBe('postural')
-        expect(prisma.exercise.create).toHaveBeenCalledWith(
+        expect(prismaMock.exercise.create).toHaveBeenCalledWith(
             expect.objectContaining({
                 data: expect.objectContaining({ type: 'postural' }),
             })
@@ -539,8 +508,8 @@ describe('POST /api/exercises', () => {
     })
 
     it('returns 409 when exercise name already exists', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findFirst).mockResolvedValue(mockExerciseWithRelations as any)
+        asTrainer()
+        prismaMock.exercise.findFirst.mockResolvedValue(mockExerciseWithRelations as never)
 
         const req = makeListRequest('http://localhost:3000/api/exercises', {
             method: 'POST',
@@ -553,9 +522,9 @@ describe('POST /api/exercises', () => {
     })
 
     it('returns 404 when movementPattern does not exist', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findFirst).mockResolvedValue(null)
-        vi.mocked(prisma.movementPattern.findUnique).mockResolvedValue(null)
+        asTrainer()
+        prismaMock.exercise.findFirst.mockResolvedValue(null)
+        prismaMock.movementPattern.findUnique.mockResolvedValue(null)
 
         const req = makeListRequest('http://localhost:3000/api/exercises', {
             method: 'POST',
@@ -568,11 +537,11 @@ describe('POST /api/exercises', () => {
     })
 
     it('returns 404 when one or more muscleGroups do not exist', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findFirst).mockResolvedValue(null)
-        vi.mocked(prisma.movementPattern.findUnique).mockResolvedValue(mockMovementPattern as any)
+        asTrainer()
+        prismaMock.exercise.findFirst.mockResolvedValue(null)
+        prismaMock.movementPattern.findUnique.mockResolvedValue(mockMovementPattern as never)
         // Return only 1 muscle group instead of 2
-        vi.mocked(prisma.muscleGroup.findMany).mockResolvedValue([mockMuscleGroups[0]] as any)
+        prismaMock.muscleGroup.findMany.mockResolvedValue([mockMuscleGroups[0]] as never)
 
         const req = makeListRequest('http://localhost:3000/api/exercises', {
             method: 'POST',
@@ -585,18 +554,18 @@ describe('POST /api/exercises', () => {
     })
 
     it('returns 400 when total coefficient exceeds 3.0', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findFirst).mockResolvedValue(null)
-        vi.mocked(prisma.movementPattern.findUnique).mockResolvedValue(mockMovementPattern as any)
+        asTrainer()
+        prismaMock.exercise.findFirst.mockResolvedValue(null)
+        prismaMock.movementPattern.findUnique.mockResolvedValue(mockMovementPattern as never)
         // Return 3 muscle groups to allow building a payload whose total > 3.0
         const thirdMG = { id: '22222222-2222-2222-2222-222222222223', name: 'Bicipiti', createdBy: 'trainer-uuid-1', isActive: true, createdAt: new Date() }
-        vi.mocked(prisma.muscleGroup.findMany).mockResolvedValue([...mockMuscleGroups, thirdMG] as any)
+        prismaMock.muscleGroup.findMany.mockResolvedValue([...mockMuscleGroups, thirdMG] as never)
 
         // 1.0 + 1.0 + 1.1 = 3.1 > 3.0  — schema allows each ≤ 1.0, so use a split across more entries
         // Since per-item max is 1.0, to get total > 3.0 we need at least 4 entries
         // (4 × 0.8 = 3.2). Use 4 muscle groups.
         const fourthMG = { id: '22222222-2222-2222-2222-222222222224', name: 'Tricipiti', createdBy: 'trainer-uuid-1', isActive: true, createdAt: new Date() }
-        vi.mocked(prisma.muscleGroup.findMany).mockResolvedValue([...mockMuscleGroups, thirdMG, fourthMG] as any)
+        prismaMock.muscleGroup.findMany.mockResolvedValue([...mockMuscleGroups, thirdMG, fourthMG] as never)
 
         const overPayload = {
             ...validPayload,
@@ -619,7 +588,7 @@ describe('POST /api/exercises', () => {
     })
 
     it('returns 400 for invalid YouTube URL', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        asTrainer()
 
         const req = makeListRequest('http://localhost:3000/api/exercises', {
             method: 'POST',
@@ -635,7 +604,7 @@ describe('POST /api/exercises', () => {
     })
 
     it('returns 400 when name is too short (< 3 chars)', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        asTrainer()
 
         const req = makeListRequest('http://localhost:3000/api/exercises', {
             method: 'POST',
@@ -648,7 +617,7 @@ describe('POST /api/exercises', () => {
     })
 
     it('returns 400 when muscleGroups array is empty', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
+        asTrainer()
 
         const req = makeListRequest('http://localhost:3000/api/exercises', {
             method: 'POST',
@@ -661,9 +630,7 @@ describe('POST /api/exercises', () => {
     })
 
     it('trainee cannot create exercises (403)', async () => {
-        vi.mocked(requireRole).mockRejectedValue(
-            Response.json({ error: { code: 'FORBIDDEN' } }, { status: 403 })
-        )
+        asForbidden()
 
         const req = makeListRequest('http://localhost:3000/api/exercises', {
             method: 'POST',
@@ -699,12 +666,12 @@ describe('PUT /api/exercises/[id]', () => {
     }
 
     it('trainer can update their own exercise (replaces muscleGroups)', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(mockExerciseWithRelations as any)
-        vi.mocked(prisma.exercise.findFirst).mockResolvedValue(null) // no name conflict
-        vi.mocked(prisma.movementPattern.findUnique).mockResolvedValue(mockMovementPattern as any)
-        vi.mocked(prisma.muscleGroup.findMany).mockResolvedValue(mockMuscleGroups as any)
-        vi.mocked(prisma.exercise.update).mockResolvedValue({
+        asTrainer()
+        prismaMock.exercise.findUnique.mockResolvedValue(mockExerciseWithRelations as never)
+        prismaMock.exercise.findFirst.mockResolvedValue(null) // no name conflict
+        prismaMock.movementPattern.findUnique.mockResolvedValue(mockMovementPattern as never)
+        prismaMock.muscleGroup.findMany.mockResolvedValue(mockMuscleGroups as never)
+        prismaMock.exercise.update.mockResolvedValue({
             ...mockExerciseWithRelations,
             name: 'Squat Updated',
             exerciseMuscleGroups: [
@@ -723,7 +690,7 @@ describe('PUT /api/exercises/[id]', () => {
                     muscleGroup: { id: MG_ID_2, name: 'Glutei' },
                 },
             ],
-        } as any)
+        } as never)
 
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
             method: 'PUT',
@@ -736,7 +703,7 @@ describe('PUT /api/exercises/[id]', () => {
         expect(res.status).toBe(200)
         expect(body.data.exercise.name).toBe('Squat Updated')
         // Verify deleteMany + create pattern (all muscleGroups replaced atomically)
-        expect(prisma.exercise.update).toHaveBeenCalledWith(
+        expect(prismaMock.exercise.update).toHaveBeenCalledWith(
             expect.objectContaining({
                 data: expect.objectContaining({
                     exerciseMuscleGroups: expect.objectContaining({
@@ -755,12 +722,12 @@ describe('PUT /api/exercises/[id]', () => {
             ...mockExerciseWithRelations,
             createdBy: 'other-trainer-uuid',
         }
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(otherTrainerExercise as any)
-        vi.mocked(prisma.exercise.findFirst).mockResolvedValue(null)
-        vi.mocked(prisma.movementPattern.findUnique).mockResolvedValue(mockMovementPattern as any)
-        vi.mocked(prisma.muscleGroup.findMany).mockResolvedValue(mockMuscleGroups as any)
-        vi.mocked(prisma.exercise.update).mockResolvedValue(otherTrainerExercise as any)
+        asTrainer()
+        prismaMock.exercise.findUnique.mockResolvedValue(otherTrainerExercise as never)
+        prismaMock.exercise.findFirst.mockResolvedValue(null)
+        prismaMock.movementPattern.findUnique.mockResolvedValue(mockMovementPattern as never)
+        prismaMock.muscleGroup.findMany.mockResolvedValue(mockMuscleGroups as never)
+        prismaMock.exercise.update.mockResolvedValue(otherTrainerExercise as never)
 
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
             method: 'PUT',
@@ -773,12 +740,12 @@ describe('PUT /api/exercises/[id]', () => {
     })
 
     it('records updatedBy and updatedAt when a trainer updates an exercise', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(mockExerciseWithRelations as any)
-        vi.mocked(prisma.exercise.findFirst).mockResolvedValue(null)
-        vi.mocked(prisma.movementPattern.findUnique).mockResolvedValue(mockMovementPattern as any)
-        vi.mocked(prisma.muscleGroup.findMany).mockResolvedValue(mockMuscleGroups as any)
-        vi.mocked(prisma.exercise.update).mockResolvedValue(mockExerciseWithRelations as any)
+        asTrainer()
+        prismaMock.exercise.findUnique.mockResolvedValue(mockExerciseWithRelations as never)
+        prismaMock.exercise.findFirst.mockResolvedValue(null)
+        prismaMock.movementPattern.findUnique.mockResolvedValue(mockMovementPattern as never)
+        prismaMock.muscleGroup.findMany.mockResolvedValue(mockMuscleGroups as never)
+        prismaMock.exercise.update.mockResolvedValue(mockExerciseWithRelations as never)
 
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
             method: 'PUT',
@@ -787,7 +754,7 @@ describe('PUT /api/exercises/[id]', () => {
         })
         await updateExercise(req, withIdParam(EX_ID_1))
 
-        expect(prisma.exercise.update).toHaveBeenCalledWith(
+        expect(prismaMock.exercise.update).toHaveBeenCalledWith(
             expect.objectContaining({
                 data: expect.objectContaining({
                     updatedBy: 'trainer-uuid-1',
@@ -802,15 +769,15 @@ describe('PUT /api/exercises/[id]', () => {
             ...mockExerciseWithRelations,
             createdBy: 'other-trainer-uuid',
         }
-        vi.mocked(requireRole).mockResolvedValue(mockAdminSession)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(otherTrainerExercise as any)
-        vi.mocked(prisma.exercise.findFirst).mockResolvedValue(null)
-        vi.mocked(prisma.movementPattern.findUnique).mockResolvedValue(mockMovementPattern as any)
-        vi.mocked(prisma.muscleGroup.findMany).mockResolvedValue(mockMuscleGroups as any)
-        vi.mocked(prisma.exercise.update).mockResolvedValue({
+        asAdmin()
+        prismaMock.exercise.findUnique.mockResolvedValue(otherTrainerExercise as never)
+        prismaMock.exercise.findFirst.mockResolvedValue(null)
+        prismaMock.movementPattern.findUnique.mockResolvedValue(mockMovementPattern as never)
+        prismaMock.muscleGroup.findMany.mockResolvedValue(mockMuscleGroups as never)
+        prismaMock.exercise.update.mockResolvedValue({
             ...mockExerciseWithRelations,
             name: 'Squat Updated',
-        } as any)
+        } as never)
 
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
             method: 'PUT',
@@ -823,11 +790,11 @@ describe('PUT /api/exercises/[id]', () => {
     })
 
     it('returns 409 when updated name conflicts with an existing exercise', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(mockExerciseWithRelations as any)
+        asTrainer()
+        prismaMock.exercise.findUnique.mockResolvedValue(mockExerciseWithRelations as never)
         // Simulate name conflict: another exercise already has the new name
-        vi.mocked(prisma.exercise.findFirst).mockResolvedValue(mockAccessoryExercise as any)
-        vi.mocked(prisma.movementPattern.findUnique).mockResolvedValue(mockMovementPattern as any)
+        prismaMock.exercise.findFirst.mockResolvedValue(mockAccessoryExercise as never)
+        prismaMock.movementPattern.findUnique.mockResolvedValue(mockMovementPattern as never)
 
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
             method: 'PUT',
@@ -840,8 +807,8 @@ describe('PUT /api/exercises/[id]', () => {
     })
 
     it('returns 404 when exercise to update does not exist', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(null)
+        asTrainer()
+        prismaMock.exercise.findUnique.mockResolvedValue(null)
 
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
             method: 'PUT',
@@ -854,9 +821,7 @@ describe('PUT /api/exercises/[id]', () => {
     })
 
     it('trainee cannot update exercises (403)', async () => {
-        vi.mocked(requireRole).mockRejectedValue(
-            Response.json({ error: { code: 'FORBIDDEN' } }, { status: 403 })
-        )
+        asForbidden()
 
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
             method: 'PUT',
@@ -866,7 +831,7 @@ describe('PUT /api/exercises/[id]', () => {
         const res = await updateExercise(req, withIdParam(EX_ID_1))
 
         expect(res.status).toBe(403)
-        expect(prisma.exercise.update).not.toHaveBeenCalled()
+        expect(prismaMock.exercise.update).not.toHaveBeenCalled()
     })
 })
 
@@ -880,9 +845,9 @@ describe('DELETE /api/exercises/[id]', () => {
     })
 
     it('trainer can delete an exercise with no references', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(makeCountedExercise() as any)
-        vi.mocked(prisma.exercise.delete).mockResolvedValue(mockExerciseWithRelations as any)
+        asTrainer()
+        prismaMock.exercise.findUnique.mockResolvedValue(makeCountedExercise() as never)
+        prismaMock.exercise.delete.mockResolvedValue(mockExerciseWithRelations as never)
 
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
             method: 'DELETE',
@@ -890,16 +855,16 @@ describe('DELETE /api/exercises/[id]', () => {
         const res = await deleteExercise(req, withIdParam(EX_ID_1))
 
         expect(res.status).toBe(200)
-        expect(prisma.exercise.delete).toHaveBeenCalledWith({ where: { id: EX_ID_1 } })
+        expect(prismaMock.exercise.delete).toHaveBeenCalledWith({ where: { id: EX_ID_1 } })
     })
 
     it('trainer can delete an unreferenced exercise created by another trainer', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(makeCountedExercise() as any)
-        vi.mocked(prisma.exercise.delete).mockResolvedValue({
+        asTrainer()
+        prismaMock.exercise.findUnique.mockResolvedValue(makeCountedExercise() as never)
+        prismaMock.exercise.delete.mockResolvedValue({
             ...mockExerciseWithRelations,
             createdBy: 'other-trainer-uuid',
-        } as any)
+        } as never)
 
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
             method: 'DELETE',
@@ -910,11 +875,11 @@ describe('DELETE /api/exercises/[id]', () => {
     })
 
     it('returns 409 when the exercise is used in a program, whatever its status', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(
-            makeCountedExercise({ workoutExercises: 3 }) as any
+        asTrainer()
+        prismaMock.exercise.findUnique.mockResolvedValue(
+            makeCountedExercise({ workoutExercises: 3 }) as never
         )
-        vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue({
+        prismaMock.workoutExercise.findFirst.mockResolvedValue({
             workout: {
                 week: {
                     program: {
@@ -923,7 +888,7 @@ describe('DELETE /api/exercises/[id]', () => {
                     },
                 },
             },
-        } as any)
+        } as never)
 
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
             method: 'DELETE',
@@ -935,15 +900,15 @@ describe('DELETE /api/exercises/[id]', () => {
         expect(json.error.key).toBe('exercise.cannotDeleteReferenced')
         expect(json.error.details.programName).toBe('Old Program')
         expect(json.error.details.workoutExercises).toBe(3)
-        expect(prisma.exercise.delete).not.toHaveBeenCalled()
+        expect(prismaMock.exercise.delete).not.toHaveBeenCalled()
     })
 
     it('returns 409 when the exercise is only referenced by a program skeleton', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(
-            makeCountedExercise({ workoutSkeletons: 1 }) as any
+        asTrainer()
+        prismaMock.exercise.findUnique.mockResolvedValue(
+            makeCountedExercise({ workoutSkeletons: 1 }) as never
         )
-        vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(null)
+        prismaMock.workoutExercise.findFirst.mockResolvedValue(null)
 
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
             method: 'DELETE',
@@ -954,15 +919,15 @@ describe('DELETE /api/exercises/[id]', () => {
         expect(res.status).toBe(409)
         expect(json.error.key).toBe('exercise.cannotDeleteReferenced')
         expect(json.error.details.workoutSkeletons).toBe(1)
-        expect(prisma.exercise.delete).not.toHaveBeenCalled()
+        expect(prismaMock.exercise.delete).not.toHaveBeenCalled()
     })
 
     it('returns 409 when the exercise is only referenced by a personal record', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(
-            makeCountedExercise({ personalRecords: 2 }) as any
+        asTrainer()
+        prismaMock.exercise.findUnique.mockResolvedValue(
+            makeCountedExercise({ personalRecords: 2 }) as never
         )
-        vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(null)
+        prismaMock.workoutExercise.findFirst.mockResolvedValue(null)
 
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
             method: 'DELETE',
@@ -973,13 +938,13 @@ describe('DELETE /api/exercises/[id]', () => {
         expect(res.status).toBe(409)
         expect(json.error.key).toBe('exercise.cannotDeleteReferenced')
         expect(json.error.details.personalRecords).toBe(2)
-        expect(prisma.exercise.delete).not.toHaveBeenCalled()
+        expect(prismaMock.exercise.delete).not.toHaveBeenCalled()
     })
 
     it('returns 409 (not 500) when the delete races with a new reference (P2003)', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(makeCountedExercise() as any)
-        vi.mocked(prisma.exercise.delete).mockRejectedValue(
+        asTrainer()
+        prismaMock.exercise.findUnique.mockResolvedValue(makeCountedExercise() as never)
+        prismaMock.exercise.delete.mockRejectedValue(
             new Prisma.PrismaClientKnownRequestError('Foreign key constraint failed', {
                 code: 'P2003',
                 clientVersion: '5.0.0',
@@ -997,8 +962,8 @@ describe('DELETE /api/exercises/[id]', () => {
     })
 
     it('returns 404 when exercise to delete does not exist', async () => {
-        vi.mocked(requireRole).mockResolvedValue(mockTrainerSession)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(null)
+        asTrainer()
+        prismaMock.exercise.findUnique.mockResolvedValue(null)
 
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
             method: 'DELETE',
@@ -1013,9 +978,9 @@ describe('DELETE /api/exercises/[id]', () => {
             ...mockExerciseWithRelations,
             createdBy: 'other-trainer-uuid',
         }
-        vi.mocked(requireRole).mockResolvedValue(mockAdminSession)
-        vi.mocked(prisma.exercise.findUnique).mockResolvedValue(makeCountedExercise() as any)
-        vi.mocked(prisma.exercise.delete).mockResolvedValue(otherTrainerExercise as any)
+        asAdmin()
+        prismaMock.exercise.findUnique.mockResolvedValue(makeCountedExercise() as never)
+        prismaMock.exercise.delete.mockResolvedValue(otherTrainerExercise as never)
 
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
             method: 'DELETE',
@@ -1026,9 +991,7 @@ describe('DELETE /api/exercises/[id]', () => {
     })
 
     it('trainee cannot delete exercises (403)', async () => {
-        vi.mocked(requireRole).mockRejectedValue(
-            Response.json({ error: { code: 'FORBIDDEN' } }, { status: 403 })
-        )
+        asForbidden()
 
         const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
             method: 'DELETE',
@@ -1036,6 +999,6 @@ describe('DELETE /api/exercises/[id]', () => {
         const res = await deleteExercise(req, withIdParam(EX_ID_1))
 
         expect(res.status).toBe(403)
-        expect(prisma.exercise.delete).not.toHaveBeenCalled()
+        expect(prismaMock.exercise.delete).not.toHaveBeenCalled()
     })
 })
