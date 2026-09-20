@@ -1,14 +1,11 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
-// The page pulls PersonalRecordsExplorer, RPEOneRMTable and SkeletonTable from
-// the '@/components' barrel, which drags in MUI and recharts: importing it for
-// real costs ~48s under jsdom. Stub the barrel with just what the page uses.
-vi.mock('@/components', () => ({
-    PersonalRecordsExplorer: () => <div data-testid="records-explorer" />,
-    RPEOneRMTable: () => <div data-testid="rpe-table" />,
-    SkeletonTable: () => <div data-testid="skeleton-table" />,
-}))
+// Stub the three heavy components the page renders: PersonalRecordsExplorer
+// and RPEOneRMTable pull in MUI and recharts, which costs seconds under jsdom.
+vi.mock('@/components/PersonalRecordsExplorer', () => ({ default: () => <div data-testid="records-explorer" /> }))
+vi.mock('@/components/RPEOneRMTable', () => ({ default: () => <div data-testid="rpe-table" /> }))
+vi.mock('@/components/Skeleton', () => ({ SkeletonTable: () => <div data-testid="skeleton-table" /> }))
 
 // Redeclared on purpose: the global mock in tests/unit/setup.ts returns
 // useParams: () => ({}), while this page needs the trainee id.
