@@ -204,7 +204,8 @@ Mutations refetch the list and raise a toast.
    actions. Edit opens the modal in single-metric mode; delete goes through
    `ConfirmationModal`.
 
-**Modal** — `Input` + `FormLabel`, react-hook-form + Zod as elsewhere in the project,
+**Modal** — `Input` + `FormLabel` with controlled React state (the form style used by
+`records/_content.tsx`; `react-hook-form` is a dependency but no component uses it today),
 `<Button isLoading loadingText={t('common:common.saving')}>` for submit (loader rule
 from CLAUDE.md). Empty fields are omitted from the payload; with every field empty
 the submit button is disabled.
@@ -233,7 +234,7 @@ Coverage floors in `vitest.config.ts` (`src/lib/**` 94%, `src/schemas/**` 95%,
   (no previous entry, single entry, equal values), metric ordering, `isMeasurementMetric`
 - `tests/unit/schemas/trainee-measurement.test.ts` — per-metric ranges, future date,
   empty `values`, unknown key, update schema with no field
-- `tests/integration/api/trainee-measurements.test.ts` — GET/POST/PATCH/DELETE across
+- `tests/integration/trainee-measurements.test.ts` — GET/POST/PATCH/DELETE across
   roles (admin, owning trainer, foreign trainer → 403, **trainee → 403**), same-day
   upsert, partial POST creating only the supplied metrics, 404 paths
 - `tests/unit/MeasurementsTab.test.tsx` — empty state, cards with delta, chart metric
