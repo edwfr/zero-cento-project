@@ -52,6 +52,17 @@ enum WeightType {
   percentage_previous   // percentuale relativa alla prima occorrenza esercizio nel workout
 }
 
+enum MeasurementMetric {
+  weight    // kg
+  height    // cm
+  chest     // torace, cm
+  arm       // braccio, cm
+  waist     // vita, cm
+  hips      // fianchi, cm
+  thigh     // coscia, cm
+  calf      // polpaccio, cm
+}
+
 enum RestTime {
   s30   // 30 secondi
   m1    // 1 minuto
@@ -90,6 +101,8 @@ model User {
   trainerAsTrainee          TrainerTrainee?             @relation("TraineeAssignment")
   exerciseFeedbacks         ExerciseFeedback[]          @relation("TraineeFeedbacks")
   personalRecords           PersonalRecord[]            @relation("TraineeRecords")
+  measurements              TraineeMeasurement[]         @relation("TraineeMeasurements")
+  createdMeasurements       TraineeMeasurement[]         @relation("CreatedMeasurements")
 
   @@index([email])
   @@index([role, isActive])
@@ -378,4 +391,24 @@ model PersonalRecord {
   @@index([traineeId, exerciseId])
   @@index([recordDate])
   @@map("personal_records")
+}
+
+model TraineeMeasurement {
+  id         String            @id @default(uuid())
+  traineeId  String
+  metric     MeasurementMetric
+  value      Float
+  measuredAt DateTime          @db.Date
+  notes      String?
+  createdBy  String            // trainer che ha inserito la misura (audit)
+  createdAt  DateTime          @default(now())
+
+  // Relations
+  trainee User @relation("TraineeMeasurements", fields: [traineeId], references: [id], onDelete: Cascade)
+  creator User @relation("CreatedMeasurements", fields: [createdBy], references: [id])
+
+  // Una misura per metrica al giorno: un re-inserimento corregge, non duplica
+  @@unique([traineeId, metric, measuredAt])
+  @@index([traineeId, measuredAt])
+  @@map("trainee_measurements")
 }
