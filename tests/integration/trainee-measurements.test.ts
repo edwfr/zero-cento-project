@@ -8,6 +8,7 @@ vi.mock('@/lib/logger', () => ({
 }))
 
 import { GET, POST } from '@/app/api/trainee-measurements/route'
+import { PATCH, DELETE } from '@/app/api/trainee-measurements/[id]/route'
 import { requireTrainerOwnership } from '@/lib/auth'
 import { apiError } from '@/lib/api-response'
 import { prismaMock } from '../helpers/prisma-mock'
@@ -281,6 +282,206 @@ describe('POST /api/trainee-measurements', () => {
         prismaMock.traineeMeasurement.upsert.mockRejectedValue(new Error('db down') as never)
 
         const res = await POST(postRequest({ traineeId: TRAINEE_ID, measuredAt: '2026-09-20', values: { weight: 78.5 } }))
+
+        expect(res.status).toBe(500)
+    })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH /api/trainee-measurements/[id]
+// ═══════════════════════════════════════════════════════════════════════════
+
+const withIdParam = (id: string) => ({ params: Promise.resolve({ id }) })
+
+function patchRequest(body: unknown) {
+    return makeRequest(`http://localhost:3000/api/trainee-measurements/${MEASUREMENT_ID}`, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+    })
+}
+
+describe('PATCH /api/trainee-measurements/[id]', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+    })
+
+    it('updates the value of an owned measurement', async () => {
+        asTrainer()
+        prismaMock.traineeMeasurement.findUnique.mockResolvedValue(mockMeasurement as never)
+        prismaMock.traineeMeasurement.update.mockResolvedValue({ ...mockMeasurement, value: 79 } as never)
+
+        const res = await PATCH(patchRequest({ value: 79 }), withIdParam(MEASUREMENT_ID))
+        const body = await res.json()
+
+        expect(res.status).toBe(200)
+        expect(body.data.measurement.value).toBe(79)
+        expect(prismaMock.traineeMeasurement.update).toHaveBeenCalledWith(
+            expect.objectContaining({ where: { id: MEASUREMENT_ID }, data: { value: 79 } })
+        )
+    })
+
+    it('clears the notes when null is sent', async () => {
+        asTrainer()
+        prismaMock.traineeMeasurement.findUnique.mockResolvedValue(mockMeasurement as never)
+        prismaMock.traineeMeasurement.update.mockResolvedValue(mockMeasurement as never)
+
+        await PATCH(patchRequest({ notes: null }), withIdParam(MEASUREMENT_ID))
+
+        expect(prismaMock.traineeMeasurement.update).toHaveBeenCalledWith(
+            expect.objectContaining({ data: { notes: null } })
+        )
+    })
+
+    it('rejects a value outside the range of the row metric', async () => {
+        asTrainer()
+        prismaMock.traineeMeasurement.findUnique.mockResolvedValue(mockMeasurement as never)
+
+        const res = await PATCH(patchRequest({ value: 900 }), withIdParam(MEASUREMENT_ID))
+        const body = await res.json()
+
+        expect(res.status).toBe(400)
+        expect(body.error.key).toBe('validation.measurementOutOfRange')
+        expect(prismaMock.traineeMeasurement.update).not.toHaveBeenCalled()
+    })
+
+    it('rejects moving the row onto a day that already has this metric with 409', async () => {
+        asTrainer()
+        prismaMock.traineeMeasurement.findUnique.mockResolvedValue(mockMeasurement as never)
+        prismaMock.traineeMeasurement.findFirst.mockResolvedValue({ ...mockMeasurement, id: 'other-id' } as never)
+
+        const res = await PATCH(patchRequest({ measuredAt: '2026-09-10' }), withIdParam(MEASUREMENT_ID))
+        const body = await res.json()
+
+        expect(res.status).toBe(409)
+        expect(body.error.key).toBe('measurement.duplicateDay')
+        expect(prismaMock.traineeMeasurement.findFirst).toHaveBeenCalledWith({
+            where: {
+                traineeId: TRAINEE_ID,
+                metric: 'weight',
+                measuredAt: new Date('2026-09-10T00:00:00.000Z'),
+                id: { not: MEASUREMENT_ID },
+            },
+            select: { id: true },
+        })
+        expect(prismaMock.traineeMeasurement.update).not.toHaveBeenCalled()
+    })
+
+    it('moves the row to a free day', async () => {
+        asTrainer()
+        prismaMock.traineeMeasurement.findUnique.mockResolvedValue(mockMeasurement as never)
+        prismaMock.traineeMeasurement.findFirst.mockResolvedValue(null as never)
+        prismaMock.traineeMeasurement.update.mockResolvedValue(mockMeasurement as never)
+
+        const res = await PATCH(patchRequest({ measuredAt: '2026-09-10' }), withIdParam(MEASUREMENT_ID))
+
+        expect(res.status).toBe(200)
+        expect(prismaMock.traineeMeasurement.update).toHaveBeenCalledWith({
+            where: { id: MEASUREMENT_ID },
+            data: { measuredAt: new Date('2026-09-10T00:00:00.000Z') },
+        })
+    })
+
+    it('rejects an empty payload', async () => {
+        asTrainer()
+
+        const res = await PATCH(patchRequest({}), withIdParam(MEASUREMENT_ID))
+
+        expect(res.status).toBe(400)
+    })
+
+    it('returns 404 for an unknown id', async () => {
+        asTrainer()
+        prismaMock.traineeMeasurement.findUnique.mockResolvedValue(null as never)
+
+        const res = await PATCH(patchRequest({ value: 79 }), withIdParam(MEASUREMENT_ID))
+        const body = await res.json()
+
+        expect(res.status).toBe(404)
+        expect(body.error.key).toBe('measurement.notFound')
+    })
+
+    it('denies a trainee with 403', async () => {
+        asTrainee()
+
+        const res = await PATCH(patchRequest({ value: 79 }), withIdParam(MEASUREMENT_ID))
+
+        expect(res.status).toBe(403)
+        expect(prismaMock.traineeMeasurement.update).not.toHaveBeenCalled()
+    })
+
+    it('denies a trainer who does not own the trainee', async () => {
+        asForeignTrainer()
+        prismaMock.traineeMeasurement.findUnique.mockResolvedValue(mockMeasurement as never)
+
+        const res = await PATCH(patchRequest({ value: 79 }), withIdParam(MEASUREMENT_ID))
+
+        expect(res.status).toBe(403)
+        expect(prismaMock.traineeMeasurement.update).not.toHaveBeenCalled()
+    })
+
+    it('returns 500 when the update throws', async () => {
+        asTrainer()
+        prismaMock.traineeMeasurement.findUnique.mockResolvedValue(mockMeasurement as never)
+        prismaMock.traineeMeasurement.update.mockRejectedValue(new Error('db down') as never)
+
+        const res = await PATCH(patchRequest({ value: 79 }), withIdParam(MEASUREMENT_ID))
+
+        expect(res.status).toBe(500)
+    })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DELETE /api/trainee-measurements/[id]
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('DELETE /api/trainee-measurements/[id]', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+    })
+
+    function deleteRequest() {
+        return makeRequest(`http://localhost:3000/api/trainee-measurements/${MEASUREMENT_ID}`, {
+            method: 'DELETE',
+        })
+    }
+
+    it('deletes an owned measurement', async () => {
+        asTrainer()
+        prismaMock.traineeMeasurement.findUnique.mockResolvedValue(mockMeasurement as never)
+        prismaMock.traineeMeasurement.delete.mockResolvedValue(mockMeasurement as never)
+
+        const res = await DELETE(deleteRequest(), withIdParam(MEASUREMENT_ID))
+        const body = await res.json()
+
+        expect(res.status).toBe(200)
+        expect(body.data.success).toBe(true)
+        expect(prismaMock.traineeMeasurement.delete).toHaveBeenCalledWith({ where: { id: MEASUREMENT_ID } })
+    })
+
+    it('returns 404 for an unknown id', async () => {
+        asTrainer()
+        prismaMock.traineeMeasurement.findUnique.mockResolvedValue(null as never)
+
+        const res = await DELETE(deleteRequest(), withIdParam(MEASUREMENT_ID))
+
+        expect(res.status).toBe(404)
+    })
+
+    it('denies a trainee with 403', async () => {
+        asTrainee()
+
+        const res = await DELETE(deleteRequest(), withIdParam(MEASUREMENT_ID))
+
+        expect(res.status).toBe(403)
+        expect(prismaMock.traineeMeasurement.delete).not.toHaveBeenCalled()
+    })
+
+    it('returns 500 when the delete throws', async () => {
+        asTrainer()
+        prismaMock.traineeMeasurement.findUnique.mockResolvedValue(mockMeasurement as never)
+        prismaMock.traineeMeasurement.delete.mockRejectedValue(new Error('db down') as never)
+
+        const res = await DELETE(deleteRequest(), withIdParam(MEASUREMENT_ID))
 
         expect(res.status).toBe(500)
     })
