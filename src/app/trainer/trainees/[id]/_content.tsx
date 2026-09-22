@@ -18,6 +18,7 @@ import { formatDate, formatDateTime } from '@/lib/date-format'
 import { compareExerciseType, EXERCISE_TYPE_META, type ExerciseType } from '@/lib/exercise-type'
 import TraineePlannedMuscleGroupReport from '@/components/TraineePlannedMuscleGroupReport'
 import TraineeNotesEditor from './_trainee-notes-editor'
+import MeasurementsTab from './_measurements-tab'
 import {
     ChevronDown,
     ChevronUp,
@@ -292,7 +293,7 @@ export default function TraineeDetailContent() {
     const [records, setRecords] = useState<PersonalRecord[]>([])
     const [plannedPoints, setPlannedPoints] = useState<PlannedTrainingSetsPoint[]>([])
     const [error, setError] = useState<string | null>(null)
-    const [activeTab, setActiveTab] = useState<'notes' | 'programs' | 'records' | 'reports'>('programs')
+    const [activeTab, setActiveTab] = useState<'notes' | 'programs' | 'records' | 'reports' | 'measurements'>('programs')
     const [draftNoteDocument, setDraftNoteDocument] = useState<JSONContent | null>(null)
     const [notesDirty, setNotesDirty] = useState(false)
     const [notesUpdatedAt, setNotesUpdatedAt] = useState<string | null>(null)
@@ -1152,6 +1153,19 @@ export default function TraineeDetailContent() {
                             >
                                 {t('athletes.reportsTab')}
                             </Button>
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => setActiveTab('measurements')}
+                                aria-pressed={activeTab === 'measurements'}
+                                className={`rounded-none border-b-2 bg-transparent px-1 pb-4 font-semibold shadow-none hover:bg-transparent ${activeTab === 'measurements'
+                                    ? 'border-brand-primary text-brand-primary'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    }`}
+                            >
+                                {t('measurements.tab')}
+                            </Button>
                         </nav>
                     </div>
                 </div>
@@ -1870,6 +1884,8 @@ export default function TraineeDetailContent() {
                         </div>
                     </div>
                 )}
+
+                {activeTab === 'measurements' && <MeasurementsTab traineeId={traineeId} />}
                 </div>
             </div>
         </>

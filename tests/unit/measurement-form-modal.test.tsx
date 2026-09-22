@@ -59,6 +59,12 @@ describe('MeasurementFormModal — create', () => {
         expect(onCreate).not.toHaveBeenCalled()
     })
 
+    it('exposes itself as a labelled dialog', () => {
+        renderCreate()
+
+        expect(screen.getByRole('dialog', { name: 'measurements.createTitle' })).toBeInTheDocument()
+    })
+
     it('closes on cancel', () => {
         renderCreate()
 
