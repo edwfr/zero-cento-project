@@ -40,6 +40,12 @@ export { default as NavigationCard } from './NavigationCard'
 export { default as RPEOneRMTable } from './RPEOneRMTable'
 export { default as MeasurementTrendChart } from './MeasurementTrendChart'
 export type { MeasurementTrendChartProps } from './MeasurementTrendChart'
+export { default as MeasurementFormModal } from './MeasurementFormModal'
+export type {
+    MeasurementFormModalProps,
+    MeasurementCreatePayload,
+    MeasurementEditPayload,
+} from './MeasurementFormModal'
 export { default as PersonalRecordsExplorer } from './PersonalRecordsExplorer'
 
 // Loading & Feedback
