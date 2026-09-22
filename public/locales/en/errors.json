@@ -52,6 +52,10 @@
         "deleteDenied": "You can only delete records for your own trainees",
         "deletedSuccess": "Personal record deleted successfully"
     },
+    "measurement": {
+        "notFound": "Measurement not found",
+        "duplicateDay": "This metric already has a measurement on that date"
+    },
     "program": {
         "notFound": "Program not found",
         "createDenied": "You can only create programs for your own trainees",

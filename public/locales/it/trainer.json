@@ -232,6 +232,48 @@
         "reportingSetsUnit": "Set",
         "reportsLoadError": "Errore nel caricamento della reportistica"
     },
+    "measurements": {
+        "tab": "Misurazioni",
+        "title": "Misurazioni",
+        "subtitle": "Dati antropometrici visibili solo a te, non all'atleta",
+        "addButton": "Nuova misurazione",
+        "createTitle": "Nuova misurazione",
+        "editTitle": "Modifica misurazione",
+        "date": "Data",
+        "value": "Valore",
+        "notes": "Note",
+        "notesPlaceholder": "Note sulla misurazione (opzionale)",
+        "empty": "Nessuna misurazione registrata per questo atleta",
+        "emptyMetric": "Mai misurato",
+        "emptyChart": "Nessun dato per le metriche selezionate",
+        "lastMeasured": "Rilevato il {{date}}",
+        "deltaNone": "Prima misurazione",
+        "chartTitle": "Andamento nel tempo",
+        "chartDescription": "Seleziona le metriche da confrontare e la finestra temporale",
+        "historyTitle": "Storico misurazioni",
+        "metricColumn": "Metrica",
+        "deleteConfirmTitle": "Elimina misurazione",
+        "deleteConfirmMessage": "Vuoi eliminare questa misurazione? L'operazione non è reversibile.",
+        "saveError": "Impossibile salvare la misurazione",
+        "loadError": "Impossibile caricare le misurazioni",
+        "retry": "Riprova",
+        "window": {
+            "3m": "3 mesi",
+            "6m": "6 mesi",
+            "1y": "1 anno",
+            "all": "Tutto"
+        },
+        "metric": {
+            "weight": "Peso",
+            "height": "Altezza",
+            "chest": "Torace",
+            "arm": "Braccio",
+            "waist": "Vita",
+            "hips": "Fianchi",
+            "thigh": "Coscia",
+            "calf": "Polpaccio"
+        }
+    },
     "personalRecords": {
         "title": "Massimali e Record",
         "record": "Massimale",

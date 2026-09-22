@@ -232,6 +232,48 @@
         "reportingSetsUnit": "sets",
         "reportsLoadError": "Error loading reporting"
     },
+    "measurements": {
+        "tab": "Measurements",
+        "title": "Measurements",
+        "subtitle": "Body data visible only to you, not to the athlete",
+        "addButton": "New measurement",
+        "createTitle": "New measurement",
+        "editTitle": "Edit measurement",
+        "date": "Date",
+        "value": "Value",
+        "notes": "Notes",
+        "notesPlaceholder": "Notes about this measurement (optional)",
+        "empty": "No measurements recorded for this athlete",
+        "emptyMetric": "Never measured",
+        "emptyChart": "No data for the selected metrics",
+        "lastMeasured": "Taken on {{date}}",
+        "deltaNone": "First measurement",
+        "chartTitle": "Trend over time",
+        "chartDescription": "Pick the metrics to compare and the time window",
+        "historyTitle": "Measurement history",
+        "metricColumn": "Metric",
+        "deleteConfirmTitle": "Delete measurement",
+        "deleteConfirmMessage": "Delete this measurement? This cannot be undone.",
+        "saveError": "Could not save the measurement",
+        "loadError": "Could not load the measurements",
+        "retry": "Retry",
+        "window": {
+            "3m": "3 months",
+            "6m": "6 months",
+            "1y": "1 year",
+            "all": "All"
+        },
+        "metric": {
+            "weight": "Weight",
+            "height": "Height",
+            "chest": "Chest",
+            "arm": "Arm",
+            "waist": "Waist",
+            "hips": "Hips",
+            "thigh": "Thigh",
+            "calf": "Calf"
+        }
+    },
     "personalRecords": {
         "title": "Personal Records and Maxes",
         "record": "Personal Record",

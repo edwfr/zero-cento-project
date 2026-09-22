@@ -73,6 +73,11 @@
         "manualPasswordOrAuto": "Enter a manual password or enable automatic generation",
         "enterPassword": "Enter password (min 8 characters)",
         "minOneExercise": "At least one exercise required",
-        "maxExercises": "Too many exercises (max 50)"
+        "maxExercises": "Too many exercises (max 50)",
+        "noMeasurementProvided": "Enter at least one measurement",
+        "noFieldToUpdate": "No field to update",
+        "measurementOutOfRange": "Value outside the allowed range",
+        "invalidMetric": "Invalid metric",
+        "valuePositive": "Value must be positive"
     }
 }

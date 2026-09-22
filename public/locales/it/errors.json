@@ -52,6 +52,10 @@
         "deleteDenied": "Puoi eliminare i massimali solo dei tuoi atleti",
         "deletedSuccess": "Massimale eliminato con successo"
     },
+    "measurement": {
+        "notFound": "Misurazione non trovata",
+        "duplicateDay": "Esiste già una misura di questa metrica in quella data"
+    },
     "program": {
         "notFound": "Programma non trovato",
         "createDenied": "Puoi creare programmi solo per i tuoi atleti",
