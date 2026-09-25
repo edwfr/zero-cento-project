@@ -11,6 +11,7 @@ import { Plus, FileEdit, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import '@/lib/i18n/client'
 import { getApiErrorMessage } from '@/lib/api-error'
+import { getYoutubeThumbnailUrl } from '@/lib/youtube'
 import { Input } from '@/components/Input'
 import ExerciseTypeBadge from '@/components/ExerciseTypeBadge'
 import { EXERCISE_TYPES, EXERCISE_TYPE_META, isExerciseType, type ExerciseType } from '@/lib/exercise-type'
@@ -36,15 +37,6 @@ interface Exercise {
         firstName: string
         lastName: string
     }
-}
-
-const getYoutubeThumbnailUrl = (youtubeUrl: string | null): string | null => {
-    if (!youtubeUrl) {
-        return null
-    }
-
-    const videoId = youtubeUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/)?.[1]
-    return videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : null
 }
 
 export default function TrainerExercisesContent() {

@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import Image from 'next/image'
 import { useTranslation } from 'react-i18next'
+import { getYoutubeThumbnailUrl, getYoutubeVideoId } from '@/lib/youtube'
 
 interface YoutubeEmbedProps {
     videoUrl: string
@@ -26,23 +27,7 @@ export default function YoutubeEmbed({
     const [isLoaded, setIsLoaded] = useState(false)
     const resolvedTitle = title ?? t('youtube.defaultTitle')
 
-    // Extract YouTube video ID from various URL formats
-    const getYouTubeVideoId = (url: string): string | null => {
-        const patterns = [
-            /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
-            /youtube\.com\/watch\?.*v=([^&\n?#]+)/,
-        ]
-
-        for (const pattern of patterns) {
-            const match = url.match(pattern)
-            if (match && match[1]) {
-                return match[1]
-            }
-        }
-        return null
-    }
-
-    const videoId = getYouTubeVideoId(videoUrl)
+    const videoId = getYoutubeVideoId(videoUrl)
     const shouldAutoplay = autoplay || isLoaded
     const embedUrl = useMemo(() => {
         if (!videoId) {
@@ -64,7 +49,7 @@ export default function YoutubeEmbed({
 
         return `https://www.youtube.com/embed/${videoId}?${params.toString()}`
     }, [shouldAutoplay, videoId])
-    const thumbnailUrl = videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : ''
+    const thumbnailUrl = getYoutubeThumbnailUrl(videoUrl, 'hqdefault') ?? ''
 
     if (!videoId) {
         return (

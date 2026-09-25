@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [25 Settembre 2026] — Anteprime YouTube per gli Shorts
+
+**File modificati:** `src/lib/youtube.ts` (nuovo), `src/components/YoutubeEmbed.tsx`, `src/app/trainer/exercises/_content.tsx`, `tests/unit/lib/youtube.test.ts` (nuovo), `implementation-docs/CHANGELOG.md`
+**Note:** Gli URL `youtube.com/shorts/<id>` superavano la validazione dello schema ma non mostravano né la miniatura nella lista esercizi del trainer né il player nel workout dell'atleta: le due regex duplicate riconoscevano solo `watch?v=`, `youtu.be/` (e `embed/` nel player). Estrazione dell'ID centralizzata in `getYoutubeVideoId()` / `getYoutubeThumbnailUrl()` in `src/lib/youtube.ts`, che gestisce `watch` (anche con `v` non primo parametro), `embed`, `shorts`, `live` e `youtu.be`, catturando esattamente gli 11 caratteri dell'ID: corregge anche la miniatura rotta per `youtu.be/<id>?si=...`, dove la vecchia regex includeva la query string nell'ID.
 ### [20 Settembre 2026] — Test quality, fase 3: `lib`, `schemas` e API oltre l'80%
 
 **File modificati:** `vitest.config.ts`, `tests/unit/schemas.test.ts`, `tests/unit/program-pdf-export.test.ts`, `tests/unit/calculations.test.ts`, `tests/unit/date-format.test.ts`, `tests/unit/lib/{program-status,sync-user-metadata,trainee-program-data}.test.ts`, `tests/unit/lib/i18n-provider.test.tsx`, `tests/integration/{workout-exercises,program-reports,program-lifecycle,program-detail,reference-data,users,users-activation,admin-actions,auth-routes,weeks,health,trainer-trainee-notes,trainee-workout-detail,planned-training-sets-report,exercises,programs}.test.ts`, `src/lib/trainee-program-data.ts`, `src/app/api/programs/[id]/workouts/[workoutId]/exercises/route.ts`, `.claude/skills/zero-cento-testing/SKILL.md`, `implementation-docs/CHANGELOG.md`
