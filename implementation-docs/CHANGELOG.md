@@ -13,7 +13,7 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ### Changed
 ### [3 Ottobre 2026] — Rinnovi abbonamento atleti (solo trainer)
 
-**File modificati:** `prisma/schema.prisma`, `prisma/migrations/20261003000000_add_subscription_renewals/migration.sql` (nuovo), `src/lib/subscriptions.ts` (nuovo), `tests/unit/lib/subscriptions.test.ts` (nuovo), `implementation-docs/CHANGELOG.md`
+**File modificati:** `prisma/schema.prisma`, `prisma/migrations/20261003000000_add_subscription_renewals/migration.sql` (nuovo), `src/lib/subscriptions.ts` (nuovo), `tests/unit/lib/subscriptions.test.ts` (nuovo), `src/lib/subscription-queries.ts` (nuovo), `tests/unit/lib/subscription-queries.test.ts` (nuovo), `implementation-docs/CHANGELOG.md`
 **Note:** Il trainer registra i rinnovi di abbonamento di ogni atleta (data inizio + durata in mesi); il sistema calcola la scadenza e avvisa quando mancano ≤ 14 giorni o l'abbonamento è scaduto. Nessuna gestione pagamenti. Dati invisibili all'atleta. Nuovo modello `SubscriptionRenewal`: una riga per rinnovo, `endDate` calcolata lato server e salvata; la scadenza attuale è `MAX(endDate)`. **Da fare al deploy:** applicare la migrazione `20261003000000_add_subscription_renewals`.
 ### [3 Ottobre 2026] — Storico misurazioni raggruppato per metrica
 
