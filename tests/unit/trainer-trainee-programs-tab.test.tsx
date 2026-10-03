@@ -2,8 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
 
+const navigationState = vi.hoisted(() => ({ search: '' }))
+
 vi.mock('next/navigation', () => ({
     useParams: () => ({ id: 'trainee-1' }),
+    useSearchParams: () => new URLSearchParams(navigationState.search),
 }))
 
 vi.mock('recharts', () => {
@@ -22,6 +25,12 @@ vi.mock('recharts', () => {
         YAxis: () => null,
     }
 })
+
+// Tabs that import the toast hook directly (subscription, measurements) bypass the '@/components' mock below
+vi.mock('@/components/ToastNotification', () => ({
+    useToast: () => ({ showToast: vi.fn() }),
+    ToastProvider: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+}))
 
 vi.mock('@/components/TraineePlannedMuscleGroupReport', () => ({
     default: () => <div data-testid="planned-muscle-report" />,
@@ -58,6 +67,7 @@ type ProgramStatus = 'draft' | 'active' | 'completed'
 describe('TraineeDetailContent Programs tab', () => {
     beforeEach(() => {
         vi.clearAllMocks()
+        navigationState.search = ''
 
         const now = new Date()
         const isoDaysAgo = (days: number) => new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString()
@@ -222,6 +232,18 @@ describe('TraineeDetailContent Programs tab', () => {
                 return {
                     ok: true,
                     json: async () => ({ data: { points: [] } }),
+                } as Response
+            }
+
+            if (url === '/api/subscription-renewals?traineeId=trainee-1') {
+                return {
+                    ok: true,
+                    json: async () => ({
+                        data: {
+                            items: [],
+                            current: { status: 'expiring', endDate: '2026-10-10T00:00:00.000Z', daysLeft: 7 },
+                        },
+                    }),
                 } as Response
             }
 
@@ -402,4 +424,21 @@ describe('TraineeDetailContent Programs tab', () => {
         })
     })
 
+    it('warns about an expiring subscription above the tabs, whatever tab is open', async () => {
+        render(<TraineeDetailContent />)
+
+        const banner = await screen.findByRole('alert')
+        expect(banner).toHaveTextContent('subscriptions.banner.expiring')
+
+        fireEvent.click(within(banner).getByRole('button', { name: 'subscriptions.banner.manage' }))
+        expect(screen.getByRole('button', { name: 'subscriptions.tab' })).toHaveAttribute('aria-pressed', 'true')
+    })
+
+    it('opens the subscription tab directly from ?tab=subscription', async () => {
+        navigationState.search = 'tab=subscription'
+        render(<TraineeDetailContent />)
+
+        expect(await screen.findByRole('button', { name: 'subscriptions.tab' })).toHaveAttribute('aria-pressed', 'true')
+        expect(await screen.findByRole('button', { name: 'subscriptions.addButton' })).toBeInTheDocument()
+    })
 })
