@@ -5,6 +5,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { createProgramSchema, programFilterSchema } from '@/schemas/program'
 import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 interface ProgramTestsSummary {
     testWeeks: number[]
@@ -293,10 +294,12 @@ export async function GET(request: NextRequest) {
                 limit,
             },
         })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error fetching programs')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch programs', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching programs',
+            message: 'Failed to fetch programs',
+            key: 'internal.default',
+        })
     }
 }
 
@@ -490,9 +493,11 @@ export async function POST(request: NextRequest) {
         )
 
         return apiSuccess({ program }, 201)
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error creating program')
-        return apiError('INTERNAL_ERROR', 'Failed to create program', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error creating program',
+            message: 'Failed to create program',
+            key: 'internal.default',
+        })
     }
 }

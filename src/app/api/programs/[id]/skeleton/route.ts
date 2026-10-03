@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireTrainerProgramOwnership } from '@/lib/auth'
 import { putSkeletonSchema } from '@/schemas/skeleton'
-import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * PUT /api/programs/[id]/skeleton
@@ -121,15 +121,12 @@ export async function PUT(
         })
 
         return apiSuccess({ skeleton })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error, programId }, 'Error updating program skeleton')
-        return apiError(
-            'INTERNAL_ERROR',
-            'Failed to update skeleton',
-            500,
-            undefined,
-            'internal.default'
-        )
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error updating program skeleton',
+            message: 'Failed to update skeleton',
+            key: 'internal.default',
+            context: { programId },
+        })
     }
 }

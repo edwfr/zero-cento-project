@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * DELETE /api/programs/[id]/workouts/[workoutId]
@@ -53,9 +54,12 @@ export async function DELETE(
         logger.info({ workoutId, programId, userId: session.user.id }, 'Workout deleted')
 
         return apiSuccess({ message: 'Workout deleted successfully' })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error, programId, workoutId }, 'Error deleting workout')
-        return apiError('INTERNAL_ERROR', 'Failed to delete workout', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error deleting workout',
+            message: 'Failed to delete workout',
+            key: 'internal.default',
+            context: { programId, workoutId },
+        })
     }
 }

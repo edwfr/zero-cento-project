@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
-import { logger } from '@/lib/logger'
 import { loadProgressAggregates } from '@/lib/trainee-program-data'
 import { prisma } from '@/lib/prisma'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * GET /api/programs/[id]/progress
@@ -44,9 +44,12 @@ export async function GET(
 
         const progress = await loadProgressAggregates(programId)
         return apiSuccess(progress)
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error, programId }, 'Error fetching program progress')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch program progress', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching program progress',
+            message: 'Failed to fetch program progress',
+            key: 'internal.default',
+            context: { programId },
+        })
     }
 }

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 interface SetPerformedEntry {
     setNumber: number
@@ -195,9 +196,12 @@ export async function GET(
             // Backward-compatible alias for consumers not migrated yet.
             testWeeks: weeks,
         })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error, programId }, 'Error fetching program test results')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch program test results', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching program test results',
+            message: 'Failed to fetch program test results',
+            key: 'internal.default',
+            context: { programId },
+        })
     }
 }

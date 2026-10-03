@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * POST /api/programs/[id]/copy-first-week
@@ -143,9 +144,12 @@ export async function POST(
             updatedWeeks: targetWeeks.length,
             updatedWorkouts: targetWeeks.reduce((total, week) => total + week.workouts.length, 0),
         })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error, programId }, 'Error copying first week workouts')
-        return apiError('INTERNAL_ERROR', 'Failed to copy first week workouts', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error copying first week workouts',
+            message: 'Failed to copy first week workouts',
+            key: 'internal.default',
+            context: { programId },
+        })
     }
 }

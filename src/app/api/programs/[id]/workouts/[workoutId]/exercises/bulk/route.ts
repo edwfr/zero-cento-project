@@ -5,6 +5,7 @@ import { requireRole } from '@/lib/auth'
 import { bulkSaveWorkoutExercisesSchema } from '@/schemas/workout-exercise'
 import { logger } from '@/lib/logger'
 import { hasWorkoutStarted } from '@/lib/program-guards'
+import { handleApiError } from '@/lib/api-error-handler'
 
 export async function PUT(
     request: NextRequest,
@@ -199,18 +200,12 @@ export async function PUT(
         )
 
         return apiSuccess({ workoutExercises })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error(
-            { error, programId, workoutId },
-            'Error bulk saving workout exercises'
-        )
-        return apiError(
-            'INTERNAL_ERROR',
-            'Failed to save workout exercises',
-            500,
-            undefined,
-            'internal.default'
-        )
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error bulk saving workout exercises',
+            message: 'Failed to save workout exercises',
+            key: 'internal.default',
+            context: { programId, workoutId },
+        })
     }
 }

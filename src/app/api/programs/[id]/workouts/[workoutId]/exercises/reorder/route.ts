@@ -5,6 +5,7 @@ import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { z } from 'zod'
 import { hasWorkoutStarted } from '@/lib/program-guards'
+import { handleApiError } from '@/lib/api-error-handler'
 
 const reorderSchema = z.object({
     exercises: z.array(
@@ -123,12 +124,12 @@ export async function PATCH(
         )
 
         return apiSuccess({ exercises: updatedExercises })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error(
-            { error, programId, workoutId },
-            'Error reordering exercises'
-        )
-        return apiError('INTERNAL_ERROR', 'Failed to reorder exercises', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error reordering exercises',
+            message: 'Failed to reorder exercises',
+            key: 'internal.default',
+            context: { programId, workoutId },
+        })
     }
 }

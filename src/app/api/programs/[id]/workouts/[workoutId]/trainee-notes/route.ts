@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * GET /api/programs/[id]/workouts/[workoutId]/trainee-notes
@@ -70,9 +71,12 @@ export async function GET(
             workoutNote: workout.traineeNotes ?? null,
             exercises,
         })
-    } catch (error: unknown) {
-        if (error instanceof Response) return error
-        logger.error({ error, programId, workoutId }, 'Error fetching trainee notes')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch trainee notes', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching trainee notes',
+            message: 'Failed to fetch trainee notes',
+            key: 'internal.default',
+            context: { programId, workoutId },
+        })
     }
 }

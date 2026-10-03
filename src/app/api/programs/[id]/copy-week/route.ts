@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * POST /api/programs/[id]/copy-week
@@ -251,9 +252,12 @@ export async function POST(
             updatedWorkouts: targetWeek.workouts.length,
             updatedWeek,
         })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error, programId }, 'Error copying workouts to next week')
-        return apiError('INTERNAL_ERROR', 'Failed to copy workouts to next week', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error copying workouts to next week',
+            message: 'Failed to copy workouts to next week',
+            key: 'internal.default',
+            context: { programId },
+        })
     }
 }

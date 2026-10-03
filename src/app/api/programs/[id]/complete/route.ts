@@ -4,6 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { z } from 'zod'
+import { handleApiError } from '@/lib/api-error-handler'
 
 const completeSchema = z.object({
     completionReason: z.string().max(500).optional(),
@@ -107,9 +108,12 @@ export async function POST(
         )
 
         return apiSuccess({ program: updatedProgram }, 200)
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error, programId }, 'Error completing program')
-        return apiError('INTERNAL_ERROR', 'Failed to complete program', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error completing program',
+            message: 'Failed to complete program',
+            key: 'internal.default',
+            context: { programId },
+        })
     }
 }

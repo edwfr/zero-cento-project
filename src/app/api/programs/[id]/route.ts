@@ -5,6 +5,7 @@ import { requireRole } from '@/lib/auth'
 import { createProgramSchema } from '@/schemas/program'
 import { logger } from '@/lib/logger'
 import { loadTraineePrMap, resolveEffectiveWeight } from '@/lib/calculations'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * GET /api/programs/[id]
@@ -192,10 +193,13 @@ export async function GET(
 
         const { workoutSkeletons, ...programWithoutSkeletons } = resolvedProgram as typeof resolvedProgram & { workoutSkeletons: unknown }
         return apiSuccess({ program: { ...programWithoutSkeletons, skeleton: workoutSkeletons ?? [] } })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error, programId }, 'Error fetching program')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch program', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching program',
+            message: 'Failed to fetch program',
+            key: 'internal.default',
+            context: { programId },
+        })
     }
 }
 
@@ -437,10 +441,13 @@ export async function PUT(
         logger.info({ programId, userId: session.user.id }, 'Program updated successfully')
 
         return apiSuccess({ program })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error, programId }, 'Error updating program')
-        return apiError('INTERNAL_ERROR', 'Failed to update program', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error updating program',
+            message: 'Failed to update program',
+            key: 'internal.default',
+            context: { programId },
+        })
     }
 }
 
@@ -483,9 +490,12 @@ export async function DELETE(
             message: 'Program deleted successfully',
             messageKey: 'program.deletedSuccess',
         })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error, programId }, 'Error deleting program')
-        return apiError('INTERNAL_ERROR', 'Failed to delete program', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error deleting program',
+            message: 'Failed to delete program',
+            key: 'internal.default',
+            context: { programId },
+        })
     }
 }

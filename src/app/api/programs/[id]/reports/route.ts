@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * GET /api/programs/[id]/reports
@@ -329,9 +330,12 @@ export async function GET(
             movementPatterns: movementPatternReport,
             rpeDistribution: rpeDistributionReport,
         })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error, programId }, 'Error fetching program reports')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch program reports', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching program reports',
+            message: 'Failed to fetch program reports',
+            key: 'internal.default',
+            context: { programId },
+        })
     }
 }

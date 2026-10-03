@@ -4,6 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { z } from 'zod'
+import { handleApiError } from '@/lib/api-error-handler'
 
 const publishSchema = z.object({
     startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)'),
@@ -159,9 +160,12 @@ export async function POST(
             program: updatedProgram,
             message: 'Program published successfully',
         })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error, programId }, 'Error publishing program')
-        return apiError('INTERNAL_ERROR', 'Failed to publish program', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error publishing program',
+            message: 'Failed to publish program',
+            key: 'internal.default',
+            context: { programId },
+        })
     }
 }

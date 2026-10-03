@@ -5,6 +5,7 @@ import { requireRole } from '@/lib/auth'
 import { workoutExerciseSchema } from '@/schemas/workout-exercise'
 import { logger } from '@/lib/logger'
 import { hasWorkoutStarted } from '@/lib/program-guards'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * PUT /api/programs/[id]/workouts/[workoutId]/exercises/[exerciseId]
@@ -141,13 +142,13 @@ export async function PUT(
         )
 
         return apiSuccess({ workoutExercise })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error(
-            { error, programId, workoutId, exerciseId },
-            'Error updating workout exercise'
-        )
-        return apiError('INTERNAL_ERROR', 'Failed to update workout exercise', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error updating workout exercise',
+            message: 'Failed to update workout exercise',
+            key: 'internal.default',
+            context: { programId, workoutId, exerciseId },
+        })
     }
 }
 
@@ -246,12 +247,12 @@ export async function DELETE(
             message: 'Exercise removed from workout successfully',
             messageKey: 'workoutExercise.removedSuccess',
         })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error(
-            { error, programId, workoutId, exerciseId },
-            'Error removing exercise from workout'
-        )
-        return apiError('INTERNAL_ERROR', 'Failed to remove exercise from workout', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error removing exercise from workout',
+            message: 'Failed to remove exercise from workout',
+            key: 'internal.default',
+            context: { programId, workoutId, exerciseId },
+        })
     }
 }

@@ -2,8 +2,8 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
-import { logger } from '@/lib/logger'
 import { normalizedOneRM } from '@/lib/calculations'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * GET /api/programs/[id]/review
@@ -165,9 +165,12 @@ export async function GET(
         }
 
         return apiSuccess({ program, estimatedOneRMByExercise, bestWeightByExerciseAndReps })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error, programId }, 'Error fetching program for review')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch program review', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching program for review',
+            message: 'Failed to fetch program review',
+            key: 'internal.default',
+            context: { programId },
+        })
     }
 }

@@ -5,6 +5,7 @@ import { requireRole } from '@/lib/auth'
 import { workoutExerciseSchema } from '@/schemas/workout-exercise'
 import { logger } from '@/lib/logger'
 import { hasWorkoutStarted } from '@/lib/program-guards'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * POST /api/programs/[id]/workouts/[workoutId]/exercises
@@ -147,12 +148,12 @@ export async function POST(
         )
 
         return apiSuccess({ workoutExercise }, 201)
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error(
-            { error, programId, workoutId },
-            'Error adding exercise to workout'
-        )
-        return apiError('INTERNAL_ERROR', 'Failed to add exercise to workout', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error adding exercise to workout',
+            message: 'Failed to add exercise to workout',
+            key: 'internal.default',
+            context: { programId, workoutId },
+        })
     }
 }
