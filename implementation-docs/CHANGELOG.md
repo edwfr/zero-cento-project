@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [3 Ottobre 2026] — Classifica costanza: conta gli allenamenti distinti
+
+**File modificati:** `src/lib/trainer-dashboard/consistency-ranking.ts`, `tests/unit/trainer-dashboard/consistency-ranking.test.ts`
+**Note:** Le sessioni fatte erano coppie (allenamento, giorno). Un allenamento diviso su due giorni, o rifatto, contava più volte, e si arrivava a valori come "14 / 12 sessioni". Ora ogni allenamento del programma con almeno un esercizio registrato nel periodo conta una volta sola. Due allenamenti diversi nello stesso giorno restano due.
 ### [3 Ottobre 2026] — Home trainer: rimossi "Nuovi record" e "Feedback recenti"
 
 **File rimossi:** `src/app/trainer/dashboard/_widgets/{NewRecordsWidget,RecentFeedbackWidget}.tsx`, `src/lib/trainer-dashboard/{new-records,recent-feedback}.ts`, i relativi test e le chiavi `records`/`feedback` in `public/locales/{it,en}/trainer.json`; `HIGH_RPE_THRESHOLD` e `LIST_LIMITS.records/feedback` in `constants.ts`.

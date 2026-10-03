@@ -65,6 +65,21 @@ describe('getConsistencyRanking', () => {
         ])
     })
 
+    it('counts distinct workouts: one split over two days or repeated counts once, two on the same day count twice', async () => {
+        prismaMock.trainingProgram.findMany.mockResolvedValue([program('t1', '2026-08-01', 3)] as never)
+        prismaMock.exerciseFeedback.findMany.mockResolvedValue([
+            sessionOn('t1', 'w1', '2026-09-14'),
+            sessionOn('t1', 'w1', '2026-09-15'), // w1 finished the next day
+            sessionOn('t1', 'w2', '2026-09-21'),
+            sessionOn('t1', 'w3', '2026-09-21'), // second workout the same day
+            sessionOn('t1', 'w2', '2026-09-28'), // w2 repeated
+        ] as never)
+
+        await expect(getConsistencyRanking('trainer-1', trainees, NOW)).resolves.toEqual([
+            { traineeId: 't1', traineeName: 'Anna Rossi', sessions: 3, expected: 12, adherence: 0.25 },
+        ])
+    })
+
     it('uses only the most recently started active program per trainee', async () => {
         prismaMock.trainingProgram.findMany.mockResolvedValue([
             program('t1', '2026-09-28', 4), // newest first (orderBy startDate desc)

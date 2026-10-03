@@ -52,7 +52,12 @@ export async function getConsistencyRanking(
         )
         const expected = program.workoutsPerWeek * elapsedWeeks
         const fromKey = utcDayKey(from)
-        const done = sessions.filter((session) => session.traineeId === traineeId && session.day >= fromKey).length
+        // distinct workouts: a workout split over several days, or repeated, counts once
+        const done = new Set(
+            sessions
+                .filter((session) => session.traineeId === traineeId && session.day >= fromKey)
+                .map((session) => session.workoutId),
+        ).size
         const trainee = byId.get(traineeId)
 
         return {
