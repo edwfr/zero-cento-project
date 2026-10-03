@@ -78,6 +78,7 @@
         "noFieldToUpdate": "Nessun campo da aggiornare",
         "measurementOutOfRange": "Valore fuori dall'intervallo consentito",
         "invalidMetric": "Metrica non valida",
-        "valuePositive": "Il valore deve essere positivo"
+        "valuePositive": "Il valore deve essere positivo",
+        "durationMonthsRange": "La durata deve essere un numero intero di mesi tra 1 e 36"
     }
 }
