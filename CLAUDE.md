@@ -66,7 +66,15 @@ Two DB URLs required: `DATABASE_URL` (pooled PgBouncer port 6543) for runtime, `
   - `FullPageLoader` (with logo + branding) is reserved for cold-start / app-bootstrap, not in-app navigation.
 - **i18n**: react-i18next, locale files in `public/locales/{en,it}/`. Translation keys used in API errors (`key` field) map to these files.
 - **PWA**: Serwist (`src/sw.ts`), manifest at `public/manifest.json`
-- **Error tracking**: Sentry (`sentry.server.config.ts`, `sentry.edge.config.ts`)
+- **Error tracking**: Sentry (`sentry.server.config.ts`, `sentry.edge.config.ts`, `src/instrumentation-client.ts`)
+
+### Sentry
+
+- API route `catch` blocks end with `return handleApiError(error, { logMessage, message, key?, context? })` (`src/lib/api-error-handler.ts`): passes guard `Response`s through, logs with pino, reports to Sentry, returns the 500. Never call Sentry for 4xx.
+- `requireAuth()` sets Sentry user `{ id }` and tag `role` — no email/name (`sendDefaultPii: false` server-side).
+- Client noise filter: `shouldDropClientEvent()` in `src/lib/sentry-filters.ts`. Free plan = 5k errors/month; keep noise out.
+- Sentry MCP: `.mcp.json` points to `https://mcp.sentry.dev/mcp`. First use: `/mcp` → sentry → Authenticate (OAuth). Org `zerocento`, project `javascript-nextjs`.
+- Triage: local skill `/sentry-triage` (report only — no code changes).
 
 ### Testing
 

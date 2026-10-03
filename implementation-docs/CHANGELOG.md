@@ -11,6 +11,13 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [3 Ottobre 2026] — Sentry: cattura dei 500 API e triage
+
+- Nuovo `handleApiError` (`src/lib/api-error-handler.ts`): i `catch` delle route API ora inviano a Sentry gli errori 500 (prima venivano solo loggati con pino e Sentry non li vedeva). Risposte al client invariate; `/api/health` escluso.
+- `requireAuth` imposta su Sentry id utente e ruolo (niente PII).
+- Filtro rumore lato client (`shouldDropClientEvent`): scarta AbortError, ChunkLoadError ed errori da estensioni del browser, per proteggere la quota del piano gratuito.
+- `.mcp.json` con il Sentry MCP server remoto, per leggere gli issue da Claude Code; sezione Sentry in `CLAUDE.md`.
+
 ### [3 Ottobre 2026] — Test unit: timeout async di Testing Library a 3s
 
 **File modificati:** `tests/unit/setup.ts`, `implementation-docs/CHANGELOG.md`
