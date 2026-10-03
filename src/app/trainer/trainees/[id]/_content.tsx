@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import type { JSONContent } from '@tiptap/react'
 import { getApiErrorMessage } from '@/lib/api-error'
@@ -19,6 +19,9 @@ import { compareExerciseType, EXERCISE_TYPE_META, type ExerciseType } from '@/li
 import TraineePlannedMuscleGroupReport from '@/components/TraineePlannedMuscleGroupReport'
 import TraineeNotesEditor from './_trainee-notes-editor'
 import MeasurementsTab from './_measurements-tab'
+import SubscriptionTab from './_subscription-tab'
+import SubscriptionAlertBanner from './_subscription-alert'
+import { useTraineeSubscription } from './_use-trainee-subscription'
 import {
     ChevronDown,
     ChevronUp,
@@ -159,6 +162,8 @@ interface SbdKpiRow {
 
 type ProgramStatusTab = 'draft' | 'active' | 'completed'
 
+type DetailTab = 'notes' | 'programs' | 'records' | 'reports' | 'measurements' | 'subscription'
+
 interface ProgramStatusCounts {
     draft: number
     active: number
@@ -293,7 +298,11 @@ export default function TraineeDetailContent() {
     const [records, setRecords] = useState<PersonalRecord[]>([])
     const [plannedPoints, setPlannedPoints] = useState<PlannedTrainingSetsPoint[]>([])
     const [error, setError] = useState<string | null>(null)
-    const [activeTab, setActiveTab] = useState<'notes' | 'programs' | 'records' | 'reports' | 'measurements'>('programs')
+    const searchParams = useSearchParams()
+    const [activeTab, setActiveTab] = useState<DetailTab>(() =>
+        searchParams.get('tab') === 'subscription' ? 'subscription' : 'programs'
+    )
+    const subscription = useTraineeSubscription(traineeId)
     const [draftNoteDocument, setDraftNoteDocument] = useState<JSONContent | null>(null)
     const [notesDirty, setNotesDirty] = useState(false)
     const [notesUpdatedAt, setNotesUpdatedAt] = useState<string | null>(null)
@@ -1097,6 +1106,10 @@ export default function TraineeDetailContent() {
                         </div>
                     </div>
                 </div>
+                <SubscriptionAlertBanner
+                    summary={subscription.current}
+                    onManage={() => setActiveTab('subscription')}
+                />
                 {/* Tabs */}
                 <div className="mb-6">
                     <div className="border-b border-gray-200">
@@ -1165,6 +1178,19 @@ export default function TraineeDetailContent() {
                                     }`}
                             >
                                 {t('measurements.tab')}
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => setActiveTab('subscription')}
+                                aria-pressed={activeTab === 'subscription'}
+                                className={`rounded-none border-b-2 bg-transparent px-1 pb-4 font-semibold shadow-none hover:bg-transparent ${activeTab === 'subscription'
+                                    ? 'border-brand-primary text-brand-primary'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    }`}
+                            >
+                                {t('subscriptions.tab')}
                             </Button>
                         </nav>
                     </div>
@@ -1886,6 +1912,7 @@ export default function TraineeDetailContent() {
                 )}
 
                 {activeTab === 'measurements' && <MeasurementsTab traineeId={traineeId} />}
+                {activeTab === 'subscription' && <SubscriptionTab traineeId={traineeId} state={subscription} />}
                 </div>
             </div>
         </>
