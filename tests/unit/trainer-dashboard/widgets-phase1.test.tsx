@@ -6,6 +6,7 @@ vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn() } }))
 vi.mock('@/lib/trainer-dashboard/header-kpis', () => ({ getHeaderKpis: vi.fn() }))
 vi.mock('@/lib/trainer-dashboard/todo-today', () => ({ getTodoItems: vi.fn() }))
 vi.mock('@/lib/trainer-dashboard/inactive-trainees', () => ({ getInactiveTrainees: vi.fn() }))
+vi.mock('@/lib/trainer-dashboard/recent-feedback', () => ({ getRecentFeedback: vi.fn() }))
 // DashboardHeader wraps the async HeaderKpis in <Suspense>; React 18 in jsdom cannot render
 // an async component, so the header test replaces it with a static stand-in.
 vi.mock('@/app/trainer/dashboard/_widgets/HeaderKpis', () => ({
@@ -20,7 +21,9 @@ import { getTodoItems } from '@/lib/trainer-dashboard/todo-today'
 import TodoTodayWidget from '@/app/trainer/dashboard/_widgets/TodoTodayWidget'
 import { getInactiveTrainees } from '@/lib/trainer-dashboard/inactive-trainees'
 import InactiveTraineesWidget from '@/app/trainer/dashboard/_widgets/InactiveTraineesWidget'
-import { NOW, TRAINEES } from './fixtures'
+import { getRecentFeedback } from '@/lib/trainer-dashboard/recent-feedback'
+import RecentFeedbackWidget from '@/app/trainer/dashboard/_widgets/RecentFeedbackWidget'
+import { NOW, TRAINEES, at } from './fixtures'
 
 const { default: HeaderKpis } = await vi.importActual<typeof import('@/app/trainer/dashboard/_widgets/HeaderKpis')>(
     '@/app/trainer/dashboard/_widgets/HeaderKpis',
@@ -169,5 +172,49 @@ describe('InactiveTraineesWidget', () => {
         await renderAsync(InactiveTraineesWidget({ ctx: makeCtx() }))
 
         expect(within(screen.getByRole('region', { name: 'Atleti inattivi' })).getByRole('alert')).toBeInTheDocument()
+    })
+})
+
+describe('RecentFeedbackWidget', () => {
+    it('shows trainee, exercise, relative time, RPE badge and the note, linking to the program', async () => {
+        vi.mocked(getRecentFeedback).mockResolvedValue([
+            {
+                id: 'f1', traineeName: 'Anna Rossi', exerciseName: 'Squat', programId: 'p1',
+                rpe: 9.5, isHighRpe: true, note: 'Ginocchio dolorante', loggedAt: at('2026-10-03T08:00:00'),
+            },
+            {
+                id: 'f2', traineeName: 'Luca Bianchi', exerciseName: 'Panca', programId: 'p2',
+                rpe: null, isHighRpe: false, note: 'Tutto bene', loggedAt: at('2026-10-02T09:00:00'),
+            },
+        ])
+
+        await renderAsync(RecentFeedbackWidget({ ctx: makeCtx() }))
+
+        const region = screen.getByRole('region', { name: 'Feedback recenti' })
+        const links = within(region).getAllByRole('link')
+        expect(getRecentFeedback).toHaveBeenCalledWith(TRAINEES, NOW)
+        expect(links[0]).toHaveAttribute('href', '/trainer/programs/p1')
+        expect(links[0]).toHaveTextContent('Anna Rossi')
+        expect(links[0]).toHaveTextContent('Squat')
+        expect(links[0]).toHaveTextContent('2 ore fa')
+        expect(links[0]).toHaveTextContent('Ginocchio dolorante')
+        expect(within(links[0]).getByText('RPE 9.5')).toHaveClass('bg-red-100')
+        expect(within(links[1]).queryByText(/RPE/)).not.toBeInTheDocument()
+    })
+
+    it('shows the empty state', async () => {
+        vi.mocked(getRecentFeedback).mockResolvedValue([])
+
+        await renderAsync(RecentFeedbackWidget({ ctx: makeCtx() }))
+
+        expect(screen.getByText('Nessuna nota o RPE alto negli ultimi 7 giorni.')).toBeInTheDocument()
+    })
+
+    it('shows the error card when loading fails', async () => {
+        vi.mocked(getRecentFeedback).mockRejectedValue(new Error('db down'))
+
+        await renderAsync(RecentFeedbackWidget({ ctx: makeCtx() }))
+
+        expect(within(screen.getByRole('region', { name: 'Feedback recenti' })).getByRole('alert')).toBeInTheDocument()
     })
 })
