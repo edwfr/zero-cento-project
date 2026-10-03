@@ -54,33 +54,41 @@ model UserStatusEvent {
 `performedStatusEvents UserStatusEvent[] @relation("PerformedStatusEvents")`.
 
 `actorId` is the user who performed the step: the trainer or admin for
-`created`, `deactivated`, `reactivated`, `invitation_resent`; `null` for
-`activated` (the trainee did it) and for backfilled events. Deleting the actor
-keeps the event and nulls the author (`SetNull`).
+`created`, `deactivated`, `reactivated`, `invitation_resent`; the trainee
+themselves for `activated` (`actorId = userId`). Deleting the actor keeps the
+event and nulls the author (`SetNull`).
 
-`created` is written for users created from now on, with the creator as actor.
-Users created before this feature have no `created` event: the timeline falls
-back to `User.createdAt` with no author.
+`created` is written for every new user, with the creator as actor. A user
+with no `created` event (only possible if created by the old code during the
+deploy window) falls back to `User.createdAt` with no author.
 "Waiting for activation" is not an event: it is the state of an inactive user
 with no `activated` event (`pendingActivation`).
 
 ### Migration and backfill
 
 One additive Prisma migration (deployed by the Vercel production build, like
-the others). It creates the enum and the table, then backfills an `activated`
-event for every existing user whose email is confirmed in Supabase Auth, dated
-`auth.users.email_confirmed_at` (approximate: it is the invite-link click, not
-the password setup). The backfill runs inside
-`DO $$ ... IF EXISTS (auth.users) ... $$` so the shadow database used by
-`prisma migrate dev`, which has no `auth` schema, skips it.
+the others). It creates the enum and the table, then backfills existing users
+assuming the standard flow (creation by the trainer, activation by the
+trainee):
+
+1. `created` for every existing user, dated `users.created_at`. Actor: the
+   trainee's current trainer from `trainer_trainees`; `null` for users with no
+   trainer (trainers, admins). If a trainee changed trainer, the current one
+   is shown: accepted approximation.
+2. `activated` for every existing user whose email is confirmed in Supabase
+   Auth, dated `auth.users.email_confirmed_at` (approximate: it is the
+   invite-link click, not the password setup), actor = the user themselves.
+   This step runs inside `DO $$ ... IF EXISTS (auth.users) ... $$` so the
+   shadow database used by `prisma migrate dev`, which has no `auth` schema,
+   skips it.
 
 Consequences for existing users:
 
 | Existing user | Badge | Timeline |
 |---|---|---|
-| active, confirmed | Active | created, activated (approx. date) |
-| inactive, confirmed | Deactivated | created, activated, "Deactivated — date not available" |
-| inactive, never confirmed | Waiting for activation | created, waiting for activation |
+| active, confirmed | Active | created by trainer, activated by trainee (approx. date) |
+| inactive, confirmed | Deactivated | created by trainer, activated by trainee, "Deactivated — date not available" |
+| inactive, never confirmed | Waiting for activation | created by trainer, waiting for activation |
 
 ## Writing events
 
@@ -91,7 +99,7 @@ writes nothing):
 | Route | Event | Actor |
 |---|---|---|
 | `POST /api/users` (after the invite is sent) | `created` | session user |
-| `POST /api/auth/activate` (end of onboarding) | `activated` | `null` |
+| `POST /api/auth/activate` (end of onboarding) | `activated` | the trainee (session user) |
 | `PATCH /api/users/[id]/deactivate` | `deactivated` | session user |
 | `PATCH /api/users/[id]/activate` | `reactivated` | session user |
 | `POST /api/users/[id]/resend-invite` (after a successful send) | `invitation_resent` | session user |
