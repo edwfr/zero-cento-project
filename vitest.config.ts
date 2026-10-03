@@ -39,8 +39,8 @@ export default defineConfig({
             thresholds: {
                 // Baseline floors measured on chore/test-quality-api, 2026-09-20.
                 // They only go up: every phase raises them to the level it reaches.
-                lines: 50, statements: 50, functions: 39, branches: 46,
-                'src/lib/**': { lines: 94, statements: 94, functions: 97, branches: 88 },
+                lines: 52, statements: 52, functions: 42, branches: 48,
+                'src/lib/**': { lines: 96, statements: 96, functions: 98, branches: 90 },
                 'src/schemas/**': { lines: 95, statements: 95, functions: 96, branches: 87 },
                 'src/app/api/**': { lines: 92, statements: 91, functions: 95, branches: 87 },
             },

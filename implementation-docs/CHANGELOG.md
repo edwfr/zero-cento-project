@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [3 Ottobre 2026] — Home trainer: Fase 2 (attività, record, andamento, costanza)
+
+**File modificati:** `src/app/trainer/dashboard/page.tsx`, `src/app/trainer/dashboard/_widgets/{ActivityFeed,NewRecords,WeeklyTrend,ConsistencyRanking}Widget.tsx` (nuovi), `src/app/trainer/dashboard/_widgets/WeeklyTrendChart.tsx` (nuovo), `src/lib/trainer-dashboard/{activity-feed,new-records,weekly-trend,consistency-ranking}.ts` (nuovi), `tests/unit/trainer-dashboard/*`, `tests/e2e/trainer-dashboard.spec.ts`, `implementation-docs/CHANGELOG.md`
+**Note:** Completa il redesign della home trainer. Feed delle sessioni degli ultimi 7 giorni raggruppate per giorno, con badge sui giorni con un nuovo record; nuovi record personali con il miglioramento rispetto al record precedente sullo stesso esercizio e numero di ripetizioni; grafico recharts delle ultime 8 settimane (barre = sessioni, linea = volume reps × kg delle serie completate); classifica costanza = sessioni delle ultime 4 settimane ÷ (allenamenti a settimana × settimane trascorse), con tetto al 100%. Layout finale a 3 colonne desktop come da spec.
 ### [3 Ottobre 2026] — Home trainer: Fase 1 (da fare oggi, atleti inattivi, feedback)
 
 **File modificati:** `src/app/trainer/dashboard/page.tsx`, `src/app/trainer/dashboard/_widgets/*` (nuovi), `src/lib/trainer-dashboard/*` (nuovi), `public/locales/{en,it}/trainer.json`, `tests/unit/trainer-dashboard/*` (nuovi), `tests/e2e/trainer-dashboard.spec.ts` (nuovo), `tests/e2e/trainer-subscription-renewals.spec.ts`, `implementation-docs/CHANGELOG.md`

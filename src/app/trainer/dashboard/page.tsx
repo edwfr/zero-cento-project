@@ -5,10 +5,14 @@ import { getSession } from '@/lib/auth'
 import DashboardLayout from '@/components/DashboardLayout'
 import { createTranslator, resolveDashboardLocale } from '@/lib/trainer-dashboard/i18n'
 import { getTrainerTrainees } from '@/lib/trainer-dashboard/trainees'
+import ActivityFeedWidget from './_widgets/ActivityFeedWidget'
+import ConsistencyRankingWidget from './_widgets/ConsistencyRankingWidget'
 import DashboardHeader from './_widgets/DashboardHeader'
 import InactiveTraineesWidget from './_widgets/InactiveTraineesWidget'
+import NewRecordsWidget from './_widgets/NewRecordsWidget'
 import RecentFeedbackWidget from './_widgets/RecentFeedbackWidget'
 import TodoTodayWidget from './_widgets/TodoTodayWidget'
+import WeeklyTrendWidget from './_widgets/WeeklyTrendWidget'
 import { WidgetSkeleton } from './_widgets/WidgetCard'
 import type { WidgetContext } from './_widgets/types'
 
@@ -53,10 +57,22 @@ export default async function TrainerDashboard() {
                         <TodoTodayWidget ctx={ctx} />
                     </Slot>
                     <Slot>
+                        <NewRecordsWidget ctx={ctx} />
+                    </Slot>
+                    <Slot span={2}>
+                        <RecentFeedbackWidget ctx={ctx} />
+                    </Slot>
+                    <Slot>
                         <InactiveTraineesWidget ctx={ctx} />
                     </Slot>
+                    <Slot span={2}>
+                        <WeeklyTrendWidget ctx={ctx} />
+                    </Slot>
+                    <Slot>
+                        <ConsistencyRankingWidget ctx={ctx} />
+                    </Slot>
                     <Slot span={3}>
-                        <RecentFeedbackWidget ctx={ctx} />
+                        <ActivityFeedWidget ctx={ctx} />
                     </Slot>
                 </div>
             </div>

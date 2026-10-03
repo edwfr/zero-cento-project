@@ -23,7 +23,15 @@ test.describe('Trainer: home', () => {
         ).toBeVisible()
         await expect(page.getByRole('link', { name: /nuovo programma|new program/i })).toHaveAttribute('href', '/trainer/programs/new')
 
-        for (const name of [/da fare oggi|to do today/i, /atleti inattivi|inactive athletes/i, /feedback recenti|recent feedback/i]) {
+        for (const name of [
+            /da fare oggi|to do today/i,
+            /nuovi record|new records/i,
+            /feedback recenti|recent feedback/i,
+            /atleti inattivi|inactive athletes/i,
+            /andamento ultime 8 settimane|last 8 weeks/i,
+            /classifica costanza|consistency ranking/i,
+            /attività recente|recent activity/i,
+        ]) {
             const region = page.getByRole('region', { name })
             await expect(region).toBeVisible()
             await expect(region.getByRole('alert')).toHaveCount(0)
