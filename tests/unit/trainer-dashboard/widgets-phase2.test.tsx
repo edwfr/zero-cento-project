@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import type { ReactNode } from 'react'
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn() } }))
 vi.mock('@/lib/trainer-dashboard/activity-feed', () => ({ getActivityFeed: vi.fn() }))
@@ -28,7 +28,7 @@ const activity = (key: string, day: string, overrides: Partial<Awaited<ReturnTyp
 })
 
 describe('ActivityFeedWidget', () => {
-    it('groups sessions by day and describes each one', async () => {
+    it('describes each session and flags records', async () => {
         vi.mocked(getActivityFeed).mockResolvedValue([
             activity('a', '2026-10-03', { hasRecord: true }),
             activity('b', '2026-10-02', { traineeName: 'Luca Bianchi', initials: 'LB', exerciseCount: 1, programId: 'p2' }),
@@ -38,15 +38,29 @@ describe('ActivityFeedWidget', () => {
 
         const region = screen.getByRole('region', { name: 'Attività recente' })
         expect(getActivityFeed).toHaveBeenCalledWith('trainer-1', TRAINEES, NOW)
-        expect(within(region).getByRole('heading', { name: 'Oggi' })).toBeInTheDocument()
-        expect(within(region).getByRole('heading', { name: 'Ieri' })).toBeInTheDocument()
         const [first, second] = within(region).getAllByRole('link')
         expect(first).toHaveAttribute('href', '/trainer/programs/p1')
         expect(first).toHaveTextContent('Anna Rossi ha completato Giorno 3 · Settimana 2')
         expect(first).toHaveTextContent('5 esercizi · 2 ore fa')
-        expect(within(first).getByText('Nuovo record')).toBeInTheDocument()
+        expect(within(first).getByLabelText('Nuovo record')).toBeInTheDocument()
         expect(second).toHaveTextContent('1 esercizio')
-        expect(within(second).queryByText('Nuovo record')).not.toBeInTheDocument()
+        expect(within(second).queryByLabelText('Nuovo record')).not.toBeInTheDocument()
+    })
+
+    it('shows 6 sessions per page', async () => {
+        vi.mocked(getActivityFeed).mockResolvedValue(
+            Array.from({ length: 7 }, (_, index) => activity(`s${index}`, '2026-10-03', { traineeName: `Atleta ${index}` })),
+        )
+
+        await renderAsync(ActivityFeedWidget({ ctx: makeCtx() }))
+
+        const region = screen.getByRole('region', { name: 'Attività recente' })
+        expect(within(region).getAllByRole('link')).toHaveLength(6)
+
+        fireEvent.click(within(region).getByRole('button', { name: 'Pagina successiva' }))
+
+        expect(within(region).getAllByRole('link')).toHaveLength(1)
+        expect(within(region).getByRole('link')).toHaveTextContent('Atleta 6')
     })
 
     it('shows the empty state', async () => {
@@ -54,7 +68,7 @@ describe('ActivityFeedWidget', () => {
 
         await renderAsync(ActivityFeedWidget({ ctx: makeCtx() }))
 
-        expect(screen.getByText('Nessun allenamento registrato negli ultimi 7 giorni.')).toBeInTheDocument()
+        expect(screen.getByText('Nessun allenamento registrato ieri o oggi.')).toBeInTheDocument()
     })
 
     it('shows the error card when loading fails', async () => {

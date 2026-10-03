@@ -11,14 +11,14 @@ const feedback = (traineeId: string, workoutId: string, date: string, time: stri
 })
 
 describe('getActivityFeed', () => {
-    it('queries the last 7 days of feedback and personal records', async () => {
+    it('queries yesterday and today of feedback and personal records', async () => {
         prismaMock.exerciseFeedback.findMany.mockResolvedValue([] as never)
         prismaMock.personalRecord.findMany.mockResolvedValue([] as never)
 
         await expect(getActivityFeed('trainer-1', TRAINEES, NOW)).resolves.toEqual([])
 
         expect(prismaMock.exerciseFeedback.findMany).toHaveBeenCalledWith({
-            where: { traineeId: { in: ['t1', 't2'] }, date: { gte: day('2026-09-26') }, workoutExercise: { workout: { week: { program: { trainerId: 'trainer-1' } } } } },
+            where: { traineeId: { in: ['t1', 't2'] }, date: { gte: day('2026-10-02') }, workoutExercise: { workout: { week: { program: { trainerId: 'trainer-1' } } } } },
             select: {
                 traineeId: true,
                 date: true,
@@ -32,7 +32,7 @@ describe('getActivityFeed', () => {
             },
         })
         expect(prismaMock.personalRecord.findMany).toHaveBeenCalledWith({
-            where: { traineeId: { in: ['t1', 't2'] }, recordDate: { gte: day('2026-09-26') } },
+            where: { traineeId: { in: ['t1', 't2'] }, recordDate: { gte: day('2026-10-02') } },
             select: { traineeId: true, recordDate: true },
         })
     })
@@ -41,7 +41,7 @@ describe('getActivityFeed', () => {
         prismaMock.exerciseFeedback.findMany.mockResolvedValue([
             feedback('t1', 'w1', '2026-10-03', '08:00:00', 3, 2),
             feedback('t1', 'w1', '2026-10-03', '08:30:00', 3, 2),
-            feedback('t2', 'w9', '2026-10-01', '19:00:00', 1, 5),
+            feedback('t2', 'w9', '2026-10-02', '19:00:00', 1, 5),
         ] as never)
         prismaMock.personalRecord.findMany.mockResolvedValue([{ traineeId: 't1', recordDate: at('2026-10-03T08:15:00') }] as never)
 
@@ -52,14 +52,14 @@ describe('getActivityFeed', () => {
                 lastLoggedAt: at('2026-10-03T08:30:00'), day: '2026-10-03', hasRecord: true,
             },
             {
-                key: 't2|w9|2026-10-01', traineeId: 't2', traineeName: 'Luca Bianchi', initials: 'LB',
+                key: 't2|w9|2026-10-02', traineeId: 't2', traineeName: 'Luca Bianchi', initials: 'LB',
                 programId: 'prog-t2', weekNumber: 5, dayIndex: 1, exerciseCount: 1,
-                lastLoggedAt: at('2026-10-01T19:00:00'), day: '2026-10-01', hasRecord: false,
+                lastLoggedAt: at('2026-10-02T19:00:00'), day: '2026-10-02', hasRecord: false,
             },
         ])
     })
 
-    it('keeps only the 15 most recent sessions', async () => {
+    it('returns every session, most recent first, with no cap', async () => {
         prismaMock.exerciseFeedback.findMany.mockResolvedValue(
             Array.from({ length: 20 }, (_, index) => feedback('t1', `w${index}`, '2026-10-02', `${String(index).padStart(2, '0')}:00:00`)) as never,
         )
@@ -67,7 +67,7 @@ describe('getActivityFeed', () => {
 
         const items = await getActivityFeed('trainer-1', TRAINEES, NOW)
 
-        expect(items).toHaveLength(15)
+        expect(items).toHaveLength(20)
         expect(items[0].key).toBe('t1|w19|2026-10-02')
     })
 
