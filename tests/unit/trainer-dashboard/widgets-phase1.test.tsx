@@ -53,14 +53,17 @@ describe('DashboardHeader', () => {
 })
 
 describe('HeaderKpis', () => {
-    it('renders the three KPIs with a positive week delta', async () => {
+    it('renders the five KPIs, each with its delta next to the value', async () => {
         vi.mocked(getHeaderKpis).mockResolvedValue({
             activeTrainees: 4,
+            activeTraineesMonthAgo: 3,
             totalTrainees: 6,
             activePrograms: 5,
+            activeProgramsMonthAgo: 7,
             sessionsThisWeek: 9,
             sessionsLastWeek: 7,
             libraryExercises: 120,
+            libraryExercisesMonthAgo: 110,
             confirmedSetsThisWeek: 40,
             confirmedSetsLastWeek: 40,
         })
@@ -68,23 +71,15 @@ describe('HeaderKpis', () => {
         await renderAsync(HeaderKpis({ ctx: makeCtx() }))
 
         expect(getHeaderKpis).toHaveBeenCalledWith('trainer-1', TRAINEES, NOW)
-        expect(screen.getByText('Atleti attivi (7 gg)').closest('div')).toHaveTextContent('4 / 6')
-        expect(screen.getByText('Programmi attivi').closest('div')).toHaveTextContent('5')
-        expect(screen.getByText('+2 rispetto alla settimana scorsa')).toBeInTheDocument()
-        expect(screen.getByText('Serie confermate questa settimana').closest('div')).toHaveTextContent('40')
-        expect(screen.getByText('0 rispetto alla settimana scorsa')).toBeInTheDocument()
-        expect(screen.getByText('Esercizi in libreria').closest('div')).toHaveTextContent('120')
-    })
-
-    it('shows a negative delta without a plus sign', async () => {
-        vi.mocked(getHeaderKpis).mockResolvedValue({
-            activeTrainees: 1, totalTrainees: 1, activePrograms: 1, sessionsThisWeek: 1, sessionsLastWeek: 4,
-            libraryExercises: 0, confirmedSetsThisWeek: 0, confirmedSetsLastWeek: 0,
-        })
-
-        await renderAsync(HeaderKpis({ ctx: makeCtx() }))
-
-        expect(screen.getByText('-3 rispetto alla settimana scorsa')).toBeInTheDocument()
+        expect(screen.getByRole('link', { name: /Atleti attivi \(7 gg\)/ })).toHaveAttribute('href', '/trainer/trainees')
+        expect(screen.getByRole('link', { name: /Atleti attivi/ })).toHaveTextContent('4 / 6+1 vs 30 gg fa')
+        expect(screen.getByRole('link', { name: /Programmi attivi/ })).toHaveAttribute('href', '/trainer/programs')
+        expect(screen.getByRole('link', { name: /Programmi attivi/ })).toHaveTextContent('5-2 vs 30 gg fa')
+        expect(screen.getByText('Sessioni questa settimana').closest('div')).toHaveTextContent('9+2 vs 7 gg fa')
+        expect(screen.getByText('Serie confermate questa settimana').closest('div')).toHaveTextContent('400 vs 7 gg fa')
+        expect(screen.getByRole('link', { name: /Esercizi in libreria/ })).toHaveAttribute('href', '/trainer/exercises')
+        expect(screen.getByRole('link', { name: /Esercizi in libreria/ })).toHaveTextContent('120+10 vs 30 gg fa')
+        expect(screen.queryByRole('link', { name: /Sessioni questa settimana/ })).not.toBeInTheDocument()
     })
 
     it('degrades to a notice when the KPIs fail to load', async () => {

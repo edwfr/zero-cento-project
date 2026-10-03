@@ -1,32 +1,57 @@
 import type { ReactNode } from 'react'
+import Link from 'next/link'
 import { Activity, ClipboardList, Dumbbell, ListChecks, Minus, TrendingDown, TrendingUp, Users } from 'lucide-react'
+import { KPI_MONTH_DAYS } from '@/lib/trainer-dashboard/constants'
 import type { Translate } from '@/lib/trainer-dashboard/i18n'
 import { getHeaderKpis } from '@/lib/trainer-dashboard/header-kpis'
 import { loadWidget } from '@/lib/trainer-dashboard/load-widget'
 import type { WidgetContext } from './types'
 
-function Kpi({ icon, label, value, footer }: { icon: ReactNode; label: string; value: ReactNode; footer?: ReactNode }) {
-    return (
-        <div className="rounded-lg bg-gray-50 px-4 py-3 ring-1 ring-inset ring-gray-200">
+function Kpi({
+    icon,
+    label,
+    value,
+    delta,
+    href,
+}: {
+    icon: ReactNode
+    label: string
+    value: ReactNode
+    delta?: ReactNode
+    href?: string
+}) {
+    const content = (
+        <>
             <p className="flex items-center gap-2 text-sm text-gray-600">
                 <span className="text-brand-primary" aria-hidden="true">{icon}</span>
                 {label}
             </p>
-            <p className="mt-1 text-3xl font-bold text-gray-900">{value}</p>
-            {footer}
-        </div>
+            <div className="mt-1 flex flex-wrap items-baseline gap-x-2">
+                <p className="text-3xl font-bold text-gray-900">{value}</p>
+                {delta}
+            </div>
+        </>
+    )
+    const className = 'block rounded-lg bg-gray-50 px-4 py-3 ring-1 ring-inset ring-gray-200'
+
+    return href ? (
+        <Link href={href} className={`${className} transition-colors hover:bg-gray-100 hover:ring-gray-300`}>
+            {content}
+        </Link>
+    ) : (
+        <div className={className}>{content}</div>
     )
 }
 
-function WeekDelta({ current, previous, t }: { current: number; previous: number; t: Translate }) {
+function Delta({ current, previous, days, t }: { current: number; previous: number; days: number; t: Translate }) {
     const delta = current - previous
     const DeltaIcon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus
     const deltaColor = delta > 0 ? 'text-green-600' : delta < 0 ? 'text-red-600' : 'text-gray-500'
 
     return (
-        <p className={`mt-1 flex items-center gap-1 text-sm ${deltaColor}`}>
+        <p className={`flex items-center gap-1 whitespace-nowrap text-sm ${deltaColor}`}>
             <DeltaIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
-            {t('trainerDashboard.header.kpiSessionsDelta', { delta: delta > 0 ? `+${delta}` : String(delta) })}
+            {t('trainerDashboard.header.kpiDelta', { delta: delta > 0 ? `+${delta}` : String(delta), count: days })}
         </p>
     )
 }
@@ -50,29 +75,35 @@ export default async function HeaderKpis({ ctx }: { ctx: WidgetContext }) {
             <Kpi
                 icon={<Users className="h-4 w-4" />}
                 label={t('trainerDashboard.header.kpiActiveTrainees')}
+                href="/trainer/trainees"
                 value={`${kpis.activeTrainees} / ${kpis.totalTrainees}`}
+                delta={<Delta current={kpis.activeTrainees} previous={kpis.activeTraineesMonthAgo} days={KPI_MONTH_DAYS} t={t} />}
             />
             <Kpi
                 icon={<ClipboardList className="h-4 w-4" />}
                 label={t('trainerDashboard.header.kpiActivePrograms')}
+                href="/trainer/programs"
                 value={kpis.activePrograms}
+                delta={<Delta current={kpis.activePrograms} previous={kpis.activeProgramsMonthAgo} days={KPI_MONTH_DAYS} t={t} />}
             />
             <Kpi
                 icon={<Activity className="h-4 w-4" />}
                 label={t('trainerDashboard.header.kpiSessionsWeek')}
                 value={kpis.sessionsThisWeek}
-                footer={<WeekDelta current={kpis.sessionsThisWeek} previous={kpis.sessionsLastWeek} t={t} />}
+                delta={<Delta current={kpis.sessionsThisWeek} previous={kpis.sessionsLastWeek} days={7} t={t} />}
             />
             <Kpi
                 icon={<ListChecks className="h-4 w-4" />}
                 label={t('trainerDashboard.header.kpiConfirmedSetsWeek')}
                 value={kpis.confirmedSetsThisWeek}
-                footer={<WeekDelta current={kpis.confirmedSetsThisWeek} previous={kpis.confirmedSetsLastWeek} t={t} />}
+                delta={<Delta current={kpis.confirmedSetsThisWeek} previous={kpis.confirmedSetsLastWeek} days={7} t={t} />}
             />
             <Kpi
                 icon={<Dumbbell className="h-4 w-4" />}
                 label={t('trainerDashboard.header.kpiLibraryExercises')}
+                href="/trainer/exercises"
                 value={kpis.libraryExercises}
+                delta={<Delta current={kpis.libraryExercises} previous={kpis.libraryExercisesMonthAgo} days={KPI_MONTH_DAYS} t={t} />}
             />
         </div>
     )

@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [4 Ottobre 2026] — Home trainer: confronto su tutti i KPI, accanto al valore
+
+**File modificati:** `src/lib/trainer-dashboard/header-kpis.ts`, `src/lib/trainer-dashboard/constants.ts`, `src/app/trainer/dashboard/_widgets/HeaderKpis.tsx`, `public/locales/{it,en}/trainer.json`, `tests/unit/trainer-dashboard/header-kpis.test.ts`, `tests/unit/trainer-dashboard/widgets-phase1.test.tsx`
+**Note:** Ogni KPI mostra la variazione sulla stessa riga del numero, nel formato "+N vs X gg fa". Sessioni e serie confermate: settimana corrente vs precedente ("vs 7 gg fa"). Atleti attivi, programmi attivi, esercizi in libreria: confronto con 30 giorni fa (`KPI_MONTH_DAYS`). Atleti attivi di allora = stessa finestra di 7 giorni spostata indietro di 30; programmi attivi di allora = pubblicati entro quella data e non ancora completati; esercizi di allora = creati entro quella data. Programmi o esercizi cancellati non sono ricostruibili, quindi il valore passato può risultare leggermente più basso. Chiave `kpiSessionsDelta` sostituita da `kpiDelta`. I blocchi Atleti attivi, Programmi attivi ed Esercizi in libreria sono link rispettivamente a lista atleti, lista programmi e libreria esercizi.
 ### [4 Ottobre 2026] — Home trainer: pannello "Bozze in attesa", "Programmi in chiusura" apre il profilo atleta
 
 **File modificati:** `src/lib/trainer-dashboard/draft-programs.ts` (nuovo), `src/app/trainer/dashboard/_widgets/DraftProgramsWidget.tsx` (nuovo), `src/app/trainer/dashboard/_widgets/ProgramEndingWidget.tsx`, `src/app/trainer/dashboard/page.tsx`, `public/locales/{it,en}/trainer.json`, `tests/unit/trainer-dashboard/draft-programs.test.ts` (nuovo), `tests/unit/trainer-dashboard/widgets-phase1.test.tsx`
