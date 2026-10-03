@@ -281,6 +281,73 @@
             "calf": "Calf"
         }
     },
+    "subscriptions": {
+        "tab": "Subscription",
+        "title": "Subscription",
+        "subtitle": "Renewals visible only to you, not to the athlete",
+        "addButton": "Record renewal",
+        "createTitle": "Record renewal",
+        "editTitle": "Edit renewal",
+        "startDate": "Start date",
+        "duration": "Duration (months)",
+        "durationShortcut": "{{count}} mo",
+        "previewLabel": "Expires on",
+        "currentTitle": "Current status",
+        "historyTitle": "Renewal history",
+        "startColumn": "Start",
+        "durationColumn": "Duration",
+        "endColumn": "End",
+        "createdColumn": "Recorded on",
+        "actionsColumn": "Actions",
+        "durationValue_one": "{{count}} month",
+        "durationValue_other": "{{count}} months",
+        "empty": "No renewals recorded for this athlete",
+        "editAction": "Edit renewal",
+        "deleteAction": "Delete renewal",
+        "deleteTitle": "Delete renewal",
+        "deleteMessage": "Delete the renewal from {{start}} to {{end}}?",
+        "loadError": "Unable to load subscriptions",
+        "saveError": "Unable to save the renewal",
+        "retry": "Retry",
+        "badge": {
+            "active": "Active until {{date}}",
+            "expiring": "Expires on {{date}} ({{days}} d)",
+            "expired": "Expired on {{date}}",
+            "none": "No subscription"
+        },
+        "remaining": {
+            "daysLeft_one": "in {{count}} day",
+            "daysLeft_other": "in {{count}} days",
+            "today": "expires today",
+            "daysOverdue_one": "expired {{count}} day ago",
+            "daysOverdue_other": "expired {{count}} days ago"
+        },
+        "banner": {
+            "expiring": "The subscription expires on {{date}} ({{remaining}})",
+            "expired": "Subscription expired on {{date}}",
+            "manage": "Manage"
+        },
+        "page": {
+            "title": "Subscriptions",
+            "description": "Your athletes' expiry dates, soonest first",
+            "counters": {
+                "expired": "Expired",
+                "expiring": "Expiring (≤ 14 d)",
+                "active": "Active",
+                "none": "No subscription"
+            },
+            "listTitle": "Recorded subscriptions",
+            "noneTitle": "No subscription",
+            "noneEmpty": "All your active athletes have a subscription",
+            "listEmpty": "No subscriptions recorded",
+            "empty": "You have no active athletes",
+            "athleteColumn": "Athlete",
+            "statusColumn": "Status",
+            "endColumn": "Expiry",
+            "remainingColumn": "Time left",
+            "manage": "Manage"
+        }
+    },
     "personalRecords": {
         "title": "Personal Records and Maxes",
         "record": "Personal Record",

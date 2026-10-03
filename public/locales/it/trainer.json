@@ -281,6 +281,73 @@
             "calf": "Polpaccio"
         }
     },
+    "subscriptions": {
+        "tab": "Abbonamento",
+        "title": "Abbonamento",
+        "subtitle": "Rinnovi visibili solo a te, non all'atleta",
+        "addButton": "Registra rinnovo",
+        "createTitle": "Registra rinnovo",
+        "editTitle": "Modifica rinnovo",
+        "startDate": "Data inizio",
+        "duration": "Durata (mesi)",
+        "durationShortcut": "{{count}} m",
+        "previewLabel": "Scadrà il",
+        "currentTitle": "Stato attuale",
+        "historyTitle": "Storico rinnovi",
+        "startColumn": "Inizio",
+        "durationColumn": "Durata",
+        "endColumn": "Fine",
+        "createdColumn": "Inserito il",
+        "actionsColumn": "Azioni",
+        "durationValue_one": "{{count}} mese",
+        "durationValue_other": "{{count}} mesi",
+        "empty": "Nessun rinnovo registrato per questo atleta",
+        "editAction": "Modifica rinnovo",
+        "deleteAction": "Elimina rinnovo",
+        "deleteTitle": "Elimina rinnovo",
+        "deleteMessage": "Eliminare il rinnovo dal {{start}} al {{end}}?",
+        "loadError": "Impossibile caricare gli abbonamenti",
+        "saveError": "Impossibile salvare il rinnovo",
+        "retry": "Riprova",
+        "badge": {
+            "active": "Attivo fino al {{date}}",
+            "expiring": "Scade il {{date}} ({{days}} gg)",
+            "expired": "Scaduto il {{date}}",
+            "none": "Nessun abbonamento"
+        },
+        "remaining": {
+            "daysLeft_one": "tra {{count}} giorno",
+            "daysLeft_other": "tra {{count}} giorni",
+            "today": "scade oggi",
+            "daysOverdue_one": "scaduto da {{count}} giorno",
+            "daysOverdue_other": "scaduto da {{count}} giorni"
+        },
+        "banner": {
+            "expiring": "L'abbonamento scade il {{date}} ({{remaining}})",
+            "expired": "Abbonamento scaduto il {{date}}",
+            "manage": "Gestisci"
+        },
+        "page": {
+            "title": "Abbonamenti",
+            "description": "Scadenze dei tuoi atleti, dalla più vicina",
+            "counters": {
+                "expired": "Scaduti",
+                "expiring": "In scadenza (≤ 14 gg)",
+                "active": "Attivi",
+                "none": "Senza abbonamento"
+            },
+            "listTitle": "Abbonamenti registrati",
+            "noneTitle": "Senza abbonamento",
+            "noneEmpty": "Tutti i tuoi atleti attivi hanno un abbonamento",
+            "listEmpty": "Nessun abbonamento registrato",
+            "empty": "Non hai atleti attivi",
+            "athleteColumn": "Atleta",
+            "statusColumn": "Stato",
+            "endColumn": "Scadenza",
+            "remainingColumn": "Tempo rimanente",
+            "manage": "Gestisci"
+        }
+    },
     "personalRecords": {
         "title": "Massimali e Record",
         "record": "Massimale",
