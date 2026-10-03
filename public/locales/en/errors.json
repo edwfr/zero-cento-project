@@ -56,6 +56,9 @@
         "notFound": "Measurement not found",
         "duplicateDay": "This metric already has a measurement on that date"
     },
+    "subscription": {
+        "notFound": "Renewal not found"
+    },
     "program": {
         "notFound": "Program not found",
         "createDenied": "You can only create programs for your own trainees",

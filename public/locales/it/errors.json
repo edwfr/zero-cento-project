@@ -56,6 +56,9 @@
         "notFound": "Misurazione non trovata",
         "duplicateDay": "Esiste già una misura di questa metrica in quella data"
     },
+    "subscription": {
+        "notFound": "Rinnovo non trovato"
+    },
     "program": {
         "notFound": "Programma non trovato",
         "createDenied": "Puoi creare programmi solo per i tuoi atleti",
