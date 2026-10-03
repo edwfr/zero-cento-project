@@ -5,6 +5,7 @@ import { render, screen, within } from '@testing-library/react'
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn() } }))
 vi.mock('@/lib/trainer-dashboard/header-kpis', () => ({ getHeaderKpis: vi.fn() }))
 vi.mock('@/lib/trainer-dashboard/todo-today', () => ({ getTodoItems: vi.fn() }))
+vi.mock('@/lib/trainer-dashboard/inactive-trainees', () => ({ getInactiveTrainees: vi.fn() }))
 // DashboardHeader wraps the async HeaderKpis in <Suspense>; React 18 in jsdom cannot render
 // an async component, so the header test replaces it with a static stand-in.
 vi.mock('@/app/trainer/dashboard/_widgets/HeaderKpis', () => ({
@@ -17,6 +18,8 @@ import type { WidgetContext } from '@/app/trainer/dashboard/_widgets/types'
 import DashboardHeader from '@/app/trainer/dashboard/_widgets/DashboardHeader'
 import { getTodoItems } from '@/lib/trainer-dashboard/todo-today'
 import TodoTodayWidget from '@/app/trainer/dashboard/_widgets/TodoTodayWidget'
+import { getInactiveTrainees } from '@/lib/trainer-dashboard/inactive-trainees'
+import InactiveTraineesWidget from '@/app/trainer/dashboard/_widgets/InactiveTraineesWidget'
 import { NOW, TRAINEES } from './fixtures'
 
 const { default: HeaderKpis } = await vi.importActual<typeof import('@/app/trainer/dashboard/_widgets/HeaderKpis')>(
@@ -127,5 +130,44 @@ describe('TodoTodayWidget', () => {
         expect(within(screen.getByRole('region', { name: 'Da fare oggi' })).getByRole('alert')).toHaveTextContent(
             'Impossibile caricare questa sezione',
         )
+    })
+})
+
+describe('InactiveTraineesWidget', () => {
+    it('links each inactive trainee to their profile and shows how long they have been silent', async () => {
+        vi.mocked(getInactiveTrainees).mockResolvedValue({
+            total: 8,
+            items: [
+                { traineeId: 't5', traineeName: 'Carla Blu', initials: 'CB', daysSinceLastSession: null },
+                { traineeId: 't2', traineeName: 'Luca Bianchi', initials: 'LB', daysSinceLastSession: 13 },
+                { traineeId: 't4', traineeName: 'Bruno Neri', initials: 'BN', daysSinceLastSession: 1 },
+            ],
+        })
+
+        await renderAsync(InactiveTraineesWidget({ ctx: makeCtx() }))
+
+        const region = screen.getByRole('region', { name: 'Atleti inattivi' })
+        expect(getInactiveTrainees).toHaveBeenCalledWith(TRAINEES, NOW)
+        expect(within(region).getByRole('link', { name: /Carla Blu/ })).toHaveAttribute('href', '/trainer/trainees/t5')
+        expect(within(region).getByText('Nessun allenamento registrato')).toBeInTheDocument()
+        expect(within(region).getByText('Ultimo allenamento 13 giorni fa')).toBeInTheDocument()
+        expect(within(region).getByText('Ultimo allenamento ieri')).toBeInTheDocument()
+        expect(within(region).getByRole('link', { name: '+5 altri' })).toHaveAttribute('href', '/trainer/trainees')
+    })
+
+    it('shows the empty state', async () => {
+        vi.mocked(getInactiveTrainees).mockResolvedValue({ items: [], total: 0 })
+
+        await renderAsync(InactiveTraineesWidget({ ctx: makeCtx() }))
+
+        expect(screen.getByText('Tutti gli atleti con un programma attivo si sono allenati di recente.')).toBeInTheDocument()
+    })
+
+    it('shows the error card when loading fails', async () => {
+        vi.mocked(getInactiveTrainees).mockRejectedValue(new Error('db down'))
+
+        await renderAsync(InactiveTraineesWidget({ ctx: makeCtx() }))
+
+        expect(within(screen.getByRole('region', { name: 'Atleti inattivi' })).getByRole('alert')).toBeInTheDocument()
     })
 })
