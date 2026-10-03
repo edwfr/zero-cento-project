@@ -4,7 +4,7 @@
 
 **Goal:** Make every unexpected API 500 reach Sentry with user/role context, connect Claude Code to Sentry via MCP, and add an on-demand `/sentry-triage` report skill.
 
-**Architecture:** A single helper `handleApiError()` replaces the duplicated `catch` tail in ~56 API route files: it logs with pino, calls `Sentry.captureException`, and returns the same `apiError(...)` 500 response as today. `requireAuth()` tags the Sentry scope with user id and role. A pure `shouldDropClientEvent()` filter protects the free-plan quota from browser noise. A committed `.mcp.json` exposes the remote Sentry MCP server; a local project skill drives triage from it.
+**Architecture:** A single helper `handleApiError()` replaces the duplicated `catch` tail in ~58 API route files: it logs with pino, calls `Sentry.captureException`, and returns the same `apiError(...)` 500 response as today. `requireAuth()` tags the Sentry scope with user id and role. A pure `shouldDropClientEvent()` filter protects the free-plan quota from browser noise. A committed `.mcp.json` exposes the remote Sentry MCP server; a local project skill drives triage from it.
 
 **Tech Stack:** Next.js 15 App Router, `@sentry/nextjs` v10, pino, Vitest (jsdom), Claude Code MCP + skills.
 
@@ -477,7 +477,7 @@ git commit -m "refactor(api): report 500s to Sentry via handleApiError (programs
 grep -rl "INTERNAL_ERROR" src/app/api/trainee src/app/api/users
 ```
 
-(~13 files). Known special cases:
+(~15 files, incl. `users/[id]/resend-invite` and `users/[id]/status-history` added on development after the spec). Known special cases:
 - `users/[id]/route.ts` has an **inner** catch (trainee data deletion) returning `apiError('INTERNAL_ERROR', 'Failed to delete user', 500, undefined, 'user.deleteFailed')` with log `'Trainee data deletion failed after auth account removal — retry to complete'` and payload `{ error, userId: id }`. Migrate it with Rule 1 too (it is a genuine 500 that must reach Sentry), keeping `key: 'user.deleteFailed'` and `context: { userId: id }`. Then migrate the outer catch normally.
 - `trainee/workout-exercises/[id]/complete/route.ts` uses 2-space indentation — keep the file's indentation.
 
