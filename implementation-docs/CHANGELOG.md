@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [3 Ottobre 2026] — Home trainer: correzioni dopo la review
+
+**File modificati:** `src/lib/trainer-dashboard/*`, `src/app/trainer/dashboard/_widgets/*`, `public/locales/{en,it}/trainer.json`, `tests/unit/trainer-dashboard/*`, `tests/e2e/trainer-subscription-renewals.spec.ts`, `implementation-docs/CHANGELOG.md`
+**Note:** Gli atleti disattivati comparivano ancora in "Da fare oggi" e nel KPI dei programmi attivi; dopo una riassegnazione (che sposta solo il link `TrainerTrainee`, non i programmi) ogni trainer vedeva i dati dei programmi dell'altro. Ora ogni query filtra per gli atleti attivi del trainer e, dove c'è un programma, per `program.trainerId` (helper `feedbackOfTrainerPrograms`). "Programma in chiusura" conta fino all'ultimo giorno di allenamento: l'ultimo giorno mostra "termina oggi" invece di "termina domani". L'E2E degli abbonamenti filtra la voce di scadenza per evitare match multipli sullo stesso atleta (E2E non eseguiti: download del browser bloccato dalla rete).
 ### [3 Ottobre 2026] — Home trainer: Fase 2 (attività, record, andamento, costanza)
 
 **File modificati:** `src/app/trainer/dashboard/page.tsx`, `src/app/trainer/dashboard/_widgets/{ActivityFeed,NewRecords,WeeklyTrend,ConsistencyRanking}Widget.tsx` (nuovi), `src/app/trainer/dashboard/_widgets/WeeklyTrendChart.tsx` (nuovo), `src/lib/trainer-dashboard/{activity-feed,new-records,weekly-trend,consistency-ranking}.ts` (nuovi), `tests/unit/trainer-dashboard/*`, `tests/e2e/trainer-dashboard.spec.ts`, `implementation-docs/CHANGELOG.md`
