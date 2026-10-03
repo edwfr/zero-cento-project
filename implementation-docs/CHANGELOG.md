@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [3 Ottobre 2026] — Icona stato abbonamento nell'intestazione atleta
+
+**File modificati:** `src/app/trainer/trainees/[id]/_subscription-status-icon.tsx` (nuovo), `src/app/trainer/trainees/[id]/_content.tsx`, `src/app/trainer/trainees/[id]/_subscription-tab.tsx`, `public/locales/{en,it}/trainer.json`, `tests/unit/trainer-subscription-status-icon.test.tsx` (nuovo), `tests/unit/trainer-subscription-tab.test.tsx`, `tests/unit/trainer-trainee-programs-tab.test.tsx`, `implementation-docs/CHANGELOG.md`
+**Note:** La card "Stato attuale" nella tab Abbonamento ripeteva il banner sopra le tab: rimossa (con la chiave `subscriptions.currentTitle`). Accanto al badge Attivo/Disattivo c'è ora un'icona sempre visibile, colorata per stato (verde in regola, ambra in scadenza, rossa scaduto, grigia nessun abbonamento); il tooltip (`title` + `aria-label`) riporta scadenza e giorni rimanenti, e il click apre la tab Abbonamento, così lo stato resta raggiungibile su touch. Durante il caricamento o in errore l'icona non compare, per non dichiarare "nessun abbonamento" a torto.
 ### [3 Ottobre 2026] — Data inizio rinnovo in formato GG/MM/AAAA
 
 **File modificati:** `src/components/SubscriptionRenewalFormModal.tsx`, `tests/unit/subscription-renewal-form-modal.test.tsx`, `tests/unit/trainer-subscription-tab.test.tsx`, `tests/e2e/trainer-subscription-renewals.spec.ts`, `implementation-docs/CHANGELOG.md`

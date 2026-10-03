@@ -294,7 +294,6 @@
         "duration": "Durata (mesi)",
         "durationShortcut": "{{count}} m",
         "previewLabel": "Scadrà il",
-        "currentTitle": "Stato attuale",
         "historyTitle": "Storico rinnovi",
         "startColumn": "Inizio",
         "durationColumn": "Durata",

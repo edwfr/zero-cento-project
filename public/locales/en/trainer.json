@@ -294,7 +294,6 @@
         "duration": "Duration (months)",
         "durationShortcut": "{{count}} mo",
         "previewLabel": "Expires on",
-        "currentTitle": "Current status",
         "historyTitle": "Renewal history",
         "startColumn": "Start",
         "durationColumn": "Duration",

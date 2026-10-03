@@ -41,10 +41,11 @@ describe('SubscriptionTab', () => {
         vi.clearAllMocks()
     })
 
-    it('shows the current status and one history row per renewal', () => {
+    it('shows one history row per renewal, without repeating the status card', () => {
         render(<SubscriptionTab traineeId={TRAINEE_ID} state={makeState()} />)
 
-        expect(screen.getByText('subscriptions.badge.expiring')).toBeInTheDocument()
+        // Status lives in the header icon and banner now
+        expect(screen.queryByText('subscriptions.currentTitle')).not.toBeInTheDocument()
         const table = screen.getByRole('table', { name: 'subscriptions.historyTitle' })
         expect(within(table).getAllByRole('row')).toHaveLength(2) // header + 1
     })
@@ -53,7 +54,7 @@ describe('SubscriptionTab', () => {
         render(<SubscriptionTab traineeId={TRAINEE_ID} state={makeState({ renewals: [], current: null })} />)
 
         expect(screen.getByText('subscriptions.empty')).toBeInTheDocument()
-        expect(screen.getByText('subscriptions.badge.none')).toBeInTheDocument()
+        expect(screen.queryByText('subscriptions.badge.none')).not.toBeInTheDocument()
     })
 
     it('pre-fills a new renewal with the day after the current expiry', () => {

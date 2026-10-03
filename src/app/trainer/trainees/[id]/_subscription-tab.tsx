@@ -7,12 +7,11 @@ import { ActionIconButton, InlineActions } from '@/components/ActionIconButton'
 import { Button } from '@/components/Button'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import SubscriptionRenewalFormModal, { type RenewalFormPayload } from '@/components/SubscriptionRenewalFormModal'
-import SubscriptionStatusBadge from '@/components/SubscriptionStatusBadge'
 import { SkeletonDetail } from '@/components/Skeleton'
 import { useToast } from '@/components/ToastNotification'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { formatDate, getTodayForInput } from '@/lib/date-format'
-import { nextRenewalStart, remainingLabel, type RenewalRow } from '@/lib/subscriptions'
+import { nextRenewalStart, type RenewalRow } from '@/lib/subscriptions'
 import type { TraineeSubscriptionState } from './_use-trainee-subscription'
 
 export interface SubscriptionTabProps {
@@ -94,8 +93,6 @@ export default function SubscriptionTab({ traineeId, state }: SubscriptionTabPro
         )
     }
 
-    const remaining = current ? remainingLabel(current.daysLeft) : null
-
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -107,18 +104,6 @@ export default function SubscriptionTab({ traineeId, state }: SubscriptionTabPro
                     {t('subscriptions.addButton')}
                 </Button>
             </div>
-
-            <section className="rounded-lg bg-white p-6 shadow-md">
-                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500">
-                    {t('subscriptions.currentTitle')}
-                </h3>
-                <div className="flex flex-wrap items-center gap-3">
-                    <SubscriptionStatusBadge summary={current} />
-                    {remaining && (
-                        <span className="text-sm text-gray-600">{t(remaining.key, { count: remaining.count })}</span>
-                    )}
-                </div>
-            </section>
 
             <section className="overflow-hidden rounded-lg bg-white shadow-md">
                 <h3 id="renewal-history-title" className="px-6 pt-6 text-lg font-semibold text-gray-900">

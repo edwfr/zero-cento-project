@@ -21,6 +21,7 @@ import TraineeNotesEditor from './_trainee-notes-editor'
 import MeasurementsTab from './_measurements-tab'
 import SubscriptionTab from './_subscription-tab'
 import SubscriptionAlertBanner from './_subscription-alert'
+import SubscriptionStatusIcon from './_subscription-status-icon'
 import { useTraineeSubscription } from './_use-trainee-subscription'
 import {
     ChevronDown,
@@ -1091,6 +1092,11 @@ export default function TraineeDetailContent() {
                             >
                                 {trainee.isActive ? t('athletes.activeStatus') : t('athletes.inactiveStatus')}
                             </span>
+                            <SubscriptionStatusIcon
+                                summary={subscription.current}
+                                loading={subscription.loading || subscription.error}
+                                onOpen={() => setActiveTab('subscription')}
+                            />
                             <Link
                                 href={`/trainer/programs/new?traineeId=${traineeId}`}
                                 className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-lg transition-colors inline-flex items-center gap-2"
