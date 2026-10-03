@@ -76,5 +76,22 @@
         "next": "Next",
         "first": "First",
         "last": "Last"
+    },
+    "userStatus": {
+        "active": "Active",
+        "deactivated": "Deactivated",
+        "pending": "Waiting for activation",
+        "historyTitle": "Account history",
+        "loadError": "Could not load the history",
+        "dateUnavailable": "Date not available",
+        "by": "by",
+        "kind": {
+            "created": "Account created",
+            "invitation_resent": "Invitation re-sent",
+            "pending_activation": "Waiting for activation",
+            "activated": "Account activated",
+            "deactivated": "Deactivated",
+            "reactivated": "Reactivated"
+        }
     }
 }

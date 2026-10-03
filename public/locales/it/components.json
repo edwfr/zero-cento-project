@@ -76,5 +76,22 @@
         "next": "Successiva",
         "first": "Prima",
         "last": "Ultima"
+    },
+    "userStatus": {
+        "active": "Attivo",
+        "deactivated": "Disattivato",
+        "pending": "In attesa di attivazione",
+        "historyTitle": "Storico account",
+        "loadError": "Impossibile caricare lo storico",
+        "dateUnavailable": "Data non disponibile",
+        "by": "da",
+        "kind": {
+            "created": "Account creato",
+            "invitation_resent": "Invito reinviato",
+            "pending_activation": "In attesa di attivazione",
+            "activated": "Account attivato",
+            "deactivated": "Disattivato",
+            "reactivated": "Riattivato"
+        }
     }
 }
