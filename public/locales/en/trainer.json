@@ -143,7 +143,6 @@
         "actions": "Actions",
         "activeStatus": "Active",
         "inactiveStatus": "Deactivated",
-        "invitationPendingStatus": "Invitation pending",
         "resendInvite": "Resend invitation",
         "resendingInvite": "Sending...",
         "resendInviteSuccess": "Invitation sent again: the new link is valid for 24 hours",

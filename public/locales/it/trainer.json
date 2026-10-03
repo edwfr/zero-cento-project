@@ -143,7 +143,6 @@
         "actions": "Azioni",
         "activeStatus": "Attivo",
         "inactiveStatus": "Disattivato",
-        "invitationPendingStatus": "Invito in attesa",
         "resendInvite": "Reinvia invito",
         "resendingInvite": "Invio...",
         "resendInviteSuccess": "Invito reinviato: il nuovo link è valido 24 ore",

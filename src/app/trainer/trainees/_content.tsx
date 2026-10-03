@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { SkeletonTable, ActionIconButton, InlineActions, Button, SubscriptionStatusBadge } from '@/components'
+import { SkeletonTable, ActionIconButton, InlineActions, Button, SubscriptionStatusBadge, UserStatusBadge } from '@/components'
 import { needsAttention, type SubscriptionSummary } from '@/lib/subscriptions'
 import { useToast } from '@/components/ToastNotification'
 import { formatDate } from '@/lib/date-format'
@@ -18,6 +18,7 @@ interface Trainee {
     lastName: string
     email: string
     isActive: boolean
+    pendingActivation?: boolean
     createdAt: string
     subscription?: SubscriptionSummary | null
 }
@@ -339,14 +340,12 @@ export default function TrainerTraineesContent() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span
-                                                className={`px-3 py-1 text-xs font-semibold rounded-full ${trainee.isActive
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : 'bg-red-100 text-red-800'
-                                                    }`}
-                                            >
-                                                {trainee.isActive ? t('athletes.activeStatus') : t('athletes.inactiveStatus')}
-                                            </span>
+                                            <UserStatusBadge
+                                                userId={trainee.id}
+                                                isActive={trainee.isActive}
+                                                pendingActivation={trainee.pendingActivation ?? false}
+                                                size="sm"
+                                            />
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                             {formatDate(trainee.createdAt)}

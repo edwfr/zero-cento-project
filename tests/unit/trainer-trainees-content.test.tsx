@@ -110,6 +110,12 @@ describe('TrainerTraineesContent', () => {
         }) as unknown as typeof fetch
     })
 
+    it('renders the account status as a badge with history', async () => {
+        render(<TrainerTraineesContent />)
+
+        expect((await screen.findAllByRole('button', { name: 'userStatus.active' })).length).toBeGreaterThan(0)
+    })
+
     it('uses server-side filters before pagination and supports numeric page navigation', async () => {
         render(<TrainerTraineesContent />)
 

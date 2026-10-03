@@ -55,10 +55,10 @@ describe('TraineeDetailContent resend invite', () => {
     })
 
     it('shows the pending badge and re-sends the invite on click', async () => {
-        mockFetch({ ...baseUser, isActive: false, invitationPending: true })
+        mockFetch({ ...baseUser, isActive: false, invitationPending: true, pendingActivation: true })
         render(<TraineeDetailContent />)
 
-        expect(await screen.findByText('athletes.invitationPendingStatus')).toBeInTheDocument()
+        expect(await screen.findByRole('button', { name: 'userStatus.pending' })).toBeInTheDocument()
         fireEvent.click(screen.getByRole('button', { name: /athletes.resendInvite/ }))
 
         await waitFor(() => expect(showToast).toHaveBeenCalledWith('athletes.resendInviteSuccess', 'success'))
@@ -67,7 +67,7 @@ describe('TraineeDetailContent resend invite', () => {
 
     it('shows the API error when the re-send fails', async () => {
         mockFetch(
-            { ...baseUser, isActive: false, invitationPending: true },
+            { ...baseUser, isActive: false, invitationPending: true, pendingActivation: true },
             jsonResponse({ error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Too many', key: 'user.inviteRateLimited' } }, false),
         )
         render(<TraineeDetailContent />)
@@ -78,10 +78,10 @@ describe('TraineeDetailContent resend invite', () => {
     })
 
     it('hides the re-send button for a trainee who completed onboarding', async () => {
-        mockFetch({ ...baseUser, isActive: true, invitationPending: false })
+        mockFetch({ ...baseUser, isActive: true, invitationPending: false, pendingActivation: false })
         render(<TraineeDetailContent />)
 
-        expect(await screen.findByText('athletes.activeStatus')).toBeInTheDocument()
+        expect(await screen.findByRole('button', { name: 'userStatus.active' })).toBeInTheDocument()
         expect(screen.queryByRole('button', { name: /athletes.resendInvite/ })).not.toBeInTheDocument()
     })
 })
