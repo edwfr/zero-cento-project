@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [3 Ottobre 2026] — Home trainer: Fase 1 (da fare oggi, atleti inattivi, feedback)
+
+**File modificati:** `src/app/trainer/dashboard/page.tsx`, `src/app/trainer/dashboard/_widgets/*` (nuovi), `src/lib/trainer-dashboard/*` (nuovi), `public/locales/{en,it}/trainer.json`, `tests/unit/trainer-dashboard/*` (nuovi), `tests/e2e/trainer-dashboard.spec.ts` (nuovo), `tests/e2e/trainer-subscription-renewals.spec.ts`, `implementation-docs/CHANGELOG.md`
+**Note:** La home trainer era un hub di link ridondanti (stat card, azioni rapide e card di navigazione verso le stesse tre pagine). Ora: intestazione con saluto, data, azioni rapide e 3 KPI (atleti attivi 7 gg, programmi attivi, sessioni della settimana con delta); "Da fare oggi" con abbonamenti scaduti/in scadenza, test da revisionare, programmi in chiusura senza successore e settimane di test in corso; atleti inattivi da 7 giorni con programma attivo; feedback recenti con note o RPE >= 9 (anche RPE delle singole serie). Ogni widget è un server component in `<Suspense>` con la sua query in `src/lib/trainer-dashboard/` e gestisce da sé l'errore, così un widget rotto non blocca la pagina. Sessione = atleta + workout + giorno (UTC) di `ExerciseFeedback`. Nessuna migrazione. Solo icone lucide, niente emoji. Spec: `docs/superpowers/specs/2026-10-03-trainer-home-redesign-design.md`.
 ### [3 Ottobre 2026] — Correzioni dalla review: permessi cambio stato e popover storico
 
 **File modificati:** `src/app/api/users/[id]/activate/route.ts`, `src/app/api/users/[id]/deactivate/route.ts`, `src/app/api/auth/activate/route.ts`, `src/components/UserStatusBadge.tsx`, `public/locales/{en,it}/errors.json`, `tests/integration/users-activation.test.ts`, `tests/integration/auth-routes.test.ts`, `tests/integration/rbac.test.ts`, `tests/unit/UserStatusBadge.test.tsx`, `implementation-docs/CHANGELOG.md`

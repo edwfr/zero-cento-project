@@ -3,7 +3,7 @@ import { E2E_CREDENTIALS } from './fixtures/test-users'
 
 /**
  * E2E: trainer records a renewal expiring within 14 days and sees the alert
- * in the profile, the athlete list, the subscriptions page and the home KPI.
+ * in the profile, the athlete list, the subscriptions page and the home "To do today" list.
  *
  * Prerequisites:
  *   - Seed data present (see ./fixtures/test-users.ts)
@@ -62,11 +62,12 @@ test.describe('Trainer: subscription renewals', () => {
         await expect(entry).toBeVisible()
         await expect(entry).toHaveAttribute('href', /\?tab=subscription$/)
 
-        // Home KPI counts at least this athlete
+        // Home "To do today" lists this athlete's expiring subscription
         await page.goto('/trainer/dashboard')
-        const kpi = page.getByRole('link', { name: /abbonamenti|subscriptions/i }).filter({ hasText: /in scadenza|expiring/i })
-        await expect(kpi).toBeVisible()
-        await expect(kpi.locator('span.text-3xl')).not.toHaveText('0')
+        const todo = page.getByRole('region', { name: /da fare oggi|to do today/i })
+        const todoItem = todo.getByRole('link').filter({ hasText: traineeName })
+        await expect(todoItem).toContainText(/in scadenza|expires/i)
+        await expect(todoItem).toHaveAttribute('href', '/trainer/subscriptions')
 
         // Clean up: delete the renewal, the banner disappears
         await page.goto(`${traineeUrl}?tab=subscription`)
