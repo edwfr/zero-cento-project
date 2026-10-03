@@ -6,12 +6,14 @@ import DashboardLayout from '@/components/DashboardLayout'
 import { NavigationCard, ProgressBar } from '@/components'
 import WeekTypeBadge from '@/components/WeekTypeBadge'
 import { prisma } from '@/lib/prisma'
-import { formatDate } from '@/lib/date-format'
+import { formatDate, getTodayDateKey } from '@/lib/date-format'
+import { getTrainerSubscriptionOverview } from '@/lib/subscription-queries'
 import {
     Users,
     ClipboardList,
     Dumbbell,
     Flame,
+    CalendarClock,
     Plus,
     User,
     Eye,
@@ -167,6 +169,9 @@ export default async function TrainerDashboard() {
     // Get exercises count
     const exercisesCount = await prisma.exercise.count()
 
+    // Subscriptions needing action (expired + expiring within 14 days), trainer's active athletes only
+    const { counts: subscriptionCounts } = await getTrainerSubscriptionOverview(trainerId, getTodayDateKey())
+
     // Get active test weeks currently in progress for the trainer's athletes.
     const currentMoment = new Date()
     const currentWeekRange = getCurrentWeekRange(currentMoment)
@@ -281,7 +286,7 @@ export default async function TrainerDashboard() {
                 </div>
 
                 {/* Statistics Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {/* Trainees Card */}
                     <Link
                         href="/trainer/trainees"
@@ -353,6 +358,27 @@ export default async function TrainerDashboard() {
                             </div>
                         </div>
                         <p className="text-orange-700 text-sm">{t('trainerDashboard.statsCardTestWeeksSub')}</p>
+                    </Link>
+
+                    {/* Subscriptions KPI */}
+                    <Link
+                        href="/trainer/subscriptions"
+                        className="bg-amber-50 hover:bg-amber-100 p-6 rounded-lg transition-colors border border-amber-200"
+                    >
+                        <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-lg font-semibold text-amber-900">
+                                <CalendarClock className="w-5 h-5 inline mr-2" />{t('trainerDashboard.statsCardSubscriptionsTitle')}
+                            </h3>
+                            <span className="text-3xl font-bold text-amber-600">
+                                {subscriptionCounts.expired + subscriptionCounts.expiring}
+                            </span>
+                        </div>
+                        <p className="text-amber-700 text-sm">
+                            {t('trainerDashboard.statsCardSubscriptionsSub', {
+                                expired: subscriptionCounts.expired,
+                                expiring: subscriptionCounts.expiring,
+                            })}
+                        </p>
                     </Link>
                 </div>
 

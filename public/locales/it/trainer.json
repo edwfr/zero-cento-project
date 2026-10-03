@@ -18,6 +18,8 @@
         "statsCardExercisesSub": "Libreria esercizi",
         "statsCardTestWeeksTitle": "Settimane Test",
         "statsCardTestWeeksSub": "test completati / test previsti",
+        "statsCardSubscriptionsTitle": "Abbonamenti",
+        "statsCardSubscriptionsSub": "{{expired}} scaduti · {{expiring}} in scadenza (14 gg)",
         "quickActionsTitle": "Azioni Rapide",
         "quickActionCreateProgram": "Crea Programma",
         "quickActionAddTrainee": "Aggiungi Atleta",

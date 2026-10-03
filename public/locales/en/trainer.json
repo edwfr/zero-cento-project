@@ -89,6 +89,8 @@
         "statsCardExercisesSub": "Exercise library",
         "statsCardTestWeeksTitle": "Test Weeks",
         "statsCardTestWeeksSub": "Users with completed test week / users in current test week",
+        "statsCardSubscriptionsTitle": "Subscriptions",
+        "statsCardSubscriptionsSub": "{{expired}} expired · {{expiring}} expiring (14 d)",
         "quickActionsTitle": "Quick Actions",
         "quickActionCreateProgram": "Create Program",
         "quickActionAddTrainee": "Add Athlete",
