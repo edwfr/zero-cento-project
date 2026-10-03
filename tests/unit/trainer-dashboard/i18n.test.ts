@@ -1,14 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import {
     createTranslator,
-    formatDayLabel,
     formatLongDate,
     formatRelative,
-    formatShortDay,
     greetingKey,
     resolveDashboardLocale,
 } from '@/lib/trainer-dashboard/i18n'
-import { NOW, at, day } from './fixtures'
+import { NOW, at } from './fixtures'
 
 const t = createTranslator('it')
 
@@ -58,16 +56,6 @@ describe('formatRelative', () => {
 })
 
 describe('day formatting', () => {
-    it('labels today and yesterday, otherwise weekday + dd/MM', () => {
-        expect(formatDayLabel('2026-10-03', NOW, 'it', t)).toBe('Oggi')
-        expect(formatDayLabel('2026-10-02', NOW, 'it', t)).toBe('Ieri')
-        expect(formatDayLabel('2026-09-29', NOW, 'it', t)).toMatch(/mar.*29\/09/i)
-    })
-
-    it('formatShortDay prints dd/MM in UTC', () => {
-        expect(formatShortDay(day('2026-09-28'), 'it')).toBe('28/09')
-    })
-
     it('formatLongDate uses the Rome calendar day', () => {
         expect(formatLongDate(NOW, 'it')).toMatch(/3 ottobre 2026/i)
         expect(formatLongDate(at('2026-10-03T22:30:00'), 'it')).toMatch(/4 ottobre 2026/i)

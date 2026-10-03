@@ -1,6 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import { LIST_LIMITS } from './constants'
-import { recentWindowStart, utcDayKey } from './dates'
+import { addDays, startOfUtcDay, utcDayKey } from './dates'
 import { SESSION_FEEDBACK_SELECT, feedbackOfTrainerPrograms, groupSessions } from './sessions'
 import { activeTraineeIds, fullName, initials, type DashboardTrainee } from './trainees'
 
@@ -26,7 +25,8 @@ export async function getActivityFeed(
     const traineeIds = activeTraineeIds(trainees)
     if (traineeIds.length === 0) return []
 
-    const since = recentWindowStart(now)
+    // yesterday and today only
+    const since = addDays(startOfUtcDay(now), -1)
     const [rows, records] = await Promise.all([
         prisma.exerciseFeedback.findMany({
             where: { traineeId: { in: traineeIds }, date: { gte: since }, ...feedbackOfTrainerPrograms(trainerId) },
@@ -50,25 +50,23 @@ export async function getActivityFeed(
     const recordDays = new Set(records.map((record) => `${record.traineeId}|${utcDayKey(record.recordDate)}`))
     const byId = new Map(trainees.map((trainee) => [trainee.id, trainee]))
 
-    return groupSessions(rows)
-        .slice(0, LIST_LIMITS.feed)
-        .flatMap((session) => {
-            const workout = workouts.get(session.workoutId)
-            const trainee = byId.get(session.traineeId)
-            if (!workout || !trainee) return []
+    return groupSessions(rows).flatMap((session) => {
+        const workout = workouts.get(session.workoutId)
+        const trainee = byId.get(session.traineeId)
+        if (!workout || !trainee) return []
 
-            return [{
-                key: session.key,
-                traineeId: session.traineeId,
-                traineeName: fullName(trainee),
-                initials: initials(trainee),
-                programId: workout.week.programId,
-                weekNumber: workout.week.weekNumber,
-                dayIndex: workout.dayIndex,
-                exerciseCount: session.exerciseCount,
-                lastLoggedAt: session.lastLoggedAt,
-                day: session.day,
-                hasRecord: recordDays.has(`${session.traineeId}|${session.day}`),
-            }]
-        })
+        return [{
+            key: session.key,
+            traineeId: session.traineeId,
+            traineeName: fullName(trainee),
+            initials: initials(trainee),
+            programId: workout.week.programId,
+            weekNumber: workout.week.weekNumber,
+            dayIndex: workout.dayIndex,
+            exerciseCount: session.exerciseCount,
+            lastLoggedAt: session.lastLoggedAt,
+            day: session.day,
+            hasRecord: recordDays.has(`${session.traineeId}|${session.day}`),
+        }]
+    })
 }

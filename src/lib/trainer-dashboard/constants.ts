@@ -8,6 +8,5 @@ export const WIDGET_PAGE_SIZE = 6
 
 export const LIST_LIMITS = {
     inactive: 6,
-    feed: 15,
     ranking: 5,
 } as const

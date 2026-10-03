@@ -128,7 +128,7 @@
             "exercises": "{{count}} exercises",
             "exercises_one": "1 exercise",
             "record": "New record",
-            "empty": "No sessions logged in the last 7 days."
+            "empty": "No training logged yesterday or today."
         },
         "consistency": {
             "title": "Consistency ranking",
@@ -142,9 +142,7 @@
             "hoursAgo": "{{count}} hours ago",
             "hoursAgo_one": "1 hour ago",
             "daysAgo": "{{count}} days ago",
-            "daysAgo_one": "yesterday",
-            "today": "Today",
-            "yesterday": "Yesterday"
+            "daysAgo_one": "yesterday"
         }
     },
     "athletes": {

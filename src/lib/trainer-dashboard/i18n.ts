@@ -1,6 +1,5 @@
 import trainerIt from '../../../public/locales/it/trainer.json'
 import trainerEn from '../../../public/locales/en/trainer.json'
-import { startOfUtcDay, wholeDaysBetween } from './dates'
 
 /**
  * Server-side translation for the trainer home. The page is a server component,
@@ -62,20 +61,6 @@ export function formatRelative(date: Date, now: Date, t: Translate): string {
     if (hours < 24) return t('trainerDashboard.time.hoursAgo', { count: hours })
 
     return t('trainerDashboard.time.daysAgo', { count: Math.floor(hours / 24) })
-}
-
-export function formatShortDay(date: Date, locale: DashboardLocale): string {
-    return new Intl.DateTimeFormat(INTL_LOCALES[locale], { day: '2-digit', month: '2-digit', timeZone: 'UTC' }).format(date)
-}
-
-export function formatDayLabel(dayKey: string, now: Date, locale: DashboardLocale, t: Translate): string {
-    const date = new Date(`${dayKey}T00:00:00.000Z`)
-    const daysAgo = wholeDaysBetween(date, startOfUtcDay(now))
-    if (daysAgo === 0) return t('trainerDashboard.time.today')
-    if (daysAgo === 1) return t('trainerDashboard.time.yesterday')
-
-    const weekday = new Intl.DateTimeFormat(INTL_LOCALES[locale], { weekday: 'short', timeZone: 'UTC' }).format(date)
-    return `${weekday} ${formatShortDay(date, locale)}`
 }
 
 export function formatLongDate(now: Date, locale: DashboardLocale): string {

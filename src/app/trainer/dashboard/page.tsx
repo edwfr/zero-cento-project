@@ -63,7 +63,7 @@ export default async function TrainerDashboard() {
                     <Slot>
                         <InactiveTraineesWidget ctx={ctx} />
                     </Slot>
-                    <Slot span={2}>
+                    <Slot>
                         <ActivityFeedWidget ctx={ctx} />
                     </Slot>
                 </div>

@@ -57,7 +57,7 @@
             "exercises": "{{count}} esercizi",
             "exercises_one": "1 esercizio",
             "record": "Nuovo record",
-            "empty": "Nessun allenamento registrato negli ultimi 7 giorni."
+            "empty": "Nessun allenamento registrato ieri o oggi."
         },
         "consistency": {
             "title": "Classifica costanza",
@@ -71,9 +71,7 @@
             "hoursAgo": "{{count}} ore fa",
             "hoursAgo_one": "1 ora fa",
             "daysAgo": "{{count}} giorni fa",
-            "daysAgo_one": "ieri",
-            "today": "Oggi",
-            "yesterday": "Ieri"
+            "daysAgo_one": "ieri"
         }
     },
     "exercises": {
