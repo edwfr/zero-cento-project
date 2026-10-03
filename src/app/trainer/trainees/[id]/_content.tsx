@@ -24,10 +24,15 @@ import SubscriptionAlertBanner from './_subscription-alert'
 import SubscriptionStatusIcon from './_subscription-status-icon'
 import { useTraineeSubscription } from './_use-trainee-subscription'
 import {
+    BarChart3,
     ChevronDown,
     ChevronUp,
+    ClipboardList,
+    CreditCard,
     Plus,
+    Ruler,
     Save,
+    StickyNote,
     Trophy,
 } from 'lucide-react'
 import {
@@ -1124,6 +1129,7 @@ export default function TraineeDetailContent() {
                                 type="button"
                                 variant="secondary"
                                 size="sm"
+                                icon={<StickyNote size={16} />}
                                 onClick={() => setActiveTab('notes')}
                                 aria-pressed={activeTab === 'notes'}
                                 className={`rounded-none border-b-2 bg-transparent px-1 pb-4 font-semibold shadow-none hover:bg-transparent ${activeTab === 'notes'
@@ -1137,6 +1143,7 @@ export default function TraineeDetailContent() {
                                 type="button"
                                 variant="secondary"
                                 size="sm"
+                                icon={<ClipboardList size={16} />}
                                 onClick={() => setActiveTab('programs')}
                                 aria-pressed={activeTab === 'programs'}
                                 className={`rounded-none border-b-2 bg-transparent px-1 pb-4 font-semibold shadow-none hover:bg-transparent ${activeTab === 'programs'
@@ -1150,6 +1157,7 @@ export default function TraineeDetailContent() {
                                 type="button"
                                 variant="secondary"
                                 size="sm"
+                                icon={<Trophy size={16} />}
                                 onClick={() => setActiveTab('records')}
                                 aria-pressed={activeTab === 'records'}
                                 className={`rounded-none border-b-2 bg-transparent px-1 pb-4 font-semibold shadow-none hover:bg-transparent ${activeTab === 'records'
@@ -1163,6 +1171,7 @@ export default function TraineeDetailContent() {
                                 type="button"
                                 variant="secondary"
                                 size="sm"
+                                icon={<BarChart3 size={16} />}
                                 onClick={() => setActiveTab('reports')}
                                 aria-pressed={activeTab === 'reports'}
                                 className={`rounded-none border-b-2 bg-transparent px-1 pb-4 font-semibold shadow-none hover:bg-transparent ${activeTab === 'reports'
@@ -1176,6 +1185,7 @@ export default function TraineeDetailContent() {
                                 type="button"
                                 variant="secondary"
                                 size="sm"
+                                icon={<Ruler size={16} />}
                                 onClick={() => setActiveTab('measurements')}
                                 aria-pressed={activeTab === 'measurements'}
                                 className={`rounded-none border-b-2 bg-transparent px-1 pb-4 font-semibold shadow-none hover:bg-transparent ${activeTab === 'measurements'
@@ -1189,6 +1199,7 @@ export default function TraineeDetailContent() {
                                 type="button"
                                 variant="secondary"
                                 size="sm"
+                                icon={<CreditCard size={16} />}
                                 onClick={() => setActiveTab('subscription')}
                                 aria-pressed={activeTab === 'subscription'}
                                 className={`rounded-none border-b-2 bg-transparent px-1 pb-4 font-semibold shadow-none hover:bg-transparent ${activeTab === 'subscription'

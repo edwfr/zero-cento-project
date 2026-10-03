@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [3 Ottobre 2026] — Icone nelle tab del dettaglio atleta
+
+**File modificati:** `src/app/trainer/trainees/[id]/_content.tsx`, `implementation-docs/CHANGELOG.md`
+**Note:** Ogni tab (Note, Programmi, Massimali, Reportistica, Misurazioni, Abbonamento) mostra un'icona lucide a sinistra dell'etichetta tramite la prop `icon` di `Button`, per riconoscerle a colpo d'occhio. Massimali riusa `Trophy`, coerente con il pulsante "Gestisci Massimali".
 ### [3 Ottobre 2026] — Icona stato abbonamento nell'intestazione atleta
 
 **File modificati:** `src/app/trainer/trainees/[id]/_subscription-status-icon.tsx` (nuovo), `src/app/trainer/trainees/[id]/_content.tsx`, `src/app/trainer/trainees/[id]/_subscription-tab.tsx`, `public/locales/{en,it}/trainer.json`, `tests/unit/trainer-subscription-status-icon.test.tsx` (nuovo), `tests/unit/trainer-subscription-tab.test.tsx`, `tests/unit/trainer-trainee-programs-tab.test.tsx`, `implementation-docs/CHANGELOG.md`
