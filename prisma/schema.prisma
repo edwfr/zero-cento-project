@@ -103,6 +103,8 @@ model User {
   personalRecords           PersonalRecord[]            @relation("TraineeRecords")
   measurements              TraineeMeasurement[]         @relation("TraineeMeasurements")
   createdMeasurements       TraineeMeasurement[]         @relation("CreatedMeasurements")
+  subscriptionRenewals      SubscriptionRenewal[]        @relation("TraineeRenewals")
+  createdRenewals           SubscriptionRenewal[]        @relation("CreatedRenewals")
 
   @@index([email])
   @@index([role, isActive])
@@ -411,4 +413,22 @@ model TraineeMeasurement {
   @@unique([traineeId, metric, measuredAt])
   @@index([traineeId, measuredAt])
   @@map("trainee_measurements")
+}
+
+model SubscriptionRenewal {
+  id             String   @id @default(uuid())
+  traineeId      String
+  startDate      DateTime @db.Date
+  durationMonths Int
+  endDate        DateTime @db.Date  // computed server-side: startDate + durationMonths (clamped to month end)
+  createdBy      String             // trainer who entered the renewal (audit)
+  createdAt      DateTime @default(now())
+
+  // Relations
+  trainee User @relation("TraineeRenewals", fields: [traineeId], references: [id], onDelete: Cascade)
+  creator User @relation("CreatedRenewals", fields: [createdBy], references: [id])
+
+  // No uniqueness: overlapping renewals are allowed, the current expiry is MAX(endDate)
+  @@index([traineeId, endDate])
+  @@map("subscription_renewals")
 }
