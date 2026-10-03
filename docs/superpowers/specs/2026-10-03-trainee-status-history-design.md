@@ -132,11 +132,12 @@ badge on first open only.
 
 ### `GET /api/users` (list) and `GET /api/users/[id]`
 
-Both add `pendingActivation: boolean` = `!isActive && no activated event`,
-computed with a filtered relation count in the same query
-(`_count: { select: { statusEvents: { where: { type: 'activated' } } } }`), no
-extra round-trip. The detail keeps `invitationPending` (Supabase) for the
-re-send button; the badge label uses `pendingActivation` in both places.
+Both add `pendingActivation: boolean` = `!isActive && no activated event`.
+`findPendingActivationIds()` (`src/lib/user-status-events.ts`) runs one
+`findMany` on the `activated` events of the inactive users only (no query
+when every user is active), so active rows cost nothing extra. The detail
+keeps `invitationPending` (Supabase) for the re-send button; the badge label
+uses `pendingActivation` in both places.
 
 ## Timeline logic
 

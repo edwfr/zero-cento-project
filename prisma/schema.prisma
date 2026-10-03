@@ -105,6 +105,8 @@ model User {
   createdMeasurements       TraineeMeasurement[]         @relation("CreatedMeasurements")
   subscriptionRenewals      SubscriptionRenewal[]        @relation("TraineeRenewals")
   createdRenewals           SubscriptionRenewal[]        @relation("CreatedRenewals")
+  statusEvents              UserStatusEvent[]            @relation("UserStatusEvents")
+  performedStatusEvents     UserStatusEvent[]            @relation("PerformedStatusEvents")
 
   @@index([email])
   @@index([role, isActive])
@@ -431,4 +433,26 @@ model SubscriptionRenewal {
   // No uniqueness: overlapping renewals are allowed, the current expiry is MAX(endDate)
   @@index([traineeId, endDate])
   @@map("subscription_renewals")
+}
+
+enum UserStatusEventType {
+  created
+  activated
+  deactivated
+  reactivated
+  invitation_resent
+}
+
+model UserStatusEvent {
+  id        String              @id @default(uuid())
+  userId    String
+  type      UserStatusEventType
+  actorId   String?
+  createdAt DateTime            @default(now())
+
+  user  User  @relation("UserStatusEvents", fields: [userId], references: [id], onDelete: Cascade)
+  actor User? @relation("PerformedStatusEvents", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@map("user_status_events")
 }
