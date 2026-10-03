@@ -17,6 +17,8 @@
             "kpiActivePrograms": "Programmi attivi",
             "kpiSessionsWeek": "Sessioni questa settimana",
             "kpiSessionsDelta": "{{delta}} rispetto alla settimana scorsa",
+            "kpiConfirmedSetsWeek": "Serie confermate questa settimana",
+            "kpiLibraryExercises": "Esercizi in libreria",
             "kpiUnavailable": "Indicatori non disponibili al momento."
         },
         "widget": {

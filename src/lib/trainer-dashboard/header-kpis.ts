@@ -9,25 +9,50 @@ export interface HeaderKpis {
     activePrograms: number
     sessionsThisWeek: number
     sessionsLastWeek: number
+    /** The exercise library is shared by every trainer */
+    libraryExercises: number
+    confirmedSetsThisWeek: number
+    confirmedSetsLastWeek: number
 }
 
 export async function getHeaderKpis(trainerId: string, trainees: DashboardTrainee[], now: Date): Promise<HeaderKpis> {
     const traineeIds = activeTraineeIds(trainees)
     if (traineeIds.length === 0) {
-        return { activeTrainees: 0, totalTrainees: 0, activePrograms: 0, sessionsThisWeek: 0, sessionsLastWeek: 0 }
+        return {
+            activeTrainees: 0,
+            totalTrainees: 0,
+            activePrograms: 0,
+            sessionsThisWeek: 0,
+            sessionsLastWeek: 0,
+            libraryExercises: await prisma.exercise.count(),
+            confirmedSetsThisWeek: 0,
+            confirmedSetsLastWeek: 0,
+        }
     }
 
     const weekStart = startOfUtcWeek(now)
     const lastWeekStart = addDays(weekStart, -7)
+    const nextWeekStart = addDays(weekStart, 7)
     const activeSince = recentWindowStart(now)
 
+    const confirmedSetsBetween = (from: Date, to: Date) =>
+        prisma.setPerformed.count({
+            where: {
+                completed: true,
+                feedback: { traineeId: { in: traineeIds }, date: { gte: from, lt: to }, ...feedbackOfTrainerPrograms(trainerId) },
+            },
+        })
+
     // lastWeekStart is always on or before activeSince, so one feedback query covers both KPIs
-    const [activePrograms, rows] = await Promise.all([
+    const [activePrograms, rows, libraryExercises, confirmedSetsThisWeek, confirmedSetsLastWeek] = await Promise.all([
         prisma.trainingProgram.count({ where: { trainerId, status: 'active', traineeId: { in: traineeIds } } }),
         prisma.exerciseFeedback.findMany({
             where: { traineeId: { in: traineeIds }, date: { gte: lastWeekStart }, ...feedbackOfTrainerPrograms(trainerId) },
             select: SESSION_FEEDBACK_SELECT,
         }),
+        prisma.exercise.count(),
+        confirmedSetsBetween(weekStart, nextWeekStart),
+        confirmedSetsBetween(lastWeekStart, weekStart),
     ])
 
     const sessions = groupSessions(rows)
@@ -37,7 +62,10 @@ export async function getHeaderKpis(trainerId: string, trainees: DashboardTraine
         activeTrainees,
         totalTrainees: traineeIds.length,
         activePrograms,
-        sessionsThisWeek: countSessionsBetween(sessions, weekStart, addDays(weekStart, 7)),
+        sessionsThisWeek: countSessionsBetween(sessions, weekStart, nextWeekStart),
         sessionsLastWeek: countSessionsBetween(sessions, lastWeekStart, weekStart),
+        libraryExercises,
+        confirmedSetsThisWeek,
+        confirmedSetsLastWeek,
     }
 }

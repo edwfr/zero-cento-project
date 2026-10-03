@@ -88,6 +88,8 @@
             "kpiActivePrograms": "Active programs",
             "kpiSessionsWeek": "Sessions this week",
             "kpiSessionsDelta": "{{delta}} vs last week",
+            "kpiConfirmedSetsWeek": "Confirmed sets this week",
+            "kpiLibraryExercises": "Exercises in library",
             "kpiUnavailable": "Indicators are not available right now."
         },
         "widget": {

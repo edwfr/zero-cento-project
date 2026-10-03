@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [3 Ottobre 2026] — Home trainer: KPI "Serie confermate" ed "Esercizi in libreria"
+
+**File modificati:** `src/lib/trainer-dashboard/header-kpis.ts`, `src/app/trainer/dashboard/_widgets/HeaderKpis.tsx`, `public/locales/{it,en}/trainer.json`, `tests/unit/trainer-dashboard/header-kpis.test.ts`, `tests/unit/trainer-dashboard/widgets-phase1.test.tsx`
+**Note:** Due nuovi blocchi nell'header. "Serie confermate questa settimana": `SetPerformed` con `completed = true` degli atleti attivi sui programmi del trainer, settimana ISO corrente, con differenza rispetto alla settimana scorsa (come le sessioni). "Esercizi in libreria": totale della tabella `Exercise`, che è condivisa tra i trainer. Griglia KPI: 5 colonne da desktop, 2 su schermi piccoli (prima 3 fisse). Il footer con la differenza settimanale è ora un componente comune (`WeekDelta`).
 ### [3 Ottobre 2026] — Home trainer: "Attività recente" solo ieri e oggi, una colonna, 6 righe per pagina
 
 **File modificati:** `src/lib/trainer-dashboard/activity-feed.ts`, `src/lib/trainer-dashboard/constants.ts`, `src/lib/trainer-dashboard/i18n.ts`, `src/app/trainer/dashboard/_widgets/ActivityFeedWidget.tsx`, `src/app/trainer/dashboard/page.tsx`, `public/locales/{it,en}/trainer.json`, `tests/unit/trainer-dashboard/{activity-feed,i18n}.test.ts`, `tests/unit/trainer-dashboard/widgets-phase2.test.tsx`

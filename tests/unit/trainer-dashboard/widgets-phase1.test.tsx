@@ -57,6 +57,9 @@ describe('HeaderKpis', () => {
             activePrograms: 5,
             sessionsThisWeek: 9,
             sessionsLastWeek: 7,
+            libraryExercises: 120,
+            confirmedSetsThisWeek: 40,
+            confirmedSetsLastWeek: 40,
         })
 
         await renderAsync(HeaderKpis({ ctx: makeCtx() }))
@@ -65,11 +68,15 @@ describe('HeaderKpis', () => {
         expect(screen.getByText('Atleti attivi (7 gg)').closest('div')).toHaveTextContent('4 / 6')
         expect(screen.getByText('Programmi attivi').closest('div')).toHaveTextContent('5')
         expect(screen.getByText('+2 rispetto alla settimana scorsa')).toBeInTheDocument()
+        expect(screen.getByText('Serie confermate questa settimana').closest('div')).toHaveTextContent('40')
+        expect(screen.getByText('0 rispetto alla settimana scorsa')).toBeInTheDocument()
+        expect(screen.getByText('Esercizi in libreria').closest('div')).toHaveTextContent('120')
     })
 
     it('shows a negative delta without a plus sign', async () => {
         vi.mocked(getHeaderKpis).mockResolvedValue({
             activeTrainees: 1, totalTrainees: 1, activePrograms: 1, sessionsThisWeek: 1, sessionsLastWeek: 4,
+            libraryExercises: 0, confirmedSetsThisWeek: 0, confirmedSetsLastWeek: 0,
         })
 
         await renderAsync(HeaderKpis({ ctx: makeCtx() }))

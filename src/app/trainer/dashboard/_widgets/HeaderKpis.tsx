@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
-import { Activity, ClipboardList, Minus, TrendingDown, TrendingUp, Users } from 'lucide-react'
+import { Activity, ClipboardList, Dumbbell, ListChecks, Minus, TrendingDown, TrendingUp, Users } from 'lucide-react'
+import type { Translate } from '@/lib/trainer-dashboard/i18n'
 import { getHeaderKpis } from '@/lib/trainer-dashboard/header-kpis'
 import { loadWidget } from '@/lib/trainer-dashboard/load-widget'
 import type { WidgetContext } from './types'
@@ -17,6 +18,19 @@ function Kpi({ icon, label, value, footer }: { icon: ReactNode; label: string; v
     )
 }
 
+function WeekDelta({ current, previous, t }: { current: number; previous: number; t: Translate }) {
+    const delta = current - previous
+    const DeltaIcon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus
+    const deltaColor = delta > 0 ? 'text-green-400' : delta < 0 ? 'text-red-400' : 'text-gray-400'
+
+    return (
+        <p className={`mt-1 flex items-center gap-1 text-sm ${deltaColor}`}>
+            <DeltaIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {t('trainerDashboard.header.kpiSessionsDelta', { delta: delta > 0 ? `+${delta}` : String(delta) })}
+        </p>
+    )
+}
+
 export default async function HeaderKpis({ ctx }: { ctx: WidgetContext }) {
     const { t } = ctx
     const result = await loadWidget('header-kpis', () => getHeaderKpis(ctx.trainerId, ctx.trainees, ctx.now))
@@ -30,12 +44,9 @@ export default async function HeaderKpis({ ctx }: { ctx: WidgetContext }) {
     }
 
     const kpis = result.data
-    const delta = kpis.sessionsThisWeek - kpis.sessionsLastWeek
-    const DeltaIcon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus
-    const deltaColor = delta > 0 ? 'text-green-400' : delta < 0 ? 'text-red-400' : 'text-gray-400'
 
     return (
-        <div className="mt-6 grid grid-cols-3 gap-4">
+        <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-5">
             <Kpi
                 icon={<Users className="h-4 w-4" />}
                 label={t('trainerDashboard.header.kpiActiveTrainees')}
@@ -50,12 +61,18 @@ export default async function HeaderKpis({ ctx }: { ctx: WidgetContext }) {
                 icon={<Activity className="h-4 w-4" />}
                 label={t('trainerDashboard.header.kpiSessionsWeek')}
                 value={kpis.sessionsThisWeek}
-                footer={
-                    <p className={`mt-1 flex items-center gap-1 text-sm ${deltaColor}`}>
-                        <DeltaIcon className="h-4 w-4" aria-hidden="true" />
-                        {t('trainerDashboard.header.kpiSessionsDelta', { delta: delta > 0 ? `+${delta}` : String(delta) })}
-                    </p>
-                }
+                footer={<WeekDelta current={kpis.sessionsThisWeek} previous={kpis.sessionsLastWeek} t={t} />}
+            />
+            <Kpi
+                icon={<ListChecks className="h-4 w-4" />}
+                label={t('trainerDashboard.header.kpiConfirmedSetsWeek')}
+                value={kpis.confirmedSetsThisWeek}
+                footer={<WeekDelta current={kpis.confirmedSetsThisWeek} previous={kpis.confirmedSetsLastWeek} t={t} />}
+            />
+            <Kpi
+                icon={<Dumbbell className="h-4 w-4" />}
+                label={t('trainerDashboard.header.kpiLibraryExercises')}
+                value={kpis.libraryExercises}
             />
         </div>
     )
