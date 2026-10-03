@@ -6,6 +6,9 @@ import { requireAuth } from '@/lib/auth'
 import { createUserSchema, userListFilterSchema } from '@/schemas/user'
 import { logger } from '@/lib/logger'
 import { syncUserMetadata } from '@/lib/sync-user-metadata'
+import { getCurrentEndDates } from '@/lib/subscription-queries'
+import { toSubscriptionSummary, type SubscriptionSummary } from '@/lib/subscriptions'
+import { getTodayDateKey } from '@/lib/date-format'
 
 interface ListedUser {
     id: string
@@ -15,6 +18,8 @@ interface ListedUser {
     role: 'admin' | 'trainer' | 'trainee'
     isActive: boolean
     createdAt: Date
+    /** Trainer listing only: current subscription, null when none recorded */
+    subscription?: SubscriptionSummary | null
 }
 
 /**
@@ -87,9 +92,17 @@ export async function GET(request: NextRequest) {
                     },
                 })
 
-                users = traineeAssociations
+                const trainees = traineeAssociations
                     .map((assoc) => assoc.trainee)
                     .sort((left, right) => right.createdAt.getTime() - left.createdAt.getTime())
+
+                // One aggregate query for every trainee (no N+1)
+                const endDates = await getCurrentEndDates(trainees.map((trainee) => trainee.id))
+                const today = getTodayDateKey()
+                users = trainees.map((trainee) => ({
+                    ...trainee,
+                    subscription: toSubscriptionSummary(endDates.get(trainee.id) ?? null, today),
+                }))
             }
         } else {
             return apiError('FORBIDDEN', 'Access denied', 403, undefined, 'auth.accessDenied')

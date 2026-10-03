@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import { NextRequest } from 'next/server'
 
 vi.mock('@/lib/auth', async () => (await import('../helpers/auth-module-mock')).authModuleMock())
@@ -75,6 +75,9 @@ const mockUsers = [
     },
 ]
 
+// Prisma's groupBy generics defeat the deep mock's typing: treat it as a plain mock
+const subscriptionGroupByMock = prismaMock.subscriptionRenewal.groupBy as unknown as Mock
+
 function makeRequest(url = 'http://localhost:3000/api/users', options?: RequestInit) {
     const { signal, ...safeOptions } = options || {}
     return new NextRequest(url, safeOptions as never)
@@ -83,6 +86,8 @@ function makeRequest(url = 'http://localhost:3000/api/users', options?: RequestI
 describe('GET /api/users', () => {
     beforeEach(() => {
         vi.clearAllMocks()
+        // Trainer listings aggregate subscription end dates: default to none recorded
+        subscriptionGroupByMock.mockResolvedValue([])
     })
 
     it('returns all users for admin', async () => {
@@ -96,6 +101,28 @@ describe('GET /api/users', () => {
         expect(res.status).toBe(200)
         expect(body.data.items).toHaveLength(2)
         expect(body.data.items[0].email).toBe('mario.rossi@example.com')
+    })
+
+    it('adds the current subscription to each trainee for a trainer', async () => {
+        vi.useFakeTimers({ toFake: ['Date'] })
+        vi.setSystemTime(new Date('2026-10-03T10:00:00.000Z'))
+        asTrainer()
+        prismaMock.trainerTrainee.findMany.mockResolvedValue([
+            { trainee: { id: 't1', email: 'a@x.it', firstName: 'Anna', lastName: 'Rossi', role: 'trainee', isActive: true, createdAt: new Date('2026-01-01') } },
+            { trainee: { id: 't2', email: 'b@x.it', firstName: 'Luca', lastName: 'Bianchi', role: 'trainee', isActive: true, createdAt: new Date('2026-01-02') } },
+        ] as never)
+        subscriptionGroupByMock.mockResolvedValue([
+            { traineeId: 't1', _max: { endDate: new Date('2026-10-10T00:00:00.000Z') } },
+        ])
+
+        const res = await GET(makeRequest())
+        const body = await res.json()
+        vi.useRealTimers()
+
+        const byId = Object.fromEntries(body.data.items.map((user: { id: string }) => [user.id, user]))
+        expect(byId.t1.subscription).toEqual({ status: 'expiring', endDate: '2026-10-10T00:00:00.000Z', daysLeft: 7 })
+        expect(byId.t2.subscription).toBeNull()
+        expect(subscriptionGroupByMock).toHaveBeenCalledTimes(1)
     })
 
     it('filters by role when query param provided', async () => {
