@@ -113,6 +113,41 @@ export function deltaFromPrevious(
     return Math.round((entries[0].value - entries[1].value) * 10) / 10
 }
 
+export interface MeasurementHistoryEntry {
+    point: MeasurementPoint
+    /** Change vs the previous (older) entry of the same metric; null for the first one. */
+    delta: number | null
+}
+
+export interface MeasurementMetricGroup {
+    metric: MeasurementMetric
+    /** Newest first. */
+    entries: MeasurementHistoryEntry[]
+}
+
+/** History grouped per metric (display order), skipping metrics never measured. */
+export function groupByMetric(rows: MeasurementPoint[]): MeasurementMetricGroup[] {
+    const groups: MeasurementMetricGroup[] = []
+
+    for (const metric of MEASUREMENT_METRICS) {
+        const points = entriesFor(rows, metric)
+        if (points.length === 0) continue
+
+        groups.push({
+            metric,
+            entries: points.map((point, index) => {
+                const previous = points[index + 1]
+                return {
+                    point,
+                    delta: previous ? Math.round((point.value - previous.value) * 10) / 10 : null,
+                }
+            }),
+        })
+    }
+
+    return groups
+}
+
 export function buildChartSeries(
     rows: MeasurementPoint[],
     metrics: MeasurementMetric[]

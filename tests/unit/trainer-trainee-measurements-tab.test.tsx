@@ -125,4 +125,19 @@ describe('MeasurementsTab', () => {
         fireEvent.click(waistToggle)
         expect(waistToggle).not.toBeChecked()
     })
+
+    it('groups the history per metric and expands older entries on demand', async () => {
+        mockFetchOnce(rows)
+
+        render(<MeasurementsTab traineeId="trainee-1" />)
+        const history = await screen.findByRole('table', { name: 'measurements.historyTitle' })
+
+        expect(within(history).getAllByText('measurements.entriesCount')).toHaveLength(2)
+        expect(within(history).queryByText('80 kg')).not.toBeInTheDocument()
+
+        fireEvent.click(within(history).getAllByRole('button', { name: 'measurements.expand' })[0])
+
+        expect(within(history).getByText('80 kg')).toBeInTheDocument()
+        expect(within(history).getByRole('button', { name: 'measurements.collapse' })).toBeInTheDocument()
+    })
 })

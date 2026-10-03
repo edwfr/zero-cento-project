@@ -4,6 +4,7 @@ import {
     MEASUREMENT_METRIC_META,
     buildChartSeries,
     deltaFromPrevious,
+    groupByMetric,
     isMeasurementMetric,
     isValueInRange,
     latestByMetric,
@@ -129,5 +130,24 @@ describe('buildChartSeries', () => {
 
     it('returns an empty array when no selected metric has data', () => {
         expect(buildChartSeries([point('a', 'weight', 80, '2026-09-01')], ['calf'])).toEqual([])
+    })
+})
+
+describe('groupByMetric', () => {
+    it('groups entries per metric in display order, newest first, with delta vs previous', () => {
+        const groups = groupByMetric([
+            point('w-old', 'weight', 80, '2026-09-01'),
+            point('c-1', 'waist', 84, '2026-09-20'),
+            point('w-new', 'weight', 78.5, '2026-09-20'),
+        ])
+
+        expect(groups.map((group) => group.metric)).toEqual(['weight', 'waist'])
+        expect(groups[0].entries.map((entry) => entry.point.id)).toEqual(['w-new', 'w-old'])
+        expect(groups[0].entries.map((entry) => entry.delta)).toEqual([-1.5, null])
+        expect(groups[1].entries).toEqual([{ point: expect.objectContaining({ id: 'c-1' }), delta: null }])
+    })
+
+    it('omits metrics without entries', () => {
+        expect(groupByMetric([])).toEqual([])
     })
 })

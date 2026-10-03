@@ -38,7 +38,13 @@ test.describe('Trainer: trainee measurements', () => {
         await expect(weightCard.getByText('78.5 kg')).toBeVisible()
         await expect(armCard.getByText('38.5 cm')).toBeVisible()
 
-        const historyRowsBefore = await page.locator('table tbody tr').count()
+        // History is grouped per metric: the weight group's entry count must not grow
+        const history = page.getByRole('table', { name: /storico misurazioni|measurement history/i })
+        const weightCount = history
+            .getByRole('row')
+            .filter({ has: page.getByText(/^(peso|weight)$/i) })
+            .getByText(/misurazion|measurement/i)
+        const weightCountBefore = await weightCount.textContent()
 
         // Same metric, same day: corrects instead of duplicating
         await addButton.click()
@@ -47,6 +53,6 @@ test.describe('Trainer: trainee measurements', () => {
         await expect(dialog).toBeHidden()
 
         await expect(weightCard.getByText('79 kg')).toBeVisible()
-        await expect(page.locator('table tbody tr')).toHaveCount(historyRowsBefore)
+        await expect(weightCount).toHaveText(weightCountBefore ?? '')
     })
 })

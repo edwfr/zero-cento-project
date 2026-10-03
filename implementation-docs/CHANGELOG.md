@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [3 Ottobre 2026] — Storico misurazioni raggruppato per metrica
+
+**File modificati:** `src/lib/measurements.ts`, `src/app/trainer/trainees/[id]/_measurements-tab.tsx`, `public/locales/{en,it}/trainer.json`, `tests/unit/lib/measurements.test.ts`, `tests/unit/trainer-trainee-measurements-tab.test.tsx`, `tests/e2e/trainer-trainee-measurements.spec.ts`, `implementation-docs/CHANGELOG.md`
+**Note:** Lo storico misurazioni era una lista piatta mista di tutte le metriche, difficile da leggere con molte rilevazioni. Ora segue lo stesso schema del "Recap massimali": una riga per metrica con ultimo valore, variazione sulla misura precedente, data, note e azioni, più il numero di rilevazioni; la riga si espande (solo se ci sono misure precedenti) per mostrare lo storico, ognuna con la propria variazione e con modifica/eliminazione. Nuovo helper puro `groupByMetric()` in `src/lib/measurements.ts` (ordine metriche di visualizzazione, più recente prima, delta calcolato sulla misura precedente). L'e2e sulla correzione nello stesso giorno ora verifica che il conteggio rilevazioni del peso non cresca, dato che il numero di righe della tabella non cambia più con i duplicati.
 ### [3 Ottobre 2026] — Link di invito non più consumati da scanner e anteprime
 
 **File modificati:** `src/app/onboarding/set-password/page.tsx`, `public/locales/{en,it}/auth.json`, `tests/unit/onboarding-set-password.test.tsx` (nuovo), `implementation-docs/CHANGELOG.md`

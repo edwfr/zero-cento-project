@@ -1,9 +1,9 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus } from 'lucide-react'
-import { ActionIconButton } from '@/components/ActionIconButton'
+import { ChevronDown, ChevronRight, Plus } from 'lucide-react'
+import { ActionIconButton, InlineActions } from '@/components/ActionIconButton'
 import { Button } from '@/components/Button'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import MeasurementFormModal, {
@@ -19,7 +19,9 @@ import {
     MEASUREMENT_METRICS,
     MEASUREMENT_METRIC_META,
     deltaFromPrevious,
+    groupByMetric,
     latestByMetric,
+    type MeasurementHistoryEntry,
     type MeasurementMetric,
     type MeasurementPoint,
 } from '@/lib/measurements'
@@ -31,6 +33,11 @@ const TIME_WINDOWS: TimeWindow[] = ['3m', '6m', '1y', 'all']
 const WINDOW_MONTHS: Record<Exclude<TimeWindow, 'all'>, number> = { '3m': 3, '6m': 6, '1y': 12 }
 
 const CHART_METRICS = MEASUREMENT_METRICS.filter((metric) => MEASUREMENT_METRIC_META[metric].inChart)
+
+function formatDelta(delta: number | null): string {
+    if (delta === null) return '—'
+    return delta > 0 ? `+${delta}` : `${delta}`
+}
 
 export interface MeasurementsTabProps {
     traineeId: string
@@ -53,6 +60,7 @@ export default function MeasurementsTab({ traineeId }: MeasurementsTabProps) {
     const [deleting, setDeleting] = useState(false)
     const [timeWindow, setTimeWindow] = useState<TimeWindow>('6m')
     const [selectedMetrics, setSelectedMetrics] = useState<MeasurementMetric[]>(['weight', 'waist'])
+    const [expandedMetrics, setExpandedMetrics] = useState<MeasurementMetric[]>([])
 
     const fetchRows = useCallback(async () => {
         try {
@@ -89,9 +97,16 @@ export default function MeasurementsTab({ traineeId }: MeasurementsTabProps) {
     }, [rows, timeWindow])
 
     const latest = useMemo(() => latestByMetric(rows), [rows])
+    const historyGroups = useMemo(() => groupByMetric(rows), [rows])
 
     const toggleMetric = (metric: MeasurementMetric) => {
         setSelectedMetrics((current) =>
+            current.includes(metric) ? current.filter((item) => item !== metric) : [...current, metric]
+        )
+    }
+
+    const toggleExpanded = (metric: MeasurementMetric) => {
+        setExpandedMetrics((current) =>
             current.includes(metric) ? current.filter((item) => item !== metric) : [...current, metric]
         )
     }
@@ -271,62 +286,133 @@ export default function MeasurementsTab({ traineeId }: MeasurementsTabProps) {
                 />
             </div>
 
-            {/* History */}
-            <div className="rounded-xl border border-gray-100 bg-white shadow-md">
-                <h3 className="px-5 py-4 text-lg font-bold text-gray-900">{t('measurements.historyTitle')}</h3>
+            {/* History grouped per metric */}
+            <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-md">
+                <div className="border-b border-gray-100 bg-gradient-to-r from-[#FFF7E5] to-[#F5F3FF] px-5 py-4">
+                    <h3 id="measurements-history-title" className="text-lg font-bold text-gray-900">
+                        {t('measurements.historyTitle')}
+                    </h3>
+                    <p className="mt-1 text-sm text-gray-600">{t('measurements.historyDescription')}</p>
+                </div>
 
-                {rows.length === 0 ? (
-                    <p className="px-5 pb-5 text-sm text-gray-500">{t('measurements.empty')}</p>
+                {historyGroups.length === 0 ? (
+                    <p className="px-5 py-8 text-center text-sm text-gray-500">{t('measurements.empty')}</p>
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
+                        <table
+                            aria-labelledby="measurements-history-title"
+                            className="min-w-full divide-y divide-gray-200"
+                        >
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-gray-500">
-                                        {t('measurements.date')}
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-gray-500">
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">
                                         {t('measurements.metricColumn')}
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-gray-500">
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">
                                         {t('measurements.value')}
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-gray-500">
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">
+                                        {t('measurements.deltaColumn')}
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">
+                                        {t('measurements.date')}
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">
                                         {t('measurements.notes')}
                                     </th>
-                                    <th className="px-6 py-3" />
+                                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500">
+                                        {t('measurements.actionsColumn')}
+                                    </th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-200 bg-white">
-                                {rows.map((row) => {
-                                    const meta = MEASUREMENT_METRIC_META[row.metric]
-                                    return (
-                                        <tr key={row.id} className="hover:bg-gray-50">
-                                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700">
-                                                {formatDate(row.measuredAt)}
+                            <tbody className="divide-y divide-gray-100 bg-white">
+                                {historyGroups.map(({ metric, entries }) => {
+                                    const meta = MEASUREMENT_METRIC_META[metric]
+                                    const [latestEntry, ...olderEntries] = entries
+                                    const isExpanded = expandedMetrics.includes(metric)
+
+                                    const renderCells = ({ point, delta }: MeasurementHistoryEntry, isLatest: boolean) => (
+                                        <>
+                                            <td
+                                                className={`whitespace-nowrap px-4 py-3 text-sm ${isLatest ? 'font-semibold text-gray-900' : 'text-gray-700'}`}
+                                            >
+                                                {`${point.value} ${meta.unit}`}
                                             </td>
-                                            <td className="px-6 py-4 text-sm font-semibold text-gray-900">
-                                                {t(meta.labelKey)}
+                                            <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">
+                                                {formatDelta(delta)}
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
-                                                {`${row.value} ${meta.unit}`}
+                                            <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">
+                                                {formatDate(point.measuredAt)}
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-gray-600">{row.notes ?? '—'}</td>
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex justify-end gap-2">
+                                            <td className="max-w-xs truncate px-4 py-3 text-sm text-gray-600">
+                                                {point.notes ?? '—'}
+                                            </td>
+                                            <td className="px-4 py-3 text-right">
+                                                <InlineActions>
                                                     <ActionIconButton
                                                         variant="edit"
                                                         label={t('common:common.edit')}
-                                                        onClick={() => setModal({ mode: 'edit', initial: row })}
+                                                        onClick={() => setModal({ mode: 'edit', initial: point })}
                                                     />
                                                     <ActionIconButton
                                                         variant="delete"
                                                         label={t('common:common.delete')}
-                                                        onClick={() => setPendingDelete(row)}
+                                                        onClick={() => setPendingDelete(point)}
                                                     />
-                                                </div>
+                                                </InlineActions>
                                             </td>
-                                        </tr>
+                                        </>
+                                    )
+
+                                    return (
+                                        <Fragment key={metric}>
+                                            <tr className="hover:bg-gray-50">
+                                                <td className="px-4 py-3">
+                                                    <div className="flex items-center gap-2">
+                                                        {olderEntries.length > 0 ? (
+                                                            <button
+                                                                type="button"
+                                                                className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                                                                onClick={() => toggleExpanded(metric)}
+                                                                aria-expanded={isExpanded}
+                                                                aria-label={
+                                                                    isExpanded
+                                                                        ? t('measurements.collapse')
+                                                                        : t('measurements.expand')
+                                                                }
+                                                            >
+                                                                {isExpanded ? (
+                                                                    <ChevronDown className="h-4 w-4" />
+                                                                ) : (
+                                                                    <ChevronRight className="h-4 w-4" />
+                                                                )}
+                                                            </button>
+                                                        ) : (
+                                                            <span className="w-6" aria-hidden="true" />
+                                                        )}
+                                                        <div>
+                                                            <p className="text-sm font-semibold text-gray-900">
+                                                                {t(meta.labelKey)}
+                                                            </p>
+                                                            <p className="text-xs text-gray-500">
+                                                                {t('measurements.entriesCount', { count: entries.length })}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                {renderCells(latestEntry, true)}
+                                            </tr>
+
+                                            {isExpanded &&
+                                                olderEntries.map((entry) => (
+                                                    <tr key={entry.point.id} className="bg-gray-50/80 hover:bg-gray-100/80">
+                                                        <td className="px-4 py-3 pl-12 text-sm text-gray-700">
+                                                            {t('measurements.historyPrefix')}
+                                                        </td>
+                                                        {renderCells(entry, false)}
+                                                    </tr>
+                                                ))}
+                                        </Fragment>
                                     )
                                 })}
                             </tbody>
