@@ -20,12 +20,13 @@ describe('getRecentFeedback', () => {
     it('loads recent feedback with a note or high RPE, newest first', async () => {
         prismaMock.exerciseFeedback.findMany.mockResolvedValue([] as never)
 
-        await getRecentFeedback(TRAINEES, NOW)
+        await getRecentFeedback('trainer-1', TRAINEES, NOW)
 
         expect(prismaMock.exerciseFeedback.findMany).toHaveBeenCalledWith({
             where: {
                 traineeId: { in: ['t1', 't2'] },
                 date: { gte: day('2026-09-26') },
+                workoutExercise: { workout: { week: { program: { trainerId: 'trainer-1' } } } },
                 OR: [
                     { notes: { not: null } },
                     { actualRpe: { gte: 9 } },
@@ -57,7 +58,7 @@ describe('getRecentFeedback', () => {
             row('f2', { actualRpe: 8, setRpes: [8, 9.5, null] }),
         ] as never)
 
-        await expect(getRecentFeedback(TRAINEES, NOW)).resolves.toEqual([
+        await expect(getRecentFeedback('trainer-1', TRAINEES, NOW)).resolves.toEqual([
             {
                 id: 'f1', traineeName: 'Anna Rossi', exerciseName: 'Squat', programId: 'p1',
                 rpe: 7, isHighRpe: false, note: 'Dolore al ginocchio', loggedAt: at('2026-10-02T18:00:00'),
@@ -75,14 +76,14 @@ describe('getRecentFeedback', () => {
             ...Array.from({ length: 12 }, (_, index) => row(`n${index}`, { notes: 'ok' })),
         ] as never)
 
-        const items = await getRecentFeedback(TRAINEES, NOW)
+        const items = await getRecentFeedback('trainer-1', TRAINEES, NOW)
 
         expect(items).toHaveLength(10)
         expect(items.map((item) => item.id)).not.toContain('blank')
     })
 
     it('does not query without active trainees', async () => {
-        await expect(getRecentFeedback([makeTrainee('t9', 'Off', 'Line', false)], NOW)).resolves.toEqual([])
+        await expect(getRecentFeedback('trainer-1', [makeTrainee('t9', 'Off', 'Line', false)], NOW)).resolves.toEqual([])
         expect(prismaMock.exerciseFeedback.findMany).not.toHaveBeenCalled()
     })
 })

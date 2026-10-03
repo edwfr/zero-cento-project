@@ -25,9 +25,11 @@ describe('getHeaderKpis', () => {
 
         const kpis = await getHeaderKpis('trainer-1', TRAINEES, NOW)
 
-        expect(prismaMock.trainingProgram.count).toHaveBeenCalledWith({ where: { trainerId: 'trainer-1', status: 'active' } })
+        expect(prismaMock.trainingProgram.count).toHaveBeenCalledWith({
+            where: { trainerId: 'trainer-1', status: 'active', traineeId: { in: ['t1', 't2'] } },
+        })
         expect(prismaMock.exerciseFeedback.findMany).toHaveBeenCalledWith({
-            where: { traineeId: { in: ['t1', 't2'] }, date: { gte: day('2026-09-21') } },
+            where: { traineeId: { in: ['t1', 't2'] }, date: { gte: day('2026-09-21') }, workoutExercise: { workout: { week: { program: { trainerId: 'trainer-1' } } } } },
             select: {
                 traineeId: true,
                 date: true,
@@ -54,11 +56,10 @@ describe('getHeaderKpis', () => {
         expect(kpis.sessionsLastWeek).toBe(1)
     })
 
-    it('skips the feedback query when the trainer has no active trainees', async () => {
-        prismaMock.trainingProgram.count.mockResolvedValue(0)
-
+    it('does not query at all when the trainer has no active trainees', async () => {
         const kpis = await getHeaderKpis('trainer-1', [makeTrainee('t9', 'Off', 'Line', false)], NOW)
 
+        expect(prismaMock.trainingProgram.count).not.toHaveBeenCalled()
         expect(prismaMock.exerciseFeedback.findMany).not.toHaveBeenCalled()
         expect(kpis).toEqual({ activeTrainees: 0, totalTrainees: 0, activePrograms: 0, sessionsThisWeek: 0, sessionsLastWeek: 0 })
     })

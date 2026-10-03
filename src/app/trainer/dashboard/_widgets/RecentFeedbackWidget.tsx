@@ -10,7 +10,7 @@ export default async function RecentFeedbackWidget({ ctx }: { ctx: WidgetContext
     const { t } = ctx
     const title = t('trainerDashboard.feedback.title')
     const icon = <MessageSquareText className="h-5 w-5" />
-    const result = await loadWidget('recent-feedback', () => getRecentFeedback(ctx.trainees, ctx.now))
+    const result = await loadWidget('recent-feedback', () => getRecentFeedback(ctx.trainerId, ctx.trainees, ctx.now))
 
     if (!result.ok) return <WidgetError title={title} icon={icon} t={t} />
 

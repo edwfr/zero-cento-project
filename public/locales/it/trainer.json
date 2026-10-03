@@ -34,7 +34,7 @@
             "testsToReview": "Test completati da revisionare · Settimana {{week}}",
             "programEnding": "{{program}} termina tra {{count}} giorni, nessun programma successivo",
             "programEnding_one": "{{program}} termina domani, nessun programma successivo",
-            "programEnding_zero": "{{program}} è terminato, nessun programma successivo",
+            "programEnding_zero": "{{program}} termina oggi, nessun programma successivo",
             "testWeekInProgress": "Settimana di test in corso · Settimana {{week}}",
             "testsProgress": "Test completati"
         },

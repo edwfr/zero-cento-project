@@ -18,7 +18,7 @@ export default async function ActivityFeedWidget({ ctx }: { ctx: WidgetContext }
     const { t } = ctx
     const title = t('trainerDashboard.feed.title')
     const icon = <Activity className="h-5 w-5" />
-    const result = await loadWidget('activity-feed', () => getActivityFeed(ctx.trainees, ctx.now))
+    const result = await loadWidget('activity-feed', () => getActivityFeed(ctx.trainerId, ctx.trainees, ctx.now))
 
     if (!result.ok) return <WidgetError title={title} icon={icon} t={t} />
 

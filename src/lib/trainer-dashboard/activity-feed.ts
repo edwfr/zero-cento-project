@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { LIST_LIMITS } from './constants'
 import { recentWindowStart, utcDayKey } from './dates'
-import { SESSION_FEEDBACK_SELECT, groupSessions } from './sessions'
+import { SESSION_FEEDBACK_SELECT, feedbackOfTrainerPrograms, groupSessions } from './sessions'
 import { activeTraineeIds, fullName, initials, type DashboardTrainee } from './trainees'
 
 export interface ActivityItem {
@@ -18,14 +18,18 @@ export interface ActivityItem {
     hasRecord: boolean
 }
 
-export async function getActivityFeed(trainees: DashboardTrainee[], now: Date): Promise<ActivityItem[]> {
+export async function getActivityFeed(
+    trainerId: string,
+    trainees: DashboardTrainee[],
+    now: Date,
+): Promise<ActivityItem[]> {
     const traineeIds = activeTraineeIds(trainees)
     if (traineeIds.length === 0) return []
 
     const since = recentWindowStart(now)
     const [rows, records] = await Promise.all([
         prisma.exerciseFeedback.findMany({
-            where: { traineeId: { in: traineeIds }, date: { gte: since } },
+            where: { traineeId: { in: traineeIds }, date: { gte: since }, ...feedbackOfTrainerPrograms(trainerId) },
             select: {
                 ...SESSION_FEEDBACK_SELECT,
                 workoutExercise: {

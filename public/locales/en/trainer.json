@@ -105,7 +105,7 @@
             "testsToReview": "Tests completed, ready for review · Week {{week}}",
             "programEnding": "{{program}} ends in {{count}} days, no follow-up program",
             "programEnding_one": "{{program}} ends tomorrow, no follow-up program",
-            "programEnding_zero": "{{program}} has ended, no follow-up program",
+            "programEnding_zero": "{{program}} ends today, no follow-up program",
             "testWeekInProgress": "Test week in progress · Week {{week}}",
             "testsProgress": "Tests completed"
         },

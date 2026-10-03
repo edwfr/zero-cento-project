@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { CONSISTENCY_WEEKS, LIST_LIMITS } from './constants'
 import { addDays, startOfUtcDay, utcDayKey, wholeDaysBetween } from './dates'
-import { SESSION_FEEDBACK_SELECT, groupSessions } from './sessions'
+import { SESSION_FEEDBACK_SELECT, feedbackOfTrainerPrograms, groupSessions } from './sessions'
 import { activeTraineeIds, fullName, type DashboardTrainee } from './trainees'
 
 export interface ConsistencyItem {
@@ -37,7 +37,7 @@ export async function getConsistencyRanking(
     if (current.size === 0) return []
 
     const rows = await prisma.exerciseFeedback.findMany({
-        where: { traineeId: { in: [...current.keys()] }, date: { gte: windowStart } },
+        where: { traineeId: { in: [...current.keys()] }, date: { gte: windowStart }, ...feedbackOfTrainerPrograms(trainerId) },
         select: SESSION_FEEDBACK_SELECT,
     })
     const sessions = groupSessions(rows)

@@ -22,16 +22,16 @@ describe('getInactiveTrainees', () => {
             // t5 never trained
         ] as never)
 
-        const result = await getInactiveTrainees(trainees, NOW)
+        const result = await getInactiveTrainees('trainer-1', trainees, NOW)
 
         expect(prismaMock.trainingProgram.findMany).toHaveBeenCalledWith({
-            where: { traineeId: { in: ['t1', 't2', 't4', 't5'] }, status: 'active' },
+            where: { trainerId: 'trainer-1', traineeId: { in: ['t1', 't2', 't4', 't5'] }, status: 'active' },
             select: { traineeId: true },
             distinct: ['traineeId'],
         })
         expect(groupByMock).toHaveBeenCalledWith({
             by: ['traineeId'],
-            where: { traineeId: { in: ['t1', 't2', 't4', 't5'] } },
+            where: { traineeId: { in: ['t1', 't2', 't4', 't5'] }, workoutExercise: { workout: { week: { program: { trainerId: 'trainer-1' } } } } },
             _max: { date: true },
         })
         expect(result).toEqual({
@@ -48,7 +48,7 @@ describe('getInactiveTrainees', () => {
         prismaMock.trainingProgram.findMany.mockResolvedValue([{ traineeId: 't1' }] as never)
         groupByMock.mockResolvedValue([{ traineeId: 't1', _max: { date: day('2026-09-26') } }] as never)
 
-        await expect(getInactiveTrainees(TRAINEES, NOW)).resolves.toEqual({ items: [], total: 0 })
+        await expect(getInactiveTrainees('trainer-1', TRAINEES, NOW)).resolves.toEqual({ items: [], total: 0 })
     })
 
     it('caps the list at 6 but reports the full total', async () => {
@@ -56,7 +56,7 @@ describe('getInactiveTrainees', () => {
         prismaMock.trainingProgram.findMany.mockResolvedValue(many.map((trainee) => ({ traineeId: trainee.id })) as never)
         groupByMock.mockResolvedValue([] as never)
 
-        const result = await getInactiveTrainees(many, NOW)
+        const result = await getInactiveTrainees('trainer-1', many, NOW)
 
         expect(result.total).toBe(8)
         expect(result.items).toHaveLength(6)
@@ -67,12 +67,12 @@ describe('getInactiveTrainees', () => {
     it('does not query feedback when no trainee has an active program', async () => {
         prismaMock.trainingProgram.findMany.mockResolvedValue([] as never)
 
-        await expect(getInactiveTrainees(TRAINEES, NOW)).resolves.toEqual({ items: [], total: 0 })
+        await expect(getInactiveTrainees('trainer-1', TRAINEES, NOW)).resolves.toEqual({ items: [], total: 0 })
         expect(groupByMock).not.toHaveBeenCalled()
     })
 
     it('does not query at all without active trainees', async () => {
-        await expect(getInactiveTrainees([makeTrainee('t9', 'Off', 'Line', false)], NOW)).resolves.toEqual({ items: [], total: 0 })
+        await expect(getInactiveTrainees('trainer-1', [makeTrainee('t9', 'Off', 'Line', false)], NOW)).resolves.toEqual({ items: [], total: 0 })
         expect(prismaMock.trainingProgram.findMany).not.toHaveBeenCalled()
     })
 })

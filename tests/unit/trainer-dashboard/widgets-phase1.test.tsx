@@ -100,7 +100,7 @@ describe('TodoTodayWidget', () => {
 
         const region = screen.getByRole('region', { name: 'Da fare oggi' })
         const links = within(region).getAllByRole('link')
-        expect(getTodoItems).toHaveBeenCalledWith('trainer-1', NOW)
+        expect(getTodoItems).toHaveBeenCalledWith('trainer-1', TRAINEES, NOW)
         expect(within(region).getByText('5')).toBeInTheDocument()
         expect(links.map((link) => link.getAttribute('href'))).toEqual([
             '/trainer/subscriptions',
@@ -150,7 +150,7 @@ describe('InactiveTraineesWidget', () => {
         await renderAsync(InactiveTraineesWidget({ ctx: makeCtx() }))
 
         const region = screen.getByRole('region', { name: 'Atleti inattivi' })
-        expect(getInactiveTrainees).toHaveBeenCalledWith(TRAINEES, NOW)
+        expect(getInactiveTrainees).toHaveBeenCalledWith('trainer-1', TRAINEES, NOW)
         expect(within(region).getByRole('link', { name: /Carla Blu/ })).toHaveAttribute('href', '/trainer/trainees/t5')
         expect(within(region).getByText('Nessun allenamento registrato')).toBeInTheDocument()
         expect(within(region).getByText('Ultimo allenamento 13 giorni fa')).toBeInTheDocument()
@@ -192,7 +192,7 @@ describe('RecentFeedbackWidget', () => {
 
         const region = screen.getByRole('region', { name: 'Feedback recenti' })
         const links = within(region).getAllByRole('link')
-        expect(getRecentFeedback).toHaveBeenCalledWith(TRAINEES, NOW)
+        expect(getRecentFeedback).toHaveBeenCalledWith('trainer-1', TRAINEES, NOW)
         expect(links[0]).toHaveAttribute('href', '/trainer/programs/p1')
         expect(links[0]).toHaveTextContent('Anna Rossi')
         expect(links[0]).toHaveTextContent('Squat')

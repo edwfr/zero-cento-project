@@ -9,7 +9,7 @@ export default async function InactiveTraineesWidget({ ctx }: { ctx: WidgetConte
     const { t } = ctx
     const title = t('trainerDashboard.inactive.title')
     const icon = <UserX className="h-5 w-5" />
-    const result = await loadWidget('inactive-trainees', () => getInactiveTrainees(ctx.trainees, ctx.now))
+    const result = await loadWidget('inactive-trainees', () => getInactiveTrainees(ctx.trainerId, ctx.trainees, ctx.now))
 
     if (!result.ok) return <WidgetError title={title} icon={icon} t={t} />
 

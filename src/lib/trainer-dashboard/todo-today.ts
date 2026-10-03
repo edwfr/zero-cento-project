@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { getTrainerSubscriptionOverview } from '@/lib/subscription-queries'
 import { PROGRAM_ENDING_DAYS } from './constants'
 import { programEndDate, startOfUtcDay, startOfUtcWeek, wholeDaysBetween } from './dates'
-import { fullName } from './trainees'
+import { activeTraineeIds, fullName, type DashboardTrainee } from './trainees'
 
 export type TodoItem =
     | { kind: 'subscriptionExpired'; traineeId: string; traineeName: string; days: number }
@@ -19,7 +19,10 @@ const PRIORITY: Record<TodoItem['kind'], number> = {
     testWeekInProgress: 4,
 }
 
-export async function getTodoItems(trainerId: string, now: Date): Promise<TodoItem[]> {
+export async function getTodoItems(trainerId: string, trainees: DashboardTrainee[], now: Date): Promise<TodoItem[]> {
+    const traineeIds = activeTraineeIds(trainees)
+    if (traineeIds.length === 0) return []
+
     const today = startOfUtcDay(now)
 
     const [overview, testWeeks, openPrograms] = await Promise.all([
@@ -28,7 +31,7 @@ export async function getTodoItems(trainerId: string, now: Date): Promise<TodoIt
             where: {
                 weekType: 'test',
                 startDate: { gte: startOfUtcWeek(now), lte: now },
-                program: { trainerId, status: { in: ['active', 'completed'] } },
+                program: { trainerId, status: { in: ['active', 'completed'] }, traineeId: { in: traineeIds } },
             },
             select: {
                 id: true,
@@ -38,7 +41,7 @@ export async function getTodoItems(trainerId: string, now: Date): Promise<TodoIt
             },
         }),
         prisma.trainingProgram.findMany({
-            where: { trainerId, status: { in: ['draft', 'active'] } },
+            where: { trainerId, status: { in: ['draft', 'active'] }, traineeId: { in: traineeIds } },
             select: {
                 id: true,
                 title: true,
@@ -81,7 +84,8 @@ export async function getTodoItems(trainerId: string, now: Date): Promise<TodoIt
     for (const program of openPrograms) {
         if (program.status !== 'active' || !program.startDate) continue
 
-        const daysLeft = wholeDaysBetween(today, programEndDate(program.startDate, program.durationWeeks))
+        // programEndDate is exclusive: count down to the last training day, so the last day reads "today"
+        const daysLeft = wholeDaysBetween(today, programEndDate(program.startDate, program.durationWeeks)) - 1
         if (daysLeft > PROGRAM_ENDING_DAYS) continue
 
         const hasSuccessor = openPrograms.some((other) => other.traineeId === program.traineeId && other.id !== program.id)

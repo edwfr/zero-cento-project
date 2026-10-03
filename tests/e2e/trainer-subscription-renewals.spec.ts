@@ -65,8 +65,9 @@ test.describe('Trainer: subscription renewals', () => {
         // Home "To do today" lists this athlete's expiring subscription
         await page.goto('/trainer/dashboard')
         const todo = page.getByRole('region', { name: /da fare oggi|to do today/i })
-        const todoItem = todo.getByRole('link').filter({ hasText: traineeName })
-        await expect(todoItem).toContainText(/in scadenza|expires/i)
+        // the athlete may also have other to-do items (test week, program ending): pick the subscription one
+        const todoItem = todo.getByRole('link').filter({ hasText: traineeName }).filter({ hasText: /in scadenza|expires/i })
+        await expect(todoItem).toHaveCount(1)
         await expect(todoItem).toHaveAttribute('href', '/trainer/subscriptions')
 
         // Clean up: delete the renewal, the banner disappears

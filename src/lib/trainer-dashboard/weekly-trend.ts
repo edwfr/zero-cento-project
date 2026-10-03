@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { TREND_WEEKS } from './constants'
 import { DAY_MS, addDays, startOfUtcDay, startOfUtcWeek, utcDayKey } from './dates'
-import { SESSION_FEEDBACK_SELECT, groupSessions } from './sessions'
+import { SESSION_FEEDBACK_SELECT, feedbackOfTrainerPrograms, groupSessions } from './sessions'
 import { activeTraineeIds, type DashboardTrainee } from './trainees'
 
 export interface TrendWeek {
@@ -13,7 +13,11 @@ export interface TrendWeek {
 
 const WEEK_MS = 7 * DAY_MS
 
-export async function getWeeklyTrend(trainees: DashboardTrainee[], now: Date): Promise<TrendWeek[]> {
+export async function getWeeklyTrend(
+    trainerId: string,
+    trainees: DashboardTrainee[],
+    now: Date,
+): Promise<TrendWeek[]> {
     const firstWeek = addDays(startOfUtcWeek(now), -7 * (TREND_WEEKS - 1))
     const weeks: TrendWeek[] = Array.from({ length: TREND_WEEKS }, (_, index) => ({
         weekStart: utcDayKey(addDays(firstWeek, 7 * index)),
@@ -25,7 +29,7 @@ export async function getWeeklyTrend(trainees: DashboardTrainee[], now: Date): P
     if (traineeIds.length === 0) return weeks
 
     const rows = await prisma.exerciseFeedback.findMany({
-        where: { traineeId: { in: traineeIds }, date: { gte: firstWeek } },
+        where: { traineeId: { in: traineeIds }, date: { gte: firstWeek }, ...feedbackOfTrainerPrograms(trainerId) },
         select: {
             ...SESSION_FEEDBACK_SELECT,
             setsPerformed: { where: { completed: true }, select: { reps: true, weight: true } },

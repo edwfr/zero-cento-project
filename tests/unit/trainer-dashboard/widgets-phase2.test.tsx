@@ -59,7 +59,7 @@ describe('ActivityFeedWidget', () => {
         await renderAsync(ActivityFeedWidget({ ctx: makeCtx() }))
 
         const region = screen.getByRole('region', { name: 'Attività recente' })
-        expect(getActivityFeed).toHaveBeenCalledWith(TRAINEES, NOW)
+        expect(getActivityFeed).toHaveBeenCalledWith('trainer-1', TRAINEES, NOW)
         expect(within(region).getByRole('heading', { name: 'Oggi' })).toBeInTheDocument()
         expect(within(region).getByRole('heading', { name: 'Ieri' })).toBeInTheDocument()
         const [first, second] = within(region).getAllByRole('link')
@@ -138,7 +138,7 @@ describe('WeeklyTrendWidget', () => {
         await renderAsync(WeeklyTrendWidget({ ctx: makeCtx() }))
 
         const region = screen.getByRole('region', { name: 'Andamento ultime 8 settimane' })
-        expect(getWeeklyTrend).toHaveBeenCalledWith(TRAINEES, NOW)
+        expect(getWeeklyTrend).toHaveBeenCalledWith('trainer-1', TRAINEES, NOW)
         expect(within(region).getByText('9 sessioni questa settimana')).toBeInTheDocument()
         expect(within(region).getByText('-3 rispetto alla settimana scorsa')).toBeInTheDocument()
         const points = JSON.parse(within(region).getByTestId('trend-chart').getAttribute('data-points') ?? '[]')

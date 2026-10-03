@@ -15,7 +15,7 @@ const feedback = (workoutId: string, date: string, sets: { reps: number; weight:
 
 describe('getWeeklyTrend', () => {
     it('returns 8 empty weeks without querying when there are no active trainees', async () => {
-        const weeks = await getWeeklyTrend([makeTrainee('t9', 'Off', 'Line', false)], NOW)
+        const weeks = await getWeeklyTrend('trainer-1', [makeTrainee('t9', 'Off', 'Line', false)], NOW)
 
         expect(weeks).toEqual(WEEK_STARTS.map((weekStart) => ({ weekStart, sessions: 0, volumeKg: 0 })))
         expect(prismaMock.exerciseFeedback.findMany).not.toHaveBeenCalled()
@@ -32,10 +32,10 @@ describe('getWeeklyTrend', () => {
             feedback('w3', '2026-10-04', []),
         ] as never)
 
-        const weeks = await getWeeklyTrend(TRAINEES, NOW)
+        const weeks = await getWeeklyTrend('trainer-1', TRAINEES, NOW)
 
         expect(prismaMock.exerciseFeedback.findMany).toHaveBeenCalledWith({
-            where: { traineeId: { in: ['t1', 't2'] }, date: { gte: day('2026-08-10') } },
+            where: { traineeId: { in: ['t1', 't2'] }, date: { gte: day('2026-08-10') }, workoutExercise: { workout: { week: { program: { trainerId: 'trainer-1' } } } } },
             select: {
                 traineeId: true,
                 date: true,

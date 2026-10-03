@@ -31,7 +31,7 @@ describe('getConsistencyRanking', () => {
             orderBy: { startDate: 'desc' },
         })
         expect(prismaMock.exerciseFeedback.findMany).toHaveBeenCalledWith({
-            where: { traineeId: { in: ['t1'] }, date: { gte: day('2026-09-06') } },
+            where: { traineeId: { in: ['t1'] }, date: { gte: day('2026-09-06') }, workoutExercise: { workout: { week: { program: { trainerId: 'trainer-1' } } } } },
             select: {
                 traineeId: true,
                 date: true,

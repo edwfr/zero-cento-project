@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { HIGH_RPE_THRESHOLD, LIST_LIMITS } from './constants'
 import { recentWindowStart } from './dates'
+import { feedbackOfTrainerPrograms } from './sessions'
 import { activeTraineeIds, fullName, type DashboardTrainee } from './trainees'
 
 export interface RecentFeedbackItem {
@@ -15,7 +16,11 @@ export interface RecentFeedbackItem {
     loggedAt: Date
 }
 
-export async function getRecentFeedback(trainees: DashboardTrainee[], now: Date): Promise<RecentFeedbackItem[]> {
+export async function getRecentFeedback(
+    trainerId: string,
+    trainees: DashboardTrainee[],
+    now: Date,
+): Promise<RecentFeedbackItem[]> {
     const traineeIds = activeTraineeIds(trainees)
     if (traineeIds.length === 0) return []
 
@@ -23,6 +28,7 @@ export async function getRecentFeedback(trainees: DashboardTrainee[], now: Date)
         where: {
             traineeId: { in: traineeIds },
             date: { gte: recentWindowStart(now) },
+            ...feedbackOfTrainerPrograms(trainerId),
             OR: [
                 { notes: { not: null } },
                 { actualRpe: { gte: HIGH_RPE_THRESHOLD } },

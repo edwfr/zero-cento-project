@@ -10,7 +10,7 @@ export default async function WeeklyTrendWidget({ ctx }: { ctx: WidgetContext })
     const { t } = ctx
     const title = t('trainerDashboard.trend.title')
     const icon = <ChartColumn className="h-5 w-5" />
-    const result = await loadWidget('weekly-trend', () => getWeeklyTrend(ctx.trainees, ctx.now))
+    const result = await loadWidget('weekly-trend', () => getWeeklyTrend(ctx.trainerId, ctx.trainees, ctx.now))
 
     if (!result.ok) return <WidgetError title={title} icon={icon} t={t} />
 

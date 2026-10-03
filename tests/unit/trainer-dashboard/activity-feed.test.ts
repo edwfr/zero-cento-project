@@ -15,10 +15,10 @@ describe('getActivityFeed', () => {
         prismaMock.exerciseFeedback.findMany.mockResolvedValue([] as never)
         prismaMock.personalRecord.findMany.mockResolvedValue([] as never)
 
-        await expect(getActivityFeed(TRAINEES, NOW)).resolves.toEqual([])
+        await expect(getActivityFeed('trainer-1', TRAINEES, NOW)).resolves.toEqual([])
 
         expect(prismaMock.exerciseFeedback.findMany).toHaveBeenCalledWith({
-            where: { traineeId: { in: ['t1', 't2'] }, date: { gte: day('2026-09-26') } },
+            where: { traineeId: { in: ['t1', 't2'] }, date: { gte: day('2026-09-26') }, workoutExercise: { workout: { week: { program: { trainerId: 'trainer-1' } } } } },
             select: {
                 traineeId: true,
                 date: true,
@@ -45,7 +45,7 @@ describe('getActivityFeed', () => {
         ] as never)
         prismaMock.personalRecord.findMany.mockResolvedValue([{ traineeId: 't1', recordDate: at('2026-10-03T08:15:00') }] as never)
 
-        await expect(getActivityFeed(TRAINEES, NOW)).resolves.toEqual([
+        await expect(getActivityFeed('trainer-1', TRAINEES, NOW)).resolves.toEqual([
             {
                 key: 't1|w1|2026-10-03', traineeId: 't1', traineeName: 'Anna Rossi', initials: 'AR',
                 programId: 'prog-t1', weekNumber: 2, dayIndex: 3, exerciseCount: 2,
@@ -65,14 +65,14 @@ describe('getActivityFeed', () => {
         )
         prismaMock.personalRecord.findMany.mockResolvedValue([] as never)
 
-        const items = await getActivityFeed(TRAINEES, NOW)
+        const items = await getActivityFeed('trainer-1', TRAINEES, NOW)
 
         expect(items).toHaveLength(15)
         expect(items[0].key).toBe('t1|w19|2026-10-02')
     })
 
     it('does not query without active trainees', async () => {
-        await expect(getActivityFeed([makeTrainee('t9', 'Off', 'Line', false)], NOW)).resolves.toEqual([])
+        await expect(getActivityFeed('trainer-1', [makeTrainee('t9', 'Off', 'Line', false)], NOW)).resolves.toEqual([])
         expect(prismaMock.exerciseFeedback.findMany).not.toHaveBeenCalled()
     })
 })

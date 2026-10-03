@@ -12,6 +12,15 @@ export const SESSION_FEEDBACK_SELECT = {
     workoutExercise: { select: { workoutId: true } },
 } as const
 
+/**
+ * Feedback filter for workouts of programs this trainer owns. A reassigned trainee
+ * keeps programs (and their feedback) under the previous trainer: neither trainer
+ * should see the other's.
+ */
+export function feedbackOfTrainerPrograms(trainerId: string) {
+    return { workoutExercise: { workout: { week: { program: { trainerId } } } } }
+}
+
 export interface SessionSourceRow {
     traineeId: string
     date: Date

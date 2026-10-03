@@ -59,7 +59,7 @@ export default async function TodoTodayWidget({ ctx }: { ctx: WidgetContext }) {
     const { t } = ctx
     const title = t('trainerDashboard.todo.title')
     const icon = <ListTodo className="h-5 w-5" />
-    const result = await loadWidget('todo-today', () => getTodoItems(ctx.trainerId, ctx.now))
+    const result = await loadWidget('todo-today', () => getTodoItems(ctx.trainerId, ctx.trainees, ctx.now))
 
     if (!result.ok) return <WidgetError title={title} icon={icon} t={t} />
 

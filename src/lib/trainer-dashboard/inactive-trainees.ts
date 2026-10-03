@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { LIST_LIMITS } from './constants'
 import { recentWindowStart, startOfUtcDay, wholeDaysBetween } from './dates'
+import { feedbackOfTrainerPrograms } from './sessions'
 import { activeTraineeIds, fullName, initials, type DashboardTrainee } from './trainees'
 
 export interface InactiveTrainee {
@@ -18,12 +19,16 @@ export interface InactiveTraineesResult {
 
 const EMPTY: InactiveTraineesResult = { items: [], total: 0 }
 
-export async function getInactiveTrainees(trainees: DashboardTrainee[], now: Date): Promise<InactiveTraineesResult> {
+export async function getInactiveTrainees(
+    trainerId: string,
+    trainees: DashboardTrainee[],
+    now: Date,
+): Promise<InactiveTraineesResult> {
     const traineeIds = activeTraineeIds(trainees)
     if (traineeIds.length === 0) return EMPTY
 
     const programs = await prisma.trainingProgram.findMany({
-        where: { traineeId: { in: traineeIds }, status: 'active' },
+        where: { trainerId, traineeId: { in: traineeIds }, status: 'active' },
         select: { traineeId: true },
         distinct: ['traineeId'],
     })
@@ -32,7 +37,7 @@ export async function getInactiveTrainees(trainees: DashboardTrainee[], now: Dat
 
     const lastSessions = await prisma.exerciseFeedback.groupBy({
         by: ['traineeId'],
-        where: { traineeId: { in: withProgram } },
+        where: { traineeId: { in: withProgram }, ...feedbackOfTrainerPrograms(trainerId) },
         _max: { date: true },
     })
 
