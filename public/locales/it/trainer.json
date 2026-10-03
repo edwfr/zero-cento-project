@@ -257,7 +257,6 @@
         "actionsColumn": "Azioni",
         "entriesCount_one": "{{count}} misurazione",
         "entriesCount_other": "{{count}} misurazioni",
-        "historyPrefix": "Storico",
         "expand": "Espandi",
         "collapse": "Comprimi",
         "deleteConfirmTitle": "Elimina misurazione",

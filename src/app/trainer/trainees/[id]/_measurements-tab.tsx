@@ -406,9 +406,7 @@ export default function MeasurementsTab({ traineeId }: MeasurementsTabProps) {
                                             {isExpanded &&
                                                 olderEntries.map((entry) => (
                                                     <tr key={entry.point.id} className="bg-gray-50/80 hover:bg-gray-100/80">
-                                                        <td className="px-4 py-3 pl-12 text-sm text-gray-700">
-                                                            {t('measurements.historyPrefix')}
-                                                        </td>
+                                                        <td className="px-4 py-3" />
                                                         {renderCells(entry, false)}
                                                     </tr>
                                                 ))}

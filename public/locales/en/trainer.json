@@ -257,7 +257,6 @@
         "actionsColumn": "Actions",
         "entriesCount_one": "{{count}} measurement",
         "entriesCount_other": "{{count}} measurements",
-        "historyPrefix": "History",
         "expand": "Expand",
         "collapse": "Collapse",
         "deleteConfirmTitle": "Delete measurement",
