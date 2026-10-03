@@ -107,6 +107,16 @@ describe('formatDateTime', () => {
         expect(formatDateTime('bad-date')).toBe('-')
     })
 
+    it('formats with seconds as dd/MM/yyyy HH:mm:ss regardless of locale', () => {
+        expect(formatDateTime('2026-10-03T09:05:07.000Z', 'seconds')).toBe('03/10/2026 09:05:07')
+        i18nMock.language = 'en'
+        expect(formatDateTime(new Date('2026-12-31T23:59:59.000Z'), 'seconds')).toBe('31/12/2026 23:59:59')
+    })
+
+    it('returns "-" for an invalid date with seconds', () => {
+        expect(formatDateTime('bad-date', 'seconds')).toBe('-')
+    })
+
     it('formats a valid datetime string (short)', () => {
         const result = formatDateTime('2024-03-30T14:30:00')
         expect(result).not.toBe('-')

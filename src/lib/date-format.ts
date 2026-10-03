@@ -72,16 +72,17 @@ export function formatDate(
  * Format a date and time for display with locale support
  * 
  * @param date - Date string, Date object, or timestamp to format
- * @param format - Format type: 'short' or 'medium'
+ * @param format - Format type: 'short', 'medium' or 'seconds'
  * @returns Formatted date and time string
  * 
  * @example
  * formatDateTime('2024-03-30T14:30:00') // "30/03/2024, 14:30"
  * formatDateTime('2024-03-30T14:30:00', 'medium') // "30 mar 2024, 14:30"
+ * formatDateTime('2024-03-30T14:30:05', 'seconds') // "30/03/2024 14:30:05"
  */
 export function formatDateTime(
     date: string | Date | number | null | undefined,
-    format: 'short' | 'medium' = 'short'
+    format: 'short' | 'medium' | 'seconds' = 'short'
 ): string {
     if (!date) return '-'
 
@@ -91,6 +92,12 @@ export function formatDateTime(
             : date
 
         if (isNaN(dateObj.getTime())) return '-'
+
+        // Fixed dd/MM/yyyy HH:mm:ss for audit timelines, independent of the locale
+        if (format === 'seconds') {
+            const pad = (value: number) => String(value).padStart(2, '0')
+            return `${pad(dateObj.getDate())}/${pad(dateObj.getMonth() + 1)}/${dateObj.getFullYear()} ${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}:${pad(dateObj.getSeconds())}`
+        }
 
         const locale = getFullLocale(getCurrentLocale())
 
