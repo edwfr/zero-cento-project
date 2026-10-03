@@ -30,6 +30,10 @@ export function WidgetCard({ title, subtitle, icon, action, children }: WidgetCa
     )
 }
 
+export function CountBadge({ count }: { count: number }) {
+    return <span className="rounded-full bg-brand-primary/15 px-2.5 py-0.5 text-sm font-semibold text-gray-900">{count}</span>
+}
+
 export function WidgetEmpty({ icon, message }: { icon: ReactNode; message: string }) {
     return (
         <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center text-sm text-gray-600">

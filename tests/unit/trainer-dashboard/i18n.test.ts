@@ -26,9 +26,9 @@ describe('createTranslator', () => {
     })
 
     it('picks _one and _zero variants from count when they exist', () => {
-        expect(t('trainerDashboard.todo.subscriptionExpiring', { count: 5 })).toBe('Abbonamento in scadenza tra 5 giorni')
-        expect(t('trainerDashboard.todo.subscriptionExpiring', { count: 1 })).toBe('Abbonamento in scadenza domani')
-        expect(t('trainerDashboard.todo.subscriptionExpiring', { count: 0 })).toBe('Abbonamento in scadenza oggi')
+        expect(t('trainerDashboard.subscriptionAlerts.expiring', { count: 5 })).toBe('In scadenza tra 5 giorni')
+        expect(t('trainerDashboard.subscriptionAlerts.expiring', { count: 1 })).toBe('In scadenza domani')
+        expect(t('trainerDashboard.subscriptionAlerts.expiring', { count: 0 })).toBe('In scadenza oggi')
         // no _zero variant: falls back to the base key
         expect(t('trainerDashboard.inactive.lastSession', { count: 0 })).toBe('Ultimo allenamento 0 giorni fa')
     })
@@ -38,7 +38,7 @@ describe('createTranslator', () => {
     })
 
     it('translates English', () => {
-        expect(createTranslator('en')('trainerDashboard.todo.title')).toBe('To do today')
+        expect(createTranslator('en')('trainerDashboard.programEnding.title')).toBe('Programs ending')
     })
 })
 

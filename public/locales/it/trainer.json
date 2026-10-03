@@ -21,22 +21,26 @@
         },
         "widget": {
             "loadError": "Impossibile caricare questa sezione. Ricarica la pagina per riprovare.",
-            "moreItems": "+{{count}} altri"
+            "moreItems": "+{{count}} altri",
+            "previousPage": "Pagina precedente",
+            "nextPage": "Pagina successiva"
         },
-        "todo": {
-            "title": "Da fare oggi",
-            "empty": "Tutto in ordine: nessuna azione richiesta.",
-            "subscriptionExpired": "Abbonamento scaduto da {{count}} giorni",
-            "subscriptionExpired_one": "Abbonamento scaduto da 1 giorno",
-            "subscriptionExpiring": "Abbonamento in scadenza tra {{count}} giorni",
-            "subscriptionExpiring_one": "Abbonamento in scadenza domani",
-            "subscriptionExpiring_zero": "Abbonamento in scadenza oggi",
-            "testsToReview": "Test completati da revisionare · Settimana {{week}}",
-            "programEnding": "{{program}} termina tra {{count}} giorni, nessun programma successivo",
-            "programEnding_one": "{{program}} termina domani, nessun programma successivo",
-            "programEnding_zero": "{{program}} termina oggi, nessun programma successivo",
-            "testWeekInProgress": "Settimana di test in corso · Settimana {{week}}",
-            "testsProgress": "Test completati"
+        "programEnding": {
+            "title": "Programmi in chiusura",
+            "empty": "Nessun programma in chiusura senza un programma successivo.",
+            "endsIn": "{{program}} termina tra {{count}} giorni",
+            "endsIn_one": "{{program}} termina domani",
+            "endsIn_zero": "{{program}} termina oggi",
+            "lastWeekProgress": "Ultima settimana"
+        },
+        "subscriptionAlerts": {
+            "title": "Abbonamenti",
+            "empty": "Nessun abbonamento scaduto o in scadenza.",
+            "expired": "Scaduto da {{count}} giorni",
+            "expired_one": "Scaduto da 1 giorno",
+            "expiring": "In scadenza tra {{count}} giorni",
+            "expiring_one": "In scadenza domani",
+            "expiring_zero": "In scadenza oggi"
         },
         "inactive": {
             "title": "Atleti inattivi",
@@ -47,12 +51,6 @@
             "empty": "Tutti gli atleti con un programma attivo si sono allenati di recente.",
             "viewAll": "Vedi tutti gli atleti"
         },
-        "feedback": {
-            "title": "Feedback recenti",
-            "subtitle": "Note degli atleti e RPE alto, ultimi 7 giorni",
-            "rpe": "RPE {{value}}",
-            "empty": "Nessuna nota o RPE alto negli ultimi 7 giorni."
-        },
         "feed": {
             "title": "Attività recente",
             "entry": "ha completato Giorno {{day}} · Settimana {{week}}",
@@ -60,14 +58,6 @@
             "exercises_one": "1 esercizio",
             "record": "Nuovo record",
             "empty": "Nessun allenamento registrato negli ultimi 7 giorni."
-        },
-        "records": {
-            "title": "Nuovi record",
-            "subtitle": "Ultimi 7 giorni",
-            "value": "{{weight}} kg × {{reps}}",
-            "delta": "+{{delta}} kg",
-            "first": "Primo record",
-            "empty": "Nessun nuovo record questa settimana. La prossima è quella buona."
         },
         "trend": {
             "title": "Andamento ultime 8 settimane",

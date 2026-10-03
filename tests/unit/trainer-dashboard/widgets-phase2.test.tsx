@@ -4,7 +4,6 @@ import { render, screen, within } from '@testing-library/react'
 
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn() } }))
 vi.mock('@/lib/trainer-dashboard/activity-feed', () => ({ getActivityFeed: vi.fn() }))
-vi.mock('@/lib/trainer-dashboard/new-records', () => ({ getNewRecords: vi.fn() }))
 vi.mock('@/lib/trainer-dashboard/weekly-trend', () => ({ getWeeklyTrend: vi.fn() }))
 vi.mock('@/lib/trainer-dashboard/consistency-ranking', () => ({ getConsistencyRanking: vi.fn() }))
 vi.mock('recharts', () => {
@@ -28,8 +27,6 @@ import { getActivityFeed } from '@/lib/trainer-dashboard/activity-feed'
 import { createTranslator } from '@/lib/trainer-dashboard/i18n'
 import type { WidgetContext } from '@/app/trainer/dashboard/_widgets/types'
 import ActivityFeedWidget from '@/app/trainer/dashboard/_widgets/ActivityFeedWidget'
-import { getNewRecords } from '@/lib/trainer-dashboard/new-records'
-import NewRecordsWidget from '@/app/trainer/dashboard/_widgets/NewRecordsWidget'
 import { getWeeklyTrend } from '@/lib/trainer-dashboard/weekly-trend'
 import WeeklyTrendWidget from '@/app/trainer/dashboard/_widgets/WeeklyTrendWidget'
 import { getConsistencyRanking } from '@/lib/trainer-dashboard/consistency-ranking'
@@ -85,45 +82,6 @@ describe('ActivityFeedWidget', () => {
         await renderAsync(ActivityFeedWidget({ ctx: makeCtx() }))
 
         expect(within(screen.getByRole('region', { name: 'Attività recente' })).getByRole('alert')).toBeInTheDocument()
-    })
-})
-
-describe('NewRecordsWidget', () => {
-    it('shows each record with its improvement, or "first record"', async () => {
-        vi.mocked(getNewRecords).mockResolvedValue([
-            { id: 'r1', traineeName: 'Anna Rossi', exerciseName: 'Squat', reps: 1, weight: 142.5, recordDate: day('2026-10-02'), deltaKg: 5 },
-            { id: 'r2', traineeName: 'Luca Bianchi', exerciseName: 'Panca', reps: 5, weight: 80, recordDate: day('2026-09-30'), deltaKg: null },
-            { id: 'r3', traineeName: 'Luca Bianchi', exerciseName: 'Stacco', reps: 3, weight: 150, recordDate: day('2026-09-29'), deltaKg: 0 },
-        ])
-
-        await renderAsync(NewRecordsWidget({ ctx: makeCtx() }))
-
-        const region = screen.getByRole('region', { name: 'Nuovi record' })
-        const items = within(region).getAllByRole('listitem')
-        expect(getNewRecords).toHaveBeenCalledWith(TRAINEES, NOW)
-        expect(items[0]).toHaveTextContent('Anna Rossi')
-        expect(items[0]).toHaveTextContent('Squat')
-        expect(items[0]).toHaveTextContent('142.5 kg × 1')
-        expect(items[0]).toHaveTextContent('+5 kg')
-        expect(items[1]).toHaveTextContent('Primo record')
-        expect(items[2]).not.toHaveTextContent('+0 kg')
-        expect(items[2]).not.toHaveTextContent('Primo record')
-    })
-
-    it('shows the encouraging empty state', async () => {
-        vi.mocked(getNewRecords).mockResolvedValue([])
-
-        await renderAsync(NewRecordsWidget({ ctx: makeCtx() }))
-
-        expect(screen.getByText('Nessun nuovo record questa settimana. La prossima è quella buona.')).toBeInTheDocument()
-    })
-
-    it('shows the error card when loading fails', async () => {
-        vi.mocked(getNewRecords).mockRejectedValue(new Error('db down'))
-
-        await renderAsync(NewRecordsWidget({ ctx: makeCtx() }))
-
-        expect(within(screen.getByRole('region', { name: 'Nuovi record' })).getByRole('alert')).toBeInTheDocument()
     })
 })
 

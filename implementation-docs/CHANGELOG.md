@@ -11,6 +11,14 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [3 Ottobre 2026] — Home trainer: rimossi "Nuovi record" e "Feedback recenti"
+
+**File rimossi:** `src/app/trainer/dashboard/_widgets/{NewRecordsWidget,RecentFeedbackWidget}.tsx`, `src/lib/trainer-dashboard/{new-records,recent-feedback}.ts`, i relativi test e le chiavi `records`/`feedback` in `public/locales/{it,en}/trainer.json`; `HIGH_RPE_THRESHOLD` e `LIST_LIMITS.records/feedback` in `constants.ts`.
+**Note:** Richiesta dell'utente: home più asciutta. Nuovo layout: riga 1 Programmi in chiusura | Abbonamenti | Classifica costanza (salita al posto di Nuovi record); riga 2 Atleti inattivi | Andamento 8 settimane (2 colonne); riga 3 Attività recente. Il badge "Nuovo record" nel feed attività resta.
+### [3 Ottobre 2026] — Home trainer: "Da fare oggi" diviso in "Programmi in chiusura" e "Abbonamenti"
+
+**File modificati:** `src/lib/trainer-dashboard/program-ending.ts` (era `todo-today.ts`), `src/lib/trainer-dashboard/subscription-alerts.ts`, `src/lib/trainer-dashboard/constants.ts`, `src/app/trainer/dashboard/_widgets/ProgramEndingWidget.tsx` (era `TodoTodayWidget.tsx`), `src/app/trainer/dashboard/_widgets/SubscriptionAlertsWidget.tsx`, `src/app/trainer/dashboard/_widgets/PaginatedList.tsx`, `src/app/trainer/dashboard/_widgets/WidgetCard.tsx`, `src/app/trainer/dashboard/page.tsx`, `public/locales/{it,en}/trainer.json`, `tests/unit/trainer-dashboard/{program-ending,subscription-alerts,i18n}.test.ts`, `tests/unit/trainer-dashboard/widgets-phase1.test.tsx`
+**Note:** Il pannello "Da fare oggi" mescolava voci eterogenee. Ora ci sono due pannelli da una colonna ciascuno, nella stessa riga di "Nuovi record". "Programmi in chiusura" mostra i programmi attivi che finiscono entro 7 giorni senza un programma successivo, ordinati per giorni rimanenti, con una barra che indica quanti allenamenti dell'ultima settimana sono completati. "Abbonamenti" mostra gli abbonamenti scaduti e quelli in scadenza entro 14 giorni, dai più critici. Le voci sulle settimane di test sono state rimosse. Entrambi i pannelli mostrano 6 righe per pagina, con paginazione lato client (`PaginatedList`).
 ### [3 Ottobre 2026] — Lista atleti: icona abbonamento accanto allo stato
 
 **File modificati:** `src/components/SubscriptionStatusIcon.tsx` (spostato da `src/app/trainer/trainees/[id]/_subscription-status-icon.tsx`), `src/components/index.ts`, `src/app/trainer/trainees/_content.tsx`, `src/app/trainer/trainees/[id]/_content.tsx`, `tests/unit/subscription-status-icon.test.tsx`, `tests/unit/trainer-trainees-list-subscription.test.tsx`, `implementation-docs/CHANGELOG.md`

@@ -92,22 +92,26 @@
         },
         "widget": {
             "loadError": "This section could not be loaded. Reload the page to try again.",
-            "moreItems": "+{{count}} more"
+            "moreItems": "+{{count}} more",
+            "previousPage": "Previous page",
+            "nextPage": "Next page"
         },
-        "todo": {
-            "title": "To do today",
-            "empty": "All clear: nothing needs your attention.",
-            "subscriptionExpired": "Subscription expired {{count}} days ago",
-            "subscriptionExpired_one": "Subscription expired 1 day ago",
-            "subscriptionExpiring": "Subscription expires in {{count}} days",
-            "subscriptionExpiring_one": "Subscription expires tomorrow",
-            "subscriptionExpiring_zero": "Subscription expires today",
-            "testsToReview": "Tests completed, ready for review · Week {{week}}",
-            "programEnding": "{{program}} ends in {{count}} days, no follow-up program",
-            "programEnding_one": "{{program}} ends tomorrow, no follow-up program",
-            "programEnding_zero": "{{program}} ends today, no follow-up program",
-            "testWeekInProgress": "Test week in progress · Week {{week}}",
-            "testsProgress": "Tests completed"
+        "programEnding": {
+            "title": "Programs ending",
+            "empty": "No program is ending without a follow-up.",
+            "endsIn": "{{program}} ends in {{count}} days",
+            "endsIn_one": "{{program}} ends tomorrow",
+            "endsIn_zero": "{{program}} ends today",
+            "lastWeekProgress": "Last week"
+        },
+        "subscriptionAlerts": {
+            "title": "Subscriptions",
+            "empty": "No expired or expiring subscriptions.",
+            "expired": "Expired {{count}} days ago",
+            "expired_one": "Expired 1 day ago",
+            "expiring": "Expires in {{count}} days",
+            "expiring_one": "Expires tomorrow",
+            "expiring_zero": "Expires today"
         },
         "inactive": {
             "title": "Inactive athletes",
@@ -118,12 +122,6 @@
             "empty": "Every athlete with an active program has trained recently.",
             "viewAll": "See all athletes"
         },
-        "feedback": {
-            "title": "Recent feedback",
-            "subtitle": "Athlete notes and high RPE, last 7 days",
-            "rpe": "RPE {{value}}",
-            "empty": "No notes or high RPE in the last 7 days."
-        },
         "feed": {
             "title": "Recent activity",
             "entry": "completed Day {{day}} · Week {{week}}",
@@ -131,14 +129,6 @@
             "exercises_one": "1 exercise",
             "record": "New record",
             "empty": "No sessions logged in the last 7 days."
-        },
-        "records": {
-            "title": "New records",
-            "subtitle": "Last 7 days",
-            "value": "{{weight}} kg × {{reps}}",
-            "delta": "+{{delta}} kg",
-            "first": "First record",
-            "empty": "No new records this week. Next week is the one."
         },
         "trend": {
             "title": "Last 8 weeks",

@@ -9,9 +9,8 @@ import ActivityFeedWidget from './_widgets/ActivityFeedWidget'
 import ConsistencyRankingWidget from './_widgets/ConsistencyRankingWidget'
 import DashboardHeader from './_widgets/DashboardHeader'
 import InactiveTraineesWidget from './_widgets/InactiveTraineesWidget'
-import NewRecordsWidget from './_widgets/NewRecordsWidget'
-import RecentFeedbackWidget from './_widgets/RecentFeedbackWidget'
-import TodoTodayWidget from './_widgets/TodoTodayWidget'
+import ProgramEndingWidget from './_widgets/ProgramEndingWidget'
+import SubscriptionAlertsWidget from './_widgets/SubscriptionAlertsWidget'
 import WeeklyTrendWidget from './_widgets/WeeklyTrendWidget'
 import { WidgetSkeleton } from './_widgets/WidgetCard'
 import type { WidgetContext } from './_widgets/types'
@@ -53,23 +52,20 @@ export default async function TrainerDashboard() {
             <div className="space-y-6">
                 <DashboardHeader ctx={ctx} firstName={session.user.firstName} />
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                    <Slot span={2}>
-                        <TodoTodayWidget ctx={ctx} />
+                    <Slot>
+                        <ProgramEndingWidget ctx={ctx} />
                     </Slot>
                     <Slot>
-                        <NewRecordsWidget ctx={ctx} />
+                        <SubscriptionAlertsWidget ctx={ctx} />
                     </Slot>
-                    <Slot span={2}>
-                        <RecentFeedbackWidget ctx={ctx} />
+                    <Slot>
+                        <ConsistencyRankingWidget ctx={ctx} />
                     </Slot>
                     <Slot>
                         <InactiveTraineesWidget ctx={ctx} />
                     </Slot>
                     <Slot span={2}>
                         <WeeklyTrendWidget ctx={ctx} />
-                    </Slot>
-                    <Slot>
-                        <ConsistencyRankingWidget ctx={ctx} />
                     </Slot>
                     <Slot span={3}>
                         <ActivityFeedWidget ctx={ctx} />

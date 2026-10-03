@@ -1,12 +1,12 @@
 import { describe, it, expect, vi } from 'vitest'
 import type { ReactNode } from 'react'
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn() } }))
 vi.mock('@/lib/trainer-dashboard/header-kpis', () => ({ getHeaderKpis: vi.fn() }))
-vi.mock('@/lib/trainer-dashboard/todo-today', () => ({ getTodoItems: vi.fn() }))
+vi.mock('@/lib/trainer-dashboard/program-ending', () => ({ getEndingPrograms: vi.fn() }))
+vi.mock('@/lib/trainer-dashboard/subscription-alerts', () => ({ getSubscriptionAlerts: vi.fn() }))
 vi.mock('@/lib/trainer-dashboard/inactive-trainees', () => ({ getInactiveTrainees: vi.fn() }))
-vi.mock('@/lib/trainer-dashboard/recent-feedback', () => ({ getRecentFeedback: vi.fn() }))
 // DashboardHeader wraps the async HeaderKpis in <Suspense>; React 18 in jsdom cannot render
 // an async component, so the header test replaces it with a static stand-in.
 vi.mock('@/app/trainer/dashboard/_widgets/HeaderKpis', () => ({
@@ -17,13 +17,13 @@ import { getHeaderKpis } from '@/lib/trainer-dashboard/header-kpis'
 import { createTranslator } from '@/lib/trainer-dashboard/i18n'
 import type { WidgetContext } from '@/app/trainer/dashboard/_widgets/types'
 import DashboardHeader from '@/app/trainer/dashboard/_widgets/DashboardHeader'
-import { getTodoItems } from '@/lib/trainer-dashboard/todo-today'
-import TodoTodayWidget from '@/app/trainer/dashboard/_widgets/TodoTodayWidget'
+import { getEndingPrograms } from '@/lib/trainer-dashboard/program-ending'
+import ProgramEndingWidget from '@/app/trainer/dashboard/_widgets/ProgramEndingWidget'
+import { getSubscriptionAlerts, type SubscriptionAlert } from '@/lib/trainer-dashboard/subscription-alerts'
+import SubscriptionAlertsWidget from '@/app/trainer/dashboard/_widgets/SubscriptionAlertsWidget'
 import { getInactiveTrainees } from '@/lib/trainer-dashboard/inactive-trainees'
 import InactiveTraineesWidget from '@/app/trainer/dashboard/_widgets/InactiveTraineesWidget'
-import { getRecentFeedback } from '@/lib/trainer-dashboard/recent-feedback'
-import RecentFeedbackWidget from '@/app/trainer/dashboard/_widgets/RecentFeedbackWidget'
-import { NOW, TRAINEES, at } from './fixtures'
+import { NOW, TRAINEES } from './fixtures'
 
 const { default: HeaderKpis } = await vi.importActual<typeof import('@/app/trainer/dashboard/_widgets/HeaderKpis')>(
     '@/app/trainer/dashboard/_widgets/HeaderKpis',
@@ -86,51 +86,113 @@ describe('HeaderKpis', () => {
     })
 })
 
-describe('TodoTodayWidget', () => {
-    it('lists every item with its text and link, and shows the count', async () => {
-        vi.mocked(getTodoItems).mockResolvedValue([
-            { kind: 'subscriptionExpired', traineeId: 't1', traineeName: 'Anna Rossi', days: 2 },
-            { kind: 'subscriptionExpiring', traineeId: 't2', traineeName: 'Luca Bianchi', days: 1 },
-            { kind: 'testsToReview', programId: 'p1', traineeName: 'Anna Rossi', weekNumber: 4 },
-            { kind: 'programEnding', programId: 'p2', traineeId: 't2', traineeName: 'Luca Bianchi', programTitle: 'Forza', days: 3 },
-            { kind: 'testWeekInProgress', programId: 'p3', traineeName: 'Sara Verdi', weekNumber: 6, completed: 1, planned: 3 },
+describe('ProgramEndingWidget', () => {
+    it('lists each ending program with its countdown, last-week progress and link, and shows the count', async () => {
+        vi.mocked(getEndingPrograms).mockResolvedValue([
+            { programId: 'p1', traineeId: 't1', traineeName: 'Anna Rossi', programTitle: 'Forza', days: 0, completed: 2, planned: 4 },
+            { programId: 'p2', traineeId: 't2', traineeName: 'Luca Bianchi', programTitle: 'Ipertrofia', days: 3, completed: 0, planned: 0 },
         ])
 
-        await renderAsync(TodoTodayWidget({ ctx: makeCtx() }))
+        await renderAsync(ProgramEndingWidget({ ctx: makeCtx() }))
 
-        const region = screen.getByRole('region', { name: 'Da fare oggi' })
+        const region = screen.getByRole('region', { name: 'Programmi in chiusura' })
         const links = within(region).getAllByRole('link')
-        expect(getTodoItems).toHaveBeenCalledWith('trainer-1', TRAINEES, NOW)
-        expect(within(region).getByText('5')).toBeInTheDocument()
-        expect(links.map((link) => link.getAttribute('href'))).toEqual([
-            '/trainer/subscriptions',
-            '/trainer/subscriptions',
-            '/trainer/programs/p1/tests?backContext=dashboard',
-            '/trainer/programs/new',
-            '/trainer/programs/p3',
-        ])
-        expect(links[0]).toHaveTextContent('Abbonamento scaduto da 2 giorni')
-        expect(links[1]).toHaveTextContent('Abbonamento in scadenza domani')
-        expect(links[2]).toHaveTextContent('Test completati da revisionare · Settimana 4')
-        expect(links[3]).toHaveTextContent('Forza termina tra 3 giorni, nessun programma successivo')
-        expect(links[4]).toHaveTextContent('Settimana di test in corso · Settimana 6')
-        expect(within(links[4]).getByText('Test completati')).toBeInTheDocument()
+        expect(getEndingPrograms).toHaveBeenCalledWith('trainer-1', TRAINEES, NOW)
+        expect(within(region).getByText('2')).toBeInTheDocument()
+        expect(links.map((link) => link.getAttribute('href'))).toEqual(['/trainer/programs/new', '/trainer/programs/new'])
+        expect(links[0]).toHaveTextContent('Forza termina oggi')
+        expect(links[0]).toHaveTextContent('50%')
+        expect(within(links[0]).getByRole('progressbar', { name: 'Ultima settimana' })).toBeInTheDocument()
+        expect(links[1]).toHaveTextContent('Ipertrofia termina tra 3 giorni')
+        // no planned workouts in the last week: no progress bar
+        expect(within(links[1]).queryByRole('progressbar')).not.toBeInTheDocument()
     })
 
-    it('shows the all-clear state when there is nothing to do', async () => {
-        vi.mocked(getTodoItems).mockResolvedValue([])
+    it('shows the empty state when no program is ending', async () => {
+        vi.mocked(getEndingPrograms).mockResolvedValue([])
 
-        await renderAsync(TodoTodayWidget({ ctx: makeCtx() }))
+        await renderAsync(ProgramEndingWidget({ ctx: makeCtx() }))
 
-        expect(screen.getByText('Tutto in ordine: nessuna azione richiesta.')).toBeInTheDocument()
+        expect(screen.getByText('Nessun programma in chiusura senza un programma successivo.')).toBeInTheDocument()
     })
 
     it('shows the error card when loading fails', async () => {
-        vi.mocked(getTodoItems).mockRejectedValue(new Error('db down'))
+        vi.mocked(getEndingPrograms).mockRejectedValue(new Error('db down'))
 
-        await renderAsync(TodoTodayWidget({ ctx: makeCtx() }))
+        await renderAsync(ProgramEndingWidget({ ctx: makeCtx() }))
 
-        expect(within(screen.getByRole('region', { name: 'Da fare oggi' })).getByRole('alert')).toHaveTextContent(
+        expect(within(screen.getByRole('region', { name: 'Programmi in chiusura' })).getByRole('alert')).toHaveTextContent(
+            'Impossibile caricare questa sezione',
+        )
+    })
+})
+
+describe('SubscriptionAlertsWidget', () => {
+    const alert = (index: number, status: SubscriptionAlert['status'] = 'expiring'): SubscriptionAlert => ({
+        status,
+        traineeId: `t${index}`,
+        traineeName: `Atleta ${index}`,
+        days: index,
+    })
+
+    it('lists expired and expiring subscriptions linking to the subscriptions page', async () => {
+        vi.mocked(getSubscriptionAlerts).mockResolvedValue([
+            { status: 'expired', traineeId: 't1', traineeName: 'Anna Rossi', days: 2 },
+            { status: 'expiring', traineeId: 't2', traineeName: 'Luca Bianchi', days: 1 },
+        ])
+
+        await renderAsync(SubscriptionAlertsWidget({ ctx: makeCtx() }))
+
+        const region = screen.getByRole('region', { name: 'Abbonamenti' })
+        const links = within(region).getAllByRole('link')
+        expect(getSubscriptionAlerts).toHaveBeenCalledWith('trainer-1', TRAINEES, NOW)
+        expect(links.map((link) => link.getAttribute('href'))).toEqual(['/trainer/subscriptions', '/trainer/subscriptions'])
+        expect(links[0]).toHaveTextContent('Scaduto da 2 giorni')
+        expect(links[1]).toHaveTextContent('In scadenza domani')
+        expect(within(region).queryByRole('button')).not.toBeInTheDocument()
+    })
+
+    it('pages through more than 6 rows', async () => {
+        vi.mocked(getSubscriptionAlerts).mockResolvedValue(Array.from({ length: 8 }, (_, index) => alert(index + 1)))
+
+        await renderAsync(SubscriptionAlertsWidget({ ctx: makeCtx() }))
+
+        const region = screen.getByRole('region', { name: 'Abbonamenti' })
+        const previous = within(region).getByRole('button', { name: 'Pagina precedente' })
+        const next = within(region).getByRole('button', { name: 'Pagina successiva' })
+        expect(within(region).getByText('8')).toBeInTheDocument()
+        expect(within(region).getAllByRole('link')).toHaveLength(6)
+        expect(within(region).getByText('1 / 2')).toBeInTheDocument()
+        expect(previous).toBeDisabled()
+
+        fireEvent.click(next)
+
+        expect(within(region).getAllByRole('link').map((link) => link.textContent)).toEqual([
+            expect.stringContaining('Atleta 7'),
+            expect.stringContaining('Atleta 8'),
+        ])
+        expect(within(region).getByText('2 / 2')).toBeInTheDocument()
+        expect(next).toBeDisabled()
+
+        fireEvent.click(previous)
+
+        expect(within(region).getAllByRole('link')).toHaveLength(6)
+    })
+
+    it('shows the empty state when no subscription needs attention', async () => {
+        vi.mocked(getSubscriptionAlerts).mockResolvedValue([])
+
+        await renderAsync(SubscriptionAlertsWidget({ ctx: makeCtx() }))
+
+        expect(screen.getByText('Nessun abbonamento scaduto o in scadenza.')).toBeInTheDocument()
+    })
+
+    it('shows the error card when loading fails', async () => {
+        vi.mocked(getSubscriptionAlerts).mockRejectedValue(new Error('db down'))
+
+        await renderAsync(SubscriptionAlertsWidget({ ctx: makeCtx() }))
+
+        expect(within(screen.getByRole('region', { name: 'Abbonamenti' })).getByRole('alert')).toHaveTextContent(
             'Impossibile caricare questa sezione',
         )
     })
@@ -172,49 +234,5 @@ describe('InactiveTraineesWidget', () => {
         await renderAsync(InactiveTraineesWidget({ ctx: makeCtx() }))
 
         expect(within(screen.getByRole('region', { name: 'Atleti inattivi' })).getByRole('alert')).toBeInTheDocument()
-    })
-})
-
-describe('RecentFeedbackWidget', () => {
-    it('shows trainee, exercise, relative time, RPE badge and the note, linking to the program', async () => {
-        vi.mocked(getRecentFeedback).mockResolvedValue([
-            {
-                id: 'f1', traineeName: 'Anna Rossi', exerciseName: 'Squat', programId: 'p1',
-                rpe: 9.5, isHighRpe: true, note: 'Ginocchio dolorante', loggedAt: at('2026-10-03T08:00:00'),
-            },
-            {
-                id: 'f2', traineeName: 'Luca Bianchi', exerciseName: 'Panca', programId: 'p2',
-                rpe: null, isHighRpe: false, note: 'Tutto bene', loggedAt: at('2026-10-02T09:00:00'),
-            },
-        ])
-
-        await renderAsync(RecentFeedbackWidget({ ctx: makeCtx() }))
-
-        const region = screen.getByRole('region', { name: 'Feedback recenti' })
-        const links = within(region).getAllByRole('link')
-        expect(getRecentFeedback).toHaveBeenCalledWith('trainer-1', TRAINEES, NOW)
-        expect(links[0]).toHaveAttribute('href', '/trainer/programs/p1')
-        expect(links[0]).toHaveTextContent('Anna Rossi')
-        expect(links[0]).toHaveTextContent('Squat')
-        expect(links[0]).toHaveTextContent('2 ore fa')
-        expect(links[0]).toHaveTextContent('Ginocchio dolorante')
-        expect(within(links[0]).getByText('RPE 9.5')).toHaveClass('bg-red-100')
-        expect(within(links[1]).queryByText(/RPE/)).not.toBeInTheDocument()
-    })
-
-    it('shows the empty state', async () => {
-        vi.mocked(getRecentFeedback).mockResolvedValue([])
-
-        await renderAsync(RecentFeedbackWidget({ ctx: makeCtx() }))
-
-        expect(screen.getByText('Nessuna nota o RPE alto negli ultimi 7 giorni.')).toBeInTheDocument()
-    })
-
-    it('shows the error card when loading fails', async () => {
-        vi.mocked(getRecentFeedback).mockRejectedValue(new Error('db down'))
-
-        await renderAsync(RecentFeedbackWidget({ ctx: makeCtx() }))
-
-        expect(within(screen.getByRole('region', { name: 'Feedback recenti' })).getByRole('alert')).toBeInTheDocument()
     })
 })
