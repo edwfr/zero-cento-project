@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import DashboardLayout from '@/components/DashboardLayout'
 
@@ -49,6 +49,19 @@ describe('DashboardLayout', () => {
             </DashboardLayout>
         )
         expect(screen.queryByTestId('back-nav-link')).not.toBeInTheDocument()
+    })
+
+    it('links the trainer menu to the subscriptions page', () => {
+        render(
+            <DashboardLayout user={mockUser}>
+                <div>Test Content</div>
+            </DashboardLayout>
+        )
+
+        fireEvent.click(screen.getByRole('button', { name: 'navigation.openNavigationMenu' }))
+
+        const link = screen.getAllByRole('link').find((item) => item.getAttribute('href') === '/trainer/subscriptions')
+        expect(link).toBeDefined()
     })
 })
 

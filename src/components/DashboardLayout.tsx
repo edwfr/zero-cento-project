@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { createClient } from '@/lib/supabase-client'
 import {
     ArrowLeft,
+    CalendarClock,
     Home,
     Users,
     ClipboardList,
@@ -37,6 +38,7 @@ const NAV_ITEMS: Record<string, { href: string; icon: ReactNode; titleKey: strin
     trainer: [
         { href: '/trainer/dashboard', icon: <Home className="w-5 h-5" />, titleKey: 'navigation.dashboard' },
         { href: '/trainer/trainees', icon: <Users className="w-5 h-5" />, titleKey: 'navigation.myAthletes' },
+        { href: '/trainer/subscriptions', icon: <CalendarClock className="w-5 h-5" />, titleKey: 'navigation.subscriptions' },
         { href: '/trainer/programs', icon: <ClipboardList className="w-5 h-5" />, titleKey: 'navigation.programs' },
         { href: '/trainer/exercises', icon: <Dumbbell className="w-5 h-5" />, titleKey: 'navigation.exercises' },
         { href: '/profile', icon: <User className="w-5 h-5" />, titleKey: 'navigation.myProfile' },
