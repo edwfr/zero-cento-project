@@ -13,6 +13,13 @@ vi.mock('@/lib/supabase-server', () => ({
     createClient: async () => ({ auth: { getUser } }),
 }))
 
+vi.mock('@sentry/nextjs', () => ({
+    setUser: vi.fn(),
+    setTag: vi.fn(),
+}))
+
+import * as Sentry from '@sentry/nextjs'
+
 import {
     getSession,
     getSessionIncludingInactive,
@@ -244,6 +251,25 @@ describe('requireAuth', () => {
             code: 'UNAUTHORIZED',
             key: 'auth.authenticationRequired',
         })
+    })
+
+    it('tags the Sentry scope with the user id and role, without PII', async () => {
+        vi.mocked(Sentry.setUser).mockClear()
+        vi.mocked(Sentry.setTag).mockClear()
+
+        await requireAuth()
+
+        expect(Sentry.setUser).toHaveBeenCalledWith({ id: 'supabase-uuid-1' })
+        expect(Sentry.setTag).toHaveBeenCalledWith('role', 'trainer')
+    })
+
+    it('does not set the Sentry user when unauthenticated', async () => {
+        vi.mocked(Sentry.setUser).mockClear()
+        getUser.mockResolvedValue({ data: { user: null }, error: null })
+
+        await caught(requireAuth())
+
+        expect(Sentry.setUser).not.toHaveBeenCalled()
     })
 })
 

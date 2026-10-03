@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs'
 import { cache } from 'react'
 import { createClient } from './supabase-server'
 import { prisma } from './prisma'
@@ -230,6 +231,10 @@ export async function requireAuth(): Promise<AuthSession> {
             AUTH_ERROR_KEYS.authenticationRequired
         )
     }
+
+    // Attach who hit the error to any Sentry event in this request. Id only (no PII).
+    Sentry.setUser({ id: session.user.id })
+    Sentry.setTag('role', session.user.role)
 
     return session
 }
