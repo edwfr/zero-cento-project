@@ -207,9 +207,3 @@ jobs:
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-args: '--prod'
-
-      - name: Run database migrations
-        run: npm run prisma:migrate:prod
-        env:
-          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
-          DIRECT_URL: ${{ secrets.PRODUCTION_DIRECT_URL }}
