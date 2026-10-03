@@ -14,6 +14,19 @@ export async function POST(request: NextRequest) {
         const session = await requireAuthDuringOnboarding()
 
         // Activate the user
+        // Onboarding completes once: an inactive user who already activated was
+        // deactivated by a trainer or admin and must not reactivate themselves
+        if (!session.user.isActive) {
+            const previousActivation = await prisma.userStatusEvent.findFirst({
+                where: { userId: session.user.id, type: 'activated' },
+                select: { id: true },
+            })
+
+            if (previousActivation) {
+                return apiError('FORBIDDEN', 'Account deactivated', 403, undefined, 'user.accountDeactivated')
+            }
+        }
+
         // The activation is the trainee's own step: they are its author
         const updatedUser = await prisma.$transaction(async (tx) => {
             const updated = await tx.user.update({

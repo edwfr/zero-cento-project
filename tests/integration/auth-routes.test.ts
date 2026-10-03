@@ -119,6 +119,22 @@ describe('POST /api/auth/activate', () => {
         })
     })
 
+    it('refuses a deactivated user who already completed onboarding', async () => {
+        requireAuthDuringOnboarding.mockResolvedValue({ user: { ...mockTrainerSession.user, isActive: false } })
+        prismaMock.userStatusEvent.findFirst.mockResolvedValue({ id: 'event-1' } as never)
+
+        const response = await activate(makeRequest({}))
+        const body = await response.json()
+
+        expect(response.status).toBe(403)
+        expect(body.error.key).toBe('user.accountDeactivated')
+        expect(prismaMock.userStatusEvent.findFirst).toHaveBeenCalledWith({
+            where: { userId: mockTrainerSession.user.id, type: 'activated' },
+            select: { id: true },
+        })
+        expect(prismaMock.user.update).not.toHaveBeenCalled()
+    })
+
     it('records nothing when the user was already active', async () => {
         const response = await activate(makeRequest({}))
 

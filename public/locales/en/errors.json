@@ -107,6 +107,7 @@
         "alreadyOnboarded": "This user has already accepted the invitation",
         "invitationPending": "The athlete has not accepted the invitation yet: resend it from their profile",
         "inviteRateLimited": "Too many emails sent, retry in a few minutes",
+        "accountDeactivated": "Your account has been deactivated: contact your trainer",
         "canOnlyDeactivateTrainee": "Can only deactivate trainee accounts",
         "onlyAdminCreateTrainer": "Only admins can create trainers",
         "onlyAdminTrainerCreateTrainee": "Only admins and trainers can create trainees"

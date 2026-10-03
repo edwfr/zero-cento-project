@@ -20,7 +20,8 @@ import { PATCH as deactivateUser } from '@/app/api/users/[id]/deactivate/route'
 import { syncUserMetadata } from '@/lib/sync-user-metadata'
 import { isInvitationPending } from '@/lib/invitation'
 import { prismaMock } from '../helpers/prisma-mock'
-import { asTrainer, asAdmin, asUnauthenticated } from '../helpers/auth-mock'
+import { asTrainer, asAdmin, asUnauthenticated, asForbidden } from '../helpers/auth-mock'
+import { requireRole } from '@/lib/auth'
 import { mockTrainerSession } from '../helpers/sessions'
 
 const TRAINEE_ID = 'trainee-uuid-1'
@@ -64,6 +65,16 @@ describe('PATCH /api/users/[id]/activate', () => {
         expect(res.status).toBe(200)
         expect(vi.mocked(isInvitationPending)).not.toHaveBeenCalled()
         expect(prismaMock.userStatusEvent.create).not.toHaveBeenCalled()
+    })
+
+    it('returns 403 for a trainee', async () => {
+        asForbidden()
+
+        const res = await activateUser(makeRequest('activate'), withParams({ id: TRAINEE_ID }))
+
+        expect(res.status).toBe(403)
+        expect(vi.mocked(requireRole)).toHaveBeenCalledWith(['admin', 'trainer'])
+        expect(prismaMock.user.update).not.toHaveBeenCalled()
     })
 
     it('records a reactivated event authored by the trainer', async () => {
@@ -174,6 +185,16 @@ describe('PATCH /api/users/[id]/deactivate', () => {
             expect.objectContaining({ where: { id: TRAINEE_ID }, data: { isActive: false } })
         )
         expect(vi.mocked(syncUserMetadata)).toHaveBeenCalledWith(TRAINEE_ID, { isActive: false })
+    })
+
+    it('returns 403 for a trainee', async () => {
+        asForbidden()
+
+        const res = await deactivateUser(makeRequest('deactivate'), withParams({ id: TRAINEE_ID }))
+
+        expect(res.status).toBe(403)
+        expect(vi.mocked(requireRole)).toHaveBeenCalledWith(['admin', 'trainer'])
+        expect(prismaMock.user.update).not.toHaveBeenCalled()
     })
 
     it('records a deactivated event authored by the trainer', async () => {

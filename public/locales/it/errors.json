@@ -107,6 +107,7 @@
         "alreadyOnboarded": "L'utente ha già accettato l'invito",
         "invitationPending": "L'atleta non ha ancora accettato l'invito: reinvialo dal suo profilo",
         "inviteRateLimited": "Troppe email inviate, riprova tra qualche minuto",
+        "accountDeactivated": "Il tuo account è stato disattivato: contatta il tuo trainer",
         "canOnlyDeactivateTrainee": "È possibile disattivare solo account atleta",
         "onlyAdminCreateTrainer": "Solo gli admin possono creare trainer",
         "onlyAdminTrainerCreateTrainee": "Solo admin e trainer possono creare atleti"

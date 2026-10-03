@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
-import { requireAuth } from '@/lib/auth'
+import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { syncUserMetadata } from '@/lib/sync-user-metadata'
 
@@ -16,7 +16,7 @@ type Params = {
 export async function PATCH(request: NextRequest, { params }: Params) {
     const { id } = await params
     try {
-        const session = await requireAuth()
+        const session = await requireRole(['admin', 'trainer'])
 
         // Check user exists
         const existingUser = await prisma.user.findUnique({
