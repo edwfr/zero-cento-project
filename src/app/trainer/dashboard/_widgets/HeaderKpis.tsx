@@ -7,12 +7,12 @@ import type { WidgetContext } from './types'
 
 function Kpi({ icon, label, value, footer }: { icon: ReactNode; label: string; value: ReactNode; footer?: ReactNode }) {
     return (
-        <div className="rounded-lg bg-white/5 px-4 py-3 ring-1 ring-inset ring-white/10">
-            <p className="flex items-center gap-2 text-sm text-gray-300">
+        <div className="rounded-lg bg-gray-50 px-4 py-3 ring-1 ring-inset ring-gray-200">
+            <p className="flex items-center gap-2 text-sm text-gray-600">
                 <span className="text-brand-primary" aria-hidden="true">{icon}</span>
                 {label}
             </p>
-            <p className="mt-1 text-3xl font-bold text-white">{value}</p>
+            <p className="mt-1 text-3xl font-bold text-gray-900">{value}</p>
             {footer}
         </div>
     )
@@ -21,7 +21,7 @@ function Kpi({ icon, label, value, footer }: { icon: ReactNode; label: string; v
 function WeekDelta({ current, previous, t }: { current: number; previous: number; t: Translate }) {
     const delta = current - previous
     const DeltaIcon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus
-    const deltaColor = delta > 0 ? 'text-green-400' : delta < 0 ? 'text-red-400' : 'text-gray-400'
+    const deltaColor = delta > 0 ? 'text-green-600' : delta < 0 ? 'text-red-600' : 'text-gray-500'
 
     return (
         <p className={`mt-1 flex items-center gap-1 text-sm ${deltaColor}`}>
@@ -37,7 +37,7 @@ export default async function HeaderKpis({ ctx }: { ctx: WidgetContext }) {
 
     if (!result.ok) {
         return (
-            <p role="alert" className="mt-6 text-sm text-gray-300">
+            <p role="alert" className="mt-6 text-sm text-gray-600">
                 {t('trainerDashboard.header.kpiUnavailable')}
             </p>
         )
