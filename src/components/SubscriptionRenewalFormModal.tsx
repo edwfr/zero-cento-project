@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
 import { FormLabel } from '@/components/FormLabel'
+import DatePicker from '@/components/DatePicker'
 import {
     DURATION_SHORTCUTS,
     MAX_DURATION_MONTHS,
@@ -75,15 +76,14 @@ export default function SubscriptionRenewalFormModal({
                     {mode === 'edit' ? t('subscriptions.editTitle') : t('subscriptions.createTitle')}
                 </h2>
 
+                {/* Shared DatePicker: dd/MM/yyyy whatever the browser locale (a native date input follows it) */}
                 <div className="mb-4">
-                    <FormLabel htmlFor="renewal-start-date" required>
-                        {t('subscriptions.startDate')}
-                    </FormLabel>
-                    <Input
+                    <DatePicker
                         id="renewal-start-date"
-                        type="date"
+                        label={t('subscriptions.startDate')}
                         value={startDate}
-                        onChange={(event) => setStartDate(event.target.value)}
+                        onChange={setStartDate}
+                        required
                         disabled={isSaving}
                     />
                 </div>

@@ -61,7 +61,7 @@ describe('SubscriptionTab', () => {
 
         fireEvent.click(screen.getByRole('button', { name: 'subscriptions.addButton' }))
 
-        expect(screen.getByLabelText(/subscriptions\.startDate/)).toHaveValue('2026-10-11')
+        expect(screen.getByLabelText(/subscriptions\.startDate/)).toHaveValue('11/10/2026')
     })
 
     it('creates a renewal and reloads the shared state', async () => {

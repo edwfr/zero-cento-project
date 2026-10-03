@@ -27,7 +27,8 @@ describe('SubscriptionRenewalFormModal', () => {
     it('pre-fills the start date with the proposed default', () => {
         renderCreate('2026-11-01')
 
-        expect(screen.getByLabelText(/subscriptions\.startDate/)).toHaveValue('2026-11-01')
+        // Italian day/month/year, not the browser-locale native date input
+        expect(screen.getByLabelText(/subscriptions\.startDate/)).toHaveValue('01/11/2026')
     })
 
     it('disables save until a duration is entered', () => {
@@ -67,6 +68,16 @@ describe('SubscriptionRenewalFormModal', () => {
         expect(onSubmit).toHaveBeenCalledWith({ startDate: '2026-11-01', durationMonths: 3 })
     })
 
+    it('accepts a start date typed as dd/MM/yyyy', () => {
+        renderCreate('2026-11-01')
+
+        fireEvent.change(screen.getByLabelText(/subscriptions\.startDate/), { target: { value: '15/12/2026' } })
+        fireEvent.change(screen.getByLabelText(/subscriptions\.duration/), { target: { value: '1' } })
+        save()
+
+        expect(onSubmit).toHaveBeenCalledWith({ startDate: '2026-12-15', durationMonths: 1 })
+    })
+
     it.each(['0', '37', '1.5'])('shows an inline error for duration %s and does not submit', (value) => {
         renderCreate()
 
@@ -97,7 +108,7 @@ describe('SubscriptionRenewalFormModal', () => {
         )
 
         expect(screen.getByText('subscriptions.editTitle')).toBeInTheDocument()
-        expect(screen.getByLabelText(/subscriptions\.startDate/)).toHaveValue('2026-09-10')
+        expect(screen.getByLabelText(/subscriptions\.startDate/)).toHaveValue('10/09/2026')
         expect(screen.getByLabelText(/subscriptions\.duration/)).toHaveValue(6)
     })
 

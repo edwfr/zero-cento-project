@@ -16,7 +16,8 @@ function expiringStartDate(): string {
     const start = new Date()
     start.setDate(start.getDate() - 20)
     const pad = (value: number) => String(value).padStart(2, '0')
-    return `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`
+    // The form takes Italian dd/MM/yyyy
+    return `${pad(start.getDate())}/${pad(start.getMonth() + 1)}/${start.getFullYear()}`
 }
 
 test.describe('Trainer: subscription renewals', () => {

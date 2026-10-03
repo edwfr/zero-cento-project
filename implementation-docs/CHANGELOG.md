@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [3 Ottobre 2026] — Data inizio rinnovo in formato GG/MM/AAAA
+
+**File modificati:** `src/components/SubscriptionRenewalFormModal.tsx`, `tests/unit/subscription-renewal-form-modal.test.tsx`, `tests/unit/trainer-subscription-tab.test.tsx`, `tests/e2e/trainer-subscription-renewals.spec.ts`, `implementation-docs/CHANGELOG.md`
+**Note:** Nel popup "Registra rinnovo" la data inizio usava l'`<input type="date">` nativo, il cui formato dipende dalla lingua del browser (es. `10/08/2026` all'americana). Ora usa il `DatePicker` condiviso: campo testo GG/MM/AAAA con pulsante calendario; il valore inviato all'API resta ISO `YYYY-MM-DD`.
 ### [3 Ottobre 2026] — Migrazioni Prisma automatiche nella build Vercel di produzione
 
 **File modificati:** `scripts/vercel-build.sh` (nuovo), `package.json`, `.github/workflows/ci.yml`, `implementation-docs/CHANGELOG.md`
