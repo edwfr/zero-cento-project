@@ -6,16 +6,13 @@ import * as Sentry from "@sentry/nextjs";
 import { shouldDropClientEvent } from "@/lib/sentry-filters";
 
 Sentry.init({
-  dsn: "https://6f6bb89cfb277fd8523a512ddb9fd313@o4511254075539456.ingest.de.sentry.io/4511254077243472",
-
-  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-  tracesSampleRate: 1,
-  // Enable logs to be sent to Sentry
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  environment: process.env.NEXT_PUBLIC_APP_ENV,
+  // Same sampling as server/edge; keeps span usage within the free plan.
+  tracesSampleRate: parseFloat(process.env.NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE ?? "0.1"),
   enableLogs: true,
-
-  // Enable sending user PII (Personally Identifiable Information)
-  // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii
-  sendDefaultPii: true,
+  // No PII (IP address, request headers) — aligned with server/edge.
+  sendDefaultPii: false,
 
   // Drop browser noise (aborted fetches, stale chunks, extensions) to protect the free-plan quota.
   beforeSend(event) {
