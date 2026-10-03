@@ -93,6 +93,29 @@ describe('GET /api/users', () => {
         vi.clearAllMocks()
         // Trainer listings aggregate subscription end dates: default to none recorded
         subscriptionGroupByMock.mockResolvedValue([])
+        prismaMock.userStatusEvent.findMany.mockResolvedValue([] as never)
+    })
+
+    it('flags inactive trainees that never activated their account', async () => {
+        asTrainer()
+        prismaMock.trainerTrainee.findMany.mockResolvedValue([
+            { trainee: { ...mockUsers[0], id: 'pending-1', isActive: false } },
+            { trainee: { ...mockUsers[0], id: 'deactivated-1', isActive: false, createdAt: new Date('2026-01-03') } },
+            { trainee: { ...mockUsers[0], id: 'active-1', createdAt: new Date('2026-01-04') } },
+        ] as never)
+        prismaMock.userStatusEvent.findMany.mockResolvedValue([{ userId: 'deactivated-1' }] as never)
+
+        const res = await GET(makeRequest('http://localhost:3000/api/users?includeInactive=true'))
+        const body = await res.json()
+
+        expect(res.status).toBe(200)
+        const pendingById = Object.fromEntries(
+            body.data.items.map((user: { id: string; pendingActivation: boolean }) => [user.id, user.pendingActivation])
+        )
+        expect(pendingById).toEqual({ 'pending-1': true, 'deactivated-1': false, 'active-1': false })
+        expect(prismaMock.userStatusEvent.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({ where: { userId: { in: ['deactivated-1', 'pending-1'] }, type: 'activated' } })
+        )
     })
 
     it('returns all users for admin', async () => {
@@ -463,6 +486,34 @@ describe('GET /api/users/[id]', () => {
         asAdmin()
         prismaMock.user.findUnique.mockResolvedValue(detailUser as never)
         vi.mocked(isInvitationPending).mockResolvedValue(false)
+        prismaMock.userStatusEvent.findMany.mockResolvedValue([] as never)
+    })
+
+    it('reports pendingActivation for an inactive user with no activated event', async () => {
+        prismaMock.user.findUnique.mockResolvedValue({ ...detailUser, isActive: false } as never)
+
+        const res = await getUser(detailRequest(), detailParams())
+        const body = await res.json()
+
+        expect(body.data.user.pendingActivation).toBe(true)
+    })
+
+    it('reports a deactivated user as not pending', async () => {
+        prismaMock.user.findUnique.mockResolvedValue({ ...detailUser, isActive: false } as never)
+        prismaMock.userStatusEvent.findMany.mockResolvedValue([{ userId: DETAIL_ID }] as never)
+
+        const res = await getUser(detailRequest(), detailParams())
+        const body = await res.json()
+
+        expect(body.data.user.pendingActivation).toBe(false)
+    })
+
+    it('does not query events for an active user', async () => {
+        const res = await getUser(detailRequest(), detailParams())
+        const body = await res.json()
+
+        expect(body.data.user.pendingActivation).toBe(false)
+        expect(prismaMock.userStatusEvent.findMany).not.toHaveBeenCalled()
     })
 
     it('reports invitationPending false for an active user without asking Supabase', async () => {

@@ -7,6 +7,7 @@ import { createUserSchema, userListFilterSchema } from '@/schemas/user'
 import { logger } from '@/lib/logger'
 import { syncUserMetadata } from '@/lib/sync-user-metadata'
 import { getCurrentEndDates } from '@/lib/subscription-queries'
+import { findPendingActivationIds } from '@/lib/user-status-events'
 import { toSubscriptionSummary, type SubscriptionSummary } from '@/lib/subscriptions'
 import { getTodayDateKey } from '@/lib/date-format'
 
@@ -20,6 +21,8 @@ interface ListedUser {
     createdAt: Date
     /** Trainer listing only: current subscription, null when none recorded */
     subscription?: SubscriptionSummary | null
+    /** Trainer listing only: inactive and never completed onboarding */
+    pendingActivation?: boolean
 }
 
 /**
@@ -96,12 +99,16 @@ export async function GET(request: NextRequest) {
                     .map((assoc) => assoc.trainee)
                     .sort((left, right) => right.createdAt.getTime() - left.createdAt.getTime())
 
-                // One aggregate query for every trainee (no N+1)
-                const endDates = await getCurrentEndDates(trainees.map((trainee) => trainee.id))
+                // One aggregate query per concern for every trainee (no N+1)
+                const [endDates, pendingIds] = await Promise.all([
+                    getCurrentEndDates(trainees.map((trainee) => trainee.id)),
+                    findPendingActivationIds(trainees.filter((trainee) => !trainee.isActive).map((trainee) => trainee.id)),
+                ])
                 const today = getTodayDateKey()
                 users = trainees.map((trainee) => ({
                     ...trainee,
                     subscription: toSubscriptionSummary(endDates.get(trainee.id) ?? null, today),
+                    pendingActivation: pendingIds.has(trainee.id),
                 }))
             }
         } else {

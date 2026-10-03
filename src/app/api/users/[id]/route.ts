@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabase-server'
 import { updateUserSchema } from '@/schemas/user'
 import { logger } from '@/lib/logger'
 import { isInvitationPending } from '@/lib/invitation'
+import { findPendingActivationIds } from '@/lib/user-status-events'
 import { syncUserMetadata } from '@/lib/sync-user-metadata'
 
 type Params = {
@@ -55,16 +56,22 @@ export async function GET(request: NextRequest, { params }: Params) {
         }
         // Admin can see anyone
 
-        // Only inactive users can have a pending invite: skip the Supabase call otherwise
+        // Only inactive users can be pending: skip both lookups otherwise
         let invitationPending = false
+        let pendingActivation = false
         if (!user.isActive) {
-            invitationPending = await isInvitationPending(id).catch((error) => {
-                logger.warn({ error, userId: id }, 'Could not read invitation status')
-                return false
-            })
+            const [pendingIds, invitePending] = await Promise.all([
+                findPendingActivationIds([id]),
+                isInvitationPending(id).catch((error) => {
+                    logger.warn({ error, userId: id }, 'Could not read invitation status')
+                    return false
+                }),
+            ])
+            pendingActivation = pendingIds.has(id)
+            invitationPending = invitePending
         }
 
-        return apiSuccess({ user: { ...user, invitationPending } })
+        return apiSuccess({ user: { ...user, invitationPending, pendingActivation } })
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error fetching user')
