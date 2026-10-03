@@ -64,8 +64,37 @@ describe('handleApiError', () => {
         expect(body.error.message).toBe('m')
     })
 
+    it('logs but does not capture client-side upstream errors (status < 500)', async () => {
+        const samePassword = { message: 'New password should be different', status: 422, code: 'same_password' }
+
+        const result = handleApiError(samePassword, { logMessage: 'l', message: 'm', key: 'k' })
+
+        expect(Sentry.captureException).not.toHaveBeenCalled()
+        expect(logger.error).toHaveBeenCalledWith({ err: samePassword }, 'l')
+        expect(result.status).toBe(500)
+        expect((await result.json()).error.key).toBe('k')
+    })
+
+    it('captures upstream errors with status >= 500', () => {
+        const upstream = { message: 'gateway', status: 502 }
+
+        handleApiError(upstream, { logMessage: 'l', message: 'm' })
+
+        expect(Sentry.captureException).toHaveBeenCalledTimes(1)
+    })
+
+    it('logs but does not capture malformed JSON bodies (SyntaxError)', () => {
+        const badJson = new SyntaxError('Unexpected token } in JSON at position 10')
+
+        const result = handleApiError(badJson, { logMessage: 'l', message: 'm' })
+
+        expect(Sentry.captureException).not.toHaveBeenCalled()
+        expect(logger.error).toHaveBeenCalledWith({ err: badJson }, 'l')
+        expect(result.status).toBe(500)
+    })
+
     it('captures non-Error throwables', () => {
-        const supabaseError = { message: 'rate limited', status: 429 }
+        const supabaseError = { message: 'unexpected payload' }
 
         const result = handleApiError(supabaseError, { logMessage: 'l', message: 'm' })
 

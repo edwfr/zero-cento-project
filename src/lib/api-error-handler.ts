@@ -24,7 +24,23 @@ export function handleApiError(error: unknown, opts: HandleApiErrorOptions): Res
     if (error instanceof Response) return error
 
     logger.error({ err: error, ...opts.context }, opts.logMessage)
-    Sentry.captureException(error, { tags: { area: 'api' }, extra: opts.context })
+    if (isReportable(error)) {
+        Sentry.captureException(error, { tags: { area: 'api' }, extra: opts.context })
+    }
 
     return apiError('INTERNAL_ERROR', opts.message, 500, undefined, opts.key)
+}
+
+/**
+ * Keep the Sentry quota for genuine server faults. Still answered with a 500 and logged,
+ * but not reported:
+ * - malformed JSON bodies (`request.json()` throws SyntaxError) — a client mistake;
+ * - upstream errors carrying a 4xx status (e.g. Supabase `same_password`, `weak_password`,
+ *   rate limits) — user input or limits, not a bug.
+ */
+function isReportable(error: unknown): boolean {
+    if (error instanceof SyntaxError) return false
+    const status = (error as { status?: unknown } | null)?.status
+    if (typeof status === 'number' && status < 500) return false
+    return true
 }
