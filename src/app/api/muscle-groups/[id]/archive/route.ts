@@ -1,8 +1,9 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { apiSuccess, apiError } from '@/lib/api-response'
+import { apiSuccess } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 type Params = {
     params: Promise<{ id: string }>
@@ -25,9 +26,11 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         logger.info({ muscleGroupId: id }, 'Muscle group archived')
 
         return apiSuccess({ muscleGroup })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error archiving muscle group')
-        return apiError('INTERNAL_ERROR', 'Failed to archive muscle group', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error archiving muscle group',
+            message: 'Failed to archive muscle group',
+            key: 'internal.default',
+        })
     }
 }

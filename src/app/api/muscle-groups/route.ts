@@ -4,6 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { muscleGroupSchema } from '@/schemas/muscle-group'
 import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * GET /api/muscle-groups
@@ -32,10 +33,12 @@ export async function GET(request: NextRequest) {
         })
 
         return apiSuccess({ items: muscleGroups })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error fetching muscle groups')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch muscle groups', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching muscle groups',
+            message: 'Failed to fetch muscle groups',
+            key: 'internal.default',
+        })
     }
 }
 
@@ -76,9 +79,11 @@ export async function POST(request: NextRequest) {
         logger.info({ muscleGroupId: muscleGroup.id }, 'Muscle group created')
 
         return apiSuccess({ muscleGroup }, 201)
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error creating muscle group')
-        return apiError('INTERNAL_ERROR', 'Failed to create muscle group', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error creating muscle group',
+            message: 'Failed to create muscle group',
+            key: 'internal.default',
+        })
     }
 }

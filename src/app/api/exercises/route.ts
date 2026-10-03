@@ -4,6 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { exerciseSchema, exerciseFilterSchema } from '@/schemas/exercise'
 import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * GET /api/exercises
@@ -143,10 +144,12 @@ export async function GET(request: NextRequest) {
                 hasMore,
             },
         })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error fetching exercises')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch exercises', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching exercises',
+            message: 'Failed to fetch exercises',
+            key: 'internal.default',
+        })
     }
 }
 
@@ -269,9 +272,11 @@ export async function POST(request: NextRequest) {
         }
 
         return apiSuccess({ exercise: responseExercise }, 201)
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error creating exercise')
-        return apiError('INTERNAL_ERROR', 'Failed to create exercise', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error creating exercise',
+            message: 'Failed to create exercise',
+            key: 'internal.default',
+        })
     }
 }

@@ -7,6 +7,7 @@ import { createMeasurementsSchema } from '@/schemas/trainee-measurement'
 import { isMeasurementMetric, toMeasurementDay, type MeasurementMetric } from '@/lib/measurements'
 import { logger } from '@/lib/logger'
 import type { AuthSession } from '@/lib/auth'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * Body measurements are trainer-only data: the trainee has no read or write
@@ -85,10 +86,12 @@ export async function GET(request: NextRequest) {
         })
 
         return apiSuccess({ items })
-    } catch (error: unknown) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error fetching trainee measurements')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch measurements', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching trainee measurements',
+            message: 'Failed to fetch measurements',
+            key: 'internal.default',
+        })
     }
 }
 
@@ -154,9 +157,11 @@ export async function POST(request: NextRequest) {
         )
 
         return apiSuccess({ items }, 201)
-    } catch (error: unknown) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error saving trainee measurements')
-        return apiError('INTERNAL_ERROR', 'Failed to save measurements', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error saving trainee measurements',
+            message: 'Failed to save measurements',
+            key: 'internal.default',
+        })
     }
 }

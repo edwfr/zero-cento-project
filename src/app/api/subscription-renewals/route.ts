@@ -7,6 +7,7 @@ import { addMonthsClamped, latestEndDate, toSubscriptionSummary } from '@/lib/su
 import { getTodayDateKey } from '@/lib/date-format'
 import { logger } from '@/lib/logger'
 import { guardRenewalAccess } from './_access'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * GET /api/subscription-renewals?traineeId=
@@ -32,10 +33,12 @@ export async function GET(request: NextRequest) {
         const current = toSubscriptionSummary(latestEndDate(items), getTodayDateKey())
 
         return apiSuccess({ items, current })
-    } catch (error: unknown) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error fetching subscription renewals')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch subscription renewals', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching subscription renewals',
+            message: 'Failed to fetch subscription renewals',
+            key: 'internal.default',
+        })
     }
 }
 
@@ -79,9 +82,11 @@ export async function POST(request: NextRequest) {
         logger.info({ traineeId, renewalId: renewal.id, userId: session.user.id }, 'Subscription renewal created')
 
         return apiSuccess({ renewal }, 201)
-    } catch (error: unknown) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error creating subscription renewal')
-        return apiError('INTERNAL_ERROR', 'Failed to create subscription renewal', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error creating subscription renewal',
+            message: 'Failed to create subscription renewal',
+            key: 'internal.default',
+        })
     }
 }

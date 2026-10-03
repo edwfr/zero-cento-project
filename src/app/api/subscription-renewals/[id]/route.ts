@@ -6,6 +6,7 @@ import { updateRenewalSchema } from '@/schemas/subscription-renewal'
 import { addMonthsClamped } from '@/lib/subscriptions'
 import { logger } from '@/lib/logger'
 import { denyTrainee, guardRenewalAccess } from '../_access'
+import { handleApiError } from '@/lib/api-error-handler'
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -44,10 +45,13 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
         logger.info({ renewalId: id, traineeId: renewal.traineeId, userId: session.user.id }, 'Subscription renewal updated')
 
         return apiSuccess({ renewal: updated })
-    } catch (error: unknown) {
-        if (error instanceof Response) return error
-        logger.error({ error, renewalId: id }, 'Error updating subscription renewal')
-        return apiError('INTERNAL_ERROR', 'Failed to update subscription renewal', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error updating subscription renewal',
+            message: 'Failed to update subscription renewal',
+            key: 'internal.default',
+            context: { renewalId: id },
+        })
     }
 }
 
@@ -75,9 +79,12 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
         logger.info({ renewalId: id, traineeId: renewal.traineeId, userId: session.user.id }, 'Subscription renewal deleted')
 
         return apiSuccess({ success: true })
-    } catch (error: unknown) {
-        if (error instanceof Response) return error
-        logger.error({ error, renewalId: id }, 'Error deleting subscription renewal')
-        return apiError('INTERNAL_ERROR', 'Failed to delete subscription renewal', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error deleting subscription renewal',
+            message: 'Failed to delete subscription renewal',
+            key: 'internal.default',
+            context: { renewalId: id },
+        })
     }
 }

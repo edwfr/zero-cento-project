@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { apiSuccess, apiError } from '@/lib/api-response'
+import { apiSuccess } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
-import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * GET /api/feedback
@@ -143,9 +143,11 @@ export async function GET(request: NextRequest) {
                 hasMore,
             },
         })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error fetching feedback')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch feedback', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching feedback',
+            message: 'Failed to fetch feedback',
+            key: 'internal.default',
+        })
     }
 }

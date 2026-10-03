@@ -1,5 +1,6 @@
 import { getSession } from '@/lib/auth'
 import { apiSuccess, apiError } from '@/lib/api-response'
+import { handleApiError } from '@/lib/api-error-handler'
 import { createClient, createAdminClient } from '@/lib/supabase-server'
 import { z } from 'zod'
 
@@ -54,7 +55,11 @@ export async function POST(request: Request) {
         })
 
         if (updateError) {
-            return apiError('INTERNAL_ERROR', 'Failed to update password', 500, undefined, 'internal.default')
+            return handleApiError(updateError, {
+                logMessage: 'Supabase password update failed',
+                message: 'Failed to update password',
+                key: 'internal.default',
+            })
         }
 
         // Get current metadata to preserve existing values
@@ -70,7 +75,11 @@ export async function POST(request: Request) {
         })
 
         if (metadataError) {
-            return apiError('INTERNAL_ERROR', 'Failed to update user metadata', 500, undefined, 'internal.default')
+            return handleApiError(metadataError, {
+                logMessage: 'Supabase metadata update after password change failed',
+                message: 'Failed to update user metadata',
+                key: 'internal.default',
+            })
         }
 
         return apiSuccess({
@@ -78,6 +87,10 @@ export async function POST(request: Request) {
             messageKey: 'auth.passwordChangedSuccess',
         })
     } catch (error: any) {
-        return apiError('INTERNAL_ERROR', error.message || 'Failed to change password', 500, undefined, 'internal.default')
+        return handleApiError(error, {
+            logMessage: 'Error changing password',
+            message: error?.message || 'Failed to change password',
+            key: 'internal.default',
+        })
     }
 }

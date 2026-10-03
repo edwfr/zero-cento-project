@@ -4,6 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { z } from 'zod'
+import { handleApiError } from '@/lib/api-error-handler'
 
 const movementPatternColorSchema = z.object({
     movementPatternId: z.string().uuid(),
@@ -40,10 +41,12 @@ export async function GET(request: NextRequest) {
         })
 
         return apiSuccess({ items: colors })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error fetching movement pattern colors')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch movement pattern colors', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching movement pattern colors',
+            message: 'Failed to fetch movement pattern colors',
+            key: 'internal.default',
+        })
     }
 }
 
@@ -105,9 +108,11 @@ export async function PUT(request: NextRequest) {
         )
 
         return apiSuccess({ items: results })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error updating movement pattern colors')
-        return apiError('INTERNAL_ERROR', 'Failed to update movement pattern colors', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error updating movement pattern colors',
+            message: 'Failed to update movement pattern colors',
+            key: 'internal.default',
+        })
     }
 }

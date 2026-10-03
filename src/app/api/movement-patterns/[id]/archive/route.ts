@@ -1,8 +1,9 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { apiSuccess, apiError } from '@/lib/api-response'
+import { apiSuccess } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 type Params = {
     params: Promise<{ id: string }>
@@ -25,9 +26,11 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         logger.info({ movementPatternId: id }, 'Movement pattern archived')
 
         return apiSuccess({ movementPattern })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error archiving movement pattern')
-        return apiError('INTERNAL_ERROR', 'Failed to archive movement pattern', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error archiving movement pattern',
+            message: 'Failed to archive movement pattern',
+            key: 'internal.default',
+        })
     }
 }

@@ -4,6 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { updateMuscleGroupSchema } from '@/schemas/muscle-group'
 import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 type Params = {
     params: Promise<{ id: string }>
@@ -34,10 +35,12 @@ export async function GET(request: NextRequest, { params }: Params) {
         }
 
         return apiSuccess({ muscleGroup })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error fetching muscle group')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch muscle group', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching muscle group',
+            message: 'Failed to fetch muscle group',
+            key: 'internal.default',
+        })
     }
 }
 
@@ -63,10 +66,12 @@ export async function PUT(request: NextRequest, { params }: Params) {
         logger.info({ muscleGroupId: id }, 'Muscle group updated')
 
         return apiSuccess({ muscleGroup })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error updating muscle group')
-        return apiError('INTERNAL_ERROR', 'Failed to update muscle group', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error updating muscle group',
+            message: 'Failed to update muscle group',
+            key: 'internal.default',
+        })
     }
 }
 
@@ -103,9 +108,11 @@ export async function DELETE(request: NextRequest, { params }: Params) {
             message: 'Muscle group deleted successfully',
             messageKey: 'muscleGroup.deletedSuccess',
         })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error deleting muscle group')
-        return apiError('INTERNAL_ERROR', 'Failed to delete muscle group', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error deleting muscle group',
+            message: 'Failed to delete muscle group',
+            key: 'internal.default',
+        })
     }
 }

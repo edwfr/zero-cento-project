@@ -5,6 +5,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { exerciseSchema } from '@/schemas/exercise'
 import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * GET /api/exercises/[id]
@@ -62,10 +63,13 @@ export async function GET(
         }
 
         return apiSuccess({ exercise })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error, exerciseId }, 'Error fetching exercise')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch exercise', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching exercise',
+            message: 'Failed to fetch exercise',
+            key: 'internal.default',
+            context: { exerciseId },
+        })
     }
 }
 
@@ -201,10 +205,13 @@ export async function PUT(
         logger.info({ exerciseId, userId: session.user.id }, 'Exercise updated successfully')
 
         return apiSuccess({ exercise })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error, exerciseId }, 'Error updating exercise')
-        return apiError('INTERNAL_ERROR', 'Failed to update exercise', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error updating exercise',
+            message: 'Failed to update exercise',
+            key: 'internal.default',
+            context: { exerciseId },
+        })
     }
 }
 
@@ -317,9 +324,12 @@ export async function DELETE(
             message: 'Exercise deleted successfully',
             messageKey: 'exercise.deletedSuccess',
         })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error, exerciseId }, 'Error deleting exercise')
-        return apiError('INTERNAL_ERROR', 'Failed to delete exercise', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error deleting exercise',
+            message: 'Failed to delete exercise',
+            key: 'internal.default',
+            context: { exerciseId },
+        })
     }
 }

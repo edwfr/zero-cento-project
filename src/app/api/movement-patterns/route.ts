@@ -4,6 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { movementPatternSchema } from '@/schemas/movement-pattern'
 import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * GET /api/movement-patterns
@@ -47,10 +48,12 @@ export async function GET(request: NextRequest) {
         })
 
         return apiSuccess({ items: movementPatterns })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error fetching movement patterns')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch movement patterns', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching movement patterns',
+            message: 'Failed to fetch movement patterns',
+            key: 'internal.default',
+        })
     }
 }
 
@@ -91,9 +94,11 @@ export async function POST(request: NextRequest) {
         logger.info({ movementPatternId: movementPattern.id }, 'Movement pattern created')
 
         return apiSuccess({ movementPattern }, 201)
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error creating movement pattern')
-        return apiError('INTERNAL_ERROR', 'Failed to create movement pattern', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error creating movement pattern',
+            message: 'Failed to create movement pattern',
+            key: 'internal.default',
+        })
     }
 }

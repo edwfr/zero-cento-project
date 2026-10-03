@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * POST /api/admin/trainees/[traineeId]/reassign
@@ -73,9 +74,12 @@ export async function POST(
             messageKey: 'trainee.reassignedSuccess',
             relation,
         })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error, traineeId }, 'Error reassigning trainee')
-        return apiError('INTERNAL_ERROR', 'Failed to reassign trainee', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error reassigning trainee',
+            message: 'Failed to reassign trainee',
+            key: 'internal.default',
+            context: { traineeId },
+        })
     }
 }

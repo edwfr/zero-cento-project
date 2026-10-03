@@ -4,6 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { updateWeekSchema } from '@/schemas/week'
 import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * PATCH /api/weeks/[id]
@@ -103,9 +104,12 @@ export async function PATCH(
         )
 
         return apiSuccess({ week: updatedWeek })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error, weekId }, 'Error updating week configuration')
-        return apiError('INTERNAL_ERROR', 'Failed to update week configuration', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error updating week configuration',
+            message: 'Failed to update week configuration',
+            key: 'internal.default',
+            context: { weekId },
+        })
     }
 }

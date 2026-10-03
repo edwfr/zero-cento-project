@@ -4,6 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { updatePersonalRecordSchema } from '@/schemas/personal-record'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * PATCH /api/personal-records/[id]
@@ -93,10 +94,13 @@ export async function PATCH(
         logger.info({ recordId, userId: session.user.id }, 'Personal record updated')
 
         return apiSuccess({ record: updatedRecord })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error, recordId }, 'Error updating personal record')
-        return apiError('INTERNAL_ERROR', 'Failed to update personal record', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error updating personal record',
+            message: 'Failed to update personal record',
+            key: 'internal.default',
+            context: { recordId },
+        })
     }
 }
 
@@ -146,9 +150,12 @@ export async function DELETE(
             message: 'Personal record deleted successfully',
             messageKey: 'personalRecord.deletedSuccess',
         })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error, recordId }, 'Error deleting personal record')
-        return apiError('INTERNAL_ERROR', 'Failed to delete personal record', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error deleting personal record',
+            message: 'Failed to delete personal record',
+            key: 'internal.default',
+            context: { recordId },
+        })
     }
 }

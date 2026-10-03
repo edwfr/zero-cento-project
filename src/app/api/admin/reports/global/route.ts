@@ -1,8 +1,9 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { apiSuccess, apiError } from '@/lib/api-response'
+import { apiSuccess } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * GET /api/admin/reports/global
@@ -84,9 +85,11 @@ export async function GET(request: NextRequest) {
             recentUsers,
             recentPrograms,
         })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error fetching global admin report')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch global report', 500, undefined, 'internal.globalReportFailed')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching global admin report',
+            message: 'Failed to fetch global report',
+            key: 'internal.globalReportFailed',
+        })
     }
 }

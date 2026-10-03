@@ -9,6 +9,7 @@ import {
     sanitizeTrainerNoteDocument,
     trainerTraineeNotesSchema,
 } from '@/schemas/trainer-trainee-notes'
+import { handleApiError } from '@/lib/api-error-handler'
 
 type Params = {
     params: Promise<{ id: string }>
@@ -39,9 +40,12 @@ export async function GET(request: NextRequest, { params }: Params) {
             updatedAt: association.trainerNotesUpdatedAt,
         })
     } catch (error) {
-        if (error instanceof Response) return error
-        logger.error({ error, traineeId }, 'Failed to fetch trainer trainee notes')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch trainer trainee notes', 500, undefined, 'internal.default')
+        return handleApiError(error, {
+            logMessage: 'Failed to fetch trainer trainee notes',
+            message: 'Failed to fetch trainer trainee notes',
+            key: 'internal.default',
+            context: { traineeId },
+        })
     }
 }
 
@@ -97,8 +101,11 @@ export async function PUT(request: NextRequest, { params }: Params) {
             updatedAt: updatedAssociation.trainerNotesUpdatedAt,
         })
     } catch (error) {
-        if (error instanceof Response) return error
-        logger.error({ error, traineeId }, 'Failed to save trainer trainee notes')
-        return apiError('INTERNAL_ERROR', 'Failed to save trainer trainee notes', 500, undefined, 'internal.default')
+        return handleApiError(error, {
+            logMessage: 'Failed to save trainer trainee notes',
+            message: 'Failed to save trainer trainee notes',
+            key: 'internal.default',
+            context: { traineeId },
+        })
     }
 }

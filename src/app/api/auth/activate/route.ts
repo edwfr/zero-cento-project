@@ -4,6 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireAuthDuringOnboarding } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { syncUserMetadata } from '@/lib/sync-user-metadata'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * POST /api/auth/activate
@@ -52,9 +53,11 @@ export async function POST(request: NextRequest) {
             message: 'User activated successfully',
             messageKey: 'user.activatedSuccess',
         })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error activating user')
-        return apiError('INTERNAL_ERROR', 'Failed to activate user', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error activating user',
+            message: 'Failed to activate user',
+            key: 'internal.default',
+        })
     }
 }

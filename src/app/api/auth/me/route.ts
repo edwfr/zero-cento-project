@@ -1,5 +1,6 @@
 import { getSession } from '@/lib/auth'
 import { apiSuccess, apiError } from '@/lib/api-response'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * GET /api/auth/me
@@ -22,6 +23,10 @@ export async function GET() {
             isActive: session.user.isActive,
         })
     } catch (error: any) {
-        return apiError('INTERNAL_ERROR', error.message || 'Failed to fetch user data', 500, undefined, 'internal.default')
+        return handleApiError(error, {
+            logMessage: 'Error fetching current user',
+            message: error?.message || 'Failed to fetch user data',
+            key: 'internal.default',
+        })
     }
 }

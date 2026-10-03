@@ -4,6 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { personalRecordSchema } from '@/schemas/personal-record'
 import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * GET /api/personal-records
@@ -91,10 +92,12 @@ export async function GET(request: NextRequest) {
         })
 
         return apiSuccess({ items: records })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error fetching personal records')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch personal records', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching personal records',
+            message: 'Failed to fetch personal records',
+            key: 'internal.default',
+        })
     }
 }
 
@@ -200,9 +203,11 @@ export async function POST(request: NextRequest) {
         )
 
         return apiSuccess({ record }, 201)
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error creating personal record')
-        return apiError('INTERNAL_ERROR', 'Failed to create personal record', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error creating personal record',
+            message: 'Failed to create personal record',
+            key: 'internal.default',
+        })
     }
 }

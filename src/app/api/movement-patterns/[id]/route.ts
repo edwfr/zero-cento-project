@@ -4,6 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { updateMovementPatternSchema } from '@/schemas/movement-pattern'
 import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 type Params = {
     params: Promise<{ id: string }>
@@ -34,10 +35,12 @@ export async function GET(request: NextRequest, { params }: Params) {
         }
 
         return apiSuccess({ movementPattern })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error fetching movement pattern')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch movement pattern', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching movement pattern',
+            message: 'Failed to fetch movement pattern',
+            key: 'internal.default',
+        })
     }
 }
 
@@ -63,10 +66,12 @@ export async function PUT(request: NextRequest, { params }: Params) {
         logger.info({ movementPatternId: id }, 'Movement pattern updated')
 
         return apiSuccess({ movementPattern })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error updating movement pattern')
-        return apiError('INTERNAL_ERROR', 'Failed to update movement pattern', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error updating movement pattern',
+            message: 'Failed to update movement pattern',
+            key: 'internal.default',
+        })
     }
 }
 
@@ -103,9 +108,11 @@ export async function DELETE(request: NextRequest, { params }: Params) {
             message: 'Movement pattern deleted successfully',
             messageKey: 'movementPattern.deletedSuccess',
         })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error deleting movement pattern')
-        return apiError('INTERNAL_ERROR', 'Failed to delete movement pattern', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error deleting movement pattern',
+            message: 'Failed to delete movement pattern',
+            key: 'internal.default',
+        })
     }
 }

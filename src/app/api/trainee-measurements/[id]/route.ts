@@ -6,6 +6,7 @@ import { requireRole, requireTrainerOwnership, type AuthSession } from '@/lib/au
 import { updateMeasurementSchema } from '@/schemas/trainee-measurement'
 import { isValueInRange } from '@/lib/measurements'
 import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -88,10 +89,13 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
         )
 
         return apiSuccess({ measurement: updated })
-    } catch (error: unknown) {
-        if (error instanceof Response) return error
-        logger.error({ error, measurementId: id }, 'Error updating trainee measurement')
-        return apiError('INTERNAL_ERROR', 'Failed to update measurement', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error updating trainee measurement',
+            message: 'Failed to update measurement',
+            key: 'internal.default',
+            context: { measurementId: id },
+        })
     }
 }
 
@@ -123,9 +127,12 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
         )
 
         return apiSuccess({ success: true })
-    } catch (error: unknown) {
-        if (error instanceof Response) return error
-        logger.error({ error, measurementId: id }, 'Error deleting trainee measurement')
-        return apiError('INTERNAL_ERROR', 'Failed to delete measurement', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error deleting trainee measurement',
+            message: 'Failed to delete measurement',
+            key: 'internal.default',
+            context: { measurementId: id },
+        })
     }
 }

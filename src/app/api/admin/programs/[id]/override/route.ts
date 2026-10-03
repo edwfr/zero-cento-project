@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * PUT /api/admin/programs/[id]/override
@@ -73,9 +74,12 @@ export async function PUT(
         )
 
         return apiSuccess({ program })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error, programId }, 'Error overriding program')
-        return apiError('INTERNAL_ERROR', 'Failed to override program', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error overriding program',
+            message: 'Failed to override program',
+            key: 'internal.default',
+            context: { programId },
+        })
     }
 }
