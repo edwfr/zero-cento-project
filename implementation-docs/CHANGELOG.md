@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [3 Ottobre 2026] — Reinvio invito ai trainee che non hanno completato l'onboarding
+
+**File modificati:** `src/lib/invitation.ts` (nuovo), `src/app/api/users/[id]/resend-invite/route.ts` (nuovo), `src/app/api/users/[id]/route.ts`, `src/app/api/users/[id]/activate/route.ts`, `src/app/trainer/trainees/[id]/_content.tsx`, `public/locales/{en,it}/{trainer,errors}.json`, `tests/unit/lib/invitation.test.ts` (nuovo), `tests/integration/users-resend-invite.test.ts` (nuovo), `tests/integration/users.test.ts`, `tests/integration/users-activation.test.ts`, `tests/unit/trainer-trainee-detail-resend-invite.test.tsx` (nuovo), `implementation-docs/CHANGELOG.md`
+**Note:** Il link d'invito Supabase scade dopo 24h e il trainee che non lo apriva in tempo restava bloccato. Nuovo `POST /api/users/[id]/resend-invite` (trainer sui propri trainee, admin su utenti non-admin): richiama `inviteUserByEmail` sullo stesso utente auth non confermato, che riceve un link nuovo (il vecchio non vale più). Lo stato "invito pendente" si legge da Supabase (`email_confirmed_at` nullo), senza migrazione: `GET /api/users/[id]` espone `invitationPending` (chiamata a Supabase solo per utenti inattivi). Nel dettaglio atleta il badge diventa "Invito in attesa" con il pulsante "Reinvia invito". Errori: 409 `user.alreadyOnboarded`, 429 `user.inviteRateLimited` (limite email SMTP Supabase). Corretto anche `PATCH /api/users/[id]/activate`: non attiva più un trainee che non ha mai accettato l'invito (409 `user.invitationPending`), perché lo avrebbe mostrato come attivo senza password. Caso non coperto: chi ha aperto il link ma non ha impostato la password ha l'email già confermata e usa "Password dimenticata".
 ### [3 Ottobre 2026] — Icone nelle tab del dettaglio atleta
 
 **File modificati:** `src/app/trainer/trainees/[id]/_content.tsx`, `implementation-docs/CHANGELOG.md`

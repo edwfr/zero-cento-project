@@ -29,6 +29,7 @@ import {
     ChevronUp,
     ClipboardList,
     CreditCard,
+    MailPlus,
     Plus,
     Ruler,
     Save,
@@ -52,6 +53,7 @@ interface Trainee {
     lastName: string
     email: string
     isActive: boolean
+    invitationPending?: boolean
     createdAt: string
 }
 
@@ -314,6 +316,7 @@ export default function TraineeDetailContent() {
     const [notesUpdatedAt, setNotesUpdatedAt] = useState<string | null>(null)
     const [notesLoading, setNotesLoading] = useState(false)
     const [notesSaving, setNotesSaving] = useState(false)
+    const [resendingInvite, setResendingInvite] = useState(false)
     const [notesError, setNotesError] = useState<string | null>(null)
     const [oneRmExerciseFilters, setOneRmExerciseFilters] = useState<string[] | null>(null)
     const [oneRmTimeWindow, setOneRmTimeWindow] = useState<RecordTimeWindow>('180d')
@@ -1042,6 +1045,24 @@ export default function TraineeDetailContent() {
         }
     }
 
+    const handleResendInvite = async () => {
+        try {
+            setResendingInvite(true)
+            const response = await fetch(`/api/users/${traineeId}/resend-invite`, { method: 'POST' })
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(getApiErrorMessage(data, t('athletes.resendInviteError'), t))
+            }
+
+            showToast(t('athletes.resendInviteSuccess'), 'success')
+        } catch (err: unknown) {
+            showToast(err instanceof Error ? err.message : t('athletes.resendInviteError'), 'error')
+        } finally {
+            setResendingInvite(false)
+        }
+    }
+
     const hasUnsavedNotes = notesDirty && draftNoteDocument !== null
 
     if (loading) {
@@ -1089,14 +1110,31 @@ export default function TraineeDetailContent() {
                             <p className="text-gray-600 mt-2">{trainee.email}</p>
                         </div>
                         <div className="flex items-center space-x-4">
-                            <span
-                                className={`px-4 py-2 text-sm font-semibold rounded-full ${trainee.isActive
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-red-100 text-red-800'
-                                    }`}
-                            >
-                                {trainee.isActive ? t('athletes.activeStatus') : t('athletes.inactiveStatus')}
-                            </span>
+                            {trainee.invitationPending ? (
+                                <>
+                                    <span className="px-4 py-2 text-sm font-semibold rounded-full bg-amber-100 text-amber-800">
+                                        {t('athletes.invitationPendingStatus')}
+                                    </span>
+                                    <Button
+                                        variant="secondary"
+                                        icon={<MailPlus size={16} />}
+                                        isLoading={resendingInvite}
+                                        loadingText={t('athletes.resendingInvite')}
+                                        onClick={handleResendInvite}
+                                    >
+                                        {t('athletes.resendInvite')}
+                                    </Button>
+                                </>
+                            ) : (
+                                <span
+                                    className={`px-4 py-2 text-sm font-semibold rounded-full ${trainee.isActive
+                                        ? 'bg-green-100 text-green-800'
+                                        : 'bg-red-100 text-red-800'
+                                        }`}
+                                >
+                                    {trainee.isActive ? t('athletes.activeStatus') : t('athletes.inactiveStatus')}
+                                </span>
+                            )}
                             <SubscriptionStatusIcon
                                 summary={subscription.current}
                                 loading={subscription.loading || subscription.error}

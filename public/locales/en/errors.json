@@ -104,6 +104,9 @@
         "deleteFailed": "Failed to delete user, please try again",
         "cannotModifyStatus": "Cannot modify user status",
         "canOnlyActivateTrainee": "Can only activate trainee accounts",
+        "alreadyOnboarded": "This user has already accepted the invitation",
+        "invitationPending": "The athlete has not accepted the invitation yet: resend it from their profile",
+        "inviteRateLimited": "Too many emails sent, retry in a few minutes",
         "canOnlyDeactivateTrainee": "Can only deactivate trainee accounts",
         "onlyAdminCreateTrainer": "Only admins can create trainers",
         "onlyAdminTrainerCreateTrainee": "Only admins and trainers can create trainees"

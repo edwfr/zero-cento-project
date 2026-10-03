@@ -11,9 +11,14 @@ vi.mock('@/lib/sync-user-metadata', () => ({
     syncUserMetadata: vi.fn().mockResolvedValue(undefined),
 }))
 
+vi.mock('@/lib/invitation', () => ({
+    isInvitationPending: vi.fn(),
+}))
+
 import { PATCH as activateUser } from '@/app/api/users/[id]/activate/route'
 import { PATCH as deactivateUser } from '@/app/api/users/[id]/deactivate/route'
 import { syncUserMetadata } from '@/lib/sync-user-metadata'
+import { isInvitationPending } from '@/lib/invitation'
 import { prismaMock } from '../helpers/prisma-mock'
 import { asTrainer, asAdmin, asUnauthenticated } from '../helpers/auth-mock'
 import { mockTrainerSession } from '../helpers/sessions'
@@ -36,6 +41,28 @@ describe('PATCH /api/users/[id]/activate', () => {
             traineeId: TRAINEE_ID,
         } as never)
         prismaMock.user.update.mockResolvedValue({ id: TRAINEE_ID, isActive: true } as never)
+        vi.mocked(isInvitationPending).mockResolvedValue(false)
+    })
+
+    it('refuses to activate a trainee who never accepted the invitation', async () => {
+        vi.mocked(isInvitationPending).mockResolvedValue(true)
+
+        const res = await activateUser(makeRequest('activate'), withParams({ id: TRAINEE_ID }))
+        const body = await res.json()
+
+        expect(res.status).toBe(409)
+        expect(body.error.key).toBe('user.invitationPending')
+        expect(vi.mocked(isInvitationPending)).toHaveBeenCalledWith(TRAINEE_ID)
+        expect(prismaMock.user.update).not.toHaveBeenCalled()
+    })
+
+    it('skips the invitation check for a trainee who is already active', async () => {
+        prismaMock.user.findUnique.mockResolvedValue({ id: TRAINEE_ID, role: 'trainee', isActive: true } as never)
+
+        const res = await activateUser(makeRequest('activate'), withParams({ id: TRAINEE_ID }))
+
+        expect(res.status).toBe(200)
+        expect(vi.mocked(isInvitationPending)).not.toHaveBeenCalled()
     })
 
     it('activates a trainee the trainer owns', async () => {

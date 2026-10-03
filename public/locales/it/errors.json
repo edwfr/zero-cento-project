@@ -104,6 +104,9 @@
         "deleteFailed": "Eliminazione utente non riuscita, riprova",
         "cannotModifyStatus": "Non è possibile modificare lo stato di questo utente",
         "canOnlyActivateTrainee": "È possibile attivare solo account atleta",
+        "alreadyOnboarded": "L'utente ha già accettato l'invito",
+        "invitationPending": "L'atleta non ha ancora accettato l'invito: reinvialo dal suo profilo",
+        "inviteRateLimited": "Troppe email inviate, riprova tra qualche minuto",
         "canOnlyDeactivateTrainee": "È possibile disattivare solo account atleta",
         "onlyAdminCreateTrainer": "Solo gli admin possono creare trainer",
         "onlyAdminTrainerCreateTrainee": "Solo admin e trainer possono creare atleti"

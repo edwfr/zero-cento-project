@@ -5,6 +5,7 @@ import { requireAuth, requireRole } from '@/lib/auth'
 import { createAdminClient } from '@/lib/supabase-server'
 import { updateUserSchema } from '@/schemas/user'
 import { logger } from '@/lib/logger'
+import { isInvitationPending } from '@/lib/invitation'
 import { syncUserMetadata } from '@/lib/sync-user-metadata'
 
 type Params = {
@@ -54,7 +55,16 @@ export async function GET(request: NextRequest, { params }: Params) {
         }
         // Admin can see anyone
 
-        return apiSuccess({ user })
+        // Only inactive users can have a pending invite: skip the Supabase call otherwise
+        let invitationPending = false
+        if (!user.isActive) {
+            invitationPending = await isInvitationPending(id).catch((error) => {
+                logger.warn({ error, userId: id }, 'Could not read invitation status')
+                return false
+            })
+        }
+
+        return apiSuccess({ user: { ...user, invitationPending } })
     } catch (error: any) {
         if (error instanceof Response) return error
         logger.error({ error }, 'Error fetching user')

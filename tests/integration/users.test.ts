@@ -32,6 +32,10 @@ vi.mock('@/lib/supabase-server', () => ({
     })),
 }))
 
+vi.mock('@/lib/invitation', () => ({
+    isInvitationPending: vi.fn(),
+}))
+
 vi.mock('@/lib/sync-user-metadata', () => ({
     syncUserMetadata: vi.fn().mockResolvedValue(undefined),
 }))
@@ -53,6 +57,7 @@ import { asTrainer, asAdmin, asUnauthenticated } from '../helpers/auth-mock'
 import { requireAuth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { syncUserMetadata } from '@/lib/sync-user-metadata'
+import { isInvitationPending } from '@/lib/invitation'
 
 const mockUsers = [
     {
@@ -431,6 +436,38 @@ describe('GET /api/users/[id]', () => {
         vi.clearAllMocks()
         asAdmin()
         prismaMock.user.findUnique.mockResolvedValue(detailUser as never)
+        vi.mocked(isInvitationPending).mockResolvedValue(false)
+    })
+
+    it('reports invitationPending false for an active user without asking Supabase', async () => {
+        const res = await getUser(detailRequest(), detailParams())
+        const body = await res.json()
+
+        expect(body.data.user.invitationPending).toBe(false)
+        expect(vi.mocked(isInvitationPending)).not.toHaveBeenCalled()
+    })
+
+    it('reports invitationPending for an inactive user who never accepted the invite', async () => {
+        prismaMock.user.findUnique.mockResolvedValue({ ...detailUser, isActive: false } as never)
+        vi.mocked(isInvitationPending).mockResolvedValue(true)
+
+        const res = await getUser(detailRequest(), detailParams())
+        const body = await res.json()
+
+        expect(res.status).toBe(200)
+        expect(body.data.user.invitationPending).toBe(true)
+        expect(vi.mocked(isInvitationPending)).toHaveBeenCalledWith(DETAIL_ID)
+    })
+
+    it('falls back to invitationPending false when Supabase fails', async () => {
+        prismaMock.user.findUnique.mockResolvedValue({ ...detailUser, isActive: false } as never)
+        vi.mocked(isInvitationPending).mockRejectedValue(new Error('supabase down'))
+
+        const res = await getUser(detailRequest(), detailParams())
+        const body = await res.json()
+
+        expect(res.status).toBe(200)
+        expect(body.data.user.invitationPending).toBe(false)
     })
 
     it('returns the user for an admin without checking associations', async () => {

@@ -4,6 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireAuth } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { syncUserMetadata } from '@/lib/sync-user-metadata'
+import { isInvitationPending } from '@/lib/invitation'
 
 type Params = {
     params: Promise<{ id: string }>
@@ -44,6 +45,12 @@ export async function PATCH(request: NextRequest, { params }: Params) {
             if (!association) {
                 return apiError('FORBIDDEN', 'Access denied', 403, undefined, 'auth.accessDenied')
             }
+        }
+
+        // A trainee who never accepted the invite has no password yet: activating
+        // them would hide the pending state without letting them log in.
+        if (!existingUser.isActive && (await isInvitationPending(id))) {
+            return apiError('CONFLICT', 'User has not accepted the invitation yet', 409, undefined, 'user.invitationPending')
         }
 
         // Activate user
