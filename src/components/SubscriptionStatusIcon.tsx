@@ -8,8 +8,8 @@ import { remainingLabel, type SubscriptionStatus, type SubscriptionSummary } fro
 export interface SubscriptionStatusIconProps {
     summary: SubscriptionSummary | null
     /** While the status is unknown (loading or failed) nothing is shown: "no subscription" would be a false claim */
-    loading: boolean
-    onOpen: () => void
+    loading?: boolean
+    size?: 'sm' | 'md'
 }
 
 const STYLES: Record<SubscriptionStatus, { Icon: typeof AlertTriangle; className: string }> = {
@@ -19,18 +19,23 @@ const STYLES: Record<SubscriptionStatus, { Icon: typeof AlertTriangle; className
     none: { Icon: CalendarX, className: 'bg-gray-100 text-gray-500 hover:bg-gray-200' },
 }
 
+const SIZES = {
+    sm: { circle: 'h-7 w-7', icon: 'h-4 w-4' },
+    md: { circle: 'h-9 w-9', icon: 'h-5 w-5' },
+}
+
 /**
- * Subscription status at a glance, next to the Active/Inactive badge in the
- * trainee header. The details live in the tooltip; clicking opens the tab,
- * since touch screens have no hover.
+ * Subscription status at a glance, next to the Active/Inactive badge.
+ * Informative only, like that badge: the details live in the tooltip.
  */
-export default function SubscriptionStatusIcon({ summary, loading, onOpen }: SubscriptionStatusIconProps) {
+export default function SubscriptionStatusIcon({ summary, loading = false, size = 'md' }: SubscriptionStatusIconProps) {
     const { t } = useTranslation('trainer')
 
     if (loading) return null
 
     const status: SubscriptionStatus = summary?.status ?? 'none'
     const { Icon, className } = STYLES[status]
+    const { circle, icon } = SIZES[size]
 
     let description = t('subscriptions.badge.none')
     if (summary) {
@@ -43,15 +48,14 @@ export default function SubscriptionStatusIcon({ summary, loading, onOpen }: Sub
     }
 
     return (
-        <button
-            type="button"
+        <span
+            role="img"
             data-status={status}
             title={description}
             aria-label={description}
-            onClick={onOpen}
-            className={`inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors ${className}`}
+            className={`inline-flex shrink-0 cursor-default items-center justify-center rounded-full transition-colors ${circle} ${className}`}
         >
-            <Icon className="h-5 w-5" aria-hidden="true" />
-        </button>
+            <Icon className={icon} aria-hidden="true" />
+        </span>
     )
 }

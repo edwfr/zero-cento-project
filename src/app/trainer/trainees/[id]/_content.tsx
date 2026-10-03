@@ -22,7 +22,7 @@ import TraineeNotesEditor from './_trainee-notes-editor'
 import MeasurementsTab from './_measurements-tab'
 import SubscriptionTab from './_subscription-tab'
 import SubscriptionAlertBanner from './_subscription-alert'
-import SubscriptionStatusIcon from './_subscription-status-icon'
+import SubscriptionStatusIcon from '@/components/SubscriptionStatusIcon'
 import { useTraineeSubscription } from './_use-trainee-subscription'
 import {
     BarChart3,
@@ -1135,7 +1135,6 @@ export default function TraineeDetailContent() {
                             <SubscriptionStatusIcon
                                 summary={subscription.current}
                                 loading={subscription.loading || subscription.error}
-                                onOpen={() => setActiveTab('subscription')}
                             />
                             <Link
                                 href={`/trainer/programs/new?traineeId=${traineeId}`}

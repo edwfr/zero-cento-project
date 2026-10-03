@@ -16,7 +16,7 @@ const items = [
     { ...base, id: 't3', firstName: 'Sara', lastName: 'Verdi', isActive: false, subscription: { status: 'expired', endDate: '2026-09-10T00:00:00.000Z', daysLeft: -23 } },
 ]
 
-describe('Trainer trainee list — subscription alert', () => {
+describe('Trainer trainee list — subscription icon', () => {
     beforeEach(() => {
         global.fetch = vi.fn().mockResolvedValue({
             ok: true,
@@ -30,12 +30,15 @@ describe('Trainer trainee list — subscription alert', () => {
         }) as never
     })
 
-    it('shows the badge only for active trainees whose subscription needs attention', async () => {
+    it('shows the status icon for every active trainee, none for inactive ones', async () => {
         render(<TrainerTraineesContent />)
 
         expect(await screen.findByText('Anna Rossi')).toBeInTheDocument()
-        expect(screen.getAllByText('subscriptions.badge.expiring')).toHaveLength(1)
-        expect(screen.queryByText('subscriptions.badge.active')).not.toBeInTheDocument()
-        expect(screen.queryByText('subscriptions.badge.expired')).not.toBeInTheDocument() // inactive trainee
+        const statuses = screen
+            .getAllByRole('img')
+            .map((el) => el.getAttribute('data-status'))
+            .filter(Boolean)
+        expect(statuses).toEqual(['expiring', 'active']) // Sara is inactive
+        expect(screen.queryByRole('button', { name: /subscriptions\.badge/ })).not.toBeInTheDocument()
     })
 })

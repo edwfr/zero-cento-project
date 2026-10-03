@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { SkeletonTable, ActionIconButton, InlineActions, Button, SubscriptionStatusBadge, UserStatusBadge } from '@/components'
-import { needsAttention, type SubscriptionSummary } from '@/lib/subscriptions'
+import { SkeletonTable, ActionIconButton, InlineActions, Button, SubscriptionStatusIcon, UserStatusBadge } from '@/components'
+import type { SubscriptionSummary } from '@/lib/subscriptions'
 import { useToast } from '@/components/ToastNotification'
 import { formatDate } from '@/lib/date-format'
 import { useTranslation } from 'react-i18next'
@@ -327,12 +327,6 @@ export default function TrainerTraineesContent() {
                                             <div className="font-semibold text-gray-900">
                                                 {trainee.firstName} {trainee.lastName}
                                             </div>
-                                            {/* Paused athletes get no alert: nothing to act on. Wrapper only when shown, no stray margin */}
-                                            {trainee.isActive && needsAttention(trainee.subscription ?? null) && (
-                                                <div className="mt-1">
-                                                    <SubscriptionStatusBadge compact summary={trainee.subscription ?? null} />
-                                                </div>
-                                            )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="text-sm text-gray-600">
@@ -340,12 +334,18 @@ export default function TrainerTraineesContent() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <UserStatusBadge
-                                                userId={trainee.id}
-                                                isActive={trainee.isActive}
-                                                pendingActivation={trainee.pendingActivation ?? false}
-                                                size="sm"
-                                            />
+                                            <div className="flex items-center gap-2">
+                                                <UserStatusBadge
+                                                    userId={trainee.id}
+                                                    isActive={trainee.isActive}
+                                                    pendingActivation={trainee.pendingActivation ?? false}
+                                                    size="sm"
+                                                />
+                                                {/* Paused athletes get no subscription icon: nothing to act on */}
+                                                {trainee.isActive && (
+                                                    <SubscriptionStatusIcon size="sm" summary={trainee.subscription ?? null} />
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                             {formatDate(trainee.createdAt)}

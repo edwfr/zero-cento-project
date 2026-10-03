@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [3 Ottobre 2026] — Lista atleti: icona abbonamento accanto allo stato
+
+**File modificati:** `src/components/SubscriptionStatusIcon.tsx` (spostato da `src/app/trainer/trainees/[id]/_subscription-status-icon.tsx`), `src/components/index.ts`, `src/app/trainer/trainees/_content.tsx`, `src/app/trainer/trainees/[id]/_content.tsx`, `tests/unit/subscription-status-icon.test.tsx`, `tests/unit/trainer-trainees-list-subscription.test.tsx`, `implementation-docs/CHANGELOG.md`
+**Note:** Nella lista atleti il badge testuale sotto il nome (solo in scadenza/scaduto) è sostituito dall'icona tonda del profilo, nella colonna Status accanto al badge Attivo, per tutti gli atleti attivi: verde ok, ambra in scadenza, rossa scaduto, grigia nessun abbonamento. Dettagli nel tooltip. L'icona ora è solo informativa ovunque (anche nel profilo non apre più il tab Abbonamento), come il badge di stato; mantiene colori e hover. Nuova prop `size` (`sm` in tabella).
 ### [3 Ottobre 2026] — Sentry: cattura dei 500 API e triage
 
 - Nuovo `handleApiError` (`src/lib/api-error-handler.ts`): i `catch` delle route API ora inviano a Sentry gli errori 500 (prima venivano solo loggati con pino e Sentry non li vedeva). Risposte al client invariate; `/api/health` escluso.
