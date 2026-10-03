@@ -57,6 +57,8 @@ export default async function TrainerDashboard() {
                     <Slot>
                         <SubscriptionAlertsWidget ctx={ctx} />
                     </Slot>
+                    {/* third column of the first row left empty on purpose */}
+                    <div className="hidden lg:block" aria-hidden="true" />
                     <Slot>
                         <ConsistencyRankingWidget ctx={ctx} />
                     </Slot>
