@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [3 Ottobre 2026] — Test unit: timeout async di Testing Library a 3s
+
+**File modificati:** `tests/unit/setup.ts`, `implementation-docs/CHANGELOG.md`
+**Note:** `findBy*`/`waitFor` usano di default 1000ms. Nel run completo con coverage su WSL `/mnt/c` il primo render di componenti pesanti supera il secondo e i test falliscono a caso (es. `program-test-results-content` fallito a 1197ms, verde se eseguito da solo). `configure({ asyncUtilTimeout: 3000 })` globale nel setup, sotto il `testTimeout` di 5s.
 ### [3 Ottobre 2026] — Home trainer: correzioni dopo la review
 
 **File modificati:** `src/lib/trainer-dashboard/*`, `src/app/trainer/dashboard/_widgets/*`, `public/locales/{en,it}/trainer.json`, `tests/unit/trainer-dashboard/*`, `tests/e2e/trainer-subscription-renewals.spec.ts`, `implementation-docs/CHANGELOG.md`

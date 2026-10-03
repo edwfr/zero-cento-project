@@ -1,6 +1,11 @@
 import '@testing-library/jest-dom'
+import { configure } from '@testing-library/react'
 import { vi, beforeEach } from 'vitest'
 import type { ReactNode } from 'react'
+
+// findBy*/waitFor default to 1000ms. Under a full coverage run on WSL /mnt/c the
+// first render of a heavy component can exceed that, making tests flaky.
+configure({ asyncUtilTimeout: 3000 })
 
 // Mock Next.js router
 vi.mock('next/navigation', () => ({
