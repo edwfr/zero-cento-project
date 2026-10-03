@@ -4,34 +4,15 @@ import { render, screen, within } from '@testing-library/react'
 
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn() } }))
 vi.mock('@/lib/trainer-dashboard/activity-feed', () => ({ getActivityFeed: vi.fn() }))
-vi.mock('@/lib/trainer-dashboard/weekly-trend', () => ({ getWeeklyTrend: vi.fn() }))
 vi.mock('@/lib/trainer-dashboard/consistency-ranking', () => ({ getConsistencyRanking: vi.fn() }))
-vi.mock('recharts', () => {
-    const Pass = ({ children }: { children?: ReactNode }) => <div>{children}</div>
-    return {
-        ResponsiveContainer: Pass,
-        ComposedChart: ({ children, data }: { children?: ReactNode; data?: unknown[] }) => (
-            <div data-testid="trend-chart" data-points={JSON.stringify(data)}>{children}</div>
-        ),
-        Bar: ({ dataKey, name }: { dataKey: string; name: string }) => <div data-testid={`bar-${dataKey}`}>{name}</div>,
-        Line: ({ dataKey, name }: { dataKey: string; name: string }) => <div data-testid={`line-${dataKey}`}>{name}</div>,
-        XAxis: () => null,
-        YAxis: () => null,
-        CartesianGrid: () => null,
-        Tooltip: () => null,
-        Legend: () => null,
-    }
-})
 
 import { getActivityFeed } from '@/lib/trainer-dashboard/activity-feed'
 import { createTranslator } from '@/lib/trainer-dashboard/i18n'
 import type { WidgetContext } from '@/app/trainer/dashboard/_widgets/types'
 import ActivityFeedWidget from '@/app/trainer/dashboard/_widgets/ActivityFeedWidget'
-import { getWeeklyTrend } from '@/lib/trainer-dashboard/weekly-trend'
-import WeeklyTrendWidget from '@/app/trainer/dashboard/_widgets/WeeklyTrendWidget'
 import { getConsistencyRanking } from '@/lib/trainer-dashboard/consistency-ranking'
 import ConsistencyRankingWidget from '@/app/trainer/dashboard/_widgets/ConsistencyRankingWidget'
-import { NOW, TRAINEES, at, day } from './fixtures'
+import { NOW, TRAINEES, at } from './fixtures'
 
 function makeCtx(overrides: Partial<WidgetContext> = {}): WidgetContext {
     return { trainerId: 'trainer-1', trainees: TRAINEES, now: NOW, locale: 'it', t: createTranslator('it'), ...overrides }
@@ -82,37 +63,6 @@ describe('ActivityFeedWidget', () => {
         await renderAsync(ActivityFeedWidget({ ctx: makeCtx() }))
 
         expect(within(screen.getByRole('region', { name: 'Attività recente' })).getByRole('alert')).toBeInTheDocument()
-    })
-})
-
-describe('WeeklyTrendWidget', () => {
-    const weeks = ['2026-08-10', '2026-08-17', '2026-08-24', '2026-08-31', '2026-09-07', '2026-09-14', '2026-09-21', '2026-09-28']
-
-    it('summarises the current week and passes 8 labelled points to the chart', async () => {
-        vi.mocked(getWeeklyTrend).mockResolvedValue(
-            weeks.map((weekStart, index) => ({ weekStart, sessions: index === 7 ? 9 : index === 6 ? 12 : 4, volumeKg: 1000 * index })),
-        )
-
-        await renderAsync(WeeklyTrendWidget({ ctx: makeCtx() }))
-
-        const region = screen.getByRole('region', { name: 'Andamento ultime 8 settimane' })
-        expect(getWeeklyTrend).toHaveBeenCalledWith('trainer-1', TRAINEES, NOW)
-        expect(within(region).getByText('9 sessioni questa settimana')).toBeInTheDocument()
-        expect(within(region).getByText('-3 rispetto alla settimana scorsa')).toBeInTheDocument()
-        const points = JSON.parse(within(region).getByTestId('trend-chart').getAttribute('data-points') ?? '[]')
-        expect(points).toHaveLength(8)
-        expect(points[0]).toEqual({ label: '10/08', sessions: 4, volumeKg: 0 })
-        expect(points[7]).toEqual({ label: '28/09', sessions: 9, volumeKg: 7000 })
-        expect(within(region).getByTestId('bar-sessions')).toHaveTextContent('Sessioni')
-        expect(within(region).getByTestId('line-volumeKg')).toHaveTextContent('Volume (kg)')
-    })
-
-    it('shows the error card when loading fails', async () => {
-        vi.mocked(getWeeklyTrend).mockRejectedValue(new Error('db down'))
-
-        await renderAsync(WeeklyTrendWidget({ ctx: makeCtx() }))
-
-        expect(within(screen.getByRole('region', { name: 'Andamento ultime 8 settimane' })).getByRole('alert')).toBeInTheDocument()
     })
 })
 

@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [3 Ottobre 2026] — Home trainer: rimosso "Andamento ultime 8 settimane"
+
+**File rimossi:** `src/app/trainer/dashboard/_widgets/{WeeklyTrendWidget,WeeklyTrendChart}.tsx`, `src/lib/trainer-dashboard/weekly-trend.ts`, `tests/unit/trainer-dashboard/weekly-trend.test.ts`, chiavi `trend` in `public/locales/{it,en}/trainer.json`, `TREND_WEEKS` in `constants.ts`.
+**Note:** Richiesta dell'utente. Nuovo layout: riga 1 Programmi in chiusura | Abbonamenti in scadenza | Classifica costanza; riga 2 Atleti inattivi | Attività recente (2 colonne). `recharts` resta una dipendenza, usata altrove.
 ### [3 Ottobre 2026] — Home trainer: righe compatte in "Programmi in chiusura", "Abbonamenti in scadenza"
 
 **File modificati:** `src/app/trainer/dashboard/_widgets/ProgramEndingWidget.tsx`, `public/locales/{it,en}/trainer.json`, `tests/unit/trainer-dashboard/widgets-phase1.test.tsx`

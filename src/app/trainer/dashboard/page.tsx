@@ -11,7 +11,6 @@ import DashboardHeader from './_widgets/DashboardHeader'
 import InactiveTraineesWidget from './_widgets/InactiveTraineesWidget'
 import ProgramEndingWidget from './_widgets/ProgramEndingWidget'
 import SubscriptionAlertsWidget from './_widgets/SubscriptionAlertsWidget'
-import WeeklyTrendWidget from './_widgets/WeeklyTrendWidget'
 import { WidgetSkeleton } from './_widgets/WidgetCard'
 import type { WidgetContext } from './_widgets/types'
 
@@ -65,9 +64,6 @@ export default async function TrainerDashboard() {
                         <InactiveTraineesWidget ctx={ctx} />
                     </Slot>
                     <Slot span={2}>
-                        <WeeklyTrendWidget ctx={ctx} />
-                    </Slot>
-                    <Slot span={3}>
                         <ActivityFeedWidget ctx={ctx} />
                     </Slot>
                 </div>

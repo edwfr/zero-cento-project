@@ -130,14 +130,6 @@
             "record": "New record",
             "empty": "No sessions logged in the last 7 days."
         },
-        "trend": {
-            "title": "Last 8 weeks",
-            "sessions": "Sessions",
-            "volume": "Volume (kg)",
-            "summary": "{{count}} sessions this week",
-            "summary_one": "1 session this week",
-            "delta": "{{delta}} vs last week"
-        },
         "consistency": {
             "title": "Consistency ranking",
             "subtitle": "Program adherence, last 4 weeks",

@@ -59,14 +59,6 @@
             "record": "Nuovo record",
             "empty": "Nessun allenamento registrato negli ultimi 7 giorni."
         },
-        "trend": {
-            "title": "Andamento ultime 8 settimane",
-            "sessions": "Sessioni",
-            "volume": "Volume (kg)",
-            "summary": "{{count}} sessioni questa settimana",
-            "summary_one": "1 sessione questa settimana",
-            "delta": "{{delta}} rispetto alla settimana scorsa"
-        },
         "consistency": {
             "title": "Classifica costanza",
             "subtitle": "Aderenza al programma, ultime 4 settimane",
