@@ -408,7 +408,7 @@ describe('RBAC Violations - Users', () => {
     })
 
     it('denies trainer A deactivating trainer B trainee', async () => {
-        vi.mocked(requireAuth).mockResolvedValue(mockTrainerASession)
+        vi.mocked(requireRole).mockResolvedValue(mockTrainerASession)
 
         prismaMock.user.findUnique.mockResolvedValue({
             id: 'trainee-b-uuid',
@@ -429,7 +429,7 @@ describe('RBAC Violations - Users', () => {
         const res = await deactivateUser(req, withIdParam('trainee-b-uuid'))
         const body = await res.json()
 
-        expect(vi.mocked(requireAuth)).toHaveBeenCalled()
+        expect(vi.mocked(requireRole)).toHaveBeenCalledWith(['admin', 'trainer'])
         expect(res.status).toBe(403)
         expect(body.error.code).toBe('FORBIDDEN')
     })

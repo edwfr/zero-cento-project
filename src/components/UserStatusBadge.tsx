@@ -33,6 +33,10 @@ const STATUS_STYLES = {
     pending: 'bg-amber-100 text-amber-800',
 }
 
+// React reports `window` as relatedTarget when the pointer leaves towards a non-React node
+const isInside = (element: HTMLElement | null, target: EventTarget | null) =>
+    target instanceof Node && !!element?.contains(target)
+
 const SIZE_STYLES = {
     sm: 'px-3 py-1 text-xs',
     md: 'px-4 py-2 text-sm',
@@ -87,14 +91,21 @@ export default function UserStatusBadge({ userId, isActive, pendingActivation, s
         const rect = buttonRef.current?.getBoundingClientRect()
         if (!rect) return
         const width = Math.min(POPOVER_WIDTH, window.innerWidth - 2 * POPOVER_GAP)
-        const height = popoverRef.current?.offsetHeight ?? 0
+        // Full content height, not the rendered one: maxHeight would cap it
+        const height = popoverRef.current?.scrollHeight ?? 0
         const left = Math.min(Math.max(POPOVER_GAP, rect.left), window.innerWidth - width - POPOVER_GAP)
-        const fitsBelow = rect.bottom + POPOVER_GAP + height <= window.innerHeight
+        const spaceBelow = window.innerHeight - rect.bottom - 2 * POPOVER_GAP
+        const spaceAbove = rect.top - 2 * POPOVER_GAP
+        // Below when it fits, above when only that fits, otherwise the roomier side with a scroll
+        const below = height <= spaceBelow || (height > spaceAbove && spaceBelow >= spaceAbove)
+        const maxHeight = below ? spaceBelow : spaceAbove
         setPopoverStyle({
             position: 'fixed',
-            top: fitsBelow ? rect.bottom + POPOVER_GAP : Math.max(POPOVER_GAP, rect.top - POPOVER_GAP - height),
+            top: below ? rect.bottom + POPOVER_GAP : rect.top - POPOVER_GAP - Math.min(height, maxHeight),
             left,
             width,
+            maxHeight,
+            overflowY: 'auto',
             zIndex: 9999,
         })
     }, [])
@@ -116,7 +127,8 @@ export default function UserStatusBadge({ userId, isActive, pendingActivation, s
             if (event.key === 'Escape') setOpen(false)
         }
         const onMouseDown = (event: MouseEvent) => {
-            if (!buttonRef.current?.contains(event.target as Node)) setOpen(false)
+            const target = event.target as Node
+            if (!buttonRef.current?.contains(target) && !popoverRef.current?.contains(target)) setOpen(false)
         }
         document.addEventListener('keydown', onKeyDown)
         document.addEventListener('mousedown', onMouseDown)
@@ -138,7 +150,10 @@ export default function UserStatusBadge({ userId, isActive, pendingActivation, s
                 aria-expanded={open}
                 aria-describedby={open ? popoverId : undefined}
                 onMouseEnter={() => setOpen(true)}
-                onMouseLeave={() => setOpen(false)}
+                // Moving onto the popover (e.g. to scroll a long timeline) keeps it open
+                onMouseLeave={(event) => {
+                    if (!isInside(popoverRef.current, event.relatedTarget)) setOpen(false)
+                }}
                 onFocus={() => setOpen(true)}
                 onBlur={() => setOpen(false)}
                 // Touch has no hover: a tap opens, a tap outside closes
@@ -153,6 +168,11 @@ export default function UserStatusBadge({ userId, isActive, pendingActivation, s
                         id={popoverId}
                         role="tooltip"
                         style={popoverStyle}
+                        onMouseLeave={(event) => {
+                            if (!isInside(buttonRef.current, event.relatedTarget)) setOpen(false)
+                        }}
+                        // Keep focus on the badge: a click here must not blur it and close the popover
+                        onMouseDown={(event) => event.preventDefault()}
                         className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-left"
                     >
                         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">

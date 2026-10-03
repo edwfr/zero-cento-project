@@ -112,7 +112,7 @@ describe('UserStatusBadge', () => {
 
     it('opens above the badge when there is no room below', async () => {
         mockFetchOk()
-        vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(200)
+        vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(200)
         render(<UserStatusBadge userId="u-1" isActive pendingActivation={false} />)
         const badge = screen.getByRole('button', { name: 'userStatus.active' })
         vi.spyOn(badge, 'getBoundingClientRect').mockReturnValue({
@@ -134,5 +134,50 @@ describe('UserStatusBadge', () => {
 
         expect(parseFloat(tooltip.style.top)).toBe(window.innerHeight - 40 - 8 - 200)
         expect(parseFloat(tooltip.style.left) + parseFloat(tooltip.style.width)).toBeLessThanOrEqual(window.innerWidth - 8)
+    })
+
+    it('stays open while the pointer moves from the badge onto the popover', async () => {
+        mockFetchOk()
+        render(<UserStatusBadge userId="u-1" isActive pendingActivation={false} />)
+        const badge = screen.getByRole('button', { name: 'userStatus.active' })
+
+        fireEvent.mouseEnter(badge)
+        const tooltip = await screen.findByRole('tooltip')
+        fireEvent.mouseLeave(badge, { relatedTarget: tooltip })
+        expect(screen.getByRole('tooltip')).toBeInTheDocument()
+
+        fireEvent.mouseDown(tooltip)
+        expect(screen.getByRole('tooltip')).toBeInTheDocument()
+
+        fireEvent.mouseLeave(tooltip, { relatedTarget: document.body })
+        expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
+    })
+
+    it('caps the height and scrolls when the timeline fits neither below nor above', async () => {
+        mockFetchOk()
+        vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(5000)
+        render(<UserStatusBadge userId="u-1" isActive pendingActivation={false} />)
+        const badge = screen.getByRole('button', { name: 'userStatus.active' })
+        vi.spyOn(badge, 'getBoundingClientRect').mockReturnValue({
+            top: 100,
+            bottom: 130,
+            left: 10,
+            right: 60,
+            width: 50,
+            height: 30,
+            x: 10,
+            y: 100,
+            toJSON: () => ({}),
+        })
+
+        await act(async () => {
+            fireEvent.click(badge)
+        })
+        const tooltip = await screen.findByRole('tooltip')
+
+        // More room below (viewport 768 in jsdom): open below, capped to the free space
+        expect(parseFloat(tooltip.style.top)).toBe(130 + 8)
+        expect(parseFloat(tooltip.style.maxHeight)).toBe(window.innerHeight - 130 - 2 * 8)
+        expect(tooltip.style.overflowY).toBe('auto')
     })
 })
