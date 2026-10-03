@@ -38,7 +38,7 @@ The feature is **trainer-only**. The trainee has no access to it, in the UI or i
 | End date | `startDate + durationMonths`, clamped to month end (31/01 + 1 → 28/02); stored, computed server-side only | stored for sorting/aggregation; client never sends it |
 | Current expiry | `MAX(endDate)` across the trainee's renewals | a back-dated correction doesn't overwrite a later expiry |
 | Overlapping renewals | allowed, no uniqueness constraint | early renewals and corrections are normal |
-| Early renewal start date | form pre-fills start = current expiry (or today if none), trainer can change it | proposed by the system, confirmed by the trainer |
+| Early renewal start date | form pre-fills start = day after the current expiry (or today if none), trainer can change it | proposed by the system, confirmed by the trainer; the end date is the last covered day, so the next period starts the day after |
 | Expired | `today > endDate` | end date is the last covered day |
 | Expiring | `0 ≤ daysLeft ≤ 14` (constant `EXPIRING_THRESHOLD_DAYS = 14`) | requested two-week warning |
 | Expired, not renewed | red alert, shown first in the subscriptions page | must not be lost after the warning window |
@@ -80,21 +80,25 @@ Pure functions (no Prisma):
 - `EXPIRING_THRESHOLD_DAYS = 14`
 - `toSubscriptionDay(date)` — normalises to a UTC calendar day (same approach as `toMeasurementDay`).
 - `addMonthsClamped(start, months)` — adds months, clamping the day to the target month's last day.
-- `getSubscriptionStatus(endDate | null, today)` →
-  `{ status: 'none' | 'active' | 'expiring' | 'expired', endDate: Date | null, daysLeft: number | null }`
-  - `none`: no end date
+- `toSubscriptionSummary(endDate | null, today)` →
+  `{ status: 'active' | 'expiring' | 'expired', endDate: ISO string, daysLeft: number } | null`
+  - `null`: no end date (status "none")
   - `expired`: `daysLeft < 0`
   - `expiring`: `0 ≤ daysLeft ≤ EXPIRING_THRESHOLD_DAYS`
   - `active`: otherwise
-- `compareByDaysLeft(a, b)` — ascending `daysLeft` (most-overdue first); ties by last name.
+- `latestEndDate(rows)`, `needsAttention(summary)`, `nextRenewalStart(currentEnd, today)`,
+  `remainingLabel(daysLeft)` (i18n key + count).
+- `buildSubscriptionOverview(trainees, endDates, today)` — ascending `daysLeft`
+  (most-overdue first), ties by last name; trainees without a subscription by last name;
+  counts per status.
 
-Query helpers (Prisma, server-only):
+Query helpers (Prisma, server-only) live in a separate `src/lib/subscription-queries.ts`,
+so client components can import the pure module without pulling in Prisma:
 
 - `getCurrentEndDates(traineeIds)` → `Map<traineeId, Date>` via one
   `subscriptionRenewal.groupBy({ by: ['traineeId'], _max: { endDate: true } })`.
 - `getTrainerSubscriptionOverview(trainerId, today)` → active trainees of that trainer,
-  split into `withSubscription` (sorted with `compareByDaysLeft`) and `withoutSubscription`
-  (sorted by last name), plus counts `{ expired, expiring, active, none }`.
+  passed through `buildSubscriptionOverview`.
   Used by the subscriptions page and the home KPI.
 
 ### 3. Validation — `src/schemas/subscription-renewal.ts`
@@ -114,7 +118,7 @@ trainee → 403 (`auth.traineeAccessDenied`) on every method; trainer →
 
 | Method & path | Behaviour |
 |---|---|
-| `GET /api/subscription-renewals?traineeId=` | renewals ordered by `startDate` desc + current status (`getSubscriptionStatus`) |
+| `GET /api/subscription-renewals?traineeId=` | renewals ordered by `startDate` desc + current status (`toSubscriptionSummary`, `null` when none) |
 | `POST /api/subscription-renewals` | body `{ traineeId, startDate, durationMonths }`; computes `endDate`; `createdBy` = session user; 201 |
 | `PATCH /api/subscription-renewals/[id]` | updates `startDate` / `durationMonths`, recomputes `endDate`; ownership checked on the renewal's trainee |
 | `DELETE /api/subscription-renewals/[id]` | deletes; ownership checked on the renewal's trainee |
@@ -133,22 +137,23 @@ All copy through react-i18next (`it` + `en`). Dates via `formatDate`.
 - `SubscriptionStatusBadge` — pill for a status: amber "Scade il {{date}} ({{days}} gg)",
   red "Scaduto il {{date}}", green "Attivo fino al {{date}}", grey "Nessun abbonamento".
   `compact` prop hides active/none (used in the list).
-- `SubscriptionRenewalFormModal` — react-hook-form + Zod schema. Fields: start date
+- `SubscriptionRenewalFormModal` — local state, same pattern as `MeasurementFormModal`. Fields: start date
   (pre-filled), duration in months (numeric input + 1/3/6/12 shortcuts). Live preview
   "Scadrà il …" using `addMonthsClamped`. Submit with
   `<Button isLoading loadingText={t('common.saving')}>`. Used for create and edit.
 
-**Client data** — `useSubscriptionRenewals(traineeId)` (TanStack Query, one query key)
-plus create/update/delete mutations that invalidate it. Banner and tab share the cache,
-so the banner updates right after a renewal is saved.
+**Client data** — `useTraineeSubscription(traineeId)` (`useState` + `fetch`, the pattern
+of the neighbouring measurements tab), called once by the trainee page and passed to both
+banner and tab. Mutations call its `reload()`, so the banner updates right after a renewal
+is saved or deleted.
 
 **Trainee profile — `src/app/trainer/trainees/[id]/`**
 
 - New tab `'subscription'` in `_content.tsx` (same button style as the other tabs),
   content in `_subscription-tab.tsx`:
   - current status card (badge + end date + days left / days overdue);
-  - "Registra rinnovo" button → form modal; start date pre-filled with the current
-    expiry if any, else today;
+  - "Registra rinnovo" button → form modal; start date pre-filled with the day
+    after the current expiry if any, else today;
   - history table (start, duration, end, entered on) with edit (same modal) and delete
     (`ConfirmationModal`).
 - Banner below the header, on **every** tab, only for `expiring` / `expired`:
@@ -163,11 +168,11 @@ so the banner updates right after a renewal is saved.
 - `SubscriptionStatusBadge compact` under the trainee name, only for `expiring` /
   `expired`, only for active trainees. No new column. Data from `/api/users`.
 
-**Subscriptions page — `src/app/trainer/subscriptions/` (`page.tsx` + `loading.tsx`)**
+**Subscriptions page — `src/app/trainer/subscriptions/` (`page.tsx` + `_content.tsx` + `loading.tsx`)**
 
-- Server component, same structure as `/trainer/dashboard`: `getSession`, trainer
-  role check, `DashboardLayout` with `backHref="/trainer/dashboard"`,
-  data from `getTrainerSubscriptionOverview(session.user.id, today)`.
+- Server `page.tsx`: `getSession`, trainer role check, `DashboardLayout` with
+  `backHref="/trainer/dashboard"`, data from `getTrainerSubscriptionOverview(session.user.id, today)`,
+  rendered by a client `_content.tsx` (react-i18next), like `/trainer/trainees`.
 - Four counters: Scaduti · In scadenza (≤ 14 gg) · Attivi · Senza abbonamento.
 - Main list: trainees with a subscription, ascending days left (overdue first). Row:
   name, badge, end date, "tra X giorni" / "scaduto da X giorni". Rows ≤ 14 days
@@ -202,8 +207,8 @@ the trainer role server-side.
 Following `zero-cento-testing`.
 
 - **Unit** `tests/unit/subscriptions.test.ts`: `addMonthsClamped` (month end, leap year,
-  year rollover); `getSubscriptionStatus` boundaries (daysLeft 15 / 14 / 0 / -1, null);
-  `compareByDaysLeft` ordering.
+  year rollover); `toSubscriptionSummary` boundaries (daysLeft 15 / 14 / 0 / -1, null);
+  `buildSubscriptionOverview` ordering and counts.
 - **Unit** schema: duration bounds, non-integer, invalid date.
 - **Integration** API: create/list/update/delete; `endDate` computed server-side and client
   value ignored; trainee 403 on every method; non-owning trainer 403; admin allowed;
