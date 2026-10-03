@@ -22,7 +22,7 @@ function Kpi({
 }) {
     const content = (
         <>
-            <p className="flex min-w-0 items-center gap-2 text-sm text-gray-600" title={label}>
+            <p className="flex min-w-0 items-center justify-center gap-2 text-sm text-gray-600" title={label}>
                 <span className="shrink-0 text-brand-primary" aria-hidden="true">{icon}</span>
                 <span className="truncate">{label}</span>
             </p>

@@ -14,7 +14,7 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ### [4 Ottobre 2026] — Home trainer: box KPI con layout uniforme
 
 **File modificati:** `src/app/trainer/dashboard/_widgets/HeaderKpis.tsx`, `public/locales/{it,en}/trainer.json`, `tests/unit/trainer-dashboard/widgets-phase1.test.tsx`
-**Note:** Tutti i box su tre righe: descrizione su una riga (troncata con tooltip se non ci sta), valore centrato, variazione centrata sotto. Etichette accorciate per stare su una riga: "Sessioni (sett.)" e "Serie confermate (sett.)", nello stesso formato di "Atleti attivi (7 gg)".
+**Note:** Tutti i box su tre righe, tutte centrate: descrizione su una riga (troncata con tooltip se non ci sta), valore, variazione centrata sotto. Etichette accorciate per stare su una riga: "Sessioni (sett.)" e "Serie confermate (sett.)", nello stesso formato di "Atleti attivi (7 gg)".
 ### [4 Ottobre 2026] — Home trainer: confronto su tutti i KPI, accanto al valore
 
 **File modificati:** `src/lib/trainer-dashboard/header-kpis.ts`, `src/lib/trainer-dashboard/constants.ts`, `src/app/trainer/dashboard/_widgets/HeaderKpis.tsx`, `public/locales/{it,en}/trainer.json`, `tests/unit/trainer-dashboard/header-kpis.test.ts`, `tests/unit/trainer-dashboard/widgets-phase1.test.tsx`
