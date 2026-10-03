@@ -70,7 +70,7 @@ Benvenuto su ZeroCento - Completa la tua registrazione
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
                                     <td style="text-align: center; padding: 10px 0 30px;">
-                                        <a href="{{ .ConfirmationURL }}" 
+                                        <a href="{{ .SiteURL }}/onboarding/set-password?token_hash={{ .TokenHash }}&type=invite" 
                                            style="display: inline-block; padding: 16px 40px; background-color: #FFA700; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px; border-radius: 8px; box-shadow: 0 2px 4px rgba(255, 167, 0, 0.3);">
                                             Completa la Registrazione
                                         </a>
@@ -93,7 +93,7 @@ Benvenuto su ZeroCento - Completa la tua registrazione
                             <!-- Link alternativo -->
                             <p style="margin: 24px 0 0; font-size: 13px; line-height: 1.5; color: #6B7280;">
                                 Se il pulsante non funziona, copia e incolla questo link nel tuo browser:<br>
-                                <a href="{{ .ConfirmationURL }}" style="color: #FFA700; word-break: break-all;">{{ .ConfirmationURL }}</a>
+                                <a href="{{ .SiteURL }}/onboarding/set-password?token_hash={{ .TokenHash }}&type=invite" style="color: #FFA700; word-break: break-all;">{{ .SiteURL }}/onboarding/set-password?token_hash={{ .TokenHash }}&type=invite</a>
                             </p>
                         </td>
                     </tr>

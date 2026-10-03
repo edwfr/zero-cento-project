@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import type { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase-client'
 import { useTranslation } from 'react-i18next'
 import Link from 'next/link'
@@ -10,6 +11,10 @@ import * as Sentry from '@sentry/nextjs'
 import { Button } from '@/components/Button'
 import { Input } from '@/components/Input'
 import { FormLabel } from '@/components/FormLabel'
+
+// isActive lives in app_metadata and becomes true once onboarding is complete
+const isOnboardingComplete = (user: User | null | undefined) =>
+    (user?.app_metadata as { isActive?: boolean } | undefined)?.isActive === true
 
 export default function SetPasswordPage() {
     const { t } = useTranslation(['auth', 'common'])
@@ -20,12 +25,26 @@ export default function SetPasswordPage() {
     const [verifying, setVerifying] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [userData, setUserData] = useState<any>(null)
+    const [pendingTokenHash, setPendingTokenHash] = useState<string | null>(null)
+    const [activating, setActivating] = useState(false)
 
     useEffect(() => {
         const supabase = createClient()
 
         const setupAuth = async () => {
             try {
+                // Invite links carry a token_hash that is verified only on an explicit
+                // click: email scanners and chat link previews follow links with GET,
+                // and would otherwise consume the one-time token before the user does.
+                const searchParams = new URLSearchParams(window.location.search)
+                const tokenHash = searchParams.get('token_hash')
+
+                if (tokenHash && searchParams.get('type') === 'invite') {
+                    setPendingTokenHash(tokenHash)
+                    setVerifying(false)
+                    return
+                }
+
                 // Check if we have tokens in the URL hash
                 const hashParams = new URLSearchParams(window.location.hash.substring(1))
                 const accessToken = hashParams.get('access_token')
@@ -49,11 +68,8 @@ export default function SetPasswordPage() {
 
                     // For invited users, email_confirmed_at is set by the invite link
                     // But they still need to set a password. Only redirect if they've
-                    // already completed onboarding (isActive lives in app_metadata)
-                    const isOnboardingComplete =
-                        (data.user?.app_metadata as { isActive?: boolean } | undefined)?.isActive === true
-
-                    if (isOnboardingComplete) {
+                    // already completed onboarding
+                    if (isOnboardingComplete(data.user)) {
                         router.push('/login')
                         return
                     }
@@ -71,11 +87,7 @@ export default function SetPasswordPage() {
                         return
                     }
 
-                    // Check if already completed onboarding (isActive lives in app_metadata)
-                    const isOnboardingComplete =
-                        (user.app_metadata as { isActive?: boolean } | undefined)?.isActive === true
-
-                    if (isOnboardingComplete) {
+                    if (isOnboardingComplete(user)) {
                         router.push('/login')
                         return
                     }
@@ -92,6 +104,44 @@ export default function SetPasswordPage() {
 
         setupAuth()
     }, [router, t])
+
+    const handleActivate = async () => {
+        if (!pendingTokenHash) return
+
+        setError(null)
+        setActivating(true)
+
+        try {
+            const supabase = createClient()
+            const { data, error: otpError } = await supabase.auth.verifyOtp({
+                token_hash: pendingTokenHash,
+                type: 'invite',
+            })
+
+            if (otpError || !data.user) {
+                setError(t('auth:setPassword.invalidInvite'))
+                setPendingTokenHash(null)
+                return
+            }
+
+            // Drop the spent token from the URL
+            window.history.replaceState(null, '', window.location.pathname)
+
+            if (isOnboardingComplete(data.user)) {
+                router.push('/login')
+                return
+            }
+
+            setUserData(data.user)
+            setPendingTokenHash(null)
+        } catch (err) {
+            Sentry.captureException(err)
+            setError(t('auth:setPassword.verifyError'))
+            setPendingTokenHash(null)
+        } finally {
+            setActivating(false)
+        }
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -210,62 +260,78 @@ export default function SetPasswordPage() {
                                 })}{' '}
                             </>
                         )}
-                        {t('auth:setPassword.description')}
+                        {pendingTokenHash
+                            ? t('auth:setPassword.activateDescription')
+                            : t('auth:setPassword.description')}
                     </p>
                 </div>
 
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        {error && (
-                            <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
-                                {error}
-                            </div>
-                        )}
-
-                        <div>
-                            <FormLabel>
-                                {t('common:common.password')}
-                            </FormLabel>
-                            <Input
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                minLength={8}
-                                disabled={loading}
-                                placeholder={t('auth:setPassword.passwordPlaceholder')}
-                                inputSize="lg"
-                            />
-                        </div>
-
-                        <div>
-                            <FormLabel>
-                                {t('auth:setPassword.confirmPassword')}
-                            </FormLabel>
-                            <Input
-                                type="password"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                required
-                                minLength={8}
-                                disabled={loading}
-                                placeholder={t('auth:setPassword.confirmPasswordPlaceholder')}
-                                inputSize="lg"
-                            />
-                        </div>
-
+                    {pendingTokenHash ? (
                         <Button
-                            type="submit"
+                            type="button"
                             variant="primary"
                             size="lg"
                             fullWidth
-                            disabled={loading || !password || !confirmPassword}
-                            isLoading={loading}
+                            onClick={handleActivate}
+                            isLoading={activating}
                             loadingText={t('common:common.loadingProgress')}
                         >
-                            {t('auth:setPassword.submit')}
+                            {t('auth:setPassword.activateSubmit')}
                         </Button>
-                    </form>
+                    ) : (
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            {error && (
+                                <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
+                                    {error}
+                                </div>
+                            )}
+
+                            <div>
+                                <FormLabel>
+                                    {t('common:common.password')}
+                                </FormLabel>
+                                <Input
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                    minLength={8}
+                                    disabled={loading}
+                                    placeholder={t('auth:setPassword.passwordPlaceholder')}
+                                    inputSize="lg"
+                                />
+                            </div>
+
+                            <div>
+                                <FormLabel>
+                                    {t('auth:setPassword.confirmPassword')}
+                                </FormLabel>
+                                <Input
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    required
+                                    minLength={8}
+                                    disabled={loading}
+                                    placeholder={t('auth:setPassword.confirmPasswordPlaceholder')}
+                                    inputSize="lg"
+                                />
+                            </div>
+
+                            <Button
+                                type="submit"
+                                variant="primary"
+                                size="lg"
+                                fullWidth
+                                disabled={loading || !password || !confirmPassword}
+                                isLoading={loading}
+                                loadingText={t('common:common.loadingProgress')}
+                            >
+                                {t('auth:setPassword.submit')}
+                            </Button>
+                        </form>
+                    )}
                 </div>
 
                 <div className="text-center mt-6">

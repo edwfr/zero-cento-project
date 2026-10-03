@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [3 Ottobre 2026] — Link di invito non più consumati da scanner e anteprime
+
+**File modificati:** `src/app/onboarding/set-password/page.tsx`, `public/locales/{en,it}/auth.json`, `tests/unit/onboarding-set-password.test.tsx` (nuovo), `implementation-docs/CHANGELOG.md`
+**Note:** Gli atleti invitati trovavano il link "non valido o scaduto" al primo click. Il link del template di default (`/auth/v1/verify?token=...`) consuma il token monouso al primo GET, e i log Auth di Supabase mostrano che lo fanno i bot prima dell'utente: anteprime link di Teams/Skype (`SkypeUriPreview`) e, per le email, scanner come Outlook Safe Links. La pagina `/onboarding/set-password` ora accetta `?token_hash=...&type=invite`: mostra un pulsante "Attiva account" e chiama `supabase.auth.verifyOtp({ token_hash, type: 'invite' })` solo al click, così una visita automatica non brucia il token. Dopo la verifica il token viene tolto dall'URL e compare il form password come prima. Il vecchio formato con `#access_token` nell'hash resta supportato per gli inviti già inviati. **Da fare al deploy:** in Supabase → Authentication → Email Templates → *Invite user*, sostituire `{{ .ConfirmationURL }}` con `{{ .SiteURL }}/onboarding/set-password?token_hash={{ .TokenHash }}&type=invite` (Site URL = dominio di produzione).
 ### [25 Settembre 2026] — Anteprime YouTube per gli Shorts
 
 **File modificati:** `src/lib/youtube.ts` (nuovo), `src/components/YoutubeEmbed.tsx`, `src/app/trainer/exercises/_content.tsx`, `tests/unit/lib/youtube.test.ts` (nuovo), `implementation-docs/CHANGELOG.md`
