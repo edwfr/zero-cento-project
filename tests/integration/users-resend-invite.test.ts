@@ -55,6 +55,25 @@ describe('POST /api/users/[id]/resend-invite', () => {
             where: { trainerId: mockTrainerSession.user.id, traineeId: TRAINEE_ID },
         })
         expect(vi.mocked(resendInvitation)).toHaveBeenCalledWith(TRAINEE_ID, EMAIL)
+        expect(prismaMock.userStatusEvent.create).toHaveBeenCalledWith({
+            data: { userId: TRAINEE_ID, type: 'invitation_resent', actorId: mockTrainerSession.user.id },
+        })
+    })
+
+    it('records nothing when the invite was not sent', async () => {
+        vi.mocked(resendInvitation).mockResolvedValue('rateLimited')
+
+        await resendInvite(makeRequest(), withParams(TRAINEE_ID))
+
+        expect(prismaMock.userStatusEvent.create).not.toHaveBeenCalled()
+    })
+
+    it('still succeeds when the event cannot be recorded', async () => {
+        prismaMock.userStatusEvent.create.mockRejectedValue(new Error('db down'))
+
+        const res = await resendInvite(makeRequest(), withParams(TRAINEE_ID))
+
+        expect(res.status).toBe(200)
     })
 
     it('lets an admin re-send without an association', async () => {

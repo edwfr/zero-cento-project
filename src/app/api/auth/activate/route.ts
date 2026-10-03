@@ -14,10 +14,21 @@ export async function POST(request: NextRequest) {
         const session = await requireAuthDuringOnboarding()
 
         // Activate the user
-        const updatedUser = await prisma.user.update({
-            where: { id: session.user.id },
-            data: { isActive: true },
-            select: { id: true },
+        // The activation is the trainee's own step: they are its author
+        const updatedUser = await prisma.$transaction(async (tx) => {
+            const updated = await tx.user.update({
+                where: { id: session.user.id },
+                data: { isActive: true },
+                select: { id: true },
+            })
+
+            if (!session.user.isActive) {
+                await tx.userStatusEvent.create({
+                    data: { userId: session.user.id, type: 'activated', actorId: session.user.id },
+                })
+            }
+
+            return updated
         })
 
         await syncUserMetadata(updatedUser.id, { isActive: true })

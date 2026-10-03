@@ -57,6 +57,15 @@ export async function POST(request: NextRequest, { params }: Params) {
             return apiError('RATE_LIMIT_EXCEEDED', 'Too many invitation emails, retry later', 429, undefined, 'user.inviteRateLimited')
         }
 
+        // The email is already out: a failed history write must not turn it into an error
+        try {
+            await prisma.userStatusEvent.create({
+                data: { userId: id, type: 'invitation_resent', actorId: session.user.id },
+            })
+        } catch (error) {
+            logger.error({ error, userId: id }, 'Could not record invitation_resent event')
+        }
+
         logger.info({ userId: id, by: session.user.id }, 'Invitation re-sent')
 
         return apiSuccess({ userId: id, status: 'invitation_sent' })

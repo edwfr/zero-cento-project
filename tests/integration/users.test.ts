@@ -297,6 +297,32 @@ describe('POST /api/users', () => {
         })
     })
 
+    it('records a created event authored by the trainer', async () => {
+        asTrainer()
+        prismaMock.user.findUnique.mockResolvedValue(null)
+        prismaMock.user.create.mockResolvedValue({
+            id: 'new-user-id',
+            email: 'new.trainee@example.com',
+            firstName: 'New',
+            lastName: 'Trainee',
+            role: 'trainee',
+            isActive: false,
+        } as never)
+
+        const res = await POST(
+            makeRequest('http://localhost:3000/api/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: 'new.trainee@example.com', firstName: 'New', lastName: 'Trainee', role: 'trainee' }),
+            })
+        )
+
+        expect(res.status).toBe(201)
+        expect(prismaMock.userStatusEvent.create).toHaveBeenCalledWith({
+            data: { userId: 'new-user-id', type: 'created', actorId: mockTrainerSession.user.id },
+        })
+    })
+
     it('returns 409 when email already exists', async () => {
         asAdmin()
         prismaMock.user.findUnique.mockResolvedValue(mockUsers[0] as never)

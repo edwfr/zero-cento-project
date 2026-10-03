@@ -53,17 +53,27 @@ export async function PATCH(request: NextRequest, { params }: Params) {
             return apiError('CONFLICT', 'User has not accepted the invitation yet', 409, undefined, 'user.invitationPending')
         }
 
-        // Activate user
-        const user = await prisma.user.update({
-            where: { id },
-            data: { isActive: true },
-            select: {
-                id: true,
-                email: true,
-                firstName: true,
-                lastName: true,
-                isActive: true,
-            },
+        // Activate user, recording the step only when the status changes
+        const user = await prisma.$transaction(async (tx) => {
+            const updated = await tx.user.update({
+                where: { id },
+                data: { isActive: true },
+                select: {
+                    id: true,
+                    email: true,
+                    firstName: true,
+                    lastName: true,
+                    isActive: true,
+                },
+            })
+
+            if (!existingUser.isActive) {
+                await tx.userStatusEvent.create({
+                    data: { userId: id, type: 'reactivated', actorId: session.user.id },
+                })
+            }
+
+            return updated
         })
 
         await syncUserMetadata(id, { isActive: true })

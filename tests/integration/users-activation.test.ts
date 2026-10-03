@@ -63,6 +63,15 @@ describe('PATCH /api/users/[id]/activate', () => {
 
         expect(res.status).toBe(200)
         expect(vi.mocked(isInvitationPending)).not.toHaveBeenCalled()
+        expect(prismaMock.userStatusEvent.create).not.toHaveBeenCalled()
+    })
+
+    it('records a reactivated event authored by the trainer', async () => {
+        await activateUser(makeRequest('activate'), withParams({ id: TRAINEE_ID }))
+
+        expect(prismaMock.userStatusEvent.create).toHaveBeenCalledWith({
+            data: { userId: TRAINEE_ID, type: 'reactivated', actorId: mockTrainerSession.user.id },
+        })
     })
 
     it('activates a trainee the trainer owns', async () => {
@@ -165,6 +174,22 @@ describe('PATCH /api/users/[id]/deactivate', () => {
             expect.objectContaining({ where: { id: TRAINEE_ID }, data: { isActive: false } })
         )
         expect(vi.mocked(syncUserMetadata)).toHaveBeenCalledWith(TRAINEE_ID, { isActive: false })
+    })
+
+    it('records a deactivated event authored by the trainer', async () => {
+        await deactivateUser(makeRequest('deactivate'), withParams({ id: TRAINEE_ID }))
+
+        expect(prismaMock.userStatusEvent.create).toHaveBeenCalledWith({
+            data: { userId: TRAINEE_ID, type: 'deactivated', actorId: mockTrainerSession.user.id },
+        })
+    })
+
+    it('records nothing when the trainee is already inactive', async () => {
+        prismaMock.user.findUnique.mockResolvedValue({ id: TRAINEE_ID, role: 'trainee', isActive: false } as never)
+
+        await deactivateUser(makeRequest('deactivate'), withParams({ id: TRAINEE_ID }))
+
+        expect(prismaMock.userStatusEvent.create).not.toHaveBeenCalled()
     })
 
     it('lets an admin deactivate a trainee without an association', async () => {

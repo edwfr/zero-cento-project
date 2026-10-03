@@ -46,17 +46,27 @@ export async function PATCH(request: NextRequest, { params }: Params) {
             }
         }
 
-        // Deactivate user
-        const user = await prisma.user.update({
-            where: { id },
-            data: { isActive: false },
-            select: {
-                id: true,
-                email: true,
-                firstName: true,
-                lastName: true,
-                isActive: true,
-            },
+        // Deactivate user, recording the step only when the status changes
+        const user = await prisma.$transaction(async (tx) => {
+            const updated = await tx.user.update({
+                where: { id },
+                data: { isActive: false },
+                select: {
+                    id: true,
+                    email: true,
+                    firstName: true,
+                    lastName: true,
+                    isActive: true,
+                },
+            })
+
+            if (existingUser.isActive) {
+                await tx.userStatusEvent.create({
+                    data: { userId: id, type: 'deactivated', actorId: session.user.id },
+                })
+            }
+
+            return updated
         })
 
         await syncUserMetadata(id, { isActive: false })

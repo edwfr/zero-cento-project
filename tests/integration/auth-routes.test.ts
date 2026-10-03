@@ -108,6 +108,24 @@ describe('POST /api/auth/activate', () => {
         expect(syncUserMetadata).toHaveBeenCalledWith(mockTrainerSession.user.id, { isActive: true })
     })
 
+    it('records the activation authored by the trainee', async () => {
+        requireAuthDuringOnboarding.mockResolvedValue({ user: { ...mockTrainerSession.user, isActive: false } })
+
+        const response = await activate(makeRequest({}))
+
+        expect(response.status).toBe(200)
+        expect(prismaMock.userStatusEvent.create).toHaveBeenCalledWith({
+            data: { userId: mockTrainerSession.user.id, type: 'activated', actorId: mockTrainerSession.user.id },
+        })
+    })
+
+    it('records nothing when the user was already active', async () => {
+        const response = await activate(makeRequest({}))
+
+        expect(response.status).toBe(200)
+        expect(prismaMock.userStatusEvent.create).not.toHaveBeenCalled()
+    })
+
     it('returns 500 when activation fails', async () => {
         prismaMock.user.update.mockRejectedValue(new Error('db down'))
 

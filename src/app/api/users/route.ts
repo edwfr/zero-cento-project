@@ -240,31 +240,39 @@ export async function POST(request: NextRequest) {
             return apiError('INTERNAL_ERROR', 'Failed to send invitation', 500, undefined, 'internal.default')
         }
 
-        // Create user in Prisma (inactive until they complete onboarding)
-        const user = await prisma.user.create({
-            data: {
-                id: authData.user.id,
-                email,
-                firstName,
-                lastName,
-                role,
-                isActive: false, // Will be activated after password setup
-            },
+        // Create user in Prisma (inactive until they complete onboarding),
+        // the trainer association and the "created" history event together
+        const user = await prisma.$transaction(async (tx) => {
+            const created = await tx.user.create({
+                data: {
+                    id: authData.user.id,
+                    email,
+                    firstName,
+                    lastName,
+                    role,
+                    isActive: false, // Will be activated after password setup
+                },
+            })
+
+            if (role === 'trainee' && session.user.role === 'trainer') {
+                await tx.trainerTrainee.create({
+                    data: {
+                        trainerId: session.user.id,
+                        traineeId: created.id,
+                    },
+                })
+            }
+
+            await tx.userStatusEvent.create({
+                data: { userId: created.id, type: 'created', actorId: session.user.id },
+            })
+
+            return created
         })
 
         // inviteUserByEmail only fills user_metadata; authorization data has to be
         // written to app_metadata with the service role.
         await syncUserMetadata(user.id, { role, isActive: false })
-
-        // If trainee and created by trainer, create trainer-trainee association
-        if (role === 'trainee' && session.user.role === 'trainer') {
-            await prisma.trainerTrainee.create({
-                data: {
-                    trainerId: session.user.id,
-                    traineeId: user.id,
-                },
-            })
-        }
 
         logger.info({ userId: user.id, role }, 'User invited successfully')
 
