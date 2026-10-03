@@ -99,13 +99,13 @@
         "programEnding": {
             "title": "Programs ending",
             "empty": "No program is ending without a follow-up.",
-            "endsIn": "{{program}} ends in {{count}} days",
-            "endsIn_one": "{{program}} ends tomorrow",
-            "endsIn_zero": "{{program}} ends today",
+            "daysLeft": "In {{count}} days",
+            "daysLeft_one": "Tomorrow",
+            "daysLeft_zero": "Today",
             "lastWeekProgress": "Last week"
         },
         "subscriptionAlerts": {
-            "title": "Subscriptions",
+            "title": "Expiring subscriptions",
             "empty": "No expired or expiring subscriptions.",
             "expired": "Expired {{count}} days ago",
             "expired_one": "Expired 1 day ago",

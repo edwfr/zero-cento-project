@@ -100,10 +100,10 @@ describe('ProgramEndingWidget', () => {
         expect(getEndingPrograms).toHaveBeenCalledWith('trainer-1', TRAINEES, NOW)
         expect(within(region).getByText('2')).toBeInTheDocument()
         expect(links.map((link) => link.getAttribute('href'))).toEqual(['/trainer/programs/new', '/trainer/programs/new'])
-        expect(links[0]).toHaveTextContent('Forza termina oggi')
+        expect(links[0]).toHaveTextContent('Anna RossiOggiForza')
         expect(links[0]).toHaveTextContent('50%')
         expect(within(links[0]).getByRole('progressbar', { name: 'Ultima settimana' })).toBeInTheDocument()
-        expect(links[1]).toHaveTextContent('Ipertrofia termina tra 3 giorni')
+        expect(links[1]).toHaveTextContent('Luca BianchiTra 3 giorniIpertrofia')
         // no planned workouts in the last week: no progress bar
         expect(within(links[1]).queryByRole('progressbar')).not.toBeInTheDocument()
     })
@@ -143,7 +143,7 @@ describe('SubscriptionAlertsWidget', () => {
 
         await renderAsync(SubscriptionAlertsWidget({ ctx: makeCtx() }))
 
-        const region = screen.getByRole('region', { name: 'Abbonamenti' })
+        const region = screen.getByRole('region', { name: 'Abbonamenti in scadenza' })
         const links = within(region).getAllByRole('link')
         expect(getSubscriptionAlerts).toHaveBeenCalledWith('trainer-1', TRAINEES, NOW)
         expect(links.map((link) => link.getAttribute('href'))).toEqual(['/trainer/subscriptions', '/trainer/subscriptions'])
@@ -157,7 +157,7 @@ describe('SubscriptionAlertsWidget', () => {
 
         await renderAsync(SubscriptionAlertsWidget({ ctx: makeCtx() }))
 
-        const region = screen.getByRole('region', { name: 'Abbonamenti' })
+        const region = screen.getByRole('region', { name: 'Abbonamenti in scadenza' })
         const previous = within(region).getByRole('button', { name: 'Pagina precedente' })
         const next = within(region).getByRole('button', { name: 'Pagina successiva' })
         expect(within(region).getByText('8')).toBeInTheDocument()
@@ -192,7 +192,7 @@ describe('SubscriptionAlertsWidget', () => {
 
         await renderAsync(SubscriptionAlertsWidget({ ctx: makeCtx() }))
 
-        expect(within(screen.getByRole('region', { name: 'Abbonamenti' })).getByRole('alert')).toHaveTextContent(
+        expect(within(screen.getByRole('region', { name: 'Abbonamenti in scadenza' })).getByRole('alert')).toHaveTextContent(
             'Impossibile caricare questa sezione',
         )
     })

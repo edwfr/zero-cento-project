@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [3 Ottobre 2026] — Home trainer: righe compatte in "Programmi in chiusura", "Abbonamenti in scadenza"
+
+**File modificati:** `src/app/trainer/dashboard/_widgets/ProgramEndingWidget.tsx`, `public/locales/{it,en}/trainer.json`, `tests/unit/trainer-dashboard/widgets-phase1.test.tsx`
+**Note:** Con 6 righe il pannello diventava troppo alto. Ogni riga ora ha nome atleta e scadenza breve ("Oggi", "Domani", "Tra N giorni") sulla stessa linea, titolo del programma su una sola riga (troncato, completo nel tooltip) e una barra sottile con la % dell'ultima settimana, senza etichetta. Rimossa l'icona tonda. Il pannello abbonamenti è rinominato "Abbonamenti in scadenza".
 ### [3 Ottobre 2026] — Classifica costanza: conta gli allenamenti distinti
 
 **File modificati:** `src/lib/trainer-dashboard/consistency-ranking.ts`, `tests/unit/trainer-dashboard/consistency-ranking.test.ts`

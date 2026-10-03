@@ -28,13 +28,13 @@
         "programEnding": {
             "title": "Programmi in chiusura",
             "empty": "Nessun programma in chiusura senza un programma successivo.",
-            "endsIn": "{{program}} termina tra {{count}} giorni",
-            "endsIn_one": "{{program}} termina domani",
-            "endsIn_zero": "{{program}} termina oggi",
+            "daysLeft": "Tra {{count}} giorni",
+            "daysLeft_one": "Domani",
+            "daysLeft_zero": "Oggi",
             "lastWeekProgress": "Ultima settimana"
         },
         "subscriptionAlerts": {
-            "title": "Abbonamenti",
+            "title": "Abbonamenti in scadenza",
             "empty": "Nessun abbonamento scaduto o in scadenza.",
             "expired": "Scaduto da {{count}} giorni",
             "expired_one": "Scaduto da 1 giorno",
