@@ -75,11 +75,11 @@ describe('HeaderKpis', () => {
         expect(screen.getByRole('link', { name: /Atleti attivi/ })).toHaveTextContent('4 / 6+1 vs 30 gg fa')
         expect(screen.getByRole('link', { name: /Programmi attivi/ })).toHaveAttribute('href', '/trainer/programs')
         expect(screen.getByRole('link', { name: /Programmi attivi/ })).toHaveTextContent('5-2 vs 30 gg fa')
-        expect(screen.getByText('Sessioni questa settimana').closest('div')).toHaveTextContent('9+2 vs 7 gg fa')
-        expect(screen.getByText('Serie confermate questa settimana').closest('div')).toHaveTextContent('400 vs 7 gg fa')
+        expect(screen.getByText('Sessioni (sett.)').closest('div')).toHaveTextContent('9+2 vs 7 gg fa')
+        expect(screen.getByText('Serie confermate (sett.)').closest('div')).toHaveTextContent('400 vs 7 gg fa')
         expect(screen.getByRole('link', { name: /Esercizi in libreria/ })).toHaveAttribute('href', '/trainer/exercises')
         expect(screen.getByRole('link', { name: /Esercizi in libreria/ })).toHaveTextContent('120+10 vs 30 gg fa')
-        expect(screen.queryByRole('link', { name: /Sessioni questa settimana/ })).not.toBeInTheDocument()
+        expect(screen.queryByRole('link', { name: /Sessioni/ })).not.toBeInTheDocument()
     })
 
     it('degrades to a notice when the KPIs fail to load', async () => {

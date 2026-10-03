@@ -22,14 +22,12 @@ function Kpi({
 }) {
     const content = (
         <>
-            <p className="flex items-center gap-2 text-sm text-gray-600">
-                <span className="text-brand-primary" aria-hidden="true">{icon}</span>
-                {label}
+            <p className="flex min-w-0 items-center gap-2 text-sm text-gray-600" title={label}>
+                <span className="shrink-0 text-brand-primary" aria-hidden="true">{icon}</span>
+                <span className="truncate">{label}</span>
             </p>
-            <div className="mt-1 flex flex-wrap items-baseline gap-x-2">
-                <p className="text-3xl font-bold text-gray-900">{value}</p>
-                {delta}
-            </div>
+            <p className="mt-2 text-center text-3xl font-bold text-gray-900">{value}</p>
+            <div className="mt-1 flex justify-center">{delta}</div>
         </>
     )
     const className = 'block rounded-lg bg-gray-50 px-4 py-3 ring-1 ring-inset ring-gray-200'

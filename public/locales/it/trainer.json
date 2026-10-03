@@ -15,9 +15,9 @@
             "newTrainee": "Nuovo atleta",
             "kpiActiveTrainees": "Atleti attivi (7 gg)",
             "kpiActivePrograms": "Programmi attivi",
-            "kpiSessionsWeek": "Sessioni questa settimana",
+            "kpiSessionsWeek": "Sessioni (sett.)",
             "kpiDelta": "{{delta}} vs {{count}} gg fa",
-            "kpiConfirmedSetsWeek": "Serie confermate questa settimana",
+            "kpiConfirmedSetsWeek": "Serie confermate (sett.)",
             "kpiLibraryExercises": "Esercizi in libreria",
             "kpiUnavailable": "Indicatori non disponibili al momento."
         },
