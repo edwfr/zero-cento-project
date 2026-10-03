@@ -106,6 +106,13 @@
             "daysLeft_zero": "Today",
             "lastWeekProgress": "Last week"
         },
+        "drafts": {
+            "title": "Pending drafts",
+            "empty": "No pending drafts.",
+            "created": "Created {{count}} days ago",
+            "created_one": "Created yesterday",
+            "created_zero": "Created today"
+        },
         "subscriptionAlerts": {
             "title": "Expiring subscriptions",
             "empty": "No expired or expiring subscriptions.",

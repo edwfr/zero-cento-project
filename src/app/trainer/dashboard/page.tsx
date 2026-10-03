@@ -8,6 +8,7 @@ import { getTrainerTrainees } from '@/lib/trainer-dashboard/trainees'
 import ActivityFeedWidget from './_widgets/ActivityFeedWidget'
 import ConsistencyRankingWidget from './_widgets/ConsistencyRankingWidget'
 import DashboardHeader from './_widgets/DashboardHeader'
+import DraftProgramsWidget from './_widgets/DraftProgramsWidget'
 import InactiveTraineesWidget from './_widgets/InactiveTraineesWidget'
 import ProgramEndingWidget from './_widgets/ProgramEndingWidget'
 import SubscriptionAlertsWidget from './_widgets/SubscriptionAlertsWidget'
@@ -57,8 +58,9 @@ export default async function TrainerDashboard() {
                     <Slot>
                         <SubscriptionAlertsWidget ctx={ctx} />
                     </Slot>
-                    {/* third column of the first row left empty on purpose */}
-                    <div className="hidden lg:block" aria-hidden="true" />
+                    <Slot>
+                        <DraftProgramsWidget ctx={ctx} />
+                    </Slot>
                     <Slot>
                         <ConsistencyRankingWidget ctx={ctx} />
                     </Slot>

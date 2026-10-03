@@ -50,7 +50,7 @@ export default async function ProgramEndingWidget({ ctx }: { ctx: WidgetContext 
                     nextLabel={t('trainerDashboard.widget.nextPage')}
                     items={items.map((item) => (
                         <li key={item.programId}>
-                            <Link href="/trainer/programs/new" className="flex items-center gap-2 rounded-lg px-2 py-2 transition-colors hover:bg-gray-50">
+                            <Link href={`/trainer/trainees/${item.traineeId}`} className="flex items-center gap-2 rounded-lg px-2 py-2 transition-colors hover:bg-gray-50">
                                 <div className="min-w-0 flex-1">
                                     <div className="flex items-baseline justify-between gap-2">
                                         <p className="truncate font-medium text-gray-900">{item.traineeName}</p>

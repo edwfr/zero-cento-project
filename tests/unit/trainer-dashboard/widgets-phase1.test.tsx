@@ -6,6 +6,7 @@ vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn() } }))
 vi.mock('@/lib/trainer-dashboard/header-kpis', () => ({ getHeaderKpis: vi.fn() }))
 vi.mock('@/lib/trainer-dashboard/program-ending', () => ({ getEndingPrograms: vi.fn() }))
 vi.mock('@/lib/trainer-dashboard/subscription-alerts', () => ({ getSubscriptionAlerts: vi.fn() }))
+vi.mock('@/lib/trainer-dashboard/draft-programs', () => ({ getDraftPrograms: vi.fn() }))
 vi.mock('@/lib/trainer-dashboard/inactive-trainees', () => ({ getInactiveTrainees: vi.fn() }))
 // DashboardHeader wraps the async HeaderKpis in <Suspense>; React 18 in jsdom cannot render
 // an async component, so the header test replaces it with a static stand-in.
@@ -21,6 +22,8 @@ import { getEndingPrograms } from '@/lib/trainer-dashboard/program-ending'
 import ProgramEndingWidget from '@/app/trainer/dashboard/_widgets/ProgramEndingWidget'
 import { getSubscriptionAlerts, type SubscriptionAlert } from '@/lib/trainer-dashboard/subscription-alerts'
 import SubscriptionAlertsWidget from '@/app/trainer/dashboard/_widgets/SubscriptionAlertsWidget'
+import { getDraftPrograms } from '@/lib/trainer-dashboard/draft-programs'
+import DraftProgramsWidget from '@/app/trainer/dashboard/_widgets/DraftProgramsWidget'
 import { getInactiveTrainees } from '@/lib/trainer-dashboard/inactive-trainees'
 import InactiveTraineesWidget from '@/app/trainer/dashboard/_widgets/InactiveTraineesWidget'
 import { NOW, TRAINEES } from './fixtures'
@@ -106,7 +109,7 @@ describe('ProgramEndingWidget', () => {
         const links = within(region).getAllByRole('link')
         expect(getEndingPrograms).toHaveBeenCalledWith('trainer-1', TRAINEES, NOW)
         expect(within(region).getByText('2')).toBeInTheDocument()
-        expect(links.map((link) => link.getAttribute('href'))).toEqual(['/trainer/programs/new', '/trainer/programs/new'])
+        expect(links.map((link) => link.getAttribute('href'))).toEqual(['/trainer/trainees/t1', '/trainer/trainees/t2'])
         expect(links[0]).toHaveTextContent('Anna RossiOggiForza')
         expect(links[0]).toHaveTextContent('50%')
         expect(within(links[0]).getByRole('progressbar', { name: 'Ultima settimana' })).toBeInTheDocument()
@@ -202,6 +205,41 @@ describe('SubscriptionAlertsWidget', () => {
         expect(within(screen.getByRole('region', { name: 'Abbonamenti in scadenza' })).getByRole('alert')).toHaveTextContent(
             'Impossibile caricare questa sezione',
         )
+    })
+})
+
+describe('DraftProgramsWidget', () => {
+    it('lists drafts with their age, each linking to the program editor', async () => {
+        vi.mocked(getDraftPrograms).mockResolvedValue([
+            { programId: 'p1', traineeName: 'Anna Rossi', programTitle: 'Forza', daysSinceCreated: 0 },
+            { programId: 'p2', traineeName: 'Luca Bianchi', programTitle: 'Ipertrofia', daysSinceCreated: 5 },
+        ])
+
+        await renderAsync(DraftProgramsWidget({ ctx: makeCtx() }))
+
+        const region = screen.getByRole('region', { name: 'Bozze in attesa' })
+        const links = within(region).getAllByRole('link')
+        expect(getDraftPrograms).toHaveBeenCalledWith('trainer-1', TRAINEES, NOW)
+        expect(within(region).getByText('2')).toBeInTheDocument()
+        expect(links.map((link) => link.getAttribute('href'))).toEqual(['/trainer/programs/p1/edit', '/trainer/programs/p2/edit'])
+        expect(links[0]).toHaveTextContent('Anna RossiCreata oggiForza')
+        expect(links[1]).toHaveTextContent('Luca BianchiCreata 5 giorni faIpertrofia')
+    })
+
+    it('shows the empty state when there are no drafts', async () => {
+        vi.mocked(getDraftPrograms).mockResolvedValue([])
+
+        await renderAsync(DraftProgramsWidget({ ctx: makeCtx() }))
+
+        expect(screen.getByText('Nessuna bozza in attesa.')).toBeInTheDocument()
+    })
+
+    it('shows the error card when loading fails', async () => {
+        vi.mocked(getDraftPrograms).mockRejectedValue(new Error('db down'))
+
+        await renderAsync(DraftProgramsWidget({ ctx: makeCtx() }))
+
+        expect(within(screen.getByRole('region', { name: 'Bozze in attesa' })).getByRole('alert')).toBeInTheDocument()
     })
 })
 

@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [4 Ottobre 2026] — Home trainer: pannello "Bozze in attesa", "Programmi in chiusura" apre il profilo atleta
+
+**File modificati:** `src/lib/trainer-dashboard/draft-programs.ts` (nuovo), `src/app/trainer/dashboard/_widgets/DraftProgramsWidget.tsx` (nuovo), `src/app/trainer/dashboard/_widgets/ProgramEndingWidget.tsx`, `src/app/trainer/dashboard/page.tsx`, `public/locales/{it,en}/trainer.json`, `tests/unit/trainer-dashboard/draft-programs.test.ts` (nuovo), `tests/unit/trainer-dashboard/widgets-phase1.test.tsx`
+**Note:** La cella vuota della prima riga ospita "Bozze in attesa": programmi in bozza del trainer per atleti attivi, dalla più recente, con "Creata oggi / ieri / N giorni fa" (da `createdAt`: modificare gli allenamenti non aggiorna `updatedAt` del programma). Click → `/trainer/programs/{id}/edit` per riprendere la modifica. 6 righe per pagina, come gli altri pannelli. In "Programmi in chiusura" il click porta ora al profilo dell'atleta invece che a "Nuovo programma".
 ### [3 Ottobre 2026] — Home trainer: KPI "Serie confermate" ed "Esercizi in libreria"
 
 **File modificati:** `src/lib/trainer-dashboard/header-kpis.ts`, `src/app/trainer/dashboard/_widgets/HeaderKpis.tsx`, `public/locales/{it,en}/trainer.json`, `tests/unit/trainer-dashboard/header-kpis.test.ts`, `tests/unit/trainer-dashboard/widgets-phase1.test.tsx`

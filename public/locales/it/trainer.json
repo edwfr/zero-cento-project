@@ -35,6 +35,13 @@
             "daysLeft_zero": "Oggi",
             "lastWeekProgress": "Ultima settimana"
         },
+        "drafts": {
+            "title": "Bozze in attesa",
+            "empty": "Nessuna bozza in attesa.",
+            "created": "Creata {{count}} giorni fa",
+            "created_one": "Creata ieri",
+            "created_zero": "Creata oggi"
+        },
         "subscriptionAlerts": {
             "title": "Abbonamenti in scadenza",
             "empty": "Nessun abbonamento scaduto o in scadenza.",
