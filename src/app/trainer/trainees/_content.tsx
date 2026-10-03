@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { SkeletonTable, ActionIconButton, InlineActions, Button } from '@/components'
+import { SkeletonTable, ActionIconButton, InlineActions, Button, SubscriptionStatusBadge } from '@/components'
+import { needsAttention, type SubscriptionSummary } from '@/lib/subscriptions'
 import { useToast } from '@/components/ToastNotification'
 import { formatDate } from '@/lib/date-format'
 import { useTranslation } from 'react-i18next'
@@ -18,6 +19,7 @@ interface Trainee {
     email: string
     isActive: boolean
     createdAt: string
+    subscription?: SubscriptionSummary | null
 }
 
 interface TraineesApiResponse {
@@ -324,6 +326,12 @@ export default function TrainerTraineesContent() {
                                             <div className="font-semibold text-gray-900">
                                                 {trainee.firstName} {trainee.lastName}
                                             </div>
+                                            {/* Paused athletes get no alert: nothing to act on. Wrapper only when shown, no stray margin */}
+                                            {trainee.isActive && needsAttention(trainee.subscription ?? null) && (
+                                                <div className="mt-1">
+                                                    <SubscriptionStatusBadge compact summary={trainee.subscription ?? null} />
+                                                </div>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="text-sm text-gray-600">
