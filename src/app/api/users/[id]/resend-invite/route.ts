@@ -4,6 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { resendInvitation } from '@/lib/invitation'
+import { handleApiError } from '@/lib/api-error-handler'
 
 type Params = {
     params: Promise<{ id: string }>
@@ -69,9 +70,12 @@ export async function POST(request: NextRequest, { params }: Params) {
         logger.info({ userId: id, by: session.user.id }, 'Invitation re-sent')
 
         return apiSuccess({ userId: id, status: 'invitation_sent' })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error, userId: id }, 'Error re-sending invitation')
-        return apiError('INTERNAL_ERROR', 'Failed to re-send invitation', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error re-sending invitation',
+            message: 'Failed to re-send invitation',
+            key: 'internal.default',
+            context: { userId: id },
+        })
     }
 }

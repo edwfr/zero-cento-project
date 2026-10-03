@@ -6,6 +6,7 @@ import { workoutSubmitSchema } from '@/schemas/feedback'
 import { logger } from '@/lib/logger'
 import { getTodayDateKey } from '@/lib/date-format'
 import { cascadeWorkoutCompletion } from '@/lib/completion-service'
+import { handleApiError } from '@/lib/api-error-handler'
 
 const arePlannedSetsCompleted = (
     sets: Array<{ setNumber: number; completed: boolean }>,
@@ -198,15 +199,12 @@ export async function POST(
         )
 
         return apiSuccess({ feedbacks, workoutCascade }, 200)
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error, workoutId }, 'Error submitting workout')
-        return apiError(
-            'INTERNAL_ERROR',
-            'Failed to submit workout',
-            500,
-            undefined,
-            'internal.default'
-        )
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error submitting workout',
+            message: 'Failed to submit workout',
+            key: 'internal.default',
+            context: { workoutId },
+        })
     }
 }

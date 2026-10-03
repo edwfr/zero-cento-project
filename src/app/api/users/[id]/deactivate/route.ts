@@ -4,6 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { syncUserMetadata } from '@/lib/sync-user-metadata'
+import { handleApiError } from '@/lib/api-error-handler'
 
 type Params = {
     params: Promise<{ id: string }>
@@ -74,9 +75,11 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         logger.info({ userId: id }, 'User deactivated')
 
         return apiSuccess({ user })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error deactivating user')
-        return apiError('INTERNAL_ERROR', 'Failed to deactivate user', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error deactivating user',
+            message: 'Failed to deactivate user',
+            key: 'internal.default',
+        })
     }
 }

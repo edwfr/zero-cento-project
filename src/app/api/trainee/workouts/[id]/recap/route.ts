@@ -1,9 +1,9 @@
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
-import { logger } from '@/lib/logger'
 import { computeExerciseStatus } from '@/lib/workout-recap'
 import type { ExerciseRecapItem } from '@/lib/workout-recap'
+import { handleApiError } from '@/lib/api-error-handler'
 
 export async function GET(
     _request: Request,
@@ -96,9 +96,12 @@ export async function GET(
         })
 
         return apiSuccess({ exercises, workoutNote: workout.traineeNotes ?? null })
-    } catch (error: unknown) {
-        if (error instanceof Response) return error
-        logger.error({ error, workoutId }, 'Error fetching workout recap')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch workout recap', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching workout recap',
+            message: 'Failed to fetch workout recap',
+            key: 'internal.default',
+            context: { workoutId },
+        })
     }
 }

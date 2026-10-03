@@ -17,7 +17,7 @@ import {
     type LiftLabels,
     type WeekSbdMetric,
 } from '@/lib/program-sbd-metrics'
-import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 type Params = {
     params: Promise<{ id: string }>
@@ -329,18 +329,12 @@ export async function GET(request: Request, { params }: Params) {
             muscleGroups,
             points,
         })
-    } catch (error: any) {
-        if (error instanceof Response) {
-            return error
-        }
-
-        logger.error({ error, traineeId: id }, 'Error fetching planned training sets report')
-        return apiError(
-            'INTERNAL_ERROR',
-            'Failed to fetch planned training sets report',
-            500,
-            undefined,
-            'internal.default'
-        )
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching planned training sets report',
+            message: 'Failed to fetch planned training sets report',
+            key: 'internal.default',
+            context: { traineeId: id },
+        })
     }
 }

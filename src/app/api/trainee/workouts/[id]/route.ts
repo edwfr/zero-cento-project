@@ -4,6 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { loadTraineePrMap, resolveEffectiveWeight } from '@/lib/calculations'
 import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 interface FeedbackSetSnapshot {
     setNumber: number
@@ -242,9 +243,12 @@ export async function GET(
                 exercises: exercisesWithFeedback,
             },
         })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error, workoutId }, 'Error fetching workout details')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch workout details', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching workout details',
+            message: 'Failed to fetch workout details',
+            key: 'internal.default',
+            context: { workoutId },
+        })
     }
 }

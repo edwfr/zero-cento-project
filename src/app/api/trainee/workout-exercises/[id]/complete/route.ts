@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { cascadeCompletion } from '@/lib/completion-service'
 import { z } from 'zod'
 import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 /**
  * PATCH /api/trainee/workout-exercises/[id]/complete
@@ -102,16 +103,12 @@ export async function PATCH(
 
     // 5. Return updated states (Rule 5: mutation returns updated resource)
     return apiSuccess(result)
-  } catch (error: any) {
-    if (error instanceof Response) return error
-
-    logger.error({ error, workoutExerciseId: id }, 'Error updating exercise completion')
-    return apiError(
-      'INTERNAL_ERROR',
-      'Unexpected error',
-      500,
-      undefined,
-      'internal.default'
-    )
+  } catch (error) {
+      return handleApiError(error, {
+          logMessage: 'Error updating exercise completion',
+          message: 'Unexpected error',
+          key: 'internal.default',
+          context: { workoutExerciseId: id },
+      })
   }
 }

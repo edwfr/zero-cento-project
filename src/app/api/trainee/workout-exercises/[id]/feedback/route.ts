@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger'
 import { getTodayDateKey } from '@/lib/date-format'
 import { cascadeCompletion } from '@/lib/completion-service'
 import { workoutExerciseAutosaveSchema } from '@/schemas/feedback'
+import { handleApiError } from '@/lib/api-error-handler'
 
 export async function PATCH(
     request: NextRequest,
@@ -143,16 +144,12 @@ export async function PATCH(
         )
 
         return apiSuccess({ feedback, cascade })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-
-        logger.error({ error, workoutExerciseId: id }, 'Error autosaving workout exercise')
-        return apiError(
-            'INTERNAL_ERROR',
-            'Failed to autosave workout exercise',
-            500,
-            undefined,
-            'internal.default'
-        )
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error autosaving workout exercise',
+            message: 'Failed to autosave workout exercise',
+            key: 'internal.default',
+            context: { workoutExerciseId: id },
+        })
     }
 }

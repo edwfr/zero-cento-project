@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { logger } from '@/lib/logger'
 import { getTodayDateKey } from '@/lib/date-format'
 import { workoutExerciseRpeSchema } from '@/schemas/feedback'
+import { handleApiError } from '@/lib/api-error-handler'
 
 export async function PATCH(
     request: NextRequest,
@@ -86,16 +87,12 @@ export async function PATCH(
         )
 
         return apiSuccess({ feedback })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-
-        logger.error({ error, workoutExerciseId: id }, 'Error autosaving RPE')
-        return apiError(
-            'INTERNAL_ERROR',
-            'Failed to autosave RPE',
-            500,
-            undefined,
-            'internal.default'
-        )
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error autosaving RPE',
+            message: 'Failed to autosave RPE',
+            key: 'internal.default',
+            context: { workoutExerciseId: id },
+        })
     }
 }

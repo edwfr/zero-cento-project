@@ -8,6 +8,7 @@ import { logger } from '@/lib/logger'
 import { isInvitationPending } from '@/lib/invitation'
 import { findPendingActivationIds } from '@/lib/user-status-events'
 import { syncUserMetadata } from '@/lib/sync-user-metadata'
+import { handleApiError } from '@/lib/api-error-handler'
 
 type Params = {
     params: Promise<{ id: string }>
@@ -72,10 +73,12 @@ export async function GET(request: NextRequest, { params }: Params) {
         }
 
         return apiSuccess({ user: { ...user, invitationPending, pendingActivation } })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error fetching user')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch user', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching user',
+            message: 'Failed to fetch user',
+            key: 'internal.default',
+        })
     }
 }
 
@@ -149,10 +152,12 @@ export async function PUT(request: NextRequest, { params }: Params) {
         logger.info({ userId: id }, 'User updated')
 
         return apiSuccess({ user })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error updating user')
-        return apiError('INTERNAL_ERROR', 'Failed to update user', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error updating user',
+            message: 'Failed to update user',
+            key: 'internal.default',
+        })
     }
 }
 
@@ -200,8 +205,12 @@ export async function DELETE(request: NextRequest, { params }: Params) {
             // gone (e.g. a previous attempt failed on the DB step), so the retry can complete.
             const { error: authError } = await createAdminClient().auth.admin.deleteUser(id)
             if (authError && authError.status !== 404) {
-                logger.error({ error: authError, userId: id }, 'Failed to delete Supabase auth user')
-                return apiError('INTERNAL_ERROR', 'Failed to delete user', 500, undefined, 'user.deleteFailed')
+                return handleApiError(authError, {
+                    logMessage: 'Failed to delete Supabase auth user',
+                    message: 'Failed to delete user',
+                    key: 'user.deleteFailed',
+                    context: { userId: id },
+                })
             }
 
             // Trainee relations have no onDelete: Cascade. Deleting programs cascades
@@ -214,8 +223,12 @@ export async function DELETE(request: NextRequest, { params }: Params) {
                     prisma.user.delete({ where: { id } }),
                 ])
             } catch (error) {
-                logger.error({ error, userId: id }, 'Trainee data deletion failed after auth account removal — retry to complete')
-                return apiError('INTERNAL_ERROR', 'Failed to delete user', 500, undefined, 'user.deleteFailed')
+                return handleApiError(error, {
+                    logMessage: 'Trainee data deletion failed after auth account removal — retry to complete',
+                    message: 'Failed to delete user',
+                    key: 'user.deleteFailed',
+                    context: { userId: id },
+                })
             }
         } else {
             await prisma.user.delete({
@@ -229,9 +242,11 @@ export async function DELETE(request: NextRequest, { params }: Params) {
             message: 'User deleted successfully',
             messageKey: 'user.deletedSuccess',
         })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error deleting user')
-        return apiError('INTERNAL_ERROR', 'Failed to delete user', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error deleting user',
+            message: 'Failed to delete user',
+            key: 'internal.default',
+        })
     }
 }

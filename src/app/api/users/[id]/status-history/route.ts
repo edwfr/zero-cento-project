@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
-import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/api-error-handler'
 
 type Params = {
     params: Promise<{ id: string }>
@@ -58,9 +58,12 @@ export async function GET(request: NextRequest, { params }: Params) {
                 actor: event.actor,
             })),
         })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error, userId: id }, 'Error fetching status history')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch status history', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching status history',
+            message: 'Failed to fetch status history',
+            key: 'internal.default',
+            context: { userId: id },
+        })
     }
 }

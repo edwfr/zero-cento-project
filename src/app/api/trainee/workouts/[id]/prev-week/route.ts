@@ -1,9 +1,9 @@
 import { prisma } from '@/lib/prisma'
-import { apiSuccess, apiError } from '@/lib/api-response'
+import { apiSuccess } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
-import { logger } from '@/lib/logger'
 import type { PrevWeekExerciseItem } from '@/lib/workout-recap'
 import type { ExerciseType } from '@/lib/exercise-type'
+import { handleApiError } from '@/lib/api-error-handler'
 
 interface PrevWeekRow {
     weId: string
@@ -116,9 +116,12 @@ export async function GET(
         const exercises = Array.from(exerciseMap.values()).sort((a, b) => a.order - b.order)
 
         return apiSuccess({ exercises })
-    } catch (error: unknown) {
-        if (error instanceof Response) return error
-        logger.error({ error, workoutId }, 'Error fetching previous week data')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch previous week data', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching previous week data',
+            message: 'Failed to fetch previous week data',
+            key: 'internal.default',
+            context: { workoutId },
+        })
     }
 }

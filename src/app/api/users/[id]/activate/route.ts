@@ -5,6 +5,7 @@ import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { syncUserMetadata } from '@/lib/sync-user-metadata'
 import { isInvitationPending } from '@/lib/invitation'
+import { handleApiError } from '@/lib/api-error-handler'
 
 type Params = {
     params: Promise<{ id: string }>
@@ -81,9 +82,11 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         logger.info({ userId: id }, 'User activated')
 
         return apiSuccess({ user })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error activating user')
-        return apiError('INTERNAL_ERROR', 'Failed to activate user', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error activating user',
+            message: 'Failed to activate user',
+            key: 'internal.default',
+        })
     }
 }

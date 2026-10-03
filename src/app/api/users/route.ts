@@ -10,6 +10,7 @@ import { getCurrentEndDates } from '@/lib/subscription-queries'
 import { findPendingActivationIds } from '@/lib/user-status-events'
 import { toSubscriptionSummary, type SubscriptionSummary } from '@/lib/subscriptions'
 import { getTodayDateKey } from '@/lib/date-format'
+import { handleApiError } from '@/lib/api-error-handler'
 
 interface ListedUser {
     id: string
@@ -177,10 +178,12 @@ export async function GET(request: NextRequest) {
                 limit,
             },
         })
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error fetching users')
-        return apiError('INTERNAL_ERROR', 'Failed to fetch users', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error fetching users',
+            message: 'Failed to fetch users',
+            key: 'internal.default',
+        })
     }
 }
 
@@ -243,8 +246,11 @@ export async function POST(request: NextRequest) {
         )
 
         if (authError) {
-            logger.error({ error: authError }, 'Failed to invite user')
-            return apiError('INTERNAL_ERROR', 'Failed to send invitation', 500, undefined, 'internal.default')
+            return handleApiError(authError, {
+                logMessage: 'Failed to invite user',
+                message: 'Failed to send invitation',
+                key: 'internal.default',
+            })
         }
 
         // Create user in Prisma (inactive until they complete onboarding),
@@ -298,9 +304,11 @@ export async function POST(request: NextRequest) {
             },
             201
         )
-    } catch (error: any) {
-        if (error instanceof Response) return error
-        logger.error({ error }, 'Error creating user')
-        return apiError('INTERNAL_ERROR', 'Failed to create user', 500, undefined, 'internal.default')
+    } catch (error) {
+        return handleApiError(error, {
+            logMessage: 'Error creating user',
+            message: 'Failed to create user',
+            key: 'internal.default',
+        })
     }
 }
