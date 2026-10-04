@@ -12,6 +12,7 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import { useToast } from '@/components/ToastNotification'
 import EditProgramMetadata from './EditProgramMetadata'
+import EditProgramStartDate from './EditProgramStartDate'
 import MovementPatternTag from '@/components/MovementPatternTag'
 import WeekTypeBadge from '@/components/WeekTypeBadge'
 import AutocompleteSearch from '@/components/AutocompleteSearch'
@@ -147,6 +148,7 @@ interface Program {
     id: string
     title: string
     status: 'draft' | 'active' | 'completed'
+    startDate: string | null
     isSbdProgram: boolean
     trainee: {
         id: string
@@ -795,6 +797,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 id: data.data.program.id,
                 title: data.data.program.title,
                 status: data.data.program.status,
+                startDate: data.data.program.startDate ?? null,
                 isSbdProgram: data.data.program.isSbdProgram,
                 trainee: data.data.program.trainee,
                 durationWeeks: data.data.program.durationWeeks,
@@ -2595,7 +2598,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                 })}
                             </p>
                         </div>
-                        <div>
+                        <div className="flex flex-wrap items-center gap-2">
                             {readOnly && program.status === 'draft' && (
                                 <Link
                                     href={editProgramHref}
@@ -2604,6 +2607,14 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                     <FileEdit className="w-4 h-4" />
                                     {t('editProgram.editProgram', 'Modifica Programma')}
                                 </Link>
+                            )}
+                            {!readOnly && (
+                                <EditProgramStartDate
+                                    programId={programId}
+                                    status={program.status}
+                                    startDate={program.startDate}
+                                    onUpdate={() => void fetchProgram({ showLoading: false })}
+                                />
                             )}
                             {!readOnly && (
                                 <EditProgramMetadata

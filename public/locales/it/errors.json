@@ -74,6 +74,8 @@
         "viewAssignedDenied": "Puoi visualizzare solo i programmi assegnati a te",
         "alreadyCompleted": "Il programma è già completato",
         "alreadyPublished": "Il programma è già pubblicato o completato",
+        "startDateNotEditable": "La data di inizio si può modificare solo per programmi pubblicati non ancora iniziati",
+        "startDateInPast": "La data di inizio non può essere nel passato",
         "cannotCompleteDraft": "Non puoi completare un programma in bozza. Pubblicalo prima.",
         "cannotModifyNonDraft": "Impossibile modificare il programma: solo i programmi in bozza possono essere modificati",
         "cannotPublishEmptyWorkouts": "Impossibile pubblicare: uno o più workout non hanno esercizi",

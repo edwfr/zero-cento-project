@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [4 Ottobre 2026] — Pagina modifica programma: modifica data di inizio prima della partenza
+
+**File modificati:** `src/app/api/programs/[id]/start-date/route.ts` (nuovo), `src/app/trainer/programs/[id]/edit/EditProgramStartDate.tsx` (nuovo), `src/app/trainer/programs/[id]/edit/_content.tsx`, `src/app/api/programs/[id]/publish/route.ts`, `src/lib/program-visibility.ts`, `public/locales/{it,en}/{trainer,errors}.json`, `tests/integration/program-start-date.test.ts` (nuovo), `tests/unit/edit-program-start-date.test.tsx` (nuovo), `tests/unit/lib/program-visibility.test.ts`
+**Note:** Pulsante "Modifica data inizio" a sinistra di "Modifica Info Programma", visibile solo per programmi pubblicati non ancora iniziati (l'atleta non li vede ancora). Apre un modale con `DatePicker` gg/MM/aaaa. `PATCH /api/programs/[id]/start-date` (trainer proprietario o admin) rifiuta programmi non attivi o già iniziati (`program.startDateNotEditable`) e date passate (`program.startDateInPast`); aggiorna in una transazione la data del programma e quelle delle settimane. Calcolo data settimana estratto in `weekStartDate()`, usato anche da publish.
 ### [4 Ottobre 2026] — Pubblicazione programma: data in gg/MM/aaaa, programma visibile all'atleta dalla data di inizio
 
 **File modificati:** `src/lib/program-visibility.ts` (nuovo), `src/app/trainer/programs/[id]/publish/_content.tsx`, `src/app/api/programs/route.ts`, `src/app/api/programs/[id]/route.ts`, `src/app/api/programs/[id]/progress/route.ts`, `src/app/api/trainee/active-program/route.ts`, `src/app/api/trainee/workouts/[id]/{route,prev-week,recap,submit}`, `src/app/api/trainee/workout-exercises/[id]/{complete,feedback,feedback/rpe}`, `src/lib/trainee-program-data.ts`, `public/locales/{it,en}/trainer.json`, test relativi + `tests/unit/lib/program-visibility.test.ts` (nuovo)

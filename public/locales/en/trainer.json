@@ -751,6 +751,12 @@
         "workoutLockedStarted": "Started workout - read only"
     },
     "programMetadata": {
+        "editStartDate": "Edit start date",
+        "editStartDateTitle": "Edit start date",
+        "editStartDateDescription": "The athlete will see the program from this date.",
+        "newStartDateLabel": "New start date",
+        "startDateUpdateSuccess": "Start date updated",
+        "startDateUpdateError": "Error updating start date",
         "loadingAthletesError": "Error loading athletes",
         "draftOnlyError": "Only draft programs can be edited",
         "draftOnlyWarning": "Only draft programs can be edited. Active or completed programs cannot be edited.",

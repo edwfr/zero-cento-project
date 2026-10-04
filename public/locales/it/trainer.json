@@ -751,6 +751,12 @@
         "workoutLockedStarted": "Workout iniziato - non modificabile"
     },
     "programMetadata": {
+        "editStartDate": "Modifica data inizio",
+        "editStartDateTitle": "Modifica data di inizio",
+        "editStartDateDescription": "L'atleta vedrà il programma a partire da questa data.",
+        "newStartDateLabel": "Nuova data di inizio",
+        "startDateUpdateSuccess": "Data di inizio aggiornata",
+        "startDateUpdateError": "Errore aggiornamento data di inizio",
         "loadingAthletesError": "Errore caricamento atleti",
         "draftOnlyError": "Solo i programmi in bozza possono essere modificati",
         "draftOnlyWarning": "Solo i programmi in bozza possono essere modificati. I programmi attivi o completati non possono essere modificati.",

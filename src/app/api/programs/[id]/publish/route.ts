@@ -5,6 +5,7 @@ import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { z } from 'zod'
 import { handleApiError } from '@/lib/api-error-handler'
+import { weekStartDate } from '@/lib/program-visibility'
 
 const publishSchema = z.object({
     startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)'),
@@ -100,14 +101,12 @@ export async function POST(
 
         // Assign dates to weeks in parallel
         await Promise.all(
-            program.weeks.map((week) => {
-                const weekStartDate = new Date(startDateObj)
-                weekStartDate.setDate(weekStartDate.getDate() + (week.weekNumber - 1) * 7)
-                return prisma.week.update({
+            program.weeks.map((week) =>
+                prisma.week.update({
                     where: { id: week.id },
-                    data: { startDate: weekStartDate },
+                    data: { startDate: weekStartDate(startDateObj, week.weekNumber) },
                 })
-            })
+            )
         )
 
         // Fetch updated program

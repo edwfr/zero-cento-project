@@ -39,3 +39,10 @@ export function traineeVisibleProgramWhere(now: Date = new Date()): Prisma.Train
         ],
     }
 }
+
+/** Week N starts (N - 1) * 7 days after the program start (both UTC midnight). */
+export function weekStartDate(programStartDate: Date, weekNumber: number): Date {
+    const date = new Date(programStartDate)
+    date.setUTCDate(date.getUTCDate() + (weekNumber - 1) * 7)
+    return date
+}

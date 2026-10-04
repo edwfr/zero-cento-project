@@ -3,6 +3,7 @@ import {
     todayInRome,
     isProgramVisibleToTrainee,
     traineeVisibleProgramWhere,
+    weekStartDate,
 } from '@/lib/program-visibility'
 
 describe('program-visibility', () => {
@@ -74,6 +75,23 @@ describe('program-visibility', () => {
                     { startDate: { lte: new Date('2026-10-04T00:00:00Z') } },
                 ],
             })
+        })
+    })
+
+    describe('weekStartDate', () => {
+        const start = new Date('2026-10-26T00:00:00Z')
+
+        it('starts week 1 on the program start date', () => {
+            expect(weekStartDate(start, 1)).toEqual(new Date('2026-10-26T00:00:00Z'))
+        })
+
+        it('adds seven days per week, across month ends', () => {
+            expect(weekStartDate(start, 2)).toEqual(new Date('2026-11-02T00:00:00Z'))
+        })
+
+        it('does not mutate the program start date', () => {
+            weekStartDate(start, 3)
+            expect(start).toEqual(new Date('2026-10-26T00:00:00Z'))
         })
     })
 })
