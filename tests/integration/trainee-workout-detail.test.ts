@@ -74,6 +74,33 @@ describe('GET /api/trainee/workouts/[id]', () => {
         } as never)
     })
 
+    it('returns 404 when the program has not started yet', async () => {
+        prismaMock.workout.findUnique.mockResolvedValue({
+            id: 'workout-1',
+            dayIndex: 1,
+            notes: null,
+            workoutExercises: [],
+            week: {
+                weekNumber: 1,
+                weekType: 'normal',
+                program: {
+                    id: 'program-1',
+                    title: 'Programma Futuro',
+                    traineeId: mockTraineeSession.user.id,
+                    trainerId: 'trainer-1',
+                    status: 'active',
+                    startDate: new Date('2999-01-01T00:00:00Z'),
+                },
+            },
+        } as never)
+
+        const res = await GET(makeRequest(), { params: Promise.resolve({ id: 'workout-1' }) })
+        const body = await res.json()
+
+        expect(res.status).toBe(404)
+        expect(body.error.key).toBe('workout.notFound')
+    })
+
     it('hydrates the latest feedback for each exercise even when it was saved before today', async () => {
         prismaMock.exerciseFeedback.findMany.mockResolvedValue([
             {
@@ -251,7 +278,9 @@ describe('GET /api/trainee/workouts/[id]/recap', () => {
             expect.objectContaining({
                 where: {
                     id: 'workout-1',
-                    week: { program: { traineeId: mockTraineeSession.user.id } },
+                    week: {
+                        program: { traineeId: mockTraineeSession.user.id, OR: expect.any(Array) },
+                    },
                 },
             })
         )

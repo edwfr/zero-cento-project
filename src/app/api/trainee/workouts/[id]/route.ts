@@ -5,6 +5,7 @@ import { requireRole } from '@/lib/auth'
 import { loadTraineePrMap, resolveEffectiveWeight } from '@/lib/calculations'
 import { logger } from '@/lib/logger'
 import { handleApiError } from '@/lib/api-error-handler'
+import { isProgramVisibleToTrainee } from '@/lib/program-visibility'
 
 interface FeedbackSetSnapshot {
     setNumber: number
@@ -112,6 +113,8 @@ export async function GET(
                                 title: true,
                                 traineeId: true,
                                 trainerId: true,
+                                status: true,
+                                startDate: true,
                             },
                         },
                     },
@@ -143,6 +146,10 @@ export async function GET(
         // RBAC: Verify trainee owns this workout
         if (workout.week.program.traineeId !== session.user.id) {
             return apiError('FORBIDDEN', 'You can only access your own workouts', 403, undefined, 'workout.accessDenied')
+        }
+
+        if (!isProgramVisibleToTrainee(workout.week.program)) {
+            return apiError('NOT_FOUND', 'Workout not found', 404, undefined, 'workout.notFound')
         }
 
         // Parallelize: fetch the latest feedback rows and trainee PR map concurrently.

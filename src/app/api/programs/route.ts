@@ -6,6 +6,7 @@ import { requireRole } from '@/lib/auth'
 import { createProgramSchema, programFilterSchema } from '@/schemas/program'
 import { logger } from '@/lib/logger'
 import { handleApiError } from '@/lib/api-error-handler'
+import { traineeVisibleProgramWhere } from '@/lib/program-visibility'
 
 interface ProgramTestsSummary {
     testWeeks: number[]
@@ -68,8 +69,9 @@ export async function GET(request: NextRequest) {
                 baseWhere.traineeId = traineeId
             }
         } else if (session.user.role === 'trainee') {
-            // Trainees see only programs assigned to them
+            // Trainees see only programs assigned to them, and active ones only from their start date
             baseWhere.traineeId = session.user.id
+            baseWhere.AND = [traineeVisibleProgramWhere()]
         } else {
             // Admins can filter by trainer/trainee
             if (trainerId) {

@@ -4,6 +4,7 @@ import { requireRole } from '@/lib/auth'
 import type { PrevWeekExerciseItem } from '@/lib/workout-recap'
 import type { ExerciseType } from '@/lib/exercise-type'
 import { handleApiError } from '@/lib/api-error-handler'
+import { todayInRome } from '@/lib/program-visibility'
 
 interface PrevWeekRow {
     weId: string
@@ -41,6 +42,7 @@ export async function GET(
                 JOIN training_programs tp ON tp.id = wk."programId"
                 WHERE w.id = ${workoutId}
                   AND tp."traineeId" = ${session.user.id}
+                  AND (tp.status <> 'active' OR tp."startDate" IS NULL OR tp."startDate" <= ${todayInRome()})
             ),
             prev_workout AS (
                 SELECT w.id

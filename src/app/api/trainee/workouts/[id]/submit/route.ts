@@ -7,6 +7,7 @@ import { logger } from '@/lib/logger'
 import { getTodayDateKey } from '@/lib/date-format'
 import { cascadeWorkoutCompletion } from '@/lib/completion-service'
 import { handleApiError } from '@/lib/api-error-handler'
+import { traineeVisibleProgramWhere } from '@/lib/program-visibility'
 
 const arePlannedSetsCompleted = (
     sets: Array<{ setNumber: number; completed: boolean }>,
@@ -70,7 +71,7 @@ export async function POST(
         const workout = await prisma.workout.findFirst({
             where: {
                 id: workoutId,
-                week: { program: { traineeId: session.user.id } },
+                week: { program: { traineeId: session.user.id, ...traineeVisibleProgramWhere() } },
             },
             select: {
                 id: true,

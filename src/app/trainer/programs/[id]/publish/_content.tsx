@@ -10,8 +10,8 @@ import { WeekType } from '@prisma/client'
 import WeekTypeBadge from '@/components/WeekTypeBadge'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
-import { Input } from '@/components/Input'
-import { FormLabel } from '@/components/FormLabel'
+import DatePicker from '@/components/DatePicker'
+import { getTodayForInput } from '@/lib/date-format'
 
 interface WorkoutSummary {
     id: string
@@ -127,12 +127,14 @@ export default function PublishProgramPage() {
     useEffect(() => {
         void fetchProgram()
 
-        // Set default start date to next Monday
+        // Set default start date to next Monday (local calendar day, not UTC)
         const today = new Date()
         const nextMonday = new Date(today)
         const daysUntilMonday = (8 - today.getDay()) % 7 || 7
         nextMonday.setDate(today.getDate() + daysUntilMonday)
-        setStartDate(nextMonday.toISOString().split('T')[0])
+        const month = String(nextMonday.getMonth() + 1).padStart(2, '0')
+        const day = String(nextMonday.getDate()).padStart(2, '0')
+        setStartDate(`${nextMonday.getFullYear()}-${month}-${day}`)
     }, [fetchProgram])
 
     const doPublish = async () => {
@@ -168,11 +170,8 @@ export default function PublishProgramPage() {
             return
         }
 
-        const selectedDate = new Date(startDate)
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-
-        if (selectedDate < today) {
+        // Both are YYYY-MM-DD, so string order is date order
+        if (startDate < getTodayForInput()) {
             showToast(t('publish.pastDateError'), 'error')
             return
         }
@@ -375,19 +374,15 @@ export default function PublishProgramPage() {
                         <h3 className="text-lg font-bold text-gray-900 mb-4">
                             {t('publish.startDateTitle')}
                         </h3>
-                        <div>
-                            <FormLabel>
-                                {t('publish.startDateLabel')}
-                            </FormLabel>
-                            <Input
-                                type="date"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                                min={new Date().toISOString().split('T')[0]}
-                                inputSize="md"
-                                required
-                            />
-                        </div>
+                        {/* Shared DatePicker: dd/MM/yyyy whatever the browser locale (a native date input follows it) */}
+                        <DatePicker
+                            id="publish-start-date"
+                            label={t('publish.startDateLabel')}
+                            value={startDate}
+                            onChange={setStartDate}
+                            min={getTodayForInput()}
+                            disabled={publishing}
+                        />
                     </div>
                 )}
 

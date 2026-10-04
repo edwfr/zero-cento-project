@@ -18,7 +18,7 @@ import { POST as copyFirstWeekPOST } from '@/app/api/programs/[id]/copy-first-we
 import { POST as publishPOST } from '@/app/api/programs/[id]/publish/route'
 import type { User } from '@prisma/client'
 import { prismaMock } from '../helpers/prisma-mock'
-import { asTrainer, asAdmin, asUnauthenticated } from '../helpers/auth-mock'
+import { asTrainer, asAdmin, asTrainee, asUnauthenticated } from '../helpers/auth-mock'
 import { callArg } from '../helpers/call-args'
 
 const mockPrograms = [
@@ -356,6 +356,44 @@ describe('GET /api/programs', () => {
             })
         )
         expect(body.data.items).toHaveLength(0)
+    })
+
+    it('hides active programs that have not started yet from the trainee', async () => {
+        asTrainee()
+        vi.useFakeTimers({ toFake: ['Date'] })
+        vi.setSystemTime(new Date('2026-10-04T10:00:00Z'))
+
+        try {
+            const res = await GET(makeRequest())
+            expect(res.status).toBe(200)
+        } finally {
+            vi.useRealTimers()
+        }
+
+        const visibility = {
+            OR: [
+                { status: { not: 'active' } },
+                { startDate: null },
+                { startDate: { lte: new Date('2026-10-04T00:00:00Z') } },
+            ],
+        }
+        expect(prismaMock.trainingProgram.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({
+                where: expect.objectContaining({ traineeId: 'trainee-uuid-1', AND: [visibility] }),
+            })
+        )
+        expect(prismaMock.trainingProgram.count).toHaveBeenCalledWith({
+            where: expect.objectContaining({ status: 'active', AND: [visibility] }),
+        })
+    })
+
+    it('does not apply the start-date filter for trainers', async () => {
+        asTrainer()
+
+        await GET(makeRequest())
+
+        const call = callArg(prismaMock.trainingProgram.findMany.mock.calls[0][0])
+        expect(call.where).not.toHaveProperty('AND')
     })
 
     it('admin sees all programs without trainer filter', async () => {

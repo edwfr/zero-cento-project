@@ -4,6 +4,7 @@ import { requireRole } from '@/lib/auth'
 import { loadProgressAggregates } from '@/lib/trainee-program-data'
 import { prisma } from '@/lib/prisma'
 import { handleApiError } from '@/lib/api-error-handler'
+import { isProgramVisibleToTrainee } from '@/lib/program-visibility'
 
 /**
  * GET /api/programs/[id]/progress
@@ -40,6 +41,9 @@ export async function GET(
         }
         if (session.user.role === 'trainee' && program.traineeId !== session.user.id) {
             return apiError('FORBIDDEN', 'You can only view programs assigned to you', 403, undefined, 'program.viewAssignedDenied')
+        }
+        if (session.user.role === 'trainee' && !isProgramVisibleToTrainee(program)) {
+            return apiError('NOT_FOUND', 'Program not found', 404, undefined, 'program.notFound')
         }
 
         const progress = await loadProgressAggregates(programId)

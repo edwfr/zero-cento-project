@@ -651,3 +651,39 @@ describe('PUT /api/programs/[id]', () => {
         expect(json.error.key).toBe('internal.default')
     })
 })
+
+describe('GET /api/programs/[id] — start date visibility', () => {
+    const futureProgram = {
+        id: 'prog-1',
+        trainerId: mockTrainerSession.user.id,
+        traineeId: mockTraineeSession.user.id,
+        status: 'active',
+        startDate: new Date('2999-01-01T00:00:00Z'),
+        weeks: [],
+        workoutSkeletons: [],
+    }
+
+    beforeEach(() => {
+        vi.clearAllMocks()
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(futureProgram as never)
+        prismaMock.workout.findMany.mockResolvedValue([] as never)
+    })
+
+    it('returns 404 to the trainee before the program start date', async () => {
+        asTrainee()
+
+        const res = await GET(makeRequest(), { params: Promise.resolve({ id: 'prog-1' }) })
+        const json = await res.json()
+
+        expect(res.status).toBe(404)
+        expect(json.error.key).toBe('program.notFound')
+    })
+
+    it('still returns the program to its trainer before the start date', async () => {
+        asTrainer()
+
+        const res = await GET(makeRequest(), { params: Promise.resolve({ id: 'prog-1' }) })
+
+        expect(res.status).toBe(200)
+    })
+})

@@ -3,13 +3,14 @@ import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { handleApiError } from '@/lib/api-error-handler'
+import { traineeVisibleProgramWhere } from '@/lib/program-visibility'
 
 export async function GET(_request: NextRequest) {
     try {
         const session = await requireRole(['trainee'])
 
         const program = await prisma.trainingProgram.findFirst({
-            where: { traineeId: session.user.id, status: 'active' },
+            where: { traineeId: session.user.id, status: 'active', ...traineeVisibleProgramWhere() },
             select: { id: true },
             orderBy: { startDate: 'desc' },
         })

@@ -232,3 +232,19 @@ describe('GET /api/programs/[id]/progress', () => {
         ])
     })
 })
+
+describe('GET /api/programs/[id]/progress — start date visibility', () => {
+    it('returns 404 to the trainee before the program start date', async () => {
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
+            ...programMeta,
+            startDate: new Date('2999-01-01T00:00:00Z'),
+        } as never)
+
+        const res = await GET(makeRequest(), { params: Promise.resolve({ id: 'prog-1' }) })
+        const json = await res.json()
+
+        expect(res.status).toBe(404)
+        expect(json.error.key).toBe('program.notFound')
+        expect(loadProgressAggregates).not.toHaveBeenCalled()
+    })
+})

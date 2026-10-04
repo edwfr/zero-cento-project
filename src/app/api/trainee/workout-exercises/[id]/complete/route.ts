@@ -6,6 +6,7 @@ import { cascadeCompletion } from '@/lib/completion-service'
 import { z } from 'zod'
 import { logger } from '@/lib/logger'
 import { handleApiError } from '@/lib/api-error-handler'
+import { traineeVisibleProgramWhere } from '@/lib/program-visibility'
 
 /**
  * PATCH /api/trainee/workout-exercises/[id]/complete
@@ -72,6 +73,7 @@ export async function PATCH(
           week: {
             program: {
               traineeId: session.user.id,
+              ...traineeVisibleProgramWhere(),
             },
           },
         },

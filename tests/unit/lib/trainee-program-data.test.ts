@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 vi.mock('@/lib/logger', () => ({
     logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
@@ -12,6 +12,15 @@ import {
 } from '@/lib/trainee-program-data'
 
 const traineeId = 'trainee-1'
+
+// Visibility filter for "now" = 2026-10-04 (see fake Date in loadActiveProgramId tests)
+const visibleFromToday = {
+    OR: [
+        { status: { not: 'active' } },
+        { startDate: null },
+        { startDate: { lte: new Date('2026-10-04T00:00:00Z') } },
+    ],
+}
 
 beforeEach(() => {
     vi.clearAllMocks()
@@ -76,7 +85,36 @@ describe('loadTraineeProgramView', () => {
     })
 })
 
+describe('loadTraineeProgramView start date visibility', () => {
+    it('returns null for an active program that has not started yet', async () => {
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
+            id: 'p1',
+            traineeId,
+            trainerId: 't1',
+            status: 'active',
+            title: 'Future Program',
+            startDate: new Date('2999-01-01T00:00:00Z'),
+            durationWeeks: 1,
+            weeks: [],
+            trainer: { firstName: 'A', lastName: 'B' },
+            trainee: { firstName: 'C', lastName: 'D' },
+        } as never)
+
+        const result = await loadTraineeProgramView({ programId: 'p1', traineeId })
+        expect(result).toBeNull()
+    })
+})
+
 describe('loadActiveProgramId', () => {
+    beforeEach(() => {
+        vi.useFakeTimers({ toFake: ['Date'] })
+        vi.setSystemTime(new Date('2026-10-04T10:00:00Z'))
+    })
+
+    afterEach(() => {
+        vi.useRealTimers()
+    })
+
     it('returns the id when active program exists', async () => {
         prismaMock.trainingProgram.findFirst.mockResolvedValue({ id: 'p1' } as never)
         await expect(loadActiveProgramId(traineeId)).resolves.toBe('p1')
@@ -90,7 +128,7 @@ describe('loadActiveProgramId', () => {
 
         expect(prismaMock.trainingProgram.findFirst).toHaveBeenCalledTimes(1)
         expect(prismaMock.trainingProgram.findFirst).toHaveBeenCalledWith({
-            where: { id: 'preferred-program', traineeId, status: 'active' },
+            where: { id: 'preferred-program', traineeId, status: 'active', ...visibleFromToday },
             select: { id: true },
         })
     })
@@ -103,11 +141,11 @@ describe('loadActiveProgramId', () => {
         await expect(loadActiveProgramId(traineeId, 'stale-program')).resolves.toBe('fallback-program')
 
         expect(prismaMock.trainingProgram.findFirst).toHaveBeenNthCalledWith(1, {
-            where: { id: 'stale-program', traineeId, status: 'active' },
+            where: { id: 'stale-program', traineeId, status: 'active', ...visibleFromToday },
             select: { id: true },
         })
         expect(prismaMock.trainingProgram.findFirst).toHaveBeenNthCalledWith(2, {
-            where: { traineeId, status: 'active' },
+            where: { traineeId, status: 'active', ...visibleFromToday },
             select: { id: true },
             orderBy: { startDate: 'desc' },
         })

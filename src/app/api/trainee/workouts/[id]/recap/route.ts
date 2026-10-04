@@ -4,6 +4,7 @@ import { requireRole } from '@/lib/auth'
 import { computeExerciseStatus } from '@/lib/workout-recap'
 import type { ExerciseRecapItem } from '@/lib/workout-recap'
 import { handleApiError } from '@/lib/api-error-handler'
+import { traineeVisibleProgramWhere } from '@/lib/program-visibility'
 
 export async function GET(
     _request: Request,
@@ -17,7 +18,7 @@ export async function GET(
         const workout = await prisma.workout.findFirst({
             where: {
                 id: workoutId,
-                week: { program: { traineeId: session.user.id } },
+                week: { program: { traineeId: session.user.id, ...traineeVisibleProgramWhere() } },
             },
             select: {
                 traineeNotes: true,

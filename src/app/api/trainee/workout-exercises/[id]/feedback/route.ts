@@ -7,6 +7,7 @@ import { getTodayDateKey } from '@/lib/date-format'
 import { cascadeCompletion } from '@/lib/completion-service'
 import { workoutExerciseAutosaveSchema } from '@/schemas/feedback'
 import { handleApiError } from '@/lib/api-error-handler'
+import { traineeVisibleProgramWhere } from '@/lib/program-visibility'
 
 export async function PATCH(
     request: NextRequest,
@@ -36,6 +37,7 @@ export async function PATCH(
                     week: {
                         program: {
                             traineeId: session.user.id,
+                            ...traineeVisibleProgramWhere(),
                         },
                     },
                 },

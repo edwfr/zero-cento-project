@@ -3,6 +3,7 @@ import type { WeekType } from '@prisma/client'
 import type { ExerciseType } from '@/lib/exercise-type'
 import { loadTraineePrMap, resolveEffectiveWeight } from './calculations'
 import { logger } from './logger'
+import { isProgramVisibleToTrainee, traineeVisibleProgramWhere } from './program-visibility'
 
 export interface TraineeProgramView {
     program: TraineeProgram
@@ -117,7 +118,7 @@ export async function loadActiveProgramId(
 ): Promise<string | null> {
     if (preferredProgramId) {
         const preferredProgram = await prisma.trainingProgram.findFirst({
-            where: { id: preferredProgramId, traineeId, status: 'active' },
+            where: { id: preferredProgramId, traineeId, status: 'active', ...traineeVisibleProgramWhere() },
             select: { id: true },
         })
 
@@ -127,7 +128,7 @@ export async function loadActiveProgramId(
     }
 
     const program = await prisma.trainingProgram.findFirst({
-        where: { traineeId, status: 'active' },
+        where: { traineeId, status: 'active', ...traineeVisibleProgramWhere() },
         select: { id: true },
         orderBy: { startDate: 'desc' },
     })
@@ -180,7 +181,7 @@ async function loadProgramTreeForTrainee(
         },
     })
 
-    if (!program || program.traineeId !== traineeId) {
+    if (!program || program.traineeId !== traineeId || !isProgramVisibleToTrainee(program)) {
         return null
     }
 

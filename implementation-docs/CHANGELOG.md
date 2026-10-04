@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [4 Ottobre 2026] — Pubblicazione programma: data in gg/MM/aaaa, programma visibile all'atleta dalla data di inizio
+
+**File modificati:** `src/lib/program-visibility.ts` (nuovo), `src/app/trainer/programs/[id]/publish/_content.tsx`, `src/app/api/programs/route.ts`, `src/app/api/programs/[id]/route.ts`, `src/app/api/programs/[id]/progress/route.ts`, `src/app/api/trainee/active-program/route.ts`, `src/app/api/trainee/workouts/[id]/{route,prev-week,recap,submit}`, `src/app/api/trainee/workout-exercises/[id]/{complete,feedback,feedback/rpe}`, `src/lib/trainee-program-data.ts`, `public/locales/{it,en}/trainer.json`, test relativi + `tests/unit/lib/program-visibility.test.ts` (nuovo)
+**Note:** La data di inizio usa il `DatePicker` condiviso (gg/MM/aaaa a prescindere dal locale del browser; il date input nativo seguiva il locale e mostrava MM/gg). Data di default (lunedì prossimo), minimo e controllo "data nel passato" ora sul giorno locale, non UTC. Un programma pubblicato (`active`) resta invisibile all'atleta fino alla data di inizio (giorno di calendario Europe/Rome): escluso da lista/dashboard/storico e dal programma corrente, 404 su dettaglio, progress e workout. Trainer e admin lo vedono da subito. Nessuna migrazione: filtro `status != active OR startDate <= oggi`. Testi di conferma pubblicazione aggiornati.
 ### [4 Ottobre 2026] — Home trainer: box KPI con layout uniforme
 
 **File modificati:** `src/app/trainer/dashboard/_widgets/HeaderKpis.tsx`, `public/locales/{it,en}/trainer.json`, `tests/unit/trainer-dashboard/widgets-phase1.test.tsx`

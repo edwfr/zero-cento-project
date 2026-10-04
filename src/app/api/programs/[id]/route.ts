@@ -6,6 +6,7 @@ import { createProgramSchema } from '@/schemas/program'
 import { logger } from '@/lib/logger'
 import { loadTraineePrMap, resolveEffectiveWeight } from '@/lib/calculations'
 import { handleApiError } from '@/lib/api-error-handler'
+import { isProgramVisibleToTrainee } from '@/lib/program-visibility'
 
 /**
  * GET /api/programs/[id]
@@ -101,6 +102,10 @@ export async function GET(
 
         if (session.user.role === 'trainee' && program.traineeId !== session.user.id) {
             return apiError('FORBIDDEN', 'You can only view programs assigned to you', 403, undefined, 'program.viewAssignedDenied')
+        }
+
+        if (session.user.role === 'trainee' && !isProgramVisibleToTrainee(program)) {
+            return apiError('NOT_FOUND', 'Program not found', 404, undefined, 'program.notFound')
         }
 
         let resolvedProgram = program

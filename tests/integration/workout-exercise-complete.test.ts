@@ -257,6 +257,8 @@ describe('PATCH /api/trainee/workout-exercises/[id]/complete', () => {
                     week: {
                         program: {
                             traineeId: 'trainee-uuid-1',
+                            // Active programs reach the trainee only from their start date
+                            OR: expect.any(Array),
                         },
                     },
                 },

@@ -22,15 +22,26 @@ beforeEach(() => {
 describe('GET /api/trainee/active-program', () => {
     it('returns 200 with id when active program exists', async () => {
         asTrainee()
+        vi.useFakeTimers({ toFake: ['Date'] })
+        vi.setSystemTime(new Date('2026-10-04T10:00:00Z'))
         prismaMock.trainingProgram.findFirst.mockResolvedValue({ id: 'prog-1' } as never)
 
         const res = await GET(makeRequest())
+        vi.useRealTimers()
         const json = await res.json()
 
         expect(res.status).toBe(200)
         expect(json.data).toEqual({ programId: 'prog-1' })
         expect(prismaMock.trainingProgram.findFirst).toHaveBeenCalledWith({
-            where: { traineeId: mockTraineeSession.user.id, status: 'active' },
+            where: {
+                traineeId: mockTraineeSession.user.id,
+                status: 'active',
+                OR: [
+                    { status: { not: 'active' } },
+                    { startDate: null },
+                    { startDate: { lte: new Date('2026-10-04T00:00:00Z') } },
+                ],
+            },
             select: { id: true },
             orderBy: { startDate: 'desc' },
         })
