@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [10 Ottobre 2026] — Pubblicazione programma: avviso per atleta senza copertura
+
+**File modificati:** `src/app/trainer/programs/[id]/publish/_content.tsx`, `public/locales/{it,en}/trainer.json`, `tests/unit/trainer-publish-program.test.tsx` (nuovo)
+**Note:** La pagina di pubblicazione legge lo stato abbonamento dell'atleta. Per un atleta a schede mostra "Schede disponibili: N → N−1 dopo la pubblicazione". Se l'atleta non ha copertura (schede esaurite, abbonamento a mesi scaduto, nessun rinnovo registrato) la conferma diventa un avviso "Pubblica comunque" con il motivo; la pubblicazione non viene mai bloccata. Se lo stato abbonamento non si carica, nessun avviso e pubblicazione normale.
 ### [10 Ottobre 2026] — Tab Abbonamento: registrazione pacchetti di schede e cronologia movimenti
 
 **File modificati:** `src/components/SubscriptionRenewalFormModal.tsx`, `src/components/SubscriptionEventList.tsx` (nuovo), `src/components/index.ts`, `src/lib/subscriptions.ts`, `src/app/trainer/trainees/[id]/_subscription-tab.tsx`, `src/app/trainer/trainees/[id]/_use-trainee-subscription.ts`, `public/locales/{it,en}/trainer.json`, test relativi + `tests/unit/subscription-event-list.test.tsx` (nuovo)

@@ -916,6 +916,14 @@
         "errorLoading": "Error loading progress"
     },
     "publish": {
+        "creditInfo": "Programs available: {{before}} → {{after}} after publishing",
+        "uncovered": {
+            "title": "Athlete without coverage",
+            "programsExhausted": "The athlete has used every purchased program: publishing will put them one program in debt.",
+            "periodExpired": "The athlete's subscription expired on {{date}}.",
+            "none": "No subscription is recorded for this athlete.",
+            "confirm": "Publish anyway"
+        },
         "backToEdit": "Back to editing",
         "backToReview": "Back to review",
         "title": "Publish Program",

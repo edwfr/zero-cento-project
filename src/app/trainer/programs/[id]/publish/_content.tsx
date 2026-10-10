@@ -11,7 +11,8 @@ import WeekTypeBadge from '@/components/WeekTypeBadge'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import DatePicker from '@/components/DatePicker'
-import { getTodayForInput } from '@/lib/date-format'
+import { formatDate, getTodayForInput } from '@/lib/date-format'
+import { uncoveredReason, type SubscriptionSummary } from '@/lib/subscriptions'
 
 interface WorkoutSummary {
     id: string
@@ -51,6 +52,8 @@ export default function PublishProgramPage() {
     const [error, setError] = useState<string | null>(null)
     const [startDate, setStartDate] = useState('')
     const [validationErrors, setValidationErrors] = useState<string[]>([])
+    // undefined = not loaded (or failed): no warning is shown, the publish is never held back by it
+    const [subscription, setSubscription] = useState<SubscriptionSummary | null | undefined>(undefined)
     const { showToast } = useToast()
     const { t } = useTranslation('trainer')
     const [confirmModal, setConfirmModal] = useState<{
@@ -117,6 +120,19 @@ export default function PublishProgramPage() {
 
             setProgram(transformedProgram)
             validateProgram(transformedProgram)
+
+            // Coverage is informative: a failure here must not prevent publishing
+            try {
+                const subscriptionRes = await fetch(`/api/subscription-renewals?traineeId=${transformedProgram.trainee.id}`, {
+                    cache: 'no-store',
+                })
+                if (subscriptionRes.ok) {
+                    const subscriptionData = await subscriptionRes.json()
+                    setSubscription(subscriptionData.data?.current ?? null)
+                }
+            } catch {
+                setSubscription(undefined)
+            }
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : String(err))
         } finally {
@@ -173,6 +189,21 @@ export default function PublishProgramPage() {
         // Both are YYYY-MM-DD, so string order is date order
         if (startDate < getTodayForInput()) {
             showToast(t('publish.pastDateError'), 'error')
+            return
+        }
+
+        const reason = subscription === undefined ? null : uncoveredReason(subscription)
+
+        if (reason) {
+            setConfirmModal({
+                title: t('publish.uncovered.title'),
+                message: `${t(`publish.uncovered.${reason}`, {
+                    date: subscription?.kind === 'period' ? formatDate(subscription.endDate) : '',
+                })}\n\n${t('publish.confirmMessage')}`,
+                confirmText: t('publish.uncovered.confirm'),
+                variant: 'warning',
+                onConfirm: doPublish,
+            })
             return
         }
 
@@ -383,6 +414,11 @@ export default function PublishProgramPage() {
                             min={getTodayForInput()}
                             disabled={publishing}
                         />
+                        {subscription?.kind === 'programs' && (
+                            <p data-testid="publish-credit-info" className="mt-4 rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-700">
+                                {t('publish.creditInfo', { before: subscription.remaining, after: subscription.remaining - 1 })}
+                            </p>
+                        )}
                     </div>
                 )}
 

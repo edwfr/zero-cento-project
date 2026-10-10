@@ -916,6 +916,14 @@
         "errorLoading": "Errore caricamento progress"
     },
     "publish": {
+        "creditInfo": "Schede disponibili: {{before}} → {{after}} dopo la pubblicazione",
+        "uncovered": {
+            "title": "Atleta senza copertura",
+            "programsExhausted": "L'atleta ha esaurito le schede acquistate: pubblicando andrà in debito di una scheda.",
+            "periodExpired": "L'abbonamento dell'atleta è scaduto il {{date}}.",
+            "none": "Per questo atleta non è registrato alcun abbonamento.",
+            "confirm": "Pubblica comunque"
+        },
         "backToEdit": "Torna alla modifica",
         "backToReview": "Torna al riepilogo",
         "title": "Pubblica Programma",
