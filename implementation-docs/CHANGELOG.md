@@ -11,6 +11,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Fixed
+### [10 Ottobre 2026] — Sentry: filtro rifiuto registrazione service worker (JAVASCRIPT-NEXTJS-N)
+
+**File modificati:** `src/lib/sentry-filters.ts`, `tests/unit/lib/sentry-filters.test.ts`
+
+`Error: Rejected` da `ServiceWorkerContainer.register` (registrazione automatica Serwist, non catturabile nel nostro codice) è ora scartato lato client: è una policy del browser, non un bug, e consumava quota.
+
 ### [10 Ottobre 2026] — Fix crash eliminazione workout con bozze (Sentry JAVASCRIPT-NEXTJS-15)
 
 **File modificati:** `src/app/trainer/programs/[id]/edit/_content.tsx`

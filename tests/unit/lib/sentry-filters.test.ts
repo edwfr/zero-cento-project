@@ -36,6 +36,27 @@ describe('shouldDropClientEvent', () => {
         expect(shouldDropClientEvent(event)).toBe(true)
     })
 
+    it('drops service worker registration "Rejected" (browser refused register)', () => {
+        const event = {
+            type: undefined,
+            exception: {
+                values: [{
+                    type: 'Error',
+                    value: 'Rejected',
+                    stacktrace: { frames: [
+                        { filename: 'https://app.zerocento.it/_next/static/chunks/a.js', function: 'o.register' },
+                        { filename: '<anonymous>', function: 'ServiceWorkerContainer.register' },
+                    ] },
+                }],
+            },
+        } as ErrorEvent
+        expect(shouldDropClientEvent(event)).toBe(true)
+    })
+
+    it('keeps "Rejected" errors that do not come from service worker registration', () => {
+        expect(shouldDropClientEvent(eventWith('Error', 'Rejected'))).toBe(false)
+    })
+
     it('keeps errors with at least one app frame', () => {
         const event = eventWith('TypeError', 'x', [
             'chrome-extension://abc/content.js',

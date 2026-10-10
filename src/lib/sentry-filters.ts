@@ -2,6 +2,7 @@ import type { ErrorEvent } from '@sentry/nextjs'
 
 const NOISE_TYPES = new Set(['AbortError', 'ChunkLoadError'])
 const CHUNK_LOAD_MESSAGE = /Loading chunk [\w-]+ failed/i
+const SW_REGISTER_FRAME = /ServiceWorkerContainer\.register|@serwist\/window/
 const EXTENSION_FRAME = /^(chrome|moz|safari(-web)?)-extension:\/\//
 
 /**
@@ -14,6 +15,16 @@ export function shouldDropClientEvent(event: ErrorEvent): boolean {
 
     if (exception.type && NOISE_TYPES.has(exception.type)) return true
     if (exception.value && CHUNK_LOAD_MESSAGE.test(exception.value)) return true
+
+    // Service worker registration refused by the browser (private mode, policy, blocked storage)
+    if (
+        exception.value === 'Rejected' &&
+        (exception.stacktrace?.frames ?? []).some((frame) =>
+            SW_REGISTER_FRAME.test(`${frame.function ?? ''} ${frame.filename ?? ''} ${frame.module ?? ''}`)
+        )
+    ) {
+        return true
+    }
 
     const filenames = (exception.stacktrace?.frames ?? [])
         .map((frame) => frame.filename)
