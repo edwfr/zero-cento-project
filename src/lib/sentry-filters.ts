@@ -2,6 +2,8 @@ import type { ErrorEvent } from '@sentry/nextjs'
 
 const NOISE_TYPES = new Set(['AbortError', 'ChunkLoadError'])
 const CHUNK_LOAD_MESSAGE = /Loading chunk [\w-]+ failed/i
+const AUTH_LOCK_STOLEN_MESSAGE = /Lock ".*" was released because another request stole it/i
+const AUTOSAVE_TRANSACTION = '/trainee/workouts/:id'
 const SW_REGISTER_FRAME = /ServiceWorkerContainer\.register|@serwist\/window/
 const EXTENSION_FRAME = /^(chrome|moz|safari(-web)?)-extension:\/\//
 
@@ -15,6 +17,18 @@ export function shouldDropClientEvent(event: ErrorEvent): boolean {
 
     if (exception.type && NOISE_TYPES.has(exception.type)) return true
     if (exception.value && CHUNK_LOAD_MESSAGE.test(exception.value)) return true
+
+    // supabase-js navigator.locks contention between tabs/requests: self-recovering
+    if (exception.value && AUTH_LOCK_STOLEN_MESSAGE.test(exception.value)) return true
+
+    // Offline/flaky mobile network on the workout page (autosave retries); scoped so other pages still report
+    if (
+        exception.type === 'TypeError' &&
+        exception.value === 'Failed to fetch' &&
+        event.transaction === AUTOSAVE_TRANSACTION
+    ) {
+        return true
+    }
 
     // Service worker registration refused by the browser (private mode, policy, blocked storage)
     if (

@@ -11,6 +11,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Fixed
+### [10 Ottobre 2026] — Sentry: filtri lock auth e Failed to fetch (JAVASCRIPT-NEXTJS-1A, -17)
+
+**File modificati:** `src/lib/sentry-filters.ts`, `tests/unit/lib/sentry-filters.test.ts`
+
+Scartati lato client il lock `auth-token` rubato da un'altra richiesta (contesa navigator.locks di supabase-js, si auto-risolve) e `TypeError: Failed to fetch` solo sulla pagina `/trainee/workouts/:id` (rete mobile assente). Altrove `Failed to fetch` continua a essere riportato.
+
 ### [10 Ottobre 2026] — Sentry: filtro rifiuto registrazione service worker (JAVASCRIPT-NEXTJS-N)
 
 **File modificati:** `src/lib/sentry-filters.ts`, `tests/unit/lib/sentry-filters.test.ts`

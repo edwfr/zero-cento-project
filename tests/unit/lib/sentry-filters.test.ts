@@ -57,6 +57,21 @@ describe('shouldDropClientEvent', () => {
         expect(shouldDropClientEvent(eventWith('Error', 'Rejected'))).toBe(false)
     })
 
+    it('drops supabase auth lock "stolen by another request"', () => {
+        const value = 'Lock "lock:sb-abc-auth-token" was released because another request stole it'
+        expect(shouldDropClientEvent(eventWith('Error', value))).toBe(true)
+    })
+
+    it('drops "Failed to fetch" on the trainee workout page', () => {
+        const event = { ...eventWith('TypeError', 'Failed to fetch'), transaction: '/trainee/workouts/:id' } as ErrorEvent
+        expect(shouldDropClientEvent(event)).toBe(true)
+    })
+
+    it('keeps "Failed to fetch" on other pages', () => {
+        const event = { ...eventWith('TypeError', 'Failed to fetch'), transaction: '/trainer/programs/:id/edit' } as ErrorEvent
+        expect(shouldDropClientEvent(event)).toBe(false)
+    })
+
     it('keeps errors with at least one app frame', () => {
         const event = eventWith('TypeError', 'x', [
             'chrome-extension://abc/content.js',
