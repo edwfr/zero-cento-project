@@ -96,7 +96,7 @@ model MacroPeriod {
 
   trainee   User           @relation("TraineeMacroPeriods", fields: [traineeId], references: [id], onDelete: Cascade)
   trainer   User           @relation("TrainerMacroPeriods", fields: [trainerId], references: [id], onDelete: Cascade)
-  phaseType MacroPhaseType @relation("PhaseTypePeriods", fields: [phaseTypeId], references: [id], onDelete: Restrict)
+  phaseType MacroPhaseType @relation("PhaseTypePeriods", fields: [phaseTypeId], references: [id], onDelete: NoAction)
 
   @@index([traineeId, startDate])
   @@index([trainerId])
@@ -110,8 +110,8 @@ model MacroPeriod {
   shortest period is one week. Dates are calendar dates with no time-of-day and no
   timezone conversion: they travel as `YYYY-MM-DD` strings in the API.
 - **No overlap.** For a given `(traineeId, trainerId)`, two periods may not share a week.
-  Checked inside the same transaction as the write. Violations return
-  `409 MACRO_PERIOD_OVERLAP`.
+  Checked inside the same transaction as the write. Violations return `409` with key
+  `macroPeriod.overlap`.
 - **Phase ownership.** A period's `phaseTypeId` must belong to the calling trainer.
   Creating a period, or changing a period's phase, requires the target phase to be
   active. Moving or resizing a period whose phase is archived is allowed.
@@ -119,7 +119,7 @@ model MacroPeriod {
   the API on top of the DB constraint). `description` up to 200 characters. `color`
   matches `^#[0-9a-fA-F]{6}$`. `note` up to 500 characters.
 - **Archive vs delete.** A phase referenced by at least one period cannot be deleted
-  (`409 MACRO_PHASE_IN_USE`); it can be archived. An archived phase stays visible on
+  (`409`, key `macroPhase.inUse`); it can be archived. An archived phase stays visible on
   existing periods and in the legend, and is not offered for new periods. A phase with no
   periods is hard-deleted.
 - **Defaults.** When a trainer with zero phase types calls the list endpoint, three
@@ -140,7 +140,6 @@ Request bodies are validated with Zod schemas in `src/schemas/macro-period.ts`.
 |---|---|---|
 | `/api/macro-phase-types` | `GET`, `POST` | `requireRole('trainer')` |
 | `/api/macro-phase-types/[id]` | `PATCH`, `DELETE` | trainer, and `phase.trainerId === user.id` |
-| `/api/macro-phase-types/[id]/archive` | `POST` | same |
 | `/api/trainer/trainees/[id]/macro-periods` | `GET`, `POST` | `requireTrainerOwnership(traineeId)` |
 | `/api/macro-periods/[id]` | `PATCH`, `DELETE` | trainer, `period.trainerId === user.id`, and ownership of `period.traineeId` |
 
@@ -149,9 +148,8 @@ Request bodies are validated with Zod schemas in `src/schemas/macro-period.ts`.
   default placeholders first when the trainer has none.
 - `POST /api/macro-phase-types` appends at the end (`sortOrder = max + 1`).
 - `PATCH /api/macro-phase-types/[id]` accepts any of `name`, `description`, `color`,
-  `sortOrder`. Reordering is a swap: the client sends one `PATCH` per moved row.
-- `POST .../archive` toggles `isActive`, matching the existing
-  `movement-patterns/[id]/archive` behaviour.
+  `sortOrder`, `isActive`. Archiving and reactivating are `isActive` updates (no separate
+  archive route). Reordering is a swap: the client sends one `PATCH` per moved row.
 - `GET /api/trainer/trainees/[id]/macro-periods` returns
   `{ periods, programs }` in one round trip. `periods` embed their phase
   (`id`, `name`, `color`, `isActive`). `programs` are the trainee's programs by this
@@ -162,25 +160,29 @@ Request bodies are validated with Zod schemas in `src/schemas/macro-period.ts`.
 
 ### Errors
 
-| Status | Code | When |
-|---|---|---|
-| 400 | `VALIDATION_ERROR` | Malformed body, non-Monday start, non-Sunday end, `end <= start` |
-| 403 | existing guard codes | Trainee not owned by the trainer |
-| 404 | `NOT_FOUND` | Phase or period missing, or owned by another trainer |
-| 409 | `MACRO_PERIOD_OVERLAP` | Write would overlap another period |
-| 409 | `MACRO_PHASE_IN_USE` | Deleting a phase that has periods |
-| 409 | `MACRO_PHASE_NAME_TAKEN` | Duplicate phase name for this trainer |
-| 409 | `MACRO_PHASE_ARCHIVED` | Assigning an archived phase to a period |
+`ApiErrorCode` is a closed union in this codebase, so conflicts share the code `CONFLICT`
+and are told apart by their i18n `key` (resolved from `errors.json`, like every other API
+error).
 
-Each code carries an i18n `key` under a `macroPeriods.errors.*` namespace, in both `en`
-and `it`. None of these are reported to Sentry (4xx).
+| Status | Code | Key | When |
+|---|---|---|---|
+| 400 | `VALIDATION_ERROR` | `validation.*` | Malformed body, non-Monday start, non-Sunday end, `end <= start` |
+| 403 | `FORBIDDEN` | existing guard keys | Trainee not owned by the trainer |
+| 404 | `NOT_FOUND` | `macroPhase.notFound`, `macroPeriod.notFound` | Missing, or owned by another trainer |
+| 409 | `CONFLICT` | `macroPeriod.overlap` | Write would overlap another period |
+| 409 | `CONFLICT` | `macroPhase.inUse` | Deleting a phase that has periods |
+| 409 | `CONFLICT` | `macroPhase.nameExists` | Duplicate phase name for this trainer |
+| 409 | `CONFLICT` | `macroPhase.archived` | Assigning an archived phase to a period |
+
+Keys exist in both `en` and `it`. None of these are reported to Sentry (4xx).
 
 ## Shared logic
 
 `src/lib/macro-periods.ts`, pure functions with no DOM or Prisma dependency, used by both
 the API and the client:
 
-- `snapToWeekStart(date)` / `snapToWeekEnd(date)` — nearest Monday / Sunday.
+- `snapToWeekStart(day)` / `snapToWeekEnd(day)` — nearest Monday / Sunday.
+- `weekStartOf(day)` / `weekEndOf(day)` — the Monday / Sunday of the week containing a day.
 - `isValidPeriodRange(start, end)`.
 - `findOverlap(candidate, periods, ignoreId?)` — returns the conflicting period or `null`.
 - `clampRangeToFree(anchorWeek, pointerWeek, periods)` — the largest free whole-week range
@@ -207,8 +209,8 @@ colours. Component `src/components/MacroPhaseTypesSection.tsx`, exported via `in
   the applicable action is shown.
 - Async buttons use `<Button isLoading>` / `<ActionIconButton isLoading>`. Success and
   failure go through the existing toast; API errors are translated from `key`.
-- Data: TanStack Query, key `['macro-phase-types']`. Mutations also invalidate
-  `['macro-periods']` so open timelines pick up renames and colour changes.
+- Data: `fetch` + local state, the pattern of the other trainer sections. The planning tab
+  loads phases itself on mount, so it always shows current names and colours.
 
 ## UI — trainee detail: planning tab
 
@@ -244,7 +246,8 @@ and `ssr: false` so the library and its peers are not in the bundle of the other
   a move) opens the same dialog, where phase, start week, end week and note can all be
   changed, with a delete action behind a confirmation. Every change that can be made by
   dragging can also be made in the dialog.
-- **Period dialog.** react-hook-form + Zod: phase (active phases only, plus the current
+- **Period dialog.** Controlled form with local state (the pattern of
+  `MeasurementFormModal`): phase (active phases only, plus the current
   one if archived), start week, end week, note.
 - **Bars.** Filled with the phase colour, labelled with the phase name, text colour from
   `readableTextColor`. The note is shown in a tooltip.
