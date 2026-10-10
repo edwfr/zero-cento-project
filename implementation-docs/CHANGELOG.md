@@ -10,6 +10,13 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### Fixed
+### [10 Ottobre 2026] — Gantt: apertura scheda senza loader bloccato e con back alla pianificazione
+
+**File modificati:** `trainees/[id]/_planning-tab.tsx`, `programs/[id]/page.tsx`, `trainer-trainee-planning-tab.test.tsx`
+
+`navigation.start()` non veniva mai fermato (nessuno chiama `stop()` all'arrivo): rimosso, il loader lo mostra `loading.tsx`. Il push ora passa `backContext/backTab/traineeId`, così la freccia indietro torna al tab Pianificazione.
+
 ### Changed
 ### [10 Ottobre 2026] — Date in formato GG/MM/AAAA in tutta l'app
 

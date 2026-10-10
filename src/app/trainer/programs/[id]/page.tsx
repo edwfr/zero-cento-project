@@ -5,7 +5,7 @@ import EditProgramContent from './edit/_content'
 import { traineeDetailHref } from '@/lib/trainee-detail-href'
 
 interface ViewProgramPageProps {
-    searchParams?: Promise<{ backContext?: string; traineeId?: string }>
+    searchParams?: Promise<{ backContext?: string; backTab?: string; traineeId?: string }>
 }
 
 export default async function ViewProgramPage({ searchParams }: ViewProgramPageProps) {
@@ -17,7 +17,7 @@ export default async function ViewProgramPage({ searchParams }: ViewProgramPageP
     const backContext = resolvedSearchParams?.backContext
     const traineeId = resolvedSearchParams?.traineeId
     const backHref = backContext === 'trainee' && traineeId
-        ? traineeDetailHref(traineeId, 'programs')
+        ? traineeDetailHref(traineeId, resolvedSearchParams?.backTab === 'planning' ? 'planning' : 'programs')
         : '/trainer/programs'
 
     return (

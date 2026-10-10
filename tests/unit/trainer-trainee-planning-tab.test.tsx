@@ -401,12 +401,14 @@ describe('PlanningTab', () => {
         expect(timeline().visibleStart).toBe(1000)
     })
 
-    it('opens a program from its bar through the navigation loader', async () => {
+    it('opens a program from its bar, with a back link to the plan', async () => {
         await renderTab()
 
         act(() => timeline().onProgramClick('g1'))
 
-        expect(mocks.startLoader).toHaveBeenCalledTimes(1)
-        expect(mocks.push).toHaveBeenCalledWith('/trainer/programs/g1')
+        expect(mocks.startLoader).not.toHaveBeenCalled()
+        expect(mocks.push).toHaveBeenCalledWith(
+            expect.stringMatching(/^\/trainer\/programs\/g1\?backContext=trainee&backTab=planning&traineeId=/)
+        )
     })
 })

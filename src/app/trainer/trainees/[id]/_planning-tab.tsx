@@ -10,7 +10,6 @@ import { Button } from '@/components/Button'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import MacroPeriodFormModal, { type MacroPeriodFormValues } from '@/components/MacroPeriodFormModal'
 import type { MacroPeriodTimelineProps } from '@/components/MacroPeriodTimeline'
-import { useNavigationLoader } from '@/components/NavigationLoadingProvider'
 import { SkeletonDetail } from '@/components/Skeleton'
 import { useToast } from '@/components/ToastNotification'
 import { getApiErrorMessage } from '@/lib/api-error'
@@ -81,7 +80,6 @@ export default function PlanningTab({ traineeId }: PlanningTabProps) {
     const { t } = useTranslation(['trainer', 'common'])
     const { showToast } = useToast()
     const router = useRouter()
-    const navigation = useNavigationLoader()
 
     const [periods, setPeriods] = useState<MacroPeriodDto[]>([])
     const [programs, setPrograms] = useState<PlanProgramDto[]>([])
@@ -253,8 +251,8 @@ export default function PlanningTab({ traineeId }: PlanningTabProps) {
     }
 
     const handleProgramClick = (id: string) => {
-        navigation.start()
-        router.push(`/trainer/programs/${id}`)
+        // No navigation.start(): nothing stops it on arrival; the program's loading.tsx shows the loader
+        router.push(`/trainer/programs/${id}?backContext=trainee&backTab=planning&traineeId=${traineeId}`)
     }
 
     // Legend: what the trainer can assign, plus archived phases this plan still shows
