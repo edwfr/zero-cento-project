@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [10 Ottobre 2026] — Pubblicazione programma: scala una scheda dal pacchetto dell'atleta
+
+**File modificati:** `src/lib/program-credits.ts` (nuovo), `src/app/api/programs/[id]/publish/route.ts`, `tests/unit/lib/program-credits.test.ts` (nuovo), `tests/integration/programs.test.ts`, `tests/unit/trainer-trainee-programs-tab.test.tsx`
+**Note:** `POST /api/programs/[id]/publish` esegue in un'unica transazione cambio stato, date delle settimane e consumo scheda. La scheda viene scalata (riga in `program_credit_usages` + movimento `credit_consumed`) solo se l'ultimo rinnovo registrato dell'atleta è a schede; a mesi o senza rinnovi non succede nulla. Il saldo non viene controllato: la pubblicazione non è mai bloccata e l'atleta può andare in debito. La risposta include `creditConsumed`. Corretto un test preesistente che cercava l'icona abbonamento come `button` (è `role="img"`, solo informativa).
 ### [10 Ottobre 2026] — Rinnovi a pacchetto di schede: API, log movimenti e saldo schede
 
 **File modificati:** `prisma/schema.prisma`, `prisma/migrations/20261010000000_add_program_package_renewals/migration.sql` (nuovo), `src/lib/subscriptions.ts`, `src/lib/subscription-queries.ts`, `src/lib/subscription-events.ts` (nuovo), `src/schemas/subscription-renewal.ts`, `src/app/api/subscription-renewals/_data.ts` (nuovo), `src/app/api/subscription-renewals/route.ts`, `src/app/api/subscription-renewals/[id]/route.ts`, `src/app/api/users/route.ts`, `src/components/SubscriptionStatusBadge.tsx`, `src/components/SubscriptionStatusIcon.tsx`, `src/app/trainer/trainees/[id]/_subscription-alert.tsx`, `src/app/trainer/subscriptions/_content.tsx`, `src/lib/trainer-dashboard/subscription-alerts.ts`, `src/app/trainer/dashboard/_widgets/SubscriptionAlertsWidget.tsx`, `public/locales/{it,en}/{trainer,errors}.json`, `tests/helpers/subscription-mock.ts` (nuovo) e i test unit/integration relativi

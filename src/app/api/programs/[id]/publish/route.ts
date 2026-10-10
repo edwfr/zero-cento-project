@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger'
 import { z } from 'zod'
 import { handleApiError } from '@/lib/api-error-handler'
 import { weekStartDate } from '@/lib/program-visibility'
+import { consumeCreditOnPublish } from '@/lib/program-credits'
 
 const publishSchema = z.object({
     startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)'),
@@ -18,6 +19,7 @@ const publishSchema = z.object({
  * - Calculate endDate based on durationWeeks
  * - Assign dates to each Week
  * - Validate each Workout has at least 1 WorkoutExercise
+ * - Consume one program credit when the trainee is on packages (never blocks)
  * RBAC: only trainer owner or admin
  */
 export async function POST(
@@ -84,30 +86,36 @@ export async function POST(
             )
         }
 
-        // Calculate dates
         const startDateObj = new Date(startDate)
-        const endDateObj = new Date(startDateObj)
-        endDateObj.setDate(endDateObj.getDate() + program.durationWeeks * 7)
 
-        // Update program status and dates
-        await prisma.trainingProgram.update({
-            where: { id: programId },
-            data: {
-                status: 'active',
-                startDate: startDateObj,
-                publishedAt: new Date(),
-            },
-        })
+        // One transaction: a published program without its credit movement (or the reverse) must never exist
+        const creditConsumed = await prisma.$transaction(async (tx) => {
+            await tx.trainingProgram.update({
+                where: { id: programId },
+                data: {
+                    status: 'active',
+                    startDate: startDateObj,
+                    publishedAt: new Date(),
+                },
+            })
 
-        // Assign dates to weeks in parallel
-        await Promise.all(
-            program.weeks.map((week) =>
-                prisma.week.update({
-                    where: { id: week.id },
-                    data: { startDate: weekStartDate(startDateObj, week.weekNumber) },
-                })
+            // Assign dates to weeks
+            await Promise.all(
+                program.weeks.map((week) =>
+                    tx.week.update({
+                        where: { id: week.id },
+                        data: { startDate: weekStartDate(startDateObj, week.weekNumber) },
+                    })
+                )
             )
-        )
+
+            return consumeCreditOnPublish(tx, {
+                traineeId: program.traineeId,
+                programId,
+                programTitle: program.title,
+                actorId: session.user.id,
+            })
+        })
 
         // Fetch updated program
         const updatedProgram = await prisma.trainingProgram.findUnique({
@@ -151,12 +159,14 @@ export async function POST(
                 traineeId: program.traineeId,
                 startDate,
                 userId: session.user.id,
+                creditConsumed,
             },
             'Program published successfully'
         )
 
         return apiSuccess({
             program: updatedProgram,
+            creditConsumed,
             message: 'Program published successfully',
         })
     } catch (error) {

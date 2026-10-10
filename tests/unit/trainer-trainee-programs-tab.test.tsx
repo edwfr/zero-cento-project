@@ -434,16 +434,14 @@ describe('TraineeDetailContent Programs tab', () => {
         expect(screen.getByRole('button', { name: 'subscriptions.tab' })).toHaveAttribute('aria-pressed', 'true')
     })
 
-    it('shows the subscription status icon in the header and opens the tab on click', async () => {
+    it('shows the subscription status icon in the header', async () => {
         render(<TraineeDetailContent />)
 
-        const icon = await screen.findByRole('button', {
+        // Informative only (role=img): the banner's "manage" button is what opens the tab
+        const icon = await screen.findByRole('img', {
             name: 'subscriptions.badge.expiring · subscriptions.remaining.daysLeft',
         })
         expect(icon).toHaveAttribute('data-status', 'expiring')
-
-        fireEvent.click(icon)
-        expect(screen.getByRole('button', { name: 'subscriptions.tab' })).toHaveAttribute('aria-pressed', 'true')
     })
 
     it('opens the subscription tab directly from ?tab=subscription', async () => {

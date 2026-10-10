@@ -841,6 +841,7 @@ describe('POST /api/programs/[id]/copy-first-week', () => {
 
 const mockPublishProgram = {
     id: 'prog-1',
+    title: 'Forza A',
     trainerId: 'trainer-uuid-1',
     traineeId: 'trainee-uuid-1',
     status: 'draft',
@@ -883,6 +884,73 @@ function makePublishRequest(programId: string, startDate = '2026-05-01'): NextRe
 describe('POST /api/programs/[id]/publish', () => {
     beforeEach(() => {
         vi.clearAllMocks()
+    })
+
+    function arrangePublishable() {
+        asTrainer()
+        prismaMock.trainingProgram.findUnique
+            .mockResolvedValueOnce(mockPublishProgram as never)
+            .mockResolvedValueOnce(mockUpdatedPublishedProgram as never)
+        prismaMock.trainingProgram.update.mockResolvedValue(mockUpdatedPublishedProgram as never)
+        prismaMock.week.update.mockResolvedValue({} as never)
+    }
+
+    const publish = () => publishPOST(makePublishRequest('prog-1'), { params: Promise.resolve({ id: 'prog-1' }) })
+
+    it('consumes a program credit for a trainee on packages', async () => {
+        arrangePublishable()
+        prismaMock.subscriptionRenewal.findFirst.mockResolvedValue({ kind: 'programs' } as never)
+
+        const res = await publish()
+        const body = await res.json()
+
+        expect(res.status).toBe(200)
+        expect(body.data.creditConsumed).toBe(true)
+        expect(prismaMock.programCreditUsage.create).toHaveBeenCalledWith({
+            data: { traineeId: 'trainee-uuid-1', programId: 'prog-1', createdBy: 'trainer-uuid-1' },
+        })
+        expect(prismaMock.subscriptionEvent.create).toHaveBeenCalledWith({
+            data: expect.objectContaining({ type: 'credit_consumed', details: { programTitle: 'Forza A' } }),
+        })
+    })
+
+    it('consumes nothing for a trainee on a period renewal', async () => {
+        arrangePublishable()
+        prismaMock.subscriptionRenewal.findFirst.mockResolvedValue({ kind: 'period' } as never)
+
+        const body = await (await publish()).json()
+
+        expect(body.data.creditConsumed).toBe(false)
+        expect(prismaMock.programCreditUsage.create).not.toHaveBeenCalled()
+    })
+
+    it('publishes for a trainee without any renewal, consuming nothing', async () => {
+        arrangePublishable()
+        prismaMock.subscriptionRenewal.findFirst.mockResolvedValue(null)
+
+        const res = await publish()
+
+        expect(res.status).toBe(200)
+        expect(prismaMock.programCreditUsage.create).not.toHaveBeenCalled()
+    })
+
+    it('runs the status change, the week dates and the consumption in one transaction', async () => {
+        arrangePublishable()
+        prismaMock.subscriptionRenewal.findFirst.mockResolvedValue({ kind: 'programs' } as never)
+
+        await publish()
+
+        expect(prismaMock.$transaction).toHaveBeenCalledTimes(1)
+    })
+
+    it('fails the whole publish when the credit cannot be recorded', async () => {
+        arrangePublishable()
+        prismaMock.subscriptionRenewal.findFirst.mockResolvedValue({ kind: 'programs' } as never)
+        prismaMock.programCreditUsage.create.mockRejectedValue(new Error('unique violation'))
+
+        const res = await publish()
+
+        expect(res.status).toBe(500)
     })
 
     it('returns 400 when startDate is missing', async () => {
