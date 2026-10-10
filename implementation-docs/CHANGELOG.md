@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [10 Ottobre 2026] — Eliminazione programma: popup dedicata per il rimborso della scheda
+
+**File modificati:** `src/components/ProgramCreditRefundModal.tsx` (nuovo), `src/components/index.ts`, `src/components/ProgramTraineeTable.tsx`, `src/app/trainer/programs/_content.tsx`, `src/app/trainer/trainees/[id]/_content.tsx`, `public/locales/{it,en}/trainer.json`, `tests/unit/program-credit-refund-modal.test.tsx` (nuovo), `tests/unit/trainer-programs-content.test.tsx`, `tests/unit/trainer-trainee-programs-tab.test.tsx`
+**Note:** Eliminando un programma che alla pubblicazione aveva scalato una scheda, al posto della conferma standard compare una popup con tre scelte: "Elimina e rimborsa la scheda", "Elimina senza rimborso", "Annulla". Vale sia dalla lista programmi sia dal tab programmi dell'atleta; in quest'ultimo, dopo l'eliminazione viene ricaricato lo stato abbonamento così saldo, icona e banner sono aggiornati. I programmi che non avevano scalato nulla mantengono la conferma attuale.
 ### [10 Ottobre 2026] — Pubblicazione programma: avviso per atleta senza copertura
 
 **File modificati:** `src/app/trainer/programs/[id]/publish/_content.tsx`, `public/locales/{it,en}/trainer.json`, `tests/unit/trainer-publish-program.test.tsx` (nuovo)

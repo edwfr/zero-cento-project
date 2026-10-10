@@ -20,6 +20,7 @@ import { compareExerciseType, EXERCISE_TYPE_META, type ExerciseType } from '@/li
 import TraineePlannedMuscleGroupReport from '@/components/TraineePlannedMuscleGroupReport'
 import TraineeNotesEditor from './_trainee-notes-editor'
 import MeasurementsTab from './_measurements-tab'
+import ProgramCreditRefundModal from '@/components/ProgramCreditRefundModal'
 import SubscriptionTab from './_subscription-tab'
 import SubscriptionAlertBanner from './_subscription-alert'
 import SubscriptionStatusIcon from '@/components/SubscriptionStatusIcon'
@@ -83,6 +84,7 @@ interface Program {
     testWeeks?: number[]
     hasTestWeeks?: boolean
     testsCompleted?: boolean
+    consumedCredit?: boolean
 }
 
 interface ProgramsApiResponse {
@@ -298,6 +300,8 @@ export default function TraineeDetailContent() {
     const [programTotalPages, setProgramTotalPages] = useState(1)
     const [programTotalItems, setProgramTotalItems] = useState(0)
     const [programStatusCounts, setProgramStatusCounts] = useState<ProgramStatusCounts>(INITIAL_STATUS_COUNTS)
+    const [refundTarget, setRefundTarget] = useState<{ id: string; title: string } | null>(null)
+    const [deletingWithRefundChoice, setDeletingWithRefundChoice] = useState(false)
     const [confirmModal, setConfirmModal] = useState<{
         title: string
         message: string
@@ -650,7 +654,49 @@ export default function TraineeDetailContent() {
         setProgramCurrentPage(targetPage)
     }
 
+    /** refundCredit is passed only for a program that consumed a program credit */
+    const deleteProgram = async (id: string, refundCredit?: boolean) => {
+        const query = refundCredit === undefined ? '' : `?refundCredit=${refundCredit}`
+        try {
+            const res = await fetch(`/api/programs/${id}${query}`, {
+                method: 'DELETE',
+            })
+
+            const data = await res.json()
+
+            if (!res.ok) {
+                throw new Error(getApiErrorMessage(data, t('programs.deleteError'), t))
+            }
+
+            programsCacheRef.current.clear()
+            void runForegroundProgramsFetch({
+                status: activeProgramTab,
+                page: programCurrentPage,
+                search: appliedProgramSearchTerm,
+                silent: false,
+            })
+            // A refund changes the balance shown by the header icon, the banner and the subscription tab
+            if (refundCredit !== undefined) void subscription.reload()
+        } catch (err: unknown) {
+            showToast(err instanceof Error ? err.message : t('programs.deleteError'), 'error')
+        }
+    }
+
+    const handleRefundChoice = async (refundCredit: boolean) => {
+        if (!refundTarget) return
+        setDeletingWithRefundChoice(true)
+        await deleteProgram(refundTarget.id, refundCredit)
+        setDeletingWithRefundChoice(false)
+        setRefundTarget(null)
+    }
+
     const handleDeleteProgram = (id: string, title: string, status: ProgramStatusTab) => {
+        // A program that consumed a credit: the trainer decides whether the athlete gets it back
+        if (programs.find((program) => program.id === id)?.consumedCredit) {
+            setRefundTarget({ id, title })
+            return
+        }
+
         const baseMessage = `${t('programs.confirmDeleteProgram')} "${title}"?`
         setConfirmModal({
             title: t('programs.deleteProgram'),
@@ -661,27 +707,7 @@ export default function TraineeDetailContent() {
             confirmText: t('programs.delete'),
             onConfirm: async () => {
                 setConfirmModal(null)
-                try {
-                    const res = await fetch(`/api/programs/${id}`, {
-                        method: 'DELETE',
-                    })
-
-                    const data = await res.json()
-
-                    if (!res.ok) {
-                        throw new Error(getApiErrorMessage(data, t('programs.deleteError'), t))
-                    }
-
-                    programsCacheRef.current.clear()
-                    void runForegroundProgramsFetch({
-                        status: activeProgramTab,
-                        page: programCurrentPage,
-                        search: appliedProgramSearchTerm,
-                        silent: false,
-                    })
-                } catch (err: unknown) {
-                    showToast(err instanceof Error ? err.message : t('programs.deleteError'), 'error')
-                }
+                await deleteProgram(id)
             },
         })
     }
@@ -1092,6 +1118,15 @@ export default function TraineeDetailContent() {
 
     return (
         <>
+            {refundTarget && (
+                <ProgramCreditRefundModal
+                    programTitle={refundTarget.title}
+                    isLoading={deletingWithRefundChoice}
+                    onRefund={() => void handleRefundChoice(true)}
+                    onKeep={() => void handleRefundChoice(false)}
+                    onClose={() => setRefundTarget(null)}
+                />
+            )}
             {confirmModal && (
                 <ConfirmationModal
                     isOpen={true}

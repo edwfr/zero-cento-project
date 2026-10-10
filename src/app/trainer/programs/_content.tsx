@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ProgramTraineeTable } from '@/components'
 import { useToast } from '@/components/ToastNotification'
 import ConfirmationModal from '@/components/ConfirmationModal'
+import ProgramCreditRefundModal from '@/components/ProgramCreditRefundModal'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 
@@ -31,6 +32,7 @@ interface Program {
     testsCompleted?: boolean
     updatedAt?: string | null
     createdAt: string
+    consumedCredit?: boolean
 }
 
 interface ProgramsApiResponse {
@@ -97,6 +99,8 @@ export default function TrainerProgramsContent() {
     const [totalPages, setTotalPages] = useState(1)
     const [totalItems, setTotalItems] = useState(0)
     const [statusCounts, setStatusCounts] = useState<ProgramStatusCounts>(INITIAL_STATUS_COUNTS)
+    const [refundTarget, setRefundTarget] = useState<{ id: string; title: string } | null>(null)
+    const [deletingWithRefundChoice, setDeletingWithRefundChoice] = useState(false)
     const [confirmModal, setConfirmModal] = useState<{
         title: string
         message: string
@@ -354,7 +358,47 @@ export default function TrainerProgramsContent() {
     )
     const visiblePages = Array.from({ length: visiblePagesCount }, (_, idx) => firstVisiblePage + idx)
 
+    /** refundCredit is passed only for a program that consumed a program credit */
+    const deleteProgram = async (id: string, refundCredit?: boolean) => {
+        const query = refundCredit === undefined ? '' : `?refundCredit=${refundCredit}`
+        try {
+            const res = await fetch(`/api/programs/${id}${query}`, {
+                method: 'DELETE',
+            })
+
+            const data = await res.json()
+
+            if (!res.ok) {
+                throw new Error(getApiErrorMessage(data, t('programs.deleteError'), t))
+            }
+
+            programsCacheRef.current.clear()
+            void runForegroundFetch({
+                status: activeTab,
+                page: currentPage,
+                search: appliedSearchTerm,
+                silent: false,
+            })
+        } catch (err: unknown) {
+            showToast(err instanceof Error ? err.message : t('programs.deleteError'), 'error')
+        }
+    }
+
+    const handleRefundChoice = async (refundCredit: boolean) => {
+        if (!refundTarget) return
+        setDeletingWithRefundChoice(true)
+        await deleteProgram(refundTarget.id, refundCredit)
+        setDeletingWithRefundChoice(false)
+        setRefundTarget(null)
+    }
+
     const handleDelete = (id: string, title: string, status: ProgramStatusTab) => {
+        // A program that consumed a credit: the trainer decides whether the athlete gets it back
+        if (programs.find((program) => program.id === id)?.consumedCredit) {
+            setRefundTarget({ id, title })
+            return
+        }
+
         const baseMessage = `${t('programs.confirmDeleteProgram')} "${title}"?`
         setConfirmModal({
             title: t('programs.deleteProgram'),
@@ -365,33 +409,22 @@ export default function TrainerProgramsContent() {
             confirmText: t('programs.delete'),
             onConfirm: async () => {
                 setConfirmModal(null)
-                try {
-                    const res = await fetch(`/api/programs/${id}`, {
-                        method: 'DELETE',
-                    })
-
-                    const data = await res.json()
-
-                    if (!res.ok) {
-                        throw new Error(getApiErrorMessage(data, t('programs.deleteError'), t))
-                    }
-
-                    programsCacheRef.current.clear()
-                    void runForegroundFetch({
-                        status: activeTab,
-                        page: currentPage,
-                        search: appliedSearchTerm,
-                        silent: false,
-                    })
-                } catch (err: unknown) {
-                    showToast(err instanceof Error ? err.message : t('programs.deleteError'), 'error')
-                }
+                await deleteProgram(id)
             },
         })
     }
 
     return (
         <>
+            {refundTarget && (
+                <ProgramCreditRefundModal
+                    programTitle={refundTarget.title}
+                    isLoading={deletingWithRefundChoice}
+                    onRefund={() => void handleRefundChoice(true)}
+                    onKeep={() => void handleRefundChoice(false)}
+                    onClose={() => setRefundTarget(null)}
+                />
+            )}
             {confirmModal && (
                 <ConfirmationModal
                     isOpen={true}

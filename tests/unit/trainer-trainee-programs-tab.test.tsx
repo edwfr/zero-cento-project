@@ -95,6 +95,8 @@ describe('TraineeDetailContent Programs tab', () => {
                 {
                     id: 'prog-active-done',
                     title: 'Programma Active Done',
+                    // Publishing this one consumed a program credit: deleting it asks about the refund
+                    consumedCredit: true,
                     status: 'active',
                     durationWeeks: 10,
                     workoutsPerWeek: 3,
@@ -182,7 +184,7 @@ describe('TraineeDetailContent Programs tab', () => {
             }
 
             if (method === 'DELETE' && url.includes('/api/programs/')) {
-                const programId = url.split('/api/programs/')[1]
+                const programId = url.split('/api/programs/')[1].split('?')[0]
                 for (const status of ['draft', 'active', 'completed'] as ProgramStatus[]) {
                     programsByStatus[status] = programsByStatus[status].filter((item) => item.id !== programId)
                 }
@@ -242,6 +244,8 @@ describe('TraineeDetailContent Programs tab', () => {
                         data: {
                             items: [],
                             current: { kind: 'period', status: 'expiring', endDate: '2026-10-10T00:00:00.000Z', daysLeft: 7 },
+                            programBalance: 0,
+                            events: [],
                         },
                     }),
                 } as Response
@@ -450,5 +454,45 @@ describe('TraineeDetailContent Programs tab', () => {
 
         expect(await screen.findByRole('button', { name: 'subscriptions.tab' })).toHaveAttribute('aria-pressed', 'true')
         expect(await screen.findByRole('button', { name: 'subscriptions.addButton' })).toBeInTheDocument()
+    })
+
+    const deleteCalls = () =>
+        vi
+            .mocked(global.fetch)
+            .mock.calls.filter((call) => call[1]?.method === 'DELETE')
+            .map((call) => String(call[0]))
+
+    /** "Programma Active Done" is the second active row: it consumed a program credit */
+    const openRefundPopup = async () => {
+        render(<TraineeDetailContent />)
+        expect(await screen.findByText('Programma Active Done')).toBeInTheDocument()
+        fireEvent.click(screen.getAllByLabelText('programs.delete')[1])
+        return screen.findByRole('dialog')
+    }
+
+    it('asks whether to refund when deleting a program that consumed a credit', async () => {
+        const dialog = await openRefundPopup()
+
+        expect(within(dialog).getByText('programs.refund.message')).toBeInTheDocument()
+    })
+
+    it('refunds, then reloads the subscription so the balance on screen is current', async () => {
+        const dialog = await openRefundPopup()
+        const subscriptionLoads = () =>
+            vi.mocked(global.fetch).mock.calls.filter((call) => String(call[0]).startsWith('/api/subscription-renewals')).length
+        const loadsBefore = subscriptionLoads()
+
+        fireEvent.click(within(dialog).getByRole('button', { name: 'programs.refund.refund' }))
+
+        await waitFor(() => expect(deleteCalls()).toEqual(['/api/programs/prog-active-done?refundCredit=true']))
+        await waitFor(() => expect(subscriptionLoads()).toBe(loadsBefore + 1))
+    })
+
+    it('keeps the credit spent when the trainer chooses not to refund', async () => {
+        const dialog = await openRefundPopup()
+
+        fireEvent.click(within(dialog).getByRole('button', { name: 'programs.refund.keep' }))
+
+        await waitFor(() => expect(deleteCalls()).toEqual(['/api/programs/prog-active-done?refundCredit=false']))
     })
 })

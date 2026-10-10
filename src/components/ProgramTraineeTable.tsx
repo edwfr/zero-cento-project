@@ -33,6 +33,8 @@ export interface ProgramTraineeTableProgram {
     testWeeks?: number[]
     hasTestWeeks?: boolean
     testsCompleted?: boolean
+    /** Trainer/admin only: the program consumed a program credit when it was published */
+    consumedCredit?: boolean
 }
 
 export interface ProgramTraineeTableStatusCounts {

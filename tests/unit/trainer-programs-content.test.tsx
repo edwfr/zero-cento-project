@@ -46,6 +46,7 @@ const activePrograms = [
     {
         id: 'program-3',
         title: 'Programma Test Fatti',
+        consumedCredit: true,
         status: 'active',
         durationWeeks: 10,
         workoutsPerWeek: 5,
@@ -330,4 +331,65 @@ describe('TrainerProgramsContent', () => {
         ).not.toBeInTheDocument()
     })
 
+
+    /** program-3 is the third active row: it consumed a program credit */
+    const openRefundPopup = async () => {
+        render(<TrainerProgramsContent />)
+        await waitFor(() => {
+            expect(screen.getByText('Programma Test Fatti')).toBeInTheDocument()
+        })
+        fireEvent.click(screen.getAllByLabelText('programs.delete')[2])
+        return screen.findByRole('dialog')
+    }
+
+    const deleteCalls = () =>
+        vi
+            .mocked(global.fetch)
+            .mock.calls.filter((call) => call[1]?.method === 'DELETE')
+            .map((call) => String(call[0]))
+
+    it('asks whether to refund when deleting a program that consumed a credit', async () => {
+        const dialog = await openRefundPopup()
+
+        expect(within(dialog).getByText('programs.refund.message')).toBeInTheDocument()
+        expect(within(dialog).queryByText('programs.deleteProgram')).not.toBeInTheDocument()
+    })
+
+    it('deletes with refundCredit=true when the trainer refunds', async () => {
+        const dialog = await openRefundPopup()
+
+        fireEvent.click(within(dialog).getByRole('button', { name: 'programs.refund.refund' }))
+
+        await waitFor(() => expect(deleteCalls()).toEqual(['/api/programs/program-3?refundCredit=true']))
+    })
+
+    it('deletes with refundCredit=false when the trainer keeps the credit spent', async () => {
+        const dialog = await openRefundPopup()
+
+        fireEvent.click(within(dialog).getByRole('button', { name: 'programs.refund.keep' }))
+
+        await waitFor(() => expect(deleteCalls()).toEqual(['/api/programs/program-3?refundCredit=false']))
+    })
+
+    it('deletes nothing when the refund popup is cancelled', async () => {
+        const dialog = await openRefundPopup()
+
+        fireEvent.click(within(dialog).getByRole('button', { name: 'common:common.cancel' }))
+
+        await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+        expect(deleteCalls()).toEqual([])
+    })
+
+    it('sends no refundCredit parameter for a program that consumed no credit', async () => {
+        render(<TrainerProgramsContent />)
+        await waitFor(() => {
+            expect(screen.getByText('Programma Senza Test')).toBeInTheDocument()
+        })
+
+        fireEvent.click(screen.getAllByLabelText('programs.delete')[0])
+        const dialog = await screen.findByRole('dialog')
+        fireEvent.click(within(dialog).getByText('programs.delete'))
+
+        await waitFor(() => expect(deleteCalls()).toEqual(['/api/programs/program-1']))
+    })
 })

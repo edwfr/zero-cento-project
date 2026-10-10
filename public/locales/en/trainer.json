@@ -446,6 +446,12 @@
         "addRecordButton": "Add Record"
     },
     "programs": {
+        "refund": {
+            "title": "Delete program",
+            "message": "The program \"{{title}}\" used one program from the athlete's package. Do you want to give it back?",
+            "refund": "Delete and refund the program",
+            "keep": "Delete without refund"
+        },
         "title": "Training Programs",
         "draft": "Draft",
         "noDraftPrograms": "No draft programs",

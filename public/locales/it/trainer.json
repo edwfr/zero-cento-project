@@ -446,6 +446,12 @@
         "addRecordButton": "Aggiungi Massimale"
     },
     "programs": {
+        "refund": {
+            "title": "Elimina programma",
+            "message": "Il programma \"{{title}}\" ha scalato una scheda dal pacchetto dell'atleta. Vuoi restituirla?",
+            "refund": "Elimina e rimborsa la scheda",
+            "keep": "Elimina senza rimborso"
+        },
         "title": "Programmi di Allenamento",
         "draft": "Bozza",
         "noDraftPrograms": "Nessun programma in bozza",
