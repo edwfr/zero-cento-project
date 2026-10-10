@@ -72,6 +72,45 @@ describe('GET /api/programs', () => {
         )
     })
 
+    const listWith = (creditUsage: { id: string } | null) => {
+        prismaMock.trainingProgram.findMany.mockResolvedValue([{ ...mockPrograms[0], creditUsage }] as never)
+        prismaMock.trainingProgram.count.mockResolvedValue(1 as never)
+    }
+
+    it('flags a program that consumed a credit, for the trainer', async () => {
+        asTrainer()
+        listWith({ id: 'u1' })
+
+        const body = await (await GET(makeRequest())).json()
+
+        expect(body.data.items[0].consumedCredit).toBe(true)
+        expect(body.data.items[0]).not.toHaveProperty('creditUsage')
+        expect(prismaMock.trainingProgram.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({
+                include: expect.objectContaining({ creditUsage: { select: { id: true } } }),
+            })
+        )
+    })
+
+    it('reports consumedCredit false for a program without a usage', async () => {
+        asTrainer()
+        listWith(null)
+
+        const body = await (await GET(makeRequest())).json()
+
+        expect(body.data.items[0].consumedCredit).toBe(false)
+    })
+
+    it('never exposes the credit to the trainee', async () => {
+        asTrainee()
+        listWith({ id: 'u1' })
+
+        const body = await (await GET(makeRequest())).json()
+
+        expect(body.data.items[0]).not.toHaveProperty('consumedCredit')
+        expect(body.data.items[0]).not.toHaveProperty('creditUsage')
+    })
+
     it('filters by status when query param provided', async () => {
         asTrainer()
         prismaMock.trainingProgram.findMany.mockResolvedValue(mockPrograms as never)

@@ -40,3 +40,37 @@ export async function consumeCreditOnPublish(tx: Prisma.TransactionClient, input
     })
     return true
 }
+
+export interface DeleteCreditInput {
+    programId: string
+    programTitle: string
+    /** The trainer's choice in the refund popup */
+    refund: boolean
+    actorId: string
+}
+
+/**
+ * Called before a program is deleted. Refund: the usage row goes, the balance
+ * rises by one. No refund: the usage row stays (the FK nulls its programId when
+ * the program is deleted), the credit remains spent.
+ */
+export async function settleCreditOnProgramDelete(
+    tx: Prisma.TransactionClient,
+    input: DeleteCreditInput
+): Promise<'refunded' | 'forfeited' | 'none'> {
+    const usage = await tx.programCreditUsage.findUnique({ where: { programId: input.programId } })
+    if (!usage) return 'none'
+
+    if (input.refund) {
+        await tx.programCreditUsage.delete({ where: { id: usage.id } })
+    }
+    await logSubscriptionEvent(tx, {
+        traineeId: usage.traineeId,
+        type: input.refund ? 'credit_refunded' : 'credit_forfeited',
+        actorId: input.actorId,
+        programId: input.programId,
+        creditDelta: input.refund ? 1 : 0,
+        details: { programTitle: input.programTitle },
+    })
+    return input.refund ? 'refunded' : 'forfeited'
+}

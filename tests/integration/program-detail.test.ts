@@ -200,6 +200,65 @@ describe('DELETE /api/programs/[id] — trainer deletion', () => {
         }
     )
 
+    const consumingProgram = {
+        id: 'prog-1',
+        title: 'Forza A',
+        trainerId: mockTrainerSession.user.id,
+        traineeId: 'trainee-uuid-1',
+        status: 'active',
+    }
+    const usage = { id: 'u1', traineeId: 'trainee-uuid-1', programId: 'prog-1' }
+    const deleteUrl = (query: string) => makeRequest(`http://localhost:3000/api/programs/prog-1${query}`)
+
+    it('refunds the credit when asked to', async () => {
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(consumingProgram as never)
+        prismaMock.programCreditUsage.findUnique.mockResolvedValue(usage as never)
+
+        const res = await DELETE(deleteUrl('?refundCredit=true'), withIdParam('prog-1'))
+
+        expect(res.status).toBe(200)
+        expect(prismaMock.programCreditUsage.delete).toHaveBeenCalledWith({ where: { id: 'u1' } })
+        expect(prismaMock.subscriptionEvent.create).toHaveBeenCalledWith({
+            data: expect.objectContaining({ type: 'credit_refunded', creditDelta: 1 }),
+        })
+        expect(prismaMock.trainingProgram.delete).toHaveBeenCalledWith({ where: { id: 'prog-1' } })
+    })
+
+    it.each(['', '?refundCredit=false', '?refundCredit=yes', '?refundCredit=1', '?refundCredit='])(
+        'keeps the credit consumed for "%s"',
+        async (query) => {
+            prismaMock.trainingProgram.findUnique.mockResolvedValue(consumingProgram as never)
+            prismaMock.programCreditUsage.findUnique.mockResolvedValue(usage as never)
+
+            const res = await DELETE(deleteUrl(query), withIdParam('prog-1'))
+
+            expect(res.status).toBe(200)
+            expect(prismaMock.programCreditUsage.delete).not.toHaveBeenCalled()
+            expect(prismaMock.subscriptionEvent.create).toHaveBeenCalledWith({
+                data: expect.objectContaining({ type: 'credit_forfeited' }),
+            })
+        }
+    )
+
+    it('settles the credit and deletes the program in one transaction', async () => {
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(consumingProgram as never)
+        prismaMock.programCreditUsage.findUnique.mockResolvedValue(usage as never)
+
+        await DELETE(deleteUrl('?refundCredit=true'), withIdParam('prog-1'))
+
+        expect(prismaMock.$transaction).toHaveBeenCalledTimes(1)
+    })
+
+    it('writes no history for a program that never consumed a credit', async () => {
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(consumingProgram as never)
+        prismaMock.programCreditUsage.findUnique.mockResolvedValue(null)
+
+        await DELETE(deleteUrl('?refundCredit=true'), withIdParam('prog-1'))
+
+        expect(prismaMock.subscriptionEvent.create).not.toHaveBeenCalled()
+        expect(prismaMock.trainingProgram.delete).toHaveBeenCalled()
+    })
+
     it('rejects deletion of a program owned by another trainer', async () => {
         asTrainer(makeTrainerSession({ id: 'other-trainer' }))
         prismaMock.trainingProgram.findUnique.mockResolvedValue({

@@ -160,6 +160,8 @@ export async function GET(request: NextRequest) {
                         weekNumber: 'asc',
                     },
                 },
+                // One-to-one: present when publishing this program consumed a program credit
+                creditUsage: { select: { id: true } },
             },
             take: limit + 1,
             ...(useCursorPagination
@@ -258,8 +260,12 @@ export async function GET(request: NextRequest) {
                     completedTestsCount: completedTestWeeksCount,
                 }
 
+                // The relation itself never leaves the API; the flag is for trainer/admin only
+                // (it drives the refund popup on delete)
+                const { creditUsage, ...programFields } = program
+
                 return {
-                    ...program,
+                    ...programFields,
                     completedAt:
                         program.completedAt ??
                         (program.status === 'completed'
@@ -277,6 +283,7 @@ export async function GET(request: NextRequest) {
                     testsCompleted: testsSummary.testsCompleted,
                     plannedTestsCount: testsSummary.plannedTestsCount,
                     completedTestsCount: testsSummary.completedTestsCount,
+                    ...(session.user.role !== 'trainee' ? { consumedCredit: Boolean(creditUsage) } : {}),
                 }
             })
 

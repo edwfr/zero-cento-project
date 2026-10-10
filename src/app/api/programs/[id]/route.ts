@@ -7,6 +7,7 @@ import { logger } from '@/lib/logger'
 import { loadTraineePrMap, resolveEffectiveWeight } from '@/lib/calculations'
 import { handleApiError } from '@/lib/api-error-handler'
 import { isProgramVisibleToTrainee } from '@/lib/program-visibility'
+import { settleCreditOnProgramDelete } from '@/lib/program-credits'
 
 /**
  * GET /api/programs/[id]
@@ -457,9 +458,10 @@ export async function PUT(
 }
 
 /**
- * DELETE /api/programs/[id]
- * Delete program
- * Only if status=draft, admin can delete any status
+ * DELETE /api/programs/[id]?refundCredit=true|false
+ * Delete a program in any status (owning trainer or admin).
+ * refundCredit: when the program consumed a program credit, `true` gives it
+ * back to the trainee; anything else (or no parameter) leaves it consumed.
  */
 export async function DELETE(
     request: NextRequest,
@@ -483,13 +485,26 @@ export async function DELETE(
             return apiError('FORBIDDEN', 'You can only delete your own programs', 403, undefined, 'program.deleteDenied')
         }
 
+        // Only the literal "true" refunds: an unexpected value must never hand a credit back
+        const refund = new URL(request.url).searchParams.get('refundCredit') === 'true'
+
         // Delete program regardless of status: cascade removes weeks, workouts,
-        // workout exercises, feedbacks, performed sets and workout skeletons
-        await prisma.trainingProgram.delete({
-            where: { id: programId },
+        // workout exercises, feedbacks, performed sets and workout skeletons.
+        // The credit is settled first, in the same transaction.
+        const creditOutcome = await prisma.$transaction(async (tx) => {
+            const outcome = await settleCreditOnProgramDelete(tx, {
+                programId,
+                programTitle: program.title,
+                refund,
+                actorId: session.user.id,
+            })
+            await tx.trainingProgram.delete({
+                where: { id: programId },
+            })
+            return outcome
         })
 
-        logger.info({ programId, userId: session.user.id }, 'Program deleted successfully')
+        logger.info({ programId, userId: session.user.id, creditOutcome }, 'Program deleted successfully')
 
         return apiSuccess({
             message: 'Program deleted successfully',

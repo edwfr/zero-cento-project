@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [10 Ottobre 2026] — Eliminazione programma: scelta di rimborso della scheda consumata
+
+**File modificati:** `src/lib/program-credits.ts`, `src/app/api/programs/[id]/route.ts`, `src/app/api/programs/route.ts`, `tests/unit/lib/program-credits.test.ts`, `tests/integration/program-detail.test.ts`, `tests/integration/programs.test.ts`
+**Note:** `DELETE /api/programs/[id]?refundCredit=true` restituisce la scheda all'atleta (riga di consumo eliminata, movimento `credit_refunded`); qualsiasi altro valore o parametro assente lascia la scheda consumata (movimento `credit_forfeited`, la riga di consumo sopravvive con `programId` nullo). Regolazione del credito ed eliminazione nella stessa transazione. `GET /api/programs` espone `consumedCredit` per trainer e admin (relazione letta con la lista, nessuna query aggiuntiva), mai per il trainee.
 ### [10 Ottobre 2026] — Pubblicazione programma: scala una scheda dal pacchetto dell'atleta
 
 **File modificati:** `src/lib/program-credits.ts` (nuovo), `src/app/api/programs/[id]/publish/route.ts`, `tests/unit/lib/program-credits.test.ts` (nuovo), `tests/integration/programs.test.ts`, `tests/unit/trainer-trainee-programs-tab.test.tsx`
