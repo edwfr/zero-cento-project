@@ -38,6 +38,16 @@
         "cannotDeleteInUse": "Impossibile eliminare lo schema motorio: è utilizzato in uno o più esercizi",
         "deletedSuccess": "Schema motorio eliminato con successo"
     },
+    "macroPhase": {
+        "notFound": "Fase non trovata",
+        "nameExists": "Esiste già una fase con questo nome",
+        "inUse": "Impossibile eliminare la fase: è usata in uno o più periodi. Puoi archiviarla.",
+        "archived": "Questa fase è archiviata: riattivala dal profilo o scegline un'altra"
+    },
+    "macroPeriod": {
+        "notFound": "Periodo non trovato",
+        "overlap": "Il periodo si sovrappone a un altro già pianificato"
+    },
     "muscleGroup": {
         "notFound": "Gruppo muscolare non trovato",
         "someNotFound": "Uno o più gruppi muscolari non trovati",

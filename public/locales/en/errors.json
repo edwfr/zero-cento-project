@@ -38,6 +38,16 @@
         "cannotDeleteInUse": "Cannot delete movement pattern: it is used in one or more exercises",
         "deletedSuccess": "Movement pattern deleted successfully"
     },
+    "macroPhase": {
+        "notFound": "Phase not found",
+        "nameExists": "A phase with this name already exists",
+        "inUse": "This phase cannot be deleted: one or more periods use it. You can archive it.",
+        "archived": "This phase is archived: reactivate it from your profile or choose another one"
+    },
+    "macroPeriod": {
+        "notFound": "Period not found",
+        "overlap": "The period overlaps another planned period"
+    },
     "muscleGroup": {
         "notFound": "Muscle group not found",
         "someNotFound": "One or more muscle groups not found",
