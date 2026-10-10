@@ -106,6 +106,9 @@ model User {
   createdExercises         Exercise[]                   @relation("CreatedExercises")
   updatedExercises         Exercise[]                   @relation("UpdatedExercises")
   movementPatternColors    MovementPatternColor[]       @relation("TrainerPatternColors")
+  macroPhaseTypes          MacroPhaseType[]             @relation("TrainerMacroPhaseTypes")
+  macroPeriodsAsTrainer    MacroPeriod[]                @relation("TrainerMacroPeriods")
+  macroPeriodsAsTrainee    MacroPeriod[]                @relation("TraineeMacroPeriods")
   
   // Trainer relations
   trainingProgramsAsTrainer TrainingProgram[]           @relation("TrainerPrograms")
@@ -194,6 +197,47 @@ model MovementPatternColor {
   @@unique([trainerId, movementPatternId])
   @@index([trainerId])
   @@map("movement_pattern_colors")
+}
+
+model MacroPhaseType {
+  id          String   @id @default(uuid())
+  trainerId   String
+  name        String
+  description String?
+  color       String   // Hex color (es. "#2563eb")
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  trainer User          @relation("TrainerMacroPhaseTypes", fields: [trainerId], references: [id], onDelete: Cascade)
+  periods MacroPeriod[] @relation("PhaseTypePeriods")
+
+  @@unique([trainerId, name])
+  @@index([trainerId, isActive])
+  @@map("macro_phase_types")
+}
+
+model MacroPeriod {
+  id          String   @id @default(uuid())
+  traineeId   String
+  trainerId   String
+  phaseTypeId String
+  startDate   DateTime @db.Date // Sempre un lunedì
+  endDate     DateTime @db.Date // Sempre una domenica, inclusa
+  note        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  trainee   User           @relation("TraineeMacroPeriods", fields: [traineeId], references: [id], onDelete: Cascade)
+  trainer   User           @relation("TrainerMacroPeriods", fields: [trainerId], references: [id], onDelete: Cascade)
+  // NoAction (non Restrict): Restrict è immediato e bloccherebbe l'eliminazione a cascata di un trainer
+  phaseType MacroPhaseType @relation("PhaseTypePeriods", fields: [phaseTypeId], references: [id], onDelete: NoAction)
+
+  @@index([traineeId, startDate])
+  @@index([trainerId])
+  @@map("macro_periods")
 }
 
 model Exercise {
