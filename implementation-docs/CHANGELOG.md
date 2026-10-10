@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [10 Ottobre 2026] — E2E rinnovi a pacchetto di schede
+
+**File modificati:** `tests/e2e/trainer-program-packages.spec.ts` (nuovo)
+**Note:** Scenario Playwright: il trainer registra un pacchetto da 1 scheda, vede "ultima scheda disponibile" su tab, banner profilo, lista atleti, pagina Abbonamenti e home, poi elimina il pacchetto e l'avviso sparisce. Richiede la migration `20261010000000_add_program_package_renewals` applicata. Scritto ma non ancora eseguito: la migration non è stata applicata ad alcun database in questa sessione.
 ### [10 Ottobre 2026] — Eliminazione programma: popup dedicata per il rimborso della scheda
 
 **File modificati:** `src/components/ProgramCreditRefundModal.tsx` (nuovo), `src/components/index.ts`, `src/components/ProgramTraineeTable.tsx`, `src/app/trainer/programs/_content.tsx`, `src/app/trainer/trainees/[id]/_content.tsx`, `public/locales/{it,en}/trainer.json`, `tests/unit/program-credit-refund-modal.test.tsx` (nuovo), `tests/unit/trainer-programs-content.test.tsx`, `tests/unit/trainer-trainee-programs-tab.test.tsx`
