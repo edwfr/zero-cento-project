@@ -10,6 +10,16 @@
 
 **Spec:** `docs/superpowers/specs/2026-10-10-macro-periods-gantt-design.md` — read it before starting any task.
 
+## Stato avanzamento (10 ottobre 2026)
+
+Tutte le task sono implementate e verificate: type-check, lint, suite unit/integration (2090 test) e build di produzione verdi.
+
+- [x] Task 1 — spike libreria: 7 prove Playwright + build passate (cancello superato).
+- [x] Task 2–9 — implementate, test verdi.
+- [x] Task 10 — scenario E2E scritto; **non eseguito** (database non raggiungibile dall'ambiente di sviluppo).
+
+Aperto: applicare la migration `20261011000000_add_macro_periods`, eseguire lo scenario E2E, provare a mano il trascinamento touch.
+
 ## Global Constraints
 
 - Before touching code, invoke the project skill that matches the task: `zero-cento-backend` (API, Prisma, lib), `zero-cento-frontend` (components, pages), `zero-cento-testing` (every test).
