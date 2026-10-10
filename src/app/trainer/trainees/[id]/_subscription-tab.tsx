@@ -166,7 +166,7 @@ export default function SubscriptionTab({ traineeId, state }: SubscriptionTabPro
                 <SubscriptionRenewalFormModal
                     mode={modal.mode}
                     initial={modal.initial}
-                    defaultStartDate={nextRenewalStart(current?.endDate ?? null, getTodayForInput())}
+                    defaultStartDate={nextRenewalStart(current?.kind === 'period' ? current.endDate : null, getTodayForInput())}
                     isSaving={saving}
                     onClose={() => setModal(null)}
                     onSubmit={(payload) => void handleSubmit(payload)}

@@ -1,13 +1,15 @@
 import { getTrainerSubscriptionOverview } from '@/lib/subscription-queries'
+import { compareOverviewItems, needsAttention, type RenewalKind } from '@/lib/subscriptions'
 import { startOfUtcDay } from './dates'
 import { activeTraineeIds, fullName, type DashboardTrainee } from './trainees'
 
 export interface SubscriptionAlert {
+    kind: RenewalKind
     status: 'expired' | 'expiring'
     traineeId: string
     traineeName: string
-    /** Days since expiry when expired, days left when expiring */
-    days: number
+    /** period: days since expiry / days left. programs: programs owed (0 = just exhausted) / programs left */
+    value: number
 }
 
 export async function getSubscriptionAlerts(
@@ -19,17 +21,17 @@ export async function getSubscriptionAlerts(
 
     const overview = await getTrainerSubscriptionOverview(trainerId, startOfUtcDay(now))
 
-    // daysLeft ascending: longest-expired first, then the ones expiring soonest
+    // Same order as the subscriptions page: red first, then amber, most urgent first
     return overview.withSubscription
-        .filter((entry) => entry.subscription.status === 'expired' || entry.subscription.status === 'expiring')
-        .sort(
-            (left, right) =>
-                left.subscription.daysLeft - right.subscription.daysLeft || fullName(left).localeCompare(fullName(right)),
-        )
+        .filter((entry) => needsAttention(entry.subscription))
+        .sort((left, right) => compareOverviewItems(left, right) || fullName(left).localeCompare(fullName(right)))
         .map((entry) => ({
+            kind: entry.subscription.kind,
             status: entry.subscription.status === 'expired' ? 'expired' : 'expiring',
             traineeId: entry.traineeId,
             traineeName: fullName(entry),
-            days: Math.abs(entry.subscription.daysLeft),
+            value: Math.abs(
+                entry.subscription.kind === 'period' ? entry.subscription.daysLeft : entry.subscription.remaining
+            ),
         }))
 }

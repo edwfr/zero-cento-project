@@ -11,7 +11,7 @@ const subscribed = (traineeId: string, firstName: string, status: 'active' | 'ex
     traineeId,
     firstName,
     lastName: 'X',
-    subscription: { status, daysLeft, endDate: '2026-10-10T00:00:00.000Z' },
+    subscription: { kind: 'period' as const, status, daysLeft, endDate: '2026-10-10T00:00:00.000Z' },
 })
 
 function arrange(items: SubscriptionOverview['withSubscription']) {
@@ -39,8 +39,8 @@ describe('getSubscriptionAlerts', () => {
         arrange([subscribed('t1', 'Zoe', 'expired', -3), subscribed('t2', 'Bea', 'expiring', 0), subscribed('t3', 'Ada', 'active', 40)])
 
         await expect(getSubscriptionAlerts('trainer-1', TRAINEES, NOW)).resolves.toEqual([
-            { status: 'expired', traineeId: 't1', traineeName: 'Zoe X', days: 3 },
-            { status: 'expiring', traineeId: 't2', traineeName: 'Bea X', days: 0 },
+            { kind: 'period', status: 'expired', traineeId: 't1', traineeName: 'Zoe X', value: 3 },
+            { kind: 'period', status: 'expiring', traineeId: 't2', traineeName: 'Bea X', value: 0 },
         ])
     })
 
@@ -61,5 +61,17 @@ describe('getSubscriptionAlerts', () => {
     it('does not query without active trainees', async () => {
         await expect(getSubscriptionAlerts('trainer-1', [makeTrainee('t9', 'Off', 'Line', false)], NOW)).resolves.toEqual([])
         expect(getTrainerSubscriptionOverview).not.toHaveBeenCalled()
+    })
+
+    it('reports package trainees with their balance as value', async () => {
+        arrange([
+            { traineeId: 'p1', firstName: 'Pia', lastName: 'X', subscription: { kind: 'programs', status: 'expired', remaining: -2 } },
+            { traineeId: 'p2', firstName: 'Lia', lastName: 'X', subscription: { kind: 'programs', status: 'expiring', remaining: 1 } },
+        ])
+
+        await expect(getSubscriptionAlerts('trainer-1', TRAINEES, NOW)).resolves.toEqual([
+            { kind: 'programs', status: 'expired', traineeId: 'p1', traineeName: 'Pia X', value: 2 },
+            { kind: 'programs', status: 'expiring', traineeId: 'p2', traineeName: 'Lia X', value: 1 },
+        ])
     })
 })

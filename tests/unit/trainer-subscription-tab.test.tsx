@@ -24,7 +24,7 @@ const renewal = {
 function makeState(overrides: Partial<TraineeSubscriptionState> = {}): TraineeSubscriptionState {
     return {
         renewals: [renewal],
-        current: { status: 'expiring', endDate: renewal.endDate, daysLeft: 7 },
+        current: { kind: 'period', status: 'expiring', endDate: renewal.endDate, daysLeft: 7 },
         loading: false,
         error: false,
         reload: vi.fn().mockResolvedValue(undefined),

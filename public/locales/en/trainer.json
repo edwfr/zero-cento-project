@@ -120,7 +120,11 @@
             "expired_one": "Expired 1 day ago",
             "expiring": "Expires in {{count}} days",
             "expiring_one": "Expires tomorrow",
-            "expiring_zero": "Expires today"
+            "expiring_zero": "Expires today",
+            "programsLast": "Last program available",
+            "programsExhausted": "No programs left",
+            "programsDebt": "{{count}} programs owed",
+            "programsDebt_one": "1 program owed"
         },
         "inactive": {
             "title": "Inactive athletes",
@@ -348,6 +352,14 @@
             "expired": "Expired on {{date}}",
             "none": "No subscription"
         },
+        "programs": {
+            "available_one": "{{count}} program available",
+            "available_other": "{{count}} programs available",
+            "last": "Last program available",
+            "exhausted": "No programs left",
+            "debt_one": "{{count}} program owed",
+            "debt_other": "{{count}} programs owed"
+        },
         "remaining": {
             "daysLeft_one": "in {{count}} day",
             "daysLeft_other": "in {{count}} days",
@@ -364,8 +376,8 @@
             "title": "Subscriptions",
             "description": "Your athletes' expiry dates, soonest first",
             "counters": {
-                "expired": "Expired",
-                "expiring": "Expiring (≤ 14 d)",
+                "expired": "Expired / exhausted",
+                "expiring": "Expiring / last program",
                 "active": "Active",
                 "none": "No subscription"
             },

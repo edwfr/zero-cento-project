@@ -11,17 +11,36 @@ export const MIN_DURATION_MONTHS = 1
 export const MAX_DURATION_MONTHS = 36
 export const DURATION_SHORTCUTS = [1, 3, 6, 12] as const
 
+/** Programs mode: the balance at which the trainer gets the amber "last program" warning */
+export const LAST_PROGRAM_THRESHOLD = 1
+export const MIN_PROGRAM_COUNT = 1
+export const MAX_PROGRAM_COUNT = 50
+export const PROGRAM_COUNT_SHORTCUTS = [1, 3, 5, 10] as const
+
 const DAY_MS = 24 * 60 * 60 * 1000
 
 export type SubscriptionStatus = 'none' | 'active' | 'expiring' | 'expired'
+export type RenewalKind = 'period' | 'programs'
 
-export interface SubscriptionSummary {
-    status: Exclude<SubscriptionStatus, 'none'>
+type RecordedStatus = Exclude<SubscriptionStatus, 'none'>
+
+export interface PeriodSummary {
+    kind: 'period'
+    status: RecordedStatus
     /** ISO string of the current expiry day */
     endDate: string
     /** Negative when expired */
     daysLeft: number
 }
+
+export interface ProgramsSummary {
+    kind: 'programs'
+    status: RecordedStatus
+    /** Programs still available; negative = programs published on credit */
+    remaining: number
+}
+
+export type SubscriptionSummary = PeriodSummary | ProgramsSummary
 
 /** A renewal as the API returns it (dates serialized to ISO strings). */
 export interface RenewalRow {
@@ -31,6 +50,25 @@ export interface RenewalRow {
     durationMonths: number
     endDate: string
     createdAt: string
+}
+
+export type SubscriptionEventType =
+    | 'period_renewal_created'
+    | 'package_created'
+    | 'renewal_updated'
+    | 'renewal_deleted'
+    | 'credit_consumed'
+    | 'credit_refunded'
+    | 'credit_forfeited'
+
+/** A history row as the API returns it. */
+export interface SubscriptionEventRow {
+    id: string
+    type: SubscriptionEventType
+    creditDelta: number | null
+    details: Record<string, unknown>
+    createdAt: string
+    actorName: string
 }
 
 export interface OverviewTrainee {
@@ -78,30 +116,99 @@ function daysBetween(from: Date, to: Date): number {
     return Math.round((toSubscriptionDay(to).getTime() - toSubscriptionDay(from).getTime()) / DAY_MS)
 }
 
-function statusFromDaysLeft(daysLeft: number): SubscriptionSummary['status'] {
+function statusFromDaysLeft(daysLeft: number): RecordedStatus {
     if (daysLeft < 0) return 'expired'
     if (daysLeft <= EXPIRING_THRESHOLD_DAYS) return 'expiring'
     return 'active'
 }
 
-/** null means "no subscription recorded". */
-export function toSubscriptionSummary(endDate: Date | string | null, today: Date): SubscriptionSummary | null {
+/** Period summary. null means "no end date recorded". */
+export function toSubscriptionSummary(endDate: Date | string | null, today: Date): PeriodSummary | null {
     if (!endDate) return null
     const end = toSubscriptionDay(new Date(endDate))
     const daysLeft = daysBetween(today, end)
-    return { status: statusFromDaysLeft(daysLeft), endDate: end.toISOString(), daysLeft }
+    return { kind: 'period', status: statusFromDaysLeft(daysLeft), endDate: end.toISOString(), daysLeft }
+}
+
+export function isValidProgramCount(value: number): boolean {
+    return Number.isInteger(value) && value >= MIN_PROGRAM_COUNT && value <= MAX_PROGRAM_COUNT
+}
+
+/** Programs summary: red when nothing is left (or owed), amber on the last program. */
+export function toProgramsSummary(remaining: number): ProgramsSummary {
+    let status: RecordedStatus = 'active'
+    if (remaining <= 0) status = 'expired'
+    else if (remaining <= LAST_PROGRAM_THRESHOLD) status = 'expiring'
+    return { kind: 'programs', status, remaining }
+}
+
+export interface SummaryInput {
+    /** kind of the most recently registered renewal, null when there is none */
+    mode: RenewalKind | null
+    endDate: Date | string | null
+    purchased: number
+    used: number
+}
+
+/** The two modes are mutually exclusive: the current one decides which numbers matter. */
+export function resolveSummary(input: SummaryInput, today: Date): SubscriptionSummary | null {
+    if (input.mode === 'programs') return toProgramsSummary(input.purchased - input.used)
+    if (input.mode === 'period') return toSubscriptionSummary(input.endDate, today)
+    return null
+}
+
+export type UncoveredReason = 'none' | 'periodExpired' | 'programsExhausted'
+
+/** Why a publish would happen without coverage; null when the trainee is covered. */
+export function uncoveredReason(summary: SubscriptionSummary | null): UncoveredReason | null {
+    if (!summary) return 'none'
+    if (summary.status !== 'expired') return null
+    return summary.kind === 'programs' ? 'programsExhausted' : 'periodExpired'
+}
+
+/** i18n key + count for a program balance. */
+export function programsLabel(remaining: number): { key: string; count: number } {
+    if (remaining < 0) return { key: 'subscriptions.programs.debt', count: -remaining }
+    if (remaining === 0) return { key: 'subscriptions.programs.exhausted', count: 0 }
+    if (remaining <= LAST_PROGRAM_THRESHOLD) return { key: 'subscriptions.programs.last', count: remaining }
+    return { key: 'subscriptions.programs.available', count: remaining }
+}
+
+/** Short status text of either kind: key, count (days or programs) and, for a period, the expiry date. */
+export function summaryLabel(summary: SubscriptionSummary): { key: string; count: number; date?: string } {
+    if (summary.kind === 'programs') return programsLabel(summary.remaining)
+    return { key: `subscriptions.badge.${summary.status}`, count: summary.daysLeft, date: summary.endDate }
+}
+
+/** What the summary needs from a renewal row, of either kind. */
+export interface RenewalFacts {
+    kind: RenewalKind
+    endDate: Date | null
+    programCount: number | null
+    createdAt: Date
+}
+
+/**
+ * Folds a trainee's renewals into the summary input: the mode is the kind of the
+ * latest registered row, the expiry is the furthest end date (a back-dated
+ * correction never shortens it), the purchased programs add up across packages.
+ */
+export function summarizeRenewals(rows: RenewalFacts[], used: number): SummaryInput {
+    let latest: RenewalFacts | null = null
+    let endDate: Date | null = null
+    let purchased = 0
+
+    for (const row of rows) {
+        if (latest === null || row.createdAt > latest.createdAt) latest = row
+        if (row.endDate && (endDate === null || row.endDate > endDate)) endDate = row.endDate
+        purchased += row.programCount ?? 0
+    }
+
+    return { mode: latest?.kind ?? null, endDate, purchased, used }
 }
 
 export function needsAttention(summary: SubscriptionSummary | null): boolean {
     return summary?.status === 'expiring' || summary?.status === 'expired'
-}
-
-/** Current expiry: the furthest end date, so a back-dated correction never shortens it. */
-export function latestEndDate(rows: { endDate: Date }[]): Date | null {
-    return rows.reduce<Date | null>(
-        (latest, row) => (latest === null || row.endDate > latest ? row.endDate : latest),
-        null
-    )
 }
 
 /** Form pre-fill: the day after the current expiry, or today when there is none. */
@@ -127,21 +234,35 @@ function isSubscribed(item: SubscriptionOverviewItem): item is SubscribedOvervie
     return item.subscription !== null
 }
 
+const STATUS_ORDER: Record<RecordedStatus, number> = { expired: 0, expiring: 1, active: 2 }
+const KIND_ORDER: Record<RenewalKind, number> = { period: 0, programs: 1 }
+
+function urgency(summary: SubscriptionSummary): number {
+    return summary.kind === 'period' ? summary.daysLeft : summary.remaining
+}
+
+/** Red first, then amber, then active; inside a status periods before packages, most urgent first. */
+export function compareOverviewItems(a: SubscribedOverviewItem, b: SubscribedOverviewItem): number {
+    return (
+        STATUS_ORDER[a.subscription.status] - STATUS_ORDER[b.subscription.status] ||
+        KIND_ORDER[a.subscription.kind] - KIND_ORDER[b.subscription.kind] ||
+        urgency(a.subscription) - urgency(b.subscription) ||
+        compareByName(a, b)
+    )
+}
+
 export function buildSubscriptionOverview(
     trainees: OverviewTrainee[],
-    endDates: Map<string, Date>,
-    today: Date
+    summaries: Map<string, SubscriptionSummary>
 ): SubscriptionOverview {
     const items: SubscriptionOverviewItem[] = trainees.map((trainee) => ({
         traineeId: trainee.id,
         firstName: trainee.firstName,
         lastName: trainee.lastName,
-        subscription: toSubscriptionSummary(endDates.get(trainee.id) ?? null, today),
+        subscription: summaries.get(trainee.id) ?? null,
     }))
 
-    const withSubscription = items
-        .filter(isSubscribed)
-        .sort((a, b) => a.subscription.daysLeft - b.subscription.daysLeft || compareByName(a, b))
+    const withSubscription = items.filter(isSubscribed).sort(compareOverviewItems)
     const withoutSubscription = items.filter((item) => !isSubscribed(item)).sort(compareByName)
 
     const counts: Record<SubscriptionStatus, number> = { expired: 0, expiring: 0, active: 0, none: withoutSubscription.length }

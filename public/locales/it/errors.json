@@ -57,7 +57,8 @@
         "duplicateDay": "Esiste già una misura di questa metrica in quella data"
     },
     "subscription": {
-        "notFound": "Rinnovo non trovato"
+        "notFound": "Rinnovo non trovato",
+        "kindImmutable": "Il tipo di un rinnovo non può essere modificato"
     },
     "program": {
         "notFound": "Programma non trovato",
@@ -132,6 +133,7 @@
     "validation": {
         "invalidInput": "Dati non validi",
         "invalidFilterParams": "Parametri filtro non validi",
+        "programCountRange": "Il numero di schede deve essere un intero tra 1 e 50",
         "searchLength": "Il parametro di ricerca deve avere tra 2 e 100 caratteri",
         "atLeastOneField": "È richiesto almeno un campo da aggiornare",
         "newTrainerIdRequired": "Il campo newTrainerId è obbligatorio",

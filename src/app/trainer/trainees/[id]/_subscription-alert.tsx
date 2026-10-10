@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/Button'
 import { formatDate } from '@/lib/date-format'
-import { needsAttention, remainingLabel, type SubscriptionSummary } from '@/lib/subscriptions'
+import { needsAttention, programsLabel, remainingLabel, type SubscriptionSummary } from '@/lib/subscriptions'
 
 export interface SubscriptionAlertBannerProps {
     summary: SubscriptionSummary | null
@@ -18,11 +18,17 @@ export default function SubscriptionAlertBanner({ summary, onManage }: Subscript
     if (!summary || !needsAttention(summary)) return null
 
     const expired = summary.status === 'expired'
-    const date = formatDate(summary.endDate)
-    const remaining = remainingLabel(summary.daysLeft)
-    const message = expired
-        ? t('subscriptions.banner.expired', { date })
-        : t('subscriptions.banner.expiring', { date, remaining: t(remaining.key, { count: remaining.count }) })
+    let message: string
+    if (summary.kind === 'programs') {
+        const label = programsLabel(summary.remaining)
+        message = t(label.key, { count: label.count })
+    } else {
+        const date = formatDate(summary.endDate)
+        const remaining = remainingLabel(summary.daysLeft)
+        message = expired
+            ? t('subscriptions.banner.expired', { date })
+            : t('subscriptions.banner.expiring', { date, remaining: t(remaining.key, { count: remaining.count }) })
+    }
 
     return (
         <div

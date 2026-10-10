@@ -57,7 +57,8 @@
         "duplicateDay": "This metric already has a measurement on that date"
     },
     "subscription": {
-        "notFound": "Renewal not found"
+        "notFound": "Renewal not found",
+        "kindImmutable": "The type of a renewal cannot be changed"
     },
     "program": {
         "notFound": "Program not found",
@@ -132,6 +133,7 @@
     "validation": {
         "invalidInput": "Invalid input",
         "invalidFilterParams": "Invalid filter parameters",
+        "programCountRange": "The number of programs must be a whole number between 1 and 50",
         "searchLength": "Search parameter must be between 2 and 100 characters",
         "atLeastOneField": "At least one field to update is required",
         "newTrainerIdRequired": "newTrainerId is required",

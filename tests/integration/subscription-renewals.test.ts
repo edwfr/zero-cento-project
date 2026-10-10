@@ -23,14 +23,26 @@ const day = (iso: string) => new Date(`${iso}T00:00:00.000Z`)
 const mockRenewal = {
     id: RENEWAL_ID,
     traineeId: TRAINEE_ID,
+    kind: 'period' as const,
     startDate: day('2026-09-10'),
     durationMonths: 1,
     endDate: day('2026-10-10'),
+    programCount: null,
     createdBy: 'trainer-uuid-1',
     createdAt: new Date('2026-09-10T10:00:00.000Z'),
 }
 
 const BASE = 'http://localhost:3000/api/subscription-renewals'
+
+const mockPackage = {
+    ...mockRenewal,
+    id: 'pppppppp-pppp-pppp-pppp-pppppppppppp',
+    kind: 'programs' as const,
+    startDate: day('2026-10-01'),
+    durationMonths: null,
+    endDate: null,
+    programCount: 5,
+}
 
 function makeRequest(url: string, options?: RequestInit) {
     const { signal, ...safeOptions } = options || {}
@@ -65,6 +77,11 @@ afterEach(() => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 describe('GET /api/subscription-renewals', () => {
+    beforeEach(() => {
+        prismaMock.programCreditUsage.count.mockResolvedValue(0 as never)
+        prismaMock.subscriptionEvent.findMany.mockResolvedValue([] as never)
+    })
+
     it('returns the history and the current status for the owning trainer', async () => {
         asTrainer()
         prismaMock.subscriptionRenewal.findMany.mockResolvedValue([mockRenewal] as never)
@@ -74,7 +91,8 @@ describe('GET /api/subscription-renewals', () => {
 
         expect(res.status).toBe(200)
         expect(body.data.items).toHaveLength(1)
-        expect(body.data.current).toEqual({ status: 'expiring', endDate: '2026-10-10T00:00:00.000Z', daysLeft: 7 })
+        expect(body.data.current).toEqual({ kind: 'period', status: 'expiring', endDate: '2026-10-10T00:00:00.000Z', daysLeft: 7 })
+        expect(body.data.programBalance).toBe(0)
         expect(prismaMock.subscriptionRenewal.findMany).toHaveBeenCalledWith({
             where: { traineeId: TRAINEE_ID },
             orderBy: [{ startDate: 'desc' }, { createdAt: 'desc' }],
@@ -89,6 +107,49 @@ describe('GET /api/subscription-renewals', () => {
         const body = await (await GET(makeRequest(`${BASE}?traineeId=${TRAINEE_ID}`))).json()
 
         expect(body.data.current).toBeNull()
+    })
+
+    it('returns a programs summary and the balance for a package trainee', async () => {
+        asTrainer()
+        prismaMock.subscriptionRenewal.findMany.mockResolvedValue([
+            { ...mockRenewal, id: 'p-1', kind: 'programs', durationMonths: null, endDate: null, programCount: 5 },
+        ] as never)
+        prismaMock.programCreditUsage.count.mockResolvedValue(4)
+
+        const body = await (await GET(makeRequest(`${BASE}?traineeId=${TRAINEE_ID}`))).json()
+
+        expect(body.data.current).toEqual({ kind: 'programs', status: 'expiring', remaining: 1 })
+        expect(body.data.programBalance).toBe(1)
+        expect(prismaMock.programCreditUsage.count).toHaveBeenCalledWith({ where: { traineeId: TRAINEE_ID } })
+    })
+
+    it('returns the movement history', async () => {
+        asTrainer()
+        prismaMock.subscriptionRenewal.findMany.mockResolvedValue([mockPackage] as never)
+        prismaMock.programCreditUsage.count.mockResolvedValue(0)
+        prismaMock.subscriptionEvent.findMany.mockResolvedValue([
+            {
+                id: 'e1',
+                type: 'package_created',
+                creditDelta: 5,
+                details: { purchaseDate: '2026-10-01', programCount: 5 },
+                createdAt: new Date('2026-10-01T10:00:00.000Z'),
+                actor: { firstName: 'Marco', lastName: 'Trainer' },
+            },
+        ] as never)
+
+        const body = await (await GET(makeRequest(`${BASE}?traineeId=${TRAINEE_ID}`))).json()
+
+        expect(body.data.events).toEqual([
+            {
+                id: 'e1',
+                type: 'package_created',
+                creditDelta: 5,
+                details: { purchaseDate: '2026-10-01', programCount: 5 },
+                createdAt: '2026-10-01T10:00:00.000Z',
+                actorName: 'Marco Trainer',
+            },
+        ])
     })
 
     it('uses the furthest end date across overlapping renewals', async () => {
@@ -178,12 +239,71 @@ describe('POST /api/subscription-renewals', () => {
         expect(prismaMock.subscriptionRenewal.create).toHaveBeenCalledWith({
             data: {
                 traineeId: TRAINEE_ID,
+                kind: 'period',
                 startDate: day('2027-01-31'),
                 durationMonths: 1,
                 endDate: day('2027-02-28'),
+                programCount: null,
                 createdBy: 'trainer-uuid-1',
             },
         })
+    })
+
+    it('creates a package and logs it with its credit delta', async () => {
+        asTrainer()
+        prismaMock.user.findUnique.mockResolvedValue({ id: TRAINEE_ID, role: 'trainee' } as never)
+        prismaMock.subscriptionRenewal.create.mockResolvedValue(mockPackage as never)
+
+        const res = await POST(jsonRequest(BASE, 'POST', { traineeId: TRAINEE_ID, kind: 'programs', startDate: '2026-10-01', programCount: 5 }))
+
+        expect(res.status).toBe(201)
+        expect(prismaMock.subscriptionRenewal.create).toHaveBeenCalledWith({
+            data: {
+                traineeId: TRAINEE_ID,
+                kind: 'programs',
+                startDate: day('2026-10-01'),
+                durationMonths: null,
+                endDate: null,
+                programCount: 5,
+                createdBy: 'trainer-uuid-1',
+            },
+        })
+        expect(prismaMock.subscriptionEvent.create).toHaveBeenCalledWith({
+            data: expect.objectContaining({
+                traineeId: TRAINEE_ID,
+                type: 'package_created',
+                creditDelta: 5,
+                renewalId: mockPackage.id,
+                actorId: 'trainer-uuid-1',
+                details: { purchaseDate: '2026-10-01', programCount: 5 },
+            }),
+        })
+    })
+
+    it('logs a period renewal without a credit delta', async () => {
+        asTrainer()
+        prismaMock.user.findUnique.mockResolvedValue({ id: TRAINEE_ID, role: 'trainee' } as never)
+        prismaMock.subscriptionRenewal.create.mockResolvedValue(mockRenewal as never)
+
+        await POST(jsonRequest(BASE, 'POST', { traineeId: TRAINEE_ID, startDate: '2026-09-10', durationMonths: 1 }))
+
+        expect(prismaMock.subscriptionEvent.create).toHaveBeenCalledWith({
+            data: expect.objectContaining({
+                type: 'period_renewal_created',
+                creditDelta: null,
+                details: { startDate: '2026-09-10', durationMonths: 1, endDate: '2026-10-10' },
+            }),
+        })
+    })
+
+    it('rejects a package of 0 programs with 400 and writes nothing', async () => {
+        asTrainer()
+
+        const res = await POST(jsonRequest(BASE, 'POST', { traineeId: TRAINEE_ID, kind: 'programs', startDate: '2026-10-01', programCount: 0 }))
+
+        expect(res.status).toBe(400)
+        expect(prismaMock.subscriptionRenewal.create).not.toHaveBeenCalled()
+        expect(prismaMock.subscriptionEvent.create).not.toHaveBeenCalled()
     })
 
     it.each([0, 37, 1.5])('rejects duration %s with 400', async (durationMonths) => {
@@ -266,9 +386,52 @@ describe('PATCH /api/subscription-renewals/[id]', () => {
         expect(res.status).toBe(200)
         expect(prismaMock.subscriptionRenewal.update).toHaveBeenCalledWith({
             where: { id: RENEWAL_ID },
-            data: { startDate: day('2026-11-01'), durationMonths: 3, endDate: day('2027-02-01') },
+            data: { kind: 'period', startDate: day('2026-11-01'), durationMonths: 3, endDate: day('2027-02-01'), programCount: null },
         })
         expect(requireTrainerOwnership).toHaveBeenCalledWith(TRAINEE_ID)
+    })
+
+    it('shrinks a package and logs the negative difference', async () => {
+        asTrainer()
+        prismaMock.subscriptionRenewal.findUnique.mockResolvedValue(mockPackage as never)
+        prismaMock.subscriptionRenewal.update.mockResolvedValue({ ...mockPackage, programCount: 2 } as never)
+
+        const res = await PATCH(jsonRequest(`${BASE}/${mockPackage.id}`, 'PATCH', { kind: 'programs', startDate: '2026-10-01', programCount: 2 }), params(mockPackage.id))
+
+        expect(res.status).toBe(200)
+        expect(prismaMock.subscriptionEvent.create).toHaveBeenCalledWith({
+            data: expect.objectContaining({
+                type: 'renewal_updated',
+                creditDelta: -3,
+                renewalId: mockPackage.id,
+                details: {
+                    kind: 'programs',
+                    before: { purchaseDate: '2026-10-01', programCount: 5 },
+                    after: { purchaseDate: '2026-10-01', programCount: 2 },
+                },
+            }),
+        })
+    })
+
+    it('refuses to turn a package into a period renewal', async () => {
+        asTrainer()
+        prismaMock.subscriptionRenewal.findUnique.mockResolvedValue(mockPackage as never)
+
+        const res = await PATCH(jsonRequest(`${BASE}/${mockPackage.id}`, 'PATCH', { kind: 'period', startDate: '2026-10-01', durationMonths: 3 }), params(mockPackage.id))
+        const body = await res.json()
+
+        expect(res.status).toBe(400)
+        expect(body.error.key).toBe('subscription.kindImmutable')
+        expect(prismaMock.subscriptionRenewal.update).not.toHaveBeenCalled()
+    })
+
+    it('treats a body without kind as a period edit, refused on a package', async () => {
+        asTrainer()
+        prismaMock.subscriptionRenewal.findUnique.mockResolvedValue(mockPackage as never)
+
+        const res = await PATCH(jsonRequest(`${BASE}/${mockPackage.id}`, 'PATCH', { startDate: '2026-10-01', durationMonths: 3 }), params(mockPackage.id))
+
+        expect(res.status).toBe(400)
     })
 
     it('returns 404 for an unknown renewal', async () => {
@@ -332,6 +495,23 @@ describe('DELETE /api/subscription-renewals/[id]', () => {
 
         expect(res.status).toBe(200)
         expect(prismaMock.subscriptionRenewal.delete).toHaveBeenCalledWith({ where: { id: RENEWAL_ID } })
+    })
+
+    it('logs the deleted package with a negative credit delta', async () => {
+        asTrainer()
+        prismaMock.subscriptionRenewal.findUnique.mockResolvedValue(mockPackage as never)
+
+        const res = await DELETE(makeRequest(`${BASE}/${mockPackage.id}`, { method: 'DELETE' }), params(mockPackage.id))
+
+        expect(res.status).toBe(200)
+        expect(prismaMock.subscriptionRenewal.delete).toHaveBeenCalledWith({ where: { id: mockPackage.id } })
+        expect(prismaMock.subscriptionEvent.create).toHaveBeenCalledWith({
+            data: expect.objectContaining({
+                type: 'renewal_deleted',
+                creditDelta: -5,
+                details: { kind: 'programs', purchaseDate: '2026-10-01', programCount: 5 },
+            }),
+        })
     })
 
     it('returns 404 for an unknown renewal', async () => {

@@ -241,7 +241,7 @@ describe('TraineeDetailContent Programs tab', () => {
                     json: async () => ({
                         data: {
                             items: [],
-                            current: { status: 'expiring', endDate: '2026-10-10T00:00:00.000Z', daysLeft: 7 },
+                            current: { kind: 'period', status: 'expiring', endDate: '2026-10-10T00:00:00.000Z', daysLeft: 7 },
                         },
                     }),
                 } as Response

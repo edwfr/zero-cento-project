@@ -72,6 +72,21 @@ enum RestTime {
   m5    // 5 minuti
 }
 
+enum RenewalKind {
+  period
+  programs
+}
+
+enum SubscriptionEventType {
+  period_renewal_created
+  package_created
+  renewal_updated
+  renewal_deleted
+  credit_consumed
+  credit_refunded
+  credit_forfeited
+}
+
 // ============================================================================
 // MODELS
 // ============================================================================
@@ -105,6 +120,10 @@ model User {
   createdMeasurements       TraineeMeasurement[]         @relation("CreatedMeasurements")
   subscriptionRenewals      SubscriptionRenewal[]        @relation("TraineeRenewals")
   createdRenewals           SubscriptionRenewal[]        @relation("CreatedRenewals")
+  creditUsages              ProgramCreditUsage[]         @relation("TraineeCreditUsages")
+  createdCreditUsages       ProgramCreditUsage[]         @relation("CreatedCreditUsages")
+  subscriptionEvents        SubscriptionEvent[]          @relation("TraineeSubscriptionEvents")
+  actedSubscriptionEvents   SubscriptionEvent[]          @relation("ActedSubscriptionEvents")
   statusEvents              UserStatusEvent[]            @relation("UserStatusEvents")
   performedStatusEvents     UserStatusEvent[]            @relation("PerformedStatusEvents")
 
@@ -243,6 +262,7 @@ model TrainingProgram {
   trainee User   @relation("TraineePrograms", fields: [traineeId], references: [id])
   weeks   Week[] @relation("ProgramWeeks")
   workoutSkeletons WorkoutSkeleton[] @relation("ProgramSkeletons")
+  creditUsage ProgramCreditUsage? @relation("ProgramCreditUsage")
 
   // Indexes per dashboard queries
   @@index([trainerId, status])
@@ -418,21 +438,60 @@ model TraineeMeasurement {
 }
 
 model SubscriptionRenewal {
-  id             String   @id @default(uuid())
+  id             String      @id @default(uuid())
   traineeId      String
-  startDate      DateTime @db.Date
-  durationMonths Int
-  endDate        DateTime @db.Date  // computed server-side: startDate + durationMonths (clamped to month end)
-  createdBy      String             // trainer who entered the renewal (audit)
-  createdAt      DateTime @default(now())
+  kind           RenewalKind @default(period)
+  startDate      DateTime    @db.Date  // period: first covered day; programs: purchase date
+  durationMonths Int?                  // period only
+  endDate        DateTime?   @db.Date  // period only, computed server-side: startDate + durationMonths (clamped to month end)
+  programCount   Int?                  // programs only: programs bought with this package
+  createdBy      String                // trainer who entered the renewal (audit)
+  createdAt      DateTime    @default(now())
 
   // Relations
   trainee User @relation("TraineeRenewals", fields: [traineeId], references: [id], onDelete: Cascade)
   creator User @relation("CreatedRenewals", fields: [createdBy], references: [id])
 
-  // No uniqueness: overlapping renewals are allowed, the current expiry is MAX(endDate)
+  // No uniqueness: overlapping renewals are allowed, the current expiry is MAX(endDate).
+  // The current mode is the kind of the latest createdAt.
   @@index([traineeId, endDate])
+  @@index([traineeId, createdAt])
   @@map("subscription_renewals")
+}
+
+/// Ledger: one row per publish that consumed a program credit. Balance = SUM(programCount) - COUNT(rows).
+model ProgramCreditUsage {
+  id        String   @id @default(uuid())
+  traineeId String
+  programId String?  @unique  // SetNull: the usage survives a program deleted without refund
+  createdBy String
+  createdAt DateTime @default(now())
+
+  trainee User             @relation("TraineeCreditUsages", fields: [traineeId], references: [id], onDelete: Cascade)
+  program TrainingProgram? @relation("ProgramCreditUsage", fields: [programId], references: [id], onDelete: SetNull)
+  creator User             @relation("CreatedCreditUsages", fields: [createdBy], references: [id])
+
+  @@index([traineeId])
+  @@map("program_credit_usages")
+}
+
+/// Append-only history shown to the trainer. Never updated, never read for calculations.
+model SubscriptionEvent {
+  id          String                @id @default(uuid())
+  traineeId   String
+  type        SubscriptionEventType
+  creditDelta Int?                  // +N package, -1 consumed, +1 refunded, signed diff on package edit/delete
+  renewalId   String?               // no FK: the row outlives the renewal
+  programId   String?               // no FK: the row outlives the program
+  details     Json
+  actorId     String
+  createdAt   DateTime              @default(now())
+
+  trainee User @relation("TraineeSubscriptionEvents", fields: [traineeId], references: [id], onDelete: Cascade)
+  actor   User @relation("ActedSubscriptionEvents", fields: [actorId], references: [id])
+
+  @@index([traineeId, createdAt])
+  @@map("subscription_events")
 }
 
 enum UserStatusEventType {

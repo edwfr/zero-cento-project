@@ -134,16 +134,17 @@ describe('ProgramEndingWidget', () => {
 
 describe('SubscriptionAlertsWidget', () => {
     const alert = (index: number, status: SubscriptionAlert['status'] = 'expiring'): SubscriptionAlert => ({
+        kind: 'period',
         status,
         traineeId: `t${index}`,
         traineeName: `Atleta ${index}`,
-        days: index,
+        value: index,
     })
 
     it('lists expired and expiring subscriptions linking to the subscriptions page', async () => {
         vi.mocked(getSubscriptionAlerts).mockResolvedValue([
-            { status: 'expired', traineeId: 't1', traineeName: 'Anna Rossi', days: 2 },
-            { status: 'expiring', traineeId: 't2', traineeName: 'Luca Bianchi', days: 1 },
+            { kind: 'period', status: 'expired', traineeId: 't1', traineeName: 'Anna Rossi', value: 2 },
+            { kind: 'period', status: 'expiring', traineeId: 't2', traineeName: 'Luca Bianchi', value: 1 },
         ])
 
         await renderAsync(SubscriptionAlertsWidget({ ctx: makeCtx() }))

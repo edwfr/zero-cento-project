@@ -49,7 +49,11 @@
             "expired_one": "Scaduto da 1 giorno",
             "expiring": "In scadenza tra {{count}} giorni",
             "expiring_one": "In scadenza domani",
-            "expiring_zero": "In scadenza oggi"
+            "expiring_zero": "In scadenza oggi",
+            "programsLast": "Ultima scheda disponibile",
+            "programsExhausted": "Schede esaurite",
+            "programsDebt": "In debito di {{count}} schede",
+            "programsDebt_one": "In debito di 1 scheda"
         },
         "inactive": {
             "title": "Atleti inattivi",
@@ -348,6 +352,14 @@
             "expired": "Scaduto il {{date}}",
             "none": "Nessun abbonamento"
         },
+        "programs": {
+            "available_one": "{{count}} scheda disponibile",
+            "available_other": "{{count}} schede disponibili",
+            "last": "Ultima scheda disponibile",
+            "exhausted": "Schede esaurite",
+            "debt_one": "In debito di {{count}} scheda",
+            "debt_other": "In debito di {{count}} schede"
+        },
         "remaining": {
             "daysLeft_one": "tra {{count}} giorno",
             "daysLeft_other": "tra {{count}} giorni",
@@ -364,8 +376,8 @@
             "title": "Abbonamenti",
             "description": "Scadenze dei tuoi atleti, dalla più vicina",
             "counters": {
-                "expired": "Scaduti",
-                "expiring": "In scadenza (≤ 14 gg)",
+                "expired": "Scaduti / esauriti",
+                "expiring": "In scadenza / ultima scheda",
                 "active": "Attivi",
                 "none": "Senza abbonamento"
             },

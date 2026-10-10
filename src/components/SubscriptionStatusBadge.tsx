@@ -3,7 +3,7 @@
 import { useTranslation } from 'react-i18next'
 import { AlertTriangle, CalendarCheck, CalendarX } from 'lucide-react'
 import { formatDate } from '@/lib/date-format'
-import type { SubscriptionStatus, SubscriptionSummary } from '@/lib/subscriptions'
+import { summaryLabel, type SubscriptionStatus, type SubscriptionSummary } from '@/lib/subscriptions'
 
 export interface SubscriptionStatusBadgeProps {
     summary: SubscriptionSummary | null
@@ -32,9 +32,11 @@ export default function SubscriptionStatusBadge({ summary, compact = false }: Su
     if (compact && (status === 'active' || status === 'none')) return null
 
     const Icon = ICONS[status]
-    const label = summary
-        ? t(`subscriptions.badge.${summary.status}`, { date: formatDate(summary.endDate), days: summary.daysLeft })
-        : t('subscriptions.badge.none')
+    let label = t('subscriptions.badge.none')
+    if (summary) {
+        const { key, count, date } = summaryLabel(summary)
+        label = t(key, { count, days: count, date: date ? formatDate(date) : undefined })
+    }
 
     return (
         <span

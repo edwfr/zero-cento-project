@@ -12,6 +12,16 @@ const STATUS_STYLE: Record<SubscriptionAlert['status'], { icon: typeof CalendarX
     expiring: { icon: CalendarClock, className: 'bg-orange-50 text-orange-600' },
 }
 
+function alertText(t: WidgetContext['t'], item: SubscriptionAlert): string {
+    if (item.kind === 'programs') {
+        if (item.status === 'expiring') return t('trainerDashboard.subscriptionAlerts.programsLast')
+        return item.value === 0
+            ? t('trainerDashboard.subscriptionAlerts.programsExhausted')
+            : t('trainerDashboard.subscriptionAlerts.programsDebt', { count: item.value })
+    }
+    return t(`trainerDashboard.subscriptionAlerts.${item.status}`, { count: item.value })
+}
+
 export default async function SubscriptionAlertsWidget({ ctx }: { ctx: WidgetContext }) {
     const { t } = ctx
     const title = t('trainerDashboard.subscriptionAlerts.title')
@@ -42,9 +52,7 @@ export default async function SubscriptionAlertsWidget({ ctx }: { ctx: WidgetCon
                                     </span>
                                     <div className="min-w-0 flex-1">
                                         <p className="font-medium text-gray-900">{item.traineeName}</p>
-                                        <p className="text-sm text-gray-600">
-                                            {t(`trainerDashboard.subscriptionAlerts.${item.status}`, { count: item.days })}
-                                        </p>
+                                        <p className="text-sm text-gray-600">{alertText(t, item)}</p>
                                     </div>
                                     <ChevronRight className="h-4 w-4 shrink-0 text-gray-400" aria-hidden="true" />
                                 </Link>

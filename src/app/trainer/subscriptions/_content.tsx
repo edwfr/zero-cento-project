@@ -7,6 +7,7 @@ import SubscriptionStatusBadge from '@/components/SubscriptionStatusBadge'
 import { formatDate } from '@/lib/date-format'
 import {
     needsAttention,
+    programsLabel,
     remainingLabel,
     type SubscriptionOverview,
     type SubscriptionOverviewItem,
@@ -27,7 +28,16 @@ const COUNTERS: { key: SubscriptionStatus; className: string }[] = [
 function SubscriptionRow({ item }: { item: SubscriptionOverviewItem }) {
     const { t } = useTranslation('trainer')
     const { subscription } = item
-    const remaining = subscription ? remainingLabel(subscription.daysLeft) : null
+    let endText = '—'
+    let remainingText = '—'
+    if (subscription?.kind === 'period') {
+        const remaining = remainingLabel(subscription.daysLeft)
+        endText = formatDate(subscription.endDate)
+        remainingText = t(remaining.key, { count: remaining.count })
+    } else if (subscription?.kind === 'programs') {
+        const label = programsLabel(subscription.remaining)
+        remainingText = t(label.key, { count: label.count })
+    }
 
     return (
         <li>
@@ -43,10 +53,8 @@ function SubscriptionRow({ item }: { item: SubscriptionOverviewItem }) {
                 <span>
                     <SubscriptionStatusBadge summary={subscription} />
                 </span>
-                <span className="text-sm text-gray-700">{subscription ? formatDate(subscription.endDate) : '—'}</span>
-                <span className="text-sm text-gray-600">
-                    {remaining ? t(remaining.key, { count: remaining.count }) : '—'}
-                </span>
+                <span className="text-sm text-gray-700">{endText}</span>
+                <span className="text-sm text-gray-600">{remainingText}</span>
                 <ChevronRight className="hidden h-4 w-4 text-gray-400 md:block" aria-hidden="true" />
             </Link>
         </li>

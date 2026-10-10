@@ -3,7 +3,7 @@
 import { useTranslation } from 'react-i18next'
 import { AlertTriangle, CalendarCheck, CalendarX } from 'lucide-react'
 import { formatDate } from '@/lib/date-format'
-import { remainingLabel, type SubscriptionStatus, type SubscriptionSummary } from '@/lib/subscriptions'
+import { remainingLabel, summaryLabel, type SubscriptionStatus, type SubscriptionSummary } from '@/lib/subscriptions'
 
 export interface SubscriptionStatusIconProps {
     summary: SubscriptionSummary | null
@@ -39,12 +39,12 @@ export default function SubscriptionStatusIcon({ summary, loading = false, size 
 
     let description = t('subscriptions.badge.none')
     if (summary) {
-        const remaining = remainingLabel(summary.daysLeft)
-        const badge = t(`subscriptions.badge.${summary.status}`, {
-            date: formatDate(summary.endDate),
-            days: summary.daysLeft,
-        })
-        description = `${badge} · ${t(remaining.key, { count: remaining.count })}`
+        const { key, count, date } = summaryLabel(summary)
+        description = t(key, { count, days: count, date: date ? formatDate(date) : undefined })
+        if (summary.kind === 'period') {
+            const remaining = remainingLabel(summary.daysLeft)
+            description = `${description} · ${t(remaining.key, { count: remaining.count })}`
+        }
     }
 
     return (

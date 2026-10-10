@@ -1,34 +1,74 @@
-import { describe, it, expect, type Mock } from 'vitest'
-import { getCurrentEndDates, getTrainerSubscriptionOverview } from '@/lib/subscription-queries'
+import { describe, it, expect } from 'vitest'
+import { getCurrentSummaries, getTrainerSubscriptionOverview } from '@/lib/subscription-queries'
 import { prismaMock } from '../../helpers/prisma-mock'
+import { mockSummaryQueries } from '../../helpers/subscription-mock'
 
 const day = (iso: string) => new Date(`${iso}T00:00:00.000Z`)
+const TODAY = day('2026-10-03')
 
-// Prisma's groupBy generics defeat the deep mock's typing: treat it as a plain mock
-const groupByMock = prismaMock.subscriptionRenewal.groupBy as unknown as Mock
-
-describe('getCurrentEndDates', () => {
+describe('getCurrentSummaries', () => {
     it('returns an empty map without querying when there are no trainees', async () => {
-        const result = await getCurrentEndDates([])
+        const result = await getCurrentSummaries([], TODAY)
 
         expect(result.size).toBe(0)
-        expect(prismaMock.subscriptionRenewal.groupBy).not.toHaveBeenCalled()
+        expect(prismaMock.subscriptionRenewal.findMany).not.toHaveBeenCalled()
     })
 
-    it('maps each trainee to its latest end date, skipping empty aggregates', async () => {
-        groupByMock.mockResolvedValue([
-            { traineeId: 't1', _max: { endDate: day('2026-12-01') } },
-            { traineeId: 't2', _max: { endDate: null } },
-        ] as never)
+    it('reads the mode from the latest registered renewal of each trainee', async () => {
+        mockSummaryQueries()
 
-        const result = await getCurrentEndDates(['t1', 't2'])
+        await getCurrentSummaries(['t1', 't2'], TODAY)
 
-        expect(prismaMock.subscriptionRenewal.groupBy).toHaveBeenCalledWith({
-            by: ['traineeId'],
+        expect(prismaMock.subscriptionRenewal.findMany).toHaveBeenCalledWith({
             where: { traineeId: { in: ['t1', 't2'] } },
-            _max: { endDate: true },
+            orderBy: { createdAt: 'desc' },
+            distinct: ['traineeId'],
+            select: { traineeId: true, kind: true },
         })
-        expect(result).toEqual(new Map([['t1', day('2026-12-01')]]))
+    })
+
+    it('builds a period summary, a programs summary and skips trainees without renewals', async () => {
+        mockSummaryQueries({
+            latest: [
+                { traineeId: 't1', kind: 'period' },
+                { traineeId: 't2', kind: 'programs' },
+            ],
+            totals: [
+                { traineeId: 't1', _max: { endDate: day('2026-10-10') }, _sum: { programCount: null } },
+                { traineeId: 't2', _max: { endDate: null }, _sum: { programCount: 5 } },
+            ],
+            usages: [{ traineeId: 't2', _count: { _all: 4 } }],
+        })
+
+        const result = await getCurrentSummaries(['t1', 't2', 't3'], TODAY)
+
+        expect(result.get('t1')).toEqual({ kind: 'period', status: 'expiring', endDate: '2026-10-10T00:00:00.000Z', daysLeft: 7 })
+        expect(result.get('t2')).toEqual({ kind: 'programs', status: 'expiring', remaining: 1 })
+        expect(result.has('t3')).toBe(false)
+    })
+
+    it('ignores a leftover package balance when the latest renewal is a period', async () => {
+        mockSummaryQueries({
+            latest: [{ traineeId: 't1', kind: 'period' }],
+            totals: [{ traineeId: 't1', _max: { endDate: day('2026-12-01') }, _sum: { programCount: 5 } }],
+            usages: [{ traineeId: 't1', _count: { _all: 2 } }],
+        })
+
+        const result = await getCurrentSummaries(['t1'], TODAY)
+
+        expect(result.get('t1')).toMatchObject({ kind: 'period', status: 'active' })
+    })
+
+    it('goes into debt when more programs were published than bought', async () => {
+        mockSummaryQueries({
+            latest: [{ traineeId: 't1', kind: 'programs' }],
+            totals: [{ traineeId: 't1', _max: { endDate: null }, _sum: { programCount: 2 } }],
+            usages: [{ traineeId: 't1', _count: { _all: 4 } }],
+        })
+
+        const result = await getCurrentSummaries(['t1'], TODAY)
+
+        expect(result.get('t1')).toEqual({ kind: 'programs', status: 'expired', remaining: -2 })
     })
 })
 
@@ -38,11 +78,12 @@ describe('getTrainerSubscriptionOverview', () => {
             { trainee: { id: 't1', firstName: 'Anna', lastName: 'Rossi' } },
             { trainee: { id: 't2', firstName: 'Luca', lastName: 'Bianchi' } },
         ] as never)
-        groupByMock.mockResolvedValue([
-            { traineeId: 't1', _max: { endDate: day('2026-10-10') } },
-        ] as never)
+        mockSummaryQueries({
+            latest: [{ traineeId: 't1', kind: 'period' }],
+            totals: [{ traineeId: 't1', _max: { endDate: day('2026-10-10') }, _sum: { programCount: null } }],
+        })
 
-        const overview = await getTrainerSubscriptionOverview('trainer-1', day('2026-10-03'))
+        const overview = await getTrainerSubscriptionOverview('trainer-1', TODAY)
 
         expect(prismaMock.trainerTrainee.findMany).toHaveBeenCalledWith({
             where: { trainerId: 'trainer-1', trainee: { isActive: true } },

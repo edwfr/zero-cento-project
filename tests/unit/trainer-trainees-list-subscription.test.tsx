@@ -11,9 +11,9 @@ import TrainerTraineesContent from '@/app/trainer/trainees/_content'
 
 const base = { email: 'x@x.it', createdAt: '2026-01-01T00:00:00.000Z' }
 const items = [
-    { ...base, id: 't1', firstName: 'Anna', lastName: 'Rossi', isActive: true, subscription: { status: 'expiring', endDate: '2026-10-10T00:00:00.000Z', daysLeft: 7 } },
-    { ...base, id: 't2', firstName: 'Luca', lastName: 'Bianchi', isActive: true, subscription: { status: 'active', endDate: '2027-01-10T00:00:00.000Z', daysLeft: 99 } },
-    { ...base, id: 't3', firstName: 'Sara', lastName: 'Verdi', isActive: false, subscription: { status: 'expired', endDate: '2026-09-10T00:00:00.000Z', daysLeft: -23 } },
+    { ...base, id: 't1', firstName: 'Anna', lastName: 'Rossi', isActive: true, subscription: { kind: 'period', status: 'expiring', endDate: '2026-10-10T00:00:00.000Z', daysLeft: 7 } },
+    { ...base, id: 't2', firstName: 'Luca', lastName: 'Bianchi', isActive: true, subscription: { kind: 'period', status: 'active', endDate: '2027-01-10T00:00:00.000Z', daysLeft: 99 } },
+    { ...base, id: 't3', firstName: 'Sara', lastName: 'Verdi', isActive: false, subscription: { kind: 'period', status: 'expired', endDate: '2026-09-10T00:00:00.000Z', daysLeft: -23 } },
 ]
 
 describe('Trainer trainee list — subscription icon', () => {

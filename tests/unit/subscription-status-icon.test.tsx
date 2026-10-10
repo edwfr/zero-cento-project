@@ -15,7 +15,7 @@ describe('SubscriptionStatusIcon', () => {
         ['expiring', 7, 'subscriptions.badge.expiring · subscriptions.remaining.daysLeft'],
         ['expired', -2, 'subscriptions.badge.expired · subscriptions.remaining.daysOverdue'],
     ] as const)('describes the %s status in its tooltip and accessible name', (status, daysLeft, text) => {
-        renderIcon({ status, endDate: END, daysLeft })
+        renderIcon({ kind: 'period', status, endDate: END, daysLeft })
 
         const icon = screen.getByRole('img', { name: text })
         expect(icon).toHaveAttribute('title', text)
@@ -30,7 +30,7 @@ describe('SubscriptionStatusIcon', () => {
     })
 
     it('is informative only, not a control', () => {
-        renderIcon({ status: 'active', endDate: END, daysLeft: 40 })
+        renderIcon({ kind: 'period', status: 'active', endDate: END, daysLeft: 40 })
 
         expect(screen.queryByRole('button')).not.toBeInTheDocument()
     })
@@ -39,5 +39,12 @@ describe('SubscriptionStatusIcon', () => {
         renderIcon(null, true)
 
         expect(screen.queryByRole('img')).not.toBeInTheDocument()
+    })
+
+    it('describes a program balance without a date', () => {
+        render(<SubscriptionStatusIcon summary={{ kind: 'programs', status: 'expired', remaining: 0 }} />)
+
+        expect(screen.getByRole('img')).toHaveAccessibleName('subscriptions.programs.exhausted')
+        expect(screen.getByRole('img')).toHaveAttribute('data-status', 'expired')
     })
 })

@@ -52,6 +52,7 @@ vi.mock('@/lib/logger', () => ({
 import { GET, POST } from '@/app/api/users/route'
 import { GET as getUser, PUT as updateUser } from '@/app/api/users/[id]/route'
 import { prismaMock } from '../helpers/prisma-mock'
+import { mockSummaryQueries } from '../helpers/subscription-mock'
 import { mockTrainerSession, mockAdminSession } from '../helpers/sessions'
 import { asTrainer, asAdmin, asUnauthenticated } from '../helpers/auth-mock'
 import { requireAuth } from '@/lib/auth'
@@ -91,8 +92,8 @@ function makeRequest(url = 'http://localhost:3000/api/users', options?: RequestI
 describe('GET /api/users', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        // Trainer listings aggregate subscription end dates: default to none recorded
-        subscriptionGroupByMock.mockResolvedValue([])
+        // Trainer listings aggregate subscription summaries: default to none recorded
+        mockSummaryQueries()
         prismaMock.userStatusEvent.findMany.mockResolvedValue([] as never)
     })
 
@@ -139,16 +140,18 @@ describe('GET /api/users', () => {
             { trainee: { id: 't1', email: 'a@x.it', firstName: 'Anna', lastName: 'Rossi', role: 'trainee', isActive: true, createdAt: new Date('2026-01-01') } },
             { trainee: { id: 't2', email: 'b@x.it', firstName: 'Luca', lastName: 'Bianchi', role: 'trainee', isActive: true, createdAt: new Date('2026-01-02') } },
         ] as never)
-        subscriptionGroupByMock.mockResolvedValue([
-            { traineeId: 't1', _max: { endDate: new Date('2026-10-10T00:00:00.000Z') } },
-        ])
+        subscriptionGroupByMock.mockResolvedValue([])
+        mockSummaryQueries({
+            latest: [{ traineeId: 't1', kind: 'period' }],
+            totals: [{ traineeId: 't1', _max: { endDate: new Date('2026-10-10T00:00:00.000Z') }, _sum: { programCount: null } }],
+        })
 
         const res = await GET(makeRequest())
         const body = await res.json()
         vi.useRealTimers()
 
         const byId = Object.fromEntries(body.data.items.map((user: { id: string }) => [user.id, user]))
-        expect(byId.t1.subscription).toEqual({ status: 'expiring', endDate: '2026-10-10T00:00:00.000Z', daysLeft: 7 })
+        expect(byId.t1.subscription).toEqual({ kind: 'period', status: 'expiring', endDate: '2026-10-10T00:00:00.000Z', daysLeft: 7 })
         expect(byId.t2.subscription).toBeNull()
         expect(subscriptionGroupByMock).toHaveBeenCalledTimes(1)
     })

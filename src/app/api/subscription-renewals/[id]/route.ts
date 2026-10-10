@@ -3,7 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { updateRenewalSchema } from '@/schemas/subscription-renewal'
-import { addMonthsClamped } from '@/lib/subscriptions'
+import { logSubscriptionEvent } from '@/lib/subscription-events'
+import { renewalSnapshot, toRenewalColumns } from '../_data'
 import { logger } from '@/lib/logger'
 import { denyTrainee, guardRenewalAccess } from '../_access'
 import { handleApiError } from '@/lib/api-error-handler'
@@ -12,7 +13,7 @@ type RouteContext = { params: Promise<{ id: string }> }
 
 /**
  * PATCH /api/subscription-renewals/[id]
- * Body: { startDate, durationMonths }. endDate is recomputed.
+ * Body: `{ kind, startDate, durationMonths | programCount }`. `kind` cannot change. endDate is recomputed.
  */
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
     const { id } = await params
@@ -36,10 +37,22 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
         const denied = await guardRenewalAccess(session, renewal.traineeId)
         if (denied) return denied
 
-        const { startDate, durationMonths } = validation.data
-        const updated = await prisma.subscriptionRenewal.update({
-            where: { id },
-            data: { startDate, durationMonths, endDate: addMonthsClamped(startDate, durationMonths) },
+        const input = validation.data
+        if (input.kind !== renewal.kind) {
+            return apiError('VALIDATION_ERROR', 'The kind of a renewal cannot be changed', 400, undefined, 'subscription.kindImmutable')
+        }
+
+        const updated = await prisma.$transaction(async (tx) => {
+            const row = await tx.subscriptionRenewal.update({ where: { id }, data: toRenewalColumns(input) })
+            await logSubscriptionEvent(tx, {
+                traineeId: renewal.traineeId,
+                type: 'renewal_updated',
+                actorId: session.user.id,
+                renewalId: id,
+                creditDelta: row.kind === 'programs' ? (row.programCount ?? 0) - (renewal.programCount ?? 0) : null,
+                details: { kind: row.kind, before: renewalSnapshot(renewal), after: renewalSnapshot(row) },
+            })
+            return row
         })
 
         logger.info({ renewalId: id, traineeId: renewal.traineeId, userId: session.user.id }, 'Subscription renewal updated')
@@ -57,6 +70,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
 /**
  * DELETE /api/subscription-renewals/[id]
+ * Writes a renewal_deleted event with a snapshot in the same transaction.
  */
 export async function DELETE(request: NextRequest, { params }: RouteContext) {
     const { id } = await params
@@ -74,7 +88,17 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
         const denied = await guardRenewalAccess(session, renewal.traineeId)
         if (denied) return denied
 
-        await prisma.subscriptionRenewal.delete({ where: { id } })
+        await prisma.$transaction(async (tx) => {
+            await tx.subscriptionRenewal.delete({ where: { id } })
+            await logSubscriptionEvent(tx, {
+                traineeId: renewal.traineeId,
+                type: 'renewal_deleted',
+                actorId: session.user.id,
+                renewalId: id,
+                creditDelta: renewal.kind === 'programs' ? -(renewal.programCount ?? 0) : null,
+                details: { kind: renewal.kind, ...renewalSnapshot(renewal) },
+            })
+        })
 
         logger.info({ renewalId: id, traineeId: renewal.traineeId, userId: session.user.id }, 'Subscription renewal deleted')
 
