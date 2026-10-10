@@ -268,9 +268,6 @@ export default function PlanningTab({ traineeId }: PlanningTabProps) {
         [t]
     )
 
-    const viewButtonClass = (active: boolean) =>
-        active ? 'bg-brand-primary text-white hover:bg-brand-primary-hover' : ''
-
     if (loading) return <SkeletonDetail />
 
     if (loadFailed) {
@@ -300,20 +297,18 @@ export default function PlanningTab({ traineeId }: PlanningTabProps) {
                 <div className="flex gap-2">
                     <Button
                         type="button"
-                        variant="secondary"
+                        variant={view === 'weeks' ? 'primary' : 'secondary'}
                         size="sm"
                         aria-pressed={view === 'weeks'}
-                        className={viewButtonClass(view === 'weeks')}
                         onClick={() => handleViewChange('weeks')}
                     >
                         {t('planning.viewWeeks')}
                     </Button>
                     <Button
                         type="button"
-                        variant="secondary"
+                        variant={view === 'month' ? 'primary' : 'secondary'}
                         size="sm"
                         aria-pressed={view === 'month'}
-                        className={viewButtonClass(view === 'month')}
                         onClick={() => handleViewChange('month')}
                     >
                         {t('planning.viewMonth')}

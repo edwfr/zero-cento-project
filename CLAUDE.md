@@ -86,6 +86,22 @@ E2E tests: `tests/e2e/`, Playwright.
 
 After every modification or new implementation, update `implementation-docs/CHANGELOG.md` with a brief entry describing what changed and why.
 
+### Feature workflow
+
+One phase per session, each on the model that fits it. Phases hand off through files in `docs/superpowers/`, never through conversation context. Do not switch model inside a session (the prompt cache is per model).
+
+| Size | Process |
+|---|---|
+| Small (1-3 files, no schema or API change) | plan mode, implement in the same session; no spec, no plan file |
+| Medium | `/feature-spec` (design inside the plan) → `/feature-implement` inline → `/feature-review` |
+| Large (schema change, new API surface, more than 5 tasks) | `/feature-spec` (spec + plan) → `/feature-implement` with subagents → `/feature-review` |
+
+- `/feature-spec` — Opus. Writes spec and plan, then stops. Plans follow `.claude/skills/feature-spec/plan-template.md`.
+- `/feature-implement <plan>` — Sonnet. Reads the plan header plus one task at a time, commits per task.
+- `/feature-review <plan>` — Opus, fresh session. Spec + diff, report only.
+- Subagents in `.claude/agents/`: `implementer` (sonnet), `mechanical` (haiku, tasks with no decisions), `reviewer` (opus).
+- Review once at the end, plus once mid-way on plans over 8 tasks. This overrides the per-task reviewers of `superpowers:subagent-driven-development`.
+
 ### Key env vars
 
 ```

@@ -11,6 +11,18 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [10 Ottobre 2026] — Gantt macro periodi: vista selezionata in colore primario
+
+**File modificati:** `src/app/trainer/trainees/[id]/_planning-tab.tsx`
+**Note:** Il pulsante della vista attiva (Settimane/Mese) appariva grigio con testo bianco, come se fosse disabilitato: le classi del colore primario erano aggiunte via `className` sopra la variante `secondary`, il cui sfondo grigio prevaleva nel CSS generato. Ora il pulsante attivo usa direttamente la variante `primary` di `Button`.
+### [10 Ottobre 2026] — Gantt macro periodi: intestazione non più rossa
+
+**File modificati:** `src/components/MacroPeriodTimeline.tsx`
+**Note:** Lo stile predefinito di `react-calendar-timeline` colora di rosso (`#c52020`) la radice dell'intestazione; il rosso traspariva nella riga delle settimane e nell'angolo sopra la colonna laterale, che non hanno uno sfondo proprio, rendendo illeggibili le date. Impostato uno sfondo grigio chiaro (`#f9fafb`) su `TimelineHeaders` tramite la prop `style`.
+### [10 Ottobre 2026] — Workflow di sviluppo a tre fasi (spec, implementazione, review)
+
+**File modificati:** `CLAUDE.md`, `.claude/skills/feature-spec/SKILL.md` (nuovo), `.claude/skills/feature-spec/plan-template.md` (nuovo), `.claude/skills/feature-implement/SKILL.md` (nuovo), `.claude/skills/feature-review/SKILL.md` (nuovo), `.claude/agents/{implementer,mechanical,reviewer}.md` (nuovi), `.claude/settings.json` (nuovo)
+**Note:** Standardizzato il processo per le nuove funzionalità per ridurre il consumo di token: una fase per sessione, passaggio di consegne tramite file in `docs/superpowers/`. `/feature-spec` (Opus) scrive spec e piano e si ferma; `/feature-implement` (Sonnet) legge intestazione del piano e un task alla volta; `/feature-review` (Opus, sessione nuova) confronta spec e diff senza modificare file. Tre subagent con modello fissato: `implementer` (sonnet), `mechanical` (haiku), `reviewer` (opus). Review una volta a fine lavoro anziché per ogni task. Il template del piano chiede firme, casi di test e codice completo solo per le parti non ovvie, invece del codice integrale di ogni task. Modello predefinito del repository impostato a Sonnet. Nessuna modifica al codice applicativo. La cartella `.claude/` è esclusa da git (`.gitignore`): di questi file solo `CLAUDE.md` e questo changelog sono versionati.
 ### [10 Ottobre 2026] — Pianificazione a macro periodi (Gantt trainer)
 
 **File modificati:** `prisma/schema.prisma`, `prisma/migrations/20261011000000_add_macro_periods/` (nuova), `src/lib/macro-periods.ts`, `src/lib/macro-period-queries.ts`, `src/schemas/macro-period.ts`, `src/app/api/macro-phase-types/**`, `src/app/api/macro-periods/[id]/route.ts`, `src/app/api/trainer/trainees/[id]/macro-periods/route.ts`, `src/components/MacroPhaseTypesSection.tsx`, `src/components/MacroPeriodFormModal.tsx`, `src/components/MacroPeriodTimeline.tsx`, `src/components/useDraftPeriodDrag.ts`, `src/components/index.ts`, `src/app/profile/page.tsx`, `src/app/trainer/trainees/[id]/_planning-tab.tsx` (nuovo), `src/app/trainer/trainees/[id]/_content.tsx`, `public/locales/{it,en}/{trainer,profile,errors,validation}.json`, `package.json`, test unit/integration/E2E dedicati

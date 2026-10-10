@@ -284,7 +284,8 @@ export default function MacroPeriodTimeline({
                 onItemSelect={handleItemActivate}
                 onCanvasClick={handleCanvasClick}
             >
-                <TimelineHeaders>
+                {/* The library paints the header root red (#c52020): it shows through every header without its own background */}
+                <TimelineHeaders style={{ background: '#f9fafb' }}>
                     <SidebarHeader>{({ getRootProps }) => <div {...getRootProps()} />}</SidebarHeader>
                     {view === 'weeks' ? (
                         <>
