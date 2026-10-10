@@ -2,10 +2,11 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/Button'
 import { FormLabel } from '@/components/FormLabel'
-import { Input } from '@/components/Input'
+import DatePicker from '@/components/DatePicker'
 import { Textarea } from '@/components/Textarea'
 import {
     addDays,
@@ -75,7 +76,7 @@ export default function MacroPeriodFormModal({
         onSubmit({ phaseTypeId, startDate: snappedStart, endDate: snappedEnd, note: note.trim() === '' ? null : note.trim() })
     }
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
             <div
                 role="dialog"
@@ -123,34 +124,29 @@ export default function MacroPeriodFormModal({
 
                 <div className="mb-1 grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
-                        <FormLabel htmlFor="macro-period-start" required>
-                            {t('planning.startWeek')}
-                        </FormLabel>
-                        <Input
+                        <DatePicker
                             id="macro-period-start"
-                            type="date"
+                            label={t('planning.startWeek')}
+                            required
                             value={startDate}
-                            onChange={(event) => {
-                                if (isIsoDay(event.target.value)) setStartDate(event.target.value)
+                            onChange={(value) => {
+                                if (isIsoDay(value)) setStartDate(value)
                             }}
                             onBlur={() => setStartDate(snappedStart)}
                             disabled={isSaving}
                         />
                     </div>
                     <div>
-                        <FormLabel htmlFor="macro-period-end" required>
-                            {t('planning.endWeek')}
-                        </FormLabel>
-                        <Input
+                        <DatePicker
                             id="macro-period-end"
-                            type="date"
+                            label={t('planning.endWeek')}
+                            required
                             value={endDate}
-                            onChange={(event) => {
-                                if (isIsoDay(event.target.value)) setEndDate(event.target.value)
+                            onChange={(value) => {
+                                if (isIsoDay(value)) setEndDate(value)
                             }}
                             onBlur={() => setEndDate(snappedEnd)}
-                            state={rangeIsValid ? 'default' : 'error'}
-                            helperText={rangeIsValid ? undefined : t('planning.invalidRange')}
+                            error={rangeIsValid ? undefined : t('planning.invalidRange')}
                             disabled={isSaving}
                         />
                     </div>
@@ -194,6 +190,7 @@ export default function MacroPeriodFormModal({
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     )
 }

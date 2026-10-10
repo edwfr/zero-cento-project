@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/Button'
+import DatePicker from '@/components/DatePicker'
 import { Input } from '@/components/Input'
 import { FormLabel } from '@/components/FormLabel'
 import { Textarea } from '@/components/Textarea'
@@ -114,15 +115,13 @@ export default function MeasurementFormModal({
                 </h2>
 
                 <div className="mb-4">
-                    <FormLabel htmlFor="measurement-date" required>
-                        {t('measurements.date')}
-                    </FormLabel>
-                    <Input
+                    <DatePicker
                         id="measurement-date"
-                        type="date"
+                        label={t('measurements.date')}
+                        required
                         value={measuredAt}
                         max={getTodayForInput()}
-                        onChange={(event) => setMeasuredAt(event.target.value)}
+                        onChange={setMeasuredAt}
                         disabled={isSaving}
                     />
                 </div>

@@ -14,6 +14,7 @@ import { normalizedOneRM } from '@/lib/calculations'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { Button } from '@/components/Button'
+import DatePicker from '@/components/DatePicker'
 import { Input } from '@/components/Input'
 import { FormLabel } from '@/components/FormLabel'
 import AutocompleteSearch, { type AutocompleteOption } from '@/components/AutocompleteSearch'
@@ -389,16 +390,12 @@ export default function TraineeRecordsContent() {
                                 </div>
 
                                 <div>
-                                    <FormLabel required>
-                                        Data Massimale
-                                    </FormLabel>
-                                    <Input
-                                        type="date"
+                                    <DatePicker
+                                        label="Data Massimale"
+                                        required
                                         value={recordDate}
                                         max={getTodayForInput()}
-                                        onChange={(e) => setRecordDate(e.target.value)}
-                                        inputSize="md"
-                                        required
+                                        onChange={setRecordDate}
                                     />
                                 </div>
 

@@ -15,6 +15,7 @@ import { normalizedOneRM } from '@/lib/calculations'
 import { formatDate, getTodayForInput } from '@/lib/date-format'
 import { EXERCISE_TYPE_META, type ExerciseType } from '@/lib/exercise-type'
 import { Button } from '@/components/Button'
+import DatePicker from '@/components/DatePicker'
 import { Input } from '@/components/Input'
 import { FormLabel } from '@/components/FormLabel'
 
@@ -644,16 +645,12 @@ export default function ProgramTestResultsContent() {
                             </div>
 
                             <div>
-                                <FormLabel required>
-                                    {t('personalRecords.recordDate')}
-                                </FormLabel>
-                                <Input
-                                    type="date"
+                                <DatePicker
+                                    label={t('personalRecords.recordDate')}
+                                    required
                                     value={recordDate}
                                     max={getTodayForInput()}
-                                    onChange={(event) => setRecordDate(event.target.value)}
-                                    inputSize="md"
-                                    required
+                                    onChange={setRecordDate}
                                 />
                             </div>
 

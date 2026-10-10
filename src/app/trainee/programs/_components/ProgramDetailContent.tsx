@@ -717,7 +717,7 @@ export default function ProgramDetailContent({
         ? Math.round((completedWorkouts / totalWorkouts) * 100)
         : 0
 
-    const locale = i18n.language === 'en' ? 'en-US' : 'it-IT'
+    const locale = i18n.language === 'en' ? 'en-GB' : 'it-IT'
 
     return (
         <div>

@@ -8,6 +8,7 @@ import { FormLabel } from '@/components/FormLabel'
 interface DatePickerProps {
     value?: string // ISO date string YYYY-MM-DD
     onChange: (date: string) => void
+    onBlur?: () => void
     label?: string
     placeholder?: string
     min?: string // YYYY-MM-DD
@@ -21,12 +22,13 @@ interface DatePickerProps {
 
 /**
  * DatePicker Component
- * Native date input with custom styling matching the ZeroCento brand.
+ * Text input in GG/MM/AAAA (Italian order, independent of browser locale) with a native calendar popup matching the ZeroCento brand.
  * Falls back gracefully on browsers that don't support date inputs.
  */
 export default function DatePicker({
     value = '',
     onChange,
+    onBlur,
     label,
     placeholder,
     min,
@@ -79,6 +81,7 @@ export default function DatePicker({
         if (!iso && textValue !== '') {
             setTextValue(formatDisplay(value))
         }
+        onBlur?.()
     }
 
     const handleNativeChange = (e: React.ChangeEvent<HTMLInputElement>) => {

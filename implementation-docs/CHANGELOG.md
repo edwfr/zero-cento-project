@@ -11,6 +11,14 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [10 Ottobre 2026] — Date in formato GG/MM/AAAA in tutta l'app
+
+**File modificati:** `DatePicker.tsx`, `MacroPeriodFormModal.tsx`, `MeasurementFormModal.tsx`, `trainees/[id]/records/_content.tsx`, `programs/[id]/tests/_content.tsx`, `date-format.ts`, `ProgramDetailContent.tsx`, `programs/[id]/review/_content.tsx`, `CLAUDE.md`
+**Note:** Gli `<input type="date">` nativi mostravano MM/GG/AAAA (locale del browser). Sostituiti con `DatePicker` (GG/MM/AAAA, nuovo prop `onBlur`). Formattazione in visualizzazione: `en-US` → `en-GB` per avere sempre giorno prima del mese. Regola aggiunta in CLAUDE.md.
+### [10 Ottobre 2026] — Modale macro periodo: render su document.body
+
+**File modificati:** `src/components/MacroPeriodFormModal.tsx`
+**Note:** Il fondo grigio della modale lasciava una fascia scoperta in alto. La modale ora usa `createPortal` su `document.body`, così l'overlay `fixed inset-0` non dipende dagli antenati.
 ### [10 Ottobre 2026] — Gantt macro periodi: vista selezionata in colore primario
 
 **File modificati:** `src/app/trainer/trainees/[id]/_planning-tab.tsx`

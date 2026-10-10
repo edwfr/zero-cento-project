@@ -416,7 +416,7 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
         }
     }, [program])
 
-    const locale = i18n.language === 'en' ? 'en-US' : 'it-IT'
+    const locale = i18n.language === 'en' ? 'en-GB' : 'it-IT'
 
     const isStructureStepActive = viewOnly && activeViewStep === 'structure'
     const isStructureStepComplete =

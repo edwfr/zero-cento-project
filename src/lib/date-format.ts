@@ -20,7 +20,7 @@ function getCurrentLocale(): string {
 function getFullLocale(locale: string): string {
     const localeMap: Record<string, string> = {
         'it': 'it-IT',
-        'en': 'en-US',
+        'en': 'en-GB',
     }
     return localeMap[locale] || locale
 }
