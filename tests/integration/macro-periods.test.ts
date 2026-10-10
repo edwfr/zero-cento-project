@@ -148,6 +148,21 @@ describe('POST /api/trainer/trainees/[id]/macro-periods', () => {
         )
     })
 
+    it('serialises writes on the same plan before reading for overlaps', async () => {
+        asTrainer()
+        prismaMock.macroPhaseType.findFirst.mockResolvedValue({ id: PHASE_ID, isActive: true } as never)
+        prismaMock.macroPeriod.findFirst.mockResolvedValue(null)
+        prismaMock.macroPeriod.create.mockResolvedValue(periodRow() as never)
+
+        await POST(request('POST', body), withId(TRAINEE_ID))
+
+        expect(prismaMock.$executeRaw).toHaveBeenCalledTimes(1)
+        expect(prismaMock.$executeRaw.mock.calls[0].slice(1)).toEqual([`macro-periods:${TRAINER_ID}:${TRAINEE_ID}`])
+        expect(prismaMock.$executeRaw.mock.invocationCallOrder[0]).toBeLessThan(
+            prismaMock.macroPeriod.findFirst.mock.invocationCallOrder[0]
+        )
+    })
+
     it('answers 409 when the weeks are already taken', async () => {
         asTrainer()
         prismaMock.macroPhaseType.findFirst.mockResolvedValue({ id: PHASE_ID, isActive: true } as never)
@@ -245,6 +260,20 @@ describe('PATCH /api/macro-periods/[id]', () => {
                 where: { id: PERIOD_ID },
                 data: { startDate: day('2026-10-12'), endDate: day('2026-10-25') },
             })
+        )
+    })
+
+    it('takes the plan lock before the overlap read when the dates move', async () => {
+        asTrainer()
+        prismaMock.macroPeriod.findFirst.mockResolvedValueOnce(storedPeriod as never).mockResolvedValueOnce(null)
+        prismaMock.macroPeriod.update.mockResolvedValue(periodRow() as never)
+
+        await PATCH(request('PATCH', { startDate: '2026-10-12', endDate: '2026-10-25' }), withId(PERIOD_ID))
+
+        expect(prismaMock.$executeRaw).toHaveBeenCalledTimes(1)
+        expect(prismaMock.$executeRaw.mock.calls[0].slice(1)).toEqual([`macro-periods:${TRAINER_ID}:${TRAINEE_ID}`])
+        expect(prismaMock.$executeRaw.mock.invocationCallOrder[0]).toBeLessThan(
+            prismaMock.macroPeriod.findFirst.mock.invocationCallOrder[1]
         )
     })
 

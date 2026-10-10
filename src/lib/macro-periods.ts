@@ -239,3 +239,22 @@ export function readableTextColor(hex: string): '#ffffff' | '#111827' {
 
     return luminance > 0.179 ? '#111827' : '#ffffff'
 }
+
+export type TimelineLabelStyle = 'monthYear' | 'month' | 'year'
+
+const TIMELINE_LABEL_FORMATS: Record<TimelineLabelStyle, Intl.DateTimeFormatOptions> = {
+    monthYear: { month: 'long', year: 'numeric' },
+    month: { month: 'short' },
+    year: { year: 'numeric' },
+}
+
+/** Timeline header text for a local-time instant, in the language of the app. */
+export function formatTimelineLabel(ms: number, style: TimelineLabelStyle, locale: string): string {
+    const options = TIMELINE_LABEL_FORMATS[style]
+    try {
+        return new Intl.DateTimeFormat(locale, options).format(ms)
+    } catch {
+        // an unknown language tag must not take the timeline down
+        return new Intl.DateTimeFormat(undefined, options).format(ms)
+    }
+}

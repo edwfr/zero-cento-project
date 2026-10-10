@@ -79,7 +79,7 @@ type Reply = { status: number; json: unknown }
 interface ApiOptions {
     periods?: MacroPeriodDto[]
     loadStatus?: number
-    onWrite?: (call: Call) => Reply
+    onWrite?: (call: Call) => Reply | Promise<Reply>
 }
 
 function mockApi({ periods = PERIODS, loadStatus = 200, onWrite }: ApiOptions = {}) {
@@ -96,7 +96,7 @@ function mockApi({ periods = PERIODS, loadStatus = 200, onWrite }: ApiOptions = 
 
         const call = { url, method, body: init?.body ? JSON.parse(String(init.body)) : undefined }
         calls.push(call)
-        const { status, json } = onWrite ? onWrite(call) : { status: 200, json: { data: {} } }
+        const { status, json } = onWrite ? await onWrite(call) : { status: 200, json: { data: {} } }
         return reply(status, json)
     })
     return calls
@@ -272,6 +272,40 @@ describe('PlanningTab', () => {
 
         await waitFor(() => expect(mocks.showToast).toHaveBeenCalledWith('errors:macroPeriod.overlap', 'error'))
         expect(timeline().periods).toEqual(PERIODS)
+    })
+
+    it('puts every bar back when two drags in flight are both rejected', async () => {
+        const refusal: Reply = { status: 409, json: { error: { code: 'CONFLICT', message: 'x', key: 'macroPeriod.overlap' } } }
+        const pending: Array<(reply: Reply) => void> = []
+        await renderTab({ onWrite: () => new Promise<Reply>((resolve) => pending.push(resolve)) })
+
+        act(() => timeline().onPeriodChange('a', { startDate: '2026-10-19', endDate: '2026-11-01' }))
+        await waitFor(() => expect(timeline().periods[0].startDate).toBe('2026-10-19'))
+        // the second drag starts while the first is still unanswered
+        act(() => timeline().onPeriodChange('b', { startDate: '2026-11-09', endDate: '2026-11-15' }))
+        await waitFor(() => expect(pending).toHaveLength(2))
+
+        await act(async () => pending[0](refusal))
+        await act(async () => pending[1](refusal))
+
+        await waitFor(() => expect(mocks.showToast).toHaveBeenCalledTimes(2))
+        expect(timeline().periods).toEqual(PERIODS)
+    })
+
+    it('keeps a newer position of the same bar when an older save fails', async () => {
+        const pending: Array<(reply: Reply) => void> = []
+        await renderTab({ onWrite: () => new Promise<Reply>((resolve) => pending.push(resolve)) })
+
+        act(() => timeline().onPeriodChange('a', { startDate: '2026-10-12', endDate: '2026-10-25' }))
+        await waitFor(() => expect(timeline().periods[0].startDate).toBe('2026-10-12'))
+        act(() => timeline().onPeriodChange('a', { startDate: '2026-10-19', endDate: '2026-11-01' }))
+        await waitFor(() => expect(pending).toHaveLength(2))
+
+        await act(async () => pending[0]({ status: 500, json: { error: {} } }))
+        await act(async () => pending[1]({ status: 200, json: { data: {} } }))
+
+        await waitFor(() => expect(mocks.showToast).toHaveBeenCalledTimes(1))
+        expect(timeline().periods[0]).toMatchObject({ id: 'a', startDate: '2026-10-19', endDate: '2026-11-01' })
     })
 
     it('explains a drag refused because it overlaps', async () => {

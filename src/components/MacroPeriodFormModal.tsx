@@ -62,12 +62,17 @@ export default function MacroPeriodFormModal({
     )
     const [note, setNote] = useState(initial.note ?? '')
 
-    const rangeIsValid = isValidPeriodRange(startDate, endDate)
+    // The fields hold what was typed; a keyed-in date passes through other days before it is complete,
+    // so the whole-week snap is applied on leaving the field and on save, never per keystroke
+    const snappedStart = weekStartOf(startDate)
+    const snappedEnd = weekEndOf(endDate)
+
+    const rangeIsValid = isValidPeriodRange(snappedStart, snappedEnd)
     const canSubmit = phaseTypeId !== '' && rangeIsValid && !isSaving
 
     const handleSubmit = () => {
         if (!canSubmit) return
-        onSubmit({ phaseTypeId, startDate, endDate, note: note.trim() === '' ? null : note.trim() })
+        onSubmit({ phaseTypeId, startDate: snappedStart, endDate: snappedEnd, note: note.trim() === '' ? null : note.trim() })
     }
 
     return (
@@ -126,8 +131,9 @@ export default function MacroPeriodFormModal({
                             type="date"
                             value={startDate}
                             onChange={(event) => {
-                                if (isIsoDay(event.target.value)) setStartDate(weekStartOf(event.target.value))
+                                if (isIsoDay(event.target.value)) setStartDate(event.target.value)
                             }}
+                            onBlur={() => setStartDate(snappedStart)}
                             disabled={isSaving}
                         />
                     </div>
@@ -140,8 +146,9 @@ export default function MacroPeriodFormModal({
                             type="date"
                             value={endDate}
                             onChange={(event) => {
-                                if (isIsoDay(event.target.value)) setEndDate(weekEndOf(event.target.value))
+                                if (isIsoDay(event.target.value)) setEndDate(event.target.value)
                             }}
+                            onBlur={() => setEndDate(snappedEnd)}
                             state={rangeIsValid ? 'default' : 'error'}
                             helperText={rangeIsValid ? undefined : t('planning.invalidRange')}
                             disabled={isSaving}

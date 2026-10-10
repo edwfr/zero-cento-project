@@ -71,14 +71,35 @@ describe('MacroPeriodFormModal', () => {
         expect(screen.getByLabelText(/planning\.endWeek/)).toHaveValue('2026-11-22')
     })
 
-    it('snaps a typed start to its Monday and a typed end to its Sunday', () => {
+    it('snaps a typed start to its Monday and a typed end to its Sunday on leaving the field', () => {
+        renderModal({ initial: { startDate: '2026-11-02', endDate: '2026-11-22' } })
+
+        fireEvent.change(screen.getByLabelText(/planning\.startWeek/), { target: { value: '2026-11-11' } })
+        fireEvent.blur(screen.getByLabelText(/planning\.startWeek/))
+        fireEvent.change(screen.getByLabelText(/planning\.endWeek/), { target: { value: '2026-11-25' } })
+        fireEvent.blur(screen.getByLabelText(/planning\.endWeek/))
+
+        expect(screen.getByLabelText(/planning\.startWeek/)).toHaveValue('2026-11-09')
+        expect(screen.getByLabelText(/planning\.endWeek/)).toHaveValue('2026-11-29')
+    })
+
+    it('leaves a date alone while it is being typed', () => {
+        renderModal({ initial: { startDate: '2026-11-02', endDate: '2026-11-22' } })
+
+        // typing "12" in the day segment passes through the 1st, which belongs to the previous month's last week
+        fireEvent.change(screen.getByLabelText(/planning\.startWeek/), { target: { value: '2026-11-01' } })
+
+        expect(screen.getByLabelText(/planning\.startWeek/)).toHaveValue('2026-11-01')
+    })
+
+    it('submits whole weeks even when the field was never left', () => {
         renderModal({ initial: { startDate: '2026-11-02', endDate: '2026-11-22' } })
 
         fireEvent.change(screen.getByLabelText(/planning\.startWeek/), { target: { value: '2026-11-11' } })
         fireEvent.change(screen.getByLabelText(/planning\.endWeek/), { target: { value: '2026-11-25' } })
+        fireEvent.click(save())
 
-        expect(screen.getByLabelText(/planning\.startWeek/)).toHaveValue('2026-11-09')
-        expect(screen.getByLabelText(/planning\.endWeek/)).toHaveValue('2026-11-29')
+        expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ startDate: '2026-11-09', endDate: '2026-11-29' }))
     })
 
     it('submits the chosen phase and a trimmed note', () => {

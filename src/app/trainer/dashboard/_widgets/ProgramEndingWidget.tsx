@@ -6,6 +6,7 @@ import { getEndingPrograms } from '@/lib/trainer-dashboard/program-ending'
 import PaginatedList from './PaginatedList'
 import { CountBadge, WidgetCard, WidgetEmpty, WidgetError } from './WidgetCard'
 import type { WidgetContext } from './types'
+import { traineeDetailHref } from '@/lib/trainee-detail-href'
 
 /** Thin one-line bar: completed workouts of the program's last week. */
 function LastWeekBar({ completed, planned, label }: { completed: number; planned: number; label: string }) {
@@ -50,7 +51,7 @@ export default async function ProgramEndingWidget({ ctx }: { ctx: WidgetContext 
                     nextLabel={t('trainerDashboard.widget.nextPage')}
                     items={items.map((item) => (
                         <li key={item.programId}>
-                            <Link href={`/trainer/trainees/${item.traineeId}`} className="flex items-center gap-2 rounded-lg px-2 py-2 transition-colors hover:bg-gray-50">
+                            <Link href={traineeDetailHref(item.traineeId, 'programs')} className="flex items-center gap-2 rounded-lg px-2 py-2 transition-colors hover:bg-gray-50">
                                 <div className="min-w-0 flex-1">
                                     <div className="flex items-baseline justify-between gap-2">
                                         <p className="truncate font-medium text-gray-900">{item.traineeName}</p>

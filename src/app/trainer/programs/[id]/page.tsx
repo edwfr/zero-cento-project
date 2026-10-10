@@ -2,6 +2,7 @@ import { getSession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import EditProgramContent from './edit/_content'
+import { traineeDetailHref } from '@/lib/trainee-detail-href'
 
 interface ViewProgramPageProps {
     searchParams?: Promise<{ backContext?: string; traineeId?: string }>
@@ -16,7 +17,7 @@ export default async function ViewProgramPage({ searchParams }: ViewProgramPageP
     const backContext = resolvedSearchParams?.backContext
     const traineeId = resolvedSearchParams?.traineeId
     const backHref = backContext === 'trainee' && traineeId
-        ? `/trainer/trainees/${traineeId}`
+        ? traineeDetailHref(traineeId, 'programs')
         : '/trainer/programs'
 
     return (

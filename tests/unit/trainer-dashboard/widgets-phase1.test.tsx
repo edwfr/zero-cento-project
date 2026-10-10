@@ -104,7 +104,7 @@ describe('ProgramEndingWidget', () => {
         const links = within(region).getAllByRole('link')
         expect(getEndingPrograms).toHaveBeenCalledWith('trainer-1', TRAINEES, NOW)
         expect(within(region).getByText('2')).toBeInTheDocument()
-        expect(links.map((link) => link.getAttribute('href'))).toEqual(['/trainer/trainees/t1', '/trainer/trainees/t2'])
+        expect(links.map((link) => link.getAttribute('href'))).toEqual(['/trainer/trainees/t1?tab=programs', '/trainer/trainees/t2?tab=programs'])
         expect(links[0]).toHaveTextContent('Anna RossiOggiForza')
         expect(links[0]).toHaveTextContent('50%')
         expect(within(links[0]).getByRole('progressbar', { name: 'Ultima settimana' })).toBeInTheDocument()

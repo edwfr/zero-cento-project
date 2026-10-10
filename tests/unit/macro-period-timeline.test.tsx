@@ -24,6 +24,7 @@ interface StubTimelineProps {
     onItemSelect: (itemId: string) => void
     onCanvasClick: (groupId: string, time: number) => void
     onTimeChange: (start: number, end: number) => void
+    children?: React.ReactNode
 }
 
 const captured = vi.hoisted(() => ({ props: null as StubTimelineProps | null }))
@@ -33,11 +34,16 @@ vi.mock('react-calendar-timeline', () => {
     return {
         default: (props: StubTimelineProps) => {
             captured.props = props
-            return <div data-testid="timeline" />
+            return <div data-testid="timeline">{props.children}</div>
         },
-        TimelineHeaders: Empty,
+        TimelineHeaders: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
         SidebarHeader: Empty,
-        DateHeader: Empty,
+        // Renders what the header would print for October 2026, or 'default' when the library's own format is left in place
+        DateHeader: ({ unit, labelFormat }: { unit: string; labelFormat?: (range: [{ valueOf: () => number }, { valueOf: () => number }], unit: string, width: number) => string }) => (
+            <span data-testid={`header-${unit}`}>
+                {labelFormat ? labelFormat([{ valueOf: () => Date.UTC(2026, 9, 5) }, { valueOf: () => Date.UTC(2026, 10, 1) }], unit, 100) : 'default'}
+            </span>
+        ),
         CustomHeader: Empty,
         TimelineMarkers: Empty,
         TodayMarker: Empty,
@@ -258,5 +264,42 @@ describe('MacroPeriodTimeline', () => {
         timeline().onTimeChange(10, 20)
 
         expect(handlers.onVisibleRangeChange).toHaveBeenCalledWith(10, 20)
+    })
+})
+
+describe('MacroPeriodTimeline headers', () => {
+    it('formats the month header itself in weeks view, in the app language', () => {
+        const { getByTestId } = render(
+            <MacroPeriodTimeline
+                periods={PERIODS}
+                programs={PROGRAMS}
+                view="weeks"
+                visibleStart={ms('2026-09-28')}
+                visibleEnd={ms('2026-09-28') + VIEW_SPAN_MS.weeks}
+                draft={null}
+                labels={{ phases: 'Fasi', programs: 'Schede', draft: 'Nuovo' }}
+                {...handlers}
+            />
+        )
+
+        expect(getByTestId('header-month')).toHaveTextContent('October 2026')
+    })
+
+    it('formats year and short month in month view', () => {
+        const { getByTestId } = render(
+            <MacroPeriodTimeline
+                periods={PERIODS}
+                programs={PROGRAMS}
+                view="month"
+                visibleStart={ms('2026-09-28')}
+                visibleEnd={ms('2026-09-28') + VIEW_SPAN_MS.month}
+                draft={null}
+                labels={{ phases: 'Fasi', programs: 'Schede', draft: 'Nuovo' }}
+                {...handlers}
+            />
+        )
+
+        expect(getByTestId('header-year')).toHaveTextContent('2026')
+        expect(getByTestId('header-month')).toHaveTextContent('Oct')
     })
 })

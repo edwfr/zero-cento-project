@@ -184,12 +184,24 @@ export default function PlanningTab({ traineeId }: PlanningTabProps) {
 
     /** A drag: show it at once, save it, put the bar back if the server refuses. */
     const handlePeriodChange = async (id: string, range: DayRange) => {
-        const previous = periods
+        const before = periods.find((item) => item.id === id)
+        if (!before) return
+        const previousRange: DayRange = { startDate: before.startDate, endDate: before.endDate }
+
         setPeriods((current) => current.map((item) => (item.id === id ? { ...item, ...range } : item)).sort(byStartDate))
         try {
             await send(`/api/macro-periods/${id}`, 'PATCH', range, 'planning.saveError')
         } catch (err) {
-            setPeriods(previous)
+            // Undo this drag only, and only if the bar is still where it left it: other saves may have landed meanwhile
+            setPeriods((current) =>
+                current
+                    .map((item) =>
+                        item.id === id && item.startDate === range.startDate && item.endDate === range.endDate
+                            ? { ...item, ...previousRange }
+                            : item
+                    )
+                    .sort(byStartDate)
+            )
             showToast(err instanceof Error ? err.message : t('planning.saveError'), 'error')
         }
     }

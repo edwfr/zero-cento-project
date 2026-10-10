@@ -6,7 +6,7 @@ import { requireRole, requireTrainerOwnership } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { handleApiError } from '@/lib/api-error-handler'
 import { dbDateToIsoDay, isValidPeriodRange, isoDayToDbDate } from '@/lib/macro-periods'
-import { PERIOD_SELECT, toPeriodDto } from '@/lib/macro-period-queries'
+import { PERIOD_SELECT, macroPlanLockKey, toPeriodDto } from '@/lib/macro-period-queries'
 import { updateMacroPeriodSchema } from '@/schemas/macro-period'
 
 type RouteContext = { params: Promise<{ id: string }> }
@@ -72,6 +72,9 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
         const period = await prisma.$transaction(async (tx) => {
             if (datesChanged) {
+                // Two writes on the same plan must not both pass the overlap read: queue them until commit
+                await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${macroPlanLockKey(trainerId, existing.traineeId)}))`
+
                 const clash = await tx.macroPeriod.findFirst({
                     where: {
                         traineeId: existing.traineeId,

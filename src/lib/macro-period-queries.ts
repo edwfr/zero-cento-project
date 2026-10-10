@@ -76,3 +76,8 @@ export function findPhaseNameClash(trainerId: string, name: string, ignoreId?: s
         select: { id: true },
     })
 }
+
+/** Advisory-lock key shared by every write on one trainer's plan for one trainee. */
+export function macroPlanLockKey(trainerId: string, traineeId: string): string {
+    return `macro-periods:${trainerId}:${traineeId}`
+}

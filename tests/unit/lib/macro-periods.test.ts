@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+    formatTimelineLabel,
     DEFAULT_PHASE_NAMES,
     PHASE_COLOR_PALETTE,
     VIEW_SPAN_MS,
@@ -280,5 +281,23 @@ describe('colours', () => {
 
     it.each(['#FFF', 'red', '', '#12345g'])('falls back to dark text for %s', (value) => {
         expect(readableTextColor(value)).toBe('#111827')
+    })
+})
+
+describe('formatTimelineLabel', () => {
+    const october = dayToLocalMs('2026-10-05')
+
+    it('writes the month in the language of the app', () => {
+        expect(formatTimelineLabel(october, 'monthYear', 'it')).toBe('ottobre 2026')
+        expect(formatTimelineLabel(october, 'monthYear', 'en')).toBe('October 2026')
+    })
+
+    it('has a short month and a year form for the month view', () => {
+        expect(formatTimelineLabel(october, 'month', 'it')).toBe('ott')
+        expect(formatTimelineLabel(october, 'year', 'it')).toBe('2026')
+    })
+
+    it('falls back to the default language on an unknown locale tag', () => {
+        expect(formatTimelineLabel(october, 'year', 'not a locale')).toBe('2026')
     })
 })

@@ -5,7 +5,7 @@ import { requireTrainerOwnership } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { handleApiError } from '@/lib/api-error-handler'
 import { isoDayToDbDate, type PlanProgramDto } from '@/lib/macro-periods'
-import { PERIOD_SELECT, PLAN_PROGRAM_SELECT, toPeriodDto, toPlanProgramDto } from '@/lib/macro-period-queries'
+import { PERIOD_SELECT, PLAN_PROGRAM_SELECT, macroPlanLockKey, toPeriodDto, toPlanProgramDto } from '@/lib/macro-period-queries'
 import { createMacroPeriodSchema } from '@/schemas/macro-period'
 
 type RouteContext = { params: Promise<{ id: string }> }
@@ -79,6 +79,9 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
 
         // The overlap read belongs to the atomic unit: check and insert together
         const period = await prisma.$transaction(async (tx) => {
+            // Two writes on the same plan must not both pass the overlap read: queue them until commit
+            await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${macroPlanLockKey(trainerId, traineeId)}))`
+
             const clash = await tx.macroPeriod.findFirst({
                 where: { traineeId, trainerId, startDate: { lte: endDate }, endDate: { gte: startDate } },
                 select: { id: true },

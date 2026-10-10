@@ -2,6 +2,7 @@ import DashboardLayout from '@/components/DashboardLayout'
 import { getSession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import TraineeRecordsContent from './_content'
+import { traineeDetailHref } from '@/lib/trainee-detail-href'
 
 interface TraineeRecordsManagementPageProps {
     params?: Promise<{ id: string }>
@@ -19,7 +20,7 @@ export default async function TraineeRecordsManagementPage({ params }: TraineeRe
         redirect(`/${session.user.role}/dashboard`)
     }
 
-    const backHref = resolvedParams?.id ? `/trainer/trainees/${resolvedParams.id}` : '/trainer/trainees'
+    const backHref = resolvedParams?.id ? traineeDetailHref(resolvedParams.id, 'records') : '/trainer/trainees'
 
     return (
         <DashboardLayout user={session.user} backHref={backHref}>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import Timeline, {
     CustomHeader,
     DateHeader,
@@ -19,6 +20,7 @@ import {
     clampRangeToFree,
     dayToLocalMs,
     findOverlap,
+    formatTimelineLabel,
     localMsToDay,
     movePeriod,
     programToRange,
@@ -28,6 +30,7 @@ import {
     type DayRange,
     type MacroPeriodDto,
     type PlanProgramDto,
+    type TimelineLabelStyle,
     type TimelineView,
 } from '@/lib/macro-periods'
 import { useDraftPeriodDrag } from './useDraftPeriodDrag'
@@ -130,6 +133,11 @@ export default function MacroPeriodTimeline({
     onPeriodClick,
     onProgramClick,
 }: MacroPeriodTimelineProps) {
+    const { i18n } = useTranslation()
+    // The library formats with dayjs' default (English) locale: write month and year ourselves
+    const headerLabel = (style: TimelineLabelStyle) => ([start]: [{ valueOf: () => number }, unknown]) =>
+        formatTimelineLabel(start.valueOf(), style, i18n.language)
+
     const containerRef = useRef<HTMLDivElement>(null)
     const scrollElementRef = useRef<HTMLDivElement | null>(null)
     const visibleRangeRef = useRef({ start: visibleStart, end: visibleEnd })
@@ -280,7 +288,7 @@ export default function MacroPeriodTimeline({
                     <SidebarHeader>{({ getRootProps }) => <div {...getRootProps()} />}</SidebarHeader>
                     {view === 'weeks' ? (
                         <>
-                            <DateHeader unit="month" />
+                            <DateHeader unit="month" labelFormat={headerLabel('monthYear')} />
                             {/* The library has no week unit: draw Mondays over day intervals, seven days wide */}
                             <CustomHeader unit="day" height={28}>
                                 {({ headerContext: { intervals }, getRootProps, getIntervalProps }) => (
@@ -309,8 +317,8 @@ export default function MacroPeriodTimeline({
                         </>
                     ) : (
                         <>
-                            <DateHeader unit="year" />
-                            <DateHeader unit="month" />
+                            <DateHeader unit="year" labelFormat={headerLabel('year')} />
+                            <DateHeader unit="month" labelFormat={headerLabel('month')} />
                         </>
                     )}
                 </TimelineHeaders>
