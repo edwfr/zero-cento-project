@@ -92,6 +92,9 @@ export { default as ProfileForm } from './ProfileForm'
 
 // Profile Components
 export { default as MovementPatternColorsSection } from './MovementPatternColorsSection'
+export { default as MacroPhaseTypesSection } from './MacroPhaseTypesSection'
+export { default as MacroPeriodFormModal } from './MacroPeriodFormModal'
+export type { MacroPeriodFormModalProps, MacroPeriodFormValues } from './MacroPeriodFormModal'
 
 // User Management Components (existing)
 export { default as UsersTable } from './UsersTable'

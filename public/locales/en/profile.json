@@ -7,6 +7,7 @@
         "roleLabel": "Role",
         "security": "Security",
         "movementPatternColors": "Movement Pattern Colors",
+        "macroPhases": "Planning phases",
         "editProfile": "Edit Profile",
         "editPersonalData": "Edit Personal Data",
         "updated": "Profile updated successfully",

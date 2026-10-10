@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import DashboardLayout from '@/components/DashboardLayout'
 import ChangePasswordSection from '@/components/ChangePasswordSection'
 import MovementPatternColorsSection from '@/components/MovementPatternColorsSection'
+import MacroPhaseTypesSection from '@/components/MacroPhaseTypesSection'
 import profileIt from '../../../public/locales/it/profile.json'
 import profileEn from '../../../public/locales/en/profile.json'
 import commonIt from '../../../public/locales/it/common.json'
@@ -116,6 +117,16 @@ export default async function ProfilePage() {
                                     {tp('profile.movementPatternColors')}
                                 </h2>
                                 <MovementPatternColorsSection />
+                            </div>
+                        )}
+
+                        {/* Macro phases - Only for Trainers */}
+                        {session.user.role === 'trainer' && (
+                            <div className="border-t border-gray-200 pt-6">
+                                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                                    {tp('profile.macroPhases')}
+                                </h2>
+                                <MacroPhaseTypesSection />
                             </div>
                         )}
                     </div>
