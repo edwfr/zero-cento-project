@@ -46,9 +46,12 @@ export type SubscriptionSummary = PeriodSummary | ProgramsSummary
 export interface RenewalRow {
     id: string
     traineeId: string
+    kind: RenewalKind
+    /** period: first covered day. programs: purchase date */
     startDate: string
-    durationMonths: number
-    endDate: string
+    durationMonths: number | null
+    endDate: string | null
+    programCount: number | null
     createdAt: string
 }
 

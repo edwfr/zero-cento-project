@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [10 Ottobre 2026] — Tab Abbonamento: registrazione pacchetti di schede e cronologia movimenti
+
+**File modificati:** `src/components/SubscriptionRenewalFormModal.tsx`, `src/components/SubscriptionEventList.tsx` (nuovo), `src/components/index.ts`, `src/lib/subscriptions.ts`, `src/app/trainer/trainees/[id]/_subscription-tab.tsx`, `src/app/trainer/trainees/[id]/_use-trainee-subscription.ts`, `public/locales/{it,en}/trainer.json`, test relativi + `tests/unit/subscription-event-list.test.tsx` (nuovo)
+**Note:** La modale rinnovo ha un selettore "A mesi / A schede" (default = modalità corrente dell'atleta, bloccato in modifica). A schede: data acquisto (default oggi), numero schede 1–50 con scorciatoie 1/3/5/10 e anteprima del saldo dopo la registrazione. Lo storico rinnovi è una tabella unica con colonna Tipo. Sotto il titolo compare il saldo schede se l'atleta ha almeno un pacchetto. Nuova sezione "Movimenti" in sola lettura (rinnovi registrati/modificati/eliminati, schede pubblicate, rimborsi) con data, autore e variazione; un tipo di movimento sconosciuto mostra una riga generica invece di rompere il tab.
 ### [10 Ottobre 2026] — Eliminazione programma: scelta di rimborso della scheda consumata
 
 **File modificati:** `src/lib/program-credits.ts`, `src/app/api/programs/[id]/route.ts`, `src/app/api/programs/route.ts`, `tests/unit/lib/program-credits.test.ts`, `tests/integration/program-detail.test.ts`, `tests/integration/programs.test.ts`

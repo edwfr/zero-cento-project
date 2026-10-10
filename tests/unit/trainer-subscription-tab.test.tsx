@@ -15,16 +15,31 @@ const TRAINEE_ID = 't-1'
 const renewal = {
     id: 'r-1',
     traineeId: TRAINEE_ID,
+    kind: 'period' as const,
     startDate: '2026-09-10T00:00:00.000Z',
     durationMonths: 1,
     endDate: '2026-10-10T00:00:00.000Z',
+    programCount: null,
     createdAt: '2026-09-10T10:00:00.000Z',
+}
+
+const packageRow = {
+    id: 'p-1',
+    traineeId: TRAINEE_ID,
+    kind: 'programs' as const,
+    startDate: '2026-10-01T00:00:00.000Z',
+    durationMonths: null,
+    endDate: null,
+    programCount: 5,
+    createdAt: '2026-10-01T10:00:00.000Z',
 }
 
 function makeState(overrides: Partial<TraineeSubscriptionState> = {}): TraineeSubscriptionState {
     return {
         renewals: [renewal],
         current: { kind: 'period', status: 'expiring', endDate: renewal.endDate, daysLeft: 7 },
+        events: [],
+        programBalance: 0,
         loading: false,
         error: false,
         reload: vi.fn().mockResolvedValue(undefined),
@@ -79,7 +94,7 @@ describe('SubscriptionTab', () => {
             '/api/subscription-renewals',
             expect.objectContaining({
                 method: 'POST',
-                body: JSON.stringify({ traineeId: TRAINEE_ID, startDate: '2026-10-11', durationMonths: 3 }),
+                body: JSON.stringify({ traineeId: TRAINEE_ID, kind: 'period', startDate: '2026-10-11', durationMonths: 3 }),
             })
         )
     })
@@ -116,5 +131,94 @@ describe('SubscriptionTab', () => {
         fireEvent.click(screen.getByRole('button', { name: 'subscriptions.retry' }))
 
         expect(state.reload).toHaveBeenCalled()
+    })
+
+    it('shows packages and period renewals in one history table', () => {
+        render(<SubscriptionTab traineeId={TRAINEE_ID} state={makeState({ renewals: [packageRow, renewal] })} />)
+
+        const rows = within(screen.getByRole('table')).getAllByRole('row').slice(1)
+        expect(rows).toHaveLength(2)
+        expect(within(rows[0]).getByText('subscriptions.kind.programs')).toBeInTheDocument()
+        expect(within(rows[0]).getByText('subscriptions.programCountValue')).toBeInTheDocument()
+        expect(within(rows[1]).getByText('subscriptions.kind.period')).toBeInTheDocument()
+    })
+
+    it('shows the program balance when the trainee has packages', () => {
+        render(
+            <SubscriptionTab
+                traineeId={TRAINEE_ID}
+                state={makeState({
+                    renewals: [packageRow],
+                    current: { kind: 'programs', status: 'active', remaining: 3 },
+                    programBalance: 3,
+                })}
+            />
+        )
+
+        expect(screen.getByTestId('program-balance')).toHaveTextContent('subscriptions.programs.available')
+    })
+
+    it('hides the program balance for a trainee who never bought a package', () => {
+        render(<SubscriptionTab traineeId={TRAINEE_ID} state={makeState()} />)
+
+        expect(screen.queryByTestId('program-balance')).not.toBeInTheDocument()
+    })
+
+    it('opens a new renewal on the programs form for a package trainee', () => {
+        render(
+            <SubscriptionTab
+                traineeId={TRAINEE_ID}
+                state={makeState({ renewals: [packageRow], current: { kind: 'programs', status: 'expired', remaining: 0 } })}
+            />
+        )
+
+        fireEvent.click(screen.getByRole('button', { name: 'subscriptions.addButton' }))
+
+        expect(screen.getByLabelText(/subscriptions\.programCount/)).toBeInTheDocument()
+    })
+
+    it('sends the package payload when saving', async () => {
+        mockFetchOk()
+        const state = makeState({ renewals: [packageRow], current: { kind: 'programs', status: 'expired', remaining: 0 } })
+        render(<SubscriptionTab traineeId={TRAINEE_ID} state={state} />)
+
+        fireEvent.click(screen.getByRole('button', { name: 'subscriptions.addButton' }))
+        fireEvent.change(screen.getByLabelText(/subscriptions\.programCount/), { target: { value: '3' } })
+        fireEvent.click(screen.getByRole('button', { name: 'common:common.save' }))
+
+        await waitFor(() => expect(state.reload).toHaveBeenCalled())
+        const [, init] = vi.mocked(global.fetch).mock.calls[0]
+        expect(JSON.parse(String(init?.body))).toMatchObject({ traineeId: TRAINEE_ID, kind: 'programs', programCount: 3 })
+    })
+
+    it('lists the movements below the history', () => {
+        render(
+            <SubscriptionTab
+                traineeId={TRAINEE_ID}
+                state={makeState({
+                    events: [
+                        {
+                            id: 'e1',
+                            type: 'package_created',
+                            creditDelta: 5,
+                            details: { programCount: 5 },
+                            createdAt: '2026-10-01T10:00:00.000Z',
+                            actorName: 'Marco Trainer',
+                        },
+                    ],
+                })}
+            />
+        )
+
+        expect(screen.getByText('subscriptions.events.title')).toBeInTheDocument()
+        expect(screen.getByText('subscriptions.events.types.package_created')).toBeInTheDocument()
+    })
+
+    it('asks to confirm a package deletion with its own message', () => {
+        render(<SubscriptionTab traineeId={TRAINEE_ID} state={makeState({ renewals: [packageRow] })} />)
+
+        fireEvent.click(screen.getByRole('button', { name: 'subscriptions.deleteAction' }))
+
+        expect(screen.getByText('subscriptions.deletePackageMessage')).toBeInTheDocument()
     })
 })

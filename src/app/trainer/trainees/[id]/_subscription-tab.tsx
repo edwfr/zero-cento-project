@@ -7,11 +7,12 @@ import { ActionIconButton, InlineActions } from '@/components/ActionIconButton'
 import { Button } from '@/components/Button'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import SubscriptionRenewalFormModal, { type RenewalFormPayload } from '@/components/SubscriptionRenewalFormModal'
+import SubscriptionEventList from '@/components/SubscriptionEventList'
 import { SkeletonDetail } from '@/components/Skeleton'
 import { useToast } from '@/components/ToastNotification'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { formatDate, getTodayForInput } from '@/lib/date-format'
-import { nextRenewalStart, type RenewalRow } from '@/lib/subscriptions'
+import { nextRenewalStart, programsLabel, type RenewalRow } from '@/lib/subscriptions'
 import type { TraineeSubscriptionState } from './_use-trainee-subscription'
 
 export interface SubscriptionTabProps {
@@ -26,12 +27,16 @@ export interface SubscriptionTabProps {
 export default function SubscriptionTab({ traineeId, state }: SubscriptionTabProps) {
     const { t } = useTranslation(['trainer', 'common'])
     const { showToast } = useToast()
-    const { renewals, current, loading, error, reload } = state
+    const { renewals, current, events, programBalance, loading, error, reload } = state
 
     const [modal, setModal] = useState<{ mode: 'create' | 'edit'; initial?: RenewalRow } | null>(null)
     const [saving, setSaving] = useState(false)
     const [pendingDelete, setPendingDelete] = useState<RenewalRow | null>(null)
     const [deleting, setDeleting] = useState(false)
+
+    // The balance is all-time: shown as soon as a package exists, whatever the current mode
+    const hasPackages = renewals.some((row) => row.kind === 'programs')
+    const balanceLabel = programsLabel(programBalance)
 
     const request = async (url: string, init: RequestInit) => {
         const res = await fetch(url, init)
@@ -99,6 +104,11 @@ export default function SubscriptionTab({ traineeId, state }: SubscriptionTabPro
                 <div>
                     <h2 className="text-xl font-bold text-gray-900">{t('subscriptions.title')}</h2>
                     <p className="mt-1 text-sm text-gray-600">{t('subscriptions.subtitle')}</p>
+                    {hasPackages && (
+                        <p data-testid="program-balance" className="mt-2 text-sm font-semibold text-gray-900">
+                            {t(balanceLabel.key, { count: balanceLabel.count })}
+                        </p>
+                    )}
                 </div>
                 <Button type="button" icon={<Plus />} onClick={() => setModal({ mode: 'create' })}>
                     {t('subscriptions.addButton')}
@@ -116,7 +126,7 @@ export default function SubscriptionTab({ traineeId, state }: SubscriptionTabPro
                         <table aria-labelledby="renewal-history-title" className="mt-4 min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    {['startColumn', 'durationColumn', 'endColumn', 'createdColumn'].map((column) => (
+                                    {['kindColumn', 'startColumn', 'durationColumn', 'endColumn', 'createdColumn'].map((column) => (
                                         <th
                                             key={column}
                                             className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
@@ -132,12 +142,15 @@ export default function SubscriptionTab({ traineeId, state }: SubscriptionTabPro
                             <tbody className="divide-y divide-gray-200 bg-white">
                                 {renewals.map((row) => (
                                     <tr key={row.id}>
+                                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">{t(`subscriptions.kind.${row.kind}`)}</td>
                                         <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{formatDate(row.startDate)}</td>
                                         <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                                            {t('subscriptions.durationValue', { count: row.durationMonths })}
+                                            {row.kind === 'programs'
+                                                ? t('subscriptions.programCountValue', { count: row.programCount ?? 0 })
+                                                : t('subscriptions.durationValue', { count: row.durationMonths ?? 0 })}
                                         </td>
                                         <td className="whitespace-nowrap px-6 py-4 text-sm font-semibold text-gray-900">
-                                            {formatDate(row.endDate)}
+                                            {row.endDate ? formatDate(row.endDate) : '—'}
                                         </td>
                                         <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">{formatDate(row.createdAt)}</td>
                                         <td className="whitespace-nowrap px-6 py-4 text-right">
@@ -162,11 +175,19 @@ export default function SubscriptionTab({ traineeId, state }: SubscriptionTabPro
                 )}
             </section>
 
+            <section className="overflow-hidden rounded-lg bg-white shadow-md">
+                <h3 className="px-6 pt-6 pb-2 text-lg font-semibold text-gray-900">{t('subscriptions.events.title')}</h3>
+                <SubscriptionEventList events={events} />
+            </section>
+
             {modal && (
                 <SubscriptionRenewalFormModal
                     mode={modal.mode}
                     initial={modal.initial}
                     defaultStartDate={nextRenewalStart(current?.kind === 'period' ? current.endDate : null, getTodayForInput())}
+                    defaultKind={current?.kind ?? 'period'}
+                    programBalance={programBalance}
+                    todayForInput={getTodayForInput()}
                     isSaving={saving}
                     onClose={() => setModal(null)}
                     onSubmit={(payload) => void handleSubmit(payload)}
@@ -179,10 +200,17 @@ export default function SubscriptionTab({ traineeId, state }: SubscriptionTabPro
                     onClose={() => setPendingDelete(null)}
                     onConfirm={() => void handleDelete(pendingDelete)}
                     title={t('subscriptions.deleteTitle')}
-                    message={t('subscriptions.deleteMessage', {
-                        start: formatDate(pendingDelete.startDate),
-                        end: formatDate(pendingDelete.endDate),
-                    })}
+                    message={
+                        pendingDelete.kind === 'programs'
+                            ? t('subscriptions.deletePackageMessage', {
+                                  date: formatDate(pendingDelete.startDate),
+                                  count: pendingDelete.programCount ?? 0,
+                              })
+                            : t('subscriptions.deleteMessage', {
+                                  start: formatDate(pendingDelete.startDate),
+                                  end: pendingDelete.endDate ? formatDate(pendingDelete.endDate) : '—',
+                              })
+                    }
                     confirmText={t('common:common.delete')}
                     variant="danger"
                     isLoading={deleting}

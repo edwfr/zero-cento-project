@@ -320,6 +320,29 @@
         }
     },
     "subscriptions": {
+        "kind": { "label": "Tipo di rinnovo", "period": "A mesi", "programs": "A schede" },
+        "kindColumn": "Tipo",
+        "purchaseDate": "Data acquisto",
+        "programCount": "Numero di schede",
+        "programCountShortcut": "{{count}}",
+        "programCountValue_one": "{{count}} scheda",
+        "programCountValue_other": "{{count}} schede",
+        "balancePreviewLabel": "Saldo dopo la registrazione:",
+        "deletePackageMessage": "Eliminare il pacchetto da {{count}} schede del {{date}}? Il saldo verrà ricalcolato.",
+        "events": {
+            "title": "Movimenti",
+            "empty": "Nessun movimento registrato",
+            "types": {
+                "period_renewal_created": "Rinnovo di {{months}} mesi registrato",
+                "package_created": "Pacchetto da {{count}} schede registrato",
+                "renewal_updated": "Rinnovo modificato",
+                "renewal_deleted": "Rinnovo eliminato",
+                "credit_consumed": "Scheda «{{title}}» pubblicata",
+                "credit_refunded": "Scheda «{{title}}» eliminata: scheda rimborsata",
+                "credit_forfeited": "Scheda «{{title}}» eliminata senza rimborso",
+                "unknown": "Movimento"
+            }
+        },
         "tab": "Abbonamento",
         "title": "Abbonamento",
         "subtitle": "Rinnovi visibili solo a te, non all'atleta",
@@ -331,8 +354,8 @@
         "durationShortcut": "{{count}} m",
         "previewLabel": "Scadrà il",
         "historyTitle": "Storico rinnovi",
-        "startColumn": "Inizio",
-        "durationColumn": "Durata",
+        "startColumn": "Inizio / acquisto",
+        "durationColumn": "Durata / schede",
         "endColumn": "Fine",
         "createdColumn": "Inserito il",
         "actionsColumn": "Azioni",

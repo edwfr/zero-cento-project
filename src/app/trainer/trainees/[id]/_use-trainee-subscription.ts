@@ -1,11 +1,15 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import type { RenewalRow, SubscriptionSummary } from '@/lib/subscriptions'
+import type { RenewalRow, SubscriptionEventRow, SubscriptionSummary } from '@/lib/subscriptions'
 
 export interface TraineeSubscriptionState {
     renewals: RenewalRow[]
     current: SubscriptionSummary | null
+    /** Movement history, newest first */
+    events: SubscriptionEventRow[]
+    /** Programs available across every package, whatever the current mode (negative = owed) */
+    programBalance: number
     loading: boolean
     error: boolean
     reload: () => Promise<void>
@@ -18,6 +22,8 @@ export interface TraineeSubscriptionState {
 export function useTraineeSubscription(traineeId: string): TraineeSubscriptionState {
     const [renewals, setRenewals] = useState<RenewalRow[]>([])
     const [current, setCurrent] = useState<SubscriptionSummary | null>(null)
+    const [events, setEvents] = useState<SubscriptionEventRow[]>([])
+    const [programBalance, setProgramBalance] = useState(0)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(false)
 
@@ -29,6 +35,8 @@ export function useTraineeSubscription(traineeId: string): TraineeSubscriptionSt
             const data = await res.json()
             setRenewals(data.data?.items ?? [])
             setCurrent(data.data?.current ?? null)
+            setEvents(data.data?.events ?? [])
+            setProgramBalance(data.data?.programBalance ?? 0)
         } catch {
             setError(true)
         } finally {
@@ -40,5 +48,5 @@ export function useTraineeSubscription(traineeId: string): TraineeSubscriptionSt
         void reload()
     }, [reload])
 
-    return { renewals, current, loading, error, reload }
+    return { renewals, current, events, programBalance, loading, error, reload }
 }

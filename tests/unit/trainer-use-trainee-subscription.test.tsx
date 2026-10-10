@@ -38,4 +38,30 @@ describe('useTraineeSubscription', () => {
         expect(result.current.renewals).toEqual([])
         expect(result.current.current).toBeNull()
     })
+
+    it('exposes the movement history and the program balance', async () => {
+        const events = [
+            { id: 'e1', type: 'package_created', creditDelta: 5, details: {}, createdAt: '2026-10-01T10:00:00.000Z', actorName: 'Marco Trainer' },
+        ]
+        global.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({ data: { items: [], current: null, programBalance: 3, events } }),
+        }) as never
+
+        const { result } = renderHook(() => useTraineeSubscription('t-1'))
+
+        await waitFor(() => expect(result.current.loading).toBe(false))
+        expect(result.current.events).toEqual(events)
+        expect(result.current.programBalance).toBe(3)
+    })
+
+    it('defaults to no events and a zero balance when the API omits them', async () => {
+        global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: { items: [], current: null } }) }) as never
+
+        const { result } = renderHook(() => useTraineeSubscription('t-1'))
+
+        await waitFor(() => expect(result.current.loading).toBe(false))
+        expect(result.current.events).toEqual([])
+        expect(result.current.programBalance).toBe(0)
+    })
 })

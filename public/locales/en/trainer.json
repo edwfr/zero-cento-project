@@ -320,6 +320,29 @@
         }
     },
     "subscriptions": {
+        "kind": { "label": "Renewal type", "period": "By months", "programs": "By programs" },
+        "kindColumn": "Type",
+        "purchaseDate": "Purchase date",
+        "programCount": "Number of programs",
+        "programCountShortcut": "{{count}}",
+        "programCountValue_one": "{{count}} program",
+        "programCountValue_other": "{{count}} programs",
+        "balancePreviewLabel": "Balance after recording:",
+        "deletePackageMessage": "Delete the package of {{count}} programs bought on {{date}}? The balance will be recalculated.",
+        "events": {
+            "title": "Movements",
+            "empty": "No movements recorded",
+            "types": {
+                "period_renewal_created": "{{months}}-month renewal recorded",
+                "package_created": "Package of {{count}} programs recorded",
+                "renewal_updated": "Renewal edited",
+                "renewal_deleted": "Renewal deleted",
+                "credit_consumed": "Program “{{title}}” published",
+                "credit_refunded": "Program “{{title}}” deleted: program refunded",
+                "credit_forfeited": "Program “{{title}}” deleted without refund",
+                "unknown": "Movement"
+            }
+        },
         "tab": "Subscription",
         "title": "Subscription",
         "subtitle": "Renewals visible only to you, not to the athlete",
@@ -331,8 +354,8 @@
         "durationShortcut": "{{count}} mo",
         "previewLabel": "Expires on",
         "historyTitle": "Renewal history",
-        "startColumn": "Start",
-        "durationColumn": "Duration",
+        "startColumn": "Start / purchase",
+        "durationColumn": "Duration / programs",
         "endColumn": "End",
         "createdColumn": "Recorded on",
         "actionsColumn": "Actions",
