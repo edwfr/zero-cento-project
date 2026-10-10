@@ -24,7 +24,6 @@ page.
   are only **displayed** alongside for comparison.
 - No overlapping periods and no multi-lane phase layout.
 - No day-level granularity: periods are whole weeks.
-- No drag-to-create on empty space (see Decisions).
 - No sharing or copying of phase types or plans between trainers or trainees.
 - No transfer of a plan when a trainee changes trainer.
 
@@ -36,7 +35,7 @@ page.
 | Periods vs programs | Independent; programs shown as a read-only row |
 | Granularity | Whole weeks: start on Monday, end on Sunday |
 | Overlap | Not allowed: at most one phase per week per trainee |
-| Editing | Drag to move, drag either edge to resize, click to create/edit via dialog |
+| Editing | Drag on empty weeks to create, drag a bar to move, drag either edge to resize; a dialog picks the phase and is the non-drag path for everything |
 | Visibility | Owning trainer only |
 | Timeline engine | `react-calendar-timeline` (0.30 beta, exact version pinned) |
 
@@ -47,14 +46,19 @@ only one with that shape natively; `@svar-ui/react-gantt` and `frappe-gantt` are
 one-row-per-task. It adds `dayjs` and `interactjs` as peer dependencies.
 
 **Known risk.** The chosen version is a beta, and snap, two-edge resize, canvas click and
-touch drag were confirmed from documentation, not from the beta itself. The implementation
-plan therefore starts with a verification task (see Rollout). Fallback:
+touch drag were confirmed from documentation, not from the beta itself. Drag-to-create is
+not a library feature at all and is built on top of it (below). The implementation plan
+therefore starts with a verification task (see Rollout). Fallback:
 `@svar-ui/react-gantt` with a one-row-per-period layout, which requires re-approving this
 spec's UI section.
 
-**Create by click, not by drag.** No candidate library documents drag-on-empty-space
-creation. Creating a period is: click an empty week (or the "New period" button), then
-confirm in the dialog. Move and resize are drag.
+**Drag-to-create is ours, not the library's.** No candidate library documents creating a
+bar by dragging on empty space, so it is implemented in `MacroPeriodTimeline` with pointer
+events on the `Fasi` row: the pointer's x position is converted to a date from the
+timeline's visible range (which the component already controls), and a temporary "draft"
+bar is rendered through the library's normal item list. The library's own
+drag-to-pan is suppressed on the `Fasi` row only; panning stays available on the header,
+on the `Schede` row, with the scroll wheel and with the navigation buttons.
 
 ## Data model
 
@@ -179,6 +183,9 @@ the API and the client:
 - `snapToWeekStart(date)` / `snapToWeekEnd(date)` — nearest Monday / Sunday.
 - `isValidPeriodRange(start, end)`.
 - `findOverlap(candidate, periods, ignoreId?)` — returns the conflicting period or `null`.
+- `clampRangeToFree(anchorWeek, pointerWeek, periods)` — the largest free whole-week range
+  from the anchor towards the pointer, stopping at the first occupied week.
+- `xToDate(x, canvasWidth, visibleStart, visibleEnd)` — pointer position to date.
 - `readableTextColor(hex)` — `'#ffffff'` or `'#111827'`, by relative luminance.
 - `programToRange(startDate, durationWeeks)` — date range for a program bar.
 - `PHASE_COLOR_PALETTE` — the 12 preset colours, and `nextUnusedColor(usedColors)`.
@@ -220,15 +227,23 @@ and `ssr: false` so the library and its peers are not in the bundle of the other
   is remembered per browser in `localStorage`, read defensively, defaulting to Weeks.
 - **Navigation.** Horizontal scroll, previous/next buttons, a "Today" button, and a
   vertical marker on the current day. The initial window is centred on today.
-- **Create.** Clicking an empty week on the `Fasi` row opens the period dialog prefilled
-  with that week. A "New period" button does the same without a prefilled week, for
-  keyboard and mobile use.
+- **Create by drag.** Pressing on an empty week of the `Fasi` row and dragging draws a
+  draft bar that snaps to whole weeks and grows in either direction. It cannot extend into
+  occupied weeks: it stops at the neighbouring period (`clampRangeToFree`). On release the
+  period dialog opens prefilled with the drawn range, so the trainer picks the phase and
+  confirms; nothing is saved before that. Cancelling the dialog, or pressing `Escape`
+  while dragging, discards the draft. A press without movement is a one-week draft, i.e.
+  a plain click on an empty week.
+- **Create without drag.** A "New period" button opens the same dialog with no prefilled
+  range, for keyboard use and for touch devices.
 - **Move / resize.** Dragging a bar or either edge snaps to whole weeks. The result is
   checked with `findOverlap` before any request: on conflict the bar returns to its
   position and a toast explains why. Otherwise the change is applied optimistically and
   rolled back if the API rejects it.
-- **Edit / delete.** Clicking a bar opens the same dialog, with a delete action behind a
-  confirmation.
+- **Edit / delete.** Clicking a bar (a press without movement, so it never conflicts with
+  a move) opens the same dialog, where phase, start week, end week and note can all be
+  changed, with a delete action behind a confirmation. Every change that can be made by
+  dragging can also be made in the dialog.
 - **Period dialog.** react-hook-form + Zod: phase (active phases only, plus the current
   one if archived), start week, end week, note.
 - **Bars.** Filled with the phase colour, labelled with the phase name, text colour from
@@ -238,13 +253,16 @@ and `ssr: false` so the library and its peers are not in the bundle of the other
   `/profile`.
 - **Empty state.** With no periods: a short message and the "New period" button. The
   programs row is still shown.
-- **Mobile.** The timeline scrolls horizontally and supports touch drag; the dialog is the
+- **Touch.** Existing bars can be moved and resized by touch drag. Drag-to-create is
+  pointer (mouse/pen) only: on touch, a horizontal drag on the timeline scrolls it, and a
+  tap on an empty week opens the dialog prefilled with that week. The dialog is the
   primary editing path on small screens.
 
 ## Testing
 
 - **Unit** (`tests/unit/macro-periods.test.ts`): snapping, range validation, overlap
-  detection including adjacency and year boundaries, text contrast, program ranges, palette
+  detection including adjacency and year boundaries, draft-range clamping in both
+  directions and against neighbours on either side, x-to-date conversion, text contrast, program ranges, palette
   selection. Zod schemas. `src/lib/macro-periods.ts` is added to the coverage list in
   `vitest.config.ts`.
 - **Integration** (`tests/integration/`): every route — foreign trainer rejected, overlap
@@ -252,7 +270,9 @@ and `ssr: false` so the library and its peers are not in the bundle of the other
   name, placeholder creation and its idempotency, trainer-scoped reads.
 - **Component**: the drag/resize handlers of `MacroPeriodTimeline` are exercised by calling
   the library callbacks directly (conflict reverts, success mutates, API failure rolls
-  back). Pixel-level dragging is not tested.
+  back). Drag-to-create is exercised with synthetic pointer events on the `Fasi` row:
+  draft grows and clamps, release opens the dialog prefilled, `Escape` and dialog cancel
+  discard it. Pixel-accurate dragging is not tested.
 - **E2E** (`tests/e2e/`): create a phase in the profile, open a trainee and land on the
   planning tab, create a period, see it coloured in the timeline and listed in the legend,
   switch Weeks/Month.
@@ -261,8 +281,12 @@ and `ssr: false` so the library and its peers are not in the bundle of the other
 
 1. **Verification task first.** Install the pinned beta and confirm, in a throwaway page,
    that week snapping, resize on both edges, canvas click with the clicked time, per-item
-   read-only bars and touch drag work on React 18.3 / Next 15. If any fails, stop and
-   return to the user with the SVAR fallback before writing feature code.
+   read-only bars and touch drag work on React 18.3 / Next 15. In the same page, prove the
+   drag-to-create mechanism: pointer events on one row with the library's pan suppressed
+   on that row only, and a draft item following the pointer. If a library capability
+   fails, stop and return to the user with the SVAR fallback before writing feature code.
+   If only drag-to-create proves infeasible on this library, stop and return to the user
+   as well: it is a stated requirement, not an optional extra.
 2. Prisma migration (additive, no backfill).
 3. Shared logic, schemas, API, then profile section, then planning tab.
 4. Locale files `public/locales/{en,it}/`, and an entry in
