@@ -63,7 +63,9 @@ test.describe('Trainer: program packages', () => {
 
         // Clean up: delete the package, the banner disappears, the deletion is in the history
         await page.goto(`${traineeUrl}?tab=subscription`)
-        await page.getByRole('button', { name: /elimina rinnovo|delete renewal/i }).first().click()
+        // Target the package row: the seeded athlete may have other renewals, sorted above it
+        const packageRow = page.getByRole('row').filter({ hasText: /a schede|by programs/i }).first()
+        await packageRow.getByRole('button', { name: /elimina rinnovo|delete renewal/i }).click()
         await page.getByRole('dialog').getByRole('button', { name: /elimina|delete/i }).first().click()
         await expect(banner).toBeHidden()
         await expect(page.getByText(/rinnovo eliminato|renewal deleted/i)).toBeVisible()

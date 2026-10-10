@@ -249,6 +249,17 @@ describe('DELETE /api/programs/[id] — trainer deletion', () => {
         expect(prismaMock.$transaction).toHaveBeenCalledTimes(1)
     })
 
+    it('settles the credit before deleting: afterwards the FK has nulled programId and the usage is unreachable', async () => {
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(consumingProgram as never)
+        prismaMock.programCreditUsage.findUnique.mockResolvedValue(usage as never)
+
+        await DELETE(deleteUrl('?refundCredit=true'), withIdParam('prog-1'))
+
+        const lookedUp = prismaMock.programCreditUsage.findUnique.mock.invocationCallOrder[0]
+        const deleted = prismaMock.trainingProgram.delete.mock.invocationCallOrder[0]
+        expect(lookedUp).toBeLessThan(deleted)
+    })
+
     it('writes no history for a program that never consumed a credit', async () => {
         prismaMock.trainingProgram.findUnique.mockResolvedValue(consumingProgram as never)
         prismaMock.programCreditUsage.findUnique.mockResolvedValue(null)

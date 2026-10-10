@@ -982,6 +982,15 @@ describe('POST /api/programs/[id]/publish', () => {
         expect(prismaMock.$transaction).toHaveBeenCalledTimes(1)
     })
 
+    it('gives the publish transaction room for a long program', async () => {
+        arrangePublishable()
+
+        await publish()
+
+        // One update per week runs on the single transaction connection: the 5 s default is too tight for 52 weeks
+        expect(prismaMock.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 15000 })
+    })
+
     it('fails the whole publish when the credit cannot be recorded', async () => {
         arrangePublishable()
         prismaMock.subscriptionRenewal.findFirst.mockResolvedValue({ kind: 'programs' } as never)
@@ -1058,7 +1067,7 @@ describe('POST /api/programs/[id]/publish', () => {
         expect(res.status).toBe(400)
     })
 
-    it('parallelizes week.update calls and returns 200 on success', async () => {
+    it('assigns a start date to every week and returns 200 on success', async () => {
         asTrainer()
         prismaMock.trainingProgram.findUnique
             .mockResolvedValueOnce(mockPublishProgram as never)

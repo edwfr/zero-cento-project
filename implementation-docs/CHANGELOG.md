@@ -11,6 +11,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Changed
+### [10 Ottobre 2026] — Rinnovi a schede: correzioni da review finale
+
+**File modificati:** `src/components/SubscriptionRenewalFormModal.tsx`, `src/app/api/programs/[id]/publish/route.ts`, `tests/unit/subscription-renewal-form-modal.test.tsx`, `tests/integration/programs.test.ts`, `tests/integration/program-detail.test.ts`, `tests/e2e/trainer-program-packages.spec.ts`
+**Note:** (1) Gli errori di validazione nella modale rinnovo mostravano la chiave i18n grezza: ora usano il namespace corretto (`errors:` per il numero di schede, `validation:` per la durata in mesi, difetto preesistente). (2) Transazione di pubblicazione: aggiornamento settimane sequenziale e timeout a 15 s, perché una transazione usa una sola connessione e il default di 5 s era stretto per programmi lunghi. (3) Test che fissa l'ordine "regola credito, poi elimina programma". (4) E2E: l'eliminazione finale punta alla riga del pacchetto, non alla prima riga. **Rilascio: applicare la migration `20261010000000_add_program_package_renewals` PRIMA del deploy del codice** (`GET /api/programs` legge la nuova relazione e fallirebbe senza tabelle); la migration è compatibile con il codice precedente.
 ### [10 Ottobre 2026] — E2E rinnovi a pacchetto di schede
 
 **File modificati:** `tests/e2e/trainer-program-packages.spec.ts` (nuovo)

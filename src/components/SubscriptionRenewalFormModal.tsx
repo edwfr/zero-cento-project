@@ -92,7 +92,8 @@ export default function SubscriptionRenewalFormModal({
     const handleSubmit = () => {
         if (isPrograms) {
             if (!isValidProgramCount(count)) {
-                setError('validation.programCountRange')
+                // Namespaced: this component's default namespace is trainer
+                setError('errors:validation.programCountRange')
                 return
             }
             setError(null)
@@ -100,7 +101,7 @@ export default function SubscriptionRenewalFormModal({
             return
         }
         if (!isValidDurationMonths(months)) {
-            setError('validation.durationMonthsRange')
+            setError('validation:validation.durationMonthsRange')
             return
         }
         setError(null)

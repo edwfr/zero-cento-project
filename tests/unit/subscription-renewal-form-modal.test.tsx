@@ -95,7 +95,7 @@ describe('SubscriptionRenewalFormModal', () => {
         fireEvent.change(screen.getByLabelText(/subscriptions\.duration/), { target: { value } })
         save()
 
-        expect(screen.getByText('validation.durationMonthsRange')).toBeInTheDocument()
+        expect(screen.getByText('validation:validation.durationMonthsRange')).toBeInTheDocument()
         expect(onSubmit).not.toHaveBeenCalled()
     })
 
@@ -186,7 +186,8 @@ describe('SubscriptionRenewalFormModal', () => {
         save()
 
         expect(onSubmit).not.toHaveBeenCalled()
-        expect(screen.getByText('validation.programCountRange')).toBeInTheDocument()
+        // Namespaced: the modal's default namespace is trainer, the message lives in errors.json
+        expect(screen.getByText('errors:validation.programCountRange')).toBeInTheDocument()
     })
 
     it('keeps save disabled while the count is empty', () => {

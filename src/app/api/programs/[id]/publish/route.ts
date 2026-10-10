@@ -8,6 +8,9 @@ import { handleApiError } from '@/lib/api-error-handler'
 import { weekStartDate } from '@/lib/program-visibility'
 import { consumeCreditOnPublish } from '@/lib/program-credits'
 
+// One statement per week through the pooler: the 5 s default is too tight for a year-long program
+const PUBLISH_TRANSACTION_TIMEOUT_MS = 15000
+
 const publishSchema = z.object({
     startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)'),
 })
@@ -99,15 +102,14 @@ export async function POST(
                 },
             })
 
-            // Assign dates to weeks
-            await Promise.all(
-                program.weeks.map((week) =>
-                    tx.week.update({
-                        where: { id: week.id },
-                        data: { startDate: weekStartDate(startDateObj, week.weekNumber) },
-                    })
-                )
-            )
+            // Assign dates to weeks. Sequential on purpose: a transaction owns one
+            // connection, so Promise.all would only queue the same statements.
+            for (const week of program.weeks) {
+                await tx.week.update({
+                    where: { id: week.id },
+                    data: { startDate: weekStartDate(startDateObj, week.weekNumber) },
+                })
+            }
 
             return consumeCreditOnPublish(tx, {
                 traineeId: program.traineeId,
@@ -115,7 +117,7 @@ export async function POST(
                 programTitle: program.title,
                 actorId: session.user.id,
             })
-        })
+        }, { timeout: PUBLISH_TRANSACTION_TIMEOUT_MS })
 
         // Fetch updated program
         const updatedProgram = await prisma.trainingProgram.findUnique({
