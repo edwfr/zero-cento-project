@@ -2323,17 +2323,19 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             })
 
             // Clean up any orphaned draft state for this workout
+            // Updaters must stay pure: read the ids up front, never from inside a deferred updater
+            const orphanDraftIds = draftRowIdsByWorkout[workoutId] ?? []
+            if (orphanDraftIds.length > 0) {
+                setRowStateById((rows) => {
+                    const nextRows = { ...rows }
+                    orphanDraftIds.forEach((id) => delete nextRows[id])
+                    return nextRows
+                })
+            }
             setDraftRowIdsByWorkout((current) => {
-                const next = { ...current }
-                if (next[workoutId]) {
-                    setRowStateById((rows) => {
-                        const nextRows = { ...rows }
-                        next[workoutId].forEach((id) => delete nextRows[id])
-                        return nextRows
-                    })
-                    delete next[workoutId]
-                }
-                return next
+                if (!current[workoutId]) return current
+                const { [workoutId]: _removed, ...rest } = current
+                return rest
             })
 
             showToast(t('editProgram.workoutDeletedSuccess'), 'success')

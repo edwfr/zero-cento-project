@@ -11,6 +11,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Fixed
+### [10 Ottobre 2026] — Fix crash eliminazione workout con bozze (Sentry JAVASCRIPT-NEXTJS-15)
+
+**File modificati:** `src/app/trainer/programs/[id]/edit/_content.tsx`
+
+L'updater di `setDraftRowIdsByWorkout` annidava `setRowStateById` e poi faceva `delete next[workoutId]`: l'updater interno, eseguito dopo, leggeva `undefined.forEach`. Ora gli id delle bozze si leggono prima e i due setState sono separati e puri.
+
 ### [10 Ottobre 2026] — Gantt: barre fase senza nome
 
 **File modificati:** `MacroPeriodTimeline.tsx`
