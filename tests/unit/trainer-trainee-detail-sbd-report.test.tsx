@@ -2,6 +2,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 
+vi.mock('@/app/trainer/trainees/[id]/_planning-tab', () => ({
+    default: () => <div data-testid="planning-tab" />,
+}))
+
 vi.mock('recharts', () => {
     const Wrapper = ({ children, ...props }: { children?: ReactNode }) => <div {...props}>{children}</div>
 

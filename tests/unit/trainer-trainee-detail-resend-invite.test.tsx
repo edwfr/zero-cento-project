@@ -1,6 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
+vi.mock('@/app/trainer/trainees/[id]/_planning-tab', () => ({
+    default: () => <div data-testid="planning-tab" />,
+}))
+
 vi.mock('recharts', () => ({
     ResponsiveContainer: () => null,
     LineChart: () => null,

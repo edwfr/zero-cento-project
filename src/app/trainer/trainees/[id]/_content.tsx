@@ -20,6 +20,7 @@ import { compareExerciseType, EXERCISE_TYPE_META, type ExerciseType } from '@/li
 import TraineePlannedMuscleGroupReport from '@/components/TraineePlannedMuscleGroupReport'
 import TraineeNotesEditor from './_trainee-notes-editor'
 import MeasurementsTab from './_measurements-tab'
+import PlanningTab from './_planning-tab'
 import ProgramCreditRefundModal from '@/components/ProgramCreditRefundModal'
 import SubscriptionTab from './_subscription-tab'
 import SubscriptionAlertBanner from './_subscription-alert'
@@ -27,6 +28,7 @@ import SubscriptionStatusIcon from '@/components/SubscriptionStatusIcon'
 import { useTraineeSubscription } from './_use-trainee-subscription'
 import {
     BarChart3,
+    CalendarRange,
     ChevronDown,
     ChevronUp,
     ClipboardList,
@@ -174,7 +176,14 @@ interface SbdKpiRow {
 
 type ProgramStatusTab = 'draft' | 'active' | 'completed'
 
-type DetailTab = 'notes' | 'programs' | 'records' | 'reports' | 'measurements' | 'subscription'
+type DetailTab = 'planning' | 'notes' | 'programs' | 'records' | 'reports' | 'measurements' | 'subscription'
+
+const DETAIL_TABS: readonly DetailTab[] = ['planning', 'notes', 'programs', 'records', 'reports', 'measurements', 'subscription']
+
+/** `?tab=<name>` opens that tab; anything else opens the plan. */
+function resolveInitialTab(requested: string | null): DetailTab {
+    return DETAIL_TABS.find((tab) => tab === requested) ?? 'planning'
+}
 
 interface ProgramStatusCounts {
     draft: number
@@ -313,9 +322,7 @@ export default function TraineeDetailContent() {
     const [plannedPoints, setPlannedPoints] = useState<PlannedTrainingSetsPoint[]>([])
     const [error, setError] = useState<string | null>(null)
     const searchParams = useSearchParams()
-    const [activeTab, setActiveTab] = useState<DetailTab>(() =>
-        searchParams.get('tab') === 'subscription' ? 'subscription' : 'programs'
-    )
+    const [activeTab, setActiveTab] = useState<DetailTab>(() => resolveInitialTab(searchParams.get('tab')))
     const subscription = useTraineeSubscription(traineeId)
     const [draftNoteDocument, setDraftNoteDocument] = useState<JSONContent | null>(null)
     const [notesDirty, setNotesDirty] = useState(false)
@@ -1193,7 +1200,21 @@ export default function TraineeDetailContent() {
                 {/* Tabs */}
                 <div className="mb-6">
                     <div className="border-b border-gray-200">
-                        <nav className="-mb-px flex space-x-8">
+                        <nav className="-mb-px flex space-x-8 overflow-x-auto">
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                icon={<CalendarRange size={16} />}
+                                onClick={() => setActiveTab('planning')}
+                                aria-pressed={activeTab === 'planning'}
+                                className={`rounded-none border-b-2 bg-transparent px-1 pb-4 font-semibold shadow-none hover:bg-transparent ${activeTab === 'planning'
+                                    ? 'border-brand-primary text-brand-primary'
+                                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                                    }`}
+                            >
+                                {t('planning.tab')}
+                            </Button>
                             <Button
                                 type="button"
                                 variant="secondary"
@@ -1283,6 +1304,7 @@ export default function TraineeDetailContent() {
                 </div>
 
                 {/* Tab Content */}
+                {activeTab === 'planning' && <PlanningTab traineeId={traineeId} />}
                 {activeTab === 'notes' && (
                     <div className="space-y-4">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

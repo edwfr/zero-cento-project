@@ -4,6 +4,10 @@ import type { ReactNode } from 'react'
 
 const navigationState = vi.hoisted(() => ({ search: '' }))
 
+vi.mock('@/app/trainer/trainees/[id]/_planning-tab', () => ({
+    default: () => <div data-testid="planning-tab" />,
+}))
+
 vi.mock('next/navigation', () => ({
     useParams: () => ({ id: 'trainee-1' }),
     useSearchParams: () => new URLSearchParams(navigationState.search),
@@ -67,7 +71,7 @@ type ProgramStatus = 'draft' | 'active' | 'completed'
 describe('TraineeDetailContent Programs tab', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        navigationState.search = ''
+        navigationState.search = 'tab=programs'
 
         const now = new Date()
         const isoDaysAgo = (days: number) => new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString()
@@ -446,6 +450,23 @@ describe('TraineeDetailContent Programs tab', () => {
             name: 'subscriptions.badge.expiring · subscriptions.remaining.daysLeft',
         })
         expect(icon).toHaveAttribute('data-status', 'expiring')
+    })
+
+    it('opens on the planning tab when no tab is requested', async () => {
+        navigationState.search = ''
+
+        render(<TraineeDetailContent />)
+
+        expect(await screen.findByTestId('planning-tab')).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: 'planning.tab' })).toHaveAttribute('aria-pressed', 'true')
+    })
+
+    it('opens on the planning tab for an unknown tab name', async () => {
+        navigationState.search = 'tab=nope'
+
+        render(<TraineeDetailContent />)
+
+        expect(await screen.findByTestId('planning-tab')).toBeInTheDocument()
     })
 
     it('opens the subscription tab directly from ?tab=subscription', async () => {
