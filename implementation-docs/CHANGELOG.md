@@ -11,6 +11,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Fixed
+### [10 Ottobre 2026] — Gantt: barre fase senza nome
+
+**File modificati:** `MacroPeriodTimeline.tsx`
+
+Il nome fase non è più scritto nella barra (il colore basta, legenda sotto); resta nel tooltip all'hover.
+
 ### [10 Ottobre 2026] — Gantt: apertura scheda senza loader bloccato e con back alla pianificazione
 
 **File modificati:** `trainees/[id]/_planning-tab.tsx`, `programs/[id]/page.tsx`, `trainer-trainee-planning-tab.test.tsx`

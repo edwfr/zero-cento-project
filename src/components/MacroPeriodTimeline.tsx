@@ -167,7 +167,7 @@ export default function MacroPeriodTimeline({
             id: `period:${period.id}`,
             group: PHASES_GROUP,
             kind: 'period',
-            label: period.phaseType.name,
+            label: '',
             tooltip: period.note ? `${period.phaseType.name} — ${period.note}` : period.phaseType.name,
             background: period.phaseType.color,
             textColor: readableTextColor(period.phaseType.color),
