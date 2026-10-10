@@ -158,6 +158,7 @@ export default function SetPasswordPage() {
         }
 
         setLoading(true)
+        let activateFailure: { status: number; code?: string } | undefined
 
         try {
             const supabase = createClient()
@@ -169,13 +170,24 @@ export default function SetPasswordPage() {
 
             if (updateError) throw updateError
 
-            // Activate the user in the database
-            const activateResponse = await fetch('/api/auth/activate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-            })
+            // Activate the user in the database. A 401 right after updateUser means the
+            // new session cookies have not propagated yet: retry once before giving up.
+            const activate = () =>
+                fetch('/api/auth/activate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                })
+
+            let activateResponse = await activate()
+            if (activateResponse.status === 401) {
+                await new Promise((resolve) => setTimeout(resolve, 800))
+                activateResponse = await activate()
+            }
 
             if (!activateResponse.ok) {
+                activateFailure = { status: activateResponse.status }
+                const body = await activateResponse.json().catch(() => null)
+                activateFailure.code = typeof body?.error?.code === 'string' ? body.error.code : undefined
                 throw new Error(t('auth:setPassword.errorActivateUser'))
             }
 
@@ -195,7 +207,15 @@ export default function SetPasswordPage() {
 
             router.push(`/${role}/dashboard`)
         } catch (err: any) {
-            Sentry.captureException(err)
+            // 403 = account deactivated after a previous activation: expected, not a bug
+            if (activateFailure?.status !== 403) {
+                Sentry.captureException(err, {
+                    extra: {
+                        activateStatus: activateFailure?.status,
+                        activateErrorCode: activateFailure?.code,
+                    },
+                })
+            }
             setError(err.message || t('auth:setPassword.errorGeneric'))
         } finally {
             setLoading(false)

@@ -11,6 +11,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Fixed
+### [10 Ottobre 2026] — Sentry: contesto HTTP su autosave feedback e attivazione utente (JAVASCRIPT-NEXTJS-R, -14)
+
+**File modificati:** `src/app/trainee/workouts/[id]/_content.tsx`, `src/app/onboarding/set-password/page.tsx`
+
+Gli errori non riportavano status né codice API, quindi la causa era indiagnosticabile. Ora l'evento Sentry include `httpStatus`/`apiErrorCode`. Non si segnalano più 401/403/429 dell'autosave (attesi) né il 403 di attivazione (account disattivato). L'attivazione ritenta una volta su 401 (cookie di sessione non ancora propagati dopo `updateUser`).
+
 ### [10 Ottobre 2026] — Sentry: filtri lock auth e Failed to fetch (JAVASCRIPT-NEXTJS-1A, -17)
 
 **File modificati:** `src/lib/sentry-filters.ts`, `tests/unit/lib/sentry-filters.test.ts`

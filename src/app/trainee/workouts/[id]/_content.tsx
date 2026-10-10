@@ -143,6 +143,9 @@ const isAbortError = (error: unknown): boolean => {
     return error instanceof Error && error.name === 'AbortError'
 }
 
+// Expected auth/throttle responses: the trainee sees the toast, nothing to triage in Sentry
+const EXPECTED_AUTOSAVE_STATUSES = new Set([401, 403, 429])
+
 const RPE_OPTIONS = [
     { value: 5, labelKey: 'rpe5' },
     { value: 5.5, labelKey: 'rpe5_5' },
@@ -418,6 +421,8 @@ export default function WorkoutDetailContent() {
         const { workoutExerciseId, setIdx, changedSet, previousSets, previousExerciseCompleted } = input
 
         setPersistingKeys((prev) => new Set(prev).add(`${workoutExerciseId}:${setIdx}`))
+        let httpStatus: number | undefined
+        let apiErrorCode: string | undefined
         try {
             const res = await keepaliveFetch(`/api/trainee/workout-exercises/${workoutExerciseId}/feedback`, {
                 method: 'PATCH',
@@ -438,6 +443,8 @@ export default function WorkoutDetailContent() {
             const data = await res.json()
 
             if (!res.ok) {
+                httpStatus = res.status
+                apiErrorCode = typeof data?.error?.code === 'string' ? data.error.code : undefined
                 throw new Error(getApiErrorMessage(data, t('workouts.errorFeedback'), t))
             }
 
@@ -495,16 +502,21 @@ export default function WorkoutDetailContent() {
                 ...prev,
                 [workoutExerciseId]: previousExerciseCompleted,
             }))
-            Sentry.captureException(err, {
-                tags: {
-                    feature: 'trainee-set-autosave',
-                    aborted: String(aborted),
-                },
-                extra: {
-                    workoutExerciseId,
-                    setNumber: changedSet.setNumber,
-                },
-            })
+            if (httpStatus === undefined || !EXPECTED_AUTOSAVE_STATUSES.has(httpStatus)) {
+                Sentry.captureException(err, {
+                    tags: {
+                        feature: 'trainee-set-autosave',
+                        aborted: String(aborted),
+                        ...(httpStatus !== undefined && { http_status: String(httpStatus) }),
+                    },
+                    extra: {
+                        workoutExerciseId,
+                        setNumber: changedSet.setNumber,
+                        httpStatus,
+                        apiErrorCode,
+                    },
+                })
+            }
             showToast(
                 aborted
                     ? t('workouts.errorFeedback')
