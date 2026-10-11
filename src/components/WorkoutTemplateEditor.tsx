@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown, ChevronUp, Plus, Save } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import '@/lib/i18n/client'
@@ -361,7 +361,7 @@ export default function WorkoutTemplateEditor({ initialTemplate }: WorkoutTempla
                         </div>
                     )}
 
-                    <Button type="button" variant="secondary" size="sm" onClick={() => addRow(day)}>
+                    <Button type="button" variant="secondary" size="sm" icon={<Plus />} onClick={() => addRow(day)}>
                         {t('trainer:templates.addExercise')}
                     </Button>
                 </section>
@@ -377,7 +377,7 @@ export default function WorkoutTemplateEditor({ initialTemplate }: WorkoutTempla
                 <Button type="button" variant="secondary" onClick={() => router.push('/trainer/templates')}>
                     {t('trainer:templates.cancel')}
                 </Button>
-                <Button type="submit" isLoading={isSaving} loadingText={t('common:common.saving')}>
+                <Button type="submit" icon={<Save />} isLoading={isSaving} loadingText={t('common:common.saving')}>
                     {t('trainer:templates.saveToLibrary')}
                 </Button>
             </div>

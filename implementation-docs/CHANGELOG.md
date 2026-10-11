@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### ui(templates): icone sui bottoni dell'editor workout template (11/10/2026)
+- `WorkoutTemplateEditor`: icona `Plus` su "Aggiungi esercizio" e `Save` sul bottone di salvataggio (prop `icon` di `Button`), coerente con gli altri form trainer.
+
 ### fix(programs): wizard bloccato sul chooser dopo la scelta del workout template (11/10/2026)
 - `NewProgramContent`: scegliere un template naviga sulla stessa route (`?templateId=`), quindi il componente non viene rimontato e `startMode`/`workoutsPerWeek` (inizializzati in `useState`) restavano quelli del chooser: compariva il banner ma non il form. Ora form visibile e workout/settimana sono derivati dalle props (`cloneSource`/`templateSource`). Test di regressione in `tests/unit/NewProgramContent.test.tsx`.
 
