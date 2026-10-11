@@ -1064,6 +1064,8 @@
         "selectExercise": "Seleziona esercizio",
         "addExercise": "Aggiungi esercizio",
         "removeExercise": "Rimuovi",
+        "moveUp": "Sposta su",
+        "moveDown": "Sposta giù",
         "saveToLibrary": "Salva in libreria",
         "cancel": "Annulla",
         "startTitle": "Come vuoi iniziare?",

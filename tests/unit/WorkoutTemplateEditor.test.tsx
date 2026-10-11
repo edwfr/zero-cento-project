@@ -129,7 +129,7 @@ describe('WorkoutTemplateEditor', () => {
         expect(screen.getByLabelText('trainer:templates.colRest')).toBeTruthy()
         expect(container.querySelector('[name="weight"]')).toBeNull()
         expect(container.querySelector('[name="targetRpe"]')).toBeNull()
-        fireEvent.click(screen.getByText('trainer:templates.removeExercise'))
+        fireEvent.click(screen.getByLabelText('trainer:templates.removeExercise'))
         expect(screen.queryByText('pick')).toBeNull()
     })
 

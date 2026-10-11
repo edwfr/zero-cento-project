@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import '@/lib/i18n/client'
@@ -143,6 +144,20 @@ export default function WorkoutTemplateEditor({ initialTemplate }: WorkoutTempla
         )
     }
 
+    const moveRow = (day: number, rowId: string, direction: -1 | 1) => {
+        setWorkouts((current) =>
+            current.map((rows, d) => {
+                if (d !== day) return rows
+                const from = rows.findIndex((r) => r.id === rowId)
+                const to = from + direction
+                if (from < 0 || to < 0 || to >= rows.length) return rows
+                const next = [...rows]
+                ;[next[from], next[to]] = [next[to], next[from]]
+                return next
+            })
+        )
+    }
+
     const colorsByDay = useMemo(() => workouts.map((rows) => computeExerciseGroupColors(rows)), [workouts])
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -246,11 +261,11 @@ export default function WorkoutTemplateEditor({ initialTemplate }: WorkoutTempla
                                         <th className="px-1 py-1 font-medium w-20">{t('trainer:templates.colSets')}</th>
                                         <th className="px-1 py-1 font-medium w-28">{t('trainer:templates.colReps')}</th>
                                         <th className="px-1 py-1 font-medium w-36">{t('trainer:templates.colRest')}</th>
-                                        <th className="px-1 py-1 w-24" />
+                                        <th className="px-1 py-1 w-28" />
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {rows.map((row) => {
+                                    {rows.map((row, rowIndex) => {
                                         const group = colorsByDay[day].get(row.id)
                                         return (
                                             <tr
@@ -310,11 +325,33 @@ export default function WorkoutTemplateEditor({ initialTemplate }: WorkoutTempla
                                                     </select>
                                                 </td>
                                                 <td className="px-1 py-1 text-right">
+                                                    <div className="flex items-center justify-end gap-1">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => moveRow(day, row.id, -1)}
+                                                        disabled={rowIndex === 0}
+                                                        title={t('trainer:templates.moveUp')}
+                                                        aria-label={t('trainer:templates.moveUp')}
+                                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                                                    >
+                                                        <ChevronUp className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => moveRow(day, row.id, 1)}
+                                                        disabled={rowIndex === rows.length - 1}
+                                                        title={t('trainer:templates.moveDown')}
+                                                        aria-label={t('trainer:templates.moveDown')}
+                                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                                                    >
+                                                        <ChevronDown className="w-4 h-4" />
+                                                    </button>
                                                     <ActionIconButton
                                                         variant="delete"
                                                         label={t('trainer:templates.removeExercise')}
                                                         onClick={() => removeRow(day, row.id)}
                                                     />
+                                                    </div>
                                                 </td>
                                             </tr>
                                         )

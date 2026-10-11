@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(templates): riordino esercizi nel workout template (11/10/2026)
+- `WorkoutTemplateEditor`: bottoni sposta su/giù per riga (`moveRow`); l'ordine salvato segue la posizione nell'array (API già assegna `order: i`). Nuove chiavi i18n `templates.moveUp/moveDown` (it/en).
+
 ### ui(templates): icona cestino al posto di "Rimuovi" (11/10/2026)
 - `WorkoutTemplateEditor`: il testo "Rimuovi" sulle righe esercizio diventa `ActionIconButton variant="delete"` (label/tooltip invariati), coerente con le altre tabelle.
 
