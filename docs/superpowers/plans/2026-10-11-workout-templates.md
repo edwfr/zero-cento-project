@@ -139,7 +139,7 @@ model WorkoutTemplateExercise {
 **Test command:** `npx vitest run tests/unit/workout-template-schema.test.ts tests/unit/lib/workout-templates.test.ts`
 **Done when:** both test files pass and the mapping functions return the exact row shapes below for a 2-day template.
 
-- [ ] **Step 1: tests** — one line per case.
+- [x] **Step 1: tests** — one line per case.
   Schema (`tests/unit/workout-template-schema.test.ts`, import `workoutTemplateSchema` from `@/schemas/workout-template`):
   - valid 2-day template → success
   - empty/whitespace `name` → fail with message `validation.templateNameRequired`
@@ -157,7 +157,7 @@ model WorkoutTemplateExercise {
   - `buildWeek1ExerciseRows`: template day 0 (2 exercises), day 1 (1 exercise) + program week-1 workouts `[{id:'w1',dayIndex:1},{id:'w2',dayIndex:2}]` → 3 rows; rows of day 0 have `workoutId:'w1'`, day 1 `workoutId:'w2'`; each row has `weightType:'absolute'`, `weight:null`, `effectiveWeight:null`, `targetRpe:null`, `variant:null`, `notes:null`, `isWarmup/isJumpSet/isSuperSet/isCompleted:false`, and `sets/reps/restTime/order/exerciseId` from the template
   - `buildWeek1ExerciseRows` when a template day has no matching program workout → throws `Error('Week 1 workout not found for dayIndex 3')`
   - `buildSkeletonRows('prog-1', template)` → rows with `programId:'prog-1'`, `dayIndex` equal to the template's 0-based day, `order`, `exerciseId`; empty template → `[]`
-- [ ] **Step 2: implementation** —
+- [x] **Step 2: implementation** —
   `src/schemas/workout-template.ts`: reuse the reps validation rule from `src/schemas/workout-exercise.ts` (read it and import/reuse its reps regex or refine; do not invent a second rule) and its `restTime` enum values. Exports:
 
 ```ts
@@ -190,8 +190,8 @@ export function buildSkeletonRows(programId: string, workouts: TemplateWorkoutLi
 ```
 
   `buildWeek1ExerciseRows` matches template day `d` to the program workout with `dayIndex === d + 1`; missing → throw the error above. Preserve template `order`.
-- [ ] **Step 3: run the test command and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit** — `feat(templates): add template schema and mapping helpers`
+- [x] **Step 3: run the test command and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit** — `feat(templates): add template schema and mapping helpers`
 
 ---
 

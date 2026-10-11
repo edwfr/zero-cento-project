@@ -11,6 +11,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Added
+### [11 Ottobre 2026] — Template allenamento: schema Zod e helper di mapping
+
+**File modificati:** `src/schemas/workout-template.ts`, `src/lib/workout-templates.ts`, `tests/unit/workout-template-schema.test.ts`, `tests/unit/lib/workout-templates.test.ts`
+
+Aggiunti lo schema `workoutTemplateSchema` (nome, giorni, esercizi con serie/reps/recupero) e gli helper puri `countTemplateExercises`, `buildWeek1ExerciseRows`, `buildSkeletonRows` per copiare un template nella Settimana 1 di un programma (dayIndex template 0-based -> workout 1-based).
+
 ### [11 Ottobre 2026] — Template allenamento: modelli Prisma e migrazione
 
 **File modificati:** `prisma/schema.prisma`, `prisma/migrations/20261011100000_add_workout_templates/migration.sql`
