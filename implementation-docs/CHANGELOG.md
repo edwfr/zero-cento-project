@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### ui(templates): icona cestino al posto di "Rimuovi" (11/10/2026)
+- `WorkoutTemplateEditor`: il testo "Rimuovi" sulle righe esercizio diventa `ActionIconButton variant="delete"` (label/tooltip invariati), coerente con le altre tabelle.
+
 ### test(macro-periods): allineati al DatePicker (11/10/2026)
 - `macro-period-form-modal` e `trainer-trainee-planning-tab`: i campi data ora sono `DatePicker` (testo `GG/MM/AAAA`), i test usavano ancora valori ISO. Aggiornati valori attesi e input digitati. Risolto anche l'errore non gestito `phaseType` undefined (effetto del range non applicato nel test overlap).
 

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import '@/lib/i18n/client'
 import { Button } from '@/components/Button'
+import { ActionIconButton } from '@/components/ActionIconButton'
 import { Input } from '@/components/Input'
 import AutocompleteSearch, { type AutocompleteOption } from '@/components/AutocompleteSearch'
 import { useNavigationLoader } from '@/components/NavigationLoadingProvider'
@@ -309,13 +310,11 @@ export default function WorkoutTemplateEditor({ initialTemplate }: WorkoutTempla
                                                     </select>
                                                 </td>
                                                 <td className="px-1 py-1 text-right">
-                                                    <button
-                                                        type="button"
+                                                    <ActionIconButton
+                                                        variant="delete"
+                                                        label={t('trainer:templates.removeExercise')}
                                                         onClick={() => removeRow(day, row.id)}
-                                                        className="text-sm text-state-error hover:underline min-h-[36px] px-2"
-                                                    >
-                                                        {t('trainer:templates.removeExercise')}
-                                                    </button>
+                                                    />
                                                 </td>
                                             </tr>
                                         )
