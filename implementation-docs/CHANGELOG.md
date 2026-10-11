@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### test(macro-periods): allineati al DatePicker (11/10/2026)
+- `macro-period-form-modal` e `trainer-trainee-planning-tab`: i campi data ora sono `DatePicker` (testo `GG/MM/AAAA`), i test usavano ancora valori ISO. Aggiornati valori attesi e input digitati. Risolto anche l'errore non gestito `phaseType` undefined (effetto del range non applicato nel test overlap).
+
 ### fix(templates): fix da review (11/10/2026)
 - Editor: `workoutsPerWeek` tenuto come testo, ridimensionamento solo al blur (campo vuoto non cancella più i giorni); conferma prima di eliminare giorni con esercizi.
 - `POST /api/programs`: `templateId` ammesso solo ai trainer, ownership su `session.user.id` (admin -> 404); P2025 sul bump `usageCount` -> 404 `template.notFound`.

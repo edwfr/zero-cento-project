@@ -182,7 +182,7 @@ describe('PlanningTab', () => {
 
         expect(timeline().draft).toEqual({ startDate: '2026-10-19', endDate: '2026-10-25' })
         const dialog = within(screen.getByRole('dialog'))
-        expect(dialog.getByLabelText(/planning\.startWeek/)).toHaveValue('2026-10-19')
+        expect(dialog.getByLabelText(/planning\.startWeek/)).toHaveValue('19/10/2026')
 
         fireEvent.click(dialog.getByRole('button', { name: 'common:common.save' }))
 
@@ -216,7 +216,7 @@ describe('PlanningTab', () => {
 
         act(() => timeline().onDraftCommit({ startDate: '2026-10-19', endDate: '2026-10-25' }))
         const dialog = within(screen.getByRole('dialog'))
-        fireEvent.change(dialog.getByLabelText(/planning\.endWeek/), { target: { value: '2026-11-04' } })
+        fireEvent.change(dialog.getByLabelText(/planning\.endWeek/), { target: { value: '04/11/2026' } })
         fireEvent.click(dialog.getByRole('button', { name: 'common:common.save' }))
 
         expect(await screen.findByRole('alert')).toHaveTextContent('errors:macroPeriod.overlap')
@@ -242,7 +242,7 @@ describe('PlanningTab', () => {
         fireEvent.click(screen.getByRole('button', { name: 'planning.newPeriod' }))
 
         const dialog = within(screen.getByRole('dialog'))
-        expect(dialog.getByLabelText(/planning\.startWeek/)).toHaveValue('2026-10-05')
+        expect(dialog.getByLabelText(/planning\.startWeek/)).toHaveValue('05/10/2026')
     })
 
     it('applies a drag at once and saves it', async () => {
