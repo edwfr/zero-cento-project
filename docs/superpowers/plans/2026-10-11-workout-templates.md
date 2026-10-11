@@ -300,7 +300,7 @@ if (template) {
 
 Invoke `zero-cento-frontend` first. Page shells mirror `src/app/trainer/programs/page.tsx` (session check, `DashboardLayout`, redirect non-trainers) and `loading.tsx` mirrors `src/app/trainer/programs/loading.tsx`.
 
-- [ ] **Step 1: tests** — `WorkoutTemplateEditor.test.tsx` (mock `fetch`, `next/navigation`, i18n like `tests/unit/NewProgramContent.test.tsx`):
+- [x] **Step 1: tests** — `WorkoutTemplateEditor.test.tsx` (mock `fetch`, `next/navigation`, i18n like `tests/unit/NewProgramContent.test.tsx`):
   - renders with `workoutsPerWeek` 3 → 3 workout blocks labelled `Workout 1..3`
   - changing workouts-per-week from 3 to 2 removes the last block; from 2 to 4 adds empty blocks
   - "Add exercise" adds a row with the 4 inputs (exercise autocomplete, sets, reps, rest); "Remove" deletes it
@@ -309,13 +309,13 @@ Invoke `zero-cento-frontend` first. Page shells mirror `src/app/trainer/programs
   - edit mode with `initialTemplate` → fields pre-filled and submit does `PUT /api/workout-templates/<id>`
   - API error response → error message shown via `getApiErrorMessage`, save button re-enabled, navigation loader stopped
   - sets and reps inputs have no kg/RPE/weight field in the DOM (assert no input named `weight`/`targetRpe`)
-- [ ] **Step 2: implementation** —
+- [x] **Step 2: implementation** —
   - `WorkoutTemplateEditor` (`'use client'`) props: `{ initialTemplate?: { id: string; name: string; workoutsPerWeek: number; workouts: { dayIndex: number; exercises: { exerciseId: string; sets: number; reps: string; restTime: RestTime }[] }[] } }`. State via react-hook-form (`useFieldArray`) validated with `workoutTemplateSchema` through `zodResolver` (check `@hookform/resolvers` is installed; if not, validate with `safeParse` manually). Loads exercises once from `/api/exercises?limit=500` (response `data.data.items`, as in `src/app/trainer/exercises/_content.tsx`) and builds `AutocompleteOption[]` (`{ id, label: name }`) for `AutocompleteSearch` (see its usage in `src/app/trainer/programs/[id]/edit/_content.tsx` around line 3686). Reps: single text input validated as `"8"` or `"8-10"`; you may reuse `parseRepsString` / `buildRepsString` from `src/app/trainer/programs/[id]/edit/reps-utils.ts` if two inputs (min/max) are used, otherwise one text input. Rest: `<select>` over `s30 m1 m1s30 m2 m3 m5` with the existing rest labels. Styling: same table look as the program editor rows (compact `px-1 py-1` cells, `computeExerciseGroupColors` from `row-utils.ts` for alternating exercise group colour when consecutive rows share an exercise). Save button `<Button isLoading loadingText={t('common.saving')}>` labelled `templates.saveToLibrary`; on success `useNavigationLoader().start()` then `router.push('/trainer/templates')`; on error `.stop()`. Do NOT touch `edit/_content.tsx`. Export from `src/components/index.ts`.
   - `/trainer/templates/page.tsx` + `_content.tsx` (`'use client'`): fetch `/api/workout-templates`; plain Tailwind table with columns name, workouts/week, exercises, times used, last used (`formatDate`, `neverUsed` when null), last modified (`formatDate`), actions (edit link, delete `ActionIconButton`). Search input filters by name (case-insensitive); clicking a column header toggles asc/desc sort (default: last modified desc). Empty state with CTA to `/trainer/templates/new`. Delete uses `ConfirmationModal` with `templates.deleteTitle/deleteMessage`, then `DELETE /api/workout-templates/<id>`, removes the row, toast via `useToast`. Header "New template" `Link` to `/trainer/templates/new`.
   - `/trainer/templates/new/page.tsx`: server page, renders `<WorkoutTemplateEditor />` inside `DashboardLayout backHref="/trainer/templates"`.
   - `/trainer/templates/[id]/page.tsx`: server page; loads the template with `prisma.workoutTemplate.findFirst({ where: { id, trainerId: session.user.id }, include: {...ordered} })`; `notFound()` when null (covers other trainers); passes `initialTemplate`. Validate id is a uuid before querying (see `isUuid` in `src/app/trainer/programs/new/page.tsx`).
-- [ ] **Step 3: run the test command and `npm run type-check` and `npm run lint`**
-- [ ] **Step 4: CHANGELOG entry and commit** — `feat(templates): add template dashboard and editor`
+- [x] **Step 3: run the test command and `npm run type-check` and `npm run lint`**
+- [x] **Step 4: CHANGELOG entry and commit** — `feat(templates): add template dashboard and editor`
 
 ---
 

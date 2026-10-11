@@ -1074,7 +1074,18 @@
         "bannerFromTemplate": "Starting from template <b>{{name}}</b>.",
         "workoutsPerWeekLockedByTemplate": "Locked: must match the template.",
         "startBlankLink": "Start blank instead",
-        "templateErrorNotFound": "Template not found."
+        "templateErrorNotFound": "Template not found.",
+        "restOptions": {
+            "s30": "30 sec",
+            "m1": "1 min",
+            "m1s30": "1 min 30 sec",
+            "m2": "2 min",
+            "m3": "3 min",
+            "m5": "5 min"
+        },
+        "deleted": "Template deleted",
+        "setsPlaceholder": "Sets",
+        "repsPlaceholder": "e.g. 8-10"
     },
     "workoutDetail": {
         "backToOverview": "Back to Overview",

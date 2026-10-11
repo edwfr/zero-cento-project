@@ -25,6 +25,8 @@ export { default as FeedbackForm } from './FeedbackForm'
 export { default as DatePicker } from './DatePicker'
 export { default as AutocompleteSearch } from './AutocompleteSearch'
 export type { AutocompleteOption } from './AutocompleteSearch'
+export { default as WorkoutTemplateEditor } from './WorkoutTemplateEditor'
+export type { WorkoutTemplateEditorProps } from './WorkoutTemplateEditor'
 
 // Display Components
 export { default as ExerciseCard } from './ExerciseCard'

@@ -1074,7 +1074,18 @@
         "bannerFromTemplate": "Parti dal template <b>{{name}}</b>.",
         "workoutsPerWeekLockedByTemplate": "Bloccato: deve corrispondere al template.",
         "startBlankLink": "Ricomincia da zero",
-        "templateErrorNotFound": "Template non trovato."
+        "templateErrorNotFound": "Template non trovato.",
+        "restOptions": {
+            "s30": "30 sec",
+            "m1": "1 min",
+            "m1s30": "1 min 30 sec",
+            "m2": "2 min",
+            "m3": "3 min",
+            "m5": "5 min"
+        },
+        "deleted": "Template eliminato",
+        "setsPlaceholder": "Serie",
+        "repsPlaceholder": "es. 8-10"
     },
     "workoutDetail": {
         "backToOverview": "Torna alla Panoramica",

@@ -11,6 +11,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Added
+### [11 Ottobre 2026] — Template allenamento: dashboard ed editor
+
+**File modificati:** `src/components/WorkoutTemplateEditor.tsx`, `src/components/index.ts`, `src/app/trainer/templates/**`, `public/locales/{it,en}/trainer.json`, `tests/unit/WorkoutTemplateEditor.test.tsx`
+
+Aggiunti l'editor snello dei template (4 colonne: esercizio, serie, ripetizioni, recupero) e le pagine trainer `/trainer/templates` (tabella ordinabile e ricercabile con statistiche d'uso, eliminazione con conferma), `/new` e `/[id]`. Aggiunte le etichette del recupero nelle locale it/en.
+
 ### [11 Ottobre 2026] — Template allenamento: chiavi i18n e voce di navigazione
 
 **File modificati:** `public/locales/{it,en}/{navigation,errors,trainer}.json`, `src/components/DashboardLayout.tsx`, `tests/unit/DashboardLayout.test.tsx`
