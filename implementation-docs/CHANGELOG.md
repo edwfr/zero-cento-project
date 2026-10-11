@@ -10,6 +10,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### chore(build): pulizia warning build Vercel (11/10/2026)
+- `package.json` `allowScripts`: approvati gli install script di `prisma`, `@prisma/client`, `@prisma/engines`, `@sentry/cli`, `esbuild`, `sharp`, `unrs-resolver`; negato `core-js` (solo banner). Evita che la nuova policy npm li blocchi in futuro (Prisma generate / binario Sentry).
+- `engines.node` da `>=20.0.0` a `22.x` (+ `.nvmrc` 22): Vercel non sale più in automatico al prossimo major.
+- `package-lock.json`: aggiunta entry `@next/swc-win32-x64-msvc` (patch di Next, mantenuti indentazione 4 spazi e CRLF per diff minimo). Restano non toccati i warning source map Sentry e `exhaustive-deps` di `STORAGE_KEY`.
+
 ### fix(ui): icone disallineate nei `Button` con icona senza dimensione esplicita (11/10/2026)
 - Causa: `Button` avvolge l'icona in uno span `w-4/5/6`, ma un'icona lucide passata nuda (`icon={<Plus />}`) resta a 24px e sborda dallo span, finendo più in basso del testo (visibile in `WorkoutTemplateEditor`, tab misurazioni, showcase).
 - Ora lo span impone la dimensione allo svg (`[&>svg]:h-full [&>svg]:w-full`, `inline-flex shrink-0`): l'icona segue sempre la `size` del bottone, senza dover passare `className`/`size` a ogni utilizzo.

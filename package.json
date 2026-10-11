@@ -104,9 +104,19 @@
         "vitest-mock-extended": "^5.1.1"
     },
     "engines": {
-        "node": ">=20.0.0"
+        "node": "22.x"
     },
     "prisma": {
         "seed": "tsx prisma/seed.ts"
+    },
+    "allowScripts": {
+        "prisma": true,
+        "@prisma/client": true,
+        "@prisma/engines": true,
+        "@sentry/cli": true,
+        "esbuild": true,
+        "sharp": true,
+        "unrs-resolver": true,
+        "core-js": false
     }
 }
