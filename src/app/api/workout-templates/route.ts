@@ -11,8 +11,10 @@ import { workoutTemplateSchema } from '@/schemas/workout-template'
  * List the trainer's own templates with usage stats (no exercise detail).
  */
 export async function GET() {
+    let trainerId: string | undefined
     try {
         const session = await requireRole(['trainer'])
+        trainerId = session.user.id
 
         const templates = await prisma.workoutTemplate.findMany({
             where: { trainerId: session.user.id },
@@ -37,6 +39,7 @@ export async function GET() {
             logMessage: 'Error listing workout templates',
             message: 'Failed to list workout templates',
             key: 'internal.default',
+            context: { trainerId },
         })
     }
 }
@@ -46,8 +49,10 @@ export async function GET() {
  * Create a template owned by the current trainer.
  */
 export async function POST(request: NextRequest) {
+    let trainerId: string | undefined
     try {
         const session = await requireRole(['trainer'])
+        trainerId = session.user.id
 
         const body = await request.json()
         const validation = workoutTemplateSchema.safeParse(body)
@@ -95,6 +100,7 @@ export async function POST(request: NextRequest) {
             logMessage: 'Error creating workout template',
             message: 'Failed to create workout template',
             key: 'internal.default',
+            context: { trainerId },
         })
     }
 }

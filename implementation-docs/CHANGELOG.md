@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### chore(sentry): context nelle route workout-templates (11/10/2026)
+- `handleApiError` nelle 5 route `workout-templates` ora passa `context` (`trainerId`, `templateId` sulle route `[id]`), così gli eventi Sentry/pino indicano trainer e template coinvolti.
+
 ### fix(navigation): loader non si chiudeva dopo il salvataggio template (11/10/2026)
 - `NavigationLoadingProvider`: `start()` manuale (usato solo da `WorkoutTemplateEditor` prima di `router.push`) non veniva mai fermato in caso di successo. Ora l'overlay si chiude al cambio di `pathname`.
 

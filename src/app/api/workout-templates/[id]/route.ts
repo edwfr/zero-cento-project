@@ -25,8 +25,10 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ) {
     const { id } = await params
+    let trainerId: string | undefined
     try {
         const session = await requireRole(['trainer'])
+        trainerId = session.user.id
         if (!UUID_RE.test(id)) return notFound()
 
         const template = await prisma.workoutTemplate.findFirst({
@@ -46,6 +48,7 @@ export async function GET(
             logMessage: 'Error fetching workout template',
             message: 'Failed to fetch workout template',
             key: 'internal.default',
+            context: { templateId: id, trainerId },
         })
     }
 }
@@ -59,8 +62,10 @@ export async function PUT(
     { params }: { params: Promise<{ id: string }> }
 ) {
     const { id } = await params
+    let trainerId: string | undefined
     try {
         const session = await requireRole(['trainer'])
+        trainerId = session.user.id
 
         const owned = await findOwnedTemplate(id, session.user.id)
         if (!owned) return notFound()
@@ -114,6 +119,7 @@ export async function PUT(
             logMessage: 'Error updating workout template',
             message: 'Failed to update workout template',
             key: 'internal.default',
+            context: { templateId: id, trainerId },
         })
     }
 }
@@ -126,8 +132,10 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     const { id } = await params
+    let trainerId: string | undefined
     try {
         const session = await requireRole(['trainer'])
+        trainerId = session.user.id
 
         const owned = await findOwnedTemplate(id, session.user.id)
         if (!owned) return notFound()
@@ -142,6 +150,7 @@ export async function DELETE(
             logMessage: 'Error deleting workout template',
             message: 'Failed to delete workout template',
             key: 'internal.default',
+            context: { templateId: id, trainerId },
         })
     }
 }
