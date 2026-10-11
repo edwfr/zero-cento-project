@@ -10,6 +10,13 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### Added
+### [11 Ottobre 2026] — Template allenamento: modelli Prisma e migrazione
+
+**File modificati:** `prisma/schema.prisma`, `prisma/migrations/20261011100000_add_workout_templates/migration.sql`
+
+Aggiunte le tabelle `WorkoutTemplate`, `WorkoutTemplateWorkout`, `WorkoutTemplateExercise` (libreria privata di template del trainer, isolata da `TrainingProgram`, nessuna FK verso i programmi) e le back-relation su `User` ed `Exercise`.
+
 ### Fixed
 ### [10 Ottobre 2026] — Sentry: contesto HTTP su autosave feedback e attivazione utente (JAVASCRIPT-NEXTJS-R, -14)
 

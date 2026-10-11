@@ -129,6 +129,7 @@ model User {
   actedSubscriptionEvents   SubscriptionEvent[]          @relation("ActedSubscriptionEvents")
   statusEvents              UserStatusEvent[]            @relation("UserStatusEvents")
   performedStatusEvents     UserStatusEvent[]            @relation("PerformedStatusEvents")
+  workoutTemplates          WorkoutTemplate[]            @relation("TrainerWorkoutTemplates")
 
   @@index([email])
   @@index([role, isActive])
@@ -261,6 +262,7 @@ model Exercise {
   workoutExercises     WorkoutExercise[]      @relation("ExerciseWorkouts")
   personalRecords      PersonalRecord[]       @relation("ExerciseRecords")
   workoutSkeletons     WorkoutSkeleton[]      @relation("ExerciseSkeletons")
+  templateExercises    WorkoutTemplateExercise[] @relation("ExerciseTemplates")
 
   @@index([type])
   @@index([movementPatternId])
@@ -558,4 +560,50 @@ model UserStatusEvent {
 
   @@index([userId, createdAt])
   @@map("user_status_events")
+}
+
+model WorkoutTemplate {
+  id              String    @id @default(uuid())
+  trainerId       String
+  name            String
+  workoutsPerWeek Int
+  usageCount      Int       @default(0)
+  lastUsedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  trainer  User                     @relation("TrainerWorkoutTemplates", fields: [trainerId], references: [id])
+  workouts WorkoutTemplateWorkout[] @relation("TemplateWorkouts")
+
+  @@index([trainerId])
+  @@map("workout_templates")
+}
+
+model WorkoutTemplateWorkout {
+  id         String @id @default(uuid())
+  templateId String
+  dayIndex   Int    // 0-based: 0..workoutsPerWeek-1
+
+  template  WorkoutTemplate           @relation("TemplateWorkouts", fields: [templateId], references: [id], onDelete: Cascade)
+  exercises WorkoutTemplateExercise[] @relation("TemplateWorkoutExercises")
+
+  @@unique([templateId, dayIndex])
+  @@map("workout_template_workouts")
+}
+
+model WorkoutTemplateExercise {
+  id                String   @id @default(uuid())
+  templateWorkoutId String
+  exerciseId        String
+  order             Int      // 0-based, contiguous per workout
+  sets              Int
+  reps              String   // same format as WorkoutExercise.reps ("8", "8-10")
+  restTime          RestTime
+
+  templateWorkout WorkoutTemplateWorkout @relation("TemplateWorkoutExercises", fields: [templateWorkoutId], references: [id], onDelete: Cascade)
+  exercise        Exercise               @relation("ExerciseTemplates", fields: [exerciseId], references: [id])
+
+  @@unique([templateWorkoutId, order])
+  @@index([exerciseId])
+  @@map("workout_template_exercises")
 }
