@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### test(templates): e2e libreria template (11/10/2026)
+- Nuovo `tests/e2e/trainer-workout-templates.spec.ts`: crea template, avvia un programma da libreria (workoutsPerWeek bloccato, Week 1 precompilata, kg vuoto), verifica `usageCount` 1 ed elimina il template lasciando intatto il programma. Non eseguito localmente (niente DB/server): verificato solo `--list`, type-check e lint.
+
 ### feat(programs): wizard nuovo programma da template (11/10/2026)
 - `/trainer/programs/new`: step 0 con scelta "Da zero" / "Da libreria"; la scelta di un template apre lo step 1 con `workoutsPerWeek` bloccato e invio di `templateId`. Flusso "da zero" e clone invariati. `page.tsx` carica template del trainer (admin: nessun template, chooser nascosto) e valida `?templateId=` con ownership (non trovato -> errore).
 

@@ -352,16 +352,16 @@ Invoke `zero-cento-frontend` first. Page shells mirror `src/app/trainer/programs
 **Test command:** `npx playwright test tests/e2e/trainer-workout-templates.spec.ts` (needs dev server and seed per `tests/e2e/fixtures/test-users.ts`; if the environment cannot run Playwright, run `npx playwright test --list tests/e2e/trainer-workout-templates.spec.ts` and say so)
 **Done when:** the spec is committed and lists/passes; full unit/integration suite is green.
 
-- [ ] **Step 1: tests** — `tests/e2e/trainer-workout-templates.spec.ts` (login helper identical to `trainer-create-program.spec.ts`):
+- [x] **Step 1: tests** — `tests/e2e/trainer-workout-templates.spec.ts` (login helper identical to `trainer-create-program.spec.ts`):
   - trainer opens `/trainer/templates` via sidebar → heading visible
   - creates a template "Template E2E" with 3 workouts/week and one exercise row (pick the first exercise in the autocomplete, sets 3, reps `8`, rest 2 min) → redirected to dashboard, row "Template E2E" visible with usage `0` and last used "Mai"/"Never"
   - opens `/trainer/programs/new` → clicks "Da libreria" → picks "Template E2E" → URL has `templateId`, workouts-per-week field is read-only with value 3
   - fills title/trainee, submits → lands on `/trainer/programs/<id>/edit`; Week 1 first workout shows the exercise row with sets 3 / reps 8 and an empty weight field
   - back on `/trainer/templates` the usage count is `1`
   - deletes "Template E2E" via the confirmation modal → row gone; the program from before is still reachable at its edit URL with the exercise row intact
-- [ ] **Step 2: implementation** — only the spec file; fix any selector issues against the real UI from Tasks 6–7 by adding `data-testid` attributes in those components if role/text selectors are ambiguous.
-- [ ] **Step 3: run the new spec, then `npm run test:unit`, `npm run type-check`, `npm run lint`**
-- [ ] **Step 4: CHANGELOG entry and commit** — `test(templates): add template e2e flow`
+- [x] **Step 2: implementation** — only the spec file; fix any selector issues against the real UI from Tasks 6–7 by adding `data-testid` attributes in those components if role/text selectors are ambiguous.
+- [x] **Step 3: run the new spec, then `npm run test:unit`, `npm run type-check`, `npm run lint`**
+- [x] **Step 4: CHANGELOG entry and commit** — `test(templates): add template e2e flow`
 
 ---
 
