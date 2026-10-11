@@ -14,8 +14,8 @@ const e = (exerciseId: string, order: number) => ({
     restTime: 'm2' as const,
 })
 const template: TemplateWorkoutLike[] = [
-    { dayIndex: 0, exercises: [e('a', 0), e('b', 1)] },
-    { dayIndex: 1, exercises: [e('c', 0)] },
+    { dayIndex: 0, exercises: [e('a', 1), e('b', 2)] },
+    { dayIndex: 1, exercises: [e('c', 1)] },
 ]
 const week1 = [
     { id: 'w1', dayIndex: 1 },
@@ -37,7 +37,7 @@ describe('countTemplateExercises', () => {
 })
 
 describe('buildWeek1ExerciseRows', () => {
-    it('converts 0-based template order to 1-based workout exercise order', () => {
+    it('keeps the 1-based template order on workout exercises', () => {
         const rows = buildWeek1ExerciseRows(template, week1)
         expect(rows.map((r) => r.order)).toEqual([1, 2, 1])
     })
@@ -72,7 +72,7 @@ describe('buildWeek1ExerciseRows', () => {
 })
 
 describe('buildSkeletonRows', () => {
-    it('keeps 0-based dayIndex', () => {
+    it('keeps 0-based dayIndex and converts order to 0-based', () => {
         expect(buildSkeletonRows('prog-1', template)).toEqual([
             { programId: 'prog-1', dayIndex: 0, order: 0, exerciseId: 'a' },
             { programId: 'prog-1', dayIndex: 0, order: 1, exerciseId: 'b' },

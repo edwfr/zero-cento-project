@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 /**
  * Workout Template Validation Schemas
- * Messages are i18n keys. `order` is derived from array position when persisting.
+ * Messages are i18n keys. `order` is derived from array position (1-based) when persisting.
  */
 
 // Same accepted formats as workoutExerciseSchema.reps (string forms), plus range ordering.

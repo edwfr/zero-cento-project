@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
                 workouts: {
                     create: workouts.map((w) => ({
                         dayIndex: w.dayIndex,
-                        exercises: { create: w.exercises.map((e, i) => ({ ...e, order: i })) },
+                        exercises: { create: w.exercises.map((e, i) => ({ ...e, order: i + 1 })) },
                     })),
                 },
             },

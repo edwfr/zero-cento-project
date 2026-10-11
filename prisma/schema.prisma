@@ -595,7 +595,7 @@ model WorkoutTemplateExercise {
   id                String   @id @default(uuid())
   templateWorkoutId String
   exerciseId        String
-  order             Int      // 0-based, contiguous per workout
+  order             Int      // 1-based, contiguous per workout
   sets              Int
   reps              String   // same format as WorkoutExercise.reps ("8", "8-10")
   restTime          RestTime

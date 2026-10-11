@@ -43,7 +43,7 @@ export function countTemplateExercises(workouts: TemplateWorkoutLike[]): number 
 
 /**
  * Template day d (0-based) maps to program Week 1 workout with dayIndex d + 1.
- * Template order is 0-based too, WorkoutExercise order is 1-based.
+ * Template order is 1-based, same as WorkoutExercise order.
  */
 export function buildWeek1ExerciseRows(
     workouts: TemplateWorkoutLike[],
@@ -59,7 +59,7 @@ export function buildWeek1ExerciseRows(
             rows.push({
                 workoutId: target.id,
                 exerciseId: ex.exerciseId,
-                order: ex.order + 1,
+                order: ex.order,
                 sets: ex.sets,
                 reps: ex.reps,
                 restTime: ex.restTime,
@@ -79,7 +79,7 @@ export function buildWeek1ExerciseRows(
     return rows
 }
 
-/** Skeleton dayIndex stays 0-based, same as the template. */
+/** Skeleton dayIndex stays 0-based, same as the template; skeleton order is 0-based, template order 1-based. */
 export function buildSkeletonRows(
     programId: string,
     workouts: TemplateWorkoutLike[]
@@ -88,7 +88,7 @@ export function buildSkeletonRows(
         w.exercises.map((ex) => ({
             programId,
             dayIndex: w.dayIndex,
-            order: ex.order,
+            order: ex.order - 1,
             exerciseId: ex.exerciseId,
         }))
     )

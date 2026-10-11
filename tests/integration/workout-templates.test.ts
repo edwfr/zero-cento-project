@@ -101,7 +101,7 @@ describe('workout templates API', () => {
     })
 
     describe('POST', () => {
-        it('creates a template with order from array index', async () => {
+        it('creates a template with 1-based order from array index', async () => {
             prismaMock.exercise.findMany.mockResolvedValue([{ id: EX_1 }, { id: EX_2 }] as never)
             prismaMock.workoutTemplate.create.mockResolvedValue({ id: TEMPLATE_ID, name: 'Settimana tipo' } as never)
 
@@ -109,8 +109,8 @@ describe('workout templates API', () => {
             expect(res.status).toBe(201)
             const arg = prismaMock.workoutTemplate.create.mock.calls[0][0] as { data: { trainerId: string; workouts: { create: Array<{ exercises: { create: Array<{ order: number }> } }> } } }
             expect(arg.data.trainerId).toBe(TRAINER_ID)
-            expect(arg.data.workouts.create[0].exercises.create.map((e: { order: number }) => e.order)).toEqual([0, 1])
-            expect(arg.data.workouts.create[1].exercises.create[0].order).toBe(0)
+            expect(arg.data.workouts.create[0].exercises.create.map((e: { order: number }) => e.order)).toEqual([1, 2])
+            expect(arg.data.workouts.create[1].exercises.create[0].order).toBe(1)
             expect((await res.json()).data.id).toBe(TEMPLATE_ID)
         })
 

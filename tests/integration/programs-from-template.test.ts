@@ -48,13 +48,13 @@ function makeTemplate(workouts?: unknown[]) {
             {
                 dayIndex: 0,
                 exercises: [
-                    { exerciseId: EX_1, order: 0, sets: 3, reps: '5', restTime: 'm3' },
-                    { exerciseId: EX_2, order: 1, sets: 4, reps: '8-10', restTime: 'm2' },
+                    { exerciseId: EX_1, order: 1, sets: 3, reps: '5', restTime: 'm3' },
+                    { exerciseId: EX_2, order: 2, sets: 4, reps: '8-10', restTime: 'm2' },
                 ],
             },
             {
                 dayIndex: 1,
-                exercises: [{ exerciseId: EX_3, order: 0, sets: 2, reps: '12', restTime: 's90' }],
+                exercises: [{ exerciseId: EX_3, order: 1, sets: 2, reps: '12', restTime: 's90' }],
             },
         ],
     }
@@ -104,6 +104,7 @@ describe('POST /api/programs - template branch', () => {
         const rows = (prismaMock.workoutExercise.createMany.mock.calls[0][0] as { data: Array<Record<string, unknown>> }).data
         expect(rows).toHaveLength(3)
         expect(rows.map((r) => r.workoutId)).toEqual(['wk1-d1', 'wk1-d1', 'wk1-d2'])
+        expect(rows.map((r) => r.order)).toEqual([1, 2, 1])
         for (const r of rows) {
             expect(r.weight).toBeNull()
             expect(r.targetRpe).toBeNull()
@@ -114,6 +115,7 @@ describe('POST /api/programs - template branch', () => {
         const skel = (prismaMock.workoutSkeleton.createMany.mock.calls[0][0] as { data: Array<Record<string, unknown>> }).data
         expect(skel).toHaveLength(3)
         expect(skel.map((r) => r.dayIndex)).toEqual([0, 0, 1])
+        expect(skel.map((r) => r.order)).toEqual([0, 1, 0])
         expect(skel.every((r) => r.programId === 'new-prog-id')).toBe(true)
 
         expect(prismaMock.workoutTemplate.update).toHaveBeenCalledWith({
