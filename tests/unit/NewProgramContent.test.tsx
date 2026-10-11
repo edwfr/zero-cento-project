@@ -14,7 +14,7 @@ vi.mock('react-i18next', () => ({
         i18n: { language: 'en', changeLanguage: vi.fn() },
     }),
     Trans: ({ i18nKey, values }: { i18nKey: string; values?: Record<string, string> }) => (
-        <>{`${i18nKey}:${values?.title ?? ''}`}</>
+        <>{`${i18nKey}:${values?.title ?? values?.name ?? ''}`}</>
     ),
     initReactI18next: { type: '3rdParty', init: vi.fn() },
 }))
@@ -125,5 +125,112 @@ describe('NewProgramContent - clone source prefill', () => {
         )
 
         expect(screen.getByText('programs.cloneSourceErrorNotFound')).toBeInTheDocument()
+    })
+})
+
+const templateSource = { id: 'tpl-1', name: 'Push Pull', workoutsPerWeek: 3 }
+const templates = [
+    { id: 'tpl-1', name: 'Push Pull', workoutsPerWeek: 3, exerciseCount: 12 },
+    { id: 'tpl-2', name: 'Full Body', workoutsPerWeek: 2, exerciseCount: 8 },
+]
+
+describe('NewProgramContent - template start', () => {
+    beforeEach(() => {
+        routerPush.mockReset()
+        global.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({ data: { program: { id: 'new-1' } } }),
+        }) as unknown as typeof fetch
+    })
+
+    it('shows chooser and hides the form initially', () => {
+        render(<NewProgramContent trainees={trainees} initialTraineeId="t-1" templates={templates} />)
+        expect(screen.getByRole('button', { name: /templates.fromScratch/ })).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /templates.fromLibrary/ })).toBeInTheDocument()
+        expect(screen.queryByPlaceholderText('programs.programNamePlaceholder')).not.toBeInTheDocument()
+    })
+
+    it('from scratch shows the form and submits without templateId', async () => {
+        render(<NewProgramContent trainees={trainees} initialTraineeId="t-1" templates={templates} />)
+        fireEvent.click(screen.getByRole('button', { name: /templates.fromScratch/ }))
+        fireEvent.change(screen.getByPlaceholderText('programs.programNamePlaceholder'), {
+            target: { value: 'P' },
+        })
+        fireEvent.click(screen.getByRole('button', { name: 'programs.nextConfigureExercises' }))
+        await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1))
+        const body = JSON.parse(String((vi.mocked(global.fetch).mock.calls[0][1] as RequestInit).body))
+        expect(body.templateId).toBeUndefined()
+    })
+
+    it('lists templates from library and navigates on select preserving traineeId', () => {
+        render(
+            <NewProgramContent
+                trainees={trainees}
+                initialTraineeId="t-1"
+                templates={templates}
+                startBlankHref="/trainer/programs/new?traineeId=t-2"
+            />
+        )
+        fireEvent.click(screen.getByRole('button', { name: /templates.fromLibrary/ }))
+        expect(screen.getByText('Full Body')).toBeInTheDocument()
+        fireEvent.click(screen.getByRole('button', { name: /Push Pull/ }))
+        expect(routerPush).toHaveBeenCalledWith('/trainer/programs/new?templateId=tpl-1&traineeId=t-2')
+    })
+
+    it('shows CTA when there are no templates', () => {
+        render(<NewProgramContent trainees={trainees} initialTraineeId="t-1" templates={[]} />)
+        fireEvent.click(screen.getByRole('button', { name: /templates.fromLibrary/ }))
+        expect(screen.getByRole('link', { name: 'templates.noTemplatesCta' })).toHaveAttribute(
+            'href',
+            '/trainer/templates/new'
+        )
+    })
+
+    it('templateSource skips chooser, locks workouts and submits templateId', async () => {
+        render(
+            <NewProgramContent
+                trainees={trainees}
+                initialTraineeId="t-1"
+                templateSource={templateSource}
+                startBlankHref="/trainer/programs/new"
+            />
+        )
+        expect(screen.getByText('trainer:templates.bannerFromTemplate:Push Pull')).toBeInTheDocument()
+        expect(screen.getByRole('link', { name: 'templates.startBlankLink' })).toHaveAttribute(
+            'href',
+            '/trainer/programs/new'
+        )
+        const locked = screen.getAllByDisplayValue('3').find((i) => (i as HTMLInputElement).readOnly)
+        expect(locked).toBeDefined()
+        expect(screen.getByRole('button', { name: '2' })).toBeDisabled()
+
+        fireEvent.change(screen.getByPlaceholderText('programs.programNamePlaceholder'), {
+            target: { value: 'P' },
+        })
+        fireEvent.click(screen.getByRole('button', { name: 'programs.nextConfigureExercises' }))
+        await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1))
+        const body = JSON.parse(String((vi.mocked(global.fetch).mock.calls[0][1] as RequestInit).body))
+        expect(body.templateId).toBe('tpl-1')
+        expect(body.workoutsPerWeek).toBe(3)
+        expect(body.cloneFromProgramId).toBeUndefined()
+    })
+
+    it('cloneSource skips chooser and sends no templateId', async () => {
+        render(<NewProgramContent trainees={trainees} initialTraineeId="t-1" cloneSource={cloneSource} templates={templates} />)
+        expect(screen.queryByRole('button', { name: /templates.fromScratch/ })).not.toBeInTheDocument()
+        fireEvent.change(screen.getByPlaceholderText('programs.programNamePlaceholder'), {
+            target: { value: 'P' },
+        })
+        fireEvent.click(screen.getByRole('button', { name: 'programs.nextConfigureExercises' }))
+        await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1))
+        const body = JSON.parse(String((vi.mocked(global.fetch).mock.calls[0][1] as RequestInit).body))
+        expect(body.templateId).toBeUndefined()
+    })
+
+    it('templateError notFound shows message and chooser stays usable', () => {
+        render(<NewProgramContent trainees={trainees} initialTraineeId="t-1" templateError="notFound" templates={templates} />)
+        expect(screen.getByText('templates.templateErrorNotFound')).toBeInTheDocument()
+        fireEvent.click(screen.getByRole('button', { name: /templates.fromScratch/ }))
+        expect(screen.getByPlaceholderText('programs.programNamePlaceholder')).toBeInTheDocument()
     })
 })

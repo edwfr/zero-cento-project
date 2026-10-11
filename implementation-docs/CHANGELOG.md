@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(programs): wizard nuovo programma da template (11/10/2026)
+- `/trainer/programs/new`: step 0 con scelta "Da zero" / "Da libreria"; la scelta di un template apre lo step 1 con `workoutsPerWeek` bloccato e invio di `templateId`. Flusso "da zero" e clone invariati. `page.tsx` carica template del trainer (admin: nessun template, chooser nascosto) e valida `?templateId=` con ownership (non trovato -> errore).
+
 ### Added
 ### [11 Ottobre 2026] — Template allenamento: dashboard ed editor
 

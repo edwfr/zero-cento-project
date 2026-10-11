@@ -24,12 +24,32 @@ interface CloneSource {
 
 type CloneError = 'notFound' | 'forbidden' | null
 
+interface TemplateOption {
+    id: string
+    name: string
+    workoutsPerWeek: number
+    exerciseCount: number
+}
+
+interface TemplateSource {
+    id: string
+    name: string
+    workoutsPerWeek: number
+}
+
+type TemplateError = 'notFound' | null
+
 interface NewProgramContentProps {
     trainees: Trainee[]
     initialTraineeId: string
     cloneSource?: CloneSource | null
     cloneError?: CloneError
     startBlankHref?: string
+    templates?: TemplateOption[]
+    templateSource?: TemplateSource | null
+    templateError?: TemplateError
+    /** Admins have no template library: skip the scratch/library chooser. */
+    showTemplateChooser?: boolean
 }
 
 export default function NewProgramContent({
@@ -38,18 +58,29 @@ export default function NewProgramContent({
     cloneSource = null,
     cloneError = null,
     startBlankHref = '/trainer/programs/new',
-}: NewProgramContentProps) {
+    templates = [],
+    templateSource = null,
+    templateError = null,
+    showTemplateChooser = true,
+}:  NewProgramContentProps) {
     const router = useRouter()
     const { t } = useTranslation(['trainer', 'common'])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [startMode, setStartMode] = useState<'choose' | 'scratch'>(
+        cloneSource || templateSource || !showTemplateChooser ? 'scratch' : 'choose'
+    )
+    const [showLibrary, setShowLibrary] = useState(false)
+    const lockedWorkouts = !!cloneSource || !!templateSource
 
     // Form state
     const [title, setTitle] = useState('')
     const [traineeId, setTraineeId] = useState(cloneSource?.traineeId ?? initialTraineeId)
     const [isSbdProgram, setIsSbdProgram] = useState(cloneSource?.isSbdProgram ?? false)
     const [durationWeeks, setDurationWeeks] = useState(4)
-    const [workoutsPerWeek, setWorkoutsPerWeek] = useState(cloneSource?.workoutsPerWeek ?? 3)
+    const [workoutsPerWeek, setWorkoutsPerWeek] = useState(
+        cloneSource?.workoutsPerWeek ?? templateSource?.workoutsPerWeek ?? 3
+    )
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError(null)
@@ -87,6 +118,7 @@ export default function NewProgramContent({
                     durationWeeks,
                     workoutsPerWeek,
                     ...(cloneSource ? { cloneFromProgramId: cloneSource.id } : {}),
+                    ...(templateSource && !cloneSource ? { templateId: templateSource.id } : {}),
                 }),
             })
 
@@ -101,6 +133,13 @@ export default function NewProgramContent({
             setError(err instanceof Error ? err.message : t('programs.createError'))
             setLoading(false)
         }
+    }
+
+    const handleSelectTemplate = (templateId: string) => {
+        const qs = startBlankHref.split('?')[1]
+        router.push(
+            `/trainer/programs/new?templateId=${encodeURIComponent(templateId)}${qs ? `&${qs}` : ''}`
+        )
     }
 
     if (trainees.length === 0 && !error) {
@@ -176,6 +215,82 @@ export default function NewProgramContent({
                 </div>
             )}
 
+            {templateError && (
+                <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6">
+                    {t('templates.templateErrorNotFound')}
+                </div>
+            )}
+
+            {templateSource && !cloneSource && (
+                <div className="bg-blue-50 border border-blue-200 text-blue-900 px-4 py-3 rounded-lg mb-6 flex items-center justify-between gap-4">
+                    <span className="text-sm">
+                        <Trans
+                            i18nKey="trainer:templates.bannerFromTemplate"
+                            values={{ name: templateSource.name }}
+                            components={{ b: <strong /> }}
+                        />
+                    </span>
+                    <Link
+                        href={startBlankHref}
+                        className="text-sm font-semibold text-blue-700 hover:text-blue-900 underline"
+                    >
+                        {t('templates.startBlankLink')}
+                    </Link>
+                </div>
+            )}
+
+            {startMode === 'choose' && (
+                <div className="space-y-6">
+                    <h1 className="text-3xl font-bold text-gray-900">{t('templates.startTitle')}</h1>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <button
+                            type="button"
+                            onClick={() => setStartMode('scratch')}
+                            className="text-left bg-white rounded-lg shadow-sm border border-gray-200 p-6 min-h-[44px] hover:border-brand-primary transition-colors"
+                        >
+                            <span className="block font-semibold text-gray-900">{t('templates.fromScratch')}</span>
+                            <span className="block text-sm text-gray-600 mt-1">{t('templates.fromScratchDesc')}</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setShowLibrary(true)}
+                            className="text-left bg-white rounded-lg shadow-sm border border-gray-200 p-6 min-h-[44px] hover:border-brand-primary transition-colors"
+                        >
+                            <span className="block font-semibold text-gray-900">{t('templates.fromLibrary')}</span>
+                            <span className="block text-sm text-gray-600 mt-1">{t('templates.fromLibraryDesc')}</span>
+                        </button>
+                    </div>
+                    {showLibrary && (
+                        templates.length === 0 ? (
+                            <Link
+                                href="/trainer/templates/new"
+                                className="inline-block text-brand-primary font-semibold underline"
+                            >
+                                {t('templates.noTemplatesCta')}
+                            </Link>
+                        ) : (
+                            <ul className="space-y-2">
+                                {templates.map((template) => (
+                                    <li key={template.id}>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSelectTemplate(template.id)}
+                                            className="w-full text-left bg-white rounded-lg border border-gray-200 px-4 py-3 min-h-[44px] hover:border-brand-primary transition-colors flex flex-wrap items-center justify-between gap-2"
+                                        >
+                                            <span className="font-semibold text-gray-900">{template.name}</span>
+                                            <span className="text-sm text-gray-600">
+                                                {t('templates.colWorkouts')}: {template.workoutsPerWeek} · {t('templates.colExercises')}: {template.exerciseCount}
+                                            </span>
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        )
+                    )}
+                </div>
+            )}
+
+            {startMode === 'scratch' && (<>
             {cloneSource && (
                 <div className="bg-blue-50 border border-blue-200 text-blue-900 px-4 py-3 rounded-lg mb-6 flex items-center justify-between gap-4">
                     <span className="text-sm">
@@ -331,8 +446,8 @@ export default function NewProgramContent({
                                         }
                                     }
                                 }}
-                                disabled={loading || !!cloneSource}
-                                readOnly={!!cloneSource}
+                                disabled={loading || lockedWorkouts}
+                                readOnly={lockedWorkouts}
                                 inputSize="md"
                                 required
                             />
@@ -343,7 +458,7 @@ export default function NewProgramContent({
                                     key={workouts}
                                     type="button"
                                     onClick={() => setWorkoutsPerWeek(workouts)}
-                                    disabled={loading || !!cloneSource}
+                                    disabled={loading || lockedWorkouts}
                                     className={`px-3 py-1 text-sm font-semibold rounded ${workoutsPerWeek === workouts
                                         ? 'bg-brand-primary text-white'
                                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -357,6 +472,11 @@ export default function NewProgramContent({
                     {cloneSource && (
                         <p className="text-xs text-gray-500 mt-1">
                             {t('programs.workoutsPerWeekLockedByClone')}
+                        </p>
+                    )}
+                    {templateSource && !cloneSource && (
+                        <p className="text-xs text-gray-500 mt-1">
+                            {t('templates.workoutsPerWeekLockedByTemplate')}
                         </p>
                     )}
                 </div>
@@ -402,6 +522,7 @@ export default function NewProgramContent({
                     </Link>
                 </div>
             </form>
+            </>)}
             </div>
             </div>
         </div>

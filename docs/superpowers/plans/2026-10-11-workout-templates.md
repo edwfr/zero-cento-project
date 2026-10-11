@@ -327,7 +327,7 @@ Invoke `zero-cento-frontend` first. Page shells mirror `src/app/trainer/programs
 **Test command:** `npx vitest run tests/unit/NewProgramContent.test.tsx`
 **Done when:** `/trainer/programs/new` shows the scratch/library chooser; choosing a template opens step 1 with `workoutsPerWeek` locked and submit sends `templateId`; "From scratch" and the existing clone flow behave exactly as before.
 
-- [ ] **Step 1: tests** — add to `NewProgramContent.test.tsx` (keep all existing cases green):
+- [x] **Step 1: tests** — add to `NewProgramContent.test.tsx` (keep all existing cases green):
   - no `cloneSource`, no `templateSource`, no `?templateId`, step-0 not yet chosen → chooser with two cards "Da zero" / "Da libreria" is shown and the setup form is not
   - click "Da zero" → form shown, behaves as today (submit body has no `templateId`)
   - `templates` prop with 2 items: click "Da libreria" → list of the 2 templates (name, workouts/week, exercise count); empty `templates` → CTA link to `/trainer/templates/new` instead
@@ -336,11 +336,11 @@ Invoke `zero-cento-frontend` first. Page shells mirror `src/app/trainer/programs
   - submit with `templateSource` → POST body includes `templateId` and `workoutsPerWeek` of the template, no `cloneFromProgramId`
   - `cloneSource` given → chooser skipped, clone flow unchanged (no `templateId` in body)
   - `templateError` `'notFound'` → error message shown and chooser/form still usable
-- [ ] **Step 2: implementation** —
+- [x] **Step 2: implementation** —
   - `page.tsx`: read `templateId` from `searchParams` (type it alongside `traineeId`/`cloneFromProgramId`). If `templateId` is a uuid: `prisma.workoutTemplate.findFirst({ where: { id: templateId, trainerId: session.user.id }, select: { id, name, workoutsPerWeek } })`; null → `templateError = 'notFound'`; else `templateSource`. If admin role: templates are trainer-scoped, so admins get `templates = []` and ignore `templateId` (document in a code comment). Always load `templates` for trainers: `findMany({ where: { trainerId }, select: { id, name, workoutsPerWeek, workouts: { select: { _count: { select: { exercises: true } } } } }, orderBy: { updatedAt: 'desc' } })`, mapped to `{ id, name, workoutsPerWeek, exerciseCount }`. Pass `templates`, `templateSource`, `templateError` to `NewProgramContent`. If both `cloneFromProgramId` and `templateId` are present, `cloneFromProgramId` wins and `templateSource` is null.
   - `NewProgramContent.tsx`: new props `templates: TemplateOption[]`, `templateSource: { id: string; name: string; workoutsPerWeek: number } | null`, `templateError: 'notFound' | null` (all optional with safe defaults so existing callers/tests compile). Local state `startMode: 'choose' | 'scratch'`, initial `'scratch'` when `cloneSource` or `templateSource` is present, else `'choose'`. While `'choose'` render the two cards (and, after clicking "Da libreria", the template list or empty CTA); the step indicator stays on step 1 styling. `workoutsPerWeek` initial state: `cloneSource?.workoutsPerWeek ?? templateSource?.workoutsPerWeek ?? 3`; the lock conditions currently keyed on `!!cloneSource` become `!!cloneSource || !!templateSource`, with helper text `templates.workoutsPerWeekLockedByTemplate` for the template case. Banner mirrors the clone banner (`<Trans i18nKey="templates.bannerFromTemplate" values={{ name }} components={{ b: <strong /> }}>`). Submit body adds `...(templateSource ? { templateId: templateSource.id } : {})`. Selecting a template builds `/trainer/programs/new?templateId=...` preserving `traineeId` if it was in the URL (use `startBlankHref` logic as reference).
-- [ ] **Step 3: run the test command and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit** — `feat(programs): start new program from a template`
+- [x] **Step 3: run the test command and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit** — `feat(programs): start new program from a template`
 
 ---
 

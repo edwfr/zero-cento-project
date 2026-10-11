@@ -5,7 +5,7 @@ import DashboardLayout from '@/components/DashboardLayout'
 import NewProgramContent from './NewProgramContent'
 
 interface NewProgramPageProps {
-    searchParams?: Promise<{ traineeId?: string; cloneFromProgramId?: string }>
+    searchParams?: Promise<{ traineeId?: string; cloneFromProgramId?: string; templateId?: string }>
 }
 
 interface TraineeOption {
@@ -140,6 +140,45 @@ export default async function NewProgramPage({ searchParams }: NewProgramPagePro
         }
     }
 
+    // Templates are trainer-scoped: admins get no templates and ignore `templateId`.
+    const isTrainer = session.user.role === 'trainer'
+    const templateId = resolvedSearchParams?.templateId
+    let templateSource: { id: string; name: string; workoutsPerWeek: number } | null = null
+    let templateError: 'notFound' | null = null
+    let templates: Array<{ id: string; name: string; workoutsPerWeek: number; exerciseCount: number }> = []
+
+    if (isTrainer) {
+        const rows = await prisma.workoutTemplate.findMany({
+            where: { trainerId: session.user.id },
+            select: {
+                id: true,
+                name: true,
+                workoutsPerWeek: true,
+                workouts: { select: { _count: { select: { exercises: true } } } },
+            },
+            orderBy: { updatedAt: 'desc' },
+        })
+        templates = rows.map((row) => ({
+            id: row.id,
+            name: row.name,
+            workoutsPerWeek: row.workoutsPerWeek,
+            exerciseCount: row.workouts.reduce((sum, w) => sum + w._count.exercises, 0),
+        }))
+
+        // cloneFromProgramId wins over templateId.
+        if (templateId && isUuid(templateId) && !cloneSource) {
+            const found = await prisma.workoutTemplate.findFirst({
+                where: { id: templateId, trainerId: session.user.id },
+                select: { id: true, name: true, workoutsPerWeek: true },
+            })
+            if (found) {
+                templateSource = found
+            } else {
+                templateError = 'notFound'
+            }
+        }
+    }
+
     const hasRequestedTrainee = trainees.some((trainee) => trainee.id === requestedTraineeId)
     const initialTraineeId = hasRequestedTrainee
         ? requestedTraineeId!
@@ -157,6 +196,10 @@ export default async function NewProgramPage({ searchParams }: NewProgramPagePro
                     cloneSource={cloneSource}
                     cloneError={cloneError}
                     startBlankHref={startBlankHref}
+                    templates={templates}
+                    templateSource={templateSource}
+                    templateError={templateError}
+                    showTemplateChooser={isTrainer}
                 />
             </div>
         </DashboardLayout>
