@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### fix(navigation): loader non si chiudeva dopo il salvataggio template (11/10/2026)
+- `NavigationLoadingProvider`: `start()` manuale (usato solo da `WorkoutTemplateEditor` prima di `router.push`) non veniva mai fermato in caso di successo. Ora l'overlay si chiude al cambio di `pathname`.
+
 ### i18n(templates): "Template" -> "Workout Template" (11/10/2026)
 - Menu, titoli, messaggi e errori di validazione/API (it/en: `navigation`, `trainer.templates`, `errors`) ora dicono "Workout Template". Solo stringhe, nessuna chiave rinominata.
 

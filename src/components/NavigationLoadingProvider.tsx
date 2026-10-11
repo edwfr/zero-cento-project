@@ -1,6 +1,7 @@
 'use client'
 
-import { createContext, useCallback, useContext, useMemo, useState, ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from 'react'
+import { usePathname } from 'next/navigation'
 import NavigationLoadingOverlay from './NavigationLoadingOverlay'
 
 interface NavigationLoadingContextValue {
@@ -24,6 +25,12 @@ export function NavigationLoadingProvider({ children }: { children: ReactNode })
         setIsLoading(false)
         setLabel(undefined)
     }, [])
+
+    // Client-driven redirects call start() before router.push(): close the overlay once the route changed.
+    const pathname = usePathname()
+    useEffect(() => {
+        stop()
+    }, [pathname, stop])
 
     const value = useMemo(
         () => ({ isLoading, start, stop }),
