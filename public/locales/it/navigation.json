@@ -21,7 +21,8 @@
         "globalPrograms": "Programmi Globali",
         "myRecords": "I Miei Massimali",
         "trainingHistory": "Storico Programmi",
-        "back": "Indietro"
+        "back": "Indietro",
+        "templates": "Template"
     },
     "roles": {
         "admin": "admin",

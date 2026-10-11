@@ -11,6 +11,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Added
+### [11 Ottobre 2026] — Template allenamento: chiavi i18n e voce di navigazione
+
+**File modificati:** `public/locales/{it,en}/{navigation,errors,trainer}.json`, `src/components/DashboardLayout.tsx`, `tests/unit/DashboardLayout.test.tsx`
+
+Aggiunte le chiavi i18n per la libreria template (`trainer.templates`, `template.notFound`, errori di validazione template e `validation.invalidReps`) in entrambe le lingue, e la voce "Template" nella sidebar del trainer che porta a `/trainer/templates`, coperta da test.
+
 ### [11 Ottobre 2026] — Template allenamento: creazione programma da template
 
 **File modificati:** `src/schemas/program.ts`, `src/app/api/programs/route.ts`, `tests/integration/programs-from-template.test.ts`

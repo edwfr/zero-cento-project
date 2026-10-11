@@ -107,6 +107,9 @@
     "trainer": {
         "notFound": "Trainer non trovato"
     },
+    "template": {
+        "notFound": "Template non trovato."
+    },
     "user": {
         "notFound": "Utente non trovato",
         "emailExists": "Email già in uso",
@@ -159,7 +162,15 @@
         "invalidTrainerNoteColor": "Il colore del testo non è valido",
         "trainerNoteTooComplex": "Il documento delle note è troppo complesso",
         "trainerNoteTooLong": "Il documento delle note è troppo lungo",
-        "workoutsPerWeekMismatchWithClone": "I giorni di allenamento a settimana devono corrispondere al programma di origine."
+        "workoutsPerWeekMismatchWithClone": "I giorni di allenamento a settimana devono corrispondere al programma di origine.",
+        "workoutsPerWeekMismatchWithTemplate": "I giorni di allenamento a settimana devono corrispondere al template.",
+        "templateAndCloneExclusive": "Non puoi usare insieme template e clonazione.",
+        "invalidTemplateId": "ID template non valido.",
+        "templateNameRequired": "Il nome del template è obbligatorio.",
+        "templateNameTooLong": "Il nome del template è troppo lungo (max 100).",
+        "invalidReps": "Ripetizioni non valide (es. 8, 8-10, 8/6, max).",
+        "templateWorkoutsMismatch": "Il numero di workout non corrisponde ai giorni a settimana.",
+        "templateInvalidDayIndex": "Indici dei workout non validi."
     },
     "internal": {
         "default": "Si è verificato un errore. Riprova.",

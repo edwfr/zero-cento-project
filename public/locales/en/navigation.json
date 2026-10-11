@@ -21,7 +21,8 @@
         "globalPrograms": "Global Programs",
         "myRecords": "My Personal Records",
         "trainingHistory": "Training History",
-        "back": "Back"
+        "back": "Back",
+        "templates": "Templates"
     },
     "roles": {
         "admin": "admin",

@@ -18,6 +18,7 @@ import {
     Trophy,
     BarChart2,
     Settings,
+    LayoutTemplate,
 } from 'lucide-react'
 
 interface User {
@@ -40,6 +41,7 @@ const NAV_ITEMS: Record<string, { href: string; icon: ReactNode; titleKey: strin
         { href: '/trainer/trainees', icon: <Users className="w-5 h-5" />, titleKey: 'navigation.myAthletes' },
         { href: '/trainer/subscriptions', icon: <CalendarClock className="w-5 h-5" />, titleKey: 'navigation.subscriptions' },
         { href: '/trainer/programs', icon: <ClipboardList className="w-5 h-5" />, titleKey: 'navigation.programs' },
+        { href: '/trainer/templates', icon: <LayoutTemplate className="w-5 h-5" />, titleKey: 'navigation.templates' },
         { href: '/trainer/exercises', icon: <Dumbbell className="w-5 h-5" />, titleKey: 'navigation.exercises' },
         { href: '/profile', icon: <User className="w-5 h-5" />, titleKey: 'navigation.myProfile' },
     ],

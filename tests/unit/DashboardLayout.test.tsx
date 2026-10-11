@@ -63,5 +63,18 @@ describe('DashboardLayout', () => {
         const link = screen.getAllByRole('link').find((item) => item.getAttribute('href') === '/trainer/subscriptions')
         expect(link).toBeDefined()
     })
+
+    it('links the trainer menu to the templates page', () => {
+        render(
+            <DashboardLayout user={mockUser}>
+                <div>Test Content</div>
+            </DashboardLayout>
+        )
+
+        fireEvent.click(screen.getByRole('button', { name: 'navigation.openNavigationMenu' }))
+
+        const link = screen.getAllByRole('link').find((item) => item.getAttribute('href') === '/trainer/templates')
+        expect(link).toBeDefined()
+    })
 })
 
