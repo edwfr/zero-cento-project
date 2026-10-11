@@ -94,9 +94,9 @@ describe('workout templates API', () => {
 
             const res = await POST(req('POST', validBody))
             expect(res.status).toBe(201)
-            const arg = prismaMock.workoutTemplate.create.mock.calls[0][0] as any
+            const arg = prismaMock.workoutTemplate.create.mock.calls[0][0] as { data: { trainerId: string; workouts: { create: Array<{ exercises: { create: Array<{ order: number }> } }> } } }
             expect(arg.data.trainerId).toBe(TRAINER_ID)
-            expect(arg.data.workouts.create[0].exercises.create.map((e: any) => e.order)).toEqual([0, 1])
+            expect(arg.data.workouts.create[0].exercises.create.map((e: { order: number }) => e.order)).toEqual([0, 1])
             expect(arg.data.workouts.create[1].exercises.create[0].order).toBe(0)
             expect((await res.json()).data.id).toBe(TEMPLATE_ID)
         })
@@ -165,7 +165,7 @@ describe('workout templates API', () => {
             expect(prismaMock.workoutTemplateWorkout.deleteMany).toHaveBeenCalledWith({
                 where: { templateId: TEMPLATE_ID },
             })
-            const data = (prismaMock.workoutTemplate.update.mock.calls[0][0] as any).data
+            const data = (prismaMock.workoutTemplate.update.mock.calls[0][0] as { data: Record<string, unknown> }).data
             expect(data.name).toBe('Settimana tipo')
             expect(data.workoutsPerWeek).toBe(2)
             expect(data).not.toHaveProperty('usageCount')

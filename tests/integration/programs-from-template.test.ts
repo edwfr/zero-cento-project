@@ -100,7 +100,7 @@ describe('POST /api/programs - template branch', () => {
         )
 
         expect(prismaMock.workoutExercise.createMany).toHaveBeenCalledOnce()
-        const rows = (prismaMock.workoutExercise.createMany.mock.calls[0][0] as { data: any[] }).data
+        const rows = (prismaMock.workoutExercise.createMany.mock.calls[0][0] as { data: Array<Record<string, unknown>> }).data
         expect(rows).toHaveLength(3)
         expect(rows.map((r) => r.workoutId)).toEqual(['wk1-d1', 'wk1-d1', 'wk1-d2'])
         for (const r of rows) {
@@ -110,7 +110,7 @@ describe('POST /api/programs - template branch', () => {
         }
 
         expect(prismaMock.workoutSkeleton.createMany).toHaveBeenCalledOnce()
-        const skel = (prismaMock.workoutSkeleton.createMany.mock.calls[0][0] as { data: any[] }).data
+        const skel = (prismaMock.workoutSkeleton.createMany.mock.calls[0][0] as { data: Array<Record<string, unknown>> }).data
         expect(skel).toHaveLength(3)
         expect(skel.map((r) => r.dayIndex)).toEqual([0, 0, 1])
         expect(skel.every((r) => r.programId === 'new-prog-id')).toBe(true)
