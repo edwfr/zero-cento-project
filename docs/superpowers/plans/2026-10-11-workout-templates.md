@@ -205,7 +205,7 @@ export function buildSkeletonRows(programId: string, workouts: TemplateWorkoutLi
 
 Mirror structure, auth mocks and prisma mock of `tests/integration/programs-clone.test.ts` (uses `authModuleMock`, `prismaMock`, `asTrainer`) and the handler shape of `src/app/api/programs/route.ts` (`requireRole`, `apiSuccess`, `apiError`, `handleApiError`, `logger.info`). Add `workoutTemplate`, `workoutTemplateWorkout`, `workoutTemplateExercise` to `tests/helpers/prisma-mock.ts` if the mock enumerates models explicitly (read it first).
 
-- [ ] **Step 1: tests** — `tests/integration/workout-templates.test.ts`:
+- [x] **Step 1: tests** — `tests/integration/workout-templates.test.ts`:
   - GET list as trainer → 200; `findMany` called with `where: { trainerId: <session user id> }`; each item exposes `{ id, name, workoutsPerWeek, exerciseCount, usageCount, lastUsedAt, createdAt, updatedAt }`; `exerciseCount` = sum of exercises across workouts
   - GET list as admin or trainee → 403 (guard rejects)
   - POST valid body → 201; `workoutTemplate.create` receives `trainerId` of the session, nested workouts with exercises whose `order` equals array index; response has the template
@@ -218,13 +218,13 @@ Mirror structure, auth mocks and prisma mock of `tests/integration/programs-clon
   - DELETE own → 200, `workoutTemplate.delete` called with `{ id }` after ownership check
   - DELETE other trainer's → 404, `delete` not called
   - non-uuid `[id]` → 404 (`template.notFound`)
-- [ ] **Step 2: implementation** —
+- [x] **Step 2: implementation** —
   - `GET /api/workout-templates`: `requireRole(['trainer'])`; `findMany({ where: { trainerId }, include: { workouts: { include: { exercises: { select: { id: true } } } } }, orderBy: { updatedAt: 'desc' } })`; map to the item shape with `countTemplateExercises`-style sum (do not return full exercises in the list).
   - `POST`: parse with `workoutTemplateSchema`; verify all distinct `exerciseId`s exist (`prisma.exercise.findMany({ where: { id: { in } }, select: { id: true } })`); create nested `workouts: { create: [...] }` with `exercises: { create: ex.map((e, i) => ({ ...e, order: i })) }`; 201.
   - `[id]/route.ts`: helper `findOwnedTemplate(id, trainerId)` using `findFirst({ where: { id, trainerId } })`, returns `apiError('NOT_FOUND', 'Template not found', 404, undefined, 'template.notFound')` when missing. `PUT`: ownership check, validate, exercises-exist check, then `prisma.$transaction`: `workoutTemplateWorkout.deleteMany({ where: { templateId } })` (cascades exercises), `workoutTemplate.update({ where: { id }, data: { name, workoutsPerWeek, workouts: { create: ... } } })`. `DELETE`: ownership check then `workoutTemplate.delete({ where: { id } })`. Route params are `Promise<{ id: string }>` in Next 15: follow the sibling `src/app/api/programs/[id]/route.ts`.
   - `catch` blocks end with `handleApiError(error, { logMessage, message, key: 'internal.default' })`.
-- [ ] **Step 3: run the test command and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit** — `feat(api): add workout template CRUD endpoints`
+- [x] **Step 3: run the test command and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit** — `feat(api): add workout template CRUD endpoints`
 
 ---
 

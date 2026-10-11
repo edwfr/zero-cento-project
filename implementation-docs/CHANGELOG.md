@@ -11,6 +11,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Added
+### [11 Ottobre 2026] — Template allenamento: API CRUD
+
+**File modificati:** `src/app/api/workout-templates/route.ts`, `src/app/api/workout-templates/[id]/route.ts`, `tests/integration/workout-templates.test.ts`
+
+Aggiunti gli endpoint `GET/POST /api/workout-templates` e `GET/PUT/DELETE /api/workout-templates/[id]`, riservati al trainer proprietario (template altrui -> 404). `PUT` sostituisce i workout in transazione preservando `usageCount` e `lastUsedAt`.
+
 ### [11 Ottobre 2026] — Template allenamento: schema Zod e helper di mapping
 
 **File modificati:** `src/schemas/workout-template.ts`, `src/lib/workout-templates.ts`, `tests/unit/workout-template-schema.test.ts`, `tests/unit/lib/workout-templates.test.ts`
