@@ -37,6 +37,10 @@ describe('countTemplateExercises', () => {
 })
 
 describe('buildWeek1ExerciseRows', () => {
+    it('converts 0-based template order to 1-based workout exercise order', () => {
+        const rows = buildWeek1ExerciseRows(template, week1)
+        expect(rows.map((r) => r.order)).toEqual([1, 2, 1])
+    })
     it('maps template day d to workout dayIndex d+1 with null loads', () => {
         const rows = buildWeek1ExerciseRows(template, week1)
         expect(rows).toHaveLength(3)
@@ -44,7 +48,7 @@ describe('buildWeek1ExerciseRows', () => {
         expect(rows[1]).toEqual({
             workoutId: 'w1',
             exerciseId: 'b',
-            order: 1,
+            order: 2,
             sets: 3,
             reps: '8-10',
             restTime: 'm2',

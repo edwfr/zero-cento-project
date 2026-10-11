@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### fix(templates): 400 sul salvataggio esercizi nei programmi creati da workout template (11/10/2026)
+- `buildWeek1ExerciseRows`: l'`order` del template (0-based) veniva copiato tale e quale nei `WorkoutExercise`, il cui `order` è 1-based (`workoutExerciseBaseSchema`: `min(1)`), quindi il bulk save rispondeva `VALIDATION_ERROR` su `exercises[0].order`. Ora `order + 1`. I programmi già creati da template vanno corretti a DB.
+
 ### ui(templates): icone sui bottoni dell'editor workout template (11/10/2026)
 - `WorkoutTemplateEditor`: icona `Plus` su "Aggiungi esercizio" e `Save` sul bottone di salvataggio (prop `icon` di `Button`), coerente con gli altri form trainer.
 

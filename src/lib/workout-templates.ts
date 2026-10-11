@@ -41,7 +41,10 @@ export function countTemplateExercises(workouts: TemplateWorkoutLike[]): number 
     return workouts.reduce((sum, w) => sum + w.exercises.length, 0)
 }
 
-/** Template day d (0-based) maps to program Week 1 workout with dayIndex d + 1. */
+/**
+ * Template day d (0-based) maps to program Week 1 workout with dayIndex d + 1.
+ * Template order is 0-based too, WorkoutExercise order is 1-based.
+ */
 export function buildWeek1ExerciseRows(
     workouts: TemplateWorkoutLike[],
     week1Workouts: Week1WorkoutRef[]
@@ -56,7 +59,7 @@ export function buildWeek1ExerciseRows(
             rows.push({
                 workoutId: target.id,
                 exerciseId: ex.exerciseId,
-                order: ex.order,
+                order: ex.order + 1,
                 sets: ex.sets,
                 reps: ex.reps,
                 restTime: ex.restTime,
