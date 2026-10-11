@@ -11,6 +11,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### Added
+### [11 Ottobre 2026] — Template allenamento: creazione programma da template
+
+**File modificati:** `src/schemas/program.ts`, `src/app/api/programs/route.ts`, `tests/integration/programs-from-template.test.ts`
+
+`POST /api/programs` accetta `templateId`: copia il template nella Settimana 1 e nello skeleton (dayIndex 0-based) e incrementa `usageCount`/`lastUsedAt` nella stessa transazione. Template altrui o inesistente -> 404, `workoutsPerWeek` diverso -> 400, `templateId` + `cloneFromProgramId` -> 400.
+
 ### [11 Ottobre 2026] — Template allenamento: API CRUD
 
 **File modificati:** `src/app/api/workout-templates/route.ts`, `src/app/api/workout-templates/[id]/route.ts`, `tests/integration/workout-templates.test.ts`

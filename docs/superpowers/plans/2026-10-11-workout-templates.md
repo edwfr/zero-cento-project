@@ -236,7 +236,7 @@ Mirror structure, auth mocks and prisma mock of `tests/integration/programs-clon
 **Test command:** `npx vitest run tests/integration/programs-from-template.test.ts tests/integration/programs-clone.test.ts tests/integration/programs.test.ts`
 **Done when:** new tests pass and the existing clone/programs tests still pass unchanged.
 
-- [ ] **Step 1: tests** — `tests/integration/programs-from-template.test.ts` (same scaffold as `programs-clone.test.ts`; `trainingProgram.create` mock must return `weeks: [{ weekNumber: 1, workouts: [{ id: 'wk1-d1', dayIndex: 1 }, { id: 'wk1-d2', dayIndex: 2 }] }]`):
+- [x] **Step 1: tests** — `tests/integration/programs-from-template.test.ts` (same scaffold as `programs-clone.test.ts`; `trainingProgram.create` mock must return `weeks: [{ weekNumber: 1, workouts: [{ id: 'wk1-d1', dayIndex: 1 }, { id: 'wk1-d2', dayIndex: 2 }] }]`):
   - valid `templateId` (template found with `findFirst({ where: { id, trainerId } })`, `workoutsPerWeek: 2`, day 0 with 2 exercises, day 1 with 1) → 201; `workoutExercise.createMany` called once with 3 rows: day 0 rows have `workoutId: 'wk1-d1'`, day 1 row `workoutId: 'wk1-d2'`, all with `weight: null`, `targetRpe: null`, `weightType: 'absolute'`
   - same case: `workoutSkeleton.createMany` called with 3 rows, `dayIndex` 0,0,1 (0-based) and `programId: 'new-prog-id'`
   - same case: `workoutTemplate.update` called with `data: { usageCount: { increment: 1 }, lastUsedAt: expect.any(Date) }`
@@ -247,7 +247,7 @@ Mirror structure, auth mocks and prisma mock of `tests/integration/programs-clon
   - template with a day that has no exercises → still 201; no `createMany` call for empty row lists (guard `length > 0`)
   - program creation fails inside the transaction (`trainingProgram.create` rejects) → 500 and `workoutTemplate.update` not called
   - response body and `logger.info` payload for the created program do not contain `templateId` as a program field; the logged object may include `templateId` (server-side log only)
-- [ ] **Step 2: implementation** —
+- [x] **Step 2: implementation** —
   - `src/schemas/program.ts`: add `templateId: z.string().uuid('validation.invalidTemplateId').optional()` to `createProgramSchema` (NOT to `updateProgramSchema`: it is `createProgramSchema.partial()`, so remove `templateId` and `cloneFromProgramId` from the update schema with `.omit({ templateId: true })` before `.partial()` only if that does not change existing behaviour for `cloneFromProgramId`; otherwise leave the update schema as is and just keep `templateId` out of any update handler).
   - `src/app/api/programs/route.ts` POST: destructure `templateId`. Early: `if (templateId && cloneFromProgramId)` → 400 `validation.templateAndCloneExclusive`. After `actualTrainerId` is resolved, if `templateId`: `prisma.workoutTemplate.findFirst({ where: { id: templateId, trainerId: actualTrainerId }, include: { workouts: { include: { exercises: { orderBy: { order: 'asc' } } }, orderBy: { dayIndex: 'asc' } } } })`; null → 404 `template.notFound`; `template.workoutsPerWeek !== workoutsPerWeek` → 400 `validation.workoutsPerWeekMismatchWithTemplate`. Inside the existing `$transaction`, after the clone block (leave it intact), add:
 
@@ -266,8 +266,8 @@ if (template) {
 ```
 
   Add `templateId: templateId ?? null` to the `logger.info` payload only. Do not add it to the response. Note `createdProgram.weeks[].workouts` is already included by the existing `include`.
-- [ ] **Step 3: run the test command and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit** — `feat(api): create program from workout template`
+- [x] **Step 3: run the test command and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit** — `feat(api): create program from workout template`
 
 ---
 

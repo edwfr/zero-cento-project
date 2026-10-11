@@ -7,6 +7,7 @@ import { createProgramSchema, programFilterSchema } from '@/schemas/program'
 import { logger } from '@/lib/logger'
 import { handleApiError } from '@/lib/api-error-handler'
 import { traineeVisibleProgramWhere } from '@/lib/program-visibility'
+import { buildWeek1ExerciseRows, buildSkeletonRows } from '@/lib/workout-templates'
 
 interface ProgramTestsSummary {
     testWeeks: number[]
@@ -312,6 +313,18 @@ export async function GET(request: NextRequest) {
     }
 }
 
+function loadTemplate(templateId: string, trainerId: string) {
+    return prisma.workoutTemplate.findFirst({
+        where: { id: templateId, trainerId },
+        include: {
+            workouts: {
+                include: { exercises: { orderBy: { order: 'asc' } } },
+                orderBy: { dayIndex: 'asc' },
+            },
+        },
+    })
+}
+
 /**
  * POST /api/programs
  * Create new program (status=draft)
@@ -334,7 +347,18 @@ export async function POST(request: NextRequest) {
             durationWeeks,
             workoutsPerWeek,
             cloneFromProgramId,
+            templateId,
         } = validation.data
+
+        if (templateId && cloneFromProgramId) {
+            return apiError(
+                'VALIDATION_ERROR',
+                'templateId and cloneFromProgramId are mutually exclusive',
+                400,
+                undefined,
+                'validation.templateAndCloneExclusive'
+            )
+        }
 
         // Verify trainee exists and is a trainee role
         const trainee = await prisma.user.findUnique({
@@ -426,6 +450,23 @@ export async function POST(request: NextRequest) {
             }
         }
 
+        let template: Awaited<ReturnType<typeof loadTemplate>> = null
+        if (templateId) {
+            template = await loadTemplate(templateId, actualTrainerId)
+            if (!template) {
+                return apiError('NOT_FOUND', 'Template not found', 404, undefined, 'template.notFound')
+            }
+            if (template.workoutsPerWeek !== workoutsPerWeek) {
+                return apiError(
+                    'VALIDATION_ERROR',
+                    'workoutsPerWeek must match the template',
+                    400,
+                    undefined,
+                    'validation.workoutsPerWeekMismatchWithTemplate'
+                )
+            }
+        }
+
         const program = await prisma.$transaction(async (tx) => {
             const createdProgram = await tx.trainingProgram.create({
                 data: {
@@ -488,6 +529,18 @@ export async function POST(request: NextRequest) {
                 }
             }
 
+            if (template) {
+                const week1 = createdProgram.weeks.find((w) => w.weekNumber === 1)
+                const exerciseRows = buildWeek1ExerciseRows(template.workouts, week1?.workouts ?? [])
+                if (exerciseRows.length > 0) await tx.workoutExercise.createMany({ data: exerciseRows })
+                const skeletonRows = buildSkeletonRows(createdProgram.id, template.workouts)
+                if (skeletonRows.length > 0) await tx.workoutSkeleton.createMany({ data: skeletonRows })
+                await tx.workoutTemplate.update({
+                    where: { id: template.id },
+                    data: { usageCount: { increment: 1 }, lastUsedAt: new Date() },
+                })
+            }
+
             return createdProgram
         })
 
@@ -497,6 +550,7 @@ export async function POST(request: NextRequest) {
                 trainerId: program.trainerId,
                 traineeId: program.traineeId,
                 clonedFrom: cloneFromProgramId ?? null,
+                templateId: templateId ?? null,
             },
             'Program created successfully'
         )
