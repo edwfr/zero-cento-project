@@ -1054,6 +1054,7 @@
         "editorNewTitle": "New template",
         "editorEditTitle": "Edit template",
         "nameLabel": "Template name",
+        "confirmShrinkWorkouts": "Reducing workouts per week will delete the exercises in the removed days. Continue?",
         "workoutsPerWeekLabel": "Workouts per week",
         "workoutLabel": "Workout {{n}}",
         "colExercise": "Exercise",

@@ -452,7 +452,11 @@ export async function POST(request: NextRequest) {
 
         let template: Awaited<ReturnType<typeof loadTemplate>> = null
         if (templateId) {
-            template = await loadTemplate(templateId, actualTrainerId)
+            // Templates are private to their trainer: admins cannot start programs from them.
+            if (session.user.role !== 'trainer') {
+                return apiError('NOT_FOUND', 'Template not found', 404, undefined, 'template.notFound')
+            }
+            template = await loadTemplate(templateId, session.user.id)
             if (!template) {
                 return apiError('NOT_FOUND', 'Template not found', 404, undefined, 'template.notFound')
             }
@@ -557,6 +561,14 @@ export async function POST(request: NextRequest) {
 
         return apiSuccess({ program }, 201)
     } catch (error) {
+        // Template deleted between load and usage bump: the transaction rolled back, report 404.
+        if (
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === 'P2025' &&
+            error.meta?.modelName === 'WorkoutTemplate'
+        ) {
+            return apiError('NOT_FOUND', 'Template not found', 404, undefined, 'template.notFound')
+        }
         return handleApiError(error, {
             logMessage: 'Error creating program',
             message: 'Failed to create program',

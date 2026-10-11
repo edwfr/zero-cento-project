@@ -230,6 +230,12 @@ export async function DELETE(request: NextRequest, { params }: Params) {
                     context: { userId: id },
                 })
             }
+        } else if (existingUser.role === 'trainer') {
+            // WorkoutTemplate.trainerId is RESTRICT: remove the trainer's templates first.
+            await prisma.$transaction([
+                prisma.workoutTemplate.deleteMany({ where: { trainerId: id } }),
+                prisma.user.delete({ where: { id } }),
+            ])
         } else {
             await prisma.user.delete({
                 where: { id },

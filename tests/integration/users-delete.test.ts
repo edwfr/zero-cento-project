@@ -159,14 +159,15 @@ describe('DELETE /api/users/[id]', () => {
         expect(body.error.key).toBe('user.deleteFailed')
     })
 
-    it('keeps plain delete for non-trainee targets (no Supabase call, no transaction)', async () => {
+    it('deletes trainer templates in the same transaction (RESTRICT FK), no Supabase call', async () => {
         prismaMock.user.findUnique.mockResolvedValue({ ...trainee, role: 'trainer' } as never)
 
         const res = await callDelete()
 
         expect(res.status).toBe(200)
+        expect(prismaMock.workoutTemplate.deleteMany).toHaveBeenCalledWith({ where: { trainerId: trainee.id } })
         expect(prismaMock.user.delete).toHaveBeenCalledWith({ where: { id: trainee.id } })
+        expect(prismaMock.$transaction).toHaveBeenCalledOnce()
         expect(deleteUserMock).not.toHaveBeenCalled()
-        expect(prismaMock.$transaction).not.toHaveBeenCalled()
     })
 })

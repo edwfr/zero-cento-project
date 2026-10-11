@@ -77,9 +77,46 @@ describe('WorkoutTemplateEditor', () => {
         render(<WorkoutTemplateEditor />)
         const input = screen.getByLabelText('trainer:templates.workoutsPerWeekLabel')
         fireEvent.change(input, { target: { value: '2' } })
+        fireEvent.blur(input)
         expect(screen.queryByText('trainer:templates.workoutLabel:3')).toBeNull()
         fireEvent.change(input, { target: { value: '4' } })
+        fireEvent.blur(input)
         expect(screen.getByText('trainer:templates.workoutLabel:4')).toBeTruthy()
+    })
+
+    it('keeps all workout blocks while the field is empty mid-typing and resizes on blur', () => {
+        mockFetch()
+        render(<WorkoutTemplateEditor />)
+        const input = screen.getByLabelText('trainer:templates.workoutsPerWeekLabel')
+        fireEvent.change(input, { target: { value: '' } })
+        expect(screen.getByText('trainer:templates.workoutLabel:3')).toBeTruthy()
+        fireEvent.change(input, { target: { value: '5' } })
+        fireEvent.blur(input)
+        expect(screen.getByText('trainer:templates.workoutLabel:5')).toBeTruthy()
+    })
+
+    it('restores the previous value when the field is left empty', () => {
+        mockFetch()
+        render(<WorkoutTemplateEditor />)
+        const input = screen.getByLabelText('trainer:templates.workoutsPerWeekLabel') as HTMLInputElement
+        fireEvent.change(input, { target: { value: '' } })
+        fireEvent.blur(input)
+        expect(input.value).toBe('3')
+        expect(screen.getByText('trainer:templates.workoutLabel:3')).toBeTruthy()
+    })
+
+    it('asks confirmation before dropping non-empty workouts and keeps them when declined', () => {
+        mockFetch()
+        const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
+        render(<WorkoutTemplateEditor />)
+        fireEvent.click(screen.getAllByText('trainer:templates.addExercise')[2])
+        const input = screen.getByLabelText('trainer:templates.workoutsPerWeekLabel') as HTMLInputElement
+        fireEvent.change(input, { target: { value: '2' } })
+        fireEvent.blur(input)
+        expect(confirm).toHaveBeenCalled()
+        expect(input.value).toBe('3')
+        expect(screen.getByText('pick')).toBeTruthy()
+        confirm.mockRestore()
     })
 
     it('adds a row with the 4 inputs and removes it, with no weight/RPE fields', () => {
@@ -108,7 +145,9 @@ describe('WorkoutTemplateEditor', () => {
         const fn = mockFetch()
         render(<WorkoutTemplateEditor />)
         fireEvent.change(screen.getByLabelText('trainer:templates.nameLabel'), { target: { value: 'Week A' } })
-        fireEvent.change(screen.getByLabelText('trainer:templates.workoutsPerWeekLabel'), { target: { value: '2' } })
+        const perWeek = screen.getByLabelText('trainer:templates.workoutsPerWeekLabel')
+        fireEvent.change(perWeek, { target: { value: '2' } })
+        fireEvent.blur(perWeek)
         fillRow()
         fireEvent.click(screen.getByText('trainer:templates.saveToLibrary'))
 
@@ -154,7 +193,9 @@ describe('WorkoutTemplateEditor', () => {
         mockFetch({ ok: false, json: { error: { code: 'X', message: 'Server boom' } } })
         render(<WorkoutTemplateEditor />)
         fireEvent.change(screen.getByLabelText('trainer:templates.nameLabel'), { target: { value: 'Week A' } })
-        fireEvent.change(screen.getByLabelText('trainer:templates.workoutsPerWeekLabel'), { target: { value: '1' } })
+        const perWeek = screen.getByLabelText('trainer:templates.workoutsPerWeekLabel')
+        fireEvent.change(perWeek, { target: { value: '1' } })
+        fireEvent.blur(perWeek)
         fillRow()
         fireEvent.click(screen.getByText('trainer:templates.saveToLibrary'))
 

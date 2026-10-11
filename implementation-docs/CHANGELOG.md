@@ -10,6 +10,13 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### fix(templates): fix da review (11/10/2026)
+- Editor: `workoutsPerWeek` tenuto come testo, ridimensionamento solo al blur (campo vuoto non cancella più i giorni); conferma prima di eliminare giorni con esercizi.
+- `POST /api/programs`: `templateId` ammesso solo ai trainer, ownership su `session.user.id` (admin -> 404); P2025 sul bump `usageCount` -> 404 `template.notFound`.
+- `DELETE /api/exercises/[id]`: conta anche `templateExercises` (409 invece di P2003 -> 500 con messaggio fuorviante).
+- `DELETE /api/users/[id]`: l'eliminazione di un trainer cancella prima i suoi template (FK RESTRICT) nella stessa transazione.
+- Schema template: messaggi i18n per `exerciseId` e `sets` (it/en); loader sulla conferma di eliminazione; test che pinnano PUT/DELETE template senza effetti sui programmi.
+
 ### test(templates): e2e libreria template (11/10/2026)
 - Nuovo `tests/e2e/trainer-workout-templates.spec.ts`: crea template, avvia un programma da libreria (workoutsPerWeek bloccato, Week 1 precompilata, kg vuoto), verifica `usageCount` 1 ed elimina il template lasciando intatto il programma. Non eseguito localmente (niente DB/server): verificato solo `--list`, type-check e lint.
 

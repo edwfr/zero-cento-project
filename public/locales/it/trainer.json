@@ -1054,6 +1054,7 @@
         "editorNewTitle": "Nuovo template",
         "editorEditTitle": "Modifica template",
         "nameLabel": "Nome template",
+        "confirmShrinkWorkouts": "Riducendo gli allenamenti a settimana verranno eliminati gli esercizi dei giorni rimossi. Continuare?",
         "workoutsPerWeekLabel": "Workout a settimana",
         "workoutLabel": "Workout {{n}}",
         "colExercise": "Esercizio",

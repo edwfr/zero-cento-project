@@ -42,6 +42,19 @@ function req(method: string, body?: unknown): NextRequest {
 }
 const ctx = (id: string) => ({ params: Promise.resolve({ id }) })
 
+/** Templates are copy-only: editing or deleting one must never write to programs. */
+function expectProgramsUntouched() {
+    for (const model of [
+        prismaMock.trainingProgram,
+        prismaMock.workoutExercise,
+        prismaMock.workoutSkeleton,
+    ]) {
+        for (const fn of [model.create, model.createMany, model.update, model.updateMany, model.delete, model.deleteMany]) {
+            expect(fn).not.toHaveBeenCalled()
+        }
+    }
+}
+
 describe('workout templates API', () => {
     beforeEach(() => {
         vi.clearAllMocks()
@@ -170,6 +183,7 @@ describe('workout templates API', () => {
             expect(data.workoutsPerWeek).toBe(2)
             expect(data).not.toHaveProperty('usageCount')
             expect(data).not.toHaveProperty('lastUsedAt')
+            expectProgramsUntouched()
         })
 
         it('returns 404 for another trainer template without deleting', async () => {
@@ -187,6 +201,7 @@ describe('workout templates API', () => {
             const res = await DELETE(req('DELETE'), ctx(TEMPLATE_ID))
             expect(res.status).toBe(200)
             expect(prismaMock.workoutTemplate.delete).toHaveBeenCalledWith({ where: { id: TEMPLATE_ID } })
+            expectProgramsUntouched()
         })
 
         it('returns 404 for another trainer template without deleting', async () => {

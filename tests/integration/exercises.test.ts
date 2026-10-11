@@ -141,7 +141,12 @@ function makeDetailRequest(
 
 /** Exercise as the DELETE handler selects it: id + reference counts. */
 function makeCountedExercise(
-    counts: Partial<{ workoutExercises: number; workoutSkeletons: number; personalRecords: number }> = {}
+    counts: Partial<{
+        workoutExercises: number
+        workoutSkeletons: number
+        personalRecords: number
+        templateExercises: number
+    }> = {}
 ) {
     return {
         id: EX_ID_1,
@@ -149,6 +154,7 @@ function makeCountedExercise(
             workoutExercises: 0,
             workoutSkeletons: 0,
             personalRecords: 0,
+            templateExercises: 0,
             ...counts,
         },
     }
@@ -1073,6 +1079,25 @@ describe('DELETE /api/exercises/[id]', () => {
         expect(res.status).toBe(409)
         expect(json.error.key).toBe('exercise.cannotDeleteReferenced')
         expect(json.error.details.personalRecords).toBe(2)
+        expect(prismaMock.exercise.delete).not.toHaveBeenCalled()
+    })
+
+    it('returns 409 when the exercise is only referenced by a template', async () => {
+        asTrainer()
+        prismaMock.exercise.findUnique.mockResolvedValue(
+            makeCountedExercise({ templateExercises: 1 }) as never
+        )
+        prismaMock.workoutExercise.findFirst.mockResolvedValue(null)
+
+        const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
+            method: 'DELETE',
+        })
+        const res = await deleteExercise(req, withIdParam(EX_ID_1))
+        const json = await res.json()
+
+        expect(res.status).toBe(409)
+        expect(json.error.key).toBe('exercise.cannotDeleteReferenced')
+        expect(json.error.details.templateExercises).toBe(1)
         expect(prismaMock.exercise.delete).not.toHaveBeenCalled()
     })
 

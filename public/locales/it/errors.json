@@ -170,7 +170,9 @@
         "templateNameTooLong": "Il nome del template è troppo lungo (max 100).",
         "invalidReps": "Ripetizioni non valide (es. 8, 8-10, 8/6, max).",
         "templateWorkoutsMismatch": "Il numero di workout non corrisponde ai giorni a settimana.",
-        "templateInvalidDayIndex": "Indici dei workout non validi."
+        "templateInvalidDayIndex": "Indici dei workout non validi.",
+        "templateExerciseRequired": "Seleziona un esercizio per ogni riga.",
+        "templateInvalidSets": "Le serie devono essere un numero intero tra 1 e 20."
     },
     "internal": {
         "default": "Si è verificato un errore. Riprova.",

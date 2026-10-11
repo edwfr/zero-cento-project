@@ -41,11 +41,6 @@ interface EditorRow {
     restTime: TemplateRestTime
 }
 
-function clampWorkouts(value: number): number {
-    if (!Number.isFinite(value)) return 1
-    return Math.min(7, Math.max(1, Math.trunc(value)))
-}
-
 export default function WorkoutTemplateEditor({ initialTemplate }: WorkoutTemplateEditorProps) {
     const { t } = useTranslation(['trainer', 'common', 'errors'])
     const router = useRouter()
@@ -55,6 +50,8 @@ export default function WorkoutTemplateEditor({ initialTemplate }: WorkoutTempla
 
     const [name, setName] = useState(initialTemplate?.name ?? '')
     const [workoutsPerWeek, setWorkoutsPerWeek] = useState(initialTemplate?.workoutsPerWeek ?? 3)
+    // Raw field text: resize happens on blur only, so an empty field mid-typing never drops days.
+    const [workoutsInput, setWorkoutsInput] = useState(String(initialTemplate?.workoutsPerWeek ?? 3))
     const [workouts, setWorkouts] = useState<EditorRow[][]>(() => {
         const count = initialTemplate?.workoutsPerWeek ?? 3
         return Array.from({ length: count }, (_, day) => {
@@ -99,8 +96,18 @@ export default function WorkoutTemplateEditor({ initialTemplate }: WorkoutTempla
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    const handleWorkoutsPerWeekChange = (raw: string) => {
-        const next = clampWorkouts(Number(raw))
+    const commitWorkoutsPerWeek = () => {
+        const next = Number(workoutsInput)
+        if (workoutsInput.trim() === '' || !Number.isInteger(next) || next < 1 || next > 7) {
+            setWorkoutsInput(String(workoutsPerWeek))
+            return
+        }
+        if (next === workoutsPerWeek) return
+        const dropsExercises = workouts.slice(next).some((rows) => rows.length > 0)
+        if (dropsExercises && !window.confirm(t('trainer:templates.confirmShrinkWorkouts'))) {
+            setWorkoutsInput(String(workoutsPerWeek))
+            return
+        }
         setWorkoutsPerWeek(next)
         setWorkouts((current) => {
             if (next <= current.length) return current.slice(0, next)
@@ -212,8 +219,9 @@ export default function WorkoutTemplateEditor({ initialTemplate }: WorkoutTempla
                         type="number"
                         min={1}
                         max={7}
-                        value={workoutsPerWeek}
-                        onChange={(e) => handleWorkoutsPerWeekChange(e.target.value)}
+                        value={workoutsInput}
+                        onChange={(e) => setWorkoutsInput(e.target.value)}
+                        onBlur={commitWorkoutsPerWeek}
                     />
                 </div>
             </div>

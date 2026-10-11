@@ -20,8 +20,12 @@ const repsSchema = z.string().refine(
 )
 
 export const templateExerciseSchema = z.object({
-    exerciseId: z.string().uuid(),
-    sets: z.number().int().min(1).max(20),
+    exerciseId: z.string().uuid('validation.templateExerciseRequired'),
+    sets: z
+        .number({ invalid_type_error: 'validation.templateInvalidSets', required_error: 'validation.templateInvalidSets' })
+        .int('validation.templateInvalidSets')
+        .min(1, 'validation.templateInvalidSets')
+        .max(20, 'validation.templateInvalidSets'),
     reps: repsSchema,
     restTime: z.enum(['s30', 'm1', 'm1s30', 'm2', 'm3', 'm5']),
 })

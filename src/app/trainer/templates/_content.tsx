@@ -34,6 +34,7 @@ export default function TrainerTemplatesContent() {
     const [sortKey, setSortKey] = useState<SortKey>('updatedAt')
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
     const [toDelete, setToDelete] = useState<TemplateListItem | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
 
     const fetchTemplates = useCallback(async () => {
         try {
@@ -80,8 +81,9 @@ export default function TrainerTemplatesContent() {
     }
 
     const handleDelete = async () => {
-        if (!toDelete) return
+        if (!toDelete || isDeleting) return
         const target = toDelete
+        setIsDeleting(true)
         try {
             const res = await fetch(`/api/workout-templates/${target.id}`, { method: 'DELETE' })
             if (!res.ok) {
@@ -93,6 +95,7 @@ export default function TrainerTemplatesContent() {
         } catch (err) {
             showToast(err instanceof Error ? err.message : t('trainer:templates.deleteError'), 'error')
         } finally {
+            setIsDeleting(false)
             setToDelete(null)
         }
     }
@@ -213,6 +216,7 @@ export default function TrainerTemplatesContent() {
                     message={t('trainer:templates.deleteMessage')}
                     confirmText={t('trainer:templates.delete')}
                     variant="danger"
+                    isLoading={isDeleting}
                 />
             )}
         </div>

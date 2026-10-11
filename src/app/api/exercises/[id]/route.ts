@@ -219,7 +219,7 @@ export async function PUT(
  * DELETE /api/exercises/[id]
  * Delete exercise (shared library: any trainer or admin can delete).
  * Only allowed when the exercise has zero references: WorkoutExercise,
- * WorkoutSkeleton and PersonalRecord all use non-cascade FKs.
+ * WorkoutSkeleton, PersonalRecord and WorkoutTemplateExercise all use non-cascade FKs.
  */
 export async function DELETE(
     request: NextRequest,
@@ -240,6 +240,7 @@ export async function DELETE(
                         workoutExercises: true,
                         workoutSkeletons: true,
                         personalRecords: true,
+                        templateExercises: true,
                     },
                 },
             },
@@ -249,10 +250,10 @@ export async function DELETE(
             return apiError('NOT_FOUND', 'Exercise not found', 404, undefined, 'exercise.notFound')
         }
 
-        // All three FKs are non-cascade, so any surviving reference would turn
+        // All four FKs are non-cascade, so any surviving reference would turn
         // the delete into a foreign key violation. Block on every one of them.
-        const { workoutExercises, workoutSkeletons, personalRecords } = exercise._count
-        const totalReferences = workoutExercises + workoutSkeletons + personalRecords
+        const { workoutExercises, workoutSkeletons, personalRecords, templateExercises } = exercise._count
+        const totalReferences = workoutExercises + workoutSkeletons + personalRecords + templateExercises
 
         if (totalReferences > 0) {
             // Slow path, only on conflict: name one referencing program in the message
@@ -282,6 +283,7 @@ export async function DELETE(
                     workoutExercises,
                     workoutSkeletons,
                     personalRecords,
+                    templateExercises,
                     ...(program ? { programId: program.id, programName: program.title } : {}),
                 },
                 'exercise.cannotDeleteReferenced'

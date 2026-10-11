@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
+import { Prisma } from '@prisma/client'
 
 vi.mock('@/lib/auth', async () => (await import('../helpers/auth-module-mock')).authModuleMock())
 
@@ -10,7 +11,7 @@ vi.mock('@/lib/logger', () => ({
 import { POST } from '@/app/api/programs/route'
 import { logger } from '@/lib/logger'
 import { prismaMock } from '../helpers/prisma-mock'
-import { asTrainer } from '../helpers/auth-mock'
+import { asTrainer, asAdmin } from '../helpers/auth-mock'
 
 const TRAINEE_ID = '3fa85f64-5717-4562-b3fc-2c963f66afa6'
 const TEMPLATE_ID = '00000000-0000-0000-0000-0000000000a1'
@@ -186,5 +187,34 @@ describe('POST /api/programs - template branch', () => {
 
         expect(res.status).toBe(500)
         expect(prismaMock.workoutTemplate.update).not.toHaveBeenCalled()
+    })
+
+    it('returns 404 for admins sending templateId without touching the template', async () => {
+        asAdmin()
+
+        const res = await POST(makePostRequest(baseBody()))
+        const json = await res.json()
+
+        expect(res.status).toBe(404)
+        expect(json.error.key).toBe('template.notFound')
+        expect(prismaMock.workoutTemplate.findFirst).not.toHaveBeenCalled()
+        expect(prismaMock.trainingProgram.create).not.toHaveBeenCalled()
+        expect(prismaMock.workoutTemplate.update).not.toHaveBeenCalled()
+    })
+
+    it('returns 404 (not 500) when the template is deleted before the usage bump (P2025)', async () => {
+        prismaMock.workoutTemplate.update.mockRejectedValue(
+            new Prisma.PrismaClientKnownRequestError('Record not found', {
+                code: 'P2025',
+                clientVersion: 'test',
+                meta: { modelName: 'WorkoutTemplate' },
+            })
+        )
+
+        const res = await POST(makePostRequest(baseBody()))
+        const json = await res.json()
+
+        expect(res.status).toBe(404)
+        expect(json.error.key).toBe('template.notFound')
     })
 })
