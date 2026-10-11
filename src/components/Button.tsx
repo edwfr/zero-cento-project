@@ -61,7 +61,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     const widthStyle = fullWidth ? 'w-full' : ''
 
     // Icon size based on button size
-    const iconSizeClass = size === 'sm' ? 'w-4 h-4' : size === 'md' ? 'w-5 h-5' : 'w-6 h-6'
+    // The wrapper sizes the svg: a bare lucide icon is 24px and would overflow it
+    const iconSizeClass = `inline-flex shrink-0 [&>svg]:h-full [&>svg]:w-full ${size === 'sm' ? 'w-4 h-4' : size === 'md' ? 'w-5 h-5' : 'w-6 h-6'}`
     const iconGap = size === 'sm' ? 'gap-1.5' : 'gap-2'
 
     const combinedClassName = `${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${widthStyle} ${icon ? iconGap : ''} ${className}`.trim()

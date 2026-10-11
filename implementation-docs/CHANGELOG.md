@@ -10,6 +10,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### fix(ui): icone disallineate nei `Button` con icona senza dimensione esplicita (11/10/2026)
+- Causa: `Button` avvolge l'icona in uno span `w-4/5/6`, ma un'icona lucide passata nuda (`icon={<Plus />}`) resta a 24px e sborda dallo span, finendo più in basso del testo (visibile in `WorkoutTemplateEditor`, tab misurazioni, showcase).
+- Ora lo span impone la dimensione allo svg (`[&>svg]:h-full [&>svg]:w-full`, `inline-flex shrink-0`): l'icona segue sempre la `size` del bottone, senza dover passare `className`/`size` a ogni utilizzo.
+
 ### fix(templates): 400 sul salvataggio esercizi nei programmi creati da workout template (11/10/2026)
 - Causa: l'`order` del template era 0-based e `buildWeek1ExerciseRows` lo copiava tale e quale nei `WorkoutExercise`, il cui `order` è 1-based (`workoutExerciseBaseSchema`: `min(1)`), quindi il bulk save rispondeva `VALIDATION_ERROR` su `exercises[0].order`.
 - Ora l'`order` degli esercizi del template è 1-based (`POST`/`PUT /api/workout-templates`: `order: i + 1`), stessa convenzione dei `WorkoutExercise`. Lo skeleton resta 0-based (`buildSkeletonRows`: `order - 1`).
