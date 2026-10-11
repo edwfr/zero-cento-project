@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### i18n(templates): "Template" -> "Workout Template" (11/10/2026)
+- Menu, titoli, messaggi e errori di validazione/API (it/en: `navigation`, `trainer.templates`, `errors`) ora dicono "Workout Template". Solo stringhe, nessuna chiave rinominata.
+
 ### feat(templates): riordino esercizi nel workout template (11/10/2026)
 - `WorkoutTemplateEditor`: bottoni sposta su/giù per riga (`moveRow`); l'ordine salvato segue la posizione nell'array (API già assegna `order: i`). Nuove chiavi i18n `templates.moveUp/moveDown` (it/en).
 

@@ -22,11 +22,11 @@
         "myRecords": "My Personal Records",
         "trainingHistory": "Training History",
         "back": "Back",
-        "templates": "Templates"
+        "templates": "Workout Templates"
     },
     "roles": {
         "admin": "admin",
         "trainer": "trainer",
         "trainee": "trainee"
     }
-}
+}

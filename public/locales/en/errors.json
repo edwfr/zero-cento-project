@@ -108,7 +108,7 @@
         "notFound": "Trainer not found"
     },
     "template": {
-        "notFound": "Template not found."
+        "notFound": "Workout Template not found."
     },
     "user": {
         "notFound": "User not found",
@@ -163,11 +163,11 @@
         "trainerNoteTooComplex": "The notes document is too complex",
         "trainerNoteTooLong": "The notes document is too long",
         "workoutsPerWeekMismatchWithClone": "Workouts per week must match the source program.",
-        "workoutsPerWeekMismatchWithTemplate": "Workouts per week must match the template.",
-        "templateAndCloneExclusive": "Cannot use a template and clone together.",
-        "invalidTemplateId": "Invalid template id.",
-        "templateNameRequired": "Template name is required.",
-        "templateNameTooLong": "Template name is too long (max 100).",
+        "workoutsPerWeekMismatchWithTemplate": "Workouts per week must match the workout template.",
+        "templateAndCloneExclusive": "Cannot use a workout template and clone together.",
+        "invalidTemplateId": "Invalid workout template id.",
+        "templateNameRequired": "Workout Template name is required.",
+        "templateNameTooLong": "Workout Template name is too long (max 100).",
         "invalidReps": "Invalid reps (e.g. 8, 8-10, 8/6, max).",
         "templateWorkoutsMismatch": "Workout count does not match workouts per week.",
         "templateInvalidDayIndex": "Invalid workout indexes.",
@@ -178,4 +178,4 @@
         "default": "An error occurred. Please try again.",
         "globalReportFailed": "Failed to fetch the global report"
     }
-}
+}
