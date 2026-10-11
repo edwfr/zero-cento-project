@@ -72,15 +72,18 @@ export default function NewProgramContent({
     )
     const [showLibrary, setShowLibrary] = useState(false)
     const lockedWorkouts = !!cloneSource || !!templateSource
+    // Picking a template is a same-route navigation (only the query string changes), so this
+    // component is not remounted: anything driven by the source must be derived from props.
+    const showForm = startMode === 'scratch' || lockedWorkouts
 
     // Form state
     const [title, setTitle] = useState('')
     const [traineeId, setTraineeId] = useState(cloneSource?.traineeId ?? initialTraineeId)
     const [isSbdProgram, setIsSbdProgram] = useState(cloneSource?.isSbdProgram ?? false)
     const [durationWeeks, setDurationWeeks] = useState(4)
-    const [workoutsPerWeek, setWorkoutsPerWeek] = useState(
-        cloneSource?.workoutsPerWeek ?? templateSource?.workoutsPerWeek ?? 3
-    )
+    const [workoutsPerWeekInput, setWorkoutsPerWeek] = useState(3)
+    const workoutsPerWeek =
+        cloneSource?.workoutsPerWeek ?? templateSource?.workoutsPerWeek ?? workoutsPerWeekInput
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError(null)
@@ -239,7 +242,7 @@ export default function NewProgramContent({
                 </div>
             )}
 
-            {startMode === 'choose' && (
+            {!showForm && (
                 <div className="space-y-6">
                     <h1 className="text-3xl font-bold text-gray-900">{t('templates.startTitle')}</h1>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -290,7 +293,7 @@ export default function NewProgramContent({
                 </div>
             )}
 
-            {startMode === 'scratch' && (<>
+            {showForm && (<>
             {cloneSource && (
                 <div className="bg-blue-50 border border-blue-200 text-blue-900 px-4 py-3 rounded-lg mb-6 flex items-center justify-between gap-4">
                     <span className="text-sm">

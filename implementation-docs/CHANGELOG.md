@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### fix(programs): wizard bloccato sul chooser dopo la scelta del workout template (11/10/2026)
+- `NewProgramContent`: scegliere un template naviga sulla stessa route (`?templateId=`), quindi il componente non viene rimontato e `startMode`/`workoutsPerWeek` (inizializzati in `useState`) restavano quelli del chooser: compariva il banner ma non il form. Ora form visibile e workout/settimana sono derivati dalle props (`cloneSource`/`templateSource`). Test di regressione in `tests/unit/NewProgramContent.test.tsx`.
+
 ### chore(sentry): context nelle route workout-templates (11/10/2026)
 - `handleApiError` nelle 5 route `workout-templates` ora passa `context` (`trainerId`, `templateId` sulle route `[id]`), così gli eventi Sentry/pino indicano trainer e template coinvolti.
 

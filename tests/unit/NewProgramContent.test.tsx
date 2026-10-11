@@ -215,6 +215,38 @@ describe('NewProgramContent - template start', () => {
         expect(body.cloneFromProgramId).toBeUndefined()
     })
 
+    // Selecting a template is a same-route navigation: the component is not remounted,
+    // it only receives the new `templateSource` prop.
+    it('templateSource arriving after mount leaves the chooser and uses the template workouts', async () => {
+        const twoWorkoutTemplate = { ...templateSource, workoutsPerWeek: 2 }
+        const { rerender } = render(
+            <NewProgramContent trainees={trainees} initialTraineeId="t-1" templates={templates} />
+        )
+        fireEvent.click(screen.getByRole('button', { name: /templates.fromLibrary/ }))
+
+        rerender(
+            <NewProgramContent
+                trainees={trainees}
+                initialTraineeId="t-1"
+                templates={templates}
+                templateSource={twoWorkoutTemplate}
+            />
+        )
+
+        expect(screen.queryByRole('button', { name: /templates.fromScratch/ })).not.toBeInTheDocument()
+        const locked = screen.getAllByDisplayValue('2').find((i) => (i as HTMLInputElement).readOnly)
+        expect(locked).toBeDefined()
+
+        fireEvent.change(screen.getByPlaceholderText('programs.programNamePlaceholder'), {
+            target: { value: 'P' },
+        })
+        fireEvent.click(screen.getByRole('button', { name: 'programs.nextConfigureExercises' }))
+        await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1))
+        const body = JSON.parse(String((vi.mocked(global.fetch).mock.calls[0][1] as RequestInit).body))
+        expect(body.templateId).toBe('tpl-1')
+        expect(body.workoutsPerWeek).toBe(2)
+    })
+
     it('cloneSource skips chooser and sends no templateId', async () => {
         render(<NewProgramContent trainees={trainees} initialTraineeId="t-1" cloneSource={cloneSource} templates={templates} />)
         expect(screen.queryByRole('button', { name: /templates.fromScratch/ })).not.toBeInTheDocument()
