@@ -219,7 +219,7 @@ exercises and all of them are completed, regardless of warm-up rows.
 **Test command:** `node -e "for (const l of ['it','en']) { const w = require('./public/locales/'+l+'/trainee.json').workouts; for (const k of ['warmupTitle','warmupHint','warmupProgress']) if (!w[k]) throw new Error(l+' '+k) }"`
 **Done when:** the three keys exist in both locales under `workouts`.
 
-- [ ] **Step 1: add the keys** inside the `workouts` object, next to `recapTitle`
+- [x] **Step 1: add the keys** inside the `workouts` object, next to `recapTitle`
 
   | key | it | en |
   |---|---|---|
@@ -228,8 +228,8 @@ exercises and all of them are completed, regardless of warm-up rows.
   | `warmupProgress` | `{{done}} / {{total}}` | `{{done}} / {{total}}` |
 
   Keep 4-space indentation, no BOM, valid JSON (mind the trailing comma of the previous line).
-- [ ] **Step 2: run the test command**
-- [ ] **Step 3: CHANGELOG entry and commit** — `chore(i18n): add trainee warm-up section keys`
+- [x] **Step 2: run the test command**
+- [x] **Step 3: CHANGELOG entry and commit** — `chore(i18n): add trainee warm-up section keys`
 
 ---
 
