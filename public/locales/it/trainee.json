@@ -260,7 +260,7 @@
         "programCompletedToast": "Programma di allenamento completato! 🎉",
         "recapTitle": "Riepilogo esercizi",
         "warmupTitle": "Riscaldamento",
-        "warmupHint": "Da fare prima di iniziare. Registrare i set è facoltativo.",
+        "warmupHint": "Registrare i set di riscaldamento è facoltativo.",
         "warmupProgress": "{{done}} / {{total}}",
         "recapClose": "Chiudi",
         "recapStatusDone": "Completato",
