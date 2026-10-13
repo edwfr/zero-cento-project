@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { ClipboardList, ChevronDown, ChevronUp, CheckCircle2, Circle, Clock } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { ExerciseRecapItem, ExerciseStatus } from '@/lib/workout-recap'
+import { partitionWarmup } from '@/lib/workout-warmup'
 import ExerciseMetaBadges from './ExerciseMetaBadges'
 
 interface WorkoutRecapPanelProps {
@@ -65,8 +66,8 @@ export default function WorkoutRecapPanel({
                 }
 
                 if (!cancelled) {
-                    const fetchedExercises = data?.data?.exercises ?? []
-                    setExercises(fetchedExercises)
+                    const fetchedExercises: ExerciseRecapItem[] = data?.data?.exercises ?? []
+                    setExercises(partitionWarmup(fetchedExercises).main)
                 }
             } catch (err: unknown) {
                 if (!cancelled) {

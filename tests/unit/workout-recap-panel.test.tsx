@@ -31,7 +31,7 @@ const mockRecapResponse = {
                 exerciseName: 'Back Squat',
                 exerciseType: 'fundamental',
                 restTime: 'm2',
-                isWarmup: true,
+                isWarmup: false,
                 isJumpSet: false,
                 isSuperSet: true,
                 targetSets: 3,
@@ -89,7 +89,7 @@ describe('WorkoutRecapPanel', () => {
         expect(screen.getByText('3 x 5 · 120kg · @RPE 8')).toBeInTheDocument()
         expect(screen.getByText('2/3')).toBeInTheDocument()
         expect(screen.queryByText('common:exerciseTypes.fundamental.label')).not.toBeInTheDocument()
-        expect(screen.getByLabelText('trainer:editProgram.tableWarmup')).toBeInTheDocument()
+        expect(screen.queryByLabelText('trainer:editProgram.tableWarmup')).not.toBeInTheDocument()
         expect(screen.getByLabelText('trainer:editProgram.tableSuperSet')).toBeInTheDocument()
         expect(screen.queryByText('Set 1')).not.toBeInTheDocument()
         expect(screen.queryByText('Workout note')).not.toBeInTheDocument()
@@ -282,5 +282,56 @@ describe('WorkoutRecapPanel', () => {
         await user.click(screen.getByRole('button', { name: 'Workout Recap' }))
         await waitFor(() => expect(screen.getByText('Back Squat')).toBeInTheDocument())
         expect(screen.getByText('3 x 5 · 102.5kg')).toBeInTheDocument()
+    })
+
+    it('lists main exercises only and hides warm-up ones', async () => {
+        const base = mockRecapResponse.data.exercises[0]
+        global.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                data: {
+                    exercises: [
+                        { ...base, id: 'a', exerciseName: 'Main A', order: 2 },
+                        { ...base, id: 'w', exerciseName: 'Warm W', isWarmup: true, order: 1 },
+                        { ...base, id: 'b', exerciseName: 'Main B', order: 3 },
+                    ],
+                    workoutNote: null,
+                },
+            }),
+        }) as unknown as typeof fetch
+
+        const user = userEvent.setup()
+        render(<WorkoutRecapPanel workoutId="w1" />)
+
+        await user.click(screen.getByRole('button', { name: 'Workout Recap' }))
+        await waitFor(() => expect(screen.getByText('Main A')).toBeInTheDocument())
+        expect(screen.getByText('Main B')).toBeInTheDocument()
+        expect(screen.queryByText('Warm W')).not.toBeInTheDocument()
+    })
+
+    it('renders an empty list when every exercise is warm-up', async () => {
+        const base = mockRecapResponse.data.exercises[0]
+        global.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                data: {
+                    exercises: [
+                        { ...base, id: 'w1', exerciseName: 'Warm 1', isWarmup: true, order: 1 },
+                        { ...base, id: 'w2', exerciseName: 'Warm 2', isWarmup: true, order: 2 },
+                    ],
+                    workoutNote: null,
+                },
+            }),
+        }) as unknown as typeof fetch
+
+        const user = userEvent.setup()
+        render(<WorkoutRecapPanel workoutId="w1" />)
+
+        await user.click(screen.getByRole('button', { name: 'Workout Recap' }))
+        await waitFor(() => expect(global.fetch).toHaveBeenCalled())
+        await waitFor(() => expect(screen.queryByText('Workout Recap loading')).not.toBeInTheDocument())
+        expect(screen.queryByText('Warm 1')).not.toBeInTheDocument()
+        expect(screen.queryByText('Warm 2')).not.toBeInTheDocument()
+        expect(screen.queryAllByRole('listitem')).toHaveLength(0)
     })
 })

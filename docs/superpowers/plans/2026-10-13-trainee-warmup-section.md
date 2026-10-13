@@ -411,14 +411,14 @@ a workout without warm-up shows no panel.
 Consumed signature (Task 1): `partitionWarmup<T extends { isWarmup: boolean; order: number }>(exercises: readonly T[]): { warmup: T[]; main: T[] }`
 — `ExerciseRecapItem` (`src/lib/workout-recap.ts`) already has `isWarmup` and `order`.
 
-- [ ] **Step 1: tests**
+- [x] **Step 1: tests**
   - API returns `[main A, warm-up W, main B]` → A and B listed, W absent
   - API returns `[warm-up W1, warm-up W2]` → empty list, no crash
   - existing tests: check their fixtures; if one asserts a row that is `isWarmup: true`,
     set it to `false` in the fixture
-- [ ] **Step 2: implementation** — where the fetch result is stored:
+- [x] **Step 2: implementation** — where the fetch result is stored:
       `setExercises(partitionWarmup(fetchedExercises).main)`. Type the fetched array as
       `ExerciseRecapItem[]`. Nothing else changes; the recap API route stays as is.
-- [ ] **Step 3: run the test command and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit** —
+- [x] **Step 3: run the test command and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit** —
       `feat(trainee): hide warm-up exercises from the workout recap panel`

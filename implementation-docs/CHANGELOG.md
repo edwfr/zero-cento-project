@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(trainee): il riepilogo workout nasconde il riscaldamento (13/10/2026)
+- `src/components/WorkoutRecapPanel.tsx` elenca solo gli esercizi non di riscaldamento (`partitionWarmup`), coerente con step e contatori. Test in `tests/unit/workout-recap-panel.test.tsx`.
+
 ### feat(trainee): pannello riscaldamento dedicato nel workout in corso (13/10/2026)
 - In `src/app/trainee/workouts/[id]/_content.tsx` nuovo `WarmupPanel` collassabile sopra la card esercizio (anche allo step finale), con registrazione facoltativa dei set tramite lo stesso autosave; estratti `SetRowsGrid` e `buildExerciseSpec`. Nessun pannello se il workout non ha riscaldamento. Test in `tests/unit/trainee-workout-focus.test.tsx`.
 
