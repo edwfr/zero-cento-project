@@ -4,6 +4,7 @@ interface ProgressBarProps {
     current: number
     total: number
     label?: string
+    ariaLabel?: string
     showPercentage?: boolean
     showCurrentTotal?: boolean
     size?: 'sm' | 'md' | 'lg'
@@ -21,6 +22,7 @@ export default function ProgressBar({
     current,
     total,
     label,
+    ariaLabel,
     showPercentage = true,
     showCurrentTotal = true,
     size = 'md',
@@ -63,7 +65,7 @@ export default function ProgressBar({
                     aria-valuenow={current}
                     aria-valuemin={0}
                     aria-valuemax={total}
-                    aria-label={label || `Progress: ${percentage}%`}
+                    aria-label={ariaLabel || label || `Progress: ${percentage}%`}
                 />
             </div>
 

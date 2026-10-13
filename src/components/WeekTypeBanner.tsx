@@ -12,6 +12,8 @@ interface WeekTypeBannerProps {
     dayNumber?: number
     workoutName?: string
     progressPercentage?: number
+    completedSets?: number
+    totalSets?: number
     className?: string
 }
 
@@ -21,6 +23,8 @@ export default function WeekTypeBanner({
     dayNumber,
     workoutName,
     progressPercentage,
+    completedSets,
+    totalSets,
     className = '',
 }: WeekTypeBannerProps) {
     const { t } = useTranslation(['trainer', 'components'])
@@ -103,8 +107,11 @@ export default function WeekTypeBanner({
     const normalizedProgress = Math.max(0, Math.min(100, Math.round(progressPercentage ?? 0)))
     const showProgress = progressPercentage !== undefined
     const weekAndDayLabel = dayNumber
-        ? `${t('components:weekTypeBanner.week')} ${weekNumber} / ${t('components:weekTypeBanner.day')} ${dayNumber}`
+        ? `${t('components:weekTypeBanner.week')} ${weekNumber} · ${t('components:weekTypeBanner.day')} ${dayNumber}`
         : `${t('components:weekTypeBanner.week')} ${weekNumber}`
+    const progressText = completedSets !== undefined && totalSets !== undefined && totalSets > 0
+        ? `${completedSets}/${totalSets} ${t('components:weekTypeBanner.sets')} · ${normalizedProgress}%`
+        : `${normalizedProgress}%`
     const badgeLabels = {
         tecnica: t('components:weekTypeBanner.badges.tecnica'),
         ipertrofia: t('components:weekTypeBanner.badges.ipertrofia'),
@@ -126,28 +133,31 @@ export default function WeekTypeBanner({
         >
             {/* Mobile layout */}
             <div className="sm:hidden">
-                <p className="text-sm font-medium opacity-75">{weekAndDayLabel}</p>
-                {workoutName && (
-                    <h3 className="text-base font-bold leading-tight">{workoutName}</h3>
-                )}
-                <div className="mt-2 flex justify-center">
+                <div className="flex items-center justify-between gap-2">
+                    <p className="min-w-0 truncate text-sm font-medium opacity-75">{weekAndDayLabel}</p>
                     <WeekTypeBadge
                         weekType={weekType}
                         labels={badgeLabels}
-                        className="px-1.5 py-px text-[9px]"
+                        className="shrink-0"
                     />
                 </div>
+                {workoutName && (
+                    <h3 className="truncate text-base font-bold leading-tight">{workoutName}</h3>
+                )}
                 {showProgress && (
-                    <ProgressBar
-                        current={normalizedProgress}
-                        total={100}
-                        label={t('components:weekTypeBanner.progress')}
-                        size="sm"
-                        showCurrentTotal={false}
-                        barClassName={config.progress}
-                        labelClassName="text-xs font-medium text-gray-700"
-                        className="mt-2"
-                    />
+                    <div className="mt-2 flex items-center gap-2">
+                        <ProgressBar
+                            current={normalizedProgress}
+                            total={100}
+                            ariaLabel={t('components:weekTypeBanner.progress')}
+                            size="sm"
+                            showPercentage={false}
+                            showCurrentTotal={false}
+                            barClassName={config.progress}
+                            className="flex-1"
+                        />
+                        <span className="shrink-0 text-xs font-semibold tabular-nums">{progressText}</span>
+                    </div>
                 )}
             </div>
 

@@ -10,6 +10,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(trainee): banner workout più compatto e leggibile su mobile (13/10/2026)
+- `src/components/WeekTypeBanner.tsx` (layout mobile): settimana/giorno e badge tipo settimana sulla stessa riga, titolo troncato su una riga, barra di avanzamento con accanto il contatore "6/12 serie · 50%". Il banner è sticky: passa da 4 a 3 righe e chiarisce a cosa si riferisce la percentuale. Nuove props opzionali `completedSets` / `totalSets` (senza, resta la sola percentuale). Separatore settimana/giorno `·` al posto di `/`.
+- `src/components/ProgressBar.tsx`: prop `ariaLabel` per etichettare la barra senza renderizzare la riga label.
+- `src/app/trainee/workouts/[id]/_content.tsx` passa le serie completate/pianificate (riscaldamento escluso). Nuova chiave i18n `components:weekTypeBanner.sets` (it/en). Test in `tests/unit/WeekTypeBanner.test.tsx`.
+
 ### fix(trainee): correzioni post-review della sezione riscaldamento (13/10/2026)
 - `cascadeCompletion` in `src/lib/completion-service.ts`: se l'esercizio è di riscaldamento aggiorna solo l'esercizio e restituisce lo stato attuale di workout/settimana/programma senza ricalcolarlo. Prima un set di riscaldamento registrato dopo l'invio poteva riaprire un workout completato forzatamente (o composto solo da riscaldamento), riportando indietro anche settimana e programma.
 - `src/app/trainee/workouts/[id]/_content.tsx`: completare un esercizio di riscaldamento non mostra più i toast "workout/settimana/programma completati"; `WarmupPanel` si chiude solo a un reale cambio di step (`prevStep` ref), così in dev con `reactStrictMode` resta aperto all'ingresso.

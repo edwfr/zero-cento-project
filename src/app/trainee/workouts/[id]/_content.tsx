@@ -813,6 +813,8 @@ export default function WorkoutDetailContent() {
                         dayNumber={workout.dayIndex}
                         workoutName={workout.program.title}
                         progressPercentage={workoutProgressPercent}
+                        completedSets={totalCompletedSets}
+                        totalSets={totalPlannedSets}
                         className="border"
                     />
                 </div>
