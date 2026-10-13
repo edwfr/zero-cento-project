@@ -1,8 +1,14 @@
+import { StrictMode } from 'react'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, within, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 const routerPush = vi.fn()
+// Shared spies: the toast and the translation args are part of the asserted behaviour.
+const { showToast, tSpy } = vi.hoisted(() => ({
+    showToast: vi.fn(),
+    tSpy: vi.fn((key: string, _vars?: Record<string, unknown>) => key),
+}))
 let searchParamsValue = ''
 
 vi.mock('next/navigation', () => ({
@@ -12,7 +18,14 @@ vi.mock('next/navigation', () => ({
 }))
 
 vi.mock('@/components/ToastNotification', () => ({
-    useToast: () => ({ showToast: vi.fn() }),
+    useToast: () => ({ showToast }),
+}))
+
+// Same contract as the mock in setup.ts (t returns the key), with a spy on the args.
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({ t: tSpy, i18n: { language: 'en', changeLanguage: vi.fn() } }),
+    Trans: ({ children }: { children: React.ReactNode }) => children,
+    initReactI18next: { type: '3rdParty', init: vi.fn() },
 }))
 
 vi.mock('@sentry/nextjs', () => ({ captureException: vi.fn() }))
@@ -95,6 +108,8 @@ const fixtureWorkout = {
 
 beforeEach(() => {
     routerPush.mockReset()
+    showToast.mockClear()
+    tSpy.mockClear()
     searchParamsValue = ''
     global.Notification = Object.assign(vi.fn(), {
         permission: 'default' as NotificationPermission,
@@ -681,6 +696,27 @@ describe('Trainee workout focus mode with warm-up exercises', () => {
         expect(screen.getByText('workouts.summaryTitle')).toBeInTheDocument()
     })
 
+    it('counts only non-warm-up exercises in the step counter', async () => {
+        const user = userEvent.setup()
+        await renderContent()
+        expect(tSpy).toHaveBeenCalledWith('workouts.stepCounter', { current: 1, total: 2 })
+
+        await user.click(nextButton())
+        expect(tSpy).toHaveBeenCalledWith('workouts.stepCounter', { current: 2, total: 2 })
+        expect(tSpy).not.toHaveBeenCalledWith(
+            'workouts.stepCounter',
+            expect.objectContaining({ total: 3 })
+        )
+    })
+
+    it('counts only non-warm-up exercises in the summary stats', async () => {
+        const user = userEvent.setup()
+        await renderContent()
+        await user.click(nextButton())
+        await user.click(nextButton())
+        expect(tSpy).toHaveBeenCalledWith('workouts.summaryStats', { done: 0, total: 2, sets: 0 })
+    })
+
     it('does not list the warm-up exercise among incomplete exercises on the final step', async () => {
         const user = userEvent.setup()
         await renderContent()
@@ -723,22 +759,26 @@ describe('Trainee workout warm-up panel', () => {
     }
     const warmupFixture = { ...fixtureWorkout, exercises: [warmupExercise, ...fixtureWorkout.exercises] }
 
-    const mockWorkout = (workout: unknown) => {
+    const mockWorkout = (workout: unknown, allCompleted = false) => {
         vi.mocked(global.fetch).mockImplementation((async (url: string) => {
             if (url.includes('/api/trainee/workouts/')) {
                 return { ok: true, json: async () => ({ data: { workout } }) } as Response
             }
             if (url.includes('/api/trainee/workout-exercises/')) {
+                const workoutExerciseId = url.split('/workout-exercises/')[1].split('/')[0]
                 return {
                     ok: true,
                     json: async () => ({
                         data: {
-                            feedback: { id: 'f', workoutExerciseId: 'ex-w', actualRpe: null, setsPerformed: [] },
+                            feedback: { id: 'f', workoutExerciseId, actualRpe: null, setsPerformed: [] },
                             cascade: {
-                                workoutExercise: { id: 'ex-w', isCompleted: false },
-                                workout: { id: 'workout-1', isCompleted: false },
-                                week: { id: 'week-1', isCompleted: false, weekNumber: 2 },
-                                program: { id: 'program-1', status: 'active' },
+                                workoutExercise: { id: workoutExerciseId, isCompleted: allCompleted },
+                                workout: { id: 'workout-1', isCompleted: allCompleted },
+                                week: { id: 'week-1', isCompleted: allCompleted, weekNumber: 2 },
+                                program: {
+                                    id: 'program-1',
+                                    status: allCompleted ? 'completed' : 'active',
+                                },
                             },
                         },
                     }),
@@ -822,6 +862,64 @@ describe('Trainee workout warm-up panel', () => {
             expect(body.set.reps).toBe(8)
             expect(body.set.weight).toBe(80)
         })
+    })
+
+    const completionToasts = () =>
+        showToast.mock.calls.filter(([message]) =>
+            /workouts\.(workout|week|program)CompletedToast/.test(String(message))
+        )
+
+    const feedbackPatchFor = (workoutExerciseId: string) =>
+        vi
+            .mocked(global.fetch)
+            .mock.calls.find(
+                ([u, init]) =>
+                    typeof u === 'string' &&
+                    u.includes(`/api/trainee/workout-exercises/${workoutExerciseId}/feedback`) &&
+                    (init as RequestInit)?.method === 'PATCH'
+            )
+
+    it('shows the completion toasts when a main exercise completes the workout', async () => {
+        mockWorkout(warmupFixture, true)
+        const user = userEvent.setup()
+        await renderContent()
+
+        const markButtons = screen
+            .getAllByRole('button', { name: /workouts\.markSetDone/i })
+            .filter((b) => !screen.getByTestId('warmup-panel').contains(b))
+        await user.click(markButtons[0])
+
+        await waitFor(() => expect(completionToasts()).toHaveLength(3))
+    })
+
+    it('never shows a completion toast when a warm-up exercise is completed', async () => {
+        mockWorkout(warmupFixture, true)
+        const user = userEvent.setup()
+        await renderContent()
+
+        await user.click(screen.getByText('Band Pull Apart'))
+        const markButtons = within(screen.getByTestId('warmup-panel')).getAllByRole('button', {
+            name: /workouts\.markSetDone/i,
+        })
+        await user.click(markButtons[0])
+
+        await waitFor(() => expect(feedbackPatchFor('ex-w')).toBeTruthy())
+        // completion toasts are scheduled up to 400ms after the response
+        await new Promise((resolve) => setTimeout(resolve, 600))
+        expect(completionToasts()).toHaveLength(0)
+    })
+
+    it('is expanded on landing under React StrictMode', async () => {
+        mockWorkout(warmupFixture)
+        render(
+            <StrictMode>
+                <WorkoutDetailContent />
+            </StrictMode>
+        )
+        await screen.findByTestId('warmup-panel')
+
+        expect(panelHeader()).toHaveAttribute('aria-expanded', 'true')
+        expect(screen.getByText('Band Pull Apart')).toBeInTheDocument()
     })
 
     it('starts collapsed when every warm-up exercise is already completed', async () => {

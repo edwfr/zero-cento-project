@@ -99,7 +99,7 @@ describe('cascadeCompletion', () => {
         expect(mockTx.workoutExercise.update).toHaveBeenCalledWith({
             where: { id: mockWorkoutExerciseId },
             data: { isCompleted: true },
-            select: { id: true, workoutId: true },
+            select: { id: true, workoutId: true, isWarmup: true },
         })
     })
 
@@ -595,5 +595,106 @@ describe('cascadeCompletion - warm-up exercises', () => {
         expect(result.workout.isCompleted).toBe(false)
         expect(mockTx.workout.update).not.toHaveBeenCalled()
         expect(mockTx.workoutExercise.count).toHaveBeenCalledTimes(2)
+    })
+})
+
+describe('cascadeCompletion - warm-up exercise never changes the workout state', () => {
+    const workoutExerciseId = 'we-warmup'
+    const workoutId = 'wo-1'
+    const weekId = 'wk-1'
+    const programId = 'prog-1'
+
+    // Counts are set so that a recompute would reopen the workout.
+    function buildTx(counts: { incomplete: number; total: number }) {
+        return {
+            workoutExercise: {
+                update: vi.fn().mockResolvedValue({ id: workoutExerciseId, workoutId, isWarmup: true }),
+                count: vi.fn()
+                    .mockResolvedValueOnce(counts.incomplete)
+                    .mockResolvedValueOnce(counts.total),
+            },
+            workout: {
+                findUnique: vi.fn().mockResolvedValue({
+                    id: workoutId,
+                    weekId,
+                    isCompleted: true,
+                    week: {
+                        id: weekId,
+                        weekNumber: 3,
+                        programId,
+                        isCompleted: true,
+                        program: { id: programId, status: 'completed' },
+                    },
+                }),
+                update: vi.fn().mockResolvedValue({ id: workoutId, weekId, isCompleted: false }),
+                count: vi.fn().mockResolvedValueOnce(1).mockResolvedValueOnce(1),
+            },
+            week: {
+                findUnique: vi.fn().mockResolvedValue({
+                    id: weekId, weekNumber: 3, programId, isCompleted: true,
+                }),
+                update: vi.fn().mockResolvedValue({
+                    id: weekId, weekNumber: 3, programId, isCompleted: false,
+                }),
+                count: vi.fn().mockResolvedValueOnce(1).mockResolvedValueOnce(1),
+            },
+            trainingProgram: {
+                findUnique: vi.fn().mockResolvedValue({ id: programId, status: 'completed' }),
+                update: vi.fn().mockResolvedValue({ id: programId, status: 'active' }),
+            },
+        }
+    }
+
+    const expectedState = {
+        workout: { id: workoutId, isCompleted: true },
+        week: { id: weekId, weekNumber: 3, isCompleted: true },
+        program: { id: programId, status: 'completed' },
+    }
+
+    beforeEach(() => {
+        vi.clearAllMocks()
+    })
+
+    it('completing a warm-up does not reopen a force-completed workout', async () => {
+        const mockTx = buildTx({ incomplete: 1, total: 2 })
+        prismaMock.$transaction.mockImplementation(((fn: (tx: unknown) => unknown) => fn(mockTx)) as never)
+
+        const result = await cascadeCompletion(workoutExerciseId, true)
+
+        expect(result).toEqual({
+            workoutExercise: { id: workoutExerciseId, isCompleted: true },
+            ...expectedState,
+        })
+        expect(mockTx.workout.update).not.toHaveBeenCalled()
+        expect(mockTx.week.update).not.toHaveBeenCalled()
+        expect(mockTx.trainingProgram.update).not.toHaveBeenCalled()
+    })
+
+    it('un-completing a warm-up does not reopen a completed workout', async () => {
+        const mockTx = buildTx({ incomplete: 1, total: 2 })
+        prismaMock.$transaction.mockImplementation(((fn: (tx: unknown) => unknown) => fn(mockTx)) as never)
+
+        const result = await cascadeCompletion(workoutExerciseId, false)
+
+        expect(result).toEqual({
+            workoutExercise: { id: workoutExerciseId, isCompleted: false },
+            ...expectedState,
+        })
+        expect(mockTx.workoutExercise.update).toHaveBeenCalledWith(
+            expect.objectContaining({ data: { isCompleted: false } })
+        )
+        expect(mockTx.workout.update).not.toHaveBeenCalled()
+        expect(mockTx.week.update).not.toHaveBeenCalled()
+        expect(mockTx.trainingProgram.update).not.toHaveBeenCalled()
+    })
+
+    it('a warm-up tick does not reopen a submitted all-warm-up workout', async () => {
+        const mockTx = buildTx({ incomplete: 0, total: 0 })
+        prismaMock.$transaction.mockImplementation(((fn: (tx: unknown) => unknown) => fn(mockTx)) as never)
+
+        const result = await cascadeCompletion(workoutExerciseId, true)
+
+        expect(result.workout.isCompleted).toBe(true)
+        expect(mockTx.workout.update).not.toHaveBeenCalled()
     })
 })

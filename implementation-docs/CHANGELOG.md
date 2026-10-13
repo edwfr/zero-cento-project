@@ -10,6 +10,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### fix(trainee): correzioni post-review della sezione riscaldamento (13/10/2026)
+- `cascadeCompletion` in `src/lib/completion-service.ts`: se l'esercizio è di riscaldamento aggiorna solo l'esercizio e restituisce lo stato attuale di workout/settimana/programma senza ricalcolarlo. Prima un set di riscaldamento registrato dopo l'invio poteva riaprire un workout completato forzatamente (o composto solo da riscaldamento), riportando indietro anche settimana e programma.
+- `src/app/trainee/workouts/[id]/_content.tsx`: completare un esercizio di riscaldamento non mostra più i toast "workout/settimana/programma completati"; `WarmupPanel` si chiude solo a un reale cambio di step (`prevStep` ref), così in dev con `reactStrictMode` resta aperto all'ingresso.
+- Test: casi warm-up in `tests/unit/completion-service.test.ts` (completa/annulla, workout solo riscaldamento); in `tests/unit/trainee-workout-focus.test.tsx` toast, StrictMode e argomenti di `workouts.stepCounter` / `workouts.summaryStats` (spy condivisi su `showToast` e `t`).
+
 ### feat(trainee): il riepilogo workout nasconde il riscaldamento (13/10/2026)
 - `src/components/WorkoutRecapPanel.tsx` elenca solo gli esercizi non di riscaldamento (`partitionWarmup`), coerente con step e contatori. Test in `tests/unit/workout-recap-panel.test.tsx`.
 

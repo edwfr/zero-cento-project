@@ -420,8 +420,9 @@ export default function WorkoutDetailContent() {
         changedSet: SetPerformed
         previousSets: SetPerformed[]
         previousExerciseCompleted: boolean
+        isWarmup: boolean
     }) => {
-        const { workoutExerciseId, setIdx, changedSet, previousSets, previousExerciseCompleted } = input
+        const { workoutExerciseId, setIdx, changedSet, previousSets, previousExerciseCompleted, isWarmup } = input
 
         setPersistingKeys((prev) => new Set(prev).add(`${workoutExerciseId}:${setIdx}`))
         let httpStatus: number | undefined
@@ -466,7 +467,8 @@ export default function WorkoutDetailContent() {
             // Refresh recap only after feedback persistence has been confirmed by API.
             setRecapRefreshSignal((prev) => prev + 1)
 
-            if (!cascade.workoutExercise.isCompleted) {
+            // Warm-up is optional: completing it never announces a workout/week/program completion.
+            if (isWarmup || !cascade.workoutExercise.isCompleted) {
                 return
             }
 
@@ -604,6 +606,7 @@ export default function WorkoutDetailContent() {
             changedSet: newSet,
             previousSets,
             previousExerciseCompleted,
+            isWarmup: we.isWarmup,
         })
     }
 
@@ -1349,13 +1352,12 @@ function WarmupPanel({
         () => currentStep === 0 && exercises.some((we) => !exerciseCompleted[we.id])
     )
     const [openExerciseId, setOpenExerciseId] = useState<string | null>(null)
-    const isFirstRun = useRef(true)
+    const prevStep = useRef(currentStep)
 
+    // Collapse only on a real step change: under StrictMode the effect also re-runs on mount.
     useEffect(() => {
-        if (isFirstRun.current) {
-            isFirstRun.current = false
-            return
-        }
+        if (prevStep.current === currentStep) return
+        prevStep.current = currentStep
         setExpanded(false)
         setOpenExerciseId(null)
     }, [currentStep])

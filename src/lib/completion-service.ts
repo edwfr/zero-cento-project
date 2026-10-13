@@ -157,6 +157,39 @@ async function cascadeFromWorkout(
   }
 }
 
+// Current state of the hierarchy above a workout, read without recomputing or writing anything.
+async function readWorkoutCascadeState(tx: any, workoutId: string): Promise<WorkoutCascadeResult> {
+  const workout = await tx.workout.findUnique({
+    where: { id: workoutId },
+    select: {
+      id: true,
+      isCompleted: true,
+      week: {
+        select: {
+          id: true,
+          weekNumber: true,
+          isCompleted: true,
+          program: { select: { id: true, status: true } },
+        },
+      },
+    },
+  })
+
+  if (!workout) {
+    throw new Error(`Workout not found: ${workoutId}`)
+  }
+
+  return {
+    workout: { id: workout.id, isCompleted: workout.isCompleted },
+    week: {
+      id: workout.week.id,
+      weekNumber: workout.week.weekNumber,
+      isCompleted: workout.week.isCompleted,
+    },
+    program: { id: workout.week.program.id, status: workout.week.program.status },
+  }
+}
+
 /**
  * Atomically cascade a completion state change from a single WorkoutExercise
  * up through the hierarchy (Workout → Week → TrainingProgram).
@@ -175,6 +208,10 @@ async function cascadeFromWorkout(
  * - Cascade continues upward, reverting Week and Program as needed
  * - Program reverts to 'active' (unless in 'draft' — untouched)
  *
+ * **Warm-up exercises:** optional for the trainee. Toggling one updates only the
+ * exercise itself: Workout, Week and Program are returned as they are, never
+ * recomputed (a recompute could reopen a workout the trainee force-completed).
+ *
  * @param workoutExerciseId - UUID of the WorkoutExercise to toggle
  * @param isCompleted - New completion state (true = mark as done, false = unmark)
  * @returns CascadeResult with updated states at all levels
@@ -190,9 +227,11 @@ export async function cascadeCompletion(
       const updatedExercise = await tx.workoutExercise.update({
         where: { id: workoutExerciseId },
         data: { isCompleted },
-        select: { id: true, workoutId: true },
+        select: { id: true, workoutId: true, isWarmup: true },
       })
-      const cascade = await cascadeFromWorkout(tx, updatedExercise.workoutId)
+      const cascade = updatedExercise.isWarmup
+        ? await readWorkoutCascadeState(tx, updatedExercise.workoutId)
+        : await cascadeFromWorkout(tx, updatedExercise.workoutId)
 
       return {
         workoutExercise: {
