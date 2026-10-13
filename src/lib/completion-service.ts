@@ -38,11 +38,12 @@ async function cascadeFromWorkout(
   let workoutIsCompleted = forcedWorkoutCompleted
 
   if (typeof workoutIsCompleted !== 'boolean') {
+    // Warm-up exercises are optional for the trainee: they never gate completion.
     const incompleteCount = await tx.workoutExercise.count({
-      where: { workoutId, isCompleted: false },
+      where: { workoutId, isWarmup: false, isCompleted: false },
     })
     const totalCount = await tx.workoutExercise.count({
-      where: { workoutId },
+      where: { workoutId, isWarmup: false },
     })
 
     workoutIsCompleted = totalCount > 0 && incompleteCount === 0
@@ -165,7 +166,7 @@ async function cascadeFromWorkout(
  * reducing unnecessary DB writes.
  *
  * **Cascade rules:**
- * - WorkoutExercise marked → if ALL exercises in workout are completed → Workout completes
+ * - WorkoutExercise marked → if ALL non-warm-up exercises in workout are completed → Workout completes
  * - Workout completed → if ALL workouts in week are completed → Week completes
  * - Week completed → if ALL weeks in program are completed → Program status → 'completed'
  *

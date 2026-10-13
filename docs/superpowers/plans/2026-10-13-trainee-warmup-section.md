@@ -170,7 +170,7 @@ Example: workout with 6 warm-up + 6 other exercises.
 **Done when:** `cascadeFromWorkout` marks a workout completed when it has non-warm-up
 exercises and all of them are completed, regardless of warm-up rows.
 
-- [ ] **Step 1: tests** — add to `tests/unit/completion-service.test.ts`, same `mockTx`
+- [x] **Step 1: tests** — add to `tests/unit/completion-service.test.ts`, same `mockTx`
       structure as the first test in the file
   - main counts `incomplete 0, total 2` → workout updated to `isCompleted: true`;
     `workoutExercise.count` called exactly twice, both with `where` containing `isWarmup: false`
@@ -180,7 +180,7 @@ exercises and all of them are completed, regardless of warm-up rows.
   - existing test "should handle empty workout (no exercises)" stays green untouched
   - `cascadeWorkoutCompletion(workoutId, true)` test stays green untouched (forced path
     does no exercise count)
-- [ ] **Step 2: implementation** — only the `if (typeof workoutIsCompleted !== 'boolean')`
+- [x] **Step 2: implementation** — only the `if (typeof workoutIsCompleted !== 'boolean')`
       block in `cascadeFromWorkout` changes. The existing tests mock `count` with ordered
       `mockResolvedValueOnce`, so **keep the call order: incomplete first, total second**,
       sequential `await`s as today:
@@ -203,10 +203,10 @@ exercises and all of them are completed, regardless of warm-up rows.
   in workout are completed". Leave the week/program queries
   (`workoutExercises: { some: {} }`) untouched. If an existing assertion checks the exact
   `where` of `workoutExercise.count`, update it to include `isWarmup: false`.
-- [ ] **Step 3: run the test command, then**
+- [x] **Step 3: run the test command, then**
       `npx vitest run tests/integration/workout-exercise-feedback.test.ts tests/integration/workout-exercise-complete.test.ts tests/integration/trainee-workout-submit.test.ts`
       **and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit** —
+- [x] **Step 4: CHANGELOG entry and commit** —
       `feat(completion): ignore warm-up exercises when completing a workout`
 
 ---

@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(completion): il completamento del workout ignora il riscaldamento (13/10/2026)
+- `cascadeFromWorkout` in `src/lib/completion-service.ts` conta solo gli esercizi con `isWarmup: false`: il workout si completa quando tutti gli esercizi non di riscaldamento sono completati (almeno uno presente). Il riscaldamento è facoltativo e non cambia mai lo stato del workout.
+
 ### feat(trainee): helper `partitionWarmup` (13/10/2026)
 - Nuovo `src/lib/workout-warmup.ts`: divide gli esercizi di un workout in `warmup` e `main`, entrambi ordinati per `order`, senza fallback se tutti sono riscaldamento. Base per la sezione riscaldamento nella vista workout del trainee.
 
