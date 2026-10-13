@@ -251,7 +251,7 @@ import { partitionWarmup } from '@/lib/workout-warmup'
 // partitionWarmup<T extends { isWarmup: boolean; order: number }>(exercises: readonly T[]): { warmup: T[]; main: T[] }
 ```
 
-- [ ] **Step 1: tests** — in `tests/unit/trainee-workout-focus.test.tsx`. The
+- [x] **Step 1: tests** — in `tests/unit/trainee-workout-focus.test.tsx`. The
       react-i18next mock returns the key itself, and `t(key, vars)` renders only the key,
       so assert counters through behaviour (number of "next" clicks) rather than text.
       Build a `warmupFixture` = `fixtureWorkout` plus a third exercise
@@ -269,7 +269,7 @@ import { partitionWarmup } from '@/lib/workout-warmup'
     that fixture exercise, delete only the warm-up badge/hint assertions, keep every
     jumpSet/superSet assertion (move those flags onto the exercises that stay as steps
     if needed).
-- [ ] **Step 2: implementation** — in `WorkoutDetailContent`:
+- [x] **Step 2: implementation** — in `WorkoutDetailContent`:
   - Replace the `sortedExercises` memo with
     `const { warmup: warmupExercises, main: mainExercises } = useMemo(() => partitionWarmup(workout?.exercises ?? []), [workout])`.
   - Every use of `sortedExercises` for **steps, counters, progress and the final step**
@@ -289,8 +289,8 @@ import { partitionWarmup } from '@/lib/workout-warmup'
     Drop the `Flame` import only if nothing else uses it (Task 5 re-adds it).
   - Do not touch `FinalStep` internals or `toggleSetCompleted` (it already looks
     exercises up in `workout.exercises`, so it works for warm-up ids).
-- [ ] **Step 3: run the test command and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit** —
+- [x] **Step 3: run the test command and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit** —
       `feat(trainee): exclude warm-up exercises from workout steps and counters`
 
 ---

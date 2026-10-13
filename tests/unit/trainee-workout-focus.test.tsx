@@ -231,7 +231,7 @@ describe('Trainee workout focus mode', () => {
             exercises: [
                 {
                     ...fixtureWorkout.exercises[0],
-                    isWarmup: true,
+                    isWarmup: false,
                     isJumpSet: false,
                     isSuperSet: false,
                 },
@@ -255,12 +255,6 @@ describe('Trainee workout focus mode', () => {
         }) as never)
 
         await renderContent()
-
-        const warmupHintButton = screen.getByRole('button', {
-            name: 'trainer:editProgram.warmupHint',
-        })
-        await user.click(warmupHintButton)
-        expect(screen.getByText('trainer:editProgram.warmupHint')).toBeInTheDocument()
 
         await user.click(nextButton())
 
@@ -645,5 +639,75 @@ describe('Trainee workout focus mode', () => {
         expect(
             screen.queryByPlaceholderText(/workouts\.exerciseNotePlaceholder/i)
         ).not.toBeInTheDocument()
+    })
+})
+
+describe('Trainee workout focus mode with warm-up exercises', () => {
+    const warmupFixture = {
+        ...fixtureWorkout,
+        exercises: [
+            {
+                ...fixtureWorkout.exercises[0],
+                id: 'ex-w',
+                order: 0,
+                isWarmup: true,
+                exercise: { ...fixtureWorkout.exercises[0].exercise, id: 'exercise-w', name: 'Band Pull Apart' },
+            },
+            ...fixtureWorkout.exercises,
+        ],
+    }
+
+    beforeEach(() => {
+        vi.mocked(global.fetch).mockImplementation((async (url: string) => {
+            if (url.includes('/api/trainee/workouts/')) {
+                return { ok: true, json: async () => ({ data: { workout: warmupFixture } }) } as Response
+            }
+            return { ok: true, json: async () => ({}) } as Response
+        }) as never)
+    })
+
+    it('does not render the warm-up exercise as a step card', async () => {
+        await renderContent()
+        expect(screen.getByRole('heading', { name: 'Bench Press' })).toBeInTheDocument()
+        expect(screen.queryByText('Band Pull Apart')).not.toBeInTheDocument()
+    })
+
+    it('reaches the final step after two next clicks (warm-up is not a step)', async () => {
+        const user = userEvent.setup()
+        await renderContent()
+        await user.click(nextButton())
+        await user.click(nextButton())
+        expect(screen.getByText('workouts.summaryTitle')).toBeInTheDocument()
+    })
+
+    it('does not list the warm-up exercise among incomplete exercises on the final step', async () => {
+        const user = userEvent.setup()
+        await renderContent()
+        await user.click(nextButton())
+        await user.click(nextButton())
+        const names = screen.getAllByRole('button').map((b) => b.textContent ?? '')
+        expect(names.some((n) => n.includes('Bench Press'))).toBe(true)
+        expect(names.some((n) => n.includes('Tricep Extension'))).toBe(true)
+        expect(names.some((n) => n.includes('Band Pull Apart'))).toBe(false)
+    })
+
+    it('submits every exercise, warm-up included', async () => {
+        const user = userEvent.setup()
+        await renderContent()
+        await user.click(nextButton())
+        await user.click(nextButton())
+        await user.click(
+            screen.getByRole('button', { name: /completeShort|complete workout|completa allenamento/i })
+        )
+
+        await waitFor(() => {
+            const call = vi
+                .mocked(global.fetch)
+                .mock.calls.find(([u]) => typeof u === 'string' && u.endsWith('/submit'))
+            expect(call).toBeTruthy()
+            const body = JSON.parse((call![1] as RequestInit).body as string)
+            expect(body.exercises).toHaveLength(3)
+            expect(body.exercises.map((e: { workoutExerciseId?: string; id?: string }) => e.workoutExerciseId ?? e.id)).toContain('ex-w')
+        })
     })
 })

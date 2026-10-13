@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(trainee): il riscaldamento esce da step e contatori del workout (13/10/2026)
+- In `src/app/trainee/workouts/[id]/_content.tsx` step, contatore, progresso e riepilogo finale usano solo gli esercizi non di riscaldamento (`partitionWarmup`); l'invio finale include comunque tutti gli esercizi. Rimosso il badge riscaldamento dalla card esercizio, ora irraggiungibile. Test aggiornati in `tests/unit/trainee-workout-focus.test.tsx`.
+
 ### chore(i18n): chiavi sezione riscaldamento trainee (13/10/2026)
 - Aggiunte `workouts.warmupTitle`, `workouts.warmupHint` e `workouts.warmupProgress` in `public/locales/it/trainee.json` e `public/locales/en/trainee.json`, per il pannello riscaldamento della vista workout.
 

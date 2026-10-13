@@ -10,6 +10,7 @@ import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { RPESelector, SkeletonDetail, WeekTypeBanner } from '@/components'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { keepaliveFetch } from '@/lib/keepalive-fetch'
+import { partitionWarmup } from '@/lib/workout-warmup'
 import {
     AlertTriangle,
     Check,
@@ -17,7 +18,6 @@ import {
     ChevronUp,
     Clock3,
     FileText,
-    Flame,
     Layers,
     PlayCircle,
     ChevronLeft,
@@ -292,7 +292,7 @@ export default function WorkoutDetailContent() {
                     if (
                         typeof parsedDraft?.currentStep === 'number' &&
                         parsedDraft.currentStep >= 0 &&
-                        parsedDraft.currentStep <= orderedExercises.length
+                        parsedDraft.currentStep <= partitionWarmup(orderedExercises).main.length
                     ) {
                         resumeStep = parsedDraft.currentStep
                     }
@@ -716,25 +716,25 @@ export default function WorkoutDetailContent() {
     }
 
     // New focus mode helpers
-    const sortedExercises = useMemo(
-        () => (workout ? [...workout.exercises].sort((a, b) => a.order - b.order) : []),
+    const { main: mainExercises } = useMemo(
+        () => partitionWarmup(workout?.exercises ?? []),
         [workout]
     )
 
-    const totalSteps = sortedExercises.length + 1
-    const isFinalStep = currentStep === sortedExercises.length
+    const totalSteps = mainExercises.length + 1
+    const isFinalStep = currentStep === mainExercises.length
 
     const goToStep = useCallback(
         (next: number) => {
-            const clamped = Math.max(0, Math.min(next, sortedExercises.length))
+            const clamped = Math.max(0, Math.min(next, mainExercises.length))
             setCurrentStep(clamped)
         },
-        [sortedExercises.length]
+        [mainExercises.length]
     )
 
     const completedExerciseCount = useMemo(
         () =>
-            sortedExercises.reduce((acc, we) => {
+            mainExercises.reduce((acc, we) => {
                 const sets = feedbackData[we.id] || []
                 const isPreciseReps = /^\d+$/.test(we.reps.trim())
                 const isMaxReps = we.reps.trim() === 'max'
@@ -744,21 +744,21 @@ export default function WorkoutDetailContent() {
                     : sets.some((s) => s.completed)
                 return acc + (hasData ? 1 : 0)
             }, 0),
-        [feedbackData, sortedExercises]
+        [feedbackData, mainExercises]
     )
 
     const totalCompletedSets = useMemo(
         () =>
-            sortedExercises.reduce((acc, we) => {
+            mainExercises.reduce((acc, we) => {
                 const sets = feedbackData[we.id] || []
                 return acc + sets.filter((s) => s.completed).length
             }, 0),
-        [feedbackData, sortedExercises]
+        [feedbackData, mainExercises]
     )
 
     const totalPlannedSets = useMemo(
-        () => sortedExercises.reduce((acc, we) => acc + we.sets, 0),
-        [sortedExercises]
+        () => mainExercises.reduce((acc, we) => acc + we.sets, 0),
+        [mainExercises]
     )
 
     const workoutProgressPercent = totalPlannedSets > 0
@@ -794,7 +794,7 @@ export default function WorkoutDetailContent() {
         return acc
     }, {})
 
-    const currentExercise = !isFinalStep ? sortedExercises[currentStep] : null
+    const currentExercise = !isFinalStep ? mainExercises[currentStep] : null
 
     return (
         <div className="flex min-h-screen flex-col bg-gray-50" {...pageSwipeHandlers}>
@@ -839,9 +839,9 @@ export default function WorkoutDetailContent() {
                     ) : (
                         <FinalStep
                             completed={completedExerciseCount}
-                            total={sortedExercises.length}
+                            total={mainExercises.length}
                             totalSets={totalCompletedSets}
-                            exercises={sortedExercises}
+                            exercises={mainExercises}
                             feedbackData={feedbackData}
                             globalNotes={globalNotes}
                             onNotesChange={setGlobalNotes}
@@ -861,7 +861,7 @@ export default function WorkoutDetailContent() {
                         closeSignal={currentStep}
                         refreshSignal={recapRefreshSignal}
                         onSelectExercise={(exerciseId) => {
-                            const idx = sortedExercises.findIndex((e) => e.id === exerciseId)
+                            const idx = mainExercises.findIndex((e) => e.id === exerciseId)
                             if (idx !== -1) goToStep(idx)
                         }}
                     />
@@ -888,7 +888,7 @@ export default function WorkoutDetailContent() {
                         <span className="text-sm font-semibold text-gray-600">
                             {t('workouts.stepCounter', {
                                 current: currentStep + 1,
-                                total: sortedExercises.length,
+                                total: mainExercises.length,
                             })}
                         </span>
                     )}
@@ -958,7 +958,7 @@ function ExerciseFocusCard({
 }: ExerciseFocusCardProps) {
     const [noteExpanded, setNoteExpanded] = useState(false)
     const [openExerciseFlagHint, setOpenExerciseFlagHint] = useState<
-        'warmup' | 'jumpSet' | 'superSet' | null
+        'jumpSet' | 'superSet' | null
     >(null)
 
     useEffect(() => {
@@ -1040,39 +1040,8 @@ function ExerciseFocusCard({
                         <p className="text-sm text-gray-600 mb-2">{we.variant}</p>
                     )}
                     <div className="flex flex-wrap gap-1.5">
-                        {(we.isWarmup || we.isJumpSet || we.isSuperSet) && (
+                        {(we.isJumpSet || we.isSuperSet) && (
                             <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-xs font-medium text-gray-600">
-                                {we.isWarmup && (
-                                    <span className="relative">
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setOpenExerciseFlagHint((current) =>
-                                                    current === 'warmup' ? null : 'warmup'
-                                                )
-                                            }
-                                            data-exercise-flag-hint-trigger="true"
-                                            className="inline-flex items-center justify-center rounded text-week-test hover:text-week-test"
-                                            title={t('trainer:editProgram.warmupHint')}
-                                            aria-label={t('trainer:editProgram.warmupHint')}
-                                            aria-expanded={openExerciseFlagHint === 'warmup'}
-                                        >
-                                            <Flame className="h-3.5 w-3.5" />
-                                            <span className="sr-only">
-                                                {t('trainer:editProgram.tableWarmup')}
-                                            </span>
-                                        </button>
-                                        {openExerciseFlagHint === 'warmup' && (
-                                            <div
-                                                data-exercise-flag-hint-popover="true"
-                                                className="absolute left-0 top-full mt-1 w-56 rounded-md border border-gray-200 bg-white p-2 text-[11px] normal-case tracking-normal text-gray-600 shadow-lg"
-                                                style={{ zIndex: 2147483647 }}
-                                            >
-                                                {t('trainer:editProgram.warmupHint')}
-                                            </div>
-                                        )}
-                                    </span>
-                                )}
                                 {we.isJumpSet && (
                                     <span className="relative">
                                         <button
