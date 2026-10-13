@@ -305,7 +305,7 @@ import { partitionWarmup } from '@/lib/workout-warmup'
 exercise card, sets can be logged from it with the same autosave as main exercises, and
 a workout without warm-up shows no panel.
 
-- [ ] **Step 1: tests** — same `warmupFixture` as Task 4 (1 warm-up + 2 main)
+- [x] **Step 1: tests** — same `warmupFixture` as Task 4 (1 warm-up + 2 main)
   - default fixture (no warm-up) → `screen.queryByTestId('warmup-panel')` is null
   - warm-up fixture, step 0 → panel present, expanded (`aria-expanded="true"` on its header button), row `Band Pull Apart` visible
   - click next → panel still present, header `aria-expanded="false"`, row not in the document
@@ -321,7 +321,7 @@ a workout without warm-up shows no panel.
   - warm-up fixture with `isCompleted: true` on `ex-w` → panel collapsed on step 0
   - within `screen.getByTestId('warmup-panel')` after logging nothing → no element with
     an `amber` class (query `container.querySelector('[class*="amber"]')` → null)
-- [ ] **Step 2: implementation** — all file-local in `_content.tsx`, below `ExerciseFocusCard`:
+- [x] **Step 2: implementation** — all file-local in `_content.tsx`, below `ExerciseFocusCard`:
   1. **Extract `SetRowsGrid`** from `ExerciseFocusCard` "Sets input": move the grid
      `<div className="grid grid-cols-[30px_3fr_5fr_3fr_42px] …">…</div>` (headers + rows)
      verbatim into
@@ -394,8 +394,8 @@ a workout without warm-up shows no panel.
      `updateSet`, `updateSetRpe`, `toggleSetCompleted`, `toggleVideo`, `persistingKeys`,
      `rpeDescriptions`. Add `warmup: warmupExercises` to the `partitionWarmup`
      destructuring left out in Task 4.
-- [ ] **Step 3: run the test command, `npm run type-check` and `npm run lint`**
-- [ ] **Step 4: CHANGELOG entry and commit** —
+- [x] **Step 3: run the test command, `npm run type-check` and `npm run lint`**
+- [x] **Step 4: CHANGELOG entry and commit** —
       `feat(trainee): dedicated warm-up panel in the in-progress workout`
 
 ---

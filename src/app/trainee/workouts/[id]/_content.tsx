@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo, Fragment } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef, Fragment } from 'react'
 import type { RestTime } from '@prisma/client'
 import { WeekType } from '@prisma/client'
 import * as Sentry from '@sentry/nextjs'
@@ -14,10 +14,13 @@ import { partitionWarmup } from '@/lib/workout-warmup'
 import {
     AlertTriangle,
     Check,
+    CheckCircle2,
     ChevronDown,
     ChevronUp,
+    Circle,
     Clock3,
     FileText,
+    Flame,
     Layers,
     PlayCircle,
     ChevronLeft,
@@ -716,7 +719,7 @@ export default function WorkoutDetailContent() {
     }
 
     // New focus mode helpers
-    const { main: mainExercises } = useMemo(
+    const { main: mainExercises, warmup: warmupExercises } = useMemo(
         () => partitionWarmup(workout?.exercises ?? []),
         [workout]
     )
@@ -815,6 +818,22 @@ export default function WorkoutDetailContent() {
             {/* Scrollable body */}
             <div className="flex-1 overflow-y-auto px-4 pt-2 pb-28 sm:px-6 sm:pb-32 lg:px-8">
                 <div className="max-w-2xl mx-auto space-y-4">
+                    {warmupExercises.length > 0 && (
+                        <WarmupPanel
+                            exercises={warmupExercises}
+                            feedbackData={feedbackData}
+                            exerciseCompleted={exerciseCompleted}
+                            currentStep={currentStep}
+                            expandedVideos={expandedVideos}
+                            onToggleVideo={toggleVideo}
+                            onUpdateSet={(id, idx, field, value) => updateSet(id, idx, field, value)}
+                            onUpdateSetRpe={(id, idx, rpe) => updateSetRpe(id, idx, rpe)}
+                            onToggleSet={(id, idx) => toggleSetCompleted(id, idx)}
+                            persistingKeys={persistingKeys}
+                            rpeDescriptions={rpeDescriptions}
+                            t={t}
+                        />
+                    )}
                     {!isFinalStep && currentExercise ? (
                         <ExerciseFocusCard
                             key={currentExercise.id}
@@ -1202,88 +1221,16 @@ function ExerciseFocusCard({
                 <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase">
                     {t('workouts.setsHeading')}
                 </h3>
-                <div className="grid grid-cols-[30px_3fr_5fr_3fr_42px] gap-x-1 px-0.5 mb-4 sm:grid-cols-[32px_3fr_5fr_3fr_44px] sm:gap-x-1.5 sm:px-1">
-                    <span />
-                    <span className="pb-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wide">
-                        {t('workouts.repsShort')}
-                    </span>
-                    <span className="pb-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wide">
-                        {t('workouts.kgShort')}
-                    </span>
-                    <span className="pb-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wide">
-                        RPE
-                    </span>
-                    <span />
-                    {sets.map((set, setIdx) => {
-                        const border = setIdx < sets.length - 1 ? 'border-b border-gray-200' : ''
-                        return (
-                            <Fragment key={setIdx}>
-                                <div className={`flex items-center justify-center ${border}`}>
-                                    <span className="text-xs font-semibold text-gray-600 sm:text-sm">#{set.setNumber}</span>
-                                </div>
-                                <div className={`flex items-center py-2 ${border}`}>
-                                    <Input
-                                        type="number"
-                                        inputMode="numeric"
-                                        min="0"
-                                        placeholder={/^\d+$/.test(we.reps.trim()) ? String(parsePlannedReps(we.reps)) : we.reps}
-                                        value={set.reps || ''}
-                                        onChange={(e) =>
-                                            onUpdateSet(we.id, setIdx, 'reps', parseInt(e.target.value) || 0)
-                                        }
-                                        disabled={!!set.completed}
-                                        aria-label={`${t('workouts.reps')} ${set.setNumber}`}
-                                        inputSize="md"
-                                        className="px-2 text-center text-sm tabular-nums [appearance:textfield] sm:px-3 sm:text-base [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                    />
-                                </div>
-                                <div className={`flex items-center py-2 ${border}`}>
-                                    <Input
-                                        type="number"
-                                        inputMode="decimal"
-                                        min="0"
-                                        step="0.5"
-                                        placeholder={String(we.effectiveWeight ?? we.weight ?? 0)}
-                                        value={set.weight || ''}
-                                        onChange={(e) =>
-                                            onUpdateSet(we.id, setIdx, 'weight', parseFloat(e.target.value) || 0)
-                                        }
-                                        disabled={!!set.completed}
-                                        aria-label={`${t('workouts.weightKg')} ${set.setNumber}`}
-                                        inputSize="md"
-                                        className="px-2 text-center text-sm tabular-nums [appearance:textfield] sm:px-3 sm:text-base [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                    />
-                                </div>
-                                <div className={`flex items-center py-2 ${border}`} data-swipe-ignore="true">
-                                    <RpeCell
-                                        value={set.actualRpe}
-                                        disabled={!!set.completed}
-                                        onChange={(rpe) => onUpdateSetRpe(we.id, setIdx, rpe)}
-                                        descriptions={rpeDescriptions}
-                                        t={t}
-                                    />
-                                </div>
-                                <div className={`flex items-center justify-center ${border}`}>
-                                    <button
-                                        type="button"
-                                        onClick={() => onToggleSet(we.id, setIdx)}
-                                        disabled={persistingKeys.has(`${we.id}:${setIdx}`)}
-                                        className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors disabled:opacity-70 disabled:cursor-not-allowed ${set.completed
-                                                ? 'border-green-300 bg-green-100 text-green-700'
-                                                : 'border-gray-300 bg-white text-gray-400 hover:border-green-300 hover:text-green-600'
-                                            }`}
-                                        aria-label={t('workouts.markSetDone')}
-                                    >
-                                        {persistingKeys.has(`${we.id}:${setIdx}`)
-                                            ? <LoadingSpinner size="sm" color="green" />
-                                            : <Check className="w-4 h-4" />
-                                        }
-                                    </button>
-                                </div>
-                            </Fragment>
-                        )
-                    })}
-                </div>
+                <SetRowsGrid
+                    we={we}
+                    sets={sets}
+                    onUpdateSet={onUpdateSet}
+                    onUpdateSetRpe={onUpdateSetRpe}
+                    onToggleSet={onToggleSet}
+                    persistingKeys={persistingKeys}
+                    rpeDescriptions={rpeDescriptions}
+                    t={t}
+                />
             </div>
 
             {/* Footer: overall RPE (kept in code, currently hidden) */}
@@ -1354,6 +1301,289 @@ function ExerciseFocusCard({
     )
 }
 
+function buildExerciseSpec(we: WorkoutExerciseWithWeight): string {
+    const weightValue = we.effectiveWeight ?? we.weight ?? 0
+    const parts = [`${we.sets} x ${we.reps}`]
+
+    if (weightValue > 0) {
+        parts.push(`${formatWeightKg(weightValue)}kg`)
+    }
+
+    if (we.targetRpe != null && we.targetRpe > 0) {
+        parts.push(`@RPE ${we.targetRpe}`)
+    }
+
+    return parts.join(' · ')
+}
+
+interface WarmupPanelProps {
+    exercises: WorkoutExerciseWithWeight[]
+    feedbackData: Record<string, SetPerformed[]>
+    exerciseCompleted: Record<string, boolean>
+    currentStep: number
+    expandedVideos: Record<string, boolean>
+    onToggleVideo: (id: string) => void
+    onUpdateSet: SetRowsGridProps['onUpdateSet']
+    onUpdateSetRpe: SetRowsGridProps['onUpdateSetRpe']
+    onToggleSet: SetRowsGridProps['onToggleSet']
+    persistingKeys: Set<string>
+    rpeDescriptions: Record<number, string>
+    t: (key: string, vars?: Record<string, unknown>) => string
+}
+
+function WarmupPanel({
+    exercises,
+    feedbackData,
+    exerciseCompleted,
+    currentStep,
+    expandedVideos,
+    onToggleVideo,
+    onUpdateSet,
+    onUpdateSetRpe,
+    onToggleSet,
+    persistingKeys,
+    rpeDescriptions,
+    t,
+}: WarmupPanelProps) {
+    const [expanded, setExpanded] = useState(
+        () => currentStep === 0 && exercises.some((we) => !exerciseCompleted[we.id])
+    )
+    const [openExerciseId, setOpenExerciseId] = useState<string | null>(null)
+    const isFirstRun = useRef(true)
+
+    useEffect(() => {
+        if (isFirstRun.current) {
+            isFirstRun.current = false
+            return
+        }
+        setExpanded(false)
+        setOpenExerciseId(null)
+    }, [currentStep])
+
+    const total = exercises.length
+    const done = exercises.filter((we) => exerciseCompleted[we.id] === true).length
+    const allDone = total > 0 && done === total
+
+    return (
+        <div
+            data-testid="warmup-panel"
+            data-swipe-ignore="true"
+            className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
+        >
+            <button
+                type="button"
+                aria-expanded={expanded}
+                onClick={() => setExpanded((prev) => !prev)}
+                className="flex w-full items-center gap-2 px-4 py-3 text-left"
+            >
+                <Flame className="h-4 w-4 text-week-test" />
+                <span className="flex-1 text-sm font-semibold text-gray-700">
+                    {t('workouts.warmupTitle')}
+                </span>
+                <span
+                    className={`rounded-full px-2.5 py-0.5 text-xs font-bold tabular-nums ${
+                        allDone ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                    }`}
+                >
+                    {t('workouts.warmupProgress', { done, total })}
+                </span>
+                {expanded
+                    ? <ChevronUp className="h-4 w-4 text-gray-400" />
+                    : <ChevronDown className="h-4 w-4 text-gray-400" />}
+            </button>
+            {expanded && (
+                <div className="border-t border-gray-200 px-4 py-3">
+                    <p className="mb-3 text-xs text-gray-500">{t('workouts.warmupHint')}</p>
+                    <ul className="space-y-2">
+                        {exercises.map((we) => {
+                            const isOpen = openExerciseId === we.id
+                            const isDone = exerciseCompleted[we.id] === true
+                            const videoUrl = we.exercise.youtubeUrl
+                            return (
+                                <li key={we.id} className="rounded-lg border border-gray-200">
+                                    <button
+                                        type="button"
+                                        aria-expanded={isOpen}
+                                        onClick={() => setOpenExerciseId(isOpen ? null : we.id)}
+                                        className="flex w-full items-center gap-3 p-3 text-left"
+                                    >
+                                        {isDone
+                                            ? <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-green-600" />
+                                            : <Circle className="h-4 w-4 flex-shrink-0 text-gray-300" />}
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-sm font-semibold text-gray-900">
+                                                {we.exercise.name}
+                                                {we.variant && (
+                                                    <span className="ml-1.5 text-xs font-normal text-gray-500">
+                                                        {we.variant}
+                                                    </span>
+                                                )}
+                                            </p>
+                                            <p className="mt-0.5 text-xs text-gray-500">
+                                                {buildExerciseSpec(we)}
+                                            </p>
+                                        </div>
+                                        {isOpen
+                                            ? <ChevronUp className="h-4 w-4 flex-shrink-0 text-gray-400" />
+                                            : <ChevronDown className="h-4 w-4 flex-shrink-0 text-gray-400" />}
+                                    </button>
+                                    {isOpen && (
+                                        <div className="border-t border-gray-200 p-3">
+                                            {we.notes && (
+                                                <p className="mb-3 text-sm text-gray-600">
+                                                    <FileText className="mr-1 inline h-4 w-4" />
+                                                    {we.notes}
+                                                </p>
+                                            )}
+                                            {videoUrl && (
+                                                <div className="mb-3 flex flex-col items-center">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => onToggleVideo(we.id)}
+                                                        className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold transition-colors hover:border-brand-primary hover:text-brand-primary"
+                                                    >
+                                                        <PlayCircle className="h-4 w-4" />
+                                                        {expandedVideos[we.id] ? t('workouts.hideVideo') : t('workouts.showVideo')}
+                                                        {expandedVideos[we.id]
+                                                            ? <ChevronUp className="h-4 w-4" />
+                                                            : <ChevronDown className="h-4 w-4" />}
+                                                    </button>
+                                                    {expandedVideos[we.id] && (
+                                                        <div className="mt-4 w-full">
+                                                            <YoutubeEmbed videoUrl={videoUrl} />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                            <SetRowsGrid
+                                                we={we}
+                                                sets={feedbackData[we.id] || []}
+                                                onUpdateSet={onUpdateSet}
+                                                onUpdateSetRpe={onUpdateSetRpe}
+                                                onToggleSet={onToggleSet}
+                                                persistingKeys={persistingKeys}
+                                                rpeDescriptions={rpeDescriptions}
+                                                t={t}
+                                            />
+                                        </div>
+                                    )}
+                                </li>
+                            )
+                        })}
+                    </ul>
+                </div>
+            )}
+        </div>
+    )
+}
+
+interface SetRowsGridProps {
+    we: WorkoutExerciseWithWeight
+    sets: SetPerformed[]
+    onUpdateSet: (id: string, idx: number, field: 'weight' | 'reps', value: number) => void
+    onUpdateSetRpe: (id: string, idx: number, rpe: number | null) => void
+    onToggleSet: (id: string, idx: number) => void
+    persistingKeys: Set<string>
+    rpeDescriptions: Record<number, string>
+    t: (key: string, vars?: Record<string, unknown>) => string
+}
+
+function SetRowsGrid({
+    we,
+    sets,
+    onUpdateSet,
+    onUpdateSetRpe,
+    onToggleSet,
+    persistingKeys,
+    rpeDescriptions,
+    t,
+}: SetRowsGridProps) {
+    return (
+        <div className="grid grid-cols-[30px_3fr_5fr_3fr_42px] gap-x-1 px-0.5 mb-4 sm:grid-cols-[32px_3fr_5fr_3fr_44px] sm:gap-x-1.5 sm:px-1">
+            <span />
+            <span className="pb-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wide">
+                {t('workouts.repsShort')}
+            </span>
+            <span className="pb-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wide">
+                {t('workouts.kgShort')}
+            </span>
+            <span className="pb-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wide">
+                RPE
+            </span>
+            <span />
+            {sets.map((set, setIdx) => {
+                const border = setIdx < sets.length - 1 ? 'border-b border-gray-200' : ''
+                return (
+                    <Fragment key={setIdx}>
+                        <div className={`flex items-center justify-center ${border}`}>
+                            <span className="text-xs font-semibold text-gray-600 sm:text-sm">#{set.setNumber}</span>
+                        </div>
+                        <div className={`flex items-center py-2 ${border}`}>
+                            <Input
+                                type="number"
+                                inputMode="numeric"
+                                min="0"
+                                placeholder={/^\d+$/.test(we.reps.trim()) ? String(parsePlannedReps(we.reps)) : we.reps}
+                                value={set.reps || ''}
+                                onChange={(e) =>
+                                    onUpdateSet(we.id, setIdx, 'reps', parseInt(e.target.value) || 0)
+                                }
+                                disabled={!!set.completed}
+                                aria-label={`${t('workouts.reps')} ${set.setNumber}`}
+                                inputSize="md"
+                                className="px-2 text-center text-sm tabular-nums [appearance:textfield] sm:px-3 sm:text-base [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                        </div>
+                        <div className={`flex items-center py-2 ${border}`}>
+                            <Input
+                                type="number"
+                                inputMode="decimal"
+                                min="0"
+                                step="0.5"
+                                placeholder={String(we.effectiveWeight ?? we.weight ?? 0)}
+                                value={set.weight || ''}
+                                onChange={(e) =>
+                                    onUpdateSet(we.id, setIdx, 'weight', parseFloat(e.target.value) || 0)
+                                }
+                                disabled={!!set.completed}
+                                aria-label={`${t('workouts.weightKg')} ${set.setNumber}`}
+                                inputSize="md"
+                                className="px-2 text-center text-sm tabular-nums [appearance:textfield] sm:px-3 sm:text-base [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                        </div>
+                        <div className={`flex items-center py-2 ${border}`} data-swipe-ignore="true">
+                            <RpeCell
+                                value={set.actualRpe}
+                                disabled={!!set.completed}
+                                onChange={(rpe) => onUpdateSetRpe(we.id, setIdx, rpe)}
+                                descriptions={rpeDescriptions}
+                                t={t}
+                            />
+                        </div>
+                        <div className={`flex items-center justify-center ${border}`}>
+                            <button
+                                type="button"
+                                onClick={() => onToggleSet(we.id, setIdx)}
+                                disabled={persistingKeys.has(`${we.id}:${setIdx}`)}
+                                className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors disabled:opacity-70 disabled:cursor-not-allowed ${set.completed
+                                        ? 'border-green-300 bg-green-100 text-green-700'
+                                        : 'border-gray-300 bg-white text-gray-400 hover:border-green-300 hover:text-green-600'
+                                    }`}
+                                aria-label={t('workouts.markSetDone')}
+                            >
+                                {persistingKeys.has(`${we.id}:${setIdx}`)
+                                    ? <LoadingSpinner size="sm" color="green" />
+                                    : <Check className="w-4 h-4" />
+                                }
+                            </button>
+                        </div>
+                    </Fragment>
+                )
+            })}
+        </div>
+    )
+}
+
 interface FinalStepProps {
     completed: number
     total: number
@@ -1414,20 +1644,7 @@ function FinalStep({
                             const idx = exercises.indexOf(we)
                             const sets = feedbackData[we.id] || []
                             const completedSets = sets.filter((s) => s.completed).length
-                            const weightValue = we.effectiveWeight ?? we.weight ?? 0
-                            const hasWeight = weightValue > 0
-                            const hasTargetRpe = we.targetRpe != null && we.targetRpe > 0
-                            const exerciseSpecParts = [`${we.sets} x ${we.reps}`]
-
-                            if (hasWeight) {
-                                exerciseSpecParts.push(`${formatWeightKg(weightValue)}kg`)
-                            }
-
-                            if (hasTargetRpe) {
-                                exerciseSpecParts.push(`@RPE ${we.targetRpe}`)
-                            }
-
-                            const exerciseSpec = exerciseSpecParts.join(' · ')
+                            const exerciseSpec = buildExerciseSpec(we)
 
                             return (
                                 <button

@@ -669,7 +669,8 @@ describe('Trainee workout focus mode with warm-up exercises', () => {
     it('does not render the warm-up exercise as a step card', async () => {
         await renderContent()
         expect(screen.getByRole('heading', { name: 'Bench Press' })).toBeInTheDocument()
-        expect(screen.queryByText('Band Pull Apart')).not.toBeInTheDocument()
+        // the warm-up lives in the panel (as a row), never as a step card
+        expect(screen.queryByRole('heading', { name: 'Band Pull Apart' })).not.toBeInTheDocument()
     })
 
     it('reaches the final step after two next clicks (warm-up is not a step)', async () => {
@@ -709,5 +710,133 @@ describe('Trainee workout focus mode with warm-up exercises', () => {
             expect(body.exercises).toHaveLength(3)
             expect(body.exercises.map((e: { workoutExerciseId?: string; id?: string }) => e.workoutExerciseId ?? e.id)).toContain('ex-w')
         })
+    })
+})
+
+describe('Trainee workout warm-up panel', () => {
+    const warmupExercise = {
+        ...fixtureWorkout.exercises[0],
+        id: 'ex-w',
+        order: 0,
+        isWarmup: true,
+        exercise: { ...fixtureWorkout.exercises[0].exercise, id: 'exercise-w', name: 'Band Pull Apart' },
+    }
+    const warmupFixture = { ...fixtureWorkout, exercises: [warmupExercise, ...fixtureWorkout.exercises] }
+
+    const mockWorkout = (workout: unknown) => {
+        vi.mocked(global.fetch).mockImplementation((async (url: string) => {
+            if (url.includes('/api/trainee/workouts/')) {
+                return { ok: true, json: async () => ({ data: { workout } }) } as Response
+            }
+            if (url.includes('/api/trainee/workout-exercises/')) {
+                return {
+                    ok: true,
+                    json: async () => ({
+                        data: {
+                            feedback: { id: 'f', workoutExerciseId: 'ex-w', actualRpe: null, setsPerformed: [] },
+                            cascade: {
+                                workoutExercise: { id: 'ex-w', isCompleted: false },
+                                workout: { id: 'workout-1', isCompleted: false },
+                                week: { id: 'week-1', isCompleted: false, weekNumber: 2 },
+                                program: { id: 'program-1', status: 'active' },
+                            },
+                        },
+                    }),
+                } as Response
+            }
+            return { ok: true, json: async () => ({}) } as Response
+        }) as never)
+    }
+
+    const panelHeader = () => within(screen.getByTestId('warmup-panel')).getAllByRole('button')[0]
+
+    it('renders no panel when the workout has no warm-up', async () => {
+        await renderContent()
+        expect(screen.queryByTestId('warmup-panel')).not.toBeInTheDocument()
+    })
+
+    it('is expanded on step 0 and collapses on step change, reopenable', async () => {
+        mockWorkout(warmupFixture)
+        const user = userEvent.setup()
+        await renderContent()
+
+        expect(panelHeader()).toHaveAttribute('aria-expanded', 'true')
+        expect(screen.getByText('Band Pull Apart')).toBeInTheDocument()
+
+        await user.click(nextButton())
+        expect(panelHeader()).toHaveAttribute('aria-expanded', 'false')
+        expect(screen.queryByText('Band Pull Apart')).not.toBeInTheDocument()
+
+        await user.click(panelHeader())
+        expect(panelHeader()).toHaveAttribute('aria-expanded', 'true')
+    })
+
+    it('stays rendered, collapsed, above the summary on the final step', async () => {
+        mockWorkout(warmupFixture)
+        const user = userEvent.setup()
+        await renderContent()
+        await user.click(nextButton())
+        await user.click(nextButton())
+
+        expect(screen.getByText('workouts.summaryTitle')).toBeInTheDocument()
+        expect(panelHeader()).toHaveAttribute('aria-expanded', 'false')
+    })
+
+    it('renders the final step with the panel when every exercise is warm-up', async () => {
+        mockWorkout({
+            ...fixtureWorkout,
+            exercises: fixtureWorkout.exercises.map((e) => ({ ...e, isWarmup: true })),
+        })
+        render(<WorkoutDetailContent />)
+        await screen.findByTestId('warmup-panel')
+
+        expect(screen.getByText('workouts.summaryTitle')).toBeInTheDocument()
+        expect(panelHeader()).toHaveAttribute('aria-expanded', 'true')
+        expect(screen.getByText('Bench Press')).toBeInTheDocument()
+        expect(screen.getByText('Tricep Extension')).toBeInTheDocument()
+    })
+
+    it('persists a set logged from the panel with the standard feedback PATCH', async () => {
+        mockWorkout(warmupFixture)
+        const user = userEvent.setup()
+        await renderContent()
+
+        await user.click(screen.getByText('Band Pull Apart'))
+        const markButtons = within(screen.getByTestId('warmup-panel')).getAllByRole('button', {
+            name: /workouts\.markSetDone/i,
+        })
+        await user.click(markButtons[0])
+
+        await waitFor(() => {
+            const call = vi
+                .mocked(global.fetch)
+                .mock.calls.find(
+                    ([u, init]) =>
+                        typeof u === 'string' &&
+                        u.includes('/api/trainee/workout-exercises/ex-w/feedback') &&
+                        (init as RequestInit)?.method === 'PATCH'
+                )
+            expect(call).toBeTruthy()
+            const body = JSON.parse((call![1] as RequestInit).body as string)
+            expect(body.set.completed).toBe(true)
+            expect(body.set.reps).toBe(8)
+            expect(body.set.weight).toBe(80)
+        })
+    })
+
+    it('starts collapsed when every warm-up exercise is already completed', async () => {
+        mockWorkout({
+            ...warmupFixture,
+            exercises: [{ ...warmupExercise, isCompleted: true }, ...fixtureWorkout.exercises],
+        })
+        await renderContent()
+        expect(panelHeader()).toHaveAttribute('aria-expanded', 'false')
+    })
+
+    it('never uses amber styling inside the panel', async () => {
+        mockWorkout(warmupFixture)
+        await renderContent()
+        const panel = screen.getByTestId('warmup-panel')
+        expect(panel.querySelector('[class*="amber"]')).toBeNull()
     })
 })

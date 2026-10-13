@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(trainee): pannello riscaldamento dedicato nel workout in corso (13/10/2026)
+- In `src/app/trainee/workouts/[id]/_content.tsx` nuovo `WarmupPanel` collassabile sopra la card esercizio (anche allo step finale), con registrazione facoltativa dei set tramite lo stesso autosave; estratti `SetRowsGrid` e `buildExerciseSpec`. Nessun pannello se il workout non ha riscaldamento. Test in `tests/unit/trainee-workout-focus.test.tsx`.
+
 ### feat(trainee): il riscaldamento esce da step e contatori del workout (13/10/2026)
 - In `src/app/trainee/workouts/[id]/_content.tsx` step, contatore, progresso e riepilogo finale usano solo gli esercizi non di riscaldamento (`partitionWarmup`); l'invio finale include comunque tutti gli esercizi. Rimosso il badge riscaldamento dalla card esercizio, ora irraggiungibile. Test aggiornati in `tests/unit/trainee-workout-focus.test.tsx`.
 
