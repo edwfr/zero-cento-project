@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(trainee): helper `partitionWarmup` (13/10/2026)
+- Nuovo `src/lib/workout-warmup.ts`: divide gli esercizi di un workout in `warmup` e `main`, entrambi ordinati per `order`, senza fallback se tutti sono riscaldamento. Base per la sezione riscaldamento nella vista workout del trainee.
+
 ### chore(build): pulizia warning build Vercel (11/10/2026)
 - `package.json` `allowScripts`: approvati gli install script di `prisma`, `@prisma/client`, `@prisma/engines`, `@sentry/cli`, `esbuild`, `sharp`, `unrs-resolver`; negato `core-js` (solo banner). Evita che la nuova policy npm li blocchi in futuro (Prisma generate / binario Sentry).
 - `engines.node` da `>=20.0.0` a `22.x` (+ `.nvmrc` 22): Vercel non sale più in automatico al prossimo major.
