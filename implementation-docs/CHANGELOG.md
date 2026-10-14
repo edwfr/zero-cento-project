@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### chore(sentry): niente eventi Sentry in sviluppo locale (14/10/2026)
+- `sentry.server.config.ts`, `sentry.edge.config.ts`, `src/instrumentation-client.ts`: `enabled` è false quando `NODE_ENV` o `NEXT_PUBLIC_APP_ENV` valgono `development`. Gli errori locali (es. JAVASCRIPT-NEXTJS-1B, pooler Supabase irraggiungibile da `localhost`) non vanno triagiati e consumavano la quota del piano free. Staging e production restano attivi.
+
 ### feat(trainee): banner workout più compatto e leggibile su mobile (13/10/2026)
 - `src/components/WeekTypeBanner.tsx` (layout mobile): settimana/giorno e badge tipo settimana sulla stessa riga, titolo troncato su una riga, barra di avanzamento con accanto il contatore "6/12 serie · 50%". Il banner è sticky: passa da 4 a 3 righe e chiarisce a cosa si riferisce la percentuale. Nuove props opzionali `completedSets` / `totalSets` (senza, resta la sola percentuale). Separatore settimana/giorno `·` al posto di `/`.
 - `src/components/ProgressBar.tsx`: prop `ariaLabel` per etichettare la barra senza renderizzare la riga label.
