@@ -309,7 +309,7 @@ export default function WorkoutDetailContent() {
         } finally {
             setLoading(false)
         }
-    }, [t, workoutId])
+    }, [STORAGE_KEY, t, workoutId])
 
     const loadLocalData = useCallback(() => {
         try {
@@ -427,21 +427,23 @@ export default function WorkoutDetailContent() {
         setPersistingKeys((prev) => new Set(prev).add(`${workoutExerciseId}:${setIdx}`))
         let httpStatus: number | undefined
         let apiErrorCode: string | undefined
+        let apiErrorDetails: unknown
+        const payload = {
+            actualRpe: exerciseRPE[workoutExerciseId] ?? null,
+            notes: (exerciseNotes[workoutExerciseId] ?? '').trim() || null,
+            set: {
+                setNumber: changedSet.setNumber,
+                completed: !!changedSet.completed,
+                reps: changedSet.reps,
+                weight: changedSet.weight,
+                actualRpe: changedSet.actualRpe ?? null,
+            },
+        }
         try {
             const res = await keepaliveFetch(`/api/trainee/workout-exercises/${workoutExerciseId}/feedback`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    actualRpe: exerciseRPE[workoutExerciseId] ?? null,
-                    notes: (exerciseNotes[workoutExerciseId] ?? '').trim() || null,
-                    set: {
-                        setNumber: changedSet.setNumber,
-                        completed: !!changedSet.completed,
-                        reps: changedSet.reps,
-                        weight: changedSet.weight,
-                        actualRpe: changedSet.actualRpe ?? null,
-                    },
-                }),
+                body: JSON.stringify(payload),
             })
 
             const data = await res.json()
@@ -449,6 +451,7 @@ export default function WorkoutDetailContent() {
             if (!res.ok) {
                 httpStatus = res.status
                 apiErrorCode = typeof data?.error?.code === 'string' ? data.error.code : undefined
+                apiErrorDetails = data?.error?.details
                 throw new Error(getApiErrorMessage(data, t('workouts.errorFeedback'), t))
             }
 
@@ -519,6 +522,13 @@ export default function WorkoutDetailContent() {
                         setNumber: changedSet.setNumber,
                         httpStatus,
                         apiErrorCode,
+                        apiErrorDetails,
+                        // Notes are free text from the trainee: send only their length, not the content (no PII).
+                        requestPayload: {
+                            ...payload,
+                            notes: payload.notes === null ? null : `[${payload.notes.length} chars]`,
+                        },
+                        isWarmup,
                     },
                 })
             }

@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### chore(sentry): più contesto sugli errori di autosave delle serie (14/10/2026)
+- `src/app/trainee/workouts/[id]/_content.tsx` (`persistExerciseFeedback`): l'evento Sentry `trainee-set-autosave` ora include in `extra` il payload inviato alla `PATCH /api/trainee/workout-exercises/:id/feedback` (`requestPayload`, con le note ridotte alla sola lunghezza per non inviare PII), i dettagli di validazione restituiti dall'API (`apiErrorDetails`, es. `fieldErrors.set: ["validation.maxReps"]`) e `isWarmup`. Serve a capire quale campo fa fallire JAVASCRIPT-NEXTJS-R (`400 VALIDATION_ERROR`).
+
 ### chore(sentry): niente eventi Sentry in sviluppo locale (14/10/2026)
 - `sentry.server.config.ts`, `sentry.edge.config.ts`, `src/instrumentation-client.ts`: `enabled` è false quando `NODE_ENV` o `NEXT_PUBLIC_APP_ENV` valgono `development`. Gli errori locali (es. JAVASCRIPT-NEXTJS-1B, pooler Supabase irraggiungibile da `localhost`) non vanno triagiati e consumavano la quota del piano free. Staging e production restano attivi.
 
