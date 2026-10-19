@@ -57,6 +57,18 @@ describe('shouldDropClientEvent', () => {
         expect(shouldDropClientEvent(eventWith('Error', 'Rejected'))).toBe(false)
     })
 
+    it('drops "Script .../sw.js load failed" (WebKit could not fetch the service worker)', () => {
+        expect(
+            shouldDropClientEvent(eventWith('TypeError', 'Script https://www.zerocento-bodylab.it/sw.js load failed', []))
+        ).toBe(true)
+    })
+
+    it('keeps "load failed" for scripts other than the service worker', () => {
+        expect(
+            shouldDropClientEvent(eventWith('TypeError', 'Script https://www.zerocento-bodylab.it/app.js load failed', []))
+        ).toBe(false)
+    })
+
     it('drops supabase auth lock "stolen by another request"', () => {
         const value = 'Lock "lock:sb-abc-auth-token" was released because another request stole it'
         expect(shouldDropClientEvent(eventWith('Error', value))).toBe(true)

@@ -5,7 +5,8 @@ const CHUNK_LOAD_MESSAGE = /Loading chunk [\w-]+ failed/i
 const AUTH_LOCK_STOLEN_MESSAGE = /Lock ".*" was released because another request stole it/i
 const AUTOSAVE_TRANSACTION = '/trainee/workouts/:id'
 const SW_REGISTER_FRAME = /ServiceWorkerContainer\.register|@serwist\/window/
-const EXTENSION_FRAME = /^(chrome|moz|safari(-web)?)-extension:\/\//
+const SW_SCRIPT_LOAD_FAILED = /^Script .*\/sw\.js load failed$/
+const EXTENSION_FRAME =/^(chrome|moz|safari(-web)?)-extension:\/\//
 
 /**
  * Client-side noise that would eat the Sentry free-plan quota (5k errors/month)
@@ -36,6 +37,15 @@ export function shouldDropClientEvent(event: ErrorEvent): boolean {
         (exception.stacktrace?.frames ?? []).some((frame) =>
             SW_REGISTER_FRAME.test(`${frame.function ?? ''} ${frame.filename ?? ''} ${frame.module ?? ''}`)
         )
+    ) {
+        return true
+    }
+
+    // WebKit (e.g. in-app WKWebView) could not download sw.js: no stacktrace, nothing to fix on our side
+    if (
+        exception.type === 'TypeError' &&
+        exception.value &&
+        SW_SCRIPT_LOAD_FAILED.test(exception.value)
     ) {
         return true
     }
