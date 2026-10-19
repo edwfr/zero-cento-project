@@ -41,6 +41,7 @@ vi.mock('@/components', () => ({
     WeekTypeBanner: ({ weekType }: { weekType?: string }) => <div data-testid="week-type-banner">{weekType}</div>,
 }))
 
+import * as Sentry from '@sentry/nextjs'
 import WorkoutDetailContent from '@/app/trainee/workouts/[id]/_content'
 
 const fixtureWorkout = {
@@ -369,6 +370,55 @@ describe('Trainee workout focus mode', () => {
             expect(body).toHaveProperty('set')
             expect(body.set).toHaveProperty('actualRpe')
             expect(body.set.actualRpe).toBeNull()
+        })
+    })
+
+    describe('set-autosave failures', () => {
+        const mockAutosaveResponse = (status: number, body: unknown) => {
+            const baseFetch = global.fetch
+            global.fetch = vi.fn(async (url: string, init?: RequestInit) => {
+                if (typeof url === 'string' && url.endsWith('/feedback') && init?.method === 'PATCH') {
+                    return { ok: false, status, json: async () => body } as Response
+                }
+                return baseFetch(url, init)
+            }) as unknown as typeof fetch
+        }
+
+        beforeEach(() => {
+            vi.mocked(Sentry.captureException).mockClear()
+        })
+
+        it('does not report a 400 VALIDATION_ERROR to Sentry and toasts the validation message', async () => {
+            mockAutosaveResponse(400, {
+                error: {
+                    code: 'VALIDATION_ERROR',
+                    message: 'Invalid input',
+                    key: 'validation.invalid',
+                    details: { formErrors: [], fieldErrors: { set: ['validation.maxReps'] } },
+                },
+            })
+            const user = userEvent.setup()
+            await renderContent()
+
+            await user.click(screen.getAllByRole('button', { name: /workouts\.markSetDone/i })[0])
+
+            await waitFor(() => {
+                // The mocked t returns keys untranslated: the field error key replaces the generic fallback
+                expect(showToast).toHaveBeenCalledWith('validation.maxReps', 'error')
+            })
+            expect(Sentry.captureException).not.toHaveBeenCalled()
+        })
+
+        it('reports a 500 to Sentry', async () => {
+            mockAutosaveResponse(500, { error: { code: 'INTERNAL_ERROR', message: 'boom' } })
+            const user = userEvent.setup()
+            await renderContent()
+
+            await user.click(screen.getAllByRole('button', { name: /workouts\.markSetDone/i })[0])
+
+            await waitFor(() => {
+                expect(Sentry.captureException).toHaveBeenCalledTimes(1)
+            })
         })
     })
 

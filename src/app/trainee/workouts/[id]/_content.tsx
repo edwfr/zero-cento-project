@@ -149,6 +149,11 @@ const isAbortError = (error: unknown): boolean => {
 // Expected auth/throttle responses: the trainee sees the toast, nothing to triage in Sentry
 const EXPECTED_AUTOSAVE_STATUSES = new Set([401, 403, 429])
 
+// Out-of-range input (e.g. 1212 reps) is a trainee mistake shown in the toast, not a bug
+const isExpectedAutosaveFailure = (httpStatus: number | undefined, apiErrorCode: string | undefined): boolean =>
+    httpStatus !== undefined &&
+    (EXPECTED_AUTOSAVE_STATUSES.has(httpStatus) || (httpStatus === 400 && apiErrorCode === 'VALIDATION_ERROR'))
+
 const RPE_OPTIONS = [
     { value: 5, labelKey: 'rpe5' },
     { value: 5.5, labelKey: 'rpe5_5' },
@@ -510,7 +515,7 @@ export default function WorkoutDetailContent() {
                 ...prev,
                 [workoutExerciseId]: previousExerciseCompleted,
             }))
-            if (httpStatus === undefined || !EXPECTED_AUTOSAVE_STATUSES.has(httpStatus)) {
+            if (!isExpectedAutosaveFailure(httpStatus, apiErrorCode)) {
                 Sentry.captureException(err, {
                     tags: {
                         feature: 'trainee-set-autosave',

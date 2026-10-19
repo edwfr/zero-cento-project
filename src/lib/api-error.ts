@@ -28,13 +28,41 @@ function translateIfExists(t: TFunction, key: string): string | undefined {
     return translated !== key ? translated : undefined
 }
 
-function extractDetailMessage(error: ApiErrorLike): string | undefined {
-    if (!Array.isArray(error.details)) {
+function firstString(values: unknown): string | undefined {
+    if (!Array.isArray(values)) {
         return undefined
     }
 
-    const firstDetail = error.details[0] as ApiDetailLike | undefined
-    return typeof firstDetail?.message === 'string' ? firstDetail.message : undefined
+    return values.find((value): value is string => typeof value === 'string')
+}
+
+// Zod `error.flatten()` shape: { formErrors: string[], fieldErrors: Record<string, string[]> }
+function extractFlattenedMessage(details: object): string | undefined {
+    const { fieldErrors, formErrors } = details as { fieldErrors?: unknown; formErrors?: unknown }
+
+    if (fieldErrors !== null && typeof fieldErrors === 'object') {
+        for (const messages of Object.values(fieldErrors)) {
+            const message = firstString(messages)
+            if (message) {
+                return message
+            }
+        }
+    }
+
+    return firstString(formErrors)
+}
+
+function extractDetailMessage(error: ApiErrorLike): string | undefined {
+    if (Array.isArray(error.details)) {
+        const firstDetail = error.details[0] as ApiDetailLike | undefined
+        return typeof firstDetail?.message === 'string' ? firstDetail.message : undefined
+    }
+
+    if (error.details !== null && typeof error.details === 'object') {
+        return extractFlattenedMessage(error.details)
+    }
+
+    return undefined
 }
 
 function resolveDetailMessage(detailMessage: string, t: TFunction): string {

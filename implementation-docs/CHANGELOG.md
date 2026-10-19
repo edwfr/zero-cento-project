@@ -10,6 +10,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### fix(trainee): messaggio di validazione esplicito sull'autosave delle serie, niente Sentry per i 400 (19/10/2026)
+- `src/lib/api-error.ts` (`getApiErrorMessage`): legge anche i `details` in formato Zod `flatten()` (`fieldErrors` poi `formErrors`), il formato restituito dalla `PATCH /api/trainee/workout-exercises/:id/feedback` e da altre route. Prima di questa modifica l'utente vedeva il generico "Errore invio feedback"; ora vede il messaggio vero, es. "Massimo 50 ripetizioni" (JAVASCRIPT-NEXTJS-R: reps 1212). Vale per tutti i chiamanti.
+- `src/app/trainee/workouts/[id]/_content.tsx`: `isExpectedAutosaveFailure` esclude da Sentry anche `400 VALIDATION_ERROR` (errore di input dell'utente, mostrato nel toast; regola del progetto: niente Sentry per i 4xx). Gli altri errori restano segnalati.
+- Test: `tests/unit/lib/api-error.test.ts`, `tests/unit/trainee-workout-focus.test.tsx`.
+
 ### chore(sentry): più contesto sugli errori di autosave delle serie (14/10/2026)
 - `src/app/trainee/workouts/[id]/_content.tsx` (`persistExerciseFeedback`): l'evento Sentry `trainee-set-autosave` ora include in `extra` il payload inviato alla `PATCH /api/trainee/workout-exercises/:id/feedback` (`requestPayload`, con le note ridotte alla sola lunghezza per non inviare PII), i dettagli di validazione restituiti dall'API (`apiErrorDetails`, es. `fieldErrors.set: ["validation.maxReps"]`) e `isWarmup`. Serve a capire quale campo fa fallire JAVASCRIPT-NEXTJS-R (`400 VALIDATION_ERROR`).
 - Stesso file: `STORAGE_KEY` aggiunta alle dipendenze di `fetchWorkout` (warning `react-hooks/exhaustive-deps`). Nessun cambio di comportamento: la chiave deriva solo da `workoutId`, già presente.

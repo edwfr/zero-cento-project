@@ -11,6 +11,7 @@ const createMockT = () => vi.fn((key: string, options?: { defaultValue?: string 
         'errors:feedback.modifyDenied': 'Puoi modificare solo il tuo feedback',
         'errors:validation.invalidMuscleGroupId': 'ID gruppo muscolare non valido',
         'validation:validation.invalidMuscleGroupId': 'ID gruppo muscolare non valido',
+        'validation:validation.maxReps': 'Massimo 50 ripetizioni',
     }
 
     return translations[key] ?? options?.defaultValue ?? key
@@ -127,5 +128,55 @@ describe('getApiErrorMessage', () => {
         const result = getApiErrorMessage(apiResponse, 'Errore generico', mockT as unknown as TFunction)
 
         expect(result).toBe('validation.unknownKey')
+    })
+
+    it('should translate the first field error from zod flatten() details', () => {
+        const mockT = createMockT()
+
+        const apiResponse = {
+            error: {
+                code: 'VALIDATION_ERROR',
+                message: 'Invalid input',
+                key: 'validation.invalid',
+                details: {
+                    formErrors: [],
+                    fieldErrors: { set: ['validation.maxReps'] },
+                },
+            },
+        }
+
+        const result = getApiErrorMessage(apiResponse, 'Errore invio feedback', mockT as unknown as TFunction)
+
+        expect(result).toBe('Massimo 50 ripetizioni')
+    })
+
+    it('should use form errors from zod flatten() details when no field error exists', () => {
+        const mockT = createMockT()
+
+        const apiResponse = {
+            error: {
+                code: 'VALIDATION_ERROR',
+                details: { formErrors: ['validation.maxReps'], fieldErrors: {} },
+            },
+        }
+
+        const result = getApiErrorMessage(apiResponse, 'Errore generico', mockT as unknown as TFunction)
+
+        expect(result).toBe('Massimo 50 ripetizioni')
+    })
+
+    it('should fall back when zod flatten() details carry no messages', () => {
+        const mockT = createMockT()
+
+        const apiResponse = {
+            error: {
+                code: 'VALIDATION_ERROR',
+                details: { formErrors: [], fieldErrors: {} },
+            },
+        }
+
+        const result = getApiErrorMessage(apiResponse, 'Errore generico', mockT as unknown as TFunction)
+
+        expect(result).toBe('Errore generico')
     })
 })
