@@ -45,6 +45,7 @@ describe('ProgramTestResultsContent', () => {
                                         {
                                             workoutExerciseId: 'row-1',
                                             exerciseName: 'Squat',
+                                            variant: 'Low bar',
                                             sets: 3,
                                             reps: '5',
                                             rpe: 8,
@@ -58,6 +59,7 @@ describe('ProgramTestResultsContent', () => {
                                         {
                                             workoutExerciseId: 'row-2',
                                             exerciseName: 'Panca',
+                                            variant: null,
                                             sets: 4,
                                             reps: '6',
                                             rpe: 7.5,
@@ -123,6 +125,7 @@ describe('ProgramTestResultsContent', () => {
         const headers = screen.getAllByRole('columnheader').map((header) => header.textContent)
         expect(headers).toEqual([
             'testResults.colExercise',
+            'testResults.colVariant',
             'testResults.colSets',
             'testResults.colReps',
             'testResults.colRpe',
@@ -134,7 +137,8 @@ describe('ProgramTestResultsContent', () => {
         ])
 
         const squatCells = screen.getAllByRole('row')[1].querySelectorAll('td')
-        expect(Array.from(squatCells).slice(1, 8).map((cell) => cell.textContent)).toEqual([
+        expect(Array.from(squatCells).slice(1, 9).map((cell) => cell.textContent)).toEqual([
+            'Low bar',
             '3',
             '5',
             '8.0',
@@ -145,7 +149,8 @@ describe('ProgramTestResultsContent', () => {
         ])
 
         const benchCells = screen.getAllByRole('row')[2].querySelectorAll('td')
-        expect(Array.from(benchCells).slice(4, 8).map((cell) => cell.textContent)).toEqual(['-', '-', '-', '-'])
+        expect(Array.from(benchCells).slice(1, 2).map((cell) => cell.textContent)).toEqual(['-'])
+        expect(Array.from(benchCells).slice(5, 9).map((cell) => cell.textContent)).toEqual(['-', '-', '-', '-'])
     })
 
     it('shows comment info icon only for exercises with a comment and reveals it on hover', async () => {
