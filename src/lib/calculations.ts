@@ -1,4 +1,4 @@
-import type { WorkoutExercise, PersonalRecord } from '@prisma/client'
+import type { WorkoutExercise } from '@prisma/client'
 import { prisma } from './prisma'
 import { plannedReps } from './reps'
 
@@ -7,63 +7,82 @@ export const CALCULATION_ERROR_KEYS = {
     noPreviousOccurrenceFound: 'calculation.noPreviousOccurrenceFound',
 } as const
 
-export type TraineePrMap = Map<string, number>
+/** exerciseId → theoretical 1RM of the most recent PR. */
+export type TraineeOneRmMap = Map<string, number>
 
-const prKey = (exerciseId: string, reps: number) => `${exerciseId}:${reps}`
-
-/**
- * Best normalized 1RM for an exercise across all rep-range records in the map.
- * Iterates PR map entries for the given exerciseId, returns the max
- * `normalizedOneRM(weight, reps)`, or null when no record exists.
- */
-function bestNormalizedOneRMForExercise(
-    prMap: TraineePrMap,
+export interface PersonalRecordInput {
     exerciseId: string
-): number | null {
-    let best: number | null = null
-    const prefix = `${exerciseId}:`
-    for (const [key, weight] of prMap.entries()) {
-        if (!key.startsWith(prefix)) continue
-        const reps = Number(key.slice(prefix.length))
-        if (!Number.isFinite(reps) || reps <= 0) continue
-        const normalized = normalizedOneRM(weight, reps)
-        if (best === null || normalized > best) {
-            best = normalized
-        }
-    }
-    return best
+    weight: number
+    reps: number
+    recordDate?: Date | string | null
+}
+
+function recordTime(recordDate: PersonalRecordInput['recordDate']): number {
+    if (!recordDate) return -Infinity
+    const time = new Date(recordDate).getTime()
+    return Number.isNaN(time) ? -Infinity : time
 }
 
 /**
- * Load all personal records for a trainee into a (exerciseId:reps → weight) map.
- * Most recent record per (exerciseId, reps) wins.
+ * Most recent PR per exercise. Ties on recordDate → higher normalizedOneRM wins.
+ * Missing/invalid recordDate counts as the oldest possible date.
+ */
+export function latestPersonalRecordByExercise<T extends PersonalRecordInput>(
+    records: readonly T[]
+): Record<string, T> {
+    const latest: Record<string, T> = {}
+    for (const candidate of records) {
+        const current = latest[candidate.exerciseId]
+        if (!current) {
+            latest[candidate.exerciseId] = candidate
+            continue
+        }
+        const candidateTime = recordTime(candidate.recordDate)
+        const currentTime = recordTime(current.recordDate)
+        if (
+            candidateTime > currentTime ||
+            (candidateTime === currentTime &&
+                normalizedOneRM(candidate.weight, candidate.reps) >
+                    normalizedOneRM(current.weight, current.reps))
+        ) {
+            latest[candidate.exerciseId] = candidate
+        }
+    }
+    return latest
+}
+
+/** normalizedOneRM(weight, reps) of latestPersonalRecordByExercise. */
+export function latestNormalizedOneRMByExercise(
+    records: readonly PersonalRecordInput[]
+): Record<string, number> {
+    const result: Record<string, number> = {}
+    for (const [exerciseId, record] of Object.entries(latestPersonalRecordByExercise(records))) {
+        result[exerciseId] = normalizedOneRM(record.weight, record.reps)
+    }
+    return result
+}
+
+/**
+ * Load all personal records for a trainee into an (exerciseId → 1RM) map.
+ * The 1RM is the theoretical one of the most recent PR of each exercise.
  * One query replaces N `personalRecord.findFirst` calls.
  */
-export async function loadTraineePrMap(traineeId: string): Promise<TraineePrMap> {
+export async function loadTraineeOneRmMap(traineeId: string): Promise<TraineeOneRmMap> {
     const records = await prisma.personalRecord.findMany({
         where: { traineeId },
         select: { exerciseId: true, reps: true, weight: true, recordDate: true },
-        orderBy: { recordDate: 'desc' },
     })
-
-    const map: TraineePrMap = new Map()
-    for (const record of records) {
-        const key = prKey(record.exerciseId, record.reps)
-        if (!map.has(key)) {
-            map.set(key, record.weight)
-        }
-    }
-    return map
+    return new Map(Object.entries(latestNormalizedOneRMByExercise(records)))
 }
 
 /**
- * Sync resolver used when caller has pre-fetched the trainee PR map and the
+ * Sync resolver used when caller has pre-fetched the trainee 1RM map and the
  * relevant workout siblings (exercises of the same workout, any order).
- * Replaces `calculateEffectiveWeight` when batching to avoid N+1.
+ * `percentage_previous` is based on the nearest previous occurrence.
  */
 export function resolveEffectiveWeight(
     workoutExercise: WorkoutExercise,
-    prMap: TraineePrMap,
+    oneRmMap: TraineeOneRmMap,
     workoutSiblings: WorkoutExercise[],
     depth = 0
 ): number | null {
@@ -76,17 +95,9 @@ export function resolveEffectiveWeight(
             return workoutExercise.weight
 
         case 'percentage_1rm': {
-            const oneRm = bestNormalizedOneRMForExercise(prMap, workoutExercise.exerciseId)
-            if (oneRm === null) return null
+            const oneRm = oneRmMap.get(workoutExercise.exerciseId)
+            if (oneRm === undefined) return null
             return (oneRm * (workoutExercise.weight || 0)) / 100
-        }
-
-        case 'percentage_rm': {
-            const targetReps = plannedReps(workoutExercise.reps)
-            if (targetReps === 0) return null
-            const rm = prMap.get(prKey(workoutExercise.exerciseId, targetReps))
-            if (rm === undefined) return null
-            return (rm * (workoutExercise.weight || 0)) / 100
         }
 
         case 'percentage_previous': {
@@ -97,7 +108,7 @@ export function resolveEffectiveWeight(
                         sibling.exerciseId === workoutExercise.exerciseId &&
                         sibling.order < workoutExercise.order
                 )
-                .sort((a, b) => a.order - b.order)[0]
+                .sort((a, b) => b.order - a.order)[0]
 
             if (!previousExercise) {
                 throw new Error(CALCULATION_ERROR_KEYS.noPreviousOccurrenceFound)
@@ -105,117 +116,12 @@ export function resolveEffectiveWeight(
 
             const baseWeight = resolveEffectiveWeight(
                 previousExercise,
-                prMap,
+                oneRmMap,
                 workoutSiblings,
                 depth + 1
             )
             if (baseWeight === null) return null
 
-            const percentage = workoutExercise.weight || 0
-            return baseWeight * (1 + percentage / 100)
-        }
-
-        default:
-            return null
-    }
-}
-
-/**
- * Calculate effective weight for a workout exercise
- * Resolves percentage_previous recursively
- */
-export async function calculateEffectiveWeight(
-    workoutExercise: WorkoutExercise & { exercise?: { id: string } },
-    traineeId: string,
-    depth = 0
-): Promise<number | null> {
-    // Prevent infinite recursion
-    if (depth > 10) {
-        throw new Error(CALCULATION_ERROR_KEYS.maxRecursionDepthExceeded)
-    }
-
-    switch (workoutExercise.weightType) {
-        case 'absolute':
-            return workoutExercise.weight
-
-        case 'percentage_1rm': {
-            // Best normalized 1RM across all rep-range records (RPE table)
-            const records = await prisma.personalRecord.findMany({
-                where: {
-                    traineeId,
-                    exerciseId: workoutExercise.exerciseId,
-                },
-                select: { weight: true, reps: true, recordDate: true },
-                orderBy: { recordDate: 'desc' },
-            })
-
-            if (records.length === 0) return null
-
-            let bestOneRm: number | null = null
-            const seenReps = new Set<number>()
-            for (const record of records) {
-                if (seenReps.has(record.reps)) continue
-                seenReps.add(record.reps)
-                const normalized = normalizedOneRM(record.weight, record.reps)
-                if (bestOneRm === null || normalized > bestOneRm) {
-                    bestOneRm = normalized
-                }
-            }
-
-            if (bestOneRm === null) return null
-            return (bestOneRm * (workoutExercise.weight || 0)) / 100
-        }
-
-        case 'percentage_rm': {
-            // Find nRM personal record based on reps
-            // Planned reps (could be "8", "8/10"); seconds and max give 0
-            const targetReps = plannedReps(workoutExercise.reps)
-            if (targetReps === 0) return null
-
-            const record = await prisma.personalRecord.findFirst({
-                where: {
-                    traineeId,
-                    exerciseId: workoutExercise.exerciseId,
-                    reps: targetReps,
-                },
-                orderBy: {
-                    recordDate: 'desc',
-                },
-            })
-
-            if (!record) return null
-            return (record.weight * (workoutExercise.weight || 0)) / 100
-        }
-
-        case 'percentage_previous': {
-            // Find previous occurrence of same exercise in same workout
-            const previousExercise = await prisma.workoutExercise.findFirst({
-                where: {
-                    workoutId: workoutExercise.workoutId,
-                    exerciseId: workoutExercise.exerciseId,
-                    order: {
-                        lt: workoutExercise.order,
-                    },
-                },
-                orderBy: {
-                    order: 'asc',
-                },
-            })
-
-            if (!previousExercise) {
-                throw new Error(CALCULATION_ERROR_KEYS.noPreviousOccurrenceFound)
-            }
-
-            // Recursively resolve base weight
-            const baseWeight = await calculateEffectiveWeight(
-                previousExercise,
-                traineeId,
-                depth + 1
-            )
-
-            if (baseWeight === null) return null
-
-            // Apply percentage adjustment
             const percentage = workoutExercise.weight || 0
             return baseWeight * (1 + percentage / 100)
         }

@@ -8,65 +8,12 @@ import {
     estimateOneRMFromRpeTable,
     intensityFromRpeChart,
     normalizedOneRM,
-    calculateEffectiveWeight as calculateEffectiveWeightRaw,
     resolveEffectiveWeight,
-    loadTraineePrMap,
+    loadTraineeOneRmMap,
+    latestPersonalRecordByExercise,
+    latestNormalizedOneRMByExercise,
 } from '@/lib/calculations'
 import { prisma } from '@/lib/prisma'
-import type { RestTime, WorkoutExercise as PrismaWorkoutExercise } from '@prisma/client'
-
-type WorkoutExercise = Omit<
-    PrismaWorkoutExercise,
-    | 'variant'
-    | 'targetRpe'
-    | 'restTime'
-    | 'isWarmup'
-    | 'isJumpSet'
-    | 'isSuperSet'
-    | 'effectiveWeight'
-    | 'isCompleted'
-> & {
-    variant?: string | null
-    targetRpe?: number | null
-    restTime?: RestTime
-    isWarmup?: boolean
-    isJumpSet?: boolean
-    isSuperSet?: boolean
-    effectiveWeight?: number | null
-    isCompleted?: boolean
-    rpe?: number | null
-    restSeconds?: number
-    createdAt?: Date
-    updatedAt?: Date
-}
-
-const normalizeWorkoutExercise = (exercise: WorkoutExercise): PrismaWorkoutExercise => ({
-    id: exercise.id,
-    workoutId: exercise.workoutId,
-    exerciseId: exercise.exerciseId,
-    variant: exercise.variant ?? null,
-    sets: exercise.sets,
-    reps: exercise.reps,
-    targetRpe: exercise.targetRpe ?? exercise.rpe ?? null,
-    weightType: exercise.weightType,
-    weight: exercise.weight,
-    restTime: exercise.restTime ?? 'm2',
-    isWarmup: exercise.isWarmup ?? false,
-    isJumpSet: exercise.isJumpSet ?? false,
-    isSuperSet: exercise.isSuperSet ?? false,
-    isCompleted: exercise.isCompleted ?? false,
-    effectiveWeight: exercise.effectiveWeight ?? null,
-    notes: exercise.notes,
-    order: exercise.order,
-})
-
-const normalizeWorkoutExerciseNullable = (
-    exercise: WorkoutExercise | null
-): PrismaWorkoutExercise | null =>
-    exercise ? normalizeWorkoutExercise(exercise) : null
-
-const calculateEffectiveWeight = (workoutExercise: WorkoutExercise, traineeId: string) =>
-    calculateEffectiveWeightRaw(normalizeWorkoutExercise(workoutExercise), traineeId)
 
 describe('calculateVolume', () => {
     it('returns sets × reps × weight × coefficient', () => {
@@ -232,866 +179,6 @@ describe('normalizedOneRM', () => {
     })
 })
 
-describe('calculateEffectiveWeight', () => {
-    const mockTraineeId = 'trainee-123'
-    const mockExerciseId = 'exercise-456'
-    const mockWorkoutId = 'workout-789'
-
-    beforeEach(() => {
-        vi.clearAllMocks()
-    })
-
-    describe('absolute weight type', () => {
-        it('returns the weight directly', async () => {
-            const workoutExercise: WorkoutExercise = {
-                id: 'we-1',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 1,
-                sets: 3,
-                reps: '8',
-                weightType: 'absolute',
-                weight: 100,
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            const result = await calculateEffectiveWeight(workoutExercise, mockTraineeId)
-            expect(result).toBe(100)
-        })
-
-        it('handles zero weight', async () => {
-            const workoutExercise: WorkoutExercise = {
-                id: 'we-1',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 1,
-                sets: 3,
-                reps: '8',
-                weightType: 'absolute',
-                weight: 0,
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            const result = await calculateEffectiveWeight(workoutExercise, mockTraineeId)
-            expect(result).toBe(0)
-        })
-    })
-
-    describe('percentage_1rm weight type', () => {
-        it('calculates weight based on 1RM personal record', async () => {
-            const workoutExercise: WorkoutExercise = {
-                id: 'we-1',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 1,
-                sets: 3,
-                reps: '8',
-                weightType: 'percentage_1rm',
-                weight: 80, // 80% of 1RM
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            const mockRecord = {
-                id: 'pr-1',
-                traineeId: mockTraineeId,
-                exerciseId: mockExerciseId,
-                weight: 150,
-                reps: 1,
-                notes: null,
-                recordDate: new Date(),
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([mockRecord])
-
-            const result = await calculateEffectiveWeight(workoutExercise, mockTraineeId)
-            // 150 (1RM) * 80 / 100 = 120
-            expect(result).toBe(120)
-
-            expect(prisma.personalRecord.findMany).toHaveBeenCalledWith({
-                where: {
-                    traineeId: mockTraineeId,
-                    exerciseId: mockExerciseId,
-                },
-                select: { weight: true, reps: true, recordDate: true },
-                orderBy: { recordDate: 'desc' },
-            })
-        })
-
-        it('falls back to best normalized 1RM (RPE table) when only nRM records exist', async () => {
-            const workoutExercise: WorkoutExercise = {
-                id: 'we-1',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 1,
-                sets: 3,
-                reps: '8',
-                weightType: 'percentage_1rm',
-                weight: 80,
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            // 100 kg @ 5 reps → normalizedOneRM ≈ 100 / 0.863 ≈ 115.9
-            vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([
-                {
-                    id: 'pr-5',
-                    traineeId: mockTraineeId,
-                    exerciseId: mockExerciseId,
-                    weight: 100,
-                    reps: 5,
-                    notes: null,
-                    recordDate: new Date(),
-                    createdAt: new Date(),
-                },
-            ])
-
-            const result = await calculateEffectiveWeight(workoutExercise, mockTraineeId)
-            // 116 (rounded to 0.5 from 115.87) * 80 / 100 = 92.8
-            expect(result).toBeCloseTo(92.8, 1)
-        })
-
-        it('returns null when no personal record exists', async () => {
-            const workoutExercise: WorkoutExercise = {
-                id: 'we-1',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 1,
-                sets: 3,
-                reps: '8',
-                weightType: 'percentage_1rm',
-                weight: 80,
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([])
-
-            const result = await calculateEffectiveWeight(workoutExercise, mockTraineeId)
-            expect(result).toBeNull()
-        })
-    })
-
-    describe('percentage_rm weight type', () => {
-        it('calculates weight based on nRM personal record', async () => {
-            const workoutExercise: WorkoutExercise = {
-                id: 'we-1',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 1,
-                sets: 3,
-                reps: '8', // Will look for 8RM
-                weightType: 'percentage_rm',
-                weight: 90, // 90% of 8RM
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            const mockRecord = {
-                id: 'pr-1',
-                traineeId: mockTraineeId,
-                exerciseId: mockExerciseId,
-                weight: 100,
-                reps: 8,
-                notes: null,
-                recordDate: new Date(),
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            vi.mocked(prisma.personalRecord.findFirst).mockResolvedValue(mockRecord)
-
-            const result = await calculateEffectiveWeight(workoutExercise, mockTraineeId)
-            // 100 * 90 / 100 = 90
-            expect(result).toBe(90)
-
-            expect(prisma.personalRecord.findFirst).toHaveBeenCalledWith({
-                where: {
-                    traineeId: mockTraineeId,
-                    exerciseId: mockExerciseId,
-                    reps: 8,
-                },
-                orderBy: {
-                    recordDate: 'desc',
-                },
-            })
-        })
-
-        it('handles reps range "8/10"', async () => {
-            const workoutExercise: WorkoutExercise = {
-                id: 'we-1',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 1,
-                sets: 3,
-                reps: '8/10', // Will look for 8RM
-                weightType: 'percentage_rm',
-                weight: 85,
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            const mockRecord = {
-                id: 'pr-1',
-                traineeId: mockTraineeId,
-                exerciseId: mockExerciseId,
-                weight: 120,
-                reps: 8,
-                notes: null,
-                recordDate: new Date(),
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            vi.mocked(prisma.personalRecord.findFirst).mockResolvedValue(mockRecord)
-
-            const result = await calculateEffectiveWeight(workoutExercise, mockTraineeId)
-            // 120 * 85 / 100 = 102
-            expect(result).toBe(102)
-        })
-
-        it('returns null when nRM record not found', async () => {
-            const workoutExercise: WorkoutExercise = {
-                id: 'we-1',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 1,
-                sets: 3,
-                reps: '10',
-                weightType: 'percentage_rm',
-                weight: 85,
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            vi.mocked(prisma.personalRecord.findFirst).mockResolvedValue(null)
-
-            const result = await calculateEffectiveWeight(workoutExercise, mockTraineeId)
-            expect(result).toBeNull()
-        })
-
-        it('returns null for invalid reps format', async () => {
-            const workoutExercise: WorkoutExercise = {
-                id: 'we-1',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 1,
-                sets: 3,
-                reps: 'AMRAP', // Invalid format
-                weightType: 'percentage_rm',
-                weight: 85,
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            const result = await calculateEffectiveWeight(workoutExercise, mockTraineeId)
-            expect(result).toBeNull()
-        })
-    })
-
-    describe('percentage_previous weight type', () => {
-        it('calculates weight based on previous occurrence (simple chain)', async () => {
-            // Current exercise (order 2, percentage_previous, +10%)
-            const currentExercise: WorkoutExercise = {
-                id: 'we-2',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 2,
-                sets: 3,
-                reps: '8',
-                weightType: 'percentage_previous',
-                weight: 10, // +10% from previous
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            // Previous exercise (order 1, absolute 100kg)
-            const previousExercise: WorkoutExercise = {
-                id: 'we-1',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 1,
-                sets: 3,
-                reps: '8',
-                weightType: 'absolute',
-                weight: 100,
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(
-                normalizeWorkoutExerciseNullable(previousExercise)
-            )
-
-            const result = await calculateEffectiveWeight(currentExercise, mockTraineeId)
-            // 100 * (1 + 10/100) = 100 * 1.1 = 110
-            expect(result).toBeCloseTo(110, 5)
-
-            expect(prisma.workoutExercise.findFirst).toHaveBeenCalledWith({
-                where: {
-                    workoutId: mockWorkoutId,
-                    exerciseId: mockExerciseId,
-                    order: {
-                        lt: 2,
-                    },
-                },
-                orderBy: {
-                    order: 'asc',
-                },
-            })
-        })
-
-        it('handles 2-level percentage_previous chain', async () => {
-            // Exercise 3: percentage_previous +5% of Exercise 2
-            const exercise3: WorkoutExercise = {
-                id: 'we-3',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 3,
-                sets: 3,
-                reps: '8',
-                weightType: 'percentage_previous',
-                weight: 5, // +5%
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            // Exercise 2: percentage_previous +10% of Exercise 1
-            const exercise2: WorkoutExercise = {
-                id: 'we-2',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 2,
-                sets: 3,
-                reps: '8',
-                weightType: 'percentage_previous',
-                weight: 10, // +10%
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            // Exercise 1: absolute 100kg
-            const exercise1: WorkoutExercise = {
-                id: 'we-1',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 1,
-                sets: 3,
-                reps: '8',
-                weightType: 'absolute',
-                weight: 100,
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            // First call: find exercise 2
-            // Second call: find exercise 1
-            vi.mocked(prisma.workoutExercise.findFirst)
-                .mockResolvedValueOnce(normalizeWorkoutExerciseNullable(exercise2))
-                .mockResolvedValueOnce(normalizeWorkoutExerciseNullable(exercise1))
-
-            const result = await calculateEffectiveWeight(exercise3, mockTraineeId)
-            // Exercise 1: 100kg
-            // Exercise 2: 100 * 1.1 = 110kg
-            // Exercise 3: 110 * 1.05 = 115.5kg
-            expect(result).toBeCloseTo(115.5, 5)
-        })
-
-        it('handles 3-level percentage_previous chain', async () => {
-            // Exercise 4: +3% of Exercise 3
-            const exercise4: WorkoutExercise = {
-                id: 'we-4',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 4,
-                sets: 3,
-                reps: '8',
-                weightType: 'percentage_previous',
-                weight: 3,
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            const exercise3: WorkoutExercise = {
-                id: 'we-3',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 3,
-                sets: 3,
-                reps: '8',
-                weightType: 'percentage_previous',
-                weight: 5,
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            const exercise2: WorkoutExercise = {
-                id: 'we-2',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 2,
-                sets: 3,
-                reps: '8',
-                weightType: 'percentage_previous',
-                weight: 10,
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            const exercise1: WorkoutExercise = {
-                id: 'we-1',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 1,
-                sets: 3,
-                reps: '8',
-                weightType: 'absolute',
-                weight: 100,
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            vi.mocked(prisma.workoutExercise.findFirst)
-                .mockResolvedValueOnce(normalizeWorkoutExerciseNullable(exercise3))
-                .mockResolvedValueOnce(normalizeWorkoutExerciseNullable(exercise2))
-                .mockResolvedValueOnce(normalizeWorkoutExerciseNullable(exercise1))
-
-            const result = await calculateEffectiveWeight(exercise4, mockTraineeId)
-            // Exercise 1: 100kg
-            // Exercise 2: 100 * 1.1 = 110kg
-            // Exercise 3: 110 * 1.05 = 115.5kg
-            // Exercise 4: 115.5 * 1.03 = 118.965kg
-            expect(result).toBeCloseTo(118.965, 2)
-        })
-
-        it('handles negative percentage (weight reduction)', async () => {
-            const currentExercise: WorkoutExercise = {
-                id: 'we-2',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 2,
-                sets: 3,
-                reps: '8',
-                weightType: 'percentage_previous',
-                weight: -10, // -10% (drop set)
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            const previousExercise: WorkoutExercise = {
-                id: 'we-1',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 1,
-                sets: 3,
-                reps: '8',
-                weightType: 'absolute',
-                weight: 100,
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(
-                normalizeWorkoutExerciseNullable(previousExercise)
-            )
-
-            const result = await calculateEffectiveWeight(currentExercise, mockTraineeId)
-            // 100 * (1 + (-10)/100) = 100 * 0.9 = 90
-            expect(result).toBe(90)
-        })
-
-        it('returns null when base weight is null (missing personal record in chain)', async () => {
-            const currentExercise: WorkoutExercise = {
-                id: 'we-2',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 2,
-                sets: 3,
-                reps: '8',
-                weightType: 'percentage_previous',
-                weight: 10,
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            // Previous exercise uses percentage_1rm but record is missing
-            const previousExercise: WorkoutExercise = {
-                id: 'we-1',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 1,
-                sets: 3,
-                reps: '8',
-                weightType: 'percentage_1rm',
-                weight: 80,
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(
-                normalizeWorkoutExerciseNullable(previousExercise)
-            )
-            vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([])
-
-            const result = await calculateEffectiveWeight(currentExercise, mockTraineeId)
-            expect(result).toBeNull()
-        })
-
-        it('throws error when no previous occurrence found', async () => {
-            const currentExercise: WorkoutExercise = {
-                id: 'we-1',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 1, // First exercise, can't use percentage_previous
-                sets: 3,
-                reps: '8',
-                weightType: 'percentage_previous',
-                weight: 10,
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(null)
-
-            await expect(
-                calculateEffectiveWeight(currentExercise, mockTraineeId)
-            ).rejects.toThrow(CALCULATION_ERROR_KEYS.noPreviousOccurrenceFound)
-        })
-
-        it('returns null when previous exercise has weight: null', async () => {
-            const previousExercise: WorkoutExercise = {
-                id: 'we-prev',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 1,
-                sets: 3,
-                reps: '8',
-                weightType: 'absolute',
-                weight: null, // trainer left blank
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            const currentExercise: WorkoutExercise = {
-                id: 'we-curr',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 2,
-                sets: 3,
-                reps: '8',
-                weightType: 'percentage_previous',
-                weight: -10, // -10%
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(
-                normalizeWorkoutExerciseNullable(previousExercise)
-            )
-
-            const result = await calculateEffectiveWeight(currentExercise, mockTraineeId)
-            expect(result).toBeNull()
-        })
-
-        it('throws error when recursion depth exceeds limit', async () => {
-            const currentExercise: WorkoutExercise = {
-                id: 'we-12',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 12,
-                sets: 3,
-                reps: '8',
-                weightType: 'percentage_previous',
-                weight: 5,
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            // Mock a long chain of percentage_previous
-            const createChainExercise = (order: number): WorkoutExercise => ({
-                id: `we-${order}`,
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order,
-                sets: 3,
-                reps: '8',
-                weightType: 'percentage_previous',
-                weight: 5,
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            })
-
-            // Mock 11 calls, all returning percentage_previous exercises
-            for (let i = 11; i >= 1; i--) {
-                vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValueOnce(
-                    normalizeWorkoutExerciseNullable(createChainExercise(i))
-                )
-            }
-
-            await expect(
-                calculateEffectiveWeight(currentExercise, mockTraineeId)
-            ).rejects.toThrow(CALCULATION_ERROR_KEYS.maxRecursionDepthExceeded)
-        })
-    })
-
-    describe('mixed weight type chains', () => {
-        it('handles chain: absolute → percentage_previous → percentage_previous', async () => {
-            // This is already tested above, but documenting the pattern
-            const exercise3: WorkoutExercise = {
-                id: 'we-3',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 3,
-                sets: 3,
-                reps: '8',
-                weightType: 'percentage_previous',
-                weight: 5,
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            const exercise2: WorkoutExercise = {
-                id: 'we-2',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 2,
-                sets: 3,
-                reps: '8',
-                weightType: 'percentage_previous',
-                weight: 10,
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            const exercise1: WorkoutExercise = {
-                id: 'we-1',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 1,
-                sets: 3,
-                reps: '8',
-                weightType: 'absolute',
-                weight: 100,
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            vi.mocked(prisma.workoutExercise.findFirst)
-                .mockResolvedValueOnce(normalizeWorkoutExerciseNullable(exercise2))
-                .mockResolvedValueOnce(normalizeWorkoutExerciseNullable(exercise1))
-
-            const result = await calculateEffectiveWeight(exercise3, mockTraineeId)
-            expect(result).toBeCloseTo(115.5, 5)
-        })
-
-        it('handles chain: percentage_1rm → percentage_previous', async () => {
-            const exercise2: WorkoutExercise = {
-                id: 'we-2',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 2,
-                sets: 3,
-                reps: '8',
-                weightType: 'percentage_previous',
-                weight: 10, // +10%
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            const exercise1: WorkoutExercise = {
-                id: 'we-1',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 1,
-                sets: 3,
-                reps: '8',
-                weightType: 'percentage_1rm',
-                weight: 80, // 80% of 1RM
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            const mockRecord = {
-                id: 'pr-1',
-                traineeId: mockTraineeId,
-                exerciseId: mockExerciseId,
-                weight: 150,
-                reps: 1,
-                notes: null,
-                recordDate: new Date(),
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(
-                normalizeWorkoutExerciseNullable(exercise1)
-            )
-            vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([mockRecord])
-
-            const result = await calculateEffectiveWeight(exercise2, mockTraineeId)
-            // Exercise 1: 150 (1RM) * 0.8 = 120kg
-            // Exercise 2: 120 * 1.1 = 132kg
-            expect(result).toBe(132)
-        })
-
-        it('handles chain: percentage_rm → percentage_previous', async () => {
-            const exercise2: WorkoutExercise = {
-                id: 'we-2',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 2,
-                sets: 3,
-                reps: '8',
-                weightType: 'percentage_previous',
-                weight: -10, // -10% drop set
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            const exercise1: WorkoutExercise = {
-                id: 'we-1',
-                workoutId: mockWorkoutId,
-                exerciseId: mockExerciseId,
-                order: 1,
-                sets: 3,
-                reps: '8',
-                weightType: 'percentage_rm',
-                weight: 90, // 90% of 8RM
-                rpe: null,
-                restSeconds: 120,
-                notes: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            const mockRecord = {
-                id: 'pr-1',
-                traineeId: mockTraineeId,
-                exerciseId: mockExerciseId,
-                weight: 100,
-                reps: 8,
-                notes: null,
-                recordDate: new Date(),
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }
-
-            vi.mocked(prisma.workoutExercise.findFirst).mockResolvedValue(
-                normalizeWorkoutExerciseNullable(exercise1)
-            )
-            vi.mocked(prisma.personalRecord.findFirst).mockResolvedValue(mockRecord)
-
-            const result = await calculateEffectiveWeight(exercise2, mockTraineeId)
-            // Exercise 1: 100 * 0.9 = 90kg
-            // Exercise 2: 90 * 0.9 = 81kg
-            expect(result).toBe(81)
-        })
-    })
-})
-
 // ────────────────────────────────────────────────────────────────────────────
 // resolveEffectiveWeight — the batched resolver used by the API routes
 // ────────────────────────────────────────────────────────────────────────────
@@ -1125,26 +212,18 @@ describe('resolveEffectiveWeight', () => {
     })
 
     describe('percentage_1rm', () => {
-        it('applies the percentage to the best normalized 1RM of the exercise', () => {
-            const prMap = new Map([[`${EX_1}:1`, 100]])
+        it('applies the percentage to the 1RM of the exercise', () => {
+            const oneRmMap = new Map([[EX_1, 100]])
             const exercise = makeWorkoutExercise({ weightType: 'percentage_1rm', weight: 80 })
 
-            expect(resolveEffectiveWeight(exercise, prMap, [])).toBe(80)
+            expect(resolveEffectiveWeight(exercise, oneRmMap, [])).toBe(80)
         })
 
-        it('picks the best record across rep ranges, not the first one', () => {
-            // 5 reps at 100 kg normalizes higher than 1 rep at 100 kg
-            const prMap = new Map([[`${EX_1}:1`, 100], [`${EX_1}:5`, 100]])
-            const exercise = makeWorkoutExercise({ weightType: 'percentage_1rm', weight: 100 })
+        it('does not round the result', () => {
+            const oneRmMap = new Map([[EX_1, 139]])
+            const exercise = makeWorkoutExercise({ weightType: 'percentage_1rm', weight: 75 })
 
-            expect(resolveEffectiveWeight(exercise, prMap, [])).toBeGreaterThan(100)
-        })
-
-        it('ignores records of other exercises and malformed keys', () => {
-            const prMap = new Map([['other-exercise:1', 200], [`${EX_1}:not-a-number`, 300], [`${EX_1}:0`, 400]])
-            const exercise = makeWorkoutExercise({ weightType: 'percentage_1rm', weight: 80 })
-
-            expect(resolveEffectiveWeight(exercise, prMap, [])).toBeNull()
+            expect(resolveEffectiveWeight(exercise, oneRmMap, [])).toBeCloseTo(104.25, 6)
         })
 
         it('returns null when the trainee has no record for the exercise', () => {
@@ -1154,47 +233,10 @@ describe('resolveEffectiveWeight', () => {
         })
 
         it('treats a missing percentage as zero', () => {
-            const prMap = new Map([[`${EX_1}:1`, 100]])
+            const oneRmMap = new Map([[EX_1, 100]])
             const exercise = makeWorkoutExercise({ weightType: 'percentage_1rm', weight: null })
 
-            expect(resolveEffectiveWeight(exercise, prMap, [])).toBe(0)
-        })
-    })
-
-    describe('percentage_rm', () => {
-        it('uses the record for the rep count written in reps', () => {
-            const prMap = new Map([[`${EX_1}:5`, 120]])
-            const exercise = makeWorkoutExercise({ weightType: 'percentage_rm', weight: 50, reps: '5' })
-
-            expect(resolveEffectiveWeight(exercise, prMap, [])).toBe(60)
-        })
-
-        it('reads the leading number of a rep range', () => {
-            const prMap = new Map([[`${EX_1}:8`, 80]])
-            const exercise = makeWorkoutExercise({ weightType: 'percentage_rm', weight: 100, reps: '8/10' })
-
-            expect(resolveEffectiveWeight(exercise, prMap, [])).toBe(80)
-        })
-
-        it('returns null for seconds without a PR lookup', () => {
-            const prMap = new Map([[`${EX_1}:30`, 120]])
-            const exercise = makeWorkoutExercise({ weightType: 'percentage_rm', weight: 50, reps: '30"' })
-
-            expect(resolveEffectiveWeight(exercise, prMap, [])).toBeNull()
-        })
-
-        it('returns null when reps does not start with a number', () => {
-            const prMap = new Map([[`${EX_1}:5`, 120]])
-            const exercise = makeWorkoutExercise({ weightType: 'percentage_rm', weight: 50, reps: 'AMRAP' })
-
-            expect(resolveEffectiveWeight(exercise, prMap, [])).toBeNull()
-        })
-
-        it('returns null when no record matches that rep count', () => {
-            const prMap = new Map([[`${EX_1}:3`, 120]])
-            const exercise = makeWorkoutExercise({ weightType: 'percentage_rm', weight: 50, reps: '5' })
-
-            expect(resolveEffectiveWeight(exercise, prMap, [])).toBeNull()
+            expect(resolveEffectiveWeight(exercise, oneRmMap, [])).toBe(0)
         })
     })
 
@@ -1245,8 +287,20 @@ describe('resolveEffectiveWeight', () => {
                 id: 'we-2', order: 3, weightType: 'percentage_previous', weight: 10,
             })
 
-            // 100 -> 110 (first chain step) -> the third resolves against the first match by order
-            expect(resolveEffectiveWeight(third, new Map(), [first, second, third])).toBeCloseTo(110, 6)
+            // 100 -> 110 -> 121: the third is based on the nearest previous occurrence
+            expect(resolveEffectiveWeight(third, new Map(), [first, second, third])).toBeCloseTo(121, 6)
+        })
+
+        it('bases the third occurrence on the second, not on the first', () => {
+            const first = makeWorkoutExercise({ id: 'we-1', order: 1, weight: 100 })
+            const second = makeWorkoutExercise({
+                id: 'we-2', order: 2, weightType: 'percentage_previous', weight: -10,
+            })
+            const third = makeWorkoutExercise({
+                id: 'we-3', order: 3, weightType: 'percentage_previous', weight: -10,
+            })
+
+            expect(resolveEffectiveWeight(third, new Map(), [third, first, second])).toBeCloseTo(81, 6)
         })
 
         it('returns null when the chain ends on an unresolvable weight', () => {
@@ -1272,49 +326,86 @@ describe('resolveEffectiveWeight', () => {
             }
 
             expect(() => resolveEffectiveWeight(siblings[12], new Map(), siblings)).toThrow(
-                CALCULATION_ERROR_KEYS.noPreviousOccurrenceFound
+                CALCULATION_ERROR_KEYS.maxRecursionDepthExceeded
             )
         })
     })
 })
 
-describe('loadTraineePrMap', () => {
-    it('keys the map by exercise and reps', async () => {
-        vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([
-            { exerciseId: EX_1, reps: 5, weight: 120, recordDate: new Date('2026-09-01') },
-            { exerciseId: EX_1, reps: 3, weight: 130, recordDate: new Date('2026-08-01') },
-        ] as never)
+const PR_OLD_HIGH = { exerciseId: EX_1, reps: 1, weight: 150, recordDate: new Date('2026-06-01') }
+const PR_RECENT = { exerciseId: EX_1, reps: 5, weight: 120, recordDate: new Date('2026-09-30') }
 
-        const map = await loadTraineePrMap('trainee-1')
+describe('latestPersonalRecordByExercise', () => {
+    it('picks the most recent record even when an older one is heavier', () => {
+        const result = latestPersonalRecordByExercise([PR_OLD_HIGH, PR_RECENT])
 
-        expect(map.get(`${EX_1}:5`)).toBe(120)
-        expect(map.get(`${EX_1}:3`)).toBe(130)
+        expect(result[EX_1]).toBe(PR_RECENT)
     })
 
-    it('keeps the most recent record when a rep count repeats', async () => {
-        // The query orders by recordDate desc, so the first row wins.
-        vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([
-            { exerciseId: EX_1, reps: 5, weight: 125, recordDate: new Date('2026-09-01') },
-            { exerciseId: EX_1, reps: 5, weight: 110, recordDate: new Date('2026-01-01') },
-        ] as never)
+    it('breaks a date tie with the higher theoretical 1RM, whatever the input order', () => {
+        const one = { exerciseId: EX_1, reps: 1, weight: 100, recordDate: '2026-09-30' }
+        const five = { exerciseId: EX_1, reps: 5, weight: 100, recordDate: '2026-09-30' }
 
-        const map = await loadTraineePrMap('trainee-1')
+        expect(latestPersonalRecordByExercise([one, five])[EX_1]).toBe(five)
+        expect(latestPersonalRecordByExercise([five, one])[EX_1]).toBe(five)
+    })
 
-        expect(map.get(`${EX_1}:5`)).toBe(125)
+    it('compares Date objects and ISO strings on the same scale', () => {
+        const older = { exerciseId: EX_1, reps: 5, weight: 100, recordDate: new Date('2026-06-01') }
+        const newer = { exerciseId: EX_1, reps: 5, weight: 90, recordDate: '2026-09-30T00:00:00.000Z' }
+
+        expect(latestPersonalRecordByExercise([older, newer])[EX_1]).toBe(newer)
+    })
+
+    it('treats a missing or invalid date as the oldest', () => {
+        const undated = { exerciseId: EX_1, reps: 5, weight: 200 }
+        const invalid = { exerciseId: EX_1, reps: 5, weight: 200, recordDate: 'not-a-date' }
+        const dated = { exerciseId: EX_1, reps: 5, weight: 50, recordDate: '2020-01-01' }
+
+        expect(latestPersonalRecordByExercise([undated, dated, invalid])[EX_1]).toBe(dated)
+    })
+
+    it('returns one entry per exercise', () => {
+        const other = { exerciseId: 'ex-2', reps: 3, weight: 80, recordDate: '2026-01-01' }
+
+        const result = latestPersonalRecordByExercise([PR_RECENT, other])
+
+        expect(Object.keys(result).sort()).toEqual(['ex-2', EX_1])
+    })
+
+    it('returns an empty object for no records', () => {
+        expect(latestPersonalRecordByExercise([])).toEqual({})
+    })
+})
+
+describe('latestNormalizedOneRMByExercise', () => {
+    it('uses the 1RM of the most recent record', () => {
+        const result = latestNormalizedOneRMByExercise([PR_OLD_HIGH, PR_RECENT])
+
+        expect(result).toEqual({ [EX_1]: normalizedOneRM(120, 5) })
+        expect(result[EX_1]).toBeCloseTo(139, 0)
+    })
+})
+
+describe('loadTraineeOneRmMap', () => {
+    it('maps each exercise to the 1RM of its most recent record', async () => {
+        vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([PR_OLD_HIGH, PR_RECENT] as never)
+
+        const map = await loadTraineeOneRmMap('trainee-1')
+
+        expect(map.get(EX_1)).toBe(normalizedOneRM(120, 5))
         expect(map.size).toBe(1)
     })
 
-    it('asks Prisma only for the records of that trainee, newest first', async () => {
+    it('asks Prisma only for the records of that trainee, including recordDate', async () => {
         vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([] as never)
 
-        const map = await loadTraineePrMap('trainee-1')
+        const map = await loadTraineeOneRmMap('trainee-1')
 
         expect(map.size).toBe(0)
-        expect(prisma.personalRecord.findMany).toHaveBeenCalledWith(
-            expect.objectContaining({
-                where: { traineeId: 'trainee-1' },
-                orderBy: { recordDate: 'desc' },
-            })
-        )
+        expect(prisma.personalRecord.findMany).toHaveBeenCalledWith({
+            where: { traineeId: 'trainee-1' },
+            select: expect.objectContaining({ recordDate: true }),
+        })
     })
 })

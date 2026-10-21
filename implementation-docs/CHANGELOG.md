@@ -10,6 +10,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(weights): %1RM dal PR più recente, occorrenza precedente più vicina (21/10/2026)
+- `src/lib/calculations.ts`: nuove `latestPersonalRecordByExercise` / `latestNormalizedOneRMByExercise` (PR con `recordDate` maggiore, a parità vince l'1RM teorico maggiore). `loadTraineePrMap` → `loadTraineeOneRmMap` (mappa `exerciseId → 1RM`). `percentage_previous` usa l'occorrenza precedente più vicina. Rimossi `percentage_rm` dal resolver, `calculateEffectiveWeight` e `bestNormalizedOneRMForExercise`.
+- Report planned-training-sets usa direttamente la mappa 1RM.
+- Motivo: un PR vecchio più alto non deve più imporre la base di calcolo; la catena di incrementi deve partire dall'esercizio precedente, non dal primo.
+
 ### feat(records): eliminazione record con pulsante inline (21/10/2026)
 - `PersonalRecordsExplorer`: rimosso il drag and drop sulla zona cestino; ogni riga (ultimo record e storico) ha ora un `ActionIconButton variant="delete"` accanto a modifica, con la stessa conferma di prima (`ConfirmationModal`). Rimosse le chiavi i18n `dragToDelete`/`dropToDelete` (it/en).
 - Motivo: coerenza con il resto dell'app (eliminazione inline) e il drag and drop non funziona su touch.

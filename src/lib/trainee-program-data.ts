@@ -1,7 +1,7 @@
 import { prisma } from './prisma'
 import type { WeekType } from '@prisma/client'
 import type { ExerciseType } from '@/lib/exercise-type'
-import { loadTraineePrMap, resolveEffectiveWeight } from './calculations'
+import { loadTraineeOneRmMap, resolveEffectiveWeight } from './calculations'
 import { logger } from './logger'
 import { isProgramVisibleToTrainee, traineeVisibleProgramWhere } from './program-visibility'
 
@@ -190,7 +190,7 @@ async function loadProgramTreeForTrainee(
             workout.workoutExercises.some((we) => we.weightType !== 'absolute')
         )
     )
-    const prMap = needsPrMap ? await loadTraineePrMap(traineeId) : new Map<string, number>()
+    const oneRmMap = needsPrMap ? await loadTraineeOneRmMap(traineeId) : new Map<string, number>()
 
     const weeks = program.weeks.map((week) => ({
         weekNumber: week.weekNumber,
@@ -223,7 +223,7 @@ async function loadProgramTreeForTrainee(
                     if (typeof base.effectiveWeight === 'number') return base
                     if (base.weightType === 'absolute') return { ...base, effectiveWeight: base.weight }
                     try {
-                        const effectiveWeight = resolveEffectiveWeight(we as any, prMap, siblings as any)
+                        const effectiveWeight = resolveEffectiveWeight(we as any, oneRmMap, siblings as any)
                         return { ...base, effectiveWeight }
                     } catch (err) {
                         logger.warn(

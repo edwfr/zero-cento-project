@@ -4,7 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { createProgramSchema } from '@/schemas/program'
 import { logger } from '@/lib/logger'
-import { loadTraineePrMap, resolveEffectiveWeight } from '@/lib/calculations'
+import { loadTraineeOneRmMap, resolveEffectiveWeight } from '@/lib/calculations'
 import { handleApiError } from '@/lib/api-error-handler'
 import { isProgramVisibleToTrainee } from '@/lib/program-visibility'
 import { settleCreditOnProgramDelete } from '@/lib/program-credits'
@@ -118,7 +118,7 @@ export async function GET(
                 )
             )
 
-            const prMap = needsPrMap ? await loadTraineePrMap(session.user.id) : new Map<string, number>()
+            const oneRmMap = needsPrMap ? await loadTraineeOneRmMap(session.user.id) : new Map<string, number>()
 
             const resolvedWeeks = program.weeks.map((week) => ({
                 ...week,
@@ -141,7 +141,7 @@ export async function GET(
                             try {
                                 const effectiveWeight = resolveEffectiveWeight(
                                     workoutExercise,
-                                    prMap,
+                                    oneRmMap,
                                     siblings
                                 )
                                 return { ...workoutExercise, effectiveWeight }

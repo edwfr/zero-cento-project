@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
-import { loadTraineePrMap, resolveEffectiveWeight } from '@/lib/calculations'
+import { loadTraineeOneRmMap, resolveEffectiveWeight } from '@/lib/calculations'
 import { logger } from '@/lib/logger'
 import { handleApiError } from '@/lib/api-error-handler'
 import { isProgramVisibleToTrainee } from '@/lib/program-visibility'
@@ -155,7 +155,7 @@ export async function GET(
         // Parallelize: fetch the latest feedback rows and trainee PR map concurrently.
         // Feedback is stored by calendar day, so the workout detail must hydrate the
         // most recent row per exercise instead of restricting the read to "today".
-        const [existingFeedback, prMap] = await Promise.all([
+        const [existingFeedback, oneRmMap] = await Promise.all([
             prisma.exerciseFeedback.findMany({
                 where: {
                     workoutExerciseId: {
@@ -174,7 +174,7 @@ export async function GET(
                     updatedAt: 'desc',
                 },
             }),
-            loadTraineePrMap(session.user.id),
+            loadTraineeOneRmMap(session.user.id),
         ])
 
         const siblings = workout.workoutExercises
@@ -188,7 +188,7 @@ export async function GET(
 
             if (effectiveWeight === null) {
                 try {
-                    effectiveWeight = resolveEffectiveWeight(we, prMap, siblings)
+                    effectiveWeight = resolveEffectiveWeight(we, oneRmMap, siblings)
                 } catch (error) {
                     logger.warn(
                         {

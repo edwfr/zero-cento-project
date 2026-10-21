@@ -3,8 +3,7 @@ import { apiError, apiSuccess } from '@/lib/api-response'
 import { requireAuth } from '@/lib/auth'
 import {
     calculateTrainingSets,
-    loadTraineePrMap,
-    normalizedOneRM,
+    loadTraineeOneRmMap,
     parseReps,
 } from '@/lib/calculations'
 import {
@@ -71,7 +70,7 @@ export async function GET(request: Request, { params }: Params) {
             return apiError('FORBIDDEN', 'Access denied', 403, undefined, 'auth.accessDenied')
         }
 
-        const [programs, prMap] = await Promise.all([
+        const [programs, oneRmMap] = await Promise.all([
             prisma.trainingProgram.findMany({
                 where: {
                     traineeId: id,
@@ -127,22 +126,10 @@ export async function GET(request: Request, { params }: Params) {
                 },
                 orderBy: { startDate: 'asc' },
             }),
-            loadTraineePrMap(id),
+            loadTraineeOneRmMap(id),
         ])
 
-        const normalizedOneRMByExercise: Record<string, number> = {}
-        for (const [key, weight] of prMap.entries()) {
-            const separatorIndex = key.indexOf(':')
-            if (separatorIndex < 0) continue
-            const exerciseId = key.slice(0, separatorIndex)
-            const reps = Number(key.slice(separatorIndex + 1))
-            if (!Number.isFinite(reps) || reps <= 0) continue
-            const candidate = normalizedOneRM(weight, reps)
-            const existing = normalizedOneRMByExercise[exerciseId]
-            if (existing === undefined || candidate > existing) {
-                normalizedOneRMByExercise[exerciseId] = candidate
-            }
-        }
+        const normalizedOneRMByExercise: Record<string, number> = Object.fromEntries(oneRmMap)
 
         const muscleGroupCatalog = new Map<string, { id: string; name: string }>()
         const timelineMap = new Map<

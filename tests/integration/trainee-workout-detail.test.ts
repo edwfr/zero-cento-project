@@ -4,7 +4,7 @@ import { NextRequest } from 'next/server'
 vi.mock('@/lib/auth', async () => (await import('../helpers/auth-module-mock')).authModuleMock())
 
 vi.mock('@/lib/calculations', () => ({
-    loadTraineePrMap: vi.fn(),
+    loadTraineeOneRmMap: vi.fn(),
     resolveEffectiveWeight: vi.fn(),
 }))
 
@@ -14,7 +14,7 @@ vi.mock('@/lib/logger', () => ({
 
 import { GET } from '@/app/api/trainee/workouts/[id]/route'
 import { GET as getRecap } from '@/app/api/trainee/workouts/[id]/recap/route'
-import { loadTraineePrMap, resolveEffectiveWeight } from '@/lib/calculations'
+import { loadTraineeOneRmMap, resolveEffectiveWeight } from '@/lib/calculations'
 import { prismaMock } from '../helpers/prisma-mock'
 import { mockTraineeSession } from '../helpers/sessions'
 import { asTrainee, asForbidden } from '../helpers/auth-mock'
@@ -27,7 +27,7 @@ describe('GET /api/trainee/workouts/[id]', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         asTrainee()
-        vi.mocked(loadTraineePrMap).mockResolvedValue(new Map())
+        vi.mocked(loadTraineeOneRmMap).mockResolvedValue(new Map())
         vi.mocked(resolveEffectiveWeight).mockReturnValue(100)
         prismaMock.workout.findUnique.mockResolvedValue({
             id: 'workout-1',
