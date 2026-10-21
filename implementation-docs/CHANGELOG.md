@@ -10,6 +10,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(trainee): range di peso da RPE nella vista trainee (21/10/2026)
+- `trainee/workouts/[id]/_content.tsx`: tipo esteso con `rpeWeightMin`/`rpeWeightMax`; nel box KG, se non c'è un peso calcolato (`-`) e il range è valorizzato, mostra `t('workouts.rpeWeightRange')` → `110.5–115 kg (RPE 8)` (qualsiasi `weightType`). Placeholder e valori iniziali delle serie invariati. Il range entra anche in `compactWeightValue` (che però non è renderizzato): per questo il box KG legge direttamente il valore del range.
+- `trainee/programs/_components/ProgramDetailContent.tsx`: tipo esteso; `buildExerciseScheme` aggiunge `≈110.5–115kg` quando nessun peso è stato inserito nello schema; i due campi passano anche ai dati PDF.
+- Test: `trainee-workout-focus.test.tsx` (range mostrato senza peso; `effectiveWeight` 80 vince sul range; senza range resta `-`).
+- Motivo: mostrare al trainee il range proposto dal trainer al posto di "-" (piano `2026-10-21-rpe-weight-range`, Task 7).
+
 ### feat(programs): range di peso da RPE nell'editor (21/10/2026)
 - Nuovo `src/app/trainer/programs/[id]/edit/rpe-weight-range.ts`: `rpeWeightRangeForRow({ weight, reps, targetRpe, oneRm })` — range solo con peso vuoto (anche solo spazi), RPE numerico e 1RM presente; reps via `plannedReps` (range → minimo, `30"`/`max` → null), poi `rpeWeightRange`.
 - `edit/_content.tsx`: `buildWorkoutExercisePayload` manda `rpeWeightMin`/`rpeWeightMax` (null se c'è un peso); in modifica anteprima verde `≈ 110.5–115 kg` sotto il campo peso; in sola lettura mostra il range salvato. Tipo `WorkoutExercise` esteso con i due campi.

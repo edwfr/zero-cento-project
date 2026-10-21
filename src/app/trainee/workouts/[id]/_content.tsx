@@ -36,6 +36,7 @@ import WorkoutRecapPanel from '@/components/WorkoutRecapPanel'
 import PrevWeekPanel from '@/components/PrevWeekPanel'
 import ExerciseTypeBadge from '@/components/ExerciseTypeBadge'
 import type { ExerciseType } from '@/lib/exercise-type'
+import { formatWeightRange } from '@/lib/weight-rounding'
 
 interface Exercise {
     id: string
@@ -68,6 +69,8 @@ interface WorkoutExerciseWithWeight {
     weightType: 'absolute' | 'percentage_1rm' | 'percentage_previous'
     weight: number | null
     effectiveWeight: number | null
+    rpeWeightMin: number | null
+    rpeWeightMax: number | null
     restTime: RestTime
     isWarmup: boolean
     isJumpSet: boolean
@@ -1060,10 +1063,20 @@ function ExerciseFocusCard({
             ? formatWeightKg(we.effectiveWeight ?? we.weight)
             : formatWeightKg(we.effectiveWeight)
     const calculatedWeightMissing = calculatedWeightValue === '-'
+    const rpeWeightRangeValue =
+        calculatedWeightMissing &&
+        typeof we.rpeWeightMin === 'number' &&
+        typeof we.rpeWeightMax === 'number'
+            ? t('workouts.rpeWeightRange', {
+                range: formatWeightRange(we.rpeWeightMin, we.rpeWeightMax),
+                rpe: we.targetRpe,
+            })
+            : null
     const compactWeightValue =
-        we.weightType !== 'absolute'
+        rpeWeightRangeValue ??
+        (we.weightType !== 'absolute'
             ? `${calculatedWeightMissing ? t('workouts.calculatedWeightMissing') : calculatedWeightValue} (${trainerSettingValue})`
-            : calculatedWeightValue
+            : calculatedWeightValue)
 
     return (
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -1178,14 +1191,20 @@ function ExerciseFocusCard({
                         <span className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary">
                             KG
                         </span>
-                        <span
-                            className={`block text-2xl font-black mt-1 leading-none whitespace-nowrap ${calculatedWeightMissing ? 'text-gray-400' : 'text-gray-900'
-                                }`}
-                        >
-                            {calculatedWeightMissing
-                                ? '-'
-                                : calculatedWeightValue}
-                        </span>
+                        {rpeWeightRangeValue ? (
+                            <span className="block text-sm font-bold mt-1 leading-tight text-gray-900">
+                                {rpeWeightRangeValue}
+                            </span>
+                        ) : (
+                            <span
+                                className={`block text-2xl font-black mt-1 leading-none whitespace-nowrap ${calculatedWeightMissing ? 'text-gray-400' : 'text-gray-900'
+                                    }`}
+                            >
+                                {calculatedWeightMissing
+                                    ? '-'
+                                    : calculatedWeightValue}
+                            </span>
+                        )}
                         {we.weightType !== 'absolute' && (
                             <span className="block text-[10px] text-gray-400 mt-1.5 leading-none">
                                 {trainerSettingValue}

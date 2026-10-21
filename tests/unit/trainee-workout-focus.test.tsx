@@ -1,5 +1,5 @@
 import { StrictMode } from 'react'
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { render, screen, within, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
@@ -986,5 +986,76 @@ describe('Trainee workout warm-up panel', () => {
         await renderContent()
         const panel = screen.getByTestId('warmup-panel')
         expect(panel.querySelector('[class*="amber"]')).toBeNull()
+    })
+})
+
+describe('Trainee workout RPE weight range', () => {
+    const mockFirstExercise = (overrides: Record<string, unknown>) => {
+        const workout = {
+            ...fixtureWorkout,
+            exercises: [{ ...fixtureWorkout.exercises[0], ...overrides }, fixtureWorkout.exercises[1]],
+        }
+        vi.mocked(global.fetch).mockImplementation((async (url: string) => {
+            if (url.includes('/api/trainee/workouts/')) {
+                return { ok: true, json: async () => ({ data: { workout } }) } as Response
+            }
+            return { ok: true, json: async () => ({}) } as Response
+        }) as never)
+    }
+
+    const kgBox = () => screen.getByText('KG').closest('div[class*="rounded-xl"]')
+
+    beforeEach(() => {
+        tSpy.mockImplementation((key: string, vars?: Record<string, unknown>) =>
+            key === 'workouts.rpeWeightRange' ? `${vars?.range} kg (RPE ${vars?.rpe})` : key
+        )
+    })
+
+    afterEach(() => {
+        tSpy.mockImplementation((key: string) => key)
+    })
+
+    it('shows the frozen range when the exercise has no weight', async () => {
+        mockFirstExercise({
+            weightType: 'absolute',
+            weight: null,
+            effectiveWeight: null,
+            targetRpe: 8,
+            rpeWeightMin: 110.5,
+            rpeWeightMax: 115,
+        })
+        await renderContent()
+
+        expect(kgBox()?.textContent).toContain('110.5–115 kg (RPE 8)')
+        expect(tSpy).toHaveBeenCalledWith('workouts.rpeWeightRange', { range: '110.5–115', rpe: 8 })
+    })
+
+    it('shows the effective weight, not the range, when both are present', async () => {
+        mockFirstExercise({
+            weightType: 'absolute',
+            weight: null,
+            effectiveWeight: 80,
+            targetRpe: 8,
+            rpeWeightMin: 110.5,
+            rpeWeightMax: 115,
+        })
+        await renderContent()
+
+        expect(kgBox()?.textContent).toContain('80')
+        expect(kgBox()?.textContent).not.toContain('110.5')
+    })
+
+    it('keeps the dash when the exercise has neither weight nor range', async () => {
+        mockFirstExercise({
+            weightType: 'absolute',
+            weight: null,
+            effectiveWeight: null,
+            rpeWeightMin: null,
+            rpeWeightMax: null,
+        })
+        await renderContent()
+
+        expect(kgBox()?.textContent).toBe('KG-')
+        expect(tSpy).not.toHaveBeenCalledWith('workouts.rpeWeightRange', expect.anything())
     })
 })

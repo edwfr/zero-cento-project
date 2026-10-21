@@ -24,6 +24,7 @@ import {
 } from '@/lib/program-pdf-export'
 import type { TraineeProgramView } from '@/lib/trainee-program-data'
 import type { ExerciseType } from '@/lib/exercise-type'
+import { formatWeightRange } from '@/lib/weight-rounding'
 
 type WeightType = 'absolute' | 'percentage_1rm' | 'percentage_previous'
 type ProgramContentMode = 'current' | 'history'
@@ -43,6 +44,8 @@ interface WorkoutExercise {
     weightType: WeightType
     weight: number | null
     effectiveWeight: number | null
+    rpeWeightMin: number | null
+    rpeWeightMax: number | null
     restTime: RestTime
     isWarmup: boolean
     isJumpSet: boolean
@@ -247,6 +250,15 @@ const buildExerciseScheme = (exercise: WorkoutExercise): string => {
         if (effectiveWeight) {
             segments.push(effectiveWeight)
         }
+    }
+
+    const hasWeightSegment = segments.length > 1
+    if (
+        !hasWeightSegment &&
+        typeof exercise.rpeWeightMin === 'number' &&
+        typeof exercise.rpeWeightMax === 'number'
+    ) {
+        segments.push(`≈${formatWeightRange(exercise.rpeWeightMin, exercise.rpeWeightMax)}kg`)
     }
 
     const rpe = formatTargetRpe(exercise.targetRpe)
@@ -591,6 +603,8 @@ export default function ProgramDetailContent({
                         weightType: exercise.weightType,
                         weight: exercise.weight,
                         effectiveWeight: exercise.effectiveWeight,
+                        rpeWeightMin: exercise.rpeWeightMin,
+                        rpeWeightMax: exercise.rpeWeightMax,
                         restTime: exercise.restTime,
                     })),
                 })),

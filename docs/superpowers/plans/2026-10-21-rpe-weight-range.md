@@ -361,12 +361,12 @@ mostra `≈ 110.5–115 kg` in verde, e il salvataggio manda `rpeWeightMin: 110.
 **Done when:** nella vista workout un esercizio senza peso ma con range mostra
 `110.5–115 kg (RPE 8)` invece di "Not available" / `-`.
 
-- [ ] **Step 1: tests** in `trainee-workout-focus.test.tsx` (riusare il fixture con
+- [x] **Step 1: tests** in `trainee-workout-focus.test.tsx` (riusare il fixture con
   `effectiveWeight: null` ~riga 97 o aggiungerne uno):
   - `weightType: 'absolute', weight: null, effectiveWeight: null, targetRpe: 8, rpeWeightMin: 110.5, rpeWeightMax: 115` → testo `110.5–115 kg (RPE 8)` presente
   - `effectiveWeight: 80` con range valorizzato (dato incoerente) → mostra `80`, non il range
   - nessun range → comportamento attuale invariato
-- [ ] **Step 2: implementation**
+- [x] **Step 2: implementation**
   - workout `_content.tsx`: tipo (~riga 70) con i due campi. Dove si calcola
     `compactWeightValue` (~riga 1058): se `calculatedWeightValue === '-'` e entrambi i campi
     sono numeri → `t('workouts.rpeWeightRange', { range: formatWeightRange(min, max), rpe: we.targetRpe })`
@@ -377,8 +377,8 @@ mostra `≈ 110.5–115 kg` in verde, e il salvataggio manda `rpeWeightMin: 110.
     `formatEffectiveWeight`). Passare i campi anche dove il componente costruisce gli
     esercizi per il PDF (il formato PDF arriva in Task 8; qui basta che i campi ci siano
     se `type-check` li richiede).
-- [ ] **Step 3: run the test command and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit** — `feat(trainee): show rpe weight range`
+- [x] **Step 3: run the test command and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit** — `feat(trainee): show rpe weight range`
 
 ---
 
