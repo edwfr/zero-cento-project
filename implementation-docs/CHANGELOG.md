@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### chore(mcp): aggiunto MCP Supabase in sola lettura (21/10/2026)
+- `.mcp.json`: server HTTP `supabase` (`https://mcp.supabase.com/mcp`) limitato al progetto `rqxbjybbwqitwhxqqgit` con `read_only=true`, così Claude Code può interrogare il DB di produzione senza poter scrivere dati o applicare migrazioni. Primo uso: `/mcp` → supabase → Authenticate (OAuth).
+
 ### chore(sentry): filtra "Script …/sw.js load failed" lato client (19/10/2026)
 - `src/lib/sentry-filters.ts` (`shouldDropClientEvent`): scarta i `TypeError` "Script <url>/sw.js load failed". WebKit (es. browser in-app WKWebView su iOS) non riesce a scaricare il service worker: promise rifiutata senza stacktrace, nessun bug nel nostro codice (JAVASCRIPT-NEXTJS-1C). Il filtro `SW_REGISTER_FRAME` non li intercettava perché l'evento non ha frame. Test in `tests/unit/lib/sentry-filters.test.ts`.
 
