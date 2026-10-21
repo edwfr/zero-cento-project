@@ -393,11 +393,11 @@ mostra `≈ 110.5–115 kg` in verde, e il salvataggio manda `rpeWeightMin: 110.
 **Done when:** PDF e review mostrano `≈ 110.5–115 kg` nella colonna peso di una riga
 senza peso con range.
 
-- [ ] **Step 1: tests** — `buildProgramPdfExerciseRow`:
+- [x] **Step 1: tests** — `buildProgramPdfExerciseRow`:
   - `weightType: 'absolute', weight: null, effectiveWeight: null, rpeWeightMin: 110.5, rpeWeightMax: 115` → colonna peso (indice 5) `'≈ 110.5–115 kg'`
   - `weight: 100` con range valorizzato → `'100 kg'` (il peso vince)
   - nessun range e nessun peso → `labels.missingValue` (invariato)
-- [ ] **Step 2: implementation**
+- [x] **Step 2: implementation**
   - `ProgramPdfExercise` (~riga 10): `rpeWeightMin: number | null`, `rpeWeightMax: number | null`.
   - `buildProgramPdfExerciseRow`: se `weightType === 'absolute'`, peso assegnato nullo e
     range presente → `weightLabel = '≈ ' + formatWeightRange(min, max) + ' kg'`.
@@ -407,5 +407,5 @@ senza peso con range.
     `tableWeightEffective` con `-`. Non mettere il range in `effectiveWeightByExerciseId`
     (non è base per `-x%`).
   - `ProgramDetailContent.tsx` mapping PDF (~riga 593): passa i due campi.
-- [ ] **Step 3: run the test command and `npm run type-check`, then the full `npm run test:unit` and `npm run lint`**
-- [ ] **Step 4: CHANGELOG entry and commit** — `feat(programs): show rpe weight range in review and pdf`
+- [x] **Step 3: run the test command and `npm run type-check`, then the full `npm run test:unit` and `npm run lint`**
+- [x] **Step 4: CHANGELOG entry and commit** — `feat(programs): show rpe weight range in review and pdf`

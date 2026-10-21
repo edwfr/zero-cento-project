@@ -10,6 +10,13 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(programs): range di peso da RPE in review e PDF (21/10/2026)
+- `src/lib/program-pdf-export.ts`: `ProgramPdfExercise` con `rpeWeightMin`/`rpeWeightMax`; in `buildProgramPdfExerciseRow` una riga `absolute` senza peso (né `weight` né `effectiveWeight`) e con range mostra `≈ 110.5–115 kg` nella colonna peso. Il peso esplicito vince; senza range resta `missingValue`.
+- `trainer/programs/[id]/review/_content.tsx`: tipo esteso, i due campi passano ai dati PDF; nella cella peso, se non c'è peso effettivo e il range c'è, la riga verde mostra `t('reviewProgram.tableWeightRpeRange')` al posto di `-`. Il range non entra in `effectiveWeightByExerciseId` (non è base per `-x%`).
+- `ProgramDetailContent.tsx` passava già i due campi al PDF (Task 7): nessuna modifica.
+- Test: `program-pdf-export.test.ts` (range senza peso; `100 kg` vince sul range; né peso né range → `-`).
+- Motivo: mostrare il range proposto al trainer in review ed esportarlo nel PDF (piano `2026-10-21-rpe-weight-range`, Task 8).
+
 ### feat(trainee): range di peso da RPE nella vista trainee (21/10/2026)
 - `trainee/workouts/[id]/_content.tsx`: tipo esteso con `rpeWeightMin`/`rpeWeightMax`; nel box KG, se non c'è un peso calcolato (`-`) e il range è valorizzato, mostra `t('workouts.rpeWeightRange')` → `110.5–115 kg (RPE 8)` (qualsiasi `weightType`). Placeholder e valori iniziali delle serie invariati. Il range entra anche in `compactWeightValue` (che però non è renderizzato): per questo il box KG legge direttamente il valore del range.
 - `trainee/programs/_components/ProgramDetailContent.tsx`: tipo esteso; `buildExerciseScheme` aggiunge `≈110.5–115kg` quando nessun peso è stato inserito nello schema; i due campi passano anche ai dati PDF.

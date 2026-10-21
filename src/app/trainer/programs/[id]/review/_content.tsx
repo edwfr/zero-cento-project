@@ -17,6 +17,7 @@ import type { ExerciseType } from '@/lib/exercise-type'
 import {
     percentageOfOneRmWeight,
     percentageOfPreviousWeight,
+    formatWeightRange,
     roundWeightValue,
 } from '@/lib/weight-rounding'
 import ExerciseTypeBadge from '@/components/ExerciseTypeBadge'
@@ -44,6 +45,8 @@ interface WorkoutExerciseSummary {
     weightType: 'absolute' | 'percentage_1rm' | 'percentage_previous'
     weight: number | null
     effectiveWeight: number | null
+    rpeWeightMin: number | null
+    rpeWeightMax: number | null
     restTime: RestTimeValue
     isWarmup: boolean
     isJumpSet: boolean
@@ -388,6 +391,8 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                             weightType: workoutExercise.weightType,
                             weight: workoutExercise.weight,
                             effectiveWeight: workoutExercise.effectiveWeight,
+                            rpeWeightMin: workoutExercise.rpeWeightMin,
+                            rpeWeightMax: workoutExercise.rpeWeightMax,
                             restTime: workoutExercise.restTime,
                         })),
                     })),
@@ -810,6 +815,18 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                                                                                 effectiveWeightValue
                                                                                             )} kg`
                                                                                             : '-'
+                                                                                    const rpeWeightRange =
+                                                                                        typeof effectiveWeightValue !==
+                                                                                            'number' &&
+                                                                                        typeof workoutExercise.rpeWeightMin ===
+                                                                                            'number' &&
+                                                                                        typeof workoutExercise.rpeWeightMax ===
+                                                                                            'number'
+                                                                                            ? formatWeightRange(
+                                                                                                workoutExercise.rpeWeightMin,
+                                                                                                workoutExercise.rpeWeightMax
+                                                                                            )
+                                                                                            : null
 
                                                                                     return (
                                                                                         <div className="space-y-1">
@@ -822,12 +839,19 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                                                                                 )}
                                                                                             </p>
                                                                                             <p className="text-xs font-semibold text-emerald-700">
-                                                                                                {t(
-                                                                                                    'reviewProgram.tableWeightEffective',
-                                                                                                    {
-                                                                                                        weight: effectiveWeight,
-                                                                                                    }
-                                                                                                )}
+                                                                                                {rpeWeightRange !== null
+                                                                                                    ? t(
+                                                                                                        'reviewProgram.tableWeightRpeRange',
+                                                                                                        {
+                                                                                                            range: rpeWeightRange,
+                                                                                                        }
+                                                                                                    )
+                                                                                                    : t(
+                                                                                                        'reviewProgram.tableWeightEffective',
+                                                                                                        {
+                                                                                                            weight: effectiveWeight,
+                                                                                                        }
+                                                                                                    )}
                                                                                             </p>
                                                                                         </div>
                                                                                     )

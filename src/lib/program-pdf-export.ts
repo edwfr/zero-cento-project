@@ -1,5 +1,6 @@
 import type { RestTime, WeekType } from '@prisma/client'
 import type { ExerciseType } from '@/lib/exercise-type'
+import { formatWeightRange } from '@/lib/weight-rounding'
 
 type WeightType = 'absolute' | 'percentage_1rm' | 'percentage_previous'
 
@@ -17,6 +18,8 @@ export interface ProgramPdfExercise {
     weightType: WeightType
     weight: number | null
     effectiveWeight: number | null
+    rpeWeightMin: number | null
+    rpeWeightMax: number | null
     restTime: RestTime
 }
 
@@ -176,10 +179,19 @@ export function buildProgramPdfExerciseRow(
         labels.missingValue
     )
     const calculatedWeight = formatWeightKg(exercise.effectiveWeight, labels.missingValue)
+    const { rpeWeightMin, rpeWeightMax } = exercise
+    const rpeWeightRangeLabel =
+        exercise.weightType === 'absolute' &&
+        typeof assignedWeightValue !== 'number' &&
+        typeof rpeWeightMin === 'number' &&
+        typeof rpeWeightMax === 'number'
+            ? `≈ ${formatWeightRange(rpeWeightMin, rpeWeightMax)} kg`
+            : null
     const weightLabel =
-        exercise.weightType === 'absolute'
+        rpeWeightRangeLabel ??
+        (exercise.weightType === 'absolute'
             ? assignedWeight
-            : formatPercentageWeightLabel(assignedWeight, calculatedWeight, labels.missingValue)
+            : formatPercentageWeightLabel(assignedWeight, calculatedWeight, labels.missingValue))
 
     const metadataBadges = [
         exercise.isWarmup ? `[${labels.warmupYesShort}]` : '',

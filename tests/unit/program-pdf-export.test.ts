@@ -31,6 +31,8 @@ const makeExercise = (overrides: Partial<ProgramPdfExercise> = {}): ProgramPdfEx
     weightType: 'absolute',
     weight: 120,
     effectiveWeight: 120,
+    rpeWeightMin: null,
+    rpeWeightMax: null,
     restTime: 'm2',
     ...overrides,
 })
@@ -83,6 +85,49 @@ describe('buildProgramPdfExerciseRow', () => {
         )
 
         expect(row[5]).toBe('+5%')
+    })
+
+    it('shows the rpe weight range when an absolute row has no weight', () => {
+        const row = buildProgramPdfExerciseRow(
+            makeExercise({
+                weightType: 'absolute',
+                weight: null,
+                effectiveWeight: null,
+                rpeWeightMin: 110.5,
+                rpeWeightMax: 115,
+            }),
+            labels
+        )
+
+        expect(row[5]).toBe('≈ 110.5–115 kg')
+    })
+
+    it('keeps the explicit weight when a rpe weight range is also present', () => {
+        const row = buildProgramPdfExerciseRow(
+            makeExercise({
+                weightType: 'absolute',
+                weight: 100,
+                effectiveWeight: 100,
+                rpeWeightMin: 110.5,
+                rpeWeightMax: 115,
+            }),
+            labels
+        )
+
+        expect(row[5]).toBe('100 kg')
+    })
+
+    it('shows the missing value when there is neither weight nor rpe weight range', () => {
+        const row = buildProgramPdfExerciseRow(
+            makeExercise({
+                weightType: 'absolute',
+                weight: null,
+                effectiveWeight: null,
+            }),
+            labels
+        )
+
+        expect(row[5]).toBe('-')
     })
 
     it('alternates gray tones when exercise name changes', () => {
