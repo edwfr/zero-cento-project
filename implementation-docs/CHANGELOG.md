@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(tests): colonna variante nei risultati test (21/10/2026)
+- Pagina `trainer/programs/[id]/tests`: nuova colonna "Variante" dopo "Esercizio" (`-` se assente). L'API `test-results` ora restituisce `variant` del `WorkoutExercise`; chiave i18n `testResults.colVariant` (it/en).
+
 ### fix(reps): fix dalla review dell'unificazione formato reps (21/10/2026)
 - Anteprima peso `percentage_rm` nell'editor programma: `parseRepsValue(row.reps.trim())`, come validazione e payload. Prima `8 ` (spazio finale) non trovava l'8RM e l'anteprima dava errore.
 - Ripristinati i line ending CRLF su 4 file convertiti per errore a LF (`core.autocrlf=input` nel `.git/config` locale): diff e `git blame` di nuovo leggibili.

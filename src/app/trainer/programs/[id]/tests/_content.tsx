@@ -22,6 +22,7 @@ import { FormLabel } from '@/components/FormLabel'
 interface TestResultRow {
     workoutExerciseId: string
     exerciseName: string
+    variant: string | null
     sets: number
     reps: string
     rpe: number | null
@@ -432,20 +433,24 @@ export default function ProgramTestResultsContent() {
                                                             <div className="overflow-x-auto">
                                                                 <table className="min-w-[1100px] w-full table-fixed divide-y divide-gray-200 text-sm">
                                                                     <colgroup>
-                                                                        <col className="w-[20%]" />
+                                                                        <col className="w-[17%]" />
+                                                                        <col className="w-[10%]" />
+                                                                        <col className="w-[5%]" />
+                                                                        <col className="w-[8%]" />
                                                                         <col className="w-[6%]" />
                                                                         <col className="w-[8%]" />
-                                                                        <col className="w-[7%]" />
-                                                                        <col className="w-[8%]" />
-                                                                        <col className="w-[16%]" />
-                                                                        <col className="w-[16%]" />
-                                                                        <col className="w-[15%]" />
+                                                                        <col className="w-[14%]" />
+                                                                        <col className="w-[14%]" />
+                                                                        <col className="w-[14%]" />
                                                                         <col className="w-[4%]" />
                                                                     </colgroup>
                                                                     <thead className="bg-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-gray-700">
                                                                         <tr>
                                                                             <th className="px-2 py-2">
                                                                                 {t('testResults.colExercise')}
+                                                                            </th>
+                                                                            <th className="px-2 py-2">
+                                                                                {t('testResults.colVariant')}
                                                                             </th>
                                                                             <th className="px-2 py-2 text-center">
                                                                                 {t('testResults.colSets')}
@@ -485,6 +490,9 @@ export default function ProgramTestResultsContent() {
                                                                             >
                                                                                 <td className="px-2 py-2 text-xs font-medium text-gray-900 break-words">
                                                                                     {row.exerciseName}
+                                                                                </td>
+                                                                                <td className="px-2 py-2 text-xs text-gray-700 break-words">
+                                                                                    {row.variant || '-'}
                                                                                 </td>
                                                                                 <td className="px-2 py-2 text-center text-xs font-semibold text-gray-900">
                                                                                     {row.sets}

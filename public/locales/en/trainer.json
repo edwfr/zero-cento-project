@@ -607,6 +607,7 @@
         "closeWorkoutDetails": "Close workout details",
         "noRowsForWorkout": "No data available for this workout.",
         "colExercise": "Exercise",
+        "colVariant": "Variant",
         "colSets": "Sets",
         "colReps": "Reps",
         "colRpe": "RPE",

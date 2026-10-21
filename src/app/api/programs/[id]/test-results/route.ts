@@ -86,6 +86,7 @@ export async function GET(
                                         weight: true,
                                         effectiveWeight: true,
                                         notes: true,
+                                        variant: true,
                                         exercise: {
                                             select: {
                                                 name: true,
@@ -152,6 +153,7 @@ export async function GET(
                     return {
                         workoutExerciseId: workoutExercise.id,
                         exerciseName: workoutExercise.exercise.name,
+                        variant: workoutExercise.variant ?? null,
                         sets: workoutExercise.sets,
                         reps: workoutExercise.reps || '-',
                         rpe: workoutExercise.targetRpe ?? null,
