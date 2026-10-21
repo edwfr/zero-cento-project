@@ -98,6 +98,27 @@
             "repsHeader": "Reps",
             "formula": "Equivalent 1RM = lifted weight / (table percentage / 100)."
         },
+        "bodyweightLoad": {
+            "ballast": "added weight {{weight}} kg",
+            "ballastRange": "added weight {{range}} kg",
+            "bodyweight": "bodyweight only",
+            "missingBodyweight": "ask your trainer",
+            "total": "{{weight}} kg total",
+            "totalRange": "{{range}} kg total",
+            "ballastWithTotal": "added weight {{weight}} kg ({{total}} total)",
+            "bodyweightNotRecorded": "body weight not recorded"
+        },
+        "bodyweightRpeTable": {
+            "title": "RPE chart: weighted pull-ups and dips",
+            "description": "Percentages of total load (body weight + added weight).",
+            "open": "Show table",
+            "close": "Hide table",
+            "rpeHeader": "RPE",
+            "repsHeader": "Reps",
+            "noteExample": "Example: 5 reps at RPE 8 ≈ 81% (5 reps + 2 in reserve = 7 → 7 @ RPE 10 = 81%).",
+            "noteBallast": "Target added weight = target total load − body weight.",
+            "noteDisclaimer": "Practical estimate, not research-validated. The RPE 10 anchors are the ones provided; lower RPEs add 1–4 reps in reserve; half points are the average of the neighbouring columns. Beyond 10 reps, Epley extension: 1RM = load × (1 + reps/30)."
+        },
         "personalRecordsExplorer": {
             "tableTitle": "PR tree table",
             "tableDescription": "First level shows the latest logged record and estimated 1RM; expand rows to view history.",

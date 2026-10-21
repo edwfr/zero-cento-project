@@ -88,6 +88,8 @@
         }
     },
     "exercises": {
+        "bodyweightLoadedLabel": "Esercizio a corpo libero zavorrato (trazioni, dip)",
+        "bodyweightLoadedHelp": "Massimali e percentuali su peso corporeo + zavorra",
         "title": "Libreria Esercizi",
         "viewGrid": "Griglia",
         "viewTable": "Tabella",
@@ -477,6 +479,7 @@
         }
     },
     "personalRecords": {
+        "totalLoadLabel": "Carico totale (peso corporeo + zavorra)",
         "title": "Massimali e Record",
         "record": "Massimale",
         "addRecord": "Aggiungi Massimale",
@@ -679,6 +682,9 @@
         "backToWeeks": "Torna alla panoramica settimane"
     },
     "editProgram": {
+        "floatingRpeTablesButton": "Tabelle RPE",
+        "rpeTablesPanelTitle": "Tabelle RPE",
+        "rpeTablesPanelClose": "Chiudi tabelle",
         "backToPrograms": "Torna ai programmi",
         "rpeWeightRangePreview": "≈ {{range}} kg",
         "stepSetup": "Setup",

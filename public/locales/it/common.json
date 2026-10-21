@@ -98,6 +98,27 @@
             "repsHeader": "Ripetizioni",
             "formula": "1RM equivalente = peso sollevato / (percentuale tabella / 100)."
         },
+        "bodyweightLoad": {
+            "ballast": "zavorra {{weight}} kg",
+            "ballastRange": "zavorra {{range}} kg",
+            "bodyweight": "corpo libero",
+            "missingBodyweight": "chiedi al trainer",
+            "total": "{{weight}} kg totali",
+            "totalRange": "{{range}} kg totali",
+            "ballastWithTotal": "zavorra {{weight}} kg ({{total}} totali)",
+            "bodyweightNotRecorded": "peso corporeo non registrato"
+        },
+        "bodyweightRpeTable": {
+            "title": "Tabella RPE trazioni zavorrate e dip",
+            "description": "Percentuali del carico totale (peso corporeo + zavorra).",
+            "open": "Mostra tabella",
+            "close": "Nascondi tabella",
+            "rpeHeader": "RPE",
+            "repsHeader": "Ripetizioni",
+            "noteExample": "Esempio: 5 ripetizioni a RPE 8 ≈ 81% (5 ripetizioni + 2 in riserva = 7 → 7 @ RPE 10 = 81%).",
+            "noteBallast": "Per ottenere la zavorra target: carico totale target − peso corporeo.",
+            "noteDisclaimer": "Stima pratica, non validata da ricerca. Gli ancoraggi RPE 10 sono quelli forniti; RPE inferiori aggiungono 1–4 ripetizioni in riserva; i mezzi punti sono la media delle colonne vicine. Oltre 10 ripetizioni, estensione Epley: 1RM = carico × (1 + ripetizioni/30)."
+        },
         "personalRecordsExplorer": {
             "tableTitle": "Recap massimali",
             "tableDescription": "Primo livello con ultimo record registrato e 1RM stimato; espandi la riga per vedere lo storico.",

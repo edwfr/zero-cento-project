@@ -7,6 +7,8 @@
         "exercisesDescription": "Manage exercises in your personal library"
     },
     "exercises": {
+        "bodyweightLoadedLabel": "Weighted bodyweight exercise (pull-ups, dips)",
+        "bodyweightLoadedHelp": "Maxes and percentages on body weight + added weight",
         "title": "Exercise Library",
         "viewGrid": "Grid",
         "viewTable": "Table",
@@ -477,6 +479,7 @@
         }
     },
     "personalRecords": {
+        "totalLoadLabel": "Total load (body weight + added weight)",
         "title": "Personal Records and Maxes",
         "record": "Personal Record",
         "addRecord": "Add Personal Record",
@@ -679,6 +682,9 @@
         "backToWeeks": "Back to weeks overview"
     },
     "editProgram": {
+        "floatingRpeTablesButton": "RPE charts",
+        "rpeTablesPanelTitle": "RPE charts",
+        "rpeTablesPanelClose": "Close charts",
         "backToPrograms": "Back to Programs",
         "rpeWeightRangePreview": "≈ {{range}} kg",
         "stepSetup": "Setup",

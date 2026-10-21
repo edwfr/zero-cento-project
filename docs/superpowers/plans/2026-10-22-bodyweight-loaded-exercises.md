@@ -418,8 +418,8 @@ esistenti passano senza modifiche.
 **Test command:** `node -e "for (const f of process.argv.slice(1)) JSON.parse(require('fs').readFileSync(f,'utf8').replace(/^﻿/,''))" public/locales/*/common.json public/locales/*/trainer.json && head -c3 public/locales/en/trainer.json | xxd -p && head -c3 public/locales/it/trainer.json | xxd -p`
 **Done when:** i JSON sono validi e il BOM `efbbbf` è ancora presente in entrambi i `trainer.json`.
 
-- [ ] **Step 1: tests**: nessun test unitario; basta il test command.
-- [ ] **Step 2: implementation**: con Edit, mai riscrivendo i file.
+- [x] **Step 1: tests**: nessun test unitario; basta il test command.
+- [x] **Step 2: implementation**: con Edit, mai riscrivendo i file.
   - `common.json` → dentro `common`, accanto a `rpeOneRmTable`:
     - `bodyweightLoad`:
       `ballast` it `"zavorra {{weight}} kg"` / en `"added weight {{weight}} kg"`;
@@ -444,8 +444,8 @@ esistenti passano senza modifiche.
     - `editProgram.floatingRpeTablesButton` it `"Tabelle RPE"` / en `"RPE charts"`;
       `editProgram.rpeTablesPanelTitle` it `"Tabelle RPE"` / en `"RPE charts"`;
       `editProgram.rpeTablesPanelClose` it `"Chiudi tabelle"` / en `"Close charts"`
-- [ ] **Step 3: run the test command**
-- [ ] **Step 4: CHANGELOG entry and commit**: `feat(i18n): add bodyweight-loaded keys`
+- [x] **Step 3: run the test command**
+- [x] **Step 4: CHANGELOG entry and commit**: `feat(i18n): add bodyweight-loaded keys`
 
 ---
 

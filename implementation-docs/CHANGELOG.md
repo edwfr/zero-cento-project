@@ -10,6 +10,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(i18n): chiavi per esercizi a corpo libero zavorrati (22/10/2026)
+- Aggiunte in `common.json` le chiavi `bodyweightLoad` e `bodyweightRpeTable`, in `trainer.json` le chiavi checkbox esercizio, etichetta carico totale e pannello tabelle RPE (it/en).
+- Motivo: servono alle etichette zavorra e ai form dei task successivi.
+
 ### feat(weights): 1RM e risoluzione `-x%` con corpo libero zavorrato (22/10/2026)
 - `loadTraineeOneRmMap` legge il flag dell'esercizio e usa la tabella trazioni/dip; nuova `loadLatestBodyweightKg`.
 - `resolveEffectiveWeight` accetta `{ bodyweightKg, isBodyweightLoaded }`: il `-x%` dopo una riga `absolute` zavorrata parte da zavorra + BW (null senza BW).
