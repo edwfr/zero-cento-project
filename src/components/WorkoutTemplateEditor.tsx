@@ -180,8 +180,10 @@ export default function WorkoutTemplateEditor({ initialTemplate }: WorkoutTempla
 
         const parsed = workoutTemplateSchema.safeParse(body)
         if (!parsed.success) {
-            const message = parsed.error.issues[0]?.message ?? ''
-            setError(message.startsWith('validation.') ? t(`errors:${message}`) : t('trainer:templates.saveError'))
+            const issue = parsed.error.issues[0]
+            const message = issue?.message ?? ''
+            const params = issue?.code === 'custom' ? issue.params : undefined
+            setError(message.startsWith('validation.') ? t(`errors:${message}`, params) : t('trainer:templates.saveError'))
             return
         }
 

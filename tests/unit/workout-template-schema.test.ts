@@ -61,8 +61,14 @@ describe('workoutTemplateSchema', () => {
     it.each(['8', '8/10'])('accepts reps %s', (reps) => {
         expect(workoutTemplateSchema.safeParse(withEx({ reps })).success).toBe(true)
     })
-    it.each(['abc', '', '10-8', '8-10', '10/8'])('rejects reps %j', (reps) => {
+    it.each(['abc', '', '10-8', '8-10'])('rejects reps %j', (reps) => {
         expect(msgs(withEx({ reps }))).toContain('validation.invalidReps')
+    })
+    it.each([
+        ['10/8', 'validation.repsRangeOrder'],
+        ['60', 'validation.repsLooksLikeSeconds'],
+    ])('rejects reps %j with %s', (reps, key) => {
+        expect(msgs(withEx({ reps }))).toContain(key)
     })
     it('rejects restTime m4', () => {
         expect(workoutTemplateSchema.safeParse(withEx({ restTime: 'm4' })).success).toBe(false)

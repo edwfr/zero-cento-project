@@ -10,6 +10,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(reps): errori di validazione specifici (21/10/2026)
+- `src/lib/reps.ts`: nuovo `checkReps()` che restituisce il motivo dell'errore (`format`, `repsOutOfRange`, `looksLikeSeconds`, `rangeOrder`, `secondsOutOfRange`); `parseReps`/`isValidReps` lo riusano. `repsSchema` emette la chiave i18n specifica, con `params.suggestion` per `looksLikeSeconds`.
+- Reps oltre 50 ma valide come secondi (es. `60`, `45/60`) suggeriscono il formato tempo: "Max 50 ripetizioni; per un tempo usa 60"".
+- Editor scheda ed editor template mostrano il messaggio specifico (namespace `errors`); rimossa la chiave non più usata `editProgram.rowValidationReps`.
+- Motivo: il vecchio messaggio generico non diceva quale limite era violato, e chi scriveva secondi senza virgolette non capiva come correggere.
+
 ### feat(reps): range in secondi `30"/45"` (21/10/2026)
 - `src/lib/reps.ts`: nuovo formato range di tempo `a"/b"` (1–300 s, `a < b`). `ParsedReps` `time` ora ha `min`/`max` come `reps`; nei calcoli conta 0 come il tempo singolo.
 - Motivo: in produzione 25 righe (`30/45`, `45/60` su plank/barchette) erano range di secondi scritti come reps; con il formato dedicato si convertono senza cambiare la prescrizione.

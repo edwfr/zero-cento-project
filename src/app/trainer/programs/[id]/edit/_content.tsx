@@ -58,7 +58,7 @@ import {
 } from '@/lib/program-sbd-metrics'
 import ProgramSbdSummaryTable from '@/components/ProgramSbdSummaryTable'
 import ProgramChartsDrawer from '@/components/ProgramChartsDrawer'
-import { isValidReps } from '@/lib/reps'
+import { checkReps, REPS_ERROR_KEYS } from '@/lib/reps'
 import {
     DndContext,
     DragOverlay,
@@ -560,7 +560,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const searchParams = useSearchParams()
     const programId = params.id as string
     const { showToast } = useToast()
-    const { t } = useTranslation(['trainer', 'navigation'])
+    const { t } = useTranslation(['trainer', 'navigation', 'errors'])
     const router = useRouter()
 
     const [loading, setLoading] = useState(true)
@@ -2057,8 +2057,9 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             return t('editProgram.rowValidationSets')
         }
 
-        if (!isValidReps(row.reps.trim())) {
-            return t('editProgram.rowValidationReps')
+        const repsCheck = checkReps(row.reps.trim())
+        if (!repsCheck.ok) {
+            return t(`errors:${REPS_ERROR_KEYS[repsCheck.error.code]}`, { suggestion: repsCheck.error.suggestion })
         }
 
         if (

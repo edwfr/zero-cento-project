@@ -20,17 +20,22 @@ const base = (reps: unknown) => ({
 const messages = (result: { success: boolean; error?: { issues: { message: string }[] } }) =>
     result.error?.issues.map((i) => i.message) ?? []
 
-const valid = ['8', '8/10', '30"', 'max']
-const invalid = ['8-10', '10/8', '0', '51']
+const valid = ['8', '8/10', '30"', '30"/45"', 'max']
+const invalid = [
+    ['8-10', 'validation.invalidReps'],
+    ['10/8', 'validation.repsRangeOrder'],
+    ['0', 'validation.repsOutOfRange'],
+    ['51', 'validation.repsLooksLikeSeconds'],
+]
 
 describe('workoutExerciseSchema reps', () => {
     it.each(valid)('accepts %s', (reps) => {
         expect(workoutExerciseSchema.safeParse(base(reps)).success).toBe(true)
     })
-    it.each(invalid)('rejects %s with validation.invalidReps', (reps) => {
+    it.each(invalid)('rejects %s with %s', (reps, key) => {
         const result = workoutExerciseSchema.safeParse(base(reps))
         expect(result.success).toBe(false)
-        expect(messages(result)).toContain('validation.invalidReps')
+        expect(messages(result)).toContain(key)
     })
 })
 
@@ -39,10 +44,10 @@ describe('bulkSaveWorkoutExercisesSchema reps', () => {
     it.each(valid)('accepts %s', (reps) => {
         expect(bulkSaveWorkoutExercisesSchema.safeParse(wrap(reps)).success).toBe(true)
     })
-    it.each(invalid)('rejects %s with validation.invalidReps', (reps) => {
+    it.each(invalid)('rejects %s with %s', (reps, key) => {
         const result = bulkSaveWorkoutExercisesSchema.safeParse(wrap(reps))
         expect(result.success).toBe(false)
-        expect(messages(result)).toContain('validation.invalidReps')
+        expect(messages(result)).toContain(key)
     })
 })
 

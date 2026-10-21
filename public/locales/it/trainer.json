@@ -828,7 +828,6 @@
         "rowValidationExercise": "Seleziona un esercizio",
         "rowValidationExclusiveFlags": "JumpSet e SuperSet non possono essere attivi insieme",
         "rowValidationSets": "Serie non valide (1-20)",
-        "rowValidationReps": "Ripetizioni non valide (es. 8, 8/10, 30\", 30\"/45\", max; 1-50, secondi 1-300)",
         "rowValidationRpe": "RPE non valido (5.0-10.0, step 0.5)",
         "rowValidationWeight": "Peso non valido",
         "rowValidationWithIndex": "Riga {{index}}: {{error}}",
