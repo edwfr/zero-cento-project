@@ -10,6 +10,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(weights)!: rimosso il tipo peso percentage_rm (21/10/2026)
+- Enum `WeightType` senza `percentage_rm` (schema Prisma, Zod, tipi union, PDF, pagine trainee, locale `weightPctRm`). `80%RM`, `%80rm`, `80%rm` in edit danno ora errore di formato. Parser input peso estratto in `edit/weight-input.ts` con test dedicati; `weightPctPrev` descrive l'occorrenza precedente.
+- **Deploy**: migrazione `20261021120000_remove_percentage_rm` scritta a mano (eventuali righe residue → `absolute`); va applicata con `npm run prisma:migrate:prod` insieme al deploy del codice.
+- Motivo: `%RM` dipendeva da un PR per numero di ripetizioni, incompatibile con la base unica 1RM dal PR più recente.
+
 ### feat(programs): PR più recente come base 1RM in edit e vista workout (21/10/2026)
 - `edit/_content.tsx` e `workouts/[wId]/_content.tsx`: `bestPRs` (massimo 1RM teorico) → `latestPRs` via `latestPersonalRecordByExercise`; il pannello PR e il calcolo `%1RM` mostrano lo stesso PR usato dal server. In edit l'ordinamento di visualizzazione resta per 1RM decrescente.
 - Motivo: stessa regola ovunque (PR più recente, non il più alto).

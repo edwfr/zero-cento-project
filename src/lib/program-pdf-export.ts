@@ -1,7 +1,7 @@
 import type { RestTime, WeekType } from '@prisma/client'
 import type { ExerciseType } from '@/lib/exercise-type'
 
-type WeightType = 'absolute' | 'percentage_1rm' | 'percentage_rm' | 'percentage_previous'
+type WeightType = 'absolute' | 'percentage_1rm' | 'percentage_previous'
 
 export interface ProgramPdfExercise {
     id: string
@@ -117,10 +117,6 @@ const formatAssignedWeight = (
 
     if (weightType === 'percentage_1rm') {
         return `${formattedWeight}% 1RM`
-    }
-
-    if (weightType === 'percentage_rm') {
-        return `${formattedWeight}% RM`
     }
 
     const sign = weight > 0 ? '+' : ''

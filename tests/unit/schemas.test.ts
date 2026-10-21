@@ -1062,7 +1062,7 @@ describe('workoutExerciseSchema weight rules per weightType', () => {
         expect(workoutExerciseSchema.safeParse({ ...base, weightType: 'absolute', weight: 100 }).success).toBe(true)
     })
 
-    it.each(['percentage_1rm', 'percentage_rm', 'percentage_previous'])(
+    it.each(['percentage_1rm', 'percentage_previous'])(
         'requires a weight when weightType is %s',
         (weightType) => {
             const result = workoutExerciseSchema.safeParse({ ...base, weightType })
@@ -1072,12 +1072,17 @@ describe('workoutExerciseSchema weight rules per weightType', () => {
         }
     )
 
-    it.each(['percentage_1rm', 'percentage_rm', 'percentage_previous'])(
+    it.each(['percentage_1rm', 'percentage_previous'])(
         'accepts %s when the weight is present',
         (weightType) => {
             expect(workoutExerciseSchema.safeParse({ ...base, weightType, weight: 80 }).success).toBe(true)
         }
     )
+
+    it('rejects the removed percentage_rm weightType', () => {
+        const result = workoutExerciseSchema.safeParse({ ...base, weightType: 'percentage_rm', weight: 80 })
+        expect(result.success).toBe(false)
+    })
 
     it('rejects a negative weight for a non-relative weightType', () => {
         const result = workoutExerciseSchema.safeParse({ ...base, weightType: 'absolute', weight: -1 })

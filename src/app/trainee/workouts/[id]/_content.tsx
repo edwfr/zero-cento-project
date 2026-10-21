@@ -65,7 +65,7 @@ interface WorkoutExerciseWithWeight {
     sets: number
     reps: string
     targetRpe: number
-    weightType: 'absolute' | 'percentage_1rm' | 'percentage_rm' | 'percentage_previous'
+    weightType: 'absolute' | 'percentage_1rm' | 'percentage_previous'
     weight: number | null
     effectiveWeight: number | null
     restTime: RestTime
@@ -1048,8 +1048,6 @@ function ExerciseFocusCard({
                 return `${formattedWeight} kg`
             case 'percentage_1rm':
                 return `${formattedWeight}% 1RM`
-            case 'percentage_rm':
-                return `${formattedWeight}% RM`
             case 'percentage_previous':
                 return `${we.weight > 0 ? '+' : ''}${formattedWeight}%`
             default:

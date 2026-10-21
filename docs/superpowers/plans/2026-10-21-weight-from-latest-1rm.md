@@ -281,7 +281,7 @@ Consumes (from `src/lib/calculations.ts`):
 **Done when:** `grep -rn "percentage_rm\|weightPctRm\|bestWeightByExerciseAndReps" src tests public/locales` → zero;
 `npx prisma validate` ok; `80%RM` in edit → errore di formato.
 
-- [ ] **Step 1: tests**
+- [x] **Step 1: tests**
   - `tests/unit/weight-input.test.ts` (new), su `parseWeightInputValue`:
     `'80%RM'`, `'%80rm'`, `'80%rm'` → `{ mode: 'invalid', value: null }` (o la forma
     `invalid` esistente); `'75%'`, `'%75'`, `'75%1RM'` → `{ mode: 'percentage_1rm', value: 75 }`;
@@ -290,7 +290,7 @@ Consumes (from `src/lib/calculations.ts`):
   - `tests/unit/schemas.test.ts:1065,1075`: togli `'percentage_rm'` dagli `it.each`; nuovo
     test: `weightType: 'percentage_rm', weight: 80` → `success === false`.
   - `tests/unit/program-sbd-metrics.test.ts:28`: togli `'percentage_rm'` dal tipo.
-- [ ] **Step 2: migrazione** — `prisma/migrations/20261021120000_remove_percentage_rm/migration.sql`:
+- [x] **Step 2: migrazione** — `prisma/migrations/20261021120000_remove_percentage_rm/migration.sql`:
 
   ```sql
   -- Safety net: prod had 0 rows on 2026-10-21; convert any leftover to absolute
@@ -310,14 +310,14 @@ Consumes (from `src/lib/calculations.ts`):
   `schema.prisma`: togli `percentage_rm`; commento di `percentage_previous` →
   "percentuale relativa all'occorrenza precedente più vicina dell'esercizio nel workout".
   Poi `npx prisma validate && npx prisma generate`.
-- [ ] **Step 3: parser** — crea `edit/weight-input.ts` spostando da `edit/_content.tsx`
+- [x] **Step 3: parser** — crea `edit/weight-input.ts` spostando da `edit/_content.tsx`
   `ParsedWeightInputMode`, `ParsedWeightInputValue`, `parseWeightInputValue`,
   `formatWeightInputFromStoredValues` (export), senza il ramo `percentageRmMatch` né il
   mode `'percentage_rm'`. `WeightType` si importa da `@prisma/client` (come fa oggi
   `_content.tsx:7`). In `_content.tsx`: import
   dal nuovo modulo; elimina il ramo `parsedInput.mode === 'percentage_rm'` (:1963-1988) e
   `recordsByExercise` se ora inutilizzato.
-- [ ] **Step 4: resto dei riferimenti** — `src/schemas/workout-exercise.ts:26,54` (enum e
+- [x] **Step 4: resto dei riferimenti** — `src/schemas/workout-exercise.ts:26,54` (enum e
   commento); `calculations.ts` (eventuali residui); `workouts/[wId]/_content.tsx:298`
   (etichetta); `trainee/workouts/[id]/_content.tsx:68,1051`;
   `ProgramDetailContent.tsx:28,208`; `program-pdf-export.ts:4,122`; tipi union in
@@ -326,8 +326,8 @@ Consumes (from `src/lib/calculations.ts`):
   it `"Percentuale rispetto all'occorrenza precedente"`,
   en `"Percentage relative to the previous occurrence"`. `file public/locales/*/trainer.json`
   deve ancora riportare `UTF-8 (with BOM)`.
-- [ ] **Step 5: verifica completa** — test command, poi `npm run test:unit`,
+- [x] **Step 5: verifica completa** — test command, poi `npm run test:unit`,
   `npm run type-check`, `npm run lint`, `npm run build`, e il grep del "Done when".
-- [ ] **Step 6: CHANGELOG entry and commit** — `feat(weights)!: remove percentage_rm weight type`.
+- [x] **Step 6: CHANGELOG entry and commit** — `feat(weights)!: remove percentage_rm weight type`.
   Nel CHANGELOG annota: la migrazione `20261021120000_remove_percentage_rm` va applicata
   con `npm run prisma:migrate:prod` insieme al deploy del codice.

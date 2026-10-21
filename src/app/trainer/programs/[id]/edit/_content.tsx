@@ -7,6 +7,11 @@ import { useTranslation } from 'react-i18next'
 import { RestTime, WeightType, WeekType } from '@prisma/client'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { latestPersonalRecordByExercise, normalizedOneRM } from '@/lib/calculations'
+import {
+    formatWeightInputFromStoredValues,
+    parseWeightInputValue,
+    type ParsedWeightInputValue,
+} from './weight-input'
 import { EXERCISE_TYPE_META, type ExerciseType } from '@/lib/exercise-type'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ConfirmationModal from '@/components/ConfirmationModal'
@@ -52,7 +57,6 @@ import { resolveEffectiveWeightDisplay } from '@/app/trainer/programs/[id]/edit/
 import {
     computeSbdMetricsByLiftAcrossWeeks,
     computeWeekSbdMetrics,
-    parseRepsValue,
     type LiftLabels,
     type SbdLiftAcrossWeeks,
 } from '@/lib/program-sbd-metrics'
@@ -205,19 +209,6 @@ interface EditProgramContentProps {
     readOnly?: boolean
 }
 
-type ParsedWeightInputMode =
-    | 'empty'
-    | 'absolute'
-    | 'percentage_1rm'
-    | 'percentage_rm'
-    | 'percentage_previous'
-    | 'invalid'
-
-interface ParsedWeightInputValue {
-    mode: ParsedWeightInputMode
-    value: number | null
-}
-
 interface ParsedWeightInputResult {
     weightType: WeightType
     weight: number | null
@@ -232,80 +223,6 @@ type WeightInputParsingErrorCode =
 type ResolveWeightInputOutcome =
     | { parsedWeight: ParsedWeightInputResult }
     | { errorCode: WeightInputParsingErrorCode }
-
-function formatWeightInputFromStoredValues(weightType: WeightType, weight: number | null): string {
-    if (typeof weight !== 'number') {
-        return ''
-    }
-
-    if (weightType === 'absolute') {
-        return String(weight)
-    }
-
-    if (weightType === 'percentage_1rm') {
-        return `${weight}%`
-    }
-
-    if (weightType === 'percentage_rm') {
-        return `${weight}%RM`
-    }
-
-    return `${weight}%`
-}
-
-function parseWeightInputValue(rawValue: string): ParsedWeightInputValue {
-    const trimmedValue = rawValue.trim()
-
-    if (trimmedValue === '') {
-        return { mode: 'empty', value: null }
-    }
-
-    const normalizedValue = trimmedValue.replace(/\s+/g, '').replace(',', '.')
-
-    const percentagePreviousMatch = normalizedValue.match(/^-(\d+(?:\.\d+)?)%$/)
-    if (percentagePreviousMatch) {
-        return {
-            mode: 'percentage_previous',
-            value: -Number(percentagePreviousMatch[1]),
-        }
-    }
-
-    const percentageOneRmMatch =
-        normalizedValue.match(/^%(\d+(?:\.\d+)?)(?:1rm)?$/i) ||
-        normalizedValue.match(/^(\d+(?:\.\d+)?)%1rm$/i) ||
-        normalizedValue.match(/^(\d+(?:\.\d+)?)%$/)
-
-    if (percentageOneRmMatch) {
-        return {
-            mode: 'percentage_1rm',
-            value: Number(percentageOneRmMatch[1]),
-        }
-    }
-
-    const percentageRmMatch =
-        normalizedValue.match(/^%(\d+(?:\.\d+)?)rm$/i) ||
-        normalizedValue.match(/^(\d+(?:\.\d+)?)%rm$/i)
-
-    if (percentageRmMatch) {
-        return {
-            mode: 'percentage_rm',
-            value: Number(percentageRmMatch[1]),
-        }
-    }
-
-    const absoluteMatch = normalizedValue.match(/^(\d+(?:\.\d+)?)(?:kg)?$/i)
-    if (absoluteMatch) {
-        return {
-            mode: 'absolute',
-            value: Number(absoluteMatch[1]),
-        }
-    }
-
-    return {
-        mode: 'invalid',
-        value: null,
-    }
-}
 
 function roundWeightValue(value: number): number {
     // Ceil to nearest 0.5 kg; pre-round to 4dp to eliminate floating-point noise
@@ -1105,19 +1022,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const totalWorkouts = program
         ? program.weeks.reduce((total, week) => total + week.workouts.length, 0)
         : 0
-
-    const recordsByExercise = useMemo(
-        () =>
-            personalRecords.reduce((acc, record) => {
-                if (!acc[record.exerciseId]) {
-                    acc[record.exerciseId] = []
-                }
-
-                acc[record.exerciseId].push(record)
-                return acc
-            }, {} as Record<string, PersonalRecord[]>),
-        [personalRecords]
-    )
 
     const latestPRs = useMemo(
         () =>
@@ -1948,32 +1852,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     weightType: 'percentage_1rm',
                     weight: value,
                     effectiveWeight: roundWeightValue((oneRm * value) / 100),
-                },
-            }
-        }
-
-        if (parsedInput.mode === 'percentage_rm') {
-            if (value < 0) {
-                return { errorCode: 'invalid_format' }
-            }
-
-            const targetReps = parseRepsValue(row.reps.trim())
-            const rmRecord = (recordsByExercise[row.exerciseId] || [])
-                .filter((record) => record.reps === targetReps)
-                .sort((left, right) => {
-                    const leftDate = left.recordDate ? new Date(left.recordDate).getTime() : 0
-                    const rightDate = right.recordDate ? new Date(right.recordDate).getTime() : 0
-                    return rightDate - leftDate
-                })[0]
-
-            return {
-                parsedWeight: {
-                    weightType: 'percentage_rm',
-                    weight: value,
-                    effectiveWeight:
-                        typeof rmRecord?.weight === 'number'
-                            ? roundWeightValue((rmRecord.weight * value) / 100)
-                            : null,
                 },
             }
         }

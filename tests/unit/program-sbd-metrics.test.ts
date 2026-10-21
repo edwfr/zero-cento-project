@@ -25,7 +25,7 @@ function makeExercise(
         sets: number
         reps: string
         isWarmup: boolean
-        weightType: 'absolute' | 'percentage_1rm' | 'percentage_rm' | 'percentage_previous'
+        weightType: 'absolute' | 'percentage_1rm' | 'percentage_previous'
         weight: number | null
         targetRpe: number | null
     }> = {},

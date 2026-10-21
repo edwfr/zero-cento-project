@@ -48,8 +48,7 @@ enum WeekType {
 enum WeightType {
   absolute              // kg assoluti (es. 100kg)
   percentage_1rm        // percentuale del massimale (es. 80% di 1RM)
-  percentage_rm         // percentuale di nRM (es. 85% di 5RM)
-  percentage_previous   // percentuale relativa alla prima occorrenza esercizio nel workout
+  percentage_previous   // percentuale relativa all'occorrenza precedente più vicina dell'esercizio nel workout
 }
 
 enum MeasurementMetric {

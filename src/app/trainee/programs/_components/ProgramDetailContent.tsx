@@ -25,7 +25,7 @@ import {
 import type { TraineeProgramView } from '@/lib/trainee-program-data'
 import type { ExerciseType } from '@/lib/exercise-type'
 
-type WeightType = 'absolute' | 'percentage_1rm' | 'percentage_rm' | 'percentage_previous'
+type WeightType = 'absolute' | 'percentage_1rm' | 'percentage_previous'
 type ProgramContentMode = 'current' | 'history'
 
 interface ProgramDetailContentProps {
@@ -205,8 +205,6 @@ const formatAssignedWeight = (weightType: WeightType, weight: number | null): st
             return `${formattedWeight}kg`
         case 'percentage_1rm':
             return `${formattedWeight}% 1RM`
-        case 'percentage_rm':
-            return `${formattedWeight}% RM`
         case 'percentage_previous':
             return `${weight > 0 ? '+' : ''}${formattedWeight}%`
         default:

@@ -295,7 +295,6 @@ export default function WorkoutDetailContent() {
         const opts = {
             absolute: 'kg',
             percentage_1rm: '% 1RM',
-            percentage_rm: '% nRM',
             percentage_previous: '% Prev'
         }
         return opts[wt] || wt

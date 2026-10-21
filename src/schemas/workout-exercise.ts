@@ -23,7 +23,7 @@ const workoutExerciseBaseSchema = z.object({
         .nullable()
         .optional(),
     weightType: z.enum(
-        ['absolute', 'percentage_1rm', 'percentage_rm', 'percentage_previous'],
+        ['absolute', 'percentage_1rm', 'percentage_previous'],
         {
             errorMap: () => ({ message: 'Tipo peso non valido' }),
         }
@@ -51,7 +51,7 @@ export const workoutExerciseSchema = workoutExerciseBaseSchema.superRefine(
                 path: ['weight'],
             })
         }
-        // For absolute and percentage_1rm/percentage_rm, weight must be >= 0
+        // For absolute and percentage_1rm, weight must be >= 0
         if (
             data.weight != null &&
             data.weightType !== 'percentage_previous' &&
