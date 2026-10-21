@@ -4,6 +4,8 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { handleApiError } from '@/lib/api-error-handler'
+import { loadLatestBodyweightKg } from '@/lib/calculations'
+import { traineeWeightFields, type BallastDisplay } from '@/lib/bodyweight-load'
 
 interface SetPerformedEntry {
     setNumber: number
@@ -16,6 +18,13 @@ interface SetPerformedEntry {
 const formatNumberList = (values: Array<number | null>): string => {
     if (values.every((value) => value === null)) return '-'
     return values.map((value) => (value === null ? '-' : `${value}`)).join(' / ')
+}
+
+// Bodyweight-loaded rows: planned weight is the ballast, like the weights the trainee logs.
+const plannedBallastWeight = (ballast: BallastDisplay | null): number | null => {
+    if (ballast?.kind === 'ballast') return ballast.kg
+    if (ballast?.kind === 'bodyweight') return 0
+    return null
 }
 
 const normalizeOptionalText = (value: string | null | undefined): string | null => {
@@ -83,13 +92,17 @@ export async function GET(
                                         sets: true,
                                         reps: true,
                                         targetRpe: true,
+                                        weightType: true,
                                         weight: true,
                                         effectiveWeight: true,
+                                        rpeWeightMin: true,
+                                        rpeWeightMax: true,
                                         notes: true,
                                         variant: true,
                                         exercise: {
                                             select: {
                                                 name: true,
+                                                isBodyweightLoaded: true,
                                             },
                                         },
                                         exerciseFeedbacks: {
@@ -136,6 +149,32 @@ export async function GET(
             return apiError('FORBIDDEN', 'You can only view programs assigned to you', 403, undefined, 'program.viewAssignedDenied')
         }
 
+        const hasBodyweightLoaded = program.weeks.some((week) =>
+            week.workouts.some((workout) =>
+                workout.workoutExercises.some((we) => we.exercise.isBodyweightLoaded)
+            )
+        )
+        const bodyweightKg = hasBodyweightLoaded ? await loadLatestBodyweightKg(program.traineeId) : null
+
+        const plannedWeightOf = (
+            workoutExercise: (typeof program.weeks)[number]['workouts'][number]['workoutExercises'][number]
+        ): number | null => {
+            const fields = traineeWeightFields(
+                {
+                    weightType: workoutExercise.weightType,
+                    weight: workoutExercise.weight,
+                    effectiveWeight: workoutExercise.effectiveWeight,
+                    rpeWeightMin: workoutExercise.rpeWeightMin,
+                    rpeWeightMax: workoutExercise.rpeWeightMax,
+                    isBodyweightLoaded: workoutExercise.exercise.isBodyweightLoaded,
+                },
+                bodyweightKg
+            )
+            return workoutExercise.exercise.isBodyweightLoaded
+                ? plannedBallastWeight(fields.ballast)
+                : fields.effectiveWeight
+        }
+
         const weeks = program.weeks.map((week) => ({
             weekId: week.id,
             weekNumber: week.weekNumber,
@@ -157,7 +196,7 @@ export async function GET(
                         sets: workoutExercise.sets,
                         reps: workoutExercise.reps || '-',
                         rpe: workoutExercise.targetRpe ?? null,
-                        plannedWeight: workoutExercise.effectiveWeight ?? null,
+                        plannedWeight: plannedWeightOf(workoutExercise),
                         repsDone: formatNumberList(completedSets.map((set: SetPerformedEntry) => set.reps)),
                         rpeDone: formatNumberList(completedSets.map((set: SetPerformedEntry) => set.actualRpe)),
                         weightUsed: formatNumberList(completedSets.map((set: SetPerformedEntry) => set.weight)),

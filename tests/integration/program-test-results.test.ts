@@ -235,4 +235,127 @@ describe('GET /api/programs/[id]/test-results', () => {
 
         expect(res.status).toBe(403)
     })
+
+    describe('bodyweight-loaded rows', () => {
+        const loadedProgram = (traineeId: string) => ({
+            id: 'prog-bw',
+            title: 'Pull block',
+            trainerId: 'trainer-uuid-1',
+            traineeId,
+            trainee: { id: traineeId, firstName: 'Mario', lastName: 'Atleta' },
+            weeks: [
+                {
+                    id: 'week-test',
+                    weekNumber: 1,
+                    weekType: 'test',
+                    startDate: new Date('2026-06-08'),
+                    workouts: [
+                        {
+                            id: 'wo-bw',
+                            dayIndex: 1,
+                            traineeNotes: null,
+                            workoutExercises: [
+                                {
+                                    id: 'we-pct',
+                                    sets: 1,
+                                    reps: '1',
+                                    targetRpe: null,
+                                    weightType: 'percentage_1rm',
+                                    weight: 90,
+                                    effectiveWeight: 117,
+                                    rpeWeightMin: null,
+                                    rpeWeightMax: null,
+                                    notes: null,
+                                    exercise: { name: 'Weighted Pull-up', isBodyweightLoaded: true },
+                                    exerciseFeedbacks: [],
+                                },
+                                {
+                                    id: 'we-abs',
+                                    sets: 3,
+                                    reps: '5',
+                                    targetRpe: null,
+                                    weightType: 'absolute',
+                                    weight: 20,
+                                    effectiveWeight: 20,
+                                    rpeWeightMin: null,
+                                    rpeWeightMax: null,
+                                    notes: null,
+                                    exercise: { name: 'Weighted Dip', isBodyweightLoaded: true },
+                                    exerciseFeedbacks: [],
+                                },
+                                {
+                                    id: 'we-plain',
+                                    sets: 1,
+                                    reps: '1',
+                                    targetRpe: null,
+                                    weightType: 'percentage_1rm',
+                                    weight: 90,
+                                    effectiveWeight: 180,
+                                    rpeWeightMin: null,
+                                    rpeWeightMax: null,
+                                    notes: null,
+                                    exercise: { name: 'Back Squat', isBodyweightLoaded: false },
+                                    exerciseFeedbacks: [],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        })
+
+        const plannedWeights = async (programId: string) => {
+            const res = await GET(makeRequest(), { params: Promise.resolve({ id: programId }) })
+            const body = await res.json()
+            return body.data.weeks[0].workouts[0].rows.map(
+                (row: { plannedWeight: number | null }) => row.plannedWeight
+            )
+        }
+
+        it('returns ballast, never total load, to the trainee', async () => {
+            asTrainee()
+            prismaMock.trainingProgram.findUnique.mockResolvedValue(
+                loadedProgram('trainee-uuid-1') as never
+            )
+            prismaMock.traineeMeasurement.findFirst.mockResolvedValue({ value: 80 } as never)
+
+            expect(await plannedWeights('prog-bw')).toEqual([37, 20, 180])
+        })
+
+        it('returns ballast to the trainer too, matching the weights the trainee logs', async () => {
+            asTrainer()
+            prismaMock.trainingProgram.findUnique.mockResolvedValue(
+                loadedProgram('trainee-uuid-1') as never
+            )
+            prismaMock.traineeMeasurement.findFirst.mockResolvedValue({ value: 80 } as never)
+
+            expect(await plannedWeights('prog-bw')).toEqual([37, 20, 180])
+            expect(prismaMock.traineeMeasurement.findFirst).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: expect.objectContaining({ traineeId: 'trainee-uuid-1' }),
+                })
+            )
+        })
+
+        it('drops the planned weight when bodyweight is missing', async () => {
+            asTrainee()
+            prismaMock.trainingProgram.findUnique.mockResolvedValue(
+                loadedProgram('trainee-uuid-1') as never
+            )
+            prismaMock.traineeMeasurement.findFirst.mockResolvedValue(null as never)
+
+            expect(await plannedWeights('prog-bw')).toEqual([null, 20, 180])
+        })
+
+        it('skips the bodyweight lookup when no row is bodyweight-loaded', async () => {
+            asTrainer()
+            prismaMock.trainingProgram.findUnique.mockResolvedValue({
+                ...loadedProgram('trainee-uuid-1'),
+                weeks: [],
+            } as never)
+
+            await plannedWeights('prog-bw').catch(() => undefined)
+            expect(prismaMock.traineeMeasurement.findFirst).not.toHaveBeenCalled()
+        })
+    })
 })
