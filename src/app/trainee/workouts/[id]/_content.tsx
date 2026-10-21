@@ -36,7 +36,6 @@ import WorkoutRecapPanel from '@/components/WorkoutRecapPanel'
 import PrevWeekPanel from '@/components/PrevWeekPanel'
 import ExerciseTypeBadge from '@/components/ExerciseTypeBadge'
 import type { ExerciseType } from '@/lib/exercise-type'
-import { formatWeightRange } from '@/lib/weight-rounding'
 import { formatBallastLabel, plannedBallastKg, type BallastDisplay } from '@/lib/bodyweight-load'
 
 interface Exercise {
@@ -1080,12 +1079,18 @@ function ExerciseFocusCard({
         calculatedWeightMissing &&
         typeof we.rpeWeightMin === 'number' &&
         typeof we.rpeWeightMax === 'number'
-            ? t('workouts.rpeWeightRange', {
-                range: formatWeightRange(we.rpeWeightMin, we.rpeWeightMax),
-                rpe: we.targetRpe,
-            })
+            ? `${String(we.rpeWeightMin)}/${String(we.rpeWeightMax)}`
             : null
-    const ballastValue = we.ballast ? ballastLabel(we.ballast, t) : null
+    // Ballast shown like a weight (number or x/y) with a "ballast" hint below;
+    // bodyweight-only and missing-bodyweight keep their text label.
+    const ballastNumericValue =
+        we.ballast?.kind === 'ballast'
+            ? formatWeightValue(we.ballast.kg)
+            : we.ballast?.kind === 'ballastRange'
+                ? `${String(we.ballast.minKg)}/${String(we.ballast.maxKg)}`
+                : null
+    const ballastValue =
+        we.ballast && ballastNumericValue === null ? ballastLabel(we.ballast, t) : null
 
     return (
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -1204,6 +1209,14 @@ function ExerciseFocusCard({
                             <span className="block text-sm font-bold mt-1 leading-tight text-gray-900">
                                 {ballastValue}
                             </span>
+                        ) : we.ballast?.kind === 'ballast' ? (
+                            <span className="block text-2xl font-black mt-1 leading-none whitespace-nowrap text-gray-900">
+                                {ballastNumericValue}
+                            </span>
+                        ) : ballastNumericValue ? (
+                            <span className="block text-sm font-bold mt-1 leading-tight text-gray-900">
+                                {ballastNumericValue}
+                            </span>
                         ) : rpeWeightRangeValue ? (
                             <span className="block text-sm font-bold mt-1 leading-tight text-gray-900">
                                 {rpeWeightRangeValue}
@@ -1218,7 +1231,15 @@ function ExerciseFocusCard({
                                     : calculatedWeightValue}
                             </span>
                         )}
-                        {!ballastValue && we.weightType !== 'absolute' && (
+                        {ballastNumericValue ? (
+                            <span className="block text-[10px] text-gray-400 mt-1.5 leading-none">
+                                {t('common:common.bodyweightLoad.ballastHint')}
+                            </span>
+                        ) : rpeWeightRangeValue && !ballastValue ? (
+                            <span className="block text-[10px] text-gray-400 mt-1.5 leading-none">
+                                {t('workouts.rpeWeightRangeHint')}
+                            </span>
+                        ) : !ballastValue && we.weightType !== 'absolute' && (
                             <span className="block text-[10px] text-gray-400 mt-1.5 leading-none">
                                 {trainerSettingValue}
                             </span>

@@ -212,7 +212,7 @@ describe('Trainee workout: bodyweight-loaded rows', () => {
     it('shows ballast and prefills sets with it, never the percentage', async () => {
         loadWith({ ballast: { kind: 'ballast', kg: 17.5 } })
         await renderContent()
-        expect(kgBox()).toHaveTextContent('common:common.bodyweightLoad.ballast 17.5')
+        expect(kgBox()).toHaveTextContent('KG17.5common:common.bodyweightLoad.ballastHint')
         expect(kgBox()).not.toHaveTextContent('75%')
         expect(weightInputs().some((i) => i.placeholder === '17.5')).toBe(true)
         expect(weightInputs().some((i) => i.placeholder === '75')).toBe(false)
@@ -238,7 +238,7 @@ describe('Trainee workout: bodyweight-loaded rows', () => {
     it('shows ballast range', async () => {
         loadWith({ ballast: { kind: 'ballastRange', minKg: 15.5, maxKg: 19 } })
         await renderContent()
-        expect(kgBox()).toHaveTextContent('common:common.bodyweightLoad.ballastRange 15.5–19')
+        expect(kgBox()).toHaveTextContent('KG15.5/19common:common.bodyweightLoad.ballastHint')
         expect(kgBox()).not.toHaveTextContent('75%')
     })
 
@@ -1088,16 +1088,6 @@ describe('Trainee workout RPE weight range', () => {
 
     const kgBox = () => screen.getByText('KG').closest('div[class*="rounded-xl"]')
 
-    beforeEach(() => {
-        tSpy.mockImplementation((key: string, vars?: Record<string, unknown>) =>
-            key === 'workouts.rpeWeightRange' ? `${vars?.range} kg (RPE ${vars?.rpe})` : key
-        )
-    })
-
-    afterEach(() => {
-        tSpy.mockImplementation((key: string) => key)
-    })
-
     it('shows the frozen range when the exercise has no weight', async () => {
         mockFirstExercise({
             weightType: 'absolute',
@@ -1109,8 +1099,7 @@ describe('Trainee workout RPE weight range', () => {
         })
         await renderContent()
 
-        expect(kgBox()?.textContent).toContain('110.5–115 kg (RPE 8)')
-        expect(tSpy).toHaveBeenCalledWith('workouts.rpeWeightRange', { range: '110.5–115', rpe: 8 })
+        expect(kgBox()?.textContent).toBe('KG110.5/115workouts.rpeWeightRangeHint')
     })
 
     it('shows the effective weight, not the range, when both are present', async () => {
@@ -1139,6 +1128,5 @@ describe('Trainee workout RPE weight range', () => {
         await renderContent()
 
         expect(kgBox()?.textContent).toBe('KG-')
-        expect(tSpy).not.toHaveBeenCalledWith('workouts.rpeWeightRange', expect.anything())
     })
 })

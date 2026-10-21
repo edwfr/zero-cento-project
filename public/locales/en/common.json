@@ -103,6 +103,7 @@
             "ballastRange": "added weight {{range}} kg",
             "ballastCompact": "+{{weight}} kg",
             "ballastRangeCompact": "+{{range}} kg",
+            "ballastHint": "added weight",
             "bodyweight": "bodyweight only",
             "missingBodyweight": "ask your trainer",
             "total": "{{weight}} kg total",

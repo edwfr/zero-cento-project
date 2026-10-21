@@ -10,6 +10,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### fix(trainee): range RPE compatto nel box KG (22/10/2026)
+- Workout trainee: il box KG della card principale mostra il range proposto da RPE come `x/y` (es. `104/108.5`) invece di `104–108.5 kg (RPE 9.5)`. L'RPE ha già il suo box a destra e il testo lungo andava a capo su 4 righe. Rimossa la chiave i18n `workouts.rpeWeightRange` non più usata; sotto il range compare in grigio `range` (nuova chiave `workouts.rpeWeightRangeHint`).
+- Stesso box per gli esercizi zavorrati: zavorra fissa come numero grande (`17.5`), range come `52/57.5`, con sotto la dicitura `zavorra` (nuova chiave `common.bodyweightLoad.ballastHint`) al posto di `zavorra 52–57.5 kg`, come avviene per `n% 1RM`. `corpo libero` / `chiedi al trainer` invariati.
+
 ### fix(programs): colonna peso dell'editor leggibile (22/10/2026)
 - Editor programma: con il peso vuoto il range proposto da RPE va nel placeholder dell'input (verde, `≈ 106.5–111 kg`; zavorrati in forma compatta `+60.5–66 kg`, etichetta completa con totale nel tooltip; senza BW il range totale più l'avviso), scrivendo un valore lo si sovrascrive. Prima il testo stava a fianco dell'input, usciva dalla cella e copriva il REST. Con un valore scritto (`90%`, `-10%`, zavorra) l'input si stringe a `w-16` e il carico proposto sta inline a destra (`98 kg`, `+20 kg`); l'avviso BW mancante resta sotto. `-x%` dopo una riga pianificata solo a range RPE ora mostra il range scalato (`≈ 93.5–97.5 kg`, solo anteprima: `effectiveWeight` resta null perché manca una base in kg). Nuovo helper `formatCompactLoadLabel()` in `src/lib/bodyweight-load.ts` (chiavi `ballastCompact`/`ballastRangeCompact`; senza BW ricade sul totale); review, PDF e trainee restano su `zavorra X kg`. Colonne: PESO 10% → 14%, RPE 8% → 6% (come REST), ESERCIZIO e VARIANTE 25% → 24%.
 

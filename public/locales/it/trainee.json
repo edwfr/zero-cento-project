@@ -164,7 +164,6 @@
         ]
     },
     "workouts": {
-        "rpeWeightRange": "{{range}} kg (RPE {{rpe}})",
         "nextExercise": "Prossimo esercizio",
         "confirmContinue": "I seguenti esercizi non hanno dati: {{exercises}}. Vuoi continuare comunque?",
         "weekLabel": "Settimana {{number}}",
@@ -185,6 +184,7 @@
         "weightLabel": "Peso",
         "trainerSettingLabel": "Impostazione trainer",
         "calculatedWeightLabel": "Peso calcolato",
+        "rpeWeightRangeHint": "MIN-MAX",
         "calculatedWeightMissing": "Non disponibile",
         "previousExerciseShort": "precedente",
         "volume": "Volume",
