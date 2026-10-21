@@ -79,9 +79,30 @@ export function latestNormalizedOneRMByExercise(
 export async function loadTraineeOneRmMap(traineeId: string): Promise<TraineeOneRmMap> {
     const records = await prisma.personalRecord.findMany({
         where: { traineeId },
-        select: { exerciseId: true, reps: true, weight: true, recordDate: true },
+        select: {
+            exerciseId: true,
+            reps: true,
+            weight: true,
+            recordDate: true,
+            exercise: { select: { isBodyweightLoaded: true } },
+        },
     })
     return new Map(Object.entries(latestNormalizedOneRMByExercise(records)))
+}
+
+/** Latest bodyweight (kg) of a trainee, or null. Server only; never return it to a trainee. */
+export async function loadLatestBodyweightKg(traineeId: string): Promise<number | null> {
+    const row = await prisma.traineeMeasurement.findFirst({
+        where: { traineeId, metric: 'weight' },
+        orderBy: { measuredAt: 'desc' },
+        select: { value: true },
+    })
+    return row ? row.value : null
+}
+
+export interface BodyweightResolveOptions {
+    bodyweightKg?: number | null
+    isBodyweightLoaded?: (exerciseId: string) => boolean
 }
 
 /**
@@ -92,7 +113,8 @@ export async function loadTraineeOneRmMap(traineeId: string): Promise<TraineeOne
 export function resolveEffectiveWeight(
     workoutExercise: WorkoutExercise,
     oneRmMap: TraineeOneRmMap,
-    workoutSiblings: WorkoutExercise[]
+    workoutSiblings: WorkoutExercise[],
+    options: BodyweightResolveOptions = {}
 ): number | null {
     // No depth guard: each percentage_previous step moves to a strictly lower
     // order, so the chain always ends within the sibling count.
@@ -121,12 +143,21 @@ export function resolveEffectiveWeight(
                 throw new Error(CALCULATION_ERROR_KEYS.noPreviousOccurrenceFound)
             }
 
-            const baseWeight = resolveEffectiveWeight(
+            let baseWeight = resolveEffectiveWeight(
                 previousExercise,
                 oneRmMap,
-                workoutSiblings
+                workoutSiblings,
+                options
             )
             if (baseWeight === null) return null
+            // An absolute weight on a bodyweight-loaded exercise is ballast only.
+            if (
+                previousExercise.weightType === 'absolute' &&
+                options.isBodyweightLoaded?.(previousExercise.exerciseId)
+            ) {
+                if (options.bodyweightKg == null) return null
+                baseWeight += options.bodyweightKg
+            }
 
             const percentage = workoutExercise.weight || 0
             return baseWeight * (1 + percentage / 100)

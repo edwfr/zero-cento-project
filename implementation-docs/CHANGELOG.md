@@ -10,6 +10,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(weights): 1RM e risoluzione `-x%` con corpo libero zavorrato (22/10/2026)
+- `loadTraineeOneRmMap` legge il flag dell'esercizio e usa la tabella trazioni/dip; nuova `loadLatestBodyweightKg`.
+- `resolveEffectiveWeight` accetta `{ bodyweightKg, isBodyweightLoaded }`: il `-x%` dopo una riga `absolute` zavorrata parte da zavorra + BW (null senza BW).
+- Motivo: la base percentuale deve essere il carico totale, non la sola zavorra.
+
 ### feat(weights): helper zavorra per esercizi a corpo libero (22/10/2026)
 - Nuovo modulo puro `src/lib/bodyweight-load.ts`: conversione carico totale -> zavorra (arrotondata per eccesso a 0,5 kg), range, etichette trainee/trainer e `traineeWeightFields` che azzera carico totale e range per le righe zavorrate.
 - Test al 100% in `tests/unit/bodyweight-load.test.ts`.

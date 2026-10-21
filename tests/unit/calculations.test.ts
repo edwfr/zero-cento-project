@@ -12,6 +12,7 @@ import {
     normalizedOneRM,
     resolveEffectiveWeight,
     loadTraineeOneRmMap,
+    loadLatestBodyweightKg,
     latestPersonalRecordByExercise,
     latestNormalizedOneRMByExercise,
     recordNormalizedOneRM,
@@ -449,6 +450,88 @@ describe('loadTraineeOneRmMap', () => {
             where: { traineeId: 'trainee-1' },
             select: expect.objectContaining({ recordDate: true }),
         })
+    })
+})
+
+describe('loadTraineeOneRmMap with bodyweight-loaded flag', () => {
+    it('selects the exercise flag and uses the pull-up chart', async () => {
+        vi.mocked(prisma.personalRecord.findMany).mockResolvedValue([
+            { exerciseId: EX_1, weight: 110, reps: 3, recordDate: new Date('2026-01-01'), exercise: { isBodyweightLoaded: true } },
+        ] as never)
+
+        const map = await loadTraineeOneRmMap('t')
+
+        expect(map.get(EX_1)).toBe(121)
+        expect(prisma.personalRecord.findMany).toHaveBeenCalledWith({
+            where: { traineeId: 't' },
+            select: expect.objectContaining({
+                exercise: { select: { isBodyweightLoaded: true } },
+            }),
+        })
+    })
+})
+
+describe('loadLatestBodyweightKg', () => {
+    it('returns the latest weight measurement', async () => {
+        vi.mocked(prisma.traineeMeasurement.findFirst).mockResolvedValue({ value: 80.5 } as never)
+
+        expect(await loadLatestBodyweightKg('t')).toBe(80.5)
+        expect(prisma.traineeMeasurement.findFirst).toHaveBeenCalledWith({
+            where: { traineeId: 't', metric: 'weight' },
+            orderBy: { measuredAt: 'desc' },
+            select: { value: true },
+        })
+    })
+
+    it('returns null without measurements', async () => {
+        vi.mocked(prisma.traineeMeasurement.findFirst).mockResolvedValue(null as never)
+
+        expect(await loadLatestBodyweightKg('t')).toBeNull()
+    })
+})
+
+describe('resolveEffectiveWeight with ballast', () => {
+    const base = makeWorkoutExercise({ id: 'we-0', order: 1, weight: 20 })
+    const pct = (id: string, order: number) =>
+        makeWorkoutExercise({ id, order, weightType: 'percentage_previous', weight: -10 })
+
+    it('adds bodyweight to an absolute base', () => {
+        const cur = pct('we-1', 2)
+        expect(
+            resolveEffectiveWeight(cur, new Map(), [base, cur], {
+                bodyweightKg: 80,
+                isBodyweightLoaded: () => true,
+            })
+        ).toBeCloseTo(90, 6)
+    })
+
+    it('returns null when bodyweight is missing', () => {
+        const cur = pct('we-1', 2)
+        expect(
+            resolveEffectiveWeight(cur, new Map(), [base, cur], {
+                bodyweightKg: null,
+                isBodyweightLoaded: () => true,
+            })
+        ).toBeNull()
+    })
+
+    it('is unchanged without options or with a false predicate', () => {
+        const cur = pct('we-1', 2)
+        expect(resolveEffectiveWeight(cur, new Map(), [base, cur])).toBeCloseTo(18, 6)
+        expect(
+            resolveEffectiveWeight(cur, new Map(), [base, cur], { isBodyweightLoaded: () => false })
+        ).toBeCloseTo(18, 6)
+    })
+
+    it('chains: second base is already total', () => {
+        const a = pct('we-1', 2)
+        const b = pct('we-2', 3)
+        expect(
+            resolveEffectiveWeight(b, new Map(), [base, a, b], {
+                bodyweightKg: 80,
+                isBodyweightLoaded: () => true,
+            })
+        ).toBeCloseTo(81, 6)
     })
 })
 

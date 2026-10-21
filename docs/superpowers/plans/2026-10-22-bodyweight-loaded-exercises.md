@@ -372,14 +372,14 @@ esistenti passano senza modifiche.
 **Done when:** con il flag, `loadTraineeOneRmMap` usa la tabella trazioni/dip, e
 `resolveEffectiveWeight` su `-10%` dopo zavorra 20 con BW 80 restituisce `90`.
 
-- [ ] **Step 1: tests** (mock `prisma` come i test esistenti di `loadTraineeOneRmMap`):
+- [x] **Step 1: tests** (mock `prisma` come i test esistenti di `loadTraineeOneRmMap`):
   - `loadTraineeOneRmMap`: la `select` include `exercise: { select: { isBodyweightLoaded: true } }`; un PR 110×3 con il flag → mappa `e → 121`
   - `loadLatestBodyweightKg('t')`: `findFirst` chiamato con `where { traineeId: 't', metric: 'weight' }`, `orderBy { measuredAt: 'desc' }`; restituisce `value`; nessuna riga → `null`
   - `resolveEffectiveWeight`, riga precedente `absolute` 20 sullo stesso esercizio, corrente `percentage_previous -10`, opzioni `{ bodyweightKg: 80, isBodyweightLoaded: () => true }` → `90`
   - stesso caso con `bodyweightKg: null` → `null`
   - stesso caso senza opzioni (o `isBodyweightLoaded: () => false`) → `18` (invariato)
   - catena `absolute 20` → `-10%` → `-10%` con il flag e BW 80 → `81` (la seconda base è già totale)
-- [ ] **Step 2: implementation**
+- [x] **Step 2: implementation**
   - `loadTraineeOneRmMap`: aggiungere l'exercise select. La mappa usa già
     `latestNormalizedOneRMByExercise`, che dal Task 1 legge il flag.
   - Nuova funzione accanto a `loadTraineeOneRmMap`:
@@ -405,8 +405,8 @@ esistenti passano senza modifiche.
     `options.isBodyweightLoaded?.(previousExercise.exerciseId)`, allora
     `baseWeight = bodyweightKg == null ? null : baseWeight + bodyweightKg`. La chiamata
     ricorsiva passa `options`.
-- [ ] **Step 3: run the test command and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit**: `feat(weights): bodyweight-aware 1rm map and resolver`
+- [x] **Step 3: run the test command and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit**: `feat(weights): bodyweight-aware 1rm map and resolver`
 
 ---
 
