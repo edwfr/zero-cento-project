@@ -12,6 +12,7 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ### test(reps): usato il formato range con slash nei fixture (21/10/2026)
 - Fixture di test che usavano `8-10` come input valido passati a `8/10` (`tests/unit/schemas.test.ts`, `tests/integration/workout-templates.test.ts`, `tests/integration/programs-from-template.test.ts`). I test che verificano il rifiuto di `8-10` restano invariati.
+- `validWorkoutExercise` in `tests/unit/schemas.test.ts` usa `reps: '8'` (stringa): lo schema programma non accetta più reps numeriche.
 
 ### chore(db): normalizzato il formato range delle reps (21/10/2026)
 - Nuova migrazione `20261021000000_normalize_reps_slash`: converte `a-b` in `a/b` su `workout_exercises` e `workout_template_exercises` (idempotente, tocca solo `^\d+-\d+$`). Da applicare in produzione PRIMA del deploy del nuovo codice. Commenti Prisma di `reps` aggiornati al nuovo formato.

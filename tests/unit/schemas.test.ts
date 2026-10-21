@@ -764,7 +764,7 @@ import {
 const validWorkoutExercise = {
     exerciseId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
     sets: 3,
-    reps: 8,
+    reps: '8',
     weightType: 'absolute' as const,
     restTime: 'm2' as const,
     isWarmup: false,

@@ -238,3 +238,10 @@ export const repsSchema: z.ZodType<string>                     // z.string().ref
 - [x] **Step 2: implementation** — nessuna.
 - [x] **Step 3: run the test command and `npm run lint`**
 - [x] **Step 4: CHANGELOG entry and commit** — `test(reps): use slash range format in fixtures`
+
+## Deviations from the spec
+
+- **Task 2** — rimosso il ramo `number` di `reps` (nessun client invia numeri: `transform-utils.ts` usa `String(we.reps)`). Semplificate le espressioni morte `typeof reps === 'number' ? …` in tre route `exercises/` (`[exerciseId]`, `bulk`, root). Il fixture `validWorkoutExercise` di `tests/unit/schemas.test.ts` è passato da `reps: 8` a `'8'`.
+- **Task 3** — rimosse le aspettative `parseRepsValue('10+')` e `('8x3')`: il parser stretto ora restituisce 0. In `program-sbd-metrics.ts` e `workouts/[wId]/_content.tsx` l'import è `plannedReps as plannedRepsOf` per evitare shadowing con variabili locali. Nessun test dedicato per il percorso async `calculateEffectiveWeight` con `30"`/`max` (coperto `resolveEffectiveWeight`).
+- **Task 4** — non estratta né testata la validazione di riga: `getBaseValidationError` è una closure nel componente e chiama solo `isValidReps`, già coperto in Task 1. Aggiornato anche `tests/unit/WorkoutTemplateEditor.test.tsx` (`'8-10'` → `'8/10'`).
+- **Task 7** — `grep -rn "8-10" tests src` trova ancora i test che pinnano il rifiuto del trattino (intenzionale).
