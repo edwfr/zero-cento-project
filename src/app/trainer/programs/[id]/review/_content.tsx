@@ -13,7 +13,6 @@ import ProgramReportSection from '@/components/ProgramReportSection'
 import { getApiErrorMessage } from '@/lib/api-error'
 import ProgramPdfExportButton from '@/components/ProgramPdfExportButton'
 import { ProgramPdfData, ProgramPdfLabels } from '@/lib/program-pdf-export'
-import { parseRepsValue } from '@/lib/program-sbd-metrics'
 import type { ExerciseType } from '@/lib/exercise-type'
 import ExerciseTypeBadge from '@/components/ExerciseTypeBadge'
 
@@ -37,7 +36,7 @@ interface WorkoutExerciseSummary {
     reps: string
     variant?: string | null
     targetRpe: number | null
-    weightType: 'absolute' | 'percentage_1rm' | 'percentage_rm' | 'percentage_previous'
+    weightType: 'absolute' | 'percentage_1rm' | 'percentage_previous'
     weight: number | null
     effectiveWeight: number | null
     restTime: RestTimeValue
@@ -199,12 +198,10 @@ function resolveEffectiveWeightFallback({
     workoutExercise,
     previousEffectiveWeightByExerciseId,
     estimatedOneRMByExercise,
-    bestWeightByExerciseAndReps,
 }: {
     workoutExercise: WorkoutExerciseSummary
     previousEffectiveWeightByExerciseId: Record<string, number | null>
     estimatedOneRMByExercise: Record<string, number>
-    bestWeightByExerciseAndReps: Record<string, Record<number, number>>
 }): number | null {
     if (typeof workoutExercise.weight !== 'number') {
         return null
@@ -221,21 +218,6 @@ function resolveEffectiveWeightFallback({
         }
 
         return roundWeightValue((oneRm * workoutExercise.weight) / 100)
-    }
-
-    if (workoutExercise.weightType === 'percentage_rm') {
-        const targetReps = parseRepsValue(workoutExercise.reps)
-        if (targetReps <= 0) {
-            return null
-        }
-
-        const bestWeight =
-            bestWeightByExerciseAndReps[workoutExercise.exercise.id]?.[targetReps]
-        if (typeof bestWeight !== 'number') {
-            return null
-        }
-
-        return roundWeightValue((bestWeight * workoutExercise.weight) / 100)
     }
 
     const previousEffectiveWeight = previousEffectiveWeightByExerciseId[workoutExercise.exercise.id]
@@ -255,7 +237,6 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
     const [loading, setLoading] = useState(true)
     const [program, setProgram] = useState<ProgramSummary | null>(null)
     const [estimatedOneRMByExercise, setEstimatedOneRMByExercise] = useState<Record<string, number>>({})
-    const [bestWeightByExerciseAndReps, setBestWeightByExerciseAndReps] = useState<Record<string, Record<number, number>>>({})
     const [error, setError] = useState<string | null>(null)
     const [activeViewStep, setActiveViewStep] = useState<ViewWizardStep>('report')
 
@@ -283,7 +264,6 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
 
                 setProgram(data.data.program)
                 setEstimatedOneRMByExercise(data.data.estimatedOneRMByExercise ?? {})
-                setBestWeightByExerciseAndReps(data.data.bestWeightByExerciseAndReps ?? {})
             } catch (err: unknown) {
                 setError(err instanceof Error ? err.message : t('reviewProgram.errorLoading'))
             } finally {
@@ -808,7 +788,6 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                                                                             previousEffectiveWeightByExerciseId:
                                                                                                 effectiveWeightByExerciseId,
                                                                                             estimatedOneRMByExercise,
-                                                                                            bestWeightByExerciseAndReps,
                                                                                         })
                                                                                     const effectiveWeightValue =
                                                                                         typeof workoutExercise.effectiveWeight ===

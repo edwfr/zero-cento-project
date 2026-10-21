@@ -10,6 +10,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(review): 1RM stimato dal PR più recente (21/10/2026)
+- `GET /api/programs/[id]/review`: la query `$queryRaw … MAX(weight) GROUP BY reps` diventa `personalRecord.findMany` + `latestNormalizedOneRMByExercise`; la risposta non contiene più `bestWeightByExerciseAndReps`. La pagina review non legge più quel campo e perde il ramo `%RM`.
+- Ripristinati i fine riga CRLF di `calculations.ts` persi nel commit precedente.
+- Motivo: la MAX per reps perdeva `recordDate`, quindi un PR vecchio più alto vinceva su quello recente.
+
 ### feat(weights): %1RM dal PR più recente, occorrenza precedente più vicina (21/10/2026)
 - `src/lib/calculations.ts`: nuove `latestPersonalRecordByExercise` / `latestNormalizedOneRMByExercise` (PR con `recordDate` maggiore, a parità vince l'1RM teorico maggiore). `loadTraineePrMap` → `loadTraineeOneRmMap` (mappa `exerciseId → 1RM`). `percentage_previous` usa l'occorrenza precedente più vicina. Rimossi `percentage_rm` dal resolver, `calculateEffectiveWeight` e `bestNormalizedOneRMForExercise`.
 - Report planned-training-sets usa direttamente la mappa 1RM.

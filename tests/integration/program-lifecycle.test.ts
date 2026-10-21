@@ -45,13 +45,13 @@ describe('GET /api/programs/[id]/review', () => {
             traineeId: TRAINEE_ID,
         } as never)
         prismaMock.trainingProgram.findUnique.mockResolvedValue(programTree as never)
-        prismaMock.$queryRaw.mockResolvedValue([] as never)
+        prismaMock.personalRecord.findMany.mockResolvedValue([] as never)
     })
 
-    it('returns the program tree with the pre-aggregated records', async () => {
-        prismaMock.$queryRaw.mockResolvedValue([
-            { exerciseId: 'ex-1', reps: 1, maxWeight: 150 },
-            { exerciseId: 'ex-1', reps: 5, maxWeight: 130 },
+    it('returns the program tree with the 1RM of the most recent record', async () => {
+        prismaMock.personalRecord.findMany.mockResolvedValue([
+            { exerciseId: 'ex-1', reps: 1, weight: 150, recordDate: new Date('2026-06-01') },
+            { exerciseId: 'ex-1', reps: 5, weight: 120, recordDate: new Date('2026-09-30') },
         ] as never)
 
         const res = await reviewProgram(makeRequest(undefined, 'GET'), withIdParam(PROGRAM_ID))
@@ -59,9 +59,11 @@ describe('GET /api/programs/[id]/review', () => {
 
         expect(res.status).toBe(200)
         expect(body.data.program.id).toBe(PROGRAM_ID)
-        expect(body.data.bestWeightByExerciseAndReps['ex-1']).toEqual({ 1: 150, 5: 130 })
-        // 5 reps at 130 kg estimates a higher 1RM than a 150 kg single
-        expect(body.data.estimatedOneRMByExercise['ex-1']).toBeGreaterThan(150)
+        // 120x5 is more recent than 150x1: the older, heavier PR is ignored
+        expect(body.data.estimatedOneRMByExercise['ex-1']).toBeCloseTo(139, 0)
+        expect(prismaMock.personalRecord.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({ where: { traineeId: TRAINEE_ID } })
+        )
     })
 
     it('returns empty aggregates when the trainee has no records', async () => {
@@ -70,7 +72,7 @@ describe('GET /api/programs/[id]/review', () => {
 
         expect(res.status).toBe(200)
         expect(body.data.estimatedOneRMByExercise).toEqual({})
-        expect(body.data.bestWeightByExerciseAndReps).toEqual({})
+        expect(body.data.bestWeightByExerciseAndReps).toBeUndefined()
     })
 
     it('returns 404 when the program does not exist', async () => {
@@ -129,7 +131,7 @@ describe('GET /api/programs/[id]/review', () => {
     })
 
     it('returns 500 when a query fails', async () => {
-        prismaMock.$queryRaw.mockRejectedValue(new Error('db down'))
+        prismaMock.personalRecord.findMany.mockRejectedValue(new Error('db down'))
 
         const res = await reviewProgram(makeRequest(undefined, 'GET'), withIdParam(PROGRAM_ID))
         const body = await res.json()

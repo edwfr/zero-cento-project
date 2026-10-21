@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
-import { normalizedOneRM } from '@/lib/calculations'
+import { latestNormalizedOneRMByExercise } from '@/lib/calculations'
 import { handleApiError } from '@/lib/api-error-handler'
 
 /**
@@ -15,10 +15,8 @@ import { handleApiError } from '@/lib/api-error-handler'
  * Optimisations:
  * - Single HTTP round-trip instead of two sequential calls.
  * - Program and personal records are fetched in parallel (Promise.all).
- * - PR aggregation (best weight per exerciseId×reps) is done at DB level
- *   with a single GROUP BY query, replacing three client-side useMemo chains.
- * - Returns pre-computed `estimatedOneRMByExercise` and
- *   `bestWeightByExerciseAndReps` ready for the client to consume directly.
+ * - Returns pre-computed `estimatedOneRMByExercise` (theoretical 1RM of the
+ *   most recent PR of each exercise) ready for the client to consume directly.
  *
  * RBAC: trainer owner or admin only.
  */
@@ -44,8 +42,8 @@ export async function GET(
             return apiError('FORBIDDEN', 'You can only view your own programs', 403, undefined, 'program.viewDenied')
         }
 
-        // Step 2 — fetch program tree and best PRs in parallel
-        const [program, bestPRRows] = await Promise.all([
+        // Step 2 — fetch program tree and the trainee's PRs in parallel
+        const [program, records] = await Promise.all([
             prisma.trainingProgram.findUnique({
                 where: { id: programId },
                 select: {
@@ -121,19 +119,10 @@ export async function GET(
                 },
             }),
 
-            // DB-side aggregation: best weight per (exerciseId, reps) combination.
-            // Replaces fetchAll → groupBy → reduce chains on the client.
-            prisma.$queryRaw<
-                Array<{ exerciseId: string; reps: bigint; maxWeight: number }>
-            >`
-                SELECT
-                    "exerciseId",
-                    reps,
-                    MAX(weight) AS "maxWeight"
-                FROM personal_records
-                WHERE "traineeId" = ${programMeta.traineeId}
-                GROUP BY "exerciseId", reps
-            `,
+            prisma.personalRecord.findMany({
+                where: { traineeId: programMeta.traineeId },
+                select: { exerciseId: true, reps: true, weight: true, recordDate: true },
+            }),
         ])
 
         if (!program) {
@@ -141,30 +130,10 @@ export async function GET(
             return apiError('NOT_FOUND', 'Program not found', 404, undefined, 'program.notFound')
         }
 
-        // Build pre-aggregated maps — O(n) over the PR rows, done once on server.
+        // estimatedOneRMByExercise[exerciseId] = 1RM of the most recent PR
+        const estimatedOneRMByExercise = latestNormalizedOneRMByExercise(records)
 
-        // bestWeightByExerciseAndReps[exerciseId][reps] = maxWeight
-        const bestWeightByExerciseAndReps: Record<string, Record<number, number>> = {}
-        // estimatedOneRMByExercise[exerciseId] = best estimated 1RM across all rep counts
-        const estimatedOneRMByExercise: Record<string, number> = {}
-
-        for (const row of bestPRRows) {
-            const exId = row.exerciseId
-            const reps = Number(row.reps)
-            const weight = Number(row.maxWeight)
-
-            if (!bestWeightByExerciseAndReps[exId]) {
-                bestWeightByExerciseAndReps[exId] = {}
-            }
-            bestWeightByExerciseAndReps[exId][reps] = weight
-
-            const normalized = normalizedOneRM(weight, reps)
-            if (!estimatedOneRMByExercise[exId] || normalized > estimatedOneRMByExercise[exId]) {
-                estimatedOneRMByExercise[exId] = normalized
-            }
-        }
-
-        return apiSuccess({ program, estimatedOneRMByExercise, bestWeightByExerciseAndReps })
+        return apiSuccess({ program, estimatedOneRMByExercise })
     } catch (error) {
         return handleApiError(error, {
             logMessage: 'Error fetching program for review',

@@ -216,12 +216,12 @@ recente), non più `bestWeightByExerciseAndReps`; la pagina review non legge pi�
 Consumes (from `src/lib/calculations.ts`):
 `latestNormalizedOneRMByExercise(records: readonly { exerciseId: string; weight: number; reps: number; recordDate?: Date | string | null }[]): Record<string, number>`
 
-- [ ] **Step 1: tests** — `tests/integration/program-lifecycle.test.ts` (describe review):
+- [x] **Step 1: tests** — `tests/integration/program-lifecycle.test.ts` (describe review):
   - `beforeEach`: `prismaMock.personalRecord.findMany.mockResolvedValue([])` al posto di `$queryRaw`
   - PR 150×1 `2026-06-01` + 120×5 `2026-09-30` → `estimatedOneRMByExercise['ex-1'] === 139`
   - nessun PR → `estimatedOneRMByExercise` `{}`; `body.data.bestWeightByExerciseAndReps` `undefined`
   - `findMany` chiamato con `where: { traineeId: TRAINEE_ID }`
-- [ ] **Step 2: implementation**
+- [x] **Step 2: implementation**
   - Route: nel `Promise.all` sostituisci `$queryRaw` con
     `prisma.personalRecord.findMany({ where: { traineeId: programMeta.traineeId }, select: { exerciseId: true, reps: true, weight: true, recordDate: true } })`;
     `estimatedOneRMByExercise = latestNormalizedOneRMByExercise(records)`;
@@ -231,8 +231,8 @@ Consumes (from `src/lib/calculations.ts`):
     `percentage_rm` di `resolveEffectiveWeightFallback` (:226-240) e `'percentage_rm'`
     dal tipo locale (:40) (`formatPlannedWeight` non ha un ramo `%RM`). Se `parseRepsValue`
     resta inutilizzato, rimuovilo.
-- [ ] **Step 3: run the test command and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit** — `feat(review): estimated 1RM from latest PR`
+- [x] **Step 3: run the test command and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit** — `feat(review): estimated 1RM from latest PR`
 
 ---
 
