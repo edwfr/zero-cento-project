@@ -50,6 +50,7 @@ interface Exercise {
     id: string
     name: string
     type: ExerciseType
+    isBodyweightLoaded?: boolean
 }
 
 interface TestResultWeek {
@@ -226,8 +227,12 @@ export default function ProgramTestResultsContent() {
         setModalError(null)
     }
 
-    const calculateOneRepMax = (inputWeight: number, inputReps: number): number => {
-        return normalizedOneRM(inputWeight, inputReps)
+    const calculateOneRepMax = (
+        inputWeight: number,
+        inputReps: number,
+        isBodyweightLoaded = false
+    ): number => {
+        return normalizedOneRM(inputWeight, inputReps, isBodyweightLoaded)
     }
 
     const handleCreateRecord = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -685,7 +690,14 @@ export default function ProgramTestResultsContent() {
                                             {t('personalRecords.estimated1RM')}
                                         </div>
                                         <div className="text-2xl font-bold text-brand-primary">
-                                            {calculateOneRepMax(parseFloat(weight), parseInt(reps, 10))} kg
+                                            {calculateOneRepMax(
+                                                parseFloat(weight),
+                                                parseInt(reps, 10),
+                                                Boolean(
+                                                    exercises.find((ex) => ex.id === selectedExerciseId)
+                                                        ?.isBodyweightLoaded
+                                                )
+                                            )} kg
                                         </div>
                                     </div>
                                 )}

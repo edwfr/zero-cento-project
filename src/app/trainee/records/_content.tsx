@@ -28,6 +28,7 @@ interface PersonalRecord {
         id: string
         name: string
         type: ExerciseType
+        isBodyweightLoaded?: boolean
     }
 }
 
@@ -91,8 +92,8 @@ export default function PersonalRecordsContent() {
         void fetchRecords()
     }, [fetchRecords])
 
-    const calculateOneRepMax = useCallback((weight: number, reps: number): number => {
-        return normalizedOneRM(weight, reps)
+    const calculateOneRepMax = useCallback((weight: number, reps: number, isBodyweightLoaded = false): number => {
+        return normalizedOneRM(weight, reps, isBodyweightLoaded)
     }, [])
 
     const buildProgressChartData = useCallback((exerciseRecords: PersonalRecord[]): ProgressChartPoint[] => {
@@ -100,7 +101,7 @@ export default function PersonalRecordsContent() {
 
         exerciseRecords.forEach((record) => {
             const dateKey = normalizeRecordDateKey(record.recordDate)
-            const oneRepMax = calculateOneRepMax(record.weight, record.reps)
+            const oneRepMax = calculateOneRepMax(record.weight, record.reps, Boolean(record.exercise.isBodyweightLoaded))
 
             if (!chartRowsByDate.has(dateKey)) {
                 chartRowsByDate.set(dateKey, {
@@ -158,8 +159,8 @@ export default function PersonalRecordsContent() {
 
     const bestRecords = useMemo(() => Object.values(groupedRecords).map((prs) => {
         return prs.reduce((best, current) => {
-            const bestOrm = calculateOneRepMax(best.weight, best.reps)
-            const currentOrm = calculateOneRepMax(current.weight, current.reps)
+            const bestOrm = calculateOneRepMax(best.weight, best.reps, Boolean(best.exercise.isBodyweightLoaded))
+            const currentOrm = calculateOneRepMax(current.weight, current.reps, Boolean(current.exercise.isBodyweightLoaded))
             return currentOrm > bestOrm ? current : best
         })
     }), [calculateOneRepMax, groupedRecords])
@@ -293,7 +294,7 @@ export default function PersonalRecordsContent() {
                             {bestRecords
                                 .sort((a, b) => a.exercise.name.localeCompare(b.exercise.name))
                                 .map((pr) => {
-                                    const oneRepMax = calculateOneRepMax(pr.weight, pr.reps)
+                                    const oneRepMax = calculateOneRepMax(pr.weight, pr.reps, Boolean(pr.exercise.isBodyweightLoaded))
                                     const allPRs = groupedRecords[pr.exercise.id] || []
                                     const sortedProgressionRecords = [...allPRs].sort(
                                         (a, b) => new Date(b.recordDate).getTime() - new Date(a.recordDate).getTime()
@@ -431,7 +432,7 @@ export default function PersonalRecordsContent() {
                                                             </thead>
                                                             <tbody className="divide-y divide-gray-100 bg-white">
                                                                 {sortedProgressionRecords.map((record) => {
-                                                                    const orm = calculateOneRepMax(record.weight, record.reps)
+                                                                    const orm = calculateOneRepMax(record.weight, record.reps, Boolean(record.exercise.isBodyweightLoaded))
                                                                     return (
                                                                         <tr key={record.id} className="text-sm text-gray-700">
                                                                             <td className="px-3 py-2">{formatDate(record.recordDate)}</td>

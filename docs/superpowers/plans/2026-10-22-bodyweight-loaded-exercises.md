@@ -538,11 +538,11 @@ corporeo + zavorra)".
 **Done when:** un PR 110×3 di un esercizio zavorrato mostra 1RM `121 kg` in tutte e
 cinque le viste.
 
-- [ ] **Step 1: tests**: in `PersonalRecordsExplorer.test.tsx`, record
+- [x] **Step 1: tests**: in `PersonalRecordsExplorer.test.tsx`, record
   `{ weight: 110, reps: 3, exercise: { …, isBodyweightLoaded: true } }` senza
   `calculateOneRepMax` → testo `121`; lo stesso record senza flag → il valore Tuchscherer
   di oggi.
-- [ ] **Step 2: implementation**
+- [x] **Step 2: implementation**
   - Explorer: `RecordExercise` riceve `isBodyweightLoaded?: boolean`. La prop diventa
     `calculateOneRepMax?: (weight: number, reps: number, isBodyweightLoaded: boolean) => number`,
     con default `normalizedOneRM`. Ogni chiamata interna passa
@@ -557,8 +557,8 @@ cinque le viste.
     nell'`exercise` (Task 2).
   - Pagina test (`tests/_content.tsx` ~riga 230): `calculateOneRepMax` riceve il flag
     dell'esercizio scelto nel modale (dal catalogo caricato da `ensureExercisesLoaded`).
-- [ ] **Step 3: run the test command and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit**: `feat(records): bodyweight-loaded 1rm in record views`
+- [x] **Step 3: run the test command and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit**: `feat(records): bodyweight-loaded 1rm in record views`
 
 ---
 

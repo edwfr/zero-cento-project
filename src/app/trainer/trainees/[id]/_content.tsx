@@ -117,6 +117,7 @@ interface PersonalRecord {
         id: string
         name: string
         type: ExerciseType
+        isBodyweightLoaded?: boolean
     }
 }
 
@@ -876,7 +877,7 @@ export default function TraineeDetailContent() {
 
         oneRmFilteredRecords.forEach((record) => {
             const dateKey = normalizeRecordDateKey(record.recordDate)
-            const oneRepMax = normalizedOneRM(record.weight, record.reps)
+            const oneRepMax = normalizedOneRM(record.weight, record.reps, Boolean(record.exercise.isBodyweightLoaded))
 
             if (!chartRowsByDate.has(dateKey)) {
                 chartRowsByDate.set(dateKey, {
@@ -1482,7 +1483,7 @@ export default function TraineeDetailContent() {
                                                                 {record.reps} reps
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-brand-primary">
-                                                                {normalizedOneRM(record.weight, record.reps)} kg
+                                                                {normalizedOneRM(record.weight, record.reps, Boolean(record.exercise.isBodyweightLoaded))} kg
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                                                 {formatDate(record.recordDate)}

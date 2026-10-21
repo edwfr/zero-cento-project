@@ -10,6 +10,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(records): 1RM con flag zavorrato nelle viste dei massimali (22/10/2026)
+- `PersonalRecordsExplorer`, massimali trainer e trainee, scheda trainee e pagina test passano `isBodyweightLoaded` dell'esercizio a `normalizedOneRM`; la prop `calculateOneRepMax` dell'explorer riceve il flag come terzo argomento.
+- Motivo: un PR di trazioni/dip deve mostrare l'1RM della tabella corpo libero (110x3 -> 121 kg) in ogni vista.
+
 ### feat(records): tabella RPE trazioni/dip e pannello tabelle (22/10/2026)
 - `RPEOneRMTable` generalizzata con props opzionali (chart, livelli, reps, formato, note, prefisso i18n); nuovi `BodyweightRPETable` e `RpeTablesDrawer` (esportati da `index.ts`). La schermata massimali mostra la tabella trazioni/dip sotto Tuchscherer e l'etichetta del peso diventa "Carico totale" per gli esercizi zavorrati.
 - Motivo: il trainer deve vedere le percentuali usate per gli esercizi a corpo libero zavorrati.

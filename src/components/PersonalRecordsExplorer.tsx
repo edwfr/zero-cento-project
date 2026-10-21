@@ -26,6 +26,7 @@ interface RecordExercise {
     id: string
     name: string
     type?: string
+    isBodyweightLoaded?: boolean
 }
 
 export interface PersonalRecordExplorerItem {
@@ -61,7 +62,7 @@ interface PersonalRecordsExplorerProps {
     className?: string
     onEditRecord?: (record: PersonalRecordExplorerItem) => void
     onDeleteRecord?: (record: PersonalRecordExplorerItem) => void
-    calculateOneRepMax?: (weight: number, reps: number) => number
+    calculateOneRepMax?: (weight: number, reps: number, isBodyweightLoaded: boolean) => number
 }
 
 function normalizeRecordDateKey(recordDate: string): string {
@@ -104,7 +105,8 @@ export default function PersonalRecordsExplorer({
             return calculateOneRepMax
         }
 
-        return (weight: number, reps: number) => normalizedOneRM(weight, reps)
+        return (weight: number, reps: number, isBodyweightLoaded: boolean) =>
+            normalizedOneRM(weight, reps, isBodyweightLoaded)
     }, [calculateOneRepMax])
 
     const groupedRecords = useMemo<GroupedExerciseRecords[]>(() => {
@@ -214,7 +216,11 @@ export default function PersonalRecordsExplorer({
 
         filteredRecordsForChart.forEach((record) => {
             const dateKey = normalizeRecordDateKey(record.recordDate)
-            const oneRepMax = computeOneRepMax(record.weight, record.reps)
+            const oneRepMax = computeOneRepMax(
+                record.weight,
+                record.reps,
+                Boolean(record.exercise.isBodyweightLoaded)
+            )
 
             if (!chartRowsByDate.has(dateKey)) {
                 chartRowsByDate.set(dateKey, {
@@ -320,7 +326,8 @@ export default function PersonalRecordsExplorer({
                                     const isExpanded = Boolean(expandedExerciseIds[group.exercise.id])
                                     const latestOneRepMax = computeOneRepMax(
                                         group.latestRecord.weight,
-                                        group.latestRecord.reps
+                                        group.latestRecord.reps,
+                                        Boolean(group.exercise.isBodyweightLoaded)
                                     )
 
                                     return (
@@ -408,7 +415,8 @@ export default function PersonalRecordsExplorer({
                                                         group.historicalRecords.map((record) => {
                                                             const historicalOneRepMax = computeOneRepMax(
                                                                 record.weight,
-                                                                record.reps
+                                                                record.reps,
+                                                                Boolean(record.exercise.isBodyweightLoaded)
                                                             )
 
                                                             return (

@@ -139,3 +139,24 @@ describe('PersonalRecordsExplorer action buttons', () => {
         expect(onDelete).toHaveBeenCalledTimes(2)
     })
 })
+
+describe('PersonalRecordsExplorer bodyweight-loaded 1RM', () => {
+    const record = (isBodyweightLoaded?: boolean) => ({
+        id: 'rec-bw',
+        weight: 110,
+        reps: 3,
+        recordDate: '2026-01-15',
+        notes: null,
+        exercise: { id: 'ex-pu', name: 'Trazioni', type: 'fundamental', isBodyweightLoaded },
+    })
+
+    it('uses the bodyweight chart for a flagged exercise', () => {
+        render(<PersonalRecordsExplorer records={[record(true)]} />)
+        expect(screen.getAllByText(/121/).length).toBeGreaterThan(0)
+    })
+
+    it('keeps the Tuchscherer value without the flag', () => {
+        render(<PersonalRecordsExplorer records={[record(undefined)]} />)
+        expect(screen.queryByText(/121/)).not.toBeInTheDocument()
+    })
+})

@@ -230,8 +230,12 @@ export default function TraineeRecordsContent() {
         })
     }
 
-    const calculateOneRepMax = (weight: number, reps: number): number => {
-        return normalizedOneRM(weight, reps)
+    const calculateOneRepMax = (
+        weight: number,
+        reps: number,
+        isBodyweightLoaded = false
+    ): number => {
+        return normalizedOneRM(weight, reps, isBodyweightLoaded)
     }
 
     if (loading) {
@@ -426,7 +430,15 @@ export default function TraineeRecordsContent() {
                                             1RM Normalizzato (tabella RPE Mike Tuchscherer - RPE 10):
                                         </div>
                                         <div className="text-2xl font-bold text-brand-primary">
-                                            {calculateOneRepMax(parseFloat(weight), parseInt(reps))} kg
+                                            {calculateOneRepMax(
+                                                parseFloat(weight),
+                                                parseInt(reps),
+                                                Boolean(
+                                                    (editingRecord?.exercise ??
+                                                        exercises.find((ex) => ex.id === selectedExerciseId))
+                                                        ?.isBodyweightLoaded
+                                                )
+                                            )} kg
                                         </div>
                                     </div>
                                 )}
