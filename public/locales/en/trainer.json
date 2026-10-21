@@ -796,7 +796,7 @@
         "noVariantAvailable": "No suggested variants, you can type one manually",
         "unlockVariantInputTitle": "Unlock variant input",
         "lockVariantInputTitle": "Lock and return to variant menu",
-        "repsPlaceholder": "e.g. 8, 8-10, 6/8, 30\", max",
+        "repsPlaceholder": "e.g. 8, 8/10, 30\", max",
         "weightPlaceholder": "e.g. 100, -10%, %80",
         "assignedWeightPreview": "Set: {{weight}}",
         "effectiveWeightPreview": "{{weight}}",
@@ -827,7 +827,7 @@
         "rowValidationExercise": "Select an exercise",
         "rowValidationExclusiveFlags": "JumpSet and SuperSet cannot both be enabled",
         "rowValidationSets": "Invalid sets (1-20)",
-        "rowValidationReps": "Invalid reps (e.g. 8, 8-10, 6/8, 30\", max)",
+        "rowValidationReps": "Invalid reps (e.g. 8, 8/10, 30\", max; 1-50, seconds 1-300)",
         "rowValidationRpe": "Invalid RPE (5.0-10.0, step 0.5)",
         "rowValidationWeight": "Invalid weight",
         "rowValidationWithIndex": "Row {{index}}: {{error}}",
@@ -1088,7 +1088,7 @@
         },
         "deleted": "Workout Template deleted",
         "setsPlaceholder": "Sets",
-        "repsPlaceholder": "e.g. 8-10"
+        "repsPlaceholder": "e.g. 8/10"
     },
     "workoutDetail": {
         "backToOverview": "Back to Overview",

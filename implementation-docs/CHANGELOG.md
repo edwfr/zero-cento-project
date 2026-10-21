@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### chore(i18n): aggiornati i testi del formato reps (21/10/2026)
+- `trainer.json` (it/en) e `errors.json` (it/en): i suggerimenti e i messaggi di errore delle ripetizioni mostrano il formato ammesso `8, 8/10, 30", max` (rimosso il trattino `8-10` e l'esempio `6/8`); il messaggio di riga riporta i limiti 1-50 e secondi 1-300.
+
 ### refactor(reps): validazione condivisa nell'editor programma (21/10/2026)
 - `edit/_content.tsx` valida le reps di riga con `isValidReps` (rimosso `repsPattern`, che accettava `8-10`); eliminato `edit/reps-utils.ts` (non importato). `WorkoutTemplateEditor` non ha validazione locale delle reps.
 

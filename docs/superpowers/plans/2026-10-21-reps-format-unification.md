@@ -179,14 +179,14 @@ export const repsSchema: z.ZodType<string>                     // z.string().ref
 **Test command:** `npx vitest run tests/unit/lib/i18n-provider.test.tsx`
 **Done when:** nessuna stringa locale cita `8-10` o `6/8` come formato ammesso.
 
-- [ ] **Step 1: tests** — nessuno nuovo.
-- [ ] **Step 2: implementation** — con `Edit` mirati (BOM!):
+- [x] **Step 1: tests** — nessuno nuovo.
+- [x] **Step 2: implementation** — con `Edit` mirati (BOM!):
   - `trainer.json` riga 799 (`editProgram.repsPlaceholder`): it `Valori ammessi: 8, 8/10, 30", max`; en `e.g. 8, 8/10, 30", max`
   - `trainer.json` riga 830 (`rowValidationReps`): it `Ripetizioni non valide (es. 8, 8/10, 30", max; 1-50, secondi 1-300)`; en equivalente
   - `trainer.json` riga 1091 (`templates.repsPlaceholder`): `es. 8/10` / `e.g. 8/10`
   - `errors.json` riga 171 (`invalidReps`): it `Ripetizioni non valide (es. 8, 8/10, 30", max).`; en `Invalid reps (e.g. 8, 8/10, 30", max).`
-- [ ] **Step 3: run the test command**
-- [ ] **Step 4: CHANGELOG entry and commit** — `chore(i18n): update reps format hints`
+- [x] **Step 3: run the test command**
+- [x] **Step 4: CHANGELOG entry and commit** — `chore(i18n): update reps format hints`
 
 ---
 
