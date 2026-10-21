@@ -30,6 +30,8 @@ const workoutExerciseBaseSchema = z.object({
     ),
     weight: z.number().nullable().optional(),
     effectiveWeight: z.number().nullable().optional(),
+    rpeWeightMin: z.number().nullable().optional(),
+    rpeWeightMax: z.number().nullable().optional(),
     restTime: z.enum(['s30', 'm1', 'm1s30', 'm2', 'm3', 'm5'], {
         errorMap: () => ({ message: 'Tempo recupero non valido' }),
     }),
@@ -39,6 +41,49 @@ const workoutExerciseBaseSchema = z.object({
     notes: z.string().max(500).nullable().optional(),
     order: z.number().int().min(1),
 })
+
+function refineRpeWeightRange(
+    data: { rpeWeightMin?: number | null; rpeWeightMax?: number | null },
+    ctx: z.RefinementCtx
+) {
+    const min = data.rpeWeightMin ?? null
+    const max = data.rpeWeightMax ?? null
+
+    if ((min === null) !== (max === null)) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'validation.rpeWeightRangeIncomplete',
+            path: [min === null ? 'rpeWeightMin' : 'rpeWeightMax'],
+        })
+        return
+    }
+    if (min === null || max === null) return
+
+    let hasNegative = false
+    for (const [field, value] of [
+        ['rpeWeightMin', min],
+        ['rpeWeightMax', max],
+    ] as const) {
+        if (value < 0) {
+            hasNegative = true
+            ctx.addIssue({
+                code: z.ZodIssueCode.too_small,
+                minimum: 0,
+                type: 'number',
+                inclusive: true,
+                message: 'validation.rpeWeightMinZero',
+                path: [field],
+            })
+        }
+    }
+    if (!hasNegative && min > max) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'validation.rpeWeightRangeOrder',
+            path: ['rpeWeightMin'],
+        })
+    }
+}
 
 // Full schema with refinements
 export const workoutExerciseSchema = workoutExerciseBaseSchema.superRefine(
@@ -89,6 +134,8 @@ export const workoutExerciseSchema = workoutExerciseBaseSchema.superRefine(
                 path: ['isSuperSet'],
             })
         }
+
+        refineRpeWeightRange(data, ctx)
     }
 )
 
@@ -149,6 +196,7 @@ export const bulkSaveWorkoutExercisesSchema = z
                             path: ['isSuperSet'],
                         })
                     }
+                    refineRpeWeightRange(data, ctx)
                 })
         ),
         deletedExerciseIds: z.array(z.string().uuid()).optional().default([]),

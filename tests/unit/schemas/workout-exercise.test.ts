@@ -64,3 +64,54 @@ describe('updateWorkoutExerciseSchema reps', () => {
         expect(messages(result)).toContain('validation.invalidReps')
     })
 })
+
+describe('rpe weight range', () => {
+    const row = (extra: Record<string, unknown> = {}) => ({
+        ...base('5'),
+        weight: null,
+        targetRpe: 8,
+        ...extra,
+    })
+    const schemas = [
+        ['workoutExerciseSchema', (data: unknown) => workoutExerciseSchema.safeParse(data)],
+        [
+            'bulkSaveWorkoutExercisesSchema',
+            (data: unknown) => bulkSaveWorkoutExercisesSchema.safeParse({ exercises: [data] }),
+        ],
+    ] as const
+    const issues = (result: {
+        success: boolean
+        error?: { issues: { message: string; path: (string | number)[] }[] }
+    }) => result.error?.issues ?? []
+
+    describe.each(schemas)('%s', (_name, parse) => {
+        it('accepts a valid range', () => {
+            expect(parse(row({ rpeWeightMin: 110.5, rpeWeightMax: 115 })).success).toBe(true)
+        })
+        it('accepts missing range fields', () => {
+            expect(parse(row()).success).toBe(true)
+        })
+        it('accepts both fields null', () => {
+            expect(parse(row({ rpeWeightMin: null, rpeWeightMax: null })).success).toBe(true)
+        })
+        it('rejects min greater than max', () => {
+            const result = parse(row({ rpeWeightMin: 115, rpeWeightMax: 110.5 }))
+            expect(result.success).toBe(false)
+            const issue = issues(result).find((i) => i.message === 'validation.rpeWeightRangeOrder')
+            expect(issue?.path.slice(-1)).toEqual(['rpeWeightMin'])
+        })
+        it('rejects only min set', () => {
+            const result = parse(row({ rpeWeightMin: 110 }))
+            expect(result.success).toBe(false)
+            const issue = issues(result).find(
+                (i) => i.message === 'validation.rpeWeightRangeIncomplete'
+            )
+            expect(issue?.path.slice(-1)).toEqual(['rpeWeightMax'])
+        })
+        it('rejects negative values', () => {
+            const result = parse(row({ rpeWeightMin: -1, rpeWeightMax: 5 }))
+            expect(result.success).toBe(false)
+            expect(messages(result)).toContain('validation.rpeWeightMinZero')
+        })
+    })
+})

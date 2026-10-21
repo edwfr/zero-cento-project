@@ -181,13 +181,13 @@ exists, else new — check `ls tests/unit | grep rounding`)
 **Done when:** il client Prisma generato ha `rpeWeightMin`/`rpeWeightMax` su
 `WorkoutExercise` e Zod rifiuta `min > max`.
 
-- [ ] **Step 1: tests** (entrambi gli schemi `workoutExerciseSchema` e `bulkSaveWorkoutExercisesSchema`, riga base valida con `weight: null`, `targetRpe: 8`):
+- [x] **Step 1: tests** (entrambi gli schemi `workoutExerciseSchema` e `bulkSaveWorkoutExercisesSchema`, riga base valida con `weight: null`, `targetRpe: 8`):
   - `rpeWeightMin: 110.5, rpeWeightMax: 115` → ok
   - campi assenti → ok; entrambi `null` → ok
   - `min 115, max 110.5` → errore, path `['rpeWeightMin']`, message `validation.rpeWeightRangeOrder`
   - solo `rpeWeightMin: 110` → errore `validation.rpeWeightRangeIncomplete`, path `['rpeWeightMax']`
   - `rpeWeightMin: -1, rpeWeightMax: 5` → errore `validation.rpeWeightMinZero`
-- [ ] **Step 2: implementation**
+- [x] **Step 2: implementation**
   - `schema.prisma`, dopo `effectiveWeight`:
     ```prisma
     rpeWeightMin Float? // kg, range proposto da RPE (congelato al salvataggio)
@@ -203,8 +203,8 @@ exists, else new — check `ls tests/unit | grep rounding`)
     idem `rpeWeightMax`. Un helper `refineRpeWeightRange(data, ctx)` (non esportato)
     con le tre regole sopra, chiamato da entrambi i `superRefine`. Le chiavi i18n arrivano
     in Task 5.
-- [ ] **Step 3: run the test command and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit** — `feat(db): add rpe weight range columns`.
+- [x] **Step 3: run the test command and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit** — `feat(db): add rpe weight range columns`.
   Nel CHANGELOG un bullet **Deploy**: migrazione da applicare con `npm run prisma:migrate:prod`
   prima del codice.
 

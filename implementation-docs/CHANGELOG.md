@@ -10,6 +10,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(db): colonne range di peso da RPE (21/10/2026)
+- `prisma/schema.prisma`: `WorkoutExercise.rpeWeightMin` / `rpeWeightMax` (`Float?`, kg, range proposto da RPE congelato al salvataggio). Migrazione scritta a mano `20261021140000_add_rpe_weight_range` (due colonne `DOUBLE PRECISION` nullable su `workout_exercises`).
+- `src/schemas/workout-exercise.ts`: campi opzionali/nullable nello schema base e helper condiviso `refineRpeWeightRange` chiamato dai due `superRefine` (`workoutExerciseSchema`, `bulkSaveWorkoutExercisesSchema`): entrambi valorizzati o entrambi null (`validation.rpeWeightRangeIncomplete`), `>= 0` (`validation.rpeWeightMinZero`), `min <= max` (`validation.rpeWeightRangeOrder`). Test in `tests/unit/schemas/workout-exercise.test.ts`.
+- **Deploy:** applicare la migrazione con `npm run prisma:migrate:prod` prima del codice.
+- Motivo: persistenza e validazione del range di peso proposto da RPE (piano `2026-10-21-rpe-weight-range`, Task 2).
+
 ### feat(weights): helper rpeWeightRange (21/10/2026)
 - `src/lib/calculations.ts`: nuova `rpeWeightRange(oneRm, reps, rpe)` → `{ min, max }` = 1RM × % tabella Tuchscherer ± 2%, ogni estremo arrotondato per eccesso a 0,5 kg con `roundWeightValue`; `null` senza 1RM, con reps fuori 1–12 o RPE fuori tabella. Esempio: 1RM 139, 5 @ RPE 8 → 110.5–115. `src/lib/weight-rounding.ts`: `formatWeightRange(min, max)` → `110.5–115`. Test in `calculations.test.ts` e `lib/weight-rounding.test.ts`.
 - Motivo: base unica per il range di peso proposto da RPE (piano `2026-10-21-rpe-weight-range`, Task 1).
