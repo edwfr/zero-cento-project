@@ -10,6 +10,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(programs): carico totale e zavorra in review e PDF trainer (22/10/2026)
+- `GET /api/programs/[id]/review`: le select dei PR e degli esercizi includono `isBodyweightLoaded` (l'1RM degli esercizi zavorrati usa la tabella trazioni/dip), la risposta aggiunge `latestBodyweightKg` (letto solo se il programma ha righe zavorrate).
+- Pagina review e PDF trainer: per le righe zavorrate `carico totale · zavorra X kg`, avviso se il peso corporeo non e' registrato; base del `-x%` successivo a una riga in kg = zavorra + BW.
+- Motivo: il trainer deve vedere carico totale e zavorra, e l'1RM della review non deve usare Tuchscherer per trazioni/dip.
+
 ### feat(programs): carichi zavorrati nell'editor del programma (22/10/2026)
 - Pagina modifica programma: per gli esercizi zavorrati anteprima `carico totale · zavorra X kg` (o `zavorra X kg (Y totali)` per i kg), range RPE dalla tabella trazioni/dip, base del `-x%` successivo a un valore in kg = zavorra + peso corporeo (ultima misurazione), avviso se il peso corporeo manca. Nuovo pulsante e pannello con le tabelle RPE. 1RM dei PR calcolato con `recordNormalizedOneRM`.
 - Test: pagina modifica esercizio carica e invia `isBodyweightLoaded`.

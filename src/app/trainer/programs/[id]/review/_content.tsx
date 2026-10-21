@@ -21,6 +21,7 @@ import {
     roundWeightValue,
 } from '@/lib/weight-rounding'
 import ExerciseTypeBadge from '@/components/ExerciseTypeBadge'
+import { formatTrainerLoadLabel } from '@/lib/bodyweight-load'
 
 const PRIMARY_COLOR = 'rgb(var(--brand-primary))'
 type RestTimeValue = 's30' | 'm1' | 'm1s30' | 'm2' | 'm3' | 'm5'
@@ -56,6 +57,7 @@ interface WorkoutExerciseSummary {
         id: string
         name: string
         type: ExerciseType
+        isBodyweightLoaded?: boolean
         movementPattern: MovementPatternSummary | null
         exerciseMuscleGroups: {
             coefficient: number
@@ -234,11 +236,12 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
     const params = useParams()
     const searchParams = useSearchParams()
     const programId = params.id as string
-    const { t, i18n } = useTranslation(['trainer', 'navigation'])
+    const { t, i18n } = useTranslation(['trainer', 'navigation', 'common'])
 
     const [loading, setLoading] = useState(true)
     const [program, setProgram] = useState<ProgramSummary | null>(null)
     const [estimatedOneRMByExercise, setEstimatedOneRMByExercise] = useState<Record<string, number>>({})
+    const [latestBodyweightKg, setLatestBodyweightKg] = useState<number | null>(null)
     const [error, setError] = useState<string | null>(null)
     const [activeViewStep, setActiveViewStep] = useState<ViewWizardStep>('report')
 
@@ -266,6 +269,7 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
 
                 setProgram(data.data.program)
                 setEstimatedOneRMByExercise(data.data.estimatedOneRMByExercise ?? {})
+                setLatestBodyweightKg(data.data.latestBodyweightKg ?? null)
             } catch (err: unknown) {
                 setError(err instanceof Error ? err.message : t('reviewProgram.errorLoading'))
             } finally {
@@ -394,11 +398,18 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                             rpeWeightMin: workoutExercise.rpeWeightMin,
                             rpeWeightMax: workoutExercise.rpeWeightMax,
                             restTime: workoutExercise.restTime,
+                            weightLabelOverride: workoutExercise.exercise.isBodyweightLoaded
+                                ? (formatTrainerLoadLabel(
+                                      workoutExercise,
+                                      latestBodyweightKg,
+                                      (key, options) => t(`common:${key}`, options) as string
+                                  )?.label ?? null)
+                                : null,
                         })),
                     })),
             })),
         }
-    }, [program])
+    }, [program, latestBodyweightKg, t])
 
     const locale = i18n.language === 'en' ? 'en-GB' : 'it-IT'
 
@@ -799,13 +810,36 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                                                                             ? workoutExercise.effectiveWeight
                                                                                             : fallbackEffectiveWeight
 
+                                                                                    const isBodyweightLoaded = Boolean(
+                                                                                        workoutExercise.exercise
+                                                                                            .isBodyweightLoaded
+                                                                                    )
+                                                                                    const bodyweightLoad = isBodyweightLoaded
+                                                                                        ? formatTrainerLoadLabel(
+                                                                                            workoutExercise,
+                                                                                            latestBodyweightKg,
+                                                                                            (key, options) =>
+                                                                                                t(`common:${key}`, options) as string
+                                                                                        )
+                                                                                        : null
+
                                                                                     if (
                                                                                         typeof effectiveWeightValue ===
                                                                                         'number'
                                                                                     ) {
+                                                                                        // Ballasted absolute rows store the ballast: the base of a
+                                                                                        // following -x% is ballast + body weight.
                                                                                         effectiveWeightByExerciseId[
                                                                                             workoutExercise.exercise.id
-                                                                                        ] = effectiveWeightValue
+                                                                                        ] =
+                                                                                            isBodyweightLoaded &&
+                                                                                            workoutExercise.weightType ===
+                                                                                                'absolute'
+                                                                                                ? latestBodyweightKg == null
+                                                                                                    ? null
+                                                                                                    : effectiveWeightValue +
+                                                                                                      latestBodyweightKg
+                                                                                                : effectiveWeightValue
                                                                                     }
 
                                                                                     const effectiveWeight =
@@ -839,7 +873,9 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                                                                                 )}
                                                                                             </p>
                                                                                             <p className="text-xs font-semibold text-emerald-700">
-                                                                                                {rpeWeightRange !== null
+                                                                                                {bodyweightLoad !== null
+                                                                                                    ? bodyweightLoad.label
+                                                                                                    : rpeWeightRange !== null
                                                                                                     ? t(
                                                                                                         'reviewProgram.tableWeightRpeRange',
                                                                                                         {
@@ -853,6 +889,11 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                                                                                         }
                                                                                                     )}
                                                                                             </p>
+                                                                                            {bodyweightLoad?.missingBodyweight && (
+                                                                                                <p className="text-xs text-state-warning">
+                                                                                                    {t('common:common.bodyweightLoad.bodyweightNotRecorded')}
+                                                                                                </p>
+                                                                                            )}
                                                                                         </div>
                                                                                     )
                                                                                 })()}

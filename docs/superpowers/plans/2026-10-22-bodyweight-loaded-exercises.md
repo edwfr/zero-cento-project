@@ -725,11 +725,11 @@ due tabelle.
 **Done when:** review e PDF trainer mostrano `97.5 kg totali · zavorra 17.5 kg` per una
 riga zavorrata.
 
-- [ ] **Step 1: tests** (route):
+- [x] **Step 1: tests** (route):
   - la `select` dei PR include `exercise: { select: { isBodyweightLoaded: true } }`; PR 110×3 con il flag → `estimatedOneRMByExercise.e === 121`
   - la `select` di `workoutExercises.exercise` include `isBodyweightLoaded: true`
   - con una riga zavorrata → `latestBodyweightKg` uguale al `value` della misura; senza righe zavorrate → `latestBodyweightKg: null` e `traineeMeasurement.findFirst` non chiamato
-- [ ] **Step 2: implementation**
+- [x] **Step 2: implementation**
   - Route: le due `select`, `loadLatestBodyweightKg(programMeta.traineeId)` (solo se
     serve), risposta `{ program, estimatedOneRMByExercise, latestBodyweightKg }`.
   - Review `_content.tsx`: tipo (~riga 46) con `exercise.isBodyweightLoaded`, stato
@@ -740,5 +740,5 @@ riga zavorrata.
     (base del `-x%` di fallback).
   - Mapping PDF (~riga 390): `weightLabelOverride` = la stessa label trainer per le righe
     zavorrate, altrimenti `null`.
-- [ ] **Step 3: run the test command, `npm run type-check`, then the full `npm run test:unit` and `npm run lint`**
-- [ ] **Step 4: CHANGELOG entry and commit**: `feat(programs): show total and ballast in review and pdf`
+- [x] **Step 3: run the test command, `npm run type-check`, then the full `npm run test:unit` and `npm run lint`**
+- [x] **Step 4: CHANGELOG entry and commit**: `feat(programs): show total and ballast in review and pdf`

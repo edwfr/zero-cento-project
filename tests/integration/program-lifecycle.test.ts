@@ -66,6 +66,67 @@ describe('GET /api/programs/[id]/review', () => {
         )
     })
 
+    it('uses the bodyweight table for flagged exercises and selects the flag', async () => {
+        prismaMock.personalRecord.findMany.mockResolvedValue([
+            {
+                exerciseId: 'e',
+                reps: 3,
+                weight: 110,
+                recordDate: new Date('2026-09-30'),
+                exercise: { isBodyweightLoaded: true },
+            },
+        ] as never)
+
+        const res = await reviewProgram(makeRequest(undefined, 'GET'), withIdParam(PROGRAM_ID))
+        const body = await res.json()
+
+        expect(body.data.estimatedOneRMByExercise.e).toBe(121)
+        expect(prismaMock.personalRecord.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({
+                select: expect.objectContaining({
+                    exercise: { select: { isBodyweightLoaded: true } },
+                }),
+            })
+        )
+        const call = prismaMock.trainingProgram.findUnique.mock.calls[0][0] as never as {
+            select: { weeks: { select: { workouts: { select: { workoutExercises: { select: { exercise: { select: Record<string, unknown> } } } } } } } }
+        }
+        expect(
+            call.select.weeks.select.workouts.select.workoutExercises.select.exercise.select
+                .isBodyweightLoaded
+        ).toBe(true)
+    })
+
+    it('returns latestBodyweightKg only when a bodyweight-loaded row exists', async () => {
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
+            ...programTree,
+            weeks: [
+                {
+                    workouts: [
+                        { workoutExercises: [{ exercise: { isBodyweightLoaded: true } }] },
+                    ],
+                },
+            ],
+        } as never)
+        prismaMock.traineeMeasurement.findFirst.mockResolvedValue({ value: 80 } as never)
+
+        const res = await reviewProgram(makeRequest(undefined, 'GET'), withIdParam(PROGRAM_ID))
+        const body = await res.json()
+
+        expect(body.data.latestBodyweightKg).toBe(80)
+        expect(prismaMock.traineeMeasurement.findFirst).toHaveBeenCalledWith(
+            expect.objectContaining({ where: { traineeId: TRAINEE_ID, metric: 'weight' } })
+        )
+    })
+
+    it('returns null latestBodyweightKg and skips the query without flagged rows', async () => {
+        const res = await reviewProgram(makeRequest(undefined, 'GET'), withIdParam(PROGRAM_ID))
+        const body = await res.json()
+
+        expect(body.data.latestBodyweightKg).toBeNull()
+        expect(prismaMock.traineeMeasurement.findFirst).not.toHaveBeenCalled()
+    })
+
     it('returns empty aggregates when the trainee has no records', async () => {
         const res = await reviewProgram(makeRequest(undefined, 'GET'), withIdParam(PROGRAM_ID))
         const body = await res.json()

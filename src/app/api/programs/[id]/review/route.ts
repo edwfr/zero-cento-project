@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
-import { latestNormalizedOneRMByExercise } from '@/lib/calculations'
+import { latestNormalizedOneRMByExercise, loadLatestBodyweightKg } from '@/lib/calculations'
 import { handleApiError } from '@/lib/api-error-handler'
 
 /**
@@ -93,6 +93,7 @@ export async function GET(
                                                     id: true,
                                                     name: true,
                                                     type: true,
+                                                    isBodyweightLoaded: true,
                                                     movementPattern: {
                                                         select: {
                                                             id: true,
@@ -123,7 +124,13 @@ export async function GET(
 
             prisma.personalRecord.findMany({
                 where: { traineeId: programMeta.traineeId },
-                select: { exerciseId: true, reps: true, weight: true, recordDate: true },
+                select: {
+                    exerciseId: true,
+                    reps: true,
+                    weight: true,
+                    recordDate: true,
+                    exercise: { select: { isBodyweightLoaded: true } },
+                },
             }),
         ])
 
@@ -135,7 +142,17 @@ export async function GET(
         // estimatedOneRMByExercise[exerciseId] = 1RM of the most recent PR
         const estimatedOneRMByExercise = latestNormalizedOneRMByExercise(records)
 
-        return apiSuccess({ program, estimatedOneRMByExercise })
+        // Latest bodyweight, read only when the program has a bodyweight-loaded row
+        const hasBodyweightLoaded = program.weeks.some((week) =>
+            week.workouts.some((workout) =>
+                workout.workoutExercises.some((we) => we.exercise.isBodyweightLoaded)
+            )
+        )
+        const latestBodyweightKg = hasBodyweightLoaded
+            ? await loadLatestBodyweightKg(programMeta.traineeId)
+            : null
+
+        return apiSuccess({ program, estimatedOneRMByExercise, latestBodyweightKg })
     } catch (error) {
         return handleApiError(error, {
             logMessage: 'Error fetching program for review',
