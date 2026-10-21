@@ -106,6 +106,16 @@ describe('GET /api/personal-records', () => {
         vi.clearAllMocks()
     })
 
+    it('selects isBodyweightLoaded on the exercise', async () => {
+        asTrainee()
+        prismaMock.personalRecord.findMany.mockResolvedValue([mockRecord] as never)
+
+        await GET(makeRequest())
+
+        const arg = callArg(prismaMock.personalRecord.findMany.mock.calls[0][0])
+        expect(arg.include.exercise.select.isBodyweightLoaded).toBe(true)
+    })
+
     it('returns own records for trainee', async () => {
         asTrainee()
         prismaMock.personalRecord.findMany.mockResolvedValue([mockRecord] as never)

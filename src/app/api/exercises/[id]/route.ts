@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
+import { z } from 'zod'
 import { exerciseSchema } from '@/schemas/exercise'
 import { logger } from '@/lib/logger'
 import { handleApiError } from '@/lib/api-error-handler'
@@ -87,12 +88,15 @@ export async function PUT(
         const session = await requireRole(['admin', 'trainer'])
         const body = await request.json()
 
-        const validation = exerciseSchema.safeParse(body)
+        // PUT replaces the exercise but must not reset the flag when it is omitted
+        const validation = exerciseSchema
+            .extend({ isBodyweightLoaded: z.boolean().optional() })
+            .safeParse(body)
         if (!validation.success) {
             return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors, 'validation.invalidInput')
         }
 
-        const { name, description, youtubeUrl, type, movementPatternId, muscleGroups, notes } = validation.data
+        const { name, description, youtubeUrl, type, movementPatternId, muscleGroups, notes, isBodyweightLoaded } = validation.data
 
         // Check if exercise exists
         const existing = await prisma.exercise.findUnique({
@@ -155,6 +159,7 @@ export async function PUT(
                 type,
                 movementPatternId,
                 notes: notes || [],
+                isBodyweightLoaded,
                 updatedBy: session.user.id,
                 updatedAt: new Date(),
                 exerciseMuscleGroups: {

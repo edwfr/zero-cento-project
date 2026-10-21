@@ -187,6 +187,20 @@ const validExercise = {
 }
 
 describe('exerciseSchema', () => {
+    it('defaults isBodyweightLoaded to false', () => {
+        const r = exerciseSchema.parse(validExercise)
+        expect(r.isBodyweightLoaded).toBe(false)
+    })
+
+    it('accepts isBodyweightLoaded true', () => {
+        const r = exerciseSchema.parse({ ...validExercise, isBodyweightLoaded: true })
+        expect(r.isBodyweightLoaded).toBe(true)
+    })
+
+    it('rejects non-boolean isBodyweightLoaded', () => {
+        expect(exerciseSchema.safeParse({ ...validExercise, isBodyweightLoaded: 'yes' }).success).toBe(false)
+    })
+
     it('accepts valid exercise', () => {
         expect(exerciseSchema.safeParse(validExercise).success).toBe(true)
     })
@@ -259,6 +273,11 @@ describe('exerciseSchema', () => {
 })
 
 describe('updateExerciseSchema', () => {
+    it('does not inject isBodyweightLoaded on empty input', () => {
+        const result = updateExerciseSchema.parse({})
+        expect('isBodyweightLoaded' in result).toBe(false)
+    })
+
     it('accepts empty object (all fields optional)', () => {
         expect(updateExerciseSchema.safeParse({}).success).toBe(true)
     })

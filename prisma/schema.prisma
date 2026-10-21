@@ -248,6 +248,7 @@ model Exercise {
   type              ExerciseType
   movementPatternId String
   notes             String[]     // Array di note/varianti
+  isBodyweightLoaded Boolean   @default(false) // trazioni/dip zavorrati: PR e % su BW + zavorra
   createdBy         String       // Solo audit trail, NON determina ownership
   createdAt         DateTime     @default(now())
   updatedBy         String?      // Chi ha modificato per ultimo (null = mai modificato)

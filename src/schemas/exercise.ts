@@ -30,6 +30,7 @@ export const exerciseSchema = z.object({
     movementPatternId: z.string().uuid('validation.invalidMovementPatternId'),
     muscleGroups: z.array(muscleGroupAssignmentSchema).default([]),
     notes: z.array(z.string().max(200)).optional(),
+    isBodyweightLoaded: z.boolean().default(false),
 })
 
 export const updateExerciseSchema = exerciseSchema.partial()

@@ -84,6 +84,13 @@ zavorra sul server e **non inviano mai** BW né carico totale per le righe zavor
   (`prisma migrate dev` applica al DB di `.env`, che può essere quello di produzione).
   Nessun comando `migrate` in questo piano; si valida con `npx prisma validate` e
   `npx prisma generate`. Il deploy applica con `npm run prisma:migrate:prod`.
+- **Tipo `PersonalRecordInput.exercise` (Task 1).** Il tipo del piano
+  `{ isBodyweightLoaded?: boolean | null } | null` dava 13 errori di type-check nelle
+  pagine edit e workouts/[wId] (weak type detection). Usato
+  `({ isBodyweightLoaded?: boolean | null } & object) | null`.
+- **PUT esercizio (Task 2).** `PUT /api/exercises/[id]` valida con `exerciseSchema` (non
+  `updateExerciseSchema`), quindi il default `false` azzerava il flag. La route usa
+  `exerciseSchema.extend({ isBodyweightLoaded: z.boolean().optional() })`.
 
 ## Traps found while exploring
 
@@ -252,13 +259,13 @@ esistenti passano senza modifiche.
 **Done when:** il client Prisma ha `Exercise.isBodyweightLoaded`. POST e PUT di
 `/api/exercises` lo salvano. `GET /api/personal-records` lo restituisce dentro `exercise`.
 
-- [ ] **Step 1: tests**
+- [x] **Step 1: tests**
   - `exerciseSchema` senza il campo → `isBodyweightLoaded === false`; con `true` → `true`; con `'yes'` → errore
   - `updateExerciseSchema.parse({})` → nessuna chiave `isBodyweightLoaded` (`'isBodyweightLoaded' in result === false`)
   - POST `/api/exercises` con `isBodyweightLoaded: true` → `prisma.exercise.create` chiamato con `data.isBodyweightLoaded === true`
   - PUT `/api/exercises/[id]` con `{ isBodyweightLoaded: true }` → update con `true`; PUT senza il campo → `data.isBodyweightLoaded === undefined`
   - GET `/api/personal-records` → la `select` di `exercise` contiene `isBodyweightLoaded: true` (asserire sull'argomento di `findMany`)
-- [ ] **Step 2: implementation**
+- [x] **Step 2: implementation**
   - `schema.prisma`, nel `model Exercise` dopo `notes`:
     ```prisma
     isBodyweightLoaded Boolean   @default(false) // trazioni/dip zavorrati: PR e % su BW + zavorra
@@ -275,8 +282,8 @@ esistenti passano senza modifiche.
   - `personal-records/route.ts` GET (~riga 64): `isBodyweightLoaded: true` nella
     `select` di `exercise`. Fare lo stesso nelle risposte POST/PUT (`personal-records/[id]`)
     se restituiscono `exercise` con `select`.
-- [ ] **Step 3: run the test command and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit**: `feat(db): add exercise isBodyweightLoaded flag`.
+- [x] **Step 3: run the test command and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit**: `feat(db): add exercise isBodyweightLoaded flag`.
   Nel CHANGELOG aggiungere un bullet **Deploy**: la migrazione va applicata con
   `npm run prisma:migrate:prod` prima del codice.
 

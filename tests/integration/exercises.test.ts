@@ -26,6 +26,7 @@ vi.mock('@/lib/logger', () => ({
 import { GET as listExercises, POST as createExercise } from '@/app/api/exercises/route'
 import { GET as getExercise, PUT as updateExercise, DELETE as deleteExercise } from '@/app/api/exercises/[id]/route'
 import { prismaMock } from '../helpers/prisma-mock'
+import { callArg } from '../helpers/call-args'
 import { asTrainer, asAdmin, asTrainee, asUnauthenticated, asForbidden } from '../helpers/auth-mock'
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -447,6 +448,28 @@ describe('POST /api/exercises', () => {
         notes: ['Keep back straight'],
     }
 
+    it('saves isBodyweightLoaded on create', async () => {
+        asTrainer()
+        prismaMock.exercise.findFirst.mockResolvedValue(null)
+        prismaMock.movementPattern.findUnique.mockResolvedValue(mockMovementPattern as never)
+        prismaMock.muscleGroup.findMany.mockResolvedValue(mockMuscleGroups as never)
+        prismaMock.exercise.create.mockResolvedValue(mockExerciseWithRelations as never)
+
+        const req = makeListRequest('http://localhost:3000/api/exercises', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...validPayload, isBodyweightLoaded: true }),
+        })
+        const res = await createExercise(req)
+
+        expect(res.status).toBe(201)
+        expect(prismaMock.exercise.create).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({ isBodyweightLoaded: true }),
+            })
+        )
+    })
+
     it('trainer creates exercise with movement pattern and muscle group relations', async () => {
         asTrainer()
         prismaMock.exercise.findFirst.mockResolvedValue(null) // no duplicate
@@ -781,6 +804,38 @@ describe('PUT /api/exercises/[id]', () => {
                 }),
             })
         )
+    })
+
+    async function putExercise(payload: Record<string, unknown>) {
+        asTrainer()
+        prismaMock.exercise.findUnique.mockResolvedValue(mockExerciseWithRelations as never)
+        prismaMock.exercise.findFirst.mockResolvedValue(null)
+        prismaMock.movementPattern.findUnique.mockResolvedValue(mockMovementPattern as never)
+        prismaMock.muscleGroup.findMany.mockResolvedValue(mockMuscleGroups as never)
+        prismaMock.exercise.update.mockResolvedValue(mockExerciseWithRelations as never)
+        const req = makeDetailRequest(EX_ID_1, `http://localhost:3000/api/exercises/${EX_ID_1}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        })
+        return updateExercise(req, withIdParam(EX_ID_1))
+    }
+
+    it('saves isBodyweightLoaded true on update', async () => {
+        const res = await putExercise({ ...updatePayload, isBodyweightLoaded: true })
+        expect(res.status).toBe(200)
+        expect(prismaMock.exercise.update).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({ isBodyweightLoaded: true }),
+            })
+        )
+    })
+
+    it('does not reset isBodyweightLoaded when the PUT omits it', async () => {
+        const res = await putExercise(updatePayload)
+        expect(res.status).toBe(200)
+        const arg = callArg(prismaMock.exercise.update.mock.calls[0][0])
+        expect(arg.data.isBodyweightLoaded).toBeUndefined()
     })
 
     it('trainer can clear all muscle groups from an exercise', async () => {

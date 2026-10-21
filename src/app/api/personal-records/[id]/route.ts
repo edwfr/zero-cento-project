@@ -79,6 +79,7 @@ export async function PATCH(
                         id: true,
                         name: true,
                         type: true,
+                        isBodyweightLoaded: true,
                     },
                 },
                 trainee: {

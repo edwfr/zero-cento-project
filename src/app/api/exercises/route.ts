@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
             return apiError('VALIDATION_ERROR', 'Invalid input', 400, validation.error.errors, 'validation.invalidInput')
         }
 
-        const { name, description, youtubeUrl, type, movementPatternId, muscleGroups, notes } = validation.data
+        const { name, description, youtubeUrl, type, movementPatternId, muscleGroups, notes, isBodyweightLoaded } = validation.data
 
         // Check if exercise name already exists
         const existing = await prisma.exercise.findFirst({
@@ -232,6 +232,7 @@ export async function POST(request: NextRequest) {
                 type,
                 movementPatternId,
                 notes: notes || [],
+                isBodyweightLoaded,
                 createdBy: session.user.id,
                 exerciseMuscleGroups: {
                     create: muscleGroups.map((mg) => ({

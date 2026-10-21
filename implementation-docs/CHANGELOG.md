@@ -10,6 +10,13 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(db): flag isBodyweightLoaded sugli esercizi (22/10/2026)
+- `prisma/schema.prisma` + migrazione `20261022090000_add_exercise_bodyweight_loaded`: colonna `exercises.isBodyweightLoaded` (default false), scritta a mano.
+- `exerciseSchema` ha `isBodyweightLoaded` (default false); POST/PUT `/api/exercises` lo salvano. Il PUT usa lo schema esteso con il campo opzionale, quindi un PUT senza il flag non lo azzera.
+- `GET/POST /api/personal-records` e `PATCH /api/personal-records/[id]` restituiscono il flag dentro `exercise`.
+- **Deploy**: la migrazione va applicata con `npm run prisma:migrate:prod` prima del codice.
+- Motivo: base per 1RM e percentuali RPE di trazioni/dip zavorrati.
+
 ### feat(weights): tabella RPE per esercizi a corpo libero zavorrati (22/10/2026)
 - `src/lib/calculations.ts`: nuove `BODYWEIGHT_LOADED_RPE_CHART` (trazioni/dip, ancore RPE 10/9/8/7/6 con mezzi punti generati), `BODYWEIGHT_LOADED_RPE_LEVELS`, `BODYWEIGHT_LOADED_REP_RANGE`. `estimateOneRMFromRpeTable`, `intensityFromRpeChart`, `rpeWeightRange`, `normalizedOneRM` prendono `bodyweightLoaded = false` (default Tuchscherer, nessun numero esistente cambia). `PersonalRecordInput.exercise?.isBodyweightLoaded` e nuova `recordNormalizedOneRM` usata da `latestPersonalRecordByExercise` e `latestNormalizedOneRMByExercise`.
 - Test: `calculations.test.ts` (`normalizedOneRM(110, 3, true)` = 121, intensità 5 @ 8.5 = 82, range 103.5–107.5, record con flag).
