@@ -298,7 +298,7 @@ esistenti passano senza modifiche.
 **Done when:** coverage 100% del modulo. `ballastFromTotal(97.5, 80)` →
 `{ kind: 'ballast', kg: 17.5 }`.
 
-- [ ] **Step 1: tests**. `t` finto: `(key, opts) => key + JSON.stringify(opts ?? {})`.
+- [x] **Step 1: tests**. `t` finto: `(key, opts) => key + JSON.stringify(opts ?? {})`.
   - `ballastFromTotal(97.5, 80)` → `{ kind: 'ballast', kg: 17.5 }`; `(97.3, 80)` → `kg: 17.5` (ceil); `(75, 80)` → `{ kind: 'bodyweight' }`; `(80, 80)` → `bodyweight`; `(97.5, null)` → `{ kind: 'missingBodyweight' }`
   - `ballastForRow`, riga `absolute` con `weight: 20` → `{ kind: 'ballast', kg: 20 }` qualunque sia BW (anche `null`); `weight: 0` → `bodyweight`
   - `percentage_1rm` con `effectiveWeight: 97.5`, BW 80 → `ballast 17.5`
@@ -315,7 +315,7 @@ esistenti passano senza modifiche.
     - absolute 20, BW 80 → `ballastWithTotal{weight:'20', total:'100'}`; BW null → `ballast{weight:'20'}` con `missingBodyweight: true`
     - range 95.5–99, BW 80 → `totalRange{range:'95.5–99'} · ballastRange{range:'15.5–19'}`
     - niente → `null`
-- [ ] **Step 2: implementation**. Modulo puro (niente Prisma e niente React). Importa
+- [x] **Step 2: implementation**. Modulo puro (niente Prisma e niente React). Importa
   `roundWeightValue` e `formatWeightRange` da `./weight-rounding`, e
   `formatWeightForDisplay` da dove lo importa oggi `edit/_content.tsx` (stesso
   formatter per i kg).
@@ -358,8 +358,8 @@ esistenti passano senza modifiche.
   se `effectiveWeight` non è un numero. Chiavi (create nel Task 5, namespace `common`):
   `common.bodyweightLoad.{ballast, ballastRange, bodyweight, missingBodyweight, total, totalRange, ballastWithTotal}`.
   Separatore trainer: `' · '`.
-- [ ] **Step 3: run the test command and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit**: `feat(weights): add bodyweight-load helpers`
+- [x] **Step 3: run the test command and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit**: `feat(weights): add bodyweight-load helpers`
 
 ---
 

@@ -10,6 +10,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(weights): helper zavorra per esercizi a corpo libero (22/10/2026)
+- Nuovo modulo puro `src/lib/bodyweight-load.ts`: conversione carico totale -> zavorra (arrotondata per eccesso a 0,5 kg), range, etichette trainee/trainer e `traineeWeightFields` che azzera carico totale e range per le righe zavorrate.
+- Test al 100% in `tests/unit/bodyweight-load.test.ts`.
+- Motivo: il trainee deve vedere solo la zavorra, senza ricavare il peso corporeo.
+
 ### feat(db): flag isBodyweightLoaded sugli esercizi (22/10/2026)
 - `prisma/schema.prisma` + migrazione `20261022090000_add_exercise_bodyweight_loaded`: colonna `exercises.isBodyweightLoaded` (default false), scritta a mano.
 - `exerciseSchema` ha `isBodyweightLoaded` (default false); POST/PUT `/api/exercises` lo salvano. Il PUT usa lo schema esteso con il campo opzionale, quindi un PUT senza il flag non lo azzera.
