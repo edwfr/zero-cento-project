@@ -95,6 +95,7 @@
             "open": "Mostra tabella",
             "close": "Nascondi tabella",
             "rpeHeader": "RPE",
+            "repsHeader": "Ripetizioni",
             "formula": "1RM equivalente = peso sollevato / (percentuale tabella / 100)."
         },
         "personalRecordsExplorer": {

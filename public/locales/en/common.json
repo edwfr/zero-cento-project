@@ -95,6 +95,7 @@
             "open": "Show table",
             "close": "Hide table",
             "rpeHeader": "RPE",
+            "repsHeader": "Reps",
             "formula": "Equivalent 1RM = lifted weight / (table percentage / 100)."
         },
         "personalRecordsExplorer": {

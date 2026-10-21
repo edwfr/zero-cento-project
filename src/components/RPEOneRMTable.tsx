@@ -71,9 +71,22 @@ export default function RPEOneRMTable({
                         <table className="min-w-full border-collapse">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="sticky left-0 z-10 bg-gray-50 border-b border-gray-200 px-3 py-2 text-left text-xs font-semibold text-gray-600">
+                                    <th
+                                        rowSpan={2}
+                                        scope="col"
+                                        className="sticky left-0 z-10 bg-gray-50 border-b border-r border-gray-200 px-3 py-2 text-left align-bottom text-xs font-semibold text-gray-600"
+                                    >
                                         {t('common.rpeOneRmTable.rpeHeader')}
                                     </th>
+                                    <th
+                                        colSpan={MIKE_TUCHSCHERER_REP_RANGE.length}
+                                        scope="colgroup"
+                                        className="border-b border-gray-200 px-3 py-1.5 text-center text-xs font-semibold uppercase tracking-wide text-gray-500"
+                                    >
+                                        {t('common.rpeOneRmTable.repsHeader')}
+                                    </th>
+                                </tr>
+                                <tr>
                                     {MIKE_TUCHSCHERER_REP_RANGE.map((rep) => (
                                         <th
                                             key={rep}
@@ -89,7 +102,10 @@ export default function RPEOneRMTable({
                                     const rpeKey = toRpeChartKey(rpe)
                                     return (
                                         <tr key={rpeKey} className="border-b border-gray-100 last:border-b-0">
-                                            <th className="sticky left-0 z-10 bg-white px-3 py-2 text-left text-xs font-semibold text-gray-700">
+                                            <th
+                                                scope="row"
+                                                className="sticky left-0 z-10 bg-gray-50 border-r border-gray-200 px-3 py-2 text-left text-xs font-semibold text-gray-700"
+                                            >
                                                 {rpeKey}
                                             </th>
                                             {MIKE_TUCHSCHERER_REP_RANGE.map((rep) => {

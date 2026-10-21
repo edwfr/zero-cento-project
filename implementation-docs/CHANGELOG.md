@@ -10,6 +10,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(records): assi espliciti nella tabella RPE (21/10/2026)
+- `RPEOneRMTable`: header su due righe, "RPE" nell'angolo (`rowSpan=2`) e "Ripetizioni" sopra le colonne 1–12 (`colSpan`); colonna RPE con sfondo grigio e bordo destro come intestazione. Nuova chiave i18n `common.rpeOneRmTable.repsHeader` (it/en).
+- Motivo: le colonne 1–12 non avevano etichetta e non era chiaro che fossero ripetizioni.
+
 ### feat(reps): errori di validazione specifici (21/10/2026)
 - `src/lib/reps.ts`: nuovo `checkReps()` che restituisce il motivo dell'errore (`format`, `repsOutOfRange`, `looksLikeSeconds`, `rangeOrder`, `secondsOutOfRange`); `parseReps`/`isValidReps` lo riusano. `repsSchema` emette la chiave i18n specifica, con `params.suggestion` per `looksLikeSeconds`.
 - Reps oltre 50 ma valide come secondi (es. `60`, `45/60`) suggeriscono il formato tempo: "Max 50 ripetizioni; per un tempo usa 60"".
