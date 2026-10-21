@@ -146,7 +146,7 @@ export async function PUT(
                 variant: row.variant ?? null,
                 order: row.order,
                 sets: row.sets,
-                reps: typeof row.reps === 'number' ? row.reps.toString() : row.reps,
+                reps: row.reps,
                 notes: row.notes ?? null,
                 targetRpe: row.targetRpe ?? null,
                 weightType: row.weightType,

@@ -112,7 +112,7 @@ export async function POST(
                 variant: variant || null,
                 order,
                 sets: sets || 1,
-                reps: typeof reps === 'number' ? reps.toString() : reps || '8',
+                reps: reps || '8',
                 notes: notes || null,
                 targetRpe: targetRpe ?? null,
                 weightType: weightType || 'absolute',

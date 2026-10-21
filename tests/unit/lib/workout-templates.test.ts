@@ -10,7 +10,7 @@ const e = (exerciseId: string, order: number) => ({
     exerciseId,
     order,
     sets: 3,
-    reps: '8-10',
+    reps: '8/10',
     restTime: 'm2' as const,
 })
 const template: TemplateWorkoutLike[] = [
@@ -50,7 +50,7 @@ describe('buildWeek1ExerciseRows', () => {
             exerciseId: 'b',
             order: 2,
             sets: 3,
-            reps: '8-10',
+            reps: '8/10',
             restTime: 'm2',
             weightType: 'absolute',
             weight: null,

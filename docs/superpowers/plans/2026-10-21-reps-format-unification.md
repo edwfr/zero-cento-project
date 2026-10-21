@@ -126,14 +126,14 @@ export const repsSchema: z.ZodType<string>                     // z.string().ref
 **Test command:** `npx vitest run tests/unit/workout-template-schema.test.ts tests/unit/schemas/workout-exercise.test.ts tests/unit/lib/workout-templates.test.ts`
 **Done when:** `reps: '8-10'` rifiutato in `workoutExerciseSchema`, `updateWorkoutExerciseSchema`, `bulkSaveWorkoutExercisesSchema` e `templateExerciseSchema`; `'8/10'` accettato.
 
-- [ ] **Step 1: tests** —
+- [x] **Step 1: tests** —
   - schema programma (nuovo file, un `workoutExercise` valido di base con `reps` variabile): `'8'`, `'8/10'`, `'30"'`, `'max'` accettati; `'8-10'`, `'10/8'`, `'0'`, `'51'` rifiutati con `validation.invalidReps`
   - `bulkSaveWorkoutExercisesSchema`: stesso accept/reject su `exercises[0].reps`
   - `updateWorkoutExerciseSchema` (partial): `reps` assente → ok; `'8-10'` → rifiutato
   - template: `'8-10'` ora rifiutato, `'8/10'` accettato; aggiornare gli input `'8-10'` esistenti a `'8/10'`
-- [ ] **Step 2: implementation** — in `workout-exercise.ts` sostituire l'intero `z.union([...])` di `reps` con `repsSchema`. **Trappola:** il valore oggi può arrivare anche come `number` (`z.number().int().min(1).max(50)`): controllare i chiamanti (`edit/transform-utils.ts`, route `exercises/bulk`, `copy-week`) per capire se qualcuno invia un numero; se sì, aggiungere `z.coerce`/preprocess che converte `number` in stringa prima di `repsSchema`, altrimenti rimuovere il ramo numerico. In `workout-template.ts` eliminare `REPS_PATTERNS` e il `refine` locale e importare `repsSchema`.
-- [ ] **Step 3: run the test command and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit** — `feat(reps): validate reps via shared schema in program and template`
+- [x] **Step 2: implementation** — in `workout-exercise.ts` sostituire l'intero `z.union([...])` di `reps` con `repsSchema`. **Trappola:** il valore oggi può arrivare anche come `number` (`z.number().int().min(1).max(50)`): controllare i chiamanti (`edit/transform-utils.ts`, route `exercises/bulk`, `copy-week`) per capire se qualcuno invia un numero; se sì, aggiungere `z.coerce`/preprocess che converte `number` in stringa prima di `repsSchema`, altrimenti rimuovere il ramo numerico. In `workout-template.ts` eliminare `REPS_PATTERNS` e il `refine` locale e importare `repsSchema`.
+- [x] **Step 3: run the test command and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit** — `feat(reps): validate reps via shared schema in program and template`
 
 ---
 

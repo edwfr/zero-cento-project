@@ -14,7 +14,7 @@ const make = (over: Record<string, unknown> = {}) => ({
     workoutsPerWeek: 2,
     workouts: [
         { dayIndex: 0, exercises: [ex()] },
-        { dayIndex: 1, exercises: [ex({ reps: '8-10' })] },
+        { dayIndex: 1, exercises: [ex({ reps: '8/10' })] },
     ],
     ...over,
 })
@@ -58,10 +58,10 @@ describe('workoutTemplateSchema', () => {
     it.each([0, 1.5])('rejects sets %s', (sets) => {
         expect(workoutTemplateSchema.safeParse(withEx({ sets })).success).toBe(false)
     })
-    it.each(['8', '8-10'])('accepts reps %s', (reps) => {
+    it.each(['8', '8/10'])('accepts reps %s', (reps) => {
         expect(workoutTemplateSchema.safeParse(withEx({ reps })).success).toBe(true)
     })
-    it.each(['abc', '', '10-8'])('rejects reps %j', (reps) => {
+    it.each(['abc', '', '10-8', '8-10', '10/8'])('rejects reps %j', (reps) => {
         expect(msgs(withEx({ reps }))).toContain('validation.invalidReps')
     })
     it('rejects restTime m4', () => {

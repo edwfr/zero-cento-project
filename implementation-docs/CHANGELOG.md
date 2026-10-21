@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(reps): schemi programma e template usano `repsSchema` (21/10/2026)
+- `src/schemas/workout-exercise.ts` e `workout-template.ts` validano `reps` con il modulo condiviso `repsSchema` (rimossi il `z.union` e `REPS_PATTERNS`): `8-10`, range invertiti e valori fuori limite sono rifiutati. Rimosso il ramo `number` di `reps` (il client invia sempre stringhe) e i relativi `typeof reps === 'number'` morti nelle route `exercises`. Test in `tests/unit/schemas/workout-exercise.test.ts` e `workout-template-schema.test.ts`.
+
 ### feat(reps): modulo condiviso per il formato delle ripetizioni (21/10/2026)
 - `src/lib/reps.ts`: unica fonte di verità per formato (`8`, `8/10`, `30"`, `max`), limiti (reps 1-50, secondi 1-300, range con `a < b`), `parseReps`, `isValidReps`, `plannedReps` (secondi/max/invalid = 0) e `repsSchema` zod con messaggio `validation.invalidReps`. Il trattino `8-10` non è più accettato. Test in `tests/unit/lib/reps.test.ts`.
 

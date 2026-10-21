@@ -107,7 +107,7 @@ export async function PUT(
                 ...(variant !== undefined && { variant }),
                 ...(order !== undefined && { order }),
                 ...(sets !== undefined && { sets }),
-                ...(reps !== undefined && { reps: typeof reps === 'number' ? reps.toString() : reps }),
+                ...(reps !== undefined && { reps }),
                 ...(notes !== undefined && { notes }),
                 ...(targetRpe !== undefined && { targetRpe }),
                 ...(weightType !== undefined && { weightType }),

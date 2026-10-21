@@ -1,23 +1,10 @@
 import { z } from 'zod'
+import { repsSchema } from '@/lib/reps'
 
 /**
  * Workout Template Validation Schemas
  * Messages are i18n keys. `order` is derived from array position (1-based) when persisting.
  */
-
-// Same accepted formats as workoutExerciseSchema.reps (string forms), plus range ordering.
-const REPS_PATTERNS = [/^\d+$/, /^\d+-\d+$/, /^\d+\/\d+$/, /^\d+"$/]
-
-const repsSchema = z.string().refine(
-    (value) => {
-        if (value === 'max') return true
-        if (!REPS_PATTERNS.some((re) => re.test(value))) return false
-        const range = /^(\d+)-(\d+)$/.exec(value)
-        if (range && Number(range[1]) > Number(range[2])) return false
-        return true
-    },
-    { message: 'validation.invalidReps' }
-)
 
 export const templateExerciseSchema = z.object({
     exerciseId: z.string().uuid('validation.templateExerciseRequired'),

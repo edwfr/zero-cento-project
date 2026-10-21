@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { repsSchema } from '@/lib/reps'
 
 /**
  * Workout Exercise Validation Schemas
@@ -13,14 +14,7 @@ const workoutExerciseBaseSchema = z.object({
         .int('Numero di serie deve essere intero')
         .min(1, 'Minimo 1 serie')
         .max(20, 'Massimo 20 serie'),
-    reps: z.union([
-        z.number().int().min(1).max(50),
-        z.string().regex(/^\d+$/, 'Numero singolo: "8"'),
-        z.string().regex(/^\d+-\d+$/, 'Formato range: "8-10"'),
-        z.string().regex(/^\d+\/\d+$/, 'Formato drop: "6/8"'),
-        z.string().regex(/^\d+"$/, 'Formato secondi: "30"'),
-        z.literal('max'),
-    ]),
+    reps: repsSchema,
     targetRpe: z
         .number()
         .min(5.0, 'RPE minimo 5.0')
