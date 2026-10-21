@@ -38,4 +38,34 @@ describe('rpeWeightRangeForRow', () => {
     it('treats a whitespace-only weight as empty', () => {
         expect(rpeWeightRangeForRow({ ...baseRow, weight: '   ' })).toEqual({ min: 110.5, max: 115 })
     })
+
+    it('uses the pull-up/dip table for bodyweight-loaded exercises', () => {
+        expect(
+            rpeWeightRangeForRow({
+                weight: '',
+                reps: '5',
+                targetRpe: '8',
+                oneRm: 130,
+                bodyweightLoaded: true,
+            })
+        ).toEqual({ min: 103.5, max: 107.5 })
+    })
+
+    it('keeps the Tuchscherer range without the flag', () => {
+        expect(
+            rpeWeightRangeForRow({ weight: '', reps: '5', targetRpe: '8', oneRm: 130 })
+        ).toEqual(rpeWeightRangeForRow({ weight: '', reps: '5', targetRpe: '8', oneRm: 130, bodyweightLoaded: false }))
+    })
+
+    it('returns null for 11 reps with the flag', () => {
+        expect(
+            rpeWeightRangeForRow({
+                weight: '',
+                reps: '11',
+                targetRpe: '8',
+                oneRm: 130,
+                bodyweightLoaded: true,
+            })
+        ).toBeNull()
+    })
 })

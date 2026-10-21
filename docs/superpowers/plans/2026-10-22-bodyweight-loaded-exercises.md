@@ -672,11 +672,11 @@ quattro le letture trainee restituiscono `effectiveWeight: null` e
 `-10%` dopo `20` salva `effectiveWeight: 90`. Il nuovo pulsante apre il pannello con le
 due tabelle.
 
-- [ ] **Step 1: tests** in `rpe-weight-range-row.test.ts`:
+- [x] **Step 1: tests** in `rpe-weight-range-row.test.ts`:
   - `{ weight: '', reps: '5', targetRpe: '8', oneRm: 130, bodyweightLoaded: true }` → `{ min: 103.5, max: 107.5 }`
   - stessa riga senza `bodyweightLoaded` → il range Tuchscherer di oggi (invariato)
   - `reps: '11', bodyweightLoaded: true` → `null`
-- [ ] **Step 2: implementation**
+- [x] **Step 2: implementation**
   - `rpeWeightRangeForRow` riceve `bodyweightLoaded?: boolean` e lo passa a `rpeWeightRange`.
   - `PersonalRecord` (~riga 182): `exercise` riceve `isBodyweightLoaded?: boolean`.
     `latestPRs` (~riga 1036) e il pannello PR (~riga 2816) usano
@@ -708,10 +708,10 @@ due tabelle.
     `top-44` invece di `top-24`, icona `Table` da `lucide-react`, `aria-label`/`title`
     `t('editProgram.floatingRpeTablesButton')`. Poi
     `<RpeTablesDrawer isOpen=… onClose=… />` accanto a `ProgramChartsDrawer`.
-- [ ] **Step 3: run the test command and `npm run type-check`**. Poi un controllo a
+- [x] **Step 3: run the test command and `npm run type-check`**. Poi un controllo a
   mano con `npm run dev` (pagina edit di un programma con trazioni zavorrate): anteprime
   e pannello. Se non è possibile, scriverlo nel report.
-- [ ] **Step 4: CHANGELOG entry and commit**: `feat(programs): bodyweight-loaded weights in editor`
+- [x] **Step 4: CHANGELOG entry and commit**: `feat(programs): bodyweight-loaded weights in editor`
 
 ---
 

@@ -8,6 +8,7 @@ export function rpeWeightRangeForRow(input: {
     reps: string
     targetRpe: string
     oneRm: number | undefined
+    bodyweightLoaded?: boolean
 }): RpeWeightRange | null {
     if (parseWeightInputValue(input.weight).mode !== 'empty') return null
 
@@ -18,5 +19,5 @@ export function rpeWeightRangeForRow(input: {
 
     if (input.oneRm === undefined) return null
 
-    return rpeWeightRange(input.oneRm, plannedReps(input.reps.trim()), rpe)
+    return rpeWeightRange(input.oneRm, plannedReps(input.reps.trim()), rpe, input.bodyweightLoaded)
 }

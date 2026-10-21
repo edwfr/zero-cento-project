@@ -10,6 +10,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(programs): carichi zavorrati nell'editor del programma (22/10/2026)
+- Pagina modifica programma: per gli esercizi zavorrati anteprima `carico totale · zavorra X kg` (o `zavorra X kg (Y totali)` per i kg), range RPE dalla tabella trazioni/dip, base del `-x%` successivo a un valore in kg = zavorra + peso corporeo (ultima misurazione), avviso se il peso corporeo manca. Nuovo pulsante e pannello con le tabelle RPE. 1RM dei PR calcolato con `recordNormalizedOneRM`.
+- Test: pagina modifica esercizio carica e invia `isBodyweightLoaded`.
+- Motivo: il trainer programma in kg di zavorra o in percentuale sul carico totale.
+
 ### feat(trainee): zavorra negli esercizi a corpo libero zavorrati (22/10/2026)
 - Workout trainee, recap, dettaglio programma e PDF mostrano `zavorra X kg`, `corpo libero` o `chiedi al trainer` al posto del carico; le serie sono precompilate con la zavorra (helper unico `plannedLoadKg`). `ProgramPdfExercise.weightLabelOverride` vince sul calcolo della colonna peso.
 - Motivo: il trainee vede solo cosa caricare, mai il carico totale ne' la percentuale applicata al corpo.

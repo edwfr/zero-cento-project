@@ -9,8 +9,9 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import {
     latestNormalizedOneRMByExercise,
     latestPersonalRecordByExercise,
-    normalizedOneRM,
+    recordNormalizedOneRM,
 } from '@/lib/calculations'
+import { formatTrainerLoadLabel } from '@/lib/bodyweight-load'
 import {
     formatWeightRange,
     percentageOfOneRmWeight,
@@ -49,6 +50,7 @@ import {
     LockOpen,
     Plus,
     Save,
+    Table,
     Trash2,
     Zap,
 } from 'lucide-react'
@@ -73,6 +75,7 @@ import {
 } from '@/lib/program-sbd-metrics'
 import ProgramSbdSummaryTable from '@/components/ProgramSbdSummaryTable'
 import ProgramChartsDrawer from '@/components/ProgramChartsDrawer'
+import RpeTablesDrawer from '@/components/RpeTablesDrawer'
 import { checkReps, REPS_ERROR_KEYS } from '@/lib/reps'
 import {
     DndContext,
@@ -189,6 +192,7 @@ interface PersonalRecord {
         id: string
         name: string
         type: ExerciseType
+        isBodyweightLoaded?: boolean
     }
 }
 
@@ -198,6 +202,7 @@ interface ExerciseCatalogItem {
     type: ExerciseType
     notes: string[]
     movementPattern: MovementPattern | null
+    isBodyweightLoaded: boolean
 }
 
 interface EditableWorkoutExerciseRow {
@@ -526,6 +531,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         readOnly ? 'details' : 'structure'
     )
     const [isChartsDrawerOpen, setIsChartsDrawerOpen] = useState(false)
+    const [isRpeTablesDrawerOpen, setIsRpeTablesDrawerOpen] = useState(false)
+    const [bodyweightKg, setBodyweightKg] = useState<number | null>(null)
     const [structureRowsByWorkoutIndex, setStructureRowsByWorkoutIndex] = useState<
         Record<number, WorkoutStructureTemplateRow[]>
     >({})
@@ -653,6 +660,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                         ? exercise.notes.filter((note: unknown) => typeof note === 'string')
                         : [],
                     movementPattern,
+                    isBodyweightLoaded: Boolean(exercise.isBodyweightLoaded),
                 }
             })
 
@@ -687,6 +695,26 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
             setPersonalRecords(recordsData.data.items || [])
             loadedPersonalRecordsTraineeIdRef.current = traineeId
+
+            try {
+                const bodyweightRes = await fetch(
+                    `/api/trainee-measurements?traineeId=${traineeId}&metric=weight`
+                )
+                const bodyweightData = bodyweightRes.ok ? await bodyweightRes.json() : null
+                if (requestId !== requestIdRef.current) {
+                    return
+                }
+                const latestValue = bodyweightData?.data?.items?.[0]?.value
+                setBodyweightKg(
+                    typeof latestValue === 'number' && Number.isFinite(latestValue)
+                        ? latestValue
+                        : null
+                )
+            } catch {
+                if (requestId === requestIdRef.current) {
+                    setBodyweightKg(null)
+                }
+            }
         } catch {
             if (requestId === requestIdRef.current) {
                 setPersonalRecords([])
@@ -974,6 +1002,10 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                             type: workoutExercise.exercise.type,
                             notes: workoutExercise.exercise.notes,
                             movementPattern: workoutExercise.exercise.movementPattern,
+                            isBodyweightLoaded: Boolean(
+                                (workoutExercise.exercise as { isBodyweightLoaded?: boolean })
+                                    .isBodyweightLoaded
+                            ),
                         })
                     }
                 })
@@ -1033,8 +1065,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const latestPRs = useMemo(
         () =>
             Object.values(latestPersonalRecordByExercise(personalRecords)).sort((left, right) => {
-                const leftValue = normalizedOneRM(left.weight, left.reps)
-                const rightValue = normalizedOneRM(right.weight, right.reps)
+                const leftValue = recordNormalizedOneRM(left)
+                const rightValue = recordNormalizedOneRM(right)
                 return rightValue - leftValue
             }),
         [personalRecords]
@@ -1794,6 +1826,9 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         })
     }
 
+    const isBodyweightLoadedExercise = (exerciseId: string): boolean =>
+        exerciseLookupById.get(exerciseId)?.isBodyweightLoaded ?? false
+
     const resolveWeightInputForRow = ({
         row,
         rowIndex,
@@ -1868,7 +1903,17 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             return { errorCode: 'missing_previous_occurrence' }
         }
 
-        const previousEffectiveWeight = effectiveWeightByRowId[previousRow.id]
+        let previousEffectiveWeight: number | null = effectiveWeightByRowId[previousRow.id]
+        if (
+            isBodyweightLoadedExercise(row.exerciseId) &&
+            parseWeightInputValue(previousRow.weight).mode === 'absolute'
+        ) {
+            // previous absolute row stores the ballast: the base of -x% is ballast + bodyweight
+            previousEffectiveWeight =
+                typeof previousEffectiveWeight === 'number' && bodyweightKg !== null
+                    ? previousEffectiveWeight + bodyweightKg
+                    : null
+        }
         if (typeof previousEffectiveWeight !== 'number' || !Number.isFinite(previousEffectiveWeight)) {
             return {
                 parsedWeight: {
@@ -1899,6 +1944,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             reps: row.reps,
             targetRpe: row.targetRpe,
             oneRm: normalizedOneRMByExercise[row.exerciseId],
+            bodyweightLoaded: isBodyweightLoadedExercise(row.exerciseId),
         })
 
         return {
@@ -2813,10 +2859,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                 </p>
                                                                 <p className="text-xs text-gray-600 font-medium">
                                                                     {t('editProgram.prHelperEstimatedOneRm', {
-                                                                        weight: normalizedOneRM(
-                                                                            record.weight,
-                                                                            record.reps
-                                                                        ),
+                                                                        weight: recordNormalizedOneRM(record),
                                                                     })}
                                                                 </p>
                                                             </div>
@@ -3455,9 +3498,37 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                 reps: row.reps,
                                                                                 targetRpe: row.targetRpe,
                                                                                 oneRm: normalizedOneRMByExercise[row.exerciseId],
+                                                                                bodyweightLoaded: isBodyweightLoadedExercise(row.exerciseId),
                                                                             })
                                                                             const persistedRpeWeightRange =
                                                                                 persistedRpeWeightRangeByRowId[row.id] ?? null
+                                                                            const rowIsBodyweightLoaded = isBodyweightLoadedExercise(row.exerciseId)
+                                                                            const rangeForLoadLabel = readOnly
+                                                                                ? persistedRpeWeightRange
+                                                                                : previewRpeWeightRange ?? persistedRpeWeightRange
+                                                                            const bodyweightLoadLabel = rowIsBodyweightLoaded
+                                                                                ? formatTrainerLoadLabel(
+                                                                                    {
+                                                                                        weightType:
+                                                                                            parsedWeightInputForPreview.mode === 'percentage_1rm' ||
+                                                                                            parsedWeightInputForPreview.mode === 'percentage_previous'
+                                                                                                ? parsedWeightInputForPreview.mode
+                                                                                                : 'absolute',
+                                                                                        weight:
+                                                                                            parsedWeightInputForPreview.mode === 'absolute'
+                                                                                                ? parsedWeightInputForPreview.value
+                                                                                                : null,
+                                                                                        effectiveWeight:
+                                                                                            typeof effectiveWeightToDisplay === 'number'
+                                                                                                ? effectiveWeightToDisplay
+                                                                                                : null,
+                                                                                        rpeWeightMin: rangeForLoadLabel?.min ?? null,
+                                                                                        rpeWeightMax: rangeForLoadLabel?.max ?? null,
+                                                                                    },
+                                                                                    bodyweightKg,
+                                                                                    (key, options) => t(`common:${key}`, options)
+                                                                                )
+                                                                                : null
 
                                                                             const groupColor = exerciseGroupColors.get(row.id)
                                                                             const rowBgClass = groupColor === 'even' ? 'bg-white' : groupColor === 'odd' ? 'bg-gray-200' : ''
@@ -3770,13 +3841,27 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                 <p className="text-xs font-semibold text-gray-900 whitespace-nowrap">
                                                                                                     {assignedWeightDisplay}
                                                                                                 </p>
-                                                                                                {shouldShowEffectiveWeight &&
+                                                                                                {rowIsBodyweightLoaded ? (
+                                                                                                    <>
+                                                                                                        {bodyweightLoadLabel && (
+                                                                                                            <p className="text-[11px] text-emerald-700 whitespace-nowrap">
+                                                                                                                {bodyweightLoadLabel.label}
+                                                                                                            </p>
+                                                                                                        )}
+                                                                                                        {bodyweightLoadLabel?.missingBodyweight && (
+                                                                                                            <p className="text-[11px] text-amber-700">
+                                                                                                                {t('common:common.bodyweightLoad.bodyweightNotRecorded')}
+                                                                                                            </p>
+                                                                                                        )}
+                                                                                                    </>
+                                                                                                ) : null}
+                                                                                                {!rowIsBodyweightLoaded && shouldShowEffectiveWeight &&
                                                                                                     typeof effectiveWeightToDisplay === 'number' && (
                                                                                                     <p className="text-[11px] text-emerald-700 whitespace-nowrap">
                                                                                                         {`= ${formatWeightForDisplay(effectiveWeightToDisplay)} kg`}
                                                                                                     </p>
                                                                                                 )}
-                                                                                                {persistedRpeWeightRange && (
+                                                                                                {!rowIsBodyweightLoaded && persistedRpeWeightRange && (
                                                                                                     <p className="text-[11px] text-emerald-700 whitespace-nowrap">
                                                                                                         {t('editProgram.rpeWeightRangePreview', {
                                                                                                             range: formatWeightRange(
@@ -3801,7 +3886,17 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                     className={metricFieldClassName}
                                                                                                 />
 
-                                                                                                {shouldShowEffectiveWeight &&
+                                                                                                {rowIsBodyweightLoaded && bodyweightLoadLabel && (
+                                                                                                    <p className="text-[11px] font-semibold text-emerald-700 whitespace-nowrap">
+                                                                                                        {bodyweightLoadLabel.label}
+                                                                                                    </p>
+                                                                                                )}
+                                                                                                {rowIsBodyweightLoaded && bodyweightLoadLabel?.missingBodyweight && (
+                                                                                                    <p className="text-[11px] text-amber-700">
+                                                                                                        {t('common:common.bodyweightLoad.bodyweightNotRecorded')}
+                                                                                                    </p>
+                                                                                                )}
+                                                                                                {!rowIsBodyweightLoaded && shouldShowEffectiveWeight &&
                                                                                                     typeof effectiveWeightToDisplay ===
                                                                                                     'number' && (
                                                                                                         <p className="text-[11px] font-semibold text-emerald-700 whitespace-nowrap">
@@ -3815,7 +3910,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                             )}
                                                                                                         </p>
                                                                                                     )}
-                                                                                                {previewRpeWeightRange && (
+                                                                                                {!rowIsBodyweightLoaded && previewRpeWeightRange && (
                                                                                                     <p className="text-[11px] font-semibold text-emerald-700 whitespace-nowrap">
                                                                                                         {t('editProgram.rpeWeightRangePreview', {
                                                                                                             range: formatWeightRange(
@@ -3953,6 +4048,21 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                         <BarChart3 className="h-6 w-6" />
                     </button>
                 )}
+                {isExercisesStepVisible && (
+                    <button
+                        type="button"
+                        onClick={() => setIsRpeTablesDrawerOpen(true)}
+                        className="fixed top-44 left-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-brand-primary text-white shadow-lg transition-colors hover:bg-brand-primary-hover"
+                        aria-label={t('editProgram.floatingRpeTablesButton')}
+                        title={t('editProgram.floatingRpeTablesButton')}
+                    >
+                        <Table className="h-6 w-6" />
+                    </button>
+                )}
+                <RpeTablesDrawer
+                    isOpen={isRpeTablesDrawerOpen}
+                    onClose={() => setIsRpeTablesDrawerOpen(false)}
+                />
                 <ProgramChartsDrawer
                     isOpen={isChartsDrawerOpen}
                     onClose={() => setIsChartsDrawerOpen(false)}
