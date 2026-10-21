@@ -1085,12 +1085,7 @@ function ExerciseFocusCard({
                 rpe: we.targetRpe,
             })
             : null
-    const compactWeightValue = we.ballast
-        ? ballastLabel(we.ballast, t)
-        : rpeWeightRangeValue ??
-        (we.weightType !== 'absolute'
-            ? `${calculatedWeightMissing ? t('workouts.calculatedWeightMissing') : calculatedWeightValue} (${trainerSettingValue})`
-            : calculatedWeightValue)
+    const ballastValue = we.ballast ? ballastLabel(we.ballast, t) : null
 
     return (
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -1205,7 +1200,11 @@ function ExerciseFocusCard({
                         <span className="block text-[10px] font-bold uppercase tracking-widest text-brand-primary">
                             KG
                         </span>
-                        {rpeWeightRangeValue ? (
+                        {ballastValue ? (
+                            <span className="block text-sm font-bold mt-1 leading-tight text-gray-900">
+                                {ballastValue}
+                            </span>
+                        ) : rpeWeightRangeValue ? (
                             <span className="block text-sm font-bold mt-1 leading-tight text-gray-900">
                                 {rpeWeightRangeValue}
                             </span>
@@ -1219,7 +1218,7 @@ function ExerciseFocusCard({
                                     : calculatedWeightValue}
                             </span>
                         )}
-                        {we.weightType !== 'absolute' && (
+                        {!ballastValue && we.weightType !== 'absolute' && (
                             <span className="block text-[10px] text-gray-400 mt-1.5 leading-none">
                                 {trainerSettingValue}
                             </span>

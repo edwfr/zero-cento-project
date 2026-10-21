@@ -197,10 +197,23 @@ describe('Trainee workout: bodyweight-loaded rows', () => {
     const weightInputs = () =>
         screen.getAllByPlaceholderText(/^[0-9.]+$/) as HTMLInputElement[]
 
+    const kgBox = () => screen.getByText('KG').closest('div[class*="rounded-xl"]') as HTMLElement
+
+    beforeEach(() => {
+        tSpy.mockImplementation((key: string, vars?: Record<string, unknown>) =>
+            vars ? `${key} ${Object.values(vars).join(' ')}` : key
+        )
+    })
+
+    afterEach(() => {
+        tSpy.mockImplementation((key: string) => key)
+    })
+
     it('shows ballast and prefills sets with it, never the percentage', async () => {
         loadWith({ ballast: { kind: 'ballast', kg: 17.5 } })
         await renderContent()
-        expect(tSpy).toHaveBeenCalledWith('common:common.bodyweightLoad.ballast', { weight: '17.5' })
+        expect(kgBox()).toHaveTextContent('common:common.bodyweightLoad.ballast 17.5')
+        expect(kgBox()).not.toHaveTextContent('75%')
         expect(weightInputs().some((i) => i.placeholder === '17.5')).toBe(true)
         expect(weightInputs().some((i) => i.placeholder === '75')).toBe(false)
     })
@@ -208,7 +221,8 @@ describe('Trainee workout: bodyweight-loaded rows', () => {
     it('shows bodyweight label with 0 placeholder', async () => {
         loadWith({ ballast: { kind: 'bodyweight' } })
         await renderContent()
-        expect(tSpy).toHaveBeenCalledWith('common:common.bodyweightLoad.bodyweight', undefined)
+        expect(kgBox()).toHaveTextContent('common:common.bodyweightLoad.bodyweight')
+        expect(kgBox()).not.toHaveTextContent('75%')
         expect(weightInputs().some((i) => i.placeholder === '0')).toBe(true)
         expect(weightInputs().some((i) => i.placeholder === '75')).toBe(false)
     })
@@ -216,16 +230,16 @@ describe('Trainee workout: bodyweight-loaded rows', () => {
     it('shows ask-trainer label without numbers', async () => {
         loadWith({ ballast: { kind: 'missingBodyweight' } })
         await renderContent()
-        expect(tSpy).toHaveBeenCalledWith('common:common.bodyweightLoad.missingBodyweight', undefined)
+        expect(kgBox()).toHaveTextContent('common:common.bodyweightLoad.missingBodyweight')
+        expect(kgBox()).not.toHaveTextContent('75%')
         expect(weightInputs().some((i) => i.placeholder === '75')).toBe(false)
     })
 
     it('shows ballast range', async () => {
         loadWith({ ballast: { kind: 'ballastRange', minKg: 15.5, maxKg: 19 } })
         await renderContent()
-        expect(tSpy).toHaveBeenCalledWith('common:common.bodyweightLoad.ballastRange', {
-            range: '15.5–19',
-        })
+        expect(kgBox()).toHaveTextContent('common:common.bodyweightLoad.ballastRange 15.5–19')
+        expect(kgBox()).not.toHaveTextContent('75%')
     })
 
     it('leaves non bodyweight-loaded rows unchanged', async () => {
