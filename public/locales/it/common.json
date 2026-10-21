@@ -101,6 +101,8 @@
         "bodyweightLoad": {
             "ballast": "zavorra {{weight}} kg",
             "ballastRange": "zavorra {{range}} kg",
+            "ballastCompact": "+{{weight}} kg",
+            "ballastRangeCompact": "+{{range}} kg",
             "bodyweight": "corpo libero",
             "missingBodyweight": "chiedi al trainer",
             "total": "{{weight}} kg totali",

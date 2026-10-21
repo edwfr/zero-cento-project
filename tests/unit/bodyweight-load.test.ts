@@ -6,6 +6,7 @@ import {
     plannedBallastKg,
     formatBallastLabel,
     formatTrainerLoadLabel,
+    formatCompactLoadLabel,
     previousLoadBase,
     type BodyweightLoadRow,
 } from '@/lib/bodyweight-load'
@@ -206,5 +207,35 @@ describe('previousLoadBase', () => {
 
     it('returns null for a missing previous weight', () => {
         expect(previousLoadBase(null, { ...loadedAbsolute, bodyweightKg: 80 })).toBeNull()
+    })
+})
+
+describe('formatCompactLoadLabel', () => {
+    it('shows a typed ballast as +kg', () => {
+        expect(formatCompactLoadLabel(row({ weightType: 'absolute', weight: 20 }), 80, t)).toBe(
+            'common.bodyweightLoad.ballastCompact{"weight":"20"}'
+        )
+    })
+
+    it('shows the ballast range of a total range as +range kg', () => {
+        expect(
+            formatCompactLoadLabel(row({ rpeWeightMin: 140.5, rpeWeightMax: 146 }), 80, t)
+        ).toBe('common.bodyweightLoad.ballastRangeCompact{"range":"60.5–66"}')
+    })
+
+    it('shows bodyweight when the total does not exceed it', () => {
+        expect(formatCompactLoadLabel(row({ effectiveWeight: 70 }), 80, t)).toBe(
+            'common.bodyweightLoad.bodyweight{}'
+        )
+    })
+
+    it('falls back to the total without bodyweight', () => {
+        expect(formatCompactLoadLabel(row({ effectiveWeight: 120 }), null, t)).toBe(
+            'common.bodyweightLoad.total{"weight":"120"}'
+        )
+    })
+
+    it('returns null when nothing is planned', () => {
+        expect(formatCompactLoadLabel(row(), 80, t)).toBeNull()
     })
 })

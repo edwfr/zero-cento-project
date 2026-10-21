@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### fix(programs): colonna peso dell'editor leggibile (22/10/2026)
+- Editor programma: con il peso vuoto il range proposto da RPE va nel placeholder dell'input (verde, `≈ 106.5–111 kg`; zavorrati in forma compatta `+60.5–66 kg`, etichetta completa con totale nel tooltip; senza BW il range totale più l'avviso), scrivendo un valore lo si sovrascrive. Prima il testo stava a fianco dell'input, usciva dalla cella e copriva il REST. Con un valore scritto (`90%`, `-10%`, zavorra) l'input si stringe a `w-16` e il carico proposto sta inline a destra (`98 kg`, `+20 kg`); l'avviso BW mancante resta sotto. `-x%` dopo una riga pianificata solo a range RPE ora mostra il range scalato (`≈ 93.5–97.5 kg`, solo anteprima: `effectiveWeight` resta null perché manca una base in kg). Nuovo helper `formatCompactLoadLabel()` in `src/lib/bodyweight-load.ts` (chiavi `ballastCompact`/`ballastRangeCompact`; senza BW ricade sul totale); review, PDF e trainee restano su `zavorra X kg`. Colonne: PESO 10% → 14%, RPE 8% → 6% (come REST), ESERCIZIO e VARIANTE 25% → 24%.
+
 ### fix(bodyweight-loaded): correzioni dalla review finale (22/10/2026)
 - Workout trainee: il box KG della card principale mostra `zavorra X kg` / `corpo libero` / `chiedi al trainer` e nasconde la percentuale (prima la zavorra compariva solo in riscaldamento e riepilogo); rimosso `compactWeightValue` inutilizzato. Test sul testo renderizzato, non sulle chiamate a `t()`.
 - `GET /api/programs/[id]/test-results`: per le righe zavorrate `plannedWeight` e' la zavorra (null se il BW manca), per trainer e trainee. Prima era il carico totale: il trainee poteva ricavare il proprio BW e il trainer vedeva totale e zavorra mescolati.

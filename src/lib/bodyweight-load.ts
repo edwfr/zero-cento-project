@@ -178,3 +178,28 @@ export function formatTrainerLoadLabel(
 
     return null
 }
+
+/**
+ * Short trainer label for the editor weight cell: `+20 kg`, `+60.5–66 kg`, bodyweight.
+ * Without bodyweight the ballast is unknown, so it falls back to the total.
+ */
+export function formatCompactLoadLabel(
+    row: BodyweightLoadRow,
+    bodyweightKg: number | null,
+    t: Translate
+): string | null {
+    const ballast = ballastForRow(row, bodyweightKg)
+    if (ballast === null) return null
+    switch (ballast.kind) {
+        case 'ballast':
+            return t('common.bodyweightLoad.ballastCompact', { weight: formatKg(ballast.kg) })
+        case 'ballastRange':
+            return t('common.bodyweightLoad.ballastRangeCompact', {
+                range: formatWeightRange(ballast.minKg, ballast.maxKg),
+            })
+        case 'bodyweight':
+            return t('common.bodyweightLoad.bodyweight')
+        case 'missingBodyweight':
+            return formatTrainerLoadLabel(row, bodyweightKg, t)?.label ?? null
+    }
+}

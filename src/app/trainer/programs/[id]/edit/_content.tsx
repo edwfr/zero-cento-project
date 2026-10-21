@@ -11,7 +11,12 @@ import {
     latestPersonalRecordByExercise,
     recordNormalizedOneRM,
 } from '@/lib/calculations'
-import { formatTrainerLoadLabel, previousLoadBase } from '@/lib/bodyweight-load'
+import {
+    formatCompactLoadLabel,
+    formatTrainerLoadLabel,
+    previousLoadBase,
+    type BodyweightLoadRow,
+} from '@/lib/bodyweight-load'
 import {
     formatWeightRange,
     percentageOfOneRmWeight,
@@ -3038,6 +3043,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                 const workoutHasUnsavedChanges =
                                                     hasWorkoutUnsavedChanges(workout)
                                                 const effectiveWeightPreviewByRowId: Record<string, number | null> = {}
+                                                // Proposed kg range per row (RPE range, or -x% of the previous row's range).
+                                                const weightRangePreviewByRowId: Record<string, { min: number; max: number } | null> = {}
                                                 const persistedEffectiveWeightByRowId =
                                                     workout.workoutExercises.reduce(
                                                         (acc, workoutExercise) => {
@@ -3211,12 +3218,12 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                         <col className="w-[3%]" />
                                                                         <col className="w-[3%]" />
                                                                         <col className="w-[3%]" />
-                                                                        <col className="w-[25%]" />
-                                                                        <col className="w-[25%]" />
+                                                                        <col className="w-[24%]" />
+                                                                        <col className="w-[24%]" />
                                                                         <col className="w-[8%]" />
                                                                         <col className="w-[8%]" />
-                                                                        <col className="w-[8%]" />
-                                                                        <col className="w-[10%]" />
+                                                                        <col className="w-[6%]" />
+                                                                        <col className="w-[14%]" />
                                                                         <col className="w-[6%]" />
                                                                     </colgroup>
                                                                     <thead className="bg-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-gray-700">
@@ -3497,33 +3504,82 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                             const persistedRpeWeightRange =
                                                                                 persistedRpeWeightRangeByRowId[row.id] ?? null
                                                                             const rowIsBodyweightLoaded = isBodyweightLoadedExercise(row.exerciseId)
+                                                                            // -x% after a row planned only by RPE range: no kg base, so scale the range.
+                                                                            const previousRowForRange =
+                                                                                parsedWeightInputForPreview.mode === 'percentage_previous' &&
+                                                                                typeof previewEffectiveWeight !== 'number'
+                                                                                    ? workoutRows
+                                                                                        .slice(0, rowIndex)
+                                                                                        .reverse()
+                                                                                        .find((candidateRow) => candidateRow.exerciseId === row.exerciseId)
+                                                                                    : undefined
+                                                                            const previousRangeForRow = previousRowForRange
+                                                                                ? weightRangePreviewByRowId[previousRowForRange.id] ?? null
+                                                                                : null
+                                                                            const percentageOfPreviousRange =
+                                                                                previousRangeForRow && typeof parsedWeightInputForPreview.value === 'number'
+                                                                                    ? {
+                                                                                        min: percentageOfPreviousWeight(previousRangeForRow.min, parsedWeightInputForPreview.value),
+                                                                                        max: percentageOfPreviousWeight(previousRangeForRow.max, parsedWeightInputForPreview.value),
+                                                                                    }
+                                                                                    : null
+                                                                            weightRangePreviewByRowId[row.id] =
+                                                                                previewRpeWeightRange ?? persistedRpeWeightRange ?? percentageOfPreviousRange
                                                                             const rangeForLoadLabel = readOnly
                                                                                 ? persistedRpeWeightRange
-                                                                                : previewRpeWeightRange ?? persistedRpeWeightRange
+                                                                                : previewRpeWeightRange ?? percentageOfPreviousRange ?? persistedRpeWeightRange
+                                                                            const bodyweightLoadRow: BodyweightLoadRow = {
+                                                                                weightType:
+                                                                                    parsedWeightInputForPreview.mode === 'percentage_1rm' ||
+                                                                                    parsedWeightInputForPreview.mode === 'percentage_previous'
+                                                                                        ? parsedWeightInputForPreview.mode
+                                                                                        : 'absolute',
+                                                                                weight:
+                                                                                    parsedWeightInputForPreview.mode === 'absolute'
+                                                                                        ? parsedWeightInputForPreview.value
+                                                                                        : null,
+                                                                                effectiveWeight:
+                                                                                    typeof effectiveWeightToDisplay === 'number'
+                                                                                        ? effectiveWeightToDisplay
+                                                                                        : null,
+                                                                                rpeWeightMin: rangeForLoadLabel?.min ?? null,
+                                                                                rpeWeightMax: rangeForLoadLabel?.max ?? null,
+                                                                            }
+                                                                            const translateCommon = (key: string, options?: Record<string, unknown>) =>
+                                                                                t(`common:${key}`, options)
                                                                             const bodyweightLoadLabel = rowIsBodyweightLoaded
-                                                                                ? formatTrainerLoadLabel(
-                                                                                    {
-                                                                                        weightType:
-                                                                                            parsedWeightInputForPreview.mode === 'percentage_1rm' ||
-                                                                                            parsedWeightInputForPreview.mode === 'percentage_previous'
-                                                                                                ? parsedWeightInputForPreview.mode
-                                                                                                : 'absolute',
-                                                                                        weight:
-                                                                                            parsedWeightInputForPreview.mode === 'absolute'
-                                                                                                ? parsedWeightInputForPreview.value
-                                                                                                : null,
-                                                                                        effectiveWeight:
-                                                                                            typeof effectiveWeightToDisplay === 'number'
-                                                                                                ? effectiveWeightToDisplay
-                                                                                                : null,
-                                                                                        rpeWeightMin: rangeForLoadLabel?.min ?? null,
-                                                                                        rpeWeightMax: rangeForLoadLabel?.max ?? null,
-                                                                                    },
-                                                                                    bodyweightKg,
-                                                                                    (key, options) => t(`common:${key}`, options)
-                                                                                )
+                                                                                ? formatTrainerLoadLabel(bodyweightLoadRow, bodyweightKg, translateCommon)
+                                                                                : null
+                                                                            // Editor cell: `+20 kg`; full label (with total) goes in the tooltip.
+                                                                            const compactLoadLabel = rowIsBodyweightLoaded
+                                                                                ? formatCompactLoadLabel(bodyweightLoadRow, bodyweightKg, translateCommon)
                                                                                 : null
 
+                                                                            // Empty weight: the proposed range goes in the placeholder, typing overrides it.
+                                                                            const weightInputIsEmpty = row.weight.trim() === ''
+                                                                            const weightPlaceholder = !weightInputIsEmpty
+                                                                                ? undefined
+                                                                                : rowIsBodyweightLoaded
+                                                                                    ? compactLoadLabel ?? undefined
+                                                                                    : previewRpeWeightRange
+                                                                                        ? t('editProgram.rpeWeightRangePreview', {
+                                                                                            range: formatWeightRange(previewRpeWeightRange.min, previewRpeWeightRange.max),
+                                                                                        })
+                                                                                        : undefined
+                                                                            // Load next to a typed weight (%, -x%, ballast); the input shrinks to make room.
+                                                                            const inlineWeightLabel = weightInputIsEmpty
+                                                                                ? null
+                                                                                : rowIsBodyweightLoaded
+                                                                                    ? compactLoadLabel
+                                                                                    : shouldShowEffectiveWeight && typeof effectiveWeightToDisplay === 'number'
+                                                                                        ? t('editProgram.effectiveWeightPreview', {
+                                                                                            weight: `${formatWeightForDisplay(effectiveWeightToDisplay)} kg`,
+                                                                                        })
+                                                                                        : percentageOfPreviousRange
+                                                                                            ? t('editProgram.rpeWeightRangePreview', {
+                                                                                                range: formatWeightRange(percentageOfPreviousRange.min, percentageOfPreviousRange.max),
+                                                                                            })
+                                                                                            : null
                                                                             const groupColor = exerciseGroupColors.get(row.id)
                                                                             const rowBgClass = groupColor === 'even' ? 'bg-white' : groupColor === 'odd' ? 'bg-gray-200' : ''
 
@@ -3838,8 +3894,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                 {rowIsBodyweightLoaded ? (
                                                                                                     <>
                                                                                                         {bodyweightLoadLabel && (
-                                                                                                            <p className="text-[11px] text-emerald-700 whitespace-nowrap">
-                                                                                                                {bodyweightLoadLabel.label}
+                                                                                                            <p className="text-[11px] text-emerald-700 whitespace-nowrap" title={bodyweightLoadLabel.label}>
+                                                                                                                {compactLoadLabel}
                                                                                                             </p>
                                                                                                         )}
                                                                                                         {bodyweightLoadLabel?.missingBodyweight && (
@@ -3867,54 +3923,38 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                 )}
                                                                                             </div>
                                                                                         ) : (
+                                                                                            <>
                                                                                             <div className="flex items-center gap-1">
-                                                                                                <Input
-                                                                                                    type="text"
-                                                                                                    value={row.weight}
-                                                                                                    onChange={(event) =>
-                                                                                                        updateRowFields(row.id, {
-                                                                                                            weight: event.target.value,
-                                                                                                        })
-                                                                                                    }
-                                                                                                    disabled={rowBusy || readOnly}
-                                                                                                    className={metricFieldClassName}
-                                                                                                />
-
-                                                                                                {rowIsBodyweightLoaded && bodyweightLoadLabel && (
-                                                                                                    <p className="text-[11px] font-semibold text-emerald-700 whitespace-nowrap">
-                                                                                                        {bodyweightLoadLabel.label}
-                                                                                                    </p>
-                                                                                                )}
-                                                                                                {rowIsBodyweightLoaded && bodyweightLoadLabel?.missingBodyweight && (
-                                                                                                    <p className="text-[11px] text-amber-700">
-                                                                                                        {t('common:common.bodyweightLoad.bodyweightNotRecorded')}
-                                                                                                    </p>
-                                                                                                )}
-                                                                                                {!rowIsBodyweightLoaded && shouldShowEffectiveWeight &&
-                                                                                                    typeof effectiveWeightToDisplay ===
-                                                                                                    'number' && (
-                                                                                                        <p className="text-[11px] font-semibold text-emerald-700 whitespace-nowrap">
-                                                                                                            {t(
-                                                                                                                'editProgram.effectiveWeightPreview',
-                                                                                                                {
-                                                                                                                    weight: `${formatWeightForDisplay(
-                                                                                                                        effectiveWeightToDisplay
-                                                                                                                    )} kg`,
-                                                                                                                }
-                                                                                                            )}
-                                                                                                        </p>
-                                                                                                    )}
-                                                                                                {!rowIsBodyweightLoaded && previewRpeWeightRange && (
-                                                                                                    <p className="text-[11px] font-semibold text-emerald-700 whitespace-nowrap">
-                                                                                                        {t('editProgram.rpeWeightRangePreview', {
-                                                                                                            range: formatWeightRange(
-                                                                                                                previewRpeWeightRange.min,
-                                                                                                                previewRpeWeightRange.max
-                                                                                                            ),
-                                                                                                        })}
+                                                                                                <div className={inlineWeightLabel ? 'w-16 shrink-0' : 'w-full'}>
+                                                                                                    <Input
+                                                                                                        type="text"
+                                                                                                        value={row.weight}
+                                                                                                        onChange={(event) =>
+                                                                                                            updateRowFields(row.id, {
+                                                                                                                weight: event.target.value,
+                                                                                                            })
+                                                                                                        }
+                                                                                                        disabled={rowBusy || readOnly}
+                                                                                                        placeholder={weightPlaceholder}
+                                                                                                        title={rowIsBodyweightLoaded && weightInputIsEmpty ? bodyweightLoadLabel?.label : undefined}
+                                                                                                        className={`${metricFieldClassName} placeholder:font-semibold placeholder:text-emerald-700`}
+                                                                                                    />
+                                                                                                </div>
+                                                                                                {inlineWeightLabel && (
+                                                                                                    <p
+                                                                                                        className="text-[11px] font-semibold text-emerald-700 whitespace-nowrap"
+                                                                                                        title={rowIsBodyweightLoaded ? bodyweightLoadLabel?.label : undefined}
+                                                                                                    >
+                                                                                                        {inlineWeightLabel}
                                                                                                     </p>
                                                                                                 )}
                                                                                             </div>
+                                                                                            {rowIsBodyweightLoaded && bodyweightLoadLabel?.missingBodyweight && (
+                                                                                                <p className="text-[11px] text-amber-700">
+                                                                                                    {t('common:common.bodyweightLoad.bodyweightNotRecorded')}
+                                                                                                </p>
+                                                                                            )}
+                                                                                            </>
                                                                                         )}
                                                                                     </td>
 
