@@ -6,16 +6,18 @@ export const SECONDS_MAX = 300
 
 export type ParsedReps =
     | { kind: 'reps'; min: number; max: number }
-    | { kind: 'time'; seconds: number }
+    | { kind: 'time'; min: number; max: number }
     | { kind: 'amrap' }
 
 const SINGLE = /^(\d+)$/
 const RANGE = /^(\d+)\/(\d+)$/
 const TIME = /^(\d+)"$/
+const TIME_RANGE = /^(\d+)"\/(\d+)"$/
 
 const inRepsLimits = (n: number) => n >= REPS_MIN && n <= REPS_MAX
+const inSecondsLimits = (n: number) => n >= 1 && n <= SECONDS_MAX
 
-/** Parses the canonical reps format ("8", "8/10", `30"`, "max"). Input is not trimmed. */
+/** Parses the canonical reps format ("8", "8/10", `30"`, `30"/45"`, "max"). Input is not trimmed. */
 export function parseReps(value: string): ParsedReps | null {
     if (value === 'max') return { kind: 'amrap' }
 
@@ -31,7 +33,12 @@ export function parseReps(value: string): ParsedReps | null {
     }
     if ((m = value.match(TIME))) {
         const s = Number(m[1])
-        return s >= 1 && s <= SECONDS_MAX ? { kind: 'time', seconds: s } : null
+        return inSecondsLimits(s) ? { kind: 'time', min: s, max: s } : null
+    }
+    if ((m = value.match(TIME_RANGE))) {
+        const a = Number(m[1])
+        const b = Number(m[2])
+        return inSecondsLimits(a) && inSecondsLimits(b) && a < b ? { kind: 'time', min: a, max: b } : null
     }
     return null
 }

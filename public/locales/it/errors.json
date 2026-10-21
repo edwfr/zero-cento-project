@@ -168,7 +168,7 @@
         "invalidTemplateId": "ID workout template non valido.",
         "templateNameRequired": "Il nome del workout template è obbligatorio.",
         "templateNameTooLong": "Il nome del workout template è troppo lungo (max 100).",
-        "invalidReps": "Ripetizioni non valide (es. 8, 8/10, 30\", max).",
+        "invalidReps": "Ripetizioni non valide (es. 8, 8/10, 30\", 30\"/45\", max).",
         "templateWorkoutsMismatch": "Il numero di workout non corrisponde ai giorni a settimana.",
         "templateInvalidDayIndex": "Indici dei workout non validi.",
         "templateExerciseRequired": "Seleziona un esercizio per ogni riga.",

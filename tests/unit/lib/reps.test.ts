@@ -9,12 +9,15 @@ describe('parseReps', () => {
         expect(parseReps('8/10')).toEqual({ kind: 'reps', min: 8, max: 10 })
     })
     it('parses seconds', () => {
-        expect(parseReps('30"')).toEqual({ kind: 'time', seconds: 30 })
+        expect(parseReps('30"')).toEqual({ kind: 'time', min: 30, max: 30 })
+    })
+    it('parses a seconds range', () => {
+        expect(parseReps('30"/45"')).toEqual({ kind: 'time', min: 30, max: 45 })
     })
     it('parses amrap', () => {
         expect(parseReps('max')).toEqual({ kind: 'amrap' })
     })
-    it.each(['', ' 8', '8 ', '8-10', '10/8', '8/8', '0', '51', '1/51', '0/5', '0"', '301"', '30/45"', 'MAX', '8/10/12', 'abc'])(
+    it.each(['', ' 8', '8 ', '8-10', '10/8', '8/8', '0', '51', '1/51', '0/5', '0"', '301"', '30/45"', '30"/45', '45"/30"', '30"/30"', '0"/30"', '30"/301"', '30"-45"', 'MAX', '8/10/12', 'abc'])(
         'rejects %j',
         (value) => {
             expect(parseReps(value)).toBeNull()
@@ -24,6 +27,7 @@ describe('parseReps', () => {
         expect(parseReps('50')).not.toBeNull()
         expect(parseReps('1/50')).not.toBeNull()
         expect(parseReps('300"')).not.toBeNull()
+        expect(parseReps('1"/300"')).not.toBeNull()
     })
 })
 
@@ -38,6 +42,7 @@ describe('plannedReps', () => {
         ['8', 8],
         ['8/10', 8],
         ['30"', 0],
+        ['30"/45"', 0],
         ['max', 0],
         ['8-10', 0],
         ['', 0],

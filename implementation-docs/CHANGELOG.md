@@ -10,6 +10,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(reps): range in secondi `30"/45"` (21/10/2026)
+- `src/lib/reps.ts`: nuovo formato range di tempo `a"/b"` (1–300 s, `a < b`). `ParsedReps` `time` ora ha `min`/`max` come `reps`; nei calcoli conta 0 come il tempo singolo.
+- Motivo: in produzione 25 righe (`30/45`, `45/60` su plank/barchette) erano range di secondi scritti come reps; con il formato dedicato si convertono senza cambiare la prescrizione.
+- Hint ed errori i18n (it/en) aggiornati; test in `tests/unit/lib/reps.test.ts`.
+
 ### feat(tests): colonna variante nei risultati test (21/10/2026)
 - Pagina `trainer/programs/[id]/tests`: nuova colonna "Variante" dopo "Esercizio" (`-` se assente). L'API `test-results` ora restituisce `variant` del `WorkoutExercise`; chiave i18n `testResults.colVariant` (it/en).
 

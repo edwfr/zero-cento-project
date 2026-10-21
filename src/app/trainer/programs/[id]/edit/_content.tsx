@@ -2041,7 +2041,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     }
 
     const getBaseValidationError = (row: EditableWorkoutExerciseRow): string | null => {
-        // Allow: number (8), range (8/10), seconds (30"), or keyword "max" (see @/lib/reps)
+        // Allow: number (8), range (8/10), seconds (30"), seconds range (30"/45"), or keyword "max" (see @/lib/reps)
         const parsedSets = Number.parseInt(row.sets, 10)
         const parsedRpe = row.targetRpe.trim() === '' ? null : Number(row.targetRpe)
 
