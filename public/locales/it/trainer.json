@@ -680,6 +680,7 @@
     },
     "editProgram": {
         "backToPrograms": "Torna ai programmi",
+        "rpeWeightRangePreview": "≈ {{range}} kg",
         "stepSetup": "Setup",
         "stepStructure": "Scheletro",
         "stepExercises": "Esercizi",
@@ -905,6 +906,7 @@
         "tableDetails": "Dettagli",
         "tableWeightAssigned": "Impostato: {{weight}}",
         "tableWeightEffective": "{{weight}}",
+        "tableWeightRpeRange": "Range RPE: {{range}} kg",
         "weekShort": "Week {{week}}",
         "noExercises": "Nessun esercizio configurato in questo workout",
         "warmupOnly": "Solo riscaldamento",

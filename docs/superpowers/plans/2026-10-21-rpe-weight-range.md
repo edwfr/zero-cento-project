@@ -285,8 +285,8 @@ o `tests/integration/program-detail.test.ts` (modify — scegliere quello che gi
 **Test command:** `node -e "for (const f of process.argv.slice(1)) JSON.parse(require('fs').readFileSync(f,'utf8').replace(/^﻿/,''))" public/locales/*/trainer.json public/locales/*/trainee.json public/locales/*/validation.json && head -c3 public/locales/en/trainer.json | xxd -p && head -c3 public/locales/it/trainer.json | xxd -p`
 **Done when:** JSON validi, BOM `efbbbf` ancora presente in entrambi i `trainer.json`.
 
-- [ ] **Step 1: tests** — nessun test unitario; il test command sopra.
-- [ ] **Step 2: implementation** — con Edit (mai riscrivere i file; `trainer.json` ha il BOM):
+- [x] **Step 1: tests** — nessun test unitario; il test command sopra.
+- [x] **Step 2: implementation** — con Edit (mai riscrivere i file; `trainer.json` ha il BOM):
   - `trainer.json` → `editProgram.rpeWeightRangePreview`: it `"≈ {{range}} kg"`, en `"≈ {{range}} kg"`
   - `trainer.json` → `reviewProgram.tableWeightRpeRange`: it `"Range RPE: {{range}} kg"`, en `"RPE range: {{range}} kg"`
   - `trainee.json` → `workouts.rpeWeightRange`: it `"{{range}} kg (RPE {{rpe}})"`, en `"{{range}} kg (RPE {{rpe}})"`
@@ -294,8 +294,8 @@ o `tests/integration/program-detail.test.ts` (modify — scegliere quello che gi
     `rpeWeightRangeOrder` (it "Il minimo del range RPE non può superare il massimo", en "RPE range minimum cannot exceed maximum"),
     `rpeWeightRangeIncomplete` (it "Il range RPE richiede minimo e massimo", en "RPE range needs both minimum and maximum"),
     `rpeWeightMinZero` (it "Il range RPE deve essere >= 0", en "RPE range must be >= 0")
-- [ ] **Step 3: run the test command**
-- [ ] **Step 4: CHANGELOG entry and commit** — `feat(i18n): add rpe weight range keys`
+- [x] **Step 3: run the test command**
+- [x] **Step 4: CHANGELOG entry and commit** — `feat(i18n): add rpe weight range keys`
 
 ---
 

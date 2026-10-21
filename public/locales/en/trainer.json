@@ -680,6 +680,7 @@
     },
     "editProgram": {
         "backToPrograms": "Back to Programs",
+        "rpeWeightRangePreview": "≈ {{range}} kg",
         "stepSetup": "Setup",
         "stepStructure": "Structure",
         "stepExercises": "Exercises",
@@ -905,6 +906,7 @@
         "tableDetails": "Details",
         "tableWeightAssigned": "Set: {{weight}}",
         "tableWeightEffective": "Effective: {{weight}}",
+        "tableWeightRpeRange": "RPE range: {{range}} kg",
         "weekShort": "Wk {{week}}",
         "noExercises": "No exercises configured for this workout",
         "warmupOnly": "Warm-up only",

@@ -164,6 +164,7 @@
         ]
     },
     "workouts": {
+        "rpeWeightRange": "{{range}} kg (RPE {{rpe}})",
         "nextExercise": "Next exercise",
         "confirmContinue": "The following exercises have no data: {{exercises}}. Continue anyway?",
         "weekLabel": "Week {{number}}",

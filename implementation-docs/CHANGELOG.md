@@ -10,6 +10,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(i18n): chiavi range di peso da RPE (21/10/2026)
+- `trainer.json`: `editProgram.rpeWeightRangePreview` (`≈ {{range}} kg`), `reviewProgram.tableWeightRpeRange` (it `Range RPE: {{range}} kg`, en `RPE range: {{range}} kg`). `trainee.json`: `workouts.rpeWeightRange` (`{{range}} kg (RPE {{rpe}})`). `validation.json`: `rpeWeightRangeOrder`, `rpeWeightRangeIncomplete`, `rpeWeightMinZero` (it + en). Modifiche puntuali, BOM di `trainer.json` preservato.
+- Motivo: testi per anteprima, review, vista trainee e messaggi Zod del range di peso da RPE (piano `2026-10-21-rpe-weight-range`, Task 5).
+
 ### feat(api): range di peso da RPE nelle letture (21/10/2026)
 - `rpeWeightMin` / `rpeWeightMax` restituiti, così come salvati e senza ricalcolo, da: review route (`select`), `loadTraineeProgramView` (`src/lib/trainee-program-data.ts`, tipo e oggetto `base`), GET `api/trainee/workouts/[id]` e `transformApiExercise` della pagina edit. `api/programs/[id]` usa `include` + spread: già li restituisce, nessuna modifica.
 - Test: `trainee-workout-detail.test.ts` e `lib/trainee-program-data.test.ts` (riga senza peso con range 110.5–115 → stessi valori in risposta, `effectiveWeight` null).
