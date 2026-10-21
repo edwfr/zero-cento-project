@@ -46,12 +46,13 @@ function makeExercise(
 }
 
 describe('parseRepsValue', () => {
-    it('parses leading integer', () => {
+    it('parses single and range (minimum)', () => {
         expect(parseRepsValue('5')).toBe(5)
-        expect(parseRepsValue('10+')).toBe(10)
-        expect(parseRepsValue('8x3')).toBe(8)
+        expect(parseRepsValue('8/10')).toBe(8)
     })
-    it('returns 0 when no leading digits', () => {
+    it('returns 0 for seconds, max and invalid', () => {
+        expect(parseRepsValue('30"')).toBe(0)
+        expect(parseRepsValue('max')).toBe(0)
         expect(parseRepsValue('AMRAP')).toBe(0)
         expect(parseRepsValue('')).toBe(0)
     })
@@ -79,6 +80,26 @@ describe('computeWeekSbdMetrics', () => {
     const buildWeek = (workouts: SbdMetricsWeek['workouts']): SbdMetricsWeek => ({
         id: 'week-1',
         workouts,
+    })
+
+    it('counts 3x"8/10" as 24 lifts and seconds as 0', () => {
+        const run = (reps: string) =>
+            computeWeekSbdMetrics({
+                weeks: [
+                    buildWeek([
+                        {
+                            id: 'w1',
+                            workoutExercises: [
+                                makeExercise({ sets: 3, reps, weightType: 'percentage_1rm', weight: 70 }),
+                            ],
+                        },
+                    ]),
+                ],
+                oneRmByExerciseId: {},
+                liftLabels: LIFT_LABELS,
+            })['week-1'][0]
+        expect(run('8/10').totalLifts).toBe(24)
+        expect(run('30"').totalLifts).toBe(0)
     })
 
     it('computes intensity from percentage_1rm weight directly', () => {

@@ -1,5 +1,6 @@
 import type { WorkoutExercise, PersonalRecord } from '@prisma/client'
 import { prisma } from './prisma'
+import { plannedReps } from './reps'
 
 export const CALCULATION_ERROR_KEYS = {
     maxRecursionDepthExceeded: 'calculation.maxRecursionDepthExceeded',
@@ -81,9 +82,8 @@ export function resolveEffectiveWeight(
         }
 
         case 'percentage_rm': {
-            const repsMatch = workoutExercise.reps.match(/^\d+/)
-            if (!repsMatch) return null
-            const targetReps = parseInt(repsMatch[0], 10)
+            const targetReps = plannedReps(workoutExercise.reps)
+            if (targetReps === 0) return null
             const rm = prMap.get(prKey(workoutExercise.exerciseId, targetReps))
             if (rm === undefined) return null
             return (rm * (workoutExercise.weight || 0)) / 100
@@ -168,10 +168,9 @@ export async function calculateEffectiveWeight(
 
         case 'percentage_rm': {
             // Find nRM personal record based on reps
-            // Parse reps (could be "8", "8-10", "6/8")
-            const repsMatch = workoutExercise.reps.match(/^\d+/)
-            if (!repsMatch) return null
-            const targetReps = parseInt(repsMatch[0], 10)
+            // Planned reps (could be "8", "8/10"); seconds and max give 0
+            const targetReps = plannedReps(workoutExercise.reps)
+            if (targetReps === 0) return null
 
             const record = await prisma.personalRecord.findFirst({
                 where: {
@@ -252,12 +251,11 @@ export function calculateTrainingSets(
 }
 
 /**
- * Parse reps string to get first number
- * Handles: "8", "8-10", "6/8"
+ * Planned reps of a reps string: "8" -> 8, "8/10" -> 8 (minimum),
+ * seconds and "max" -> 0.
  */
 export function parseReps(repsString: string): number {
-    const match = repsString.match(/^\d+/)
-    return match ? parseInt(match[0], 10) : 0
+    return plannedReps(repsString)
 }
 
 /**

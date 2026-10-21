@@ -145,14 +145,14 @@ export const repsSchema: z.ZodType<string>                     // z.string().ref
 **Test command:** `npx vitest run tests/unit/calculations.test.ts tests/unit/program-sbd-metrics.test.ts`
 **Done when:** non esiste più nessuna regex `/^\d+/` su `reps` in `src`; `30"` e `max` danno 0.
 
-- [ ] **Step 1: tests** —
+- [x] **Step 1: tests** —
   - `parseReps('8/10')` → 8 (minimo); `parseReps('8')` → 8; `parseReps('30"')` → 0; `parseReps('max')` → 0
   - `percentage_rm` con `reps:'8/10'` cerca il PR a 8 reps (aggiornare il caso esistente a riga ~441/448 da `'8-10'`)
   - `percentage_rm` con `reps:'30"'` e `reps:'max'` → `null` senza interrogare il PR
   - sbd-metrics: esercizio con `reps:'30"'` contribuisce 0 al `liftCount`; `reps:'8/10'`, sets 3 → 24
-- [ ] **Step 2: implementation** — in `calculations.ts` mantenere l'export `parseReps(repsString): number` come wrapper di `plannedReps` (è importato da `planned-training-sets/route.ts`), e usarlo nei due `percentage_rm` (righe ~84 e ~172) con `if (targetReps === 0) return null`; aggiornare i commenti "8-10"/"6/8". In `program-sbd-metrics.ts` `parseRepsValue` diventa re-export di `plannedReps` (importato da `review/_content.tsx` e `edit/_content.tsx`). Eliminare la copia locale in `workouts/[wId]/_content.tsx:101` e importare da `@/lib/reps`.
-- [ ] **Step 3: run the test command and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit** — `fix(reps): exclude seconds and max from planned volume`
+- [x] **Step 2: implementation** — in `calculations.ts` mantenere l'export `parseReps(repsString): number` come wrapper di `plannedReps` (è importato da `planned-training-sets/route.ts`), e usarlo nei due `percentage_rm` (righe ~84 e ~172) con `if (targetReps === 0) return null`; aggiornare i commenti "8-10"/"6/8". In `program-sbd-metrics.ts` `parseRepsValue` diventa re-export di `plannedReps` (importato da `review/_content.tsx` e `edit/_content.tsx`). Eliminare la copia locale in `workouts/[wId]/_content.tsx:101` e importare da `@/lib/reps`.
+- [x] **Step 3: run the test command and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit** — `fix(reps): exclude seconds and max from planned volume`
 
 ---
 

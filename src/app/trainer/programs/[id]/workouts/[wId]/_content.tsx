@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { normalizedOneRM } from '@/lib/calculations'
 import type { ExerciseType } from '@/lib/exercise-type'
+import { plannedReps as plannedRepsOf } from '@/lib/reps'
 import ExerciseTypeBadge from '@/components/ExerciseTypeBadge'
 import { Trash2, Dumbbell, GripVertical, ChevronLeft, ChevronRight, BarChart3, FileText, MessageSquare } from 'lucide-react'
 import {
@@ -96,11 +97,6 @@ interface PersonalRecord {
         name: string
         type: ExerciseType
     }
-}
-
-function parseRepsValue(repsValue: string): number {
-    const match = repsValue.match(/^\d+/)
-    return match ? parseInt(match[0], 10) : 0
 }
 
 function SortableExerciseItem({ id, children }: { id: string; children: React.ReactNode }) {
@@ -339,7 +335,7 @@ export default function WorkoutDetailContent() {
                     .filter((weekExercise) => weekExercise.exercise.type === 'fundamental' && !weekExercise.isWarmup)
                     .forEach((weekExercise) => {
                         const key = weekExercise.exercise.id
-                        const plannedReps = parseRepsValue(weekExercise.reps)
+                        const plannedReps = plannedRepsOf(weekExercise.reps)
                         const liftCount = weekExercise.sets * plannedReps
 
                         let intensity: number | null = null

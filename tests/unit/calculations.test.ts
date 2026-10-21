@@ -109,12 +109,13 @@ describe('parseReps', () => {
         expect(parseReps('8')).toBe(8)
     })
 
-    it('parses range "8-10" and returns first number', () => {
-        expect(parseReps('8-10')).toBe(8)
+    it('parses range "8/10" and returns the minimum', () => {
+        expect(parseReps('8/10')).toBe(8)
     })
 
-    it('parses slash format "6/8" and returns first number', () => {
-        expect(parseReps('6/8')).toBe(6)
+    it('returns 0 for seconds and max', () => {
+        expect(parseReps('30"')).toBe(0)
+        expect(parseReps('max')).toBe(0)
     })
 
     it('returns 0 for empty string', () => {
@@ -438,14 +439,14 @@ describe('calculateEffectiveWeight', () => {
             })
         })
 
-        it('handles reps range "8-10"', async () => {
+        it('handles reps range "8/10"', async () => {
             const workoutExercise: WorkoutExercise = {
                 id: 'we-1',
                 workoutId: mockWorkoutId,
                 exerciseId: mockExerciseId,
                 order: 1,
                 sets: 3,
-                reps: '8-10', // Will look for 8RM
+                reps: '8/10', // Will look for 8RM
                 weightType: 'percentage_rm',
                 weight: 85,
                 rpe: null,
@@ -1170,9 +1171,16 @@ describe('resolveEffectiveWeight', () => {
 
         it('reads the leading number of a rep range', () => {
             const prMap = new Map([[`${EX_1}:8`, 80]])
-            const exercise = makeWorkoutExercise({ weightType: 'percentage_rm', weight: 100, reps: '8-10' })
+            const exercise = makeWorkoutExercise({ weightType: 'percentage_rm', weight: 100, reps: '8/10' })
 
             expect(resolveEffectiveWeight(exercise, prMap, [])).toBe(80)
+        })
+
+        it('returns null for seconds without a PR lookup', () => {
+            const prMap = new Map([[`${EX_1}:30`, 120]])
+            const exercise = makeWorkoutExercise({ weightType: 'percentage_rm', weight: 50, reps: '30"' })
+
+            expect(resolveEffectiveWeight(exercise, prMap, [])).toBeNull()
         })
 
         it('returns null when reps does not start with a number', () => {

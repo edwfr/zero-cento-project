@@ -1,4 +1,5 @@
 import { intensityFromRpeChart } from './calculations'
+import { plannedReps as plannedRepsOf } from './reps'
 import type { ExerciseType } from '@/lib/exercise-type'
 
 export type FundamentalLift = 'squat' | 'bench' | 'deadlift'
@@ -11,10 +12,7 @@ export const FUNDAMENTAL_PATTERNS: Record<FundamentalLift, string[]> = {
 
 export const FUNDAMENTAL_LIFT_ORDER: FundamentalLift[] = ['squat', 'bench', 'deadlift']
 
-export function parseRepsValue(repsValue: string): number {
-    const match = repsValue.match(/^\d+/)
-    return match ? parseInt(match[0], 10) : 0
-}
+export { plannedReps as parseRepsValue } from './reps'
 
 export function matchFundamentalLift(exerciseName: string): FundamentalLift | null {
     const lowerName = exerciseName.toLowerCase()
@@ -104,7 +102,7 @@ export function computeWeekSbdMetrics({
                             return
                         }
 
-                        const plannedReps = parseRepsValue(workoutExercise.reps)
+                        const plannedReps = plannedRepsOf(workoutExercise.reps)
                         const liftCount = workoutExercise.sets * plannedReps
 
                         let intensity: number | null = null

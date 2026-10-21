@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### fix(reps): secondi e max esclusi dal volume pianificato (21/10/2026)
+- `parseReps` (calculations), `parseRepsValue` (program-sbd-metrics) e la copia locale in `workouts/[wId]/_content.tsx` ora usano `plannedReps` di `@/lib/reps`: `8/10` vale 8 (minimo), `30"` e `max` valgono 0 in volume, conteggio SBD e `percentage_rm` (che ritorna `null` senza cercare il PR). Test aggiornati.
+
 ### feat(reps): schemi programma e template usano `repsSchema` (21/10/2026)
 - `src/schemas/workout-exercise.ts` e `workout-template.ts` validano `reps` con il modulo condiviso `repsSchema` (rimossi il `z.union` e `REPS_PATTERNS`): `8-10`, range invertiti e valori fuori limite sono rifiutati. Rimosso il ramo `number` di `reps` (il client invia sempre stringhe) e i relativi `typeof reps === 'number'` morti nelle route `exercises`. Test in `tests/unit/schemas/workout-exercise.test.ts` e `workout-template-schema.test.ts`.
 
