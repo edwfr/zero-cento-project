@@ -7,6 +7,7 @@ import {
     estimateOneRM,
     estimateOneRMFromRpeTable,
     intensityFromRpeChart,
+    rpeWeightRange,
     normalizedOneRM,
     resolveEffectiveWeight,
     loadTraineeOneRmMap,
@@ -153,6 +154,32 @@ describe('intensityFromRpeChart', () => {
     it('returns null on non-finite inputs', () => {
         expect(intensityFromRpeChart(Number.NaN, 10)).toBeNull()
         expect(intensityFromRpeChart(5, Number.NaN)).toBeNull()
+    })
+})
+
+describe('rpeWeightRange', () => {
+    it('proposes 110.5–115 for 1RM 139, 5 reps @ RPE 8 (81.1%)', () => {
+        expect(rpeWeightRange(139, 5, 8)).toEqual({ min: 110.5, max: 115 })
+    })
+
+    it('gives ±2% around the 1RM for 1 rep @ RPE 10', () => {
+        expect(rpeWeightRange(100, 1, 10)).toEqual({ min: 98, max: 102 })
+    })
+
+    it('reads half-point RPE directly from the chart (82.4%)', () => {
+        expect(rpeWeightRange(139, 5, 8.5)).toEqual({ min: 112.5, max: 117 })
+    })
+
+    it('covers reps up to 12 and returns null beyond the chart', () => {
+        expect(rpeWeightRange(139, 12, 8)).not.toBeNull()
+        expect(rpeWeightRange(139, 13, 8)).toBeNull()
+    })
+
+    it('returns null without valid reps, 1RM or RPE in the chart', () => {
+        expect(rpeWeightRange(139, 0, 8)).toBeNull()
+        expect(rpeWeightRange(0, 5, 8)).toBeNull()
+        expect(rpeWeightRange(Number.NaN, 5, 8)).toBeNull()
+        expect(rpeWeightRange(139, 5, 4)).toBeNull()
     })
 })
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { latestNormalizedOneRMByExercise } from '@/lib/calculations'
 import {
+    formatWeightRange,
     percentageOfOneRmWeight,
     percentageOfPreviousWeight,
     roundWeightValue,
@@ -35,5 +36,12 @@ describe('percentageOfPreviousWeight', () => {
     it('applies a negative percentage to the previous weight and rounds', () => {
         expect(percentageOfPreviousWeight(100, -5)).toBe(95)
         expect(percentageOfPreviousWeight(97, -10)).toBe(87.5)
+    })
+})
+
+describe('formatWeightRange', () => {
+    it('joins bounds with an en dash, no spaces, no unit', () => {
+        expect(formatWeightRange(110.5, 115)).toBe('110.5–115')
+        expect(formatWeightRange(100, 102)).toBe('100–102')
     })
 })

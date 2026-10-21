@@ -17,3 +17,8 @@ export function percentageOfOneRmWeight(oneRm: number, percentage: number): numb
 export function percentageOfPreviousWeight(previousWeight: number, percentage: number): number {
     return roundWeightValue(previousWeight * (1 + percentage / 100))
 }
+
+/** "110.5–115" (en dash, no unit). Inputs are already rounded to 0.5 kg. */
+export function formatWeightRange(min: number, max: number): string {
+    return `${String(min)}–${String(max)}`
+}

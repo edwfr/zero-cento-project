@@ -10,6 +10,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(weights): helper rpeWeightRange (21/10/2026)
+- `src/lib/calculations.ts`: nuova `rpeWeightRange(oneRm, reps, rpe)` → `{ min, max }` = 1RM × % tabella Tuchscherer ± 2%, ogni estremo arrotondato per eccesso a 0,5 kg con `roundWeightValue`; `null` senza 1RM, con reps fuori 1–12 o RPE fuori tabella. Esempio: 1RM 139, 5 @ RPE 8 → 110.5–115. `src/lib/weight-rounding.ts`: `formatWeightRange(min, max)` → `110.5–115`. Test in `calculations.test.ts` e `lib/weight-rounding.test.ts`.
+- Motivo: base unica per il range di peso proposto da RPE (piano `2026-10-21-rpe-weight-range`, Task 1).
+
 ### test(tests): colonna variante nei risultati test (21/10/2026)
 - `program-test-results-content.test.tsx` aggiornato alla colonna Variante aggiunta in `ccd1bfc` (10 intestazioni, indici celle spostati, variante presente e assente `-`). Motivo: il test falliva sulle 9 colonne vecchie.
 

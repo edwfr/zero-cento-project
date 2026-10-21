@@ -1,6 +1,7 @@
 import type { WorkoutExercise } from '@prisma/client'
 import { prisma } from './prisma'
 import { plannedReps } from './reps'
+import { roundWeightValue } from './weight-rounding'
 
 export const CALCULATION_ERROR_KEYS = {
     noPreviousOccurrenceFound: 'calculation.noPreviousOccurrenceFound',
@@ -381,6 +382,27 @@ export function intensityFromRpeChart(reps: number, rpe: number): number | null 
     if (typeof percentage !== 'number' || percentage <= 0) return null
 
     return percentage
+}
+
+const RPE_WEIGHT_RANGE_TOLERANCE = 0.02
+
+export interface RpeWeightRange {
+    min: number
+    max: number
+}
+
+/** Proposed kg range: oneRm × chart% ± 2%, each bound ceiled to 0.5 kg. Null outside the chart or without a 1RM. */
+export function rpeWeightRange(oneRm: number, reps: number, rpe: number): RpeWeightRange | null {
+    if (!Number.isFinite(oneRm) || oneRm <= 0) return null
+
+    const pct = intensityFromRpeChart(reps, rpe)
+    if (pct === null) return null
+
+    const center = (oneRm * pct) / 100
+    return {
+        min: roundWeightValue(center * (1 - RPE_WEIGHT_RANGE_TOLERANCE)),
+        max: roundWeightValue(center * (1 + RPE_WEIGHT_RANGE_TOLERANCE)),
+    }
 }
 
 /**
