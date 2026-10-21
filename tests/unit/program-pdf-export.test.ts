@@ -99,7 +99,7 @@ describe('buildProgramPdfExerciseRow', () => {
             labels
         )
 
-        expect(row[5]).toBe('≈ 110.5–115 kg')
+        expect(row[5]).toBe('~ 110.5–115 kg')
     })
 
     it('keeps the explicit weight when a rpe weight range is also present', () => {

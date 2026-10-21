@@ -72,6 +72,19 @@ un peso effettivo.
   (nessun `isBodyweightLoaded` nello schema). Questo piano usa solo Tuchscherer; il piano
   zavorrati dovrà aggiungere a `rpeWeightRange` il parametro tabella.
 
+Decisioni prese in implementazione:
+
+- **PDF: prefisso `~` invece di `≈`** (Task 8). L'Helvetica built-in di jsPDF non ha
+  `≈`: la sua presenza fa ricodificare l'intera cella in UTF-16 e il testo esce corrotto
+  (`"H\0 \01\01…`). L'en dash `–` è in WinAnsi e funziona. UI web invariata (`≈`).
+- **PUT `[exerciseId]` con soli campi range** (Task 3): l'invariante `weight != null` →
+  range null usa il `weight` già salvato sulla riga quando il body non manda `weight`.
+- **Vista trainee** (Task 7): `compactWeightValue` non è renderizzato; il range è mostrato
+  direttamente nel box KG (oltre ad essere assegnato a `compactWeightValue`).
+- **File di test**: `tests/unit/lib/weight-rounding.test.ts` (Task 1),
+  `tests/integration/programs.test.ts` per copy-first-week (Task 3),
+  `tests/unit/lib/trainee-program-data.test.ts` (Task 4) — i file esistenti per quei moduli.
+
 ## Traps found while exploring
 
 - `public/locales/{en,it}/trainer.json` iniziano con **BOM UTF-8** (`EF BB BF`); gli altri

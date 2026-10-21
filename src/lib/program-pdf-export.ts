@@ -185,7 +185,7 @@ export function buildProgramPdfExerciseRow(
         typeof assignedWeightValue !== 'number' &&
         typeof rpeWeightMin === 'number' &&
         typeof rpeWeightMax === 'number'
-            ? `≈ ${formatWeightRange(rpeWeightMin, rpeWeightMax)} kg`
+            ? `~ ${formatWeightRange(rpeWeightMin, rpeWeightMax)} kg`
             : null
     const weightLabel =
         rpeWeightRangeLabel ??

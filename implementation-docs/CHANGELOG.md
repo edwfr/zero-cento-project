@@ -11,7 +11,7 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 ## [Unreleased]
 
 ### feat(programs): range di peso da RPE in review e PDF (21/10/2026)
-- `src/lib/program-pdf-export.ts`: `ProgramPdfExercise` con `rpeWeightMin`/`rpeWeightMax`; in `buildProgramPdfExerciseRow` una riga `absolute` senza peso (né `weight` né `effectiveWeight`) e con range mostra `≈ 110.5–115 kg` nella colonna peso. Il peso esplicito vince; senza range resta `missingValue`.
+- `src/lib/program-pdf-export.ts`: `ProgramPdfExercise` con `rpeWeightMin`/`rpeWeightMax`; in `buildProgramPdfExerciseRow` una riga `absolute` senza peso (né `weight` né `effectiveWeight`) e con range mostra `~ 110.5–115 kg` nella colonna peso (prefisso `~`: l'Helvetica built-in di jsPDF non ha `≈` e corromperebbe la cella). Il peso esplicito vince; senza range resta `missingValue`.
 - `trainer/programs/[id]/review/_content.tsx`: tipo esteso, i due campi passano ai dati PDF; nella cella peso, se non c'è peso effettivo e il range c'è, la riga verde mostra `t('reviewProgram.tableWeightRpeRange')` al posto di `-`. Il range non entra in `effectiveWeightByExerciseId` (non è base per `-x%`).
 - `ProgramDetailContent.tsx` passava già i due campi al PDF (Task 7): nessuna modifica.
 - Test: `program-pdf-export.test.ts` (range senza peso; `100 kg` vince sul range; né peso né range → `-`).
