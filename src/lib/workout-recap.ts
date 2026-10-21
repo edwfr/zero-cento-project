@@ -1,4 +1,5 @@
 import type { ExerciseType } from '@/lib/exercise-type'
+import type { BallastDisplay } from '@/lib/bodyweight-load'
 
 export type ExerciseStatus = 'not_started' | 'in_progress' | 'done'
 export type WorkoutExerciseType = ExerciseType
@@ -25,6 +26,7 @@ export interface ExerciseRecapItem {
     reps: string
     targetRpe: number | null
     effectiveWeight: number | null
+    ballast: BallastDisplay | null
     status: ExerciseStatus
     actualRpe: number | null
     exerciseNote: string | null

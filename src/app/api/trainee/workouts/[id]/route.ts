@@ -2,7 +2,8 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
-import { loadTraineeOneRmMap, resolveEffectiveWeight } from '@/lib/calculations'
+import { loadLatestBodyweightKg, loadTraineeOneRmMap, resolveEffectiveWeight } from '@/lib/calculations'
+import { traineeWeightFields } from '@/lib/bodyweight-load'
 import { logger } from '@/lib/logger'
 import { handleApiError } from '@/lib/api-error-handler'
 import { isProgramVisibleToTrainee } from '@/lib/program-visibility'
@@ -129,6 +130,7 @@ export async function GET(
                                 youtubeUrl: true,
                                 type: true,
                                 notes: true,
+                                isBodyweightLoaded: true,
                             },
                         },
                     },
@@ -155,7 +157,8 @@ export async function GET(
         // Parallelize: fetch the latest feedback rows and trainee PR map concurrently.
         // Feedback is stored by calendar day, so the workout detail must hydrate the
         // most recent row per exercise instead of restricting the read to "today".
-        const [existingFeedback, oneRmMap] = await Promise.all([
+        const needsBodyweight = workout.workoutExercises.some((we) => we.exercise.isBodyweightLoaded)
+        const [existingFeedback, oneRmMap, bodyweightKg] = await Promise.all([
             prisma.exerciseFeedback.findMany({
                 where: {
                     workoutExerciseId: {
@@ -175,9 +178,15 @@ export async function GET(
                 },
             }),
             loadTraineeOneRmMap(session.user.id),
+            needsBodyweight ? loadLatestBodyweightKg(session.user.id) : Promise.resolve(null),
         ])
 
         const siblings = workout.workoutExercises
+        const loadedIds = new Set(
+            workout.workoutExercises
+                .filter((we) => we.exercise.isBodyweightLoaded)
+                .map((we) => we.exerciseId)
+        )
         const exercisesWithWeights = workout.workoutExercises.map((we) => {
             let effectiveWeight: number | null =
                 typeof we.effectiveWeight === 'number'
@@ -188,7 +197,10 @@ export async function GET(
 
             if (effectiveWeight === null) {
                 try {
-                    effectiveWeight = resolveEffectiveWeight(we, oneRmMap, siblings)
+                    effectiveWeight = resolveEffectiveWeight(we, oneRmMap, siblings, {
+                        bodyweightKg,
+                        isBodyweightLoaded: (exerciseId) => loadedIds.has(exerciseId),
+                    })
                 } catch (error) {
                     logger.warn(
                         {
@@ -202,6 +214,18 @@ export async function GET(
                 }
             }
 
+            const weightFields = traineeWeightFields(
+                {
+                    weightType: we.weightType,
+                    weight: we.weight,
+                    effectiveWeight,
+                    rpeWeightMin: we.rpeWeightMin ?? null,
+                    rpeWeightMax: we.rpeWeightMax ?? null,
+                    isBodyweightLoaded: Boolean(we.exercise.isBodyweightLoaded),
+                },
+                bodyweightKg
+            )
+
             return {
                 id: we.id,
                 exercise: we.exercise,
@@ -211,9 +235,10 @@ export async function GET(
                 targetRpe: we.targetRpe,
                 weightType: we.weightType,
                 weight: we.weight,
-                effectiveWeight,
-                rpeWeightMin: we.rpeWeightMin ?? null,
-                rpeWeightMax: we.rpeWeightMax ?? null,
+                effectiveWeight: weightFields.effectiveWeight,
+                rpeWeightMin: weightFields.rpeWeightMin,
+                rpeWeightMax: weightFields.rpeWeightMax,
+                ballast: weightFields.ballast,
                 restTime: we.restTime,
                 isWarmup: Boolean(we.isWarmup),
                 isJumpSet: Boolean(we.isJumpSet),

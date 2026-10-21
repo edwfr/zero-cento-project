@@ -4,7 +4,8 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { createProgramSchema } from '@/schemas/program'
 import { logger } from '@/lib/logger'
-import { loadTraineeOneRmMap, resolveEffectiveWeight } from '@/lib/calculations'
+import { loadLatestBodyweightKg, loadTraineeOneRmMap, resolveEffectiveWeight } from '@/lib/calculations'
+import { traineeWeightFields } from '@/lib/bodyweight-load'
 import { handleApiError } from '@/lib/api-error-handler'
 import { isProgramVisibleToTrainee } from '@/lib/program-visibility'
 import { settleCreditOnProgramDelete } from '@/lib/program-credits'
@@ -24,7 +25,7 @@ export async function GET(
 
         const exerciseSelector =
             session.user.role === 'trainee'
-                ? { select: { id: true, name: true, type: true } }
+                ? { select: { id: true, name: true, type: true, isBodyweightLoaded: true } }
                 : {
                       include: {
                           movementPattern: {
@@ -120,6 +121,23 @@ export async function GET(
 
             const oneRmMap = needsPrMap ? await loadTraineeOneRmMap(session.user.id) : new Map<string, number>()
 
+            const loadedIds = new Set<string>()
+            for (const week of program.weeks) {
+                for (const workout of week.workouts) {
+                    for (const we of workout.workoutExercises) {
+                        if ((we.exercise as { isBodyweightLoaded?: boolean }).isBodyweightLoaded) {
+                            loadedIds.add(we.exerciseId)
+                        }
+                    }
+                }
+            }
+            const bodyweightKg =
+                loadedIds.size > 0 ? await loadLatestBodyweightKg(session.user.id) : null
+            const resolveOptions = {
+                bodyweightKg,
+                isBodyweightLoaded: (exerciseId: string) => loadedIds.has(exerciseId),
+            }
+
             const resolvedWeeks = program.weeks.map((week) => ({
                 ...week,
                 workouts: week.workouts.map((workout) => {
@@ -127,24 +145,40 @@ export async function GET(
                     return {
                         ...workout,
                         workoutExercises: workout.workoutExercises.map((workoutExercise) => {
+                            const withBallast = (effectiveWeight: number | null) => ({
+                                ...workoutExercise,
+                                ...traineeWeightFields(
+                                    {
+                                        weightType: workoutExercise.weightType,
+                                        weight: workoutExercise.weight,
+                                        effectiveWeight,
+                                        rpeWeightMin: workoutExercise.rpeWeightMin ?? null,
+                                        rpeWeightMax: workoutExercise.rpeWeightMax ?? null,
+                                        isBodyweightLoaded: Boolean(
+                                            (workoutExercise.exercise as { isBodyweightLoaded?: boolean })
+                                                .isBodyweightLoaded
+                                        ),
+                                    },
+                                    bodyweightKg
+                                ),
+                            })
+
                             if (typeof workoutExercise.effectiveWeight === 'number') {
-                                return workoutExercise
+                                return withBallast(workoutExercise.effectiveWeight)
                             }
 
                             if (workoutExercise.weightType === 'absolute') {
-                                return {
-                                    ...workoutExercise,
-                                    effectiveWeight: workoutExercise.weight,
-                                }
+                                return withBallast(workoutExercise.weight)
                             }
 
                             try {
                                 const effectiveWeight = resolveEffectiveWeight(
                                     workoutExercise,
                                     oneRmMap,
-                                    siblings
+                                    siblings,
+                                    resolveOptions
                                 )
-                                return { ...workoutExercise, effectiveWeight }
+                                return withBallast(effectiveWeight)
                             } catch (calculationError: unknown) {
                                 logger.warn(
                                     {
@@ -157,7 +191,7 @@ export async function GET(
                                     },
                                     'Failed to resolve effective weight while fetching program details'
                                 )
-                                return { ...workoutExercise, effectiveWeight: null }
+                                return withBallast(null)
                             }
                         }),
                     }

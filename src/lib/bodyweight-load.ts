@@ -59,7 +59,9 @@ export function ballastForRow(
 ): BallastDisplay | null {
     if (row.weightType === 'absolute') {
         if (typeof row.weight === 'number') {
-            return row.weight > 0 ? { kind: 'ballast', kg: row.weight } : { kind: 'bodyweight' }
+            return row.weight > 0
+                ? { kind: 'ballast', kg: roundWeightValue(row.weight) }
+                : { kind: 'bodyweight' }
         }
     } else if (typeof row.effectiveWeight === 'number') {
         return ballastFromTotal(row.effectiveWeight, bodyweightKg)

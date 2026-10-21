@@ -37,6 +37,13 @@ describe('ballastFromTotal', () => {
 })
 
 describe('ballastForRow', () => {
+    it('rounds an absolute ballast up to 0.5 kg like the labels', () => {
+        expect(ballastForRow(row({ weightType: 'absolute', weight: 17.3 }), 80)).toEqual({
+            kind: 'ballast',
+            kg: 17.5,
+        })
+    })
+
     it('uses weight for absolute rows regardless of BW', () => {
         const r = row({ weightType: 'absolute', weight: 20 })
         expect(ballastForRow(r, 80)).toEqual({ kind: 'ballast', kg: 20 })

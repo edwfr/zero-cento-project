@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
+import { loadLatestBodyweightKg } from '@/lib/calculations'
+import { traineeWeightFields } from '@/lib/bodyweight-load'
 import { computeExerciseStatus } from '@/lib/workout-recap'
 import type { ExerciseRecapItem } from '@/lib/workout-recap'
 import { handleApiError } from '@/lib/api-error-handler'
@@ -35,8 +37,12 @@ export async function GET(
                         reps: true,
                         targetRpe: true,
                         restTime: true,
+                        weightType: true,
+                        weight: true,
                         effectiveWeight: true,
-                        exercise: { select: { name: true, type: true } },
+                        rpeWeightMin: true,
+                        rpeWeightMax: true,
+                        exercise: { select: { name: true, type: true, isBodyweightLoaded: true } },
                         exerciseFeedbacks: {
                             where: { traineeId: session.user.id },
                             orderBy: { date: 'desc' },
@@ -64,11 +70,26 @@ export async function GET(
             return apiError('NOT_FOUND', 'Workout not found', 404, undefined, 'workout.notFound')
         }
 
+        const needsBodyweight = workout.workoutExercises.some((we) => we.exercise.isBodyweightLoaded)
+        const bodyweightKg = needsBodyweight ? await loadLatestBodyweightKg(session.user.id) : null
+
         const exercises: ExerciseRecapItem[] = workout.workoutExercises.map((we) => {
             const feedback = we.exerciseFeedbacks[0] ?? null
             const setsPerformed = feedback?.setsPerformed ?? []
             const completedSets = setsPerformed.filter((s) => s.completed).length
             const hasAnyCompletedSet = setsPerformed.some((s) => s.completed)
+
+            const weightFields = traineeWeightFields(
+                {
+                    weightType: we.weightType,
+                    weight: we.weight,
+                    effectiveWeight: we.effectiveWeight,
+                    rpeWeightMin: we.rpeWeightMin ?? null,
+                    rpeWeightMax: we.rpeWeightMax ?? null,
+                    isBodyweightLoaded: Boolean(we.exercise.isBodyweightLoaded),
+                },
+                bodyweightKg
+            )
 
             return {
                 id: we.id,
@@ -83,7 +104,8 @@ export async function GET(
                 completedSets,
                 reps: we.reps,
                 targetRpe: we.targetRpe,
-                effectiveWeight: we.effectiveWeight,
+                effectiveWeight: weightFields.effectiveWeight,
+                ballast: weightFields.ballast,
                 status: computeExerciseStatus(we.isCompleted, hasAnyCompletedSet),
                 actualRpe: feedback?.actualRpe ?? null,
                 exerciseNote: feedback?.notes ?? null,

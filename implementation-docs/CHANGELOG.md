@@ -10,6 +10,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(api): letture trainee con la sola zavorra (22/10/2026)
+- Workout detail, recap, `GET /api/programs/[id]` (ramo trainee) e `loadTraineeProgramView` leggono il peso corporeo solo se c'e' una riga zavorrata, passano le opzioni BW a `resolveEffectiveWeight` e restituiscono `effectiveWeight`/range a `null` piu' `ballast` gia' calcolato; nessun campo BW nelle risposte. `ExerciseRecapItem` ha `ballast`. `ballastForRow` arrotonda per eccesso a 0,5 kg anche la zavorra `absolute`.
+- Motivo: il trainee vede solo cosa caricare e BW non si ricava nemmeno per sottrazione.
+
 ### feat(records): 1RM con flag zavorrato nelle viste dei massimali (22/10/2026)
 - `PersonalRecordsExplorer`, massimali trainer e trainee, scheda trainee e pagina test passano `isBodyweightLoaded` dell'esercizio a `normalizedOneRM`; la prop `calculateOneRepMax` dell'explorer riceve il flag come terzo argomento.
 - Motivo: un PR di trazioni/dip deve mostrare l'1RM della tabella corpo libero (110x3 -> 121 kg) in ogni vista.

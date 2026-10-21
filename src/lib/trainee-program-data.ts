@@ -1,7 +1,9 @@
 import { prisma } from './prisma'
 import type { WeekType } from '@prisma/client'
 import type { ExerciseType } from '@/lib/exercise-type'
-import { loadTraineeOneRmMap, resolveEffectiveWeight } from './calculations'
+import { loadLatestBodyweightKg, loadTraineeOneRmMap, resolveEffectiveWeight } from './calculations'
+import { traineeWeightFields } from './bodyweight-load'
+import type { BallastDisplay } from './bodyweight-load'
 import { logger } from './logger'
 import { isProgramVisibleToTrainee, traineeVisibleProgramWhere } from './program-visibility'
 
@@ -36,6 +38,7 @@ export interface TraineeProgram {
                 effectiveWeight: number | null
                 rpeWeightMin: number | null
                 rpeWeightMax: number | null
+                ballast: BallastDisplay | null
                 restTime: 's30' | 'm1' | 'm1s30' | 'm2' | 'm3' | 'm5'
                 isWarmup: boolean
                 isJumpSet: boolean
@@ -171,7 +174,7 @@ async function loadProgramTreeForTrainee(
                         include: {
                             workoutExercises: {
                                 include: {
-                                    exercise: { select: { id: true, name: true, type: true } },
+                                    exercise: { select: { id: true, name: true, type: true, isBodyweightLoaded: true } },
                                 },
                                 orderBy: { order: 'asc' },
                             },
@@ -194,6 +197,20 @@ async function loadProgramTreeForTrainee(
     )
     const oneRmMap = needsPrMap ? await loadTraineeOneRmMap(traineeId) : new Map<string, number>()
 
+    const loadedIds = new Set<string>()
+    for (const week of program.weeks) {
+        for (const workout of week.workouts) {
+            for (const we of workout.workoutExercises) {
+                if (we.exercise.isBodyweightLoaded) loadedIds.add(we.exerciseId)
+            }
+        }
+    }
+    const bodyweightKg = loadedIds.size > 0 ? await loadLatestBodyweightKg(traineeId) : null
+    const resolveOptions = {
+        bodyweightKg,
+        isBodyweightLoaded: (exerciseId: string) => loadedIds.has(exerciseId),
+    }
+
     const weeks = program.weeks.map((week) => ({
         weekNumber: week.weekNumber,
         weekType: week.weekType,
@@ -203,6 +220,7 @@ async function loadProgramTreeForTrainee(
                 id: workout.id,
                 dayIndex: workout.dayIndex,
                 workoutExercises: workout.workoutExercises.map((we) => {
+                    const { isBodyweightLoaded, ...exercise } = we.exercise
                     const base = {
                         id: we.id,
                         workoutId: we.workoutId,
@@ -222,19 +240,27 @@ async function loadProgramTreeForTrainee(
                         isSuperSet: we.isSuperSet,
                         notes: we.notes,
                         order: we.order,
-                        exercise: we.exercise,
+                        ballast: null as BallastDisplay | null,
+                        exercise,
                     }
-                    if (typeof base.effectiveWeight === 'number') return base
-                    if (base.weightType === 'absolute') return { ...base, effectiveWeight: base.weight }
+                    const withBallast = (effectiveWeight: number | null) => ({
+                        ...base,
+                        ...traineeWeightFields(
+                            { ...base, effectiveWeight, isBodyweightLoaded: Boolean(isBodyweightLoaded) },
+                            bodyweightKg
+                        ),
+                    })
+                    if (typeof base.effectiveWeight === 'number') return withBallast(base.effectiveWeight)
+                    if (base.weightType === 'absolute') return withBallast(base.weight)
                     try {
-                        const effectiveWeight = resolveEffectiveWeight(we as any, oneRmMap, siblings as any)
-                        return { ...base, effectiveWeight }
+                        const effectiveWeight = resolveEffectiveWeight(we as any, oneRmMap, siblings as any, resolveOptions)
+                        return withBallast(effectiveWeight)
                     } catch (err) {
                         logger.warn(
                             { programId, workoutExerciseId: we.id, error: err instanceof Error ? err.message : String(err) },
                             'Failed to resolve effective weight'
                         )
-                        return { ...base, effectiveWeight: null }
+                        return withBallast(null)
                     }
                 }),
             }

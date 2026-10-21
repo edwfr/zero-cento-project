@@ -575,7 +575,7 @@ cinque le viste.
 quattro le letture trainee restituiscono `effectiveWeight: null` e
 `ballast: { kind: 'ballast', kg: 17.5 }`, e nessun campo BW.
 
-- [ ] **Step 1: tests**, per ciascuna delle quattro letture (mock prisma esistenti più
+- [x] **Step 1: tests**, per ciascuna delle quattro letture (mock prisma esistenti più
   `traineeMeasurement.findFirst`):
   - riga zavorrata, `effectiveWeight: 97.5`, BW 80 → `effectiveWeight: null`, `ballast { kind: 'ballast', kg: 17.5 }`
   - riga zavorrata con range 95.5–99 → `rpeWeightMin/Max: null`, `ballast { kind: 'ballastRange', minKg: 15.5, maxKg: 19 }` (solo workout detail + program data)
@@ -585,7 +585,7 @@ quattro le letture trainee restituiscono `effectiveWeight: null` e
   - il JSON della risposta non contiene la stringa `bodyweight` come chiave
     (`expect(JSON.stringify(body)).not.toMatch(/"bodyweightKg"/)`)
   - workout detail, `-10%` dopo `absolute 20` zavorrato, nessun `effectiveWeight` salvato, BW 80 → `ballast kg 10` (passa per `resolveEffectiveWeight` con le opzioni BW)
-- [ ] **Step 2: implementation**. Lo stesso schema in ogni lettura:
+- [x] **Step 2: implementation**. Lo stesso schema in ogni lettura:
   1. aggiungere `isBodyweightLoaded: true` alla `select` di `exercise`, dove è esplicita;
   2. `const needsBodyweight = rows.some((we) => we.exercise.isBodyweightLoaded)`;
   3. `const bodyweightKg = needsBodyweight ? await loadLatestBodyweightKg(traineeId) : null`.
@@ -602,8 +602,8 @@ quattro le letture trainee restituiscono `effectiveWeight: null` e
     `ballast: BallastDisplay | null`.
   - `trainee-program-data.ts`: tipo (~riga 36) e oggetto `base` (~riga 207). Il campo
     `ballast` va esposto in `TraineeProgramView`.
-- [ ] **Step 3: run the test command and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit**: `feat(api): trainee reads show ballast only`
+- [x] **Step 3: run the test command and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit**: `feat(api): trainee reads show ballast only`
 
 ---
 

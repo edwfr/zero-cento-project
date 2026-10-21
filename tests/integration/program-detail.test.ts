@@ -113,6 +113,122 @@ describe('GET /api/programs/[id] — trainee branch', () => {
     })
 })
 
+describe('GET /api/programs/[id] - trainee bodyweight-loaded rows', () => {
+    const loadedRow = (overrides: Record<string, unknown> = {}) => ({
+        ...baseExercise,
+        exerciseId: 'ex-pullup',
+        weightType: 'percentage_1rm' as const,
+        weight: 75,
+        effectiveWeight: 97.5,
+        rpeWeightMin: null,
+        rpeWeightMax: null,
+        exercise: { id: 'ex-pullup', name: 'Trazioni', type: 'fundamental' as const, isBodyweightLoaded: true },
+        ...overrides,
+    })
+
+    function mockProgram(rows: unknown[]) {
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
+            id: 'prog-1',
+            traineeId: mockTraineeSession.user.id,
+            trainerId: 'trainer-1',
+            title: 'Test',
+            startDate: new Date(),
+            durationWeeks: 1,
+            weeks: [
+                {
+                    weekNumber: 1,
+                    weekType: 'volume',
+                    workouts: [{ id: 'w-1', dayIndex: 1, workoutExercises: rows }],
+                },
+            ],
+            trainer: { id: 'trainer-1', firstName: 'T', lastName: 'R' },
+            trainee: { id: mockTraineeSession.user.id, firstName: 'M', lastName: 'A' },
+        } as never)
+        prismaMock.personalRecord.findMany.mockResolvedValue([] as never)
+    }
+
+    const fetchRows = async () => {
+        const res = await GET(makeRequest(), { params: Promise.resolve({ id: 'prog-1' }) })
+        const json = await res.json()
+        return { res, json, rows: json.data.program.weeks[0].workouts[0].workoutExercises }
+    }
+
+    beforeEach(() => {
+        vi.clearAllMocks()
+        ;asTrainee()
+        prismaMock.traineeMeasurement.findFirst.mockResolvedValue({ value: 80 } as never)
+    })
+
+    it('hides the total load and returns only the ballast', async () => {
+        mockProgram([loadedRow()])
+
+        const { rows, json } = await fetchRows()
+
+        expect(rows[0]).toMatchObject({
+            effectiveWeight: null,
+            rpeWeightMin: null,
+            rpeWeightMax: null,
+            ballast: { kind: 'ballast', kg: 17.5 },
+        })
+        expect(prismaMock.traineeMeasurement.findFirst).toHaveBeenCalledTimes(1)
+        expect(JSON.stringify(json)).not.toMatch(/"bodyweightKg"/)
+    })
+
+    it('returns a ballast range for a frozen total range', async () => {
+        mockProgram([
+            loadedRow({ weight: null, effectiveWeight: null, rpeWeightMin: 95.5, rpeWeightMax: 99 }),
+        ])
+
+        const { rows } = await fetchRows()
+
+        expect(rows[0]).toMatchObject({
+            rpeWeightMin: null,
+            rpeWeightMax: null,
+            ballast: { kind: 'ballastRange', minKg: 15.5, maxKg: 19 },
+        })
+    })
+
+    it('reports a missing bodyweight', async () => {
+        prismaMock.traineeMeasurement.findFirst.mockResolvedValue(null)
+        mockProgram([loadedRow()])
+
+        const { rows } = await fetchRows()
+
+        expect(rows[0].ballast).toEqual({ kind: 'missingBodyweight' })
+    })
+
+    it('leaves a non-loaded row unchanged and skips the bodyweight read', async () => {
+        mockProgram([
+            loadedRow({
+                exercise: { id: 'ex-pullup', name: 'Squat', type: 'fundamental', isBodyweightLoaded: false },
+            }),
+        ])
+
+        const { rows } = await fetchRows()
+
+        expect(rows[0]).toMatchObject({ effectiveWeight: 97.5, ballast: null })
+        expect(prismaMock.traineeMeasurement.findFirst).not.toHaveBeenCalled()
+    })
+
+    it('resolves -10% after an absolute ballast on top of the bodyweight', async () => {
+        mockProgram([
+            loadedRow({ id: 'we-1', order: 1, weightType: 'absolute', weight: 20, effectiveWeight: null }),
+            loadedRow({
+                id: 'we-2',
+                order: 2,
+                weightType: 'percentage_previous',
+                weight: -10,
+                effectiveWeight: null,
+            }),
+        ])
+
+        const { rows } = await fetchRows()
+
+        expect(rows[0].ballast).toEqual({ kind: 'ballast', kg: 20 })
+        expect(rows[1].ballast).toEqual({ kind: 'ballast', kg: 10 })
+    })
+})
+
 describe('GET /api/programs/[id] — trainee select shape', () => {
     beforeEach(() => {
         vi.clearAllMocks()
@@ -138,7 +254,7 @@ describe('GET /api/programs/[id] — trainee select shape', () => {
 
         // Trainee branch must use `select`, not `include` with movementPattern.
         expect(exerciseInclude.include).toBeUndefined()
-        expect(exerciseInclude.select).toEqual({ id: true, name: true, type: true })
+        expect(exerciseInclude.select).toEqual({ id: true, name: true, type: true, isBodyweightLoaded: true })
     })
 })
 
