@@ -310,14 +310,14 @@ o `tests/integration/program-detail.test.ts` (modify — scegliere quello che gi
 **Done when:** in edit, riga con peso vuoto + RPE 8 + reps 5 su esercizio con PR (1RM 139)
 mostra `≈ 110.5–115 kg` in verde, e il salvataggio manda `rpeWeightMin: 110.5, rpeWeightMax: 115`.
 
-- [ ] **Step 1: tests** — `rpeWeightRangeForRow` (stesso stile di `tests/unit/weight-input.test.ts`):
+- [x] **Step 1: tests** — `rpeWeightRangeForRow` (stesso stile di `tests/unit/weight-input.test.ts`):
   - `{ weight: '', reps: '5', targetRpe: '8', oneRm: 139 }` → `{ min: 110.5, max: 115 }`
   - `weight: '100'` / `'75%'` / `'-10%'` → `null`
   - `targetRpe: ''` → `null`; `oneRm: undefined` → `null`
   - `reps: '8/10', targetRpe: '8'` → uguale a `reps: '8'`
   - `reps: '30"'` → `null`; `reps: 'max'` → `null`; `reps: '13'` → `null`
   - `weight: '   '` (solo spazi) → calcolato (vuoto)
-- [ ] **Step 2: implementation**
+- [x] **Step 2: implementation**
   - `edit/rpe-weight-range.ts`:
     ```ts
     import type { RpeWeightRange } from '@/lib/calculations'
@@ -345,8 +345,8 @@ mostra `≈ 110.5–115 kg` in verde, e il salvataggio manda `rpeWeightMin: 110.
       stesso `<p className="text-[11px] text-emerald-700 whitespace-nowrap">` con la stessa chiave.
     - `skeleton-hydration.ts` e `workout-templates.ts` costruiscono righe con
       `effectiveWeight: null`: se `type-check` lo chiede, aggiungere `rpeWeightMin: null, rpeWeightMax: null`.
-- [ ] **Step 3: run the test command, `npx vitest run tests/unit/weight-input.test.ts tests/unit/effective-weight-display.test.ts` and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit** — `feat(programs): propose rpe weight range in editor`
+- [x] **Step 3: run the test command, `npx vitest run tests/unit/weight-input.test.ts tests/unit/effective-weight-display.test.ts` and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit** — `feat(programs): propose rpe weight range in editor`
 
 ---
 

@@ -12,6 +12,7 @@ import {
     normalizedOneRM,
 } from '@/lib/calculations'
 import {
+    formatWeightRange,
     percentageOfOneRmWeight,
     percentageOfPreviousWeight,
     roundWeightValue,
@@ -21,6 +22,7 @@ import {
     parseWeightInputValue,
     type ParsedWeightInputValue,
 } from './weight-input'
+import { rpeWeightRangeForRow } from './rpe-weight-range'
 import { EXERCISE_TYPE_META, type ExerciseType } from '@/lib/exercise-type'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ConfirmationModal from '@/components/ConfirmationModal'
@@ -136,6 +138,8 @@ interface WorkoutExercise {
     weightType: WeightType
     weight: number | null
     effectiveWeight: number | null
+    rpeWeightMin: number | null
+    rpeWeightMax: number | null
     restTime: RestTime
     isWarmup: boolean
     isJumpSet: boolean
@@ -1890,6 +1894,12 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     ) => {
         const parsedSets = Number.parseInt(row.sets, 10)
         const parsedRpe = row.targetRpe.trim() === '' ? null : Number(row.targetRpe)
+        const rpeRange = rpeWeightRangeForRow({
+            weight: row.weight,
+            reps: row.reps,
+            targetRpe: row.targetRpe,
+            oneRm: normalizedOneRMByExercise[row.exerciseId],
+        })
 
         return {
             exerciseId: row.exerciseId,
@@ -1901,6 +1911,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             weightType: parsedWeight.weightType,
             weight: parsedWeight.weight,
             effectiveWeight: parsedWeight.effectiveWeight,
+            rpeWeightMin: rpeRange?.min ?? null,
+            rpeWeightMax: rpeRange?.max ?? null,
             restTime: row.restTime,
             isWarmup: row.isWarmup,
             isJumpSet: row.isJumpSet,
@@ -2998,6 +3010,21 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                         },
                                                         {} as Record<string, number | null>
                                                     )
+                                                const persistedRpeWeightRangeByRowId =
+                                                    workout.workoutExercises.reduce(
+                                                        (acc, workoutExercise) => {
+                                                            acc[workoutExercise.id] =
+                                                                workoutExercise.rpeWeightMin !== null &&
+                                                                workoutExercise.rpeWeightMax !== null
+                                                                    ? {
+                                                                        min: workoutExercise.rpeWeightMin,
+                                                                        max: workoutExercise.rpeWeightMax,
+                                                                    }
+                                                                    : null
+                                                            return acc
+                                                        },
+                                                        {} as Record<string, { min: number; max: number } | null>
+                                                    )
                                                 const workoutLabel = t('editProgram.workoutFallback', {
                                                     number: workoutIndex + 1,
                                                 })
@@ -3423,6 +3450,15 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                 typeof previewEffectiveWeight ===
                                                                                 'number'
 
+                                                                            const previewRpeWeightRange = rpeWeightRangeForRow({
+                                                                                weight: row.weight,
+                                                                                reps: row.reps,
+                                                                                targetRpe: row.targetRpe,
+                                                                                oneRm: normalizedOneRMByExercise[row.exerciseId],
+                                                                            })
+                                                                            const persistedRpeWeightRange =
+                                                                                persistedRpeWeightRangeByRowId[row.id] ?? null
+
                                                                             const groupColor = exerciseGroupColors.get(row.id)
                                                                             const rowBgClass = groupColor === 'even' ? 'bg-white' : groupColor === 'odd' ? 'bg-gray-200' : ''
 
@@ -3740,6 +3776,16 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                         {`= ${formatWeightForDisplay(effectiveWeightToDisplay)} kg`}
                                                                                                     </p>
                                                                                                 )}
+                                                                                                {persistedRpeWeightRange && (
+                                                                                                    <p className="text-[11px] text-emerald-700 whitespace-nowrap">
+                                                                                                        {t('editProgram.rpeWeightRangePreview', {
+                                                                                                            range: formatWeightRange(
+                                                                                                                persistedRpeWeightRange.min,
+                                                                                                                persistedRpeWeightRange.max
+                                                                                                            ),
+                                                                                                        })}
+                                                                                                    </p>
+                                                                                                )}
                                                                                             </div>
                                                                                         ) : (
                                                                                             <div className="flex items-center gap-1">
@@ -3769,6 +3815,16 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                             )}
                                                                                                         </p>
                                                                                                     )}
+                                                                                                {previewRpeWeightRange && (
+                                                                                                    <p className="text-[11px] font-semibold text-emerald-700 whitespace-nowrap">
+                                                                                                        {t('editProgram.rpeWeightRangePreview', {
+                                                                                                            range: formatWeightRange(
+                                                                                                                previewRpeWeightRange.min,
+                                                                                                                previewRpeWeightRange.max
+                                                                                                            ),
+                                                                                                        })}
+                                                                                                    </p>
+                                                                                                )}
                                                                                             </div>
                                                                                         )}
                                                                                     </td>

@@ -10,6 +10,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(programs): range di peso da RPE nell'editor (21/10/2026)
+- Nuovo `src/app/trainer/programs/[id]/edit/rpe-weight-range.ts`: `rpeWeightRangeForRow({ weight, reps, targetRpe, oneRm })` — range solo con peso vuoto (anche solo spazi), RPE numerico e 1RM presente; reps via `plannedReps` (range → minimo, `30"`/`max` → null), poi `rpeWeightRange`.
+- `edit/_content.tsx`: `buildWorkoutExercisePayload` manda `rpeWeightMin`/`rpeWeightMax` (null se c'è un peso); in modifica anteprima verde `≈ 110.5–115 kg` sotto il campo peso; in sola lettura mostra il range salvato. Tipo `WorkoutExercise` esteso con i due campi.
+- Test: `tests/unit/rpe-weight-range-row.test.ts` (esempio 1RM 139, 5 @ RPE 8 → 110.5–115; peso `100`/`75%`/`-10%`, RPE vuoto, senza 1RM, reps `30"`/`max`/`13` → null).
+- Motivo: proporre al trainer il range di kg quando lascia il peso vuoto e congelarlo al salvataggio (piano `2026-10-21-rpe-weight-range`, Task 6).
+
 ### feat(i18n): chiavi range di peso da RPE (21/10/2026)
 - `trainer.json`: `editProgram.rpeWeightRangePreview` (`≈ {{range}} kg`), `reviewProgram.tableWeightRpeRange` (it `Range RPE: {{range}} kg`, en `RPE range: {{range}} kg`). `trainee.json`: `workouts.rpeWeightRange` (`{{range}} kg (RPE {{rpe}})`). `validation.json`: `rpeWeightRangeOrder`, `rpeWeightRangeIncomplete`, `rpeWeightMinZero` (it + en). Modifiche puntuali, BOM di `trainer.json` preservato.
 - Motivo: testi per anteprima, review, vista trainee e messaggi Zod del range di peso da RPE (piano `2026-10-21-rpe-weight-range`, Task 5).
