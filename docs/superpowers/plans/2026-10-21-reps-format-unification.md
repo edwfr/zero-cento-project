@@ -234,7 +234,7 @@ export const repsSchema: z.ZodType<string>                     // z.string().ref
 **Test command:** `npx vitest run`
 **Done when:** `grep -rn "8-10" tests src` non trova più il formato reps (le date tipo `2026-10-15` non contano).
 
-- [ ] **Step 1: tests** — sostituire `'8-10'`/`"8-10"` usati come reps con `'8/10'`.
-- [ ] **Step 2: implementation** — nessuna.
-- [ ] **Step 3: run the test command and `npm run lint`**
-- [ ] **Step 4: CHANGELOG entry and commit** — `test(reps): use slash range format in fixtures`
+- [x] **Step 1: tests** — sostituire `'8-10'`/`"8-10"` usati come reps con `'8/10'`.
+- [x] **Step 2: implementation** — nessuna.
+- [x] **Step 3: run the test command and `npm run lint`**
+- [x] **Step 4: CHANGELOG entry and commit** — `test(reps): use slash range format in fixtures`

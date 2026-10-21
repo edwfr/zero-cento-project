@@ -26,7 +26,7 @@ const validBody = {
             dayIndex: 0,
             exercises: [
                 { exerciseId: EX_1, sets: 3, reps: '8', restTime: 'm2' },
-                { exerciseId: EX_2, sets: 4, reps: '8-10', restTime: 'm1' },
+                { exerciseId: EX_2, sets: 4, reps: '8/10', restTime: 'm1' },
             ],
         },
         { dayIndex: 1, exercises: [{ exerciseId: EX_1, sets: 5, reps: '5', restTime: 'm3' }] },

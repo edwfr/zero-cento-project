@@ -780,7 +780,7 @@ describe('workoutExerciseSchema', () => {
     })
 
     it('accepts reps as range string', () => {
-        const result = workoutExerciseSchema.safeParse({ ...validWorkoutExercise, reps: '8-10' })
+        const result = workoutExerciseSchema.safeParse({ ...validWorkoutExercise, reps: '8/10' })
         expect(result.success).toBe(true)
     })
 

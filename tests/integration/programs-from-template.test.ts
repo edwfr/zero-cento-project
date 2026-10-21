@@ -49,7 +49,7 @@ function makeTemplate(workouts?: unknown[]) {
                 dayIndex: 0,
                 exercises: [
                     { exerciseId: EX_1, order: 1, sets: 3, reps: '5', restTime: 'm3' },
-                    { exerciseId: EX_2, order: 2, sets: 4, reps: '8-10', restTime: 'm2' },
+                    { exerciseId: EX_2, order: 2, sets: 4, reps: '8/10', restTime: 'm2' },
                 ],
             },
             {
