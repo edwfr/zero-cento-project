@@ -461,18 +461,18 @@ esistenti passano senza modifiche.
 **Done when:** in creazione, modifica e modale la checkbox è visibile e il body di
 POST/PUT contiene `isBodyweightLoaded`. In modifica la checkbox parte dal valore salvato.
 
-- [ ] **Step 1: tests** (modale; `fetch` mockato come negli altri test dei componenti):
+- [x] **Step 1: tests** (modale; `fetch` mockato come negli altri test dei componenti):
   - checkbox con label `exercises.bodyweightLoadedLabel` presente, non spuntata di default
   - spunta + submit valido → body JSON con `isBodyweightLoaded: true`
   - senza spunta → `isBodyweightLoaded: false`
-- [ ] **Step 2: implementation**: `useState(false)` (in modifica si inizializza dal GET
+- [x] **Step 2: implementation**: `useState(false)` (in modifica si inizializza dal GET
   dell'esercizio). Il markup è lo stesso del toggle in `src/components/FeedbackForm.tsx`
   ~riga 96 (`label` + `input type="checkbox"` + classi `h-5 w-5 rounded border-gray-300
   text-brand-primary focus:ring-brand-primary`), con sotto il testo di aiuto
   `exercises.bodyweightLoadedHelp` in `text-xs text-gray-500`. Va messo dopo il
   selettore del tipo. Il campo va aggiunto a ogni `JSON.stringify` del body.
-- [ ] **Step 3: run the test command and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit**: `feat(exercises): bodyweight-loaded checkbox`
+- [x] **Step 3: run the test command and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit**: `feat(exercises): bodyweight-loaded checkbox`
 
 > **Mid-way review** here (`reviewer` agent on Tasks 1–6) before continuing.
 

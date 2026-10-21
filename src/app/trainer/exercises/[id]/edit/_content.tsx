@@ -35,6 +35,7 @@ interface Exercise {
     description?: string
     youtubeUrl?: string
     type: ExerciseType
+    isBodyweightLoaded?: boolean
     movementPatternId: string
     notes: string[]
     exerciseMuscleGroups: Array<{
@@ -63,6 +64,7 @@ export default function EditExerciseContent() {
     const [name, setName] = useState('')
     const [youtubeUrl, setYoutubeUrl] = useState('')
     const [type, setType] = useState<ExerciseType>(DEFAULT_EXERCISE_TYPE)
+    const [isBodyweightLoaded, setIsBodyweightLoaded] = useState(false)
     const [movementPatternId, setMovementPatternId] = useState('')
     const [variants, setVariants] = useState<string[]>([])
     const [selectedMuscleGroups, setSelectedMuscleGroups] = useState<MuscleGroupInput[]>([])
@@ -90,6 +92,7 @@ export default function EditExerciseContent() {
             setName(exercise.name)
             setYoutubeUrl(exercise.youtubeUrl || '')
             setType(exercise.type)
+            setIsBodyweightLoaded(exercise.isBodyweightLoaded ?? false)
             setMovementPatternId(exercise.movementPatternId)
             setVariants(exercise.notes)
             setSelectedMuscleGroups(
@@ -166,6 +169,7 @@ export default function EditExerciseContent() {
                     name,
                     youtubeUrl: youtubeUrl || undefined,
                     type,
+                    isBodyweightLoaded,
                     movementPatternId,
                     muscleGroups: selectedMuscleGroups,
                     notes: variants.filter((v) => v.trim()),
@@ -292,6 +296,21 @@ export default function EditExerciseContent() {
                     <div>
                         <FormLabel>{t('exercises.typeLabel')}</FormLabel>
                         <ExerciseTypeRadioGroup value={type} onChange={setType} disabled={saving} />
+                    </div>
+
+                    {/* Bodyweight loaded */}
+                    <div>
+                        <label className="flex cursor-pointer items-center gap-3">
+                            <input
+                                type="checkbox"
+                                checked={isBodyweightLoaded}
+                                onChange={(e) => setIsBodyweightLoaded(e.target.checked)}
+                                disabled={saving}
+                                className="h-5 w-5 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+                            />
+                            <span className="text-sm font-medium text-gray-700">{t('exercises.bodyweightLoadedLabel')}</span>
+                        </label>
+                        <p className="mt-1 text-xs text-gray-500">{t('exercises.bodyweightLoadedHelp')}</p>
                     </div>
 
                     {/* Movement Pattern */}

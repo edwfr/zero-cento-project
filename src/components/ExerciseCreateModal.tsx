@@ -40,6 +40,7 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
         youtubeUrl: '',
         type: DEFAULT_EXERCISE_TYPE as ExerciseType,
         movementPatternId: '',
+        isBodyweightLoaded: false,
     })
     const [selectedMuscleGroups, setSelectedMuscleGroups] = useState<MuscleGroupAssignment[]>([])
 
@@ -269,6 +270,20 @@ export default function ExerciseCreateModal({ onClose, onExerciseCreated }: Exer
                                     </option>
                                 ))}
                             </select>
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className="flex cursor-pointer items-center gap-3">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.isBodyweightLoaded}
+                                    onChange={(e) => setFormData({ ...formData, isBodyweightLoaded: e.target.checked })}
+                                    disabled={loading}
+                                    className="h-5 w-5 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+                                />
+                                <span className="text-sm font-medium text-gray-700">{t('exercises.bodyweightLoadedLabel')}</span>
+                            </label>
+                            <p className="mt-1 text-xs text-gray-500">{t('exercises.bodyweightLoadedHelp')}</p>
                         </div>
 
                         <div>

@@ -10,6 +10,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(exercises): checkbox corpo libero zavorrato nei form esercizio (22/10/2026)
+- Checkbox `isBodyweightLoaded` (con testo di aiuto) in creazione, modifica e `ExerciseCreateModal`; il flag e' inviato nel body di POST/PUT e in modifica parte dal valore salvato.
+- Motivo: il trainer deve poter marcare trazioni/dip come esercizi a corpo libero zavorrati.
+
 ### feat(i18n): chiavi per esercizi a corpo libero zavorrati (22/10/2026)
 - Aggiunte in `common.json` le chiavi `bodyweightLoad` e `bodyweightRpeTable`, in `trainer.json` le chiavi checkbox esercizio, etichetta carico totale e pannello tabelle RPE (it/en).
 - Motivo: servono alle etichette zavorra e ai form dei task successivi.

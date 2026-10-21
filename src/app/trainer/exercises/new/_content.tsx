@@ -42,6 +42,7 @@ export default function NewExerciseContent() {
     const [variants, setVariants] = useState<string[]>([])
     const [youtubeUrl, setYoutubeUrl] = useState('')
     const [type, setType] = useState<ExerciseType>(DEFAULT_EXERCISE_TYPE)
+    const [isBodyweightLoaded, setIsBodyweightLoaded] = useState(false)
     const [movementPatternId, setMovementPatternId] = useState('')
     const [selectedMuscleGroups, setSelectedMuscleGroups] = useState<MuscleGroupInput[]>([])
 
@@ -124,6 +125,7 @@ export default function NewExerciseContent() {
                     name,
                     youtubeUrl: youtubeUrl || undefined,
                     type,
+                    isBodyweightLoaded,
                     movementPatternId,
                     muscleGroups: selectedMuscleGroups,
                     notes: variants.filter((v) => v.trim()),
@@ -241,6 +243,21 @@ export default function NewExerciseContent() {
                 <div>
                     <FormLabel>{t('exercises.typeLabel')}</FormLabel>
                     <ExerciseTypeRadioGroup value={type} onChange={setType} disabled={loading} />
+                </div>
+
+                {/* Bodyweight loaded */}
+                <div>
+                    <label className="flex cursor-pointer items-center gap-3">
+                        <input
+                            type="checkbox"
+                            checked={isBodyweightLoaded}
+                            onChange={(e) => setIsBodyweightLoaded(e.target.checked)}
+                            disabled={loading}
+                            className="h-5 w-5 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+                        />
+                        <span className="text-sm font-medium text-gray-700">{t('exercises.bodyweightLoadedLabel')}</span>
+                    </label>
+                    <p className="mt-1 text-xs text-gray-500">{t('exercises.bodyweightLoadedHelp')}</p>
                 </div>
 
                 {/* Movement Pattern */}
