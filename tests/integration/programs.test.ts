@@ -874,6 +874,38 @@ describe('POST /api/programs/[id]/copy-first-week', () => {
             ]),
         })
     })
+
+    it('copies the frozen rpe weight range to the following weeks', async () => {
+        asTrainer()
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(mockProgramMeta as never)
+        const sourceWorkout = mockSourceWeek.workouts[0]
+        prismaMock.week.findFirst.mockResolvedValue({
+            ...mockSourceWeek,
+            workouts: [{
+                ...sourceWorkout,
+                workoutExercises: [{
+                    ...sourceWorkout.workoutExercises[0],
+                    weight: null,
+                    effectiveWeight: null,
+                    rpeWeightMin: 110.5,
+                    rpeWeightMax: 115,
+                }],
+            }],
+        } as never)
+        prismaMock.week.findMany.mockResolvedValue([
+            { id: 'week-2', weekNumber: 2, workouts: [{ id: 'wo-2', dayIndex: 1 }] },
+        ] as never)
+
+        const res = await copyFirstWeekPOST(
+            makeCopyFirstWeekRequest('prog-1'),
+            { params: Promise.resolve({ id: 'prog-1' }) }
+        )
+
+        expect(res.status).toBe(200)
+        expect(prismaMock.workoutExercise.createMany).toHaveBeenCalledWith({
+            data: [expect.objectContaining({ workoutId: 'wo-2', rpeWeightMin: 110.5, rpeWeightMax: 115 })],
+        })
+    })
 })
 
 // ── Fixtures for publish ──────────────────────────────────────────────────────

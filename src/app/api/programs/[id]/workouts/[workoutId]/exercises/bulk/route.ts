@@ -6,6 +6,7 @@ import { bulkSaveWorkoutExercisesSchema } from '@/schemas/workout-exercise'
 import { logger } from '@/lib/logger'
 import { hasWorkoutStarted } from '@/lib/program-guards'
 import { handleApiError } from '@/lib/api-error-handler'
+import { storedRpeWeightRange } from '@/lib/calculations'
 
 export async function PUT(
     request: NextRequest,
@@ -152,6 +153,7 @@ export async function PUT(
                 weightType: row.weightType,
                 weight: row.weight ?? null,
                 effectiveWeight: row.effectiveWeight ?? null,
+                ...storedRpeWeightRange(row.weight, row.rpeWeightMin, row.rpeWeightMax),
                 restTime: row.restTime,
                 isWarmup: row.isWarmup,
                 isJumpSet: row.isJumpSet,

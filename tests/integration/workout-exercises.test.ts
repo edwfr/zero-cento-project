@@ -13,6 +13,7 @@ import { PATCH as reorderExercises } from '@/app/api/programs/[id]/workouts/[wor
 import { prismaMock } from '../helpers/prisma-mock'
 import { asTrainer, asAdmin, asUnauthenticated, asForbidden } from '../helpers/auth-mock'
 import { mockTrainerSession, mockAdminSession, makeTrainerSession } from '../helpers/sessions'
+import { callArg } from '../helpers/call-args'
 
 const PROGRAM_ID = '55555555-5555-5555-5555-555555555551'
 const WORKOUT_ID = '66666666-6666-6666-6666-666666666661'
@@ -74,6 +75,34 @@ describe('POST /api/programs/[id]/workouts/[workoutId]/exercises', () => {
                     weightType: 'absolute',
                     weight: 100,
                 }),
+            })
+        )
+    })
+
+    it('saves the rpe weight range on an exercise without weight', async () => {
+        const res = await addExercise(
+            makeRequest({ ...validBody, weight: null, targetRpe: 8, rpeWeightMin: 110.5, rpeWeightMax: 115 }),
+            withParams({ id: PROGRAM_ID, workoutId: WORKOUT_ID })
+        )
+
+        expect(res.status).toBe(201)
+        expect(prismaMock.workoutExercise.create).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({ weight: null, rpeWeightMin: 110.5, rpeWeightMax: 115 }),
+            })
+        )
+    })
+
+    it('clears the rpe weight range when a weight is assigned', async () => {
+        const res = await addExercise(
+            makeRequest({ ...validBody, weight: 100, rpeWeightMin: 110.5, rpeWeightMax: 115 }),
+            withParams({ id: PROGRAM_ID, workoutId: WORKOUT_ID })
+        )
+
+        expect(res.status).toBe(201)
+        expect(prismaMock.workoutExercise.create).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({ weight: 100, rpeWeightMin: null, rpeWeightMax: null }),
             })
         )
     })
@@ -228,6 +257,49 @@ describe('PUT /api/programs/[id]/workouts/[workoutId]/exercises/[exerciseId]', (
             expect.objectContaining({
                 where: { id: WE_ID },
                 data: expect.objectContaining({ sets: 4 }),
+            })
+        )
+    })
+
+    it('clears the rpe weight range when a weight is assigned', async () => {
+        const res = await updateExercise(
+            makeRequest({ ...validBody, weight: 100, rpeWeightMin: 110.5, rpeWeightMax: 115 }, 'PUT'),
+            putParams
+        )
+
+        expect(res.status).toBe(200)
+        expect(prismaMock.workoutExercise.update).toHaveBeenCalledWith(
+            expect.objectContaining({
+                where: { id: WE_ID },
+                data: expect.objectContaining({ weight: 100, rpeWeightMin: null, rpeWeightMax: null }),
+            })
+        )
+    })
+
+    it('does not touch the rpe weight range when neither weight nor range is sent', async () => {
+        const res = await updateExercise(makeRequest({ ...validBody, weight: undefined }, 'PUT'), putParams)
+
+        expect(res.status).toBe(200)
+        expect(prismaMock.workoutExercise.update).toHaveBeenCalledWith(
+            expect.objectContaining({ where: { id: WE_ID } })
+        )
+        const { data } = callArg(prismaMock.workoutExercise.update.mock.calls[0][0])
+        expect(data).not.toHaveProperty('rpeWeightMin')
+        expect(data).not.toHaveProperty('rpeWeightMax')
+    })
+
+    it('keeps the range null when only the range is sent and the stored row has a weight', async () => {
+        prismaMock.workoutExercise.findUnique.mockResolvedValue({ id: WE_ID, workoutId: WORKOUT_ID, weight: 100 } as never)
+
+        const res = await updateExercise(
+            makeRequest({ ...validBody, weight: undefined, rpeWeightMin: 110.5, rpeWeightMax: 115 }, 'PUT'),
+            putParams
+        )
+
+        expect(res.status).toBe(200)
+        expect(prismaMock.workoutExercise.update).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({ rpeWeightMin: null, rpeWeightMax: null }),
             })
         )
     })

@@ -118,6 +118,8 @@ export async function POST(
                             weightType: exercise.weightType,
                             weight: exercise.weight,
                             effectiveWeight: exercise.effectiveWeight,
+                            rpeWeightMin: exercise.rpeWeightMin,
+                            rpeWeightMax: exercise.rpeWeightMax,
                             restTime: exercise.restTime,
                             isWarmup: exercise.isWarmup,
                             isJumpSet: exercise.isJumpSet,

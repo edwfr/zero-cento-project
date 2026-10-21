@@ -214,6 +214,48 @@ describe('POST /api/programs/[id]/copy-week', () => {
         })
     })
 
+    it('copies the frozen rpe weight range to the target week and returns it', async () => {
+        const createManyMock = vi.fn().mockResolvedValue({ count: 1 })
+        const sourceWorkout = baseProgram.weeks[0].workouts[0]
+        prismaMock.week.findUnique.mockResolvedValue({
+            ...baseProgram.weeks[0],
+            programId: 'prog-1',
+            workouts: [{
+                ...sourceWorkout,
+                workoutExercises: [{
+                    ...sourceWorkout.workoutExercises[0],
+                    weight: null,
+                    effectiveWeight: null,
+                    rpeWeightMin: 110.5,
+                    rpeWeightMax: 115,
+                }],
+            }],
+        } as never)
+        prismaMock.$transaction.mockImplementation((async (ops: unknown) => {
+            if (typeof ops === 'function') {
+                return ops({
+                    workoutExercise: {
+                        deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+                        createMany: createManyMock,
+                    },
+                })
+            }
+            return Promise.all(ops as Promise<unknown>[])
+        }) as never)
+
+        const res = await POST(makeRequest({ sourceWeekId: 'week-1' }), { params: Promise.resolve({ id: 'prog-1' }) })
+        const body = await res.json()
+
+        expect(res.status).toBe(200)
+        expect(createManyMock).toHaveBeenCalledWith({
+            data: [expect.objectContaining({ workoutId: 'workout-w2-d0', rpeWeightMin: 110.5, rpeWeightMax: 115 })],
+        })
+        expect(body.data.updatedWeek.workouts[0].workoutExercises[0]).toMatchObject({
+            rpeWeightMin: 110.5,
+            rpeWeightMax: 115,
+        })
+    })
+
     it('skips target workouts with no matching dayIndex in source week', async () => {
         const mismatchProgram = {
             ...baseProgram,

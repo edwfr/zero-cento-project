@@ -405,6 +405,16 @@ export function rpeWeightRange(oneRm: number, reps: number, rpe: number): RpeWei
     }
 }
 
+/** Range is stored only when no weight is assigned. */
+export function storedRpeWeightRange(
+    weight: number | null | undefined,
+    min: number | null | undefined,
+    max: number | null | undefined
+): { rpeWeightMin: number | null; rpeWeightMax: number | null } {
+    if (weight != null) return { rpeWeightMin: null, rpeWeightMax: null }
+    return { rpeWeightMin: min ?? null, rpeWeightMax: max ?? null }
+}
+
 /**
  * Canonical normalized 1RM used across the app.
  * Mike Tuchscherer RPE table at RPE 10, rounded to the nearest 0.5 kg.

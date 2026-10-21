@@ -10,6 +10,13 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(api): salvataggio e copia del range di peso da RPE (21/10/2026)
+- `src/lib/calculations.ts`: helper `storedRpeWeightRange(weight, min, max)` — con `weight != null` restituisce `rpeWeightMin = rpeWeightMax = null`, altrimenti i valori ricevuti (o null). Usato da POST `exercises`, PUT `exercises/[exerciseId]` e PUT `exercises/bulk`, così il server azzera il range su ogni riga con peso qualunque cosa arrivi nel body.
+- PUT `[exerciseId]` (update parziale): tocca le colonne solo se il body manda `weight` o i campi range; senza `weight` nel body l'invariante usa il peso già salvato sulla riga.
+- `copy-week` (sia `createMany` sia la settimana restituita) e `copy-first-week` copiano `rpeWeightMin`/`rpeWeightMax` così come sono, senza ricalcolo.
+- Test: `workout-exercises-bulk.test.ts`, `workout-exercises.test.ts`, `copy-week.test.ts`, `programs.test.ts` (copy-first-week), `calculations.test.ts`.
+- Motivo: persistenza e copia del range di peso proposto da RPE (piano `2026-10-21-rpe-weight-range`, Task 3).
+
 ### feat(db): colonne range di peso da RPE (21/10/2026)
 - `prisma/schema.prisma`: `WorkoutExercise.rpeWeightMin` / `rpeWeightMax` (`Float?`, kg, range proposto da RPE congelato al salvataggio). Migrazione scritta a mano `20261021140000_add_rpe_weight_range` (due colonne `DOUBLE PRECISION` nullable su `workout_exercises`).
 - `src/schemas/workout-exercise.ts`: campi opzionali/nullable nello schema base e helper condiviso `refineRpeWeightRange` chiamato dai due `superRefine` (`workoutExerciseSchema`, `bulkSaveWorkoutExercisesSchema`): entrambi valorizzati o entrambi null (`validation.rpeWeightRangeIncomplete`), `>= 0` (`validation.rpeWeightMinZero`), `min <= max` (`validation.rpeWeightRangeOrder`). Test in `tests/unit/schemas/workout-exercise.test.ts`.

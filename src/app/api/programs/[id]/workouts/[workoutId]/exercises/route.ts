@@ -6,6 +6,7 @@ import { workoutExerciseSchema } from '@/schemas/workout-exercise'
 import { logger } from '@/lib/logger'
 import { hasWorkoutStarted } from '@/lib/program-guards'
 import { handleApiError } from '@/lib/api-error-handler'
+import { storedRpeWeightRange } from '@/lib/calculations'
 
 /**
  * POST /api/programs/[id]/workouts/[workoutId]/exercises
@@ -37,6 +38,8 @@ export async function POST(
             weightType,
             weight,
             effectiveWeight,
+            rpeWeightMin,
+            rpeWeightMax,
             restTime,
             isWarmup,
             isJumpSet,
@@ -118,6 +121,7 @@ export async function POST(
                 weightType: weightType || 'absolute',
                 weight: weight ?? null,
                 effectiveWeight: effectiveWeight ?? null,
+                ...storedRpeWeightRange(weight, rpeWeightMin, rpeWeightMax),
                 restTime: restTime || 'm2',
                 isWarmup: isWarmup || false,
                 isJumpSet: isJumpSet || false,

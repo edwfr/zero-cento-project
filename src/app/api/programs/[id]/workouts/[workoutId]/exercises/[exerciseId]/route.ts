@@ -6,6 +6,7 @@ import { workoutExerciseSchema } from '@/schemas/workout-exercise'
 import { logger } from '@/lib/logger'
 import { hasWorkoutStarted } from '@/lib/program-guards'
 import { handleApiError } from '@/lib/api-error-handler'
+import { storedRpeWeightRange } from '@/lib/calculations'
 
 /**
  * PUT /api/programs/[id]/workouts/[workoutId]/exercises/[exerciseId]
@@ -36,6 +37,8 @@ export async function PUT(
             weightType,
             weight,
             effectiveWeight,
+            rpeWeightMin,
+            rpeWeightMax,
             restTime,
             isWarmup,
             isJumpSet,
@@ -113,6 +116,8 @@ export async function PUT(
                 ...(weightType !== undefined && { weightType }),
                 ...(weight !== undefined && { weight }),
                 ...(effectiveWeight !== undefined && { effectiveWeight }),
+                ...((weight !== undefined || rpeWeightMin !== undefined || rpeWeightMax !== undefined) &&
+                    storedRpeWeightRange(weight !== undefined ? weight : existing.weight, rpeWeightMin, rpeWeightMax)),
                 ...(restTime !== undefined && { restTime }),
                 ...(isWarmup !== undefined && { isWarmup }),
                 ...(isJumpSet !== undefined && { isJumpSet }),

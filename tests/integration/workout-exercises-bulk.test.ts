@@ -80,6 +80,51 @@ describe('PUT /api/programs/[id]/workouts/[workoutId]/exercises/bulk', () => {
         )
     })
 
+    it('persists the rpe weight range on a row without weight', async () => {
+        prismaMock.workoutExercise.findMany
+            .mockResolvedValueOnce([{ id: WE_EXISTING }] as never)
+            .mockResolvedValueOnce([{ id: WE_EXISTING, order: 1 }, { id: 'new-1', order: 2 }] as never)
+        const rangeRow = { ...baseRow, weight: null, targetRpe: 8, rpeWeightMin: 110.5, rpeWeightMax: 115 }
+
+        const res = await bulkPut(
+            makePutRequest({ exercises: [{ ...rangeRow, id: WE_EXISTING }, { ...rangeRow, order: 2 }] }),
+            params(PROG, WK)
+        )
+
+        expect(res.status).toBe(200)
+        expect(prismaMock.workoutExercise.update).toHaveBeenCalledWith({
+            where: { id: WE_EXISTING },
+            data: expect.objectContaining({ weight: null, rpeWeightMin: 110.5, rpeWeightMax: 115 }),
+        })
+        expect(prismaMock.workoutExercise.create).toHaveBeenCalledWith({
+            data: expect.objectContaining({ weight: null, rpeWeightMin: 110.5, rpeWeightMax: 115 }),
+        })
+    })
+
+    it('clears the rpe weight range when the row has a weight', async () => {
+        const res = await bulkPut(
+            makePutRequest({ exercises: [{ ...baseRow, weight: 100, rpeWeightMin: 110.5, rpeWeightMax: 115 }] }),
+            params(PROG, WK)
+        )
+
+        expect(res.status).toBe(200)
+        expect(prismaMock.workoutExercise.create).toHaveBeenCalledWith({
+            data: expect.objectContaining({ weight: 100, rpeWeightMin: null, rpeWeightMax: null }),
+        })
+    })
+
+    it('stores a null range when the row does not send one', async () => {
+        const res = await bulkPut(
+            makePutRequest({ exercises: [{ ...baseRow, weight: null }] }),
+            params(PROG, WK)
+        )
+
+        expect(res.status).toBe(200)
+        expect(prismaMock.workoutExercise.create).toHaveBeenCalledWith({
+            data: expect.objectContaining({ rpeWeightMin: null, rpeWeightMax: null }),
+        })
+    })
+
     it('updates an existing row when id is supplied', async () => {
         prismaMock.workoutExercise.findMany
             .mockResolvedValueOnce([{ id: WE_EXISTING }] as never) // ownership check

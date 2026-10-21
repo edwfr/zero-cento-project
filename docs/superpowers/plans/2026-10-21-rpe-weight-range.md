@@ -222,7 +222,7 @@ exists, else new — check `ls tests/unit | grep rounding`)
 **Test command:** `npx vitest run tests/integration/workout-exercises-bulk.test.ts tests/integration/workout-exercises.test.ts tests/integration/copy-week.test.ts`
 **Done when:** bulk save con riga senza peso persiste i due campi; con peso li azzera; copy-week li copia.
 
-- [ ] **Step 1: tests** (seguire i mock prisma già presenti in ciascun file):
+- [x] **Step 1: tests** (seguire i mock prisma già presenti in ciascun file):
   - bulk: riga `weight: null, rpeWeightMin: 110.5, rpeWeightMax: 115` → `update/create` chiamato con quei valori
   - bulk: riga `weight: 100, rpeWeightMin: 110.5, rpeWeightMax: 115` → dati con `rpeWeightMin: null, rpeWeightMax: null`
   - bulk: riga senza i campi → `null, null`
@@ -230,7 +230,7 @@ exists, else new — check `ls tests/unit | grep rounding`)
   - PUT `[exerciseId]`: `weight: 100` → `rpeWeightMin: null, rpeWeightMax: null` nei dati di update
   - copy-week: sorgente con `rpeWeightMin: 110.5, rpeWeightMax: 115` → target con gli stessi valori (in entrambi i rami se il test copre entrambi)
   - copy-first-week: se esiste un test (`grep -rl copy-first-week tests`), stesso caso; altrimenti aggiungerlo in `copy-week.test.ts` solo se il setup lo rende banale
-- [ ] **Step 2: implementation** — accanto a ogni `effectiveWeight` aggiungere i due campi.
+- [x] **Step 2: implementation** — accanto a ogni `effectiveWeight` aggiungere i due campi.
   Invariante con un helper in `src/lib/calculations.ts` (usato da tutte e tre le route):
   ```ts
   /** Range is stored only when no weight is assigned. */
@@ -245,8 +245,8 @@ exists, else new — check `ls tests/unit | grep rounding`)
   nel body; altrimenti non toccare le colonne. Copy-week/first-week copiano i valori così
   come sono (sono già coerenti). Aggiungere un test unitario dell'helper in
   `calculations.test.ts` (3 righe: peso → null; nessun peso → valori; tutto undefined → null).
-- [ ] **Step 3: run the test command, `npx vitest run tests/unit/calculations.test.ts` and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit** — `feat(api): persist and copy rpe weight range`
+- [x] **Step 3: run the test command, `npx vitest run tests/unit/calculations.test.ts` and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit** — `feat(api): persist and copy rpe weight range`
 
 ---
 

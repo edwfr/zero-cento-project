@@ -8,6 +8,7 @@ import {
     estimateOneRMFromRpeTable,
     intensityFromRpeChart,
     rpeWeightRange,
+    storedRpeWeightRange,
     normalizedOneRM,
     resolveEffectiveWeight,
     loadTraineeOneRmMap,
@@ -180,6 +181,20 @@ describe('rpeWeightRange', () => {
         expect(rpeWeightRange(0, 5, 8)).toBeNull()
         expect(rpeWeightRange(Number.NaN, 5, 8)).toBeNull()
         expect(rpeWeightRange(139, 5, 4)).toBeNull()
+    })
+})
+
+describe('storedRpeWeightRange', () => {
+    it('drops the range when a weight is assigned', () => {
+        expect(storedRpeWeightRange(100, 110.5, 115)).toEqual({ rpeWeightMin: null, rpeWeightMax: null })
+    })
+
+    it('keeps the range when no weight is assigned', () => {
+        expect(storedRpeWeightRange(null, 110.5, 115)).toEqual({ rpeWeightMin: 110.5, rpeWeightMax: 115 })
+    })
+
+    it('stores nulls when nothing is supplied', () => {
+        expect(storedRpeWeightRange(undefined, undefined, undefined)).toEqual({ rpeWeightMin: null, rpeWeightMax: null })
     })
 })
 
