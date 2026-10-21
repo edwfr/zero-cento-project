@@ -198,8 +198,8 @@ export const repsSchema: z.ZodType<string>                     // z.string().ref
 **Test command:** `npm run type-check`
 **Done when:** la migrazione esiste ed è idempotente; i commenti di `reps` citano il nuovo formato.
 
-- [ ] **Step 1: tests** — nessun test automatico; verifica manuale della SQL con query `SELECT count(*)` prima/dopo su un DB locale se disponibile.
-- [ ] **Step 2: implementation** — migrazione (completa, non derivabile):
+- [x] **Step 1: tests** — nessun test automatico; verifica manuale della SQL con query `SELECT count(*)` prima/dopo su un DB locale se disponibile.
+- [x] **Step 2: implementation** — migrazione (completa, non derivabile):
 
   ```sql
   -- Unify reps range format: "8-10" -> "8/10" (the "/" form is the canonical one).
@@ -221,8 +221,8 @@ export const repsSchema: z.ZodType<string>                     // z.string().ref
      or (reps ~ '^\d+[-/]\d+$' and (split_part(replace(reps,'-','/'),'/',2)::int > 50 or split_part(replace(reps,'-','/'),'/',1)::int < 1))
   group by reps order by 2 desc;
   ```
-- [ ] **Step 3: `npm run type-check` e `npx prisma validate`**
-- [ ] **Step 4: CHANGELOG entry and commit** — `chore(db): normalize reps range format to slash`
+- [x] **Step 3: `npm run type-check` e `npx prisma validate`**
+- [x] **Step 4: CHANGELOG entry and commit** — `chore(db): normalize reps range format to slash`
 
 ---
 

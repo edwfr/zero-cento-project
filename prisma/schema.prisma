@@ -362,7 +362,7 @@ model WorkoutExercise {
   exerciseId String
   variant    String?    // Variante specifica dell'esercizio (es. "bilanciere", "manubri", ecc.)
   sets       Int
-  reps       String     // es. "8", "8-10", "6/8"
+  reps       String     // "8", "8/10", `30"`, "max"
   targetRpe  Float?     // 5.0-10.0 con incrementi 0.5
   weightType WeightType
   weight     Float?
@@ -597,7 +597,7 @@ model WorkoutTemplateExercise {
   exerciseId        String
   order             Int      // 1-based, contiguous per workout
   sets              Int
-  reps              String   // same format as WorkoutExercise.reps ("8", "8-10")
+  reps              String   // same format as WorkoutExercise.reps
   restTime          RestTime
 
   templateWorkout WorkoutTemplateWorkout @relation("TemplateWorkoutExercises", fields: [templateWorkoutId], references: [id], onDelete: Cascade)

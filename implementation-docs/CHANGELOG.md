@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### chore(db): normalizzato il formato range delle reps (21/10/2026)
+- Nuova migrazione `20261021000000_normalize_reps_slash`: converte `a-b` in `a/b` su `workout_exercises` e `workout_template_exercises` (idempotente, tocca solo `^\d+-\d+$`). Da applicare in produzione PRIMA del deploy del nuovo codice. Commenti Prisma di `reps` aggiornati al nuovo formato.
+
 ### chore(i18n): aggiornati i testi del formato reps (21/10/2026)
 - `trainer.json` (it/en) e `errors.json` (it/en): i suggerimenti e i messaggi di errore delle ripetizioni mostrano il formato ammesso `8, 8/10, 30", max` (rimosso il trattino `8-10` e l'esempio `6/8`); il messaggio di riga riporta i limiti 1-50 e secondi 1-300.
 
