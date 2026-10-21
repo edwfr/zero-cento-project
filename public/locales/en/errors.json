@@ -97,7 +97,6 @@
         "copyWeekTargetProtected": "Cannot copy: the target week contains completed workouts"
     },
     "calculation": {
-        "maxRecursionDepthExceeded": "Maximum recursion depth exceeded for percentage_previous",
         "noPreviousOccurrenceFound": "No previous occurrence found for percentage_previous"
     },
     "trainee": {

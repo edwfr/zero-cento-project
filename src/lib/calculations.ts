@@ -3,7 +3,6 @@ import { prisma } from './prisma'
 import { plannedReps } from './reps'
 
 export const CALCULATION_ERROR_KEYS = {
-    maxRecursionDepthExceeded: 'calculation.maxRecursionDepthExceeded',
     noPreviousOccurrenceFound: 'calculation.noPreviousOccurrenceFound',
 } as const
 
@@ -83,12 +82,10 @@ export async function loadTraineeOneRmMap(traineeId: string): Promise<TraineeOne
 export function resolveEffectiveWeight(
     workoutExercise: WorkoutExercise,
     oneRmMap: TraineeOneRmMap,
-    workoutSiblings: WorkoutExercise[],
-    depth = 0
+    workoutSiblings: WorkoutExercise[]
 ): number | null {
-    if (depth > 10) {
-        throw new Error(CALCULATION_ERROR_KEYS.maxRecursionDepthExceeded)
-    }
+    // No depth guard: each percentage_previous step moves to a strictly lower
+    // order, so the chain always ends within the sibling count.
 
     switch (workoutExercise.weightType) {
         case 'absolute':
@@ -117,8 +114,7 @@ export function resolveEffectiveWeight(
             const baseWeight = resolveEffectiveWeight(
                 previousExercise,
                 oneRmMap,
-                workoutSiblings,
-                depth + 1
+                workoutSiblings
             )
             if (baseWeight === null) return null
 

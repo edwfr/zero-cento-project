@@ -97,7 +97,6 @@
         "copyWeekTargetProtected": "Non è possibile copiare: la settimana successiva contiene workout completati"
     },
     "calculation": {
-        "maxRecursionDepthExceeded": "Profondità massima di ricorsione superata per percentage_previous",
         "noPreviousOccurrenceFound": "Nessuna occorrenza precedente trovata per percentage_previous"
     },
     "trainee": {

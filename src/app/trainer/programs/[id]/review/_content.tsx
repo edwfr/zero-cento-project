@@ -14,6 +14,11 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import ProgramPdfExportButton from '@/components/ProgramPdfExportButton'
 import { ProgramPdfData, ProgramPdfLabels } from '@/lib/program-pdf-export'
 import type { ExerciseType } from '@/lib/exercise-type'
+import {
+    percentageOfOneRmWeight,
+    percentageOfPreviousWeight,
+    roundWeightValue,
+} from '@/lib/weight-rounding'
 import ExerciseTypeBadge from '@/components/ExerciseTypeBadge'
 
 const PRIMARY_COLOR = 'rgb(var(--brand-primary))'
@@ -98,12 +103,6 @@ interface ReviewProgramContentProps {
 }
 
 type ViewWizardStep = 'structure' | 'exercises' | 'report'
-
-function roundWeightValue(value: number): number {
-    // Ceil to nearest 0.5 kg; pre-round to 4dp to eliminate floating-point noise
-    const precise = Math.round(value * 10000) / 10000
-    return Math.ceil(precise * 2) / 2
-}
 
 function formatWeightForDisplay(value: number): string {
     const roundedValue = roundWeightValue(value)
@@ -217,7 +216,7 @@ function resolveEffectiveWeightFallback({
             return null
         }
 
-        return roundWeightValue((oneRm * workoutExercise.weight) / 100)
+        return percentageOfOneRmWeight(oneRm, workoutExercise.weight)
     }
 
     const previousEffectiveWeight = previousEffectiveWeightByExerciseId[workoutExercise.exercise.id]
@@ -225,7 +224,7 @@ function resolveEffectiveWeightFallback({
         return null
     }
 
-    return roundWeightValue(previousEffectiveWeight * (1 + workoutExercise.weight / 100))
+    return percentageOfPreviousWeight(previousEffectiveWeight, workoutExercise.weight)
 }
 
 export default function ReviewProgramContent({ viewOnly = false }: ReviewProgramContentProps) {

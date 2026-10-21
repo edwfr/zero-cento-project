@@ -1,5 +1,11 @@
 # Calcolo Pesi Server-Side per Visualizzazione Trainee
 
+> **Documento storico (design pre-implementazione).** Il codice reale differisce:
+> `percentage_rm` è stato rimosso (21/10/2026); `calculateEffectiveWeight` e
+> `loadTraineePrMap` non esistono più. Implementazione attuale in `src/lib/calculations.ts`:
+> `loadTraineeOneRmMap()` (1RM teorico del PR più recente, via `latestPersonalRecordByExercise`)
+> + `resolveEffectiveWeight()` sincrono (`percentage_previous` sull'occorrenza precedente più vicina).
+
 ## Problema
 Quando un trainee visualizza un workout, gli esercizi con `weightType` dinamico (percentage_1rm, percentage_rm, percentage_previous) richiedono calcoli server-side che dipendono da:
 - Query DB per Personal Records (1RM, nRM)

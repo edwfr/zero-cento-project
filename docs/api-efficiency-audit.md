@@ -6,6 +6,9 @@
 
 Actionable checklist. Tick items when implemented. Grouped by impact.
 
+> **Historical snapshot.** Since 2026-10-21 `loadTraineePrMap()` is `loadTraineeOneRmMap()` and the
+> old async `calculateEffectiveWeight` is gone; see `src/lib/calculations.ts`.
+
 ---
 
 ## CRITICAL

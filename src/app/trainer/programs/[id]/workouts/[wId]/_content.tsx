@@ -10,7 +10,7 @@ import MovementPatternTag from '@/components/MovementPatternTag'
 import { WeightType, RestTime } from '@prisma/client'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { latestPersonalRecordByExercise, normalizedOneRM } from '@/lib/calculations'
+import { latestNormalizedOneRMByExercise, latestPersonalRecordByExercise } from '@/lib/calculations'
 import type { ExerciseType } from '@/lib/exercise-type'
 import { plannedReps as plannedRepsOf } from '@/lib/reps'
 import ExerciseTypeBadge from '@/components/ExerciseTypeBadge'
@@ -303,10 +303,7 @@ export default function WorkoutDetailContent() {
     // Most recent PR per exercise: its theoretical 1RM is the base for %1RM
     const latestPRs = Object.values(latestPersonalRecordByExercise(personalRecords))
 
-    const normalizedOneRMByExercise = latestPRs.reduce((acc, record) => {
-        acc[record.exerciseId] = normalizedOneRM(record.weight, record.reps)
-        return acc
-    }, {} as Record<string, number>)
+    const normalizedOneRMByExercise = latestNormalizedOneRMByExercise(personalRecords)
 
     const currentWeek = program.weeks.find((week) =>
         week.workouts.some((weekWorkout) => weekWorkout.id === workoutId)

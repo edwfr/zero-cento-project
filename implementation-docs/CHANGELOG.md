@@ -10,6 +10,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### fix(weights): follow-up review peso da PR più recente (21/10/2026)
+- Arrotondamento 0,5 kg e calcolo `%1RM` / `%prev` lato client estratti in `src/lib/weight-rounding.ts` (usati da edit, review e vista workout) con test: 150×1 giugno + 120×5 settembre + 75% → 104,5. Edit e vista workout costruiscono la mappa 1RM con `latestNormalizedOneRMByExercise`, già coperta da test.
+- `resolveEffectiveWeight`: rimosso il limite di profondità 10 e la chiave `calculation.maxRecursionDepthExceeded`. Con la base "occorrenza più vicina" una catena di 12+ righe `percentage_previous` lo superava e il trainee vedeva il peso vuoto; un ciclo è impossibile perché `order` scende a ogni passo.
+- `docs/weight-calculation.md` e `docs/api-efficiency-audit.md` segnati come storici, con i nomi delle funzioni attuali.
+
 ### feat(weights)!: rimosso il tipo peso percentage_rm (21/10/2026)
 - Enum `WeightType` senza `percentage_rm` (schema Prisma, Zod, tipi union, PDF, pagine trainee, locale `weightPctRm`). `80%RM`, `%80rm`, `80%rm` in edit danno ora errore di formato. Parser input peso estratto in `edit/weight-input.ts` con test dedicati; `weightPctPrev` descrive l'occorrenza precedente.
 - **Deploy**: migrazione `20261021120000_remove_percentage_rm` scritta a mano (eventuali righe residue → `absolute`); va applicata con `npm run prisma:migrate:prod` insieme al deploy del codice.

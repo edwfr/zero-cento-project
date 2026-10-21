@@ -312,22 +312,18 @@ describe('resolveEffectiveWeight', () => {
             expect(resolveEffectiveWeight(current, new Map(), [previous, current])).toBeNull()
         })
 
-        it('stops a self-referencing chain with the recursion-depth error', () => {
-            // Two exercises that each point at the other's position would recurse
-            // forever: the resolver caps the depth instead.
-            const siblings: ResolverExercise[] = []
-            for (let order = 1; order <= 13; order++) {
+        it('resolves a chain longer than ten occurrences', () => {
+            // Nearest-previous base: depth grows by one per occurrence.
+            const siblings: ResolverExercise[] = [
+                makeWorkoutExercise({ id: 'we-1', order: 1, weightType: 'absolute', weight: 100 }),
+            ]
+            for (let order = 2; order <= 13; order++) {
                 siblings.push(makeWorkoutExercise({
-                    id: `we-${order}`,
-                    order,
-                    weightType: order === 1 ? 'percentage_previous' : 'percentage_previous',
-                    weight: 10,
+                    id: `we-${order}`, order, weightType: 'percentage_previous', weight: -1,
                 }))
             }
 
-            expect(() => resolveEffectiveWeight(siblings[12], new Map(), siblings)).toThrow(
-                CALCULATION_ERROR_KEYS.maxRecursionDepthExceeded
-            )
+            expect(resolveEffectiveWeight(siblings[12], new Map(), siblings)).toBeCloseTo(100 * 0.99 ** 12, 6)
         })
     })
 })

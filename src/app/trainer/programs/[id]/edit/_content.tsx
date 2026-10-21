@@ -6,7 +6,16 @@ import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { RestTime, WeightType, WeekType } from '@prisma/client'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { latestPersonalRecordByExercise, normalizedOneRM } from '@/lib/calculations'
+import {
+    latestNormalizedOneRMByExercise,
+    latestPersonalRecordByExercise,
+    normalizedOneRM,
+} from '@/lib/calculations'
+import {
+    percentageOfOneRmWeight,
+    percentageOfPreviousWeight,
+    roundWeightValue,
+} from '@/lib/weight-rounding'
 import {
     formatWeightInputFromStoredValues,
     parseWeightInputValue,
@@ -223,12 +232,6 @@ type WeightInputParsingErrorCode =
 type ResolveWeightInputOutcome =
     | { parsedWeight: ParsedWeightInputResult }
     | { errorCode: WeightInputParsingErrorCode }
-
-function roundWeightValue(value: number): number {
-    // Ceil to nearest 0.5 kg; pre-round to 4dp to eliminate floating-point noise
-    const precise = Math.round(value * 10000) / 10000
-    return Math.ceil(precise * 2) / 2
-}
 
 function formatWeightForDisplay(value: number): string {
     const roundedValue = roundWeightValue(value)
@@ -1034,12 +1037,8 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     )
 
     const normalizedOneRMByExercise = useMemo(
-        () =>
-            latestPRs.reduce((acc, record) => {
-                acc[record.exerciseId] = normalizedOneRM(record.weight, record.reps)
-                return acc
-            }, {} as Record<string, number>),
-        [latestPRs]
+        () => latestNormalizedOneRMByExercise(personalRecords),
+        [personalRecords]
     )
 
     const shouldShowSbdReporting = program?.isSbdProgram ?? false
@@ -1851,7 +1850,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 parsedWeight: {
                     weightType: 'percentage_1rm',
                     weight: value,
-                    effectiveWeight: roundWeightValue((oneRm * value) / 100),
+                    effectiveWeight: percentageOfOneRmWeight(oneRm, value),
                 },
             }
         }
@@ -1880,7 +1879,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             parsedWeight: {
                 weightType: 'percentage_previous',
                 weight: value,
-                effectiveWeight: roundWeightValue(previousEffectiveWeight * (1 + value / 100)),
+                effectiveWeight: percentageOfPreviousWeight(previousEffectiveWeight, value),
             },
         }
     }
