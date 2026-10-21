@@ -16,6 +16,13 @@ interface RPEOneRMTableProps {
     defaultOpen?: boolean
     openText?: string
     closeText?: string
+    chart?: Record<number, Record<string, number>>
+    rpeLevels?: readonly number[]
+    repRange?: readonly number[]
+    formatPercentage?: (pct: number) => string
+    notes?: string[]
+    i18nPrefix?: string
+    showFormula?: boolean
 }
 
 function toRpeChartKey(rpe: number): string {
@@ -36,14 +43,21 @@ export default function RPEOneRMTable({
     defaultOpen = false,
     openText,
     closeText,
+    chart = MIKE_TUCHSCHERER_RPE_CHART,
+    rpeLevels = MIKE_TUCHSCHERER_RPE_LEVELS,
+    repRange = MIKE_TUCHSCHERER_REP_RANGE,
+    formatPercentage = (pct) => `${pct.toFixed(1)}%`,
+    notes,
+    i18nPrefix = 'common.rpeOneRmTable',
+    showFormula = true,
 }: RPEOneRMTableProps) {
     const { t } = useTranslation('common')
     const [isOpen, setIsOpen] = useState(defaultOpen)
 
-    const resolvedTitle = title ?? t('common.rpeOneRmTable.title')
-    const resolvedDescription = description ?? t('common.rpeOneRmTable.description')
-    const resolvedOpenText = openText ?? t('common.rpeOneRmTable.open')
-    const resolvedCloseText = closeText ?? t('common.rpeOneRmTable.close')
+    const resolvedTitle = title ?? t(`${i18nPrefix}.title`)
+    const resolvedDescription = description ?? t(`${i18nPrefix}.description`)
+    const resolvedOpenText = openText ?? t(`${i18nPrefix}.open`)
+    const resolvedCloseText = closeText ?? t(`${i18nPrefix}.close`)
 
     return (
         <div className={`rounded-xl border border-gray-200 bg-white shadow-sm ${className}`}>
@@ -76,18 +90,18 @@ export default function RPEOneRMTable({
                                         scope="col"
                                         className="sticky left-0 z-10 bg-gray-50 border-b border-r border-gray-200 px-3 py-2 text-left align-bottom text-xs font-semibold text-gray-600"
                                     >
-                                        {t('common.rpeOneRmTable.rpeHeader')}
+                                        {t(`${i18nPrefix}.rpeHeader`)}
                                     </th>
                                     <th
-                                        colSpan={MIKE_TUCHSCHERER_REP_RANGE.length}
+                                        colSpan={repRange.length}
                                         scope="colgroup"
                                         className="border-b border-gray-200 px-3 py-1.5 text-center text-xs font-semibold uppercase tracking-wide text-gray-500"
                                     >
-                                        {t('common.rpeOneRmTable.repsHeader')}
+                                        {t(`${i18nPrefix}.repsHeader`)}
                                     </th>
                                 </tr>
                                 <tr>
-                                    {MIKE_TUCHSCHERER_REP_RANGE.map((rep) => (
+                                    {repRange.map((rep) => (
                                         <th
                                             key={rep}
                                             className="border-b border-gray-200 px-3 py-2 text-center text-xs font-semibold text-gray-600"
@@ -98,7 +112,7 @@ export default function RPEOneRMTable({
                                 </tr>
                             </thead>
                             <tbody>
-                                {MIKE_TUCHSCHERER_RPE_LEVELS.map((rpe) => {
+                                {rpeLevels.map((rpe) => {
                                     const rpeKey = toRpeChartKey(rpe)
                                     return (
                                         <tr key={rpeKey} className="border-b border-gray-100 last:border-b-0">
@@ -108,8 +122,8 @@ export default function RPEOneRMTable({
                                             >
                                                 {rpeKey}
                                             </th>
-                                            {MIKE_TUCHSCHERER_REP_RANGE.map((rep) => {
-                                                const percentage = MIKE_TUCHSCHERER_RPE_CHART[rep]?.[rpeKey]
+                                            {repRange.map((rep) => {
+                                                const percentage = chart[rep]?.[rpeKey]
                                                 return (
                                                     <td
                                                         key={`${rpeKey}-${rep}`}
@@ -118,7 +132,7 @@ export default function RPEOneRMTable({
                                                                 : 'bg-gray-50 text-gray-400'
                                                             }`}
                                                     >
-                                                        {typeof percentage === 'number' ? `${percentage.toFixed(1)}%` : '-'}
+                                                        {typeof percentage === 'number' ? formatPercentage(percentage) : '-'}
                                                     </td>
                                                 )
                                             })}
@@ -129,9 +143,16 @@ export default function RPEOneRMTable({
                         </table>
                     </div>
 
-                    <p className="mt-3 text-xs text-gray-500">
-                        {t('common.rpeOneRmTable.formula')}
-                    </p>
+                    {showFormula && (
+                        <p className="mt-3 text-xs text-gray-500">
+                            {t(`${i18nPrefix}.formula`)}
+                        </p>
+                    )}
+                    {notes?.map((note) => (
+                        <p key={note} className="mt-3 text-xs text-gray-500">
+                            {note}
+                        </p>
+                    ))}
                 </div>
             )}
         </div>

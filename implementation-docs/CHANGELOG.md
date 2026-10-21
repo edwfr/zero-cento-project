@@ -10,6 +10,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(records): tabella RPE trazioni/dip e pannello tabelle (22/10/2026)
+- `RPEOneRMTable` generalizzata con props opzionali (chart, livelli, reps, formato, note, prefisso i18n); nuovi `BodyweightRPETable` e `RpeTablesDrawer` (esportati da `index.ts`). La schermata massimali mostra la tabella trazioni/dip sotto Tuchscherer e l'etichetta del peso diventa "Carico totale" per gli esercizi zavorrati.
+- Motivo: il trainer deve vedere le percentuali usate per gli esercizi a corpo libero zavorrati.
+
 ### feat(exercises): checkbox corpo libero zavorrato nei form esercizio (22/10/2026)
 - Checkbox `isBodyweightLoaded` (con testo di aiuto) in creazione, modifica e `ExerciseCreateModal`; il flag e' inviato nel body di POST/PUT e in modifica parte dal valore salvato.
 - Motivo: il trainer deve poter marcare trazioni/dip come esercizi a corpo libero zavorrati.

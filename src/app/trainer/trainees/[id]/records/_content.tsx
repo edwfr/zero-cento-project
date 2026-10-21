@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import PersonalRecordsExplorer from '@/components/PersonalRecordsExplorer'
 import RPEOneRMTable from '@/components/RPEOneRMTable'
+import BodyweightRPETable from '@/components/BodyweightRPETable'
 import { SkeletonTable } from '@/components/Skeleton'
 import { Plus, Dumbbell } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
@@ -30,12 +31,14 @@ interface Exercise {
     id: string
     name: string
     type: ExerciseType
+    isBodyweightLoaded?: boolean
 }
 
 interface PersonalRecordExercise {
     id: string
     name: string
     type?: string
+    isBodyweightLoaded?: boolean
 }
 
 interface PersonalRecord {
@@ -290,6 +293,7 @@ export default function TraineeRecordsContent() {
                 </div>
 
                 <RPEOneRMTable className="mb-6" />
+                <BodyweightRPETable className="mb-6" />
 
                 {/* Error */}
                 {error && (
@@ -358,7 +362,9 @@ export default function TraineeRecordsContent() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <FormLabel required>
-                                            Peso (kg)
+                                            {(editingRecord?.exercise ?? exercises.find((ex) => ex.id === selectedExerciseId))?.isBodyweightLoaded
+                                                ? t('personalRecords.totalLoadLabel')
+                                                : 'Peso (kg)'}
                                         </FormLabel>
                                         <Input
                                             type="number"

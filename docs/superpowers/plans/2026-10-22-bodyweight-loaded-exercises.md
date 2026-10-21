@@ -491,13 +491,13 @@ POST/PUT contiene `isBodyweightLoaded`. In modifica la checkbox parte dal valore
 Nel form PR di un esercizio zavorrato l'etichetta del peso è "Carico totale (peso
 corporeo + zavorra)".
 
-- [ ] **Step 1: tests**
+- [x] **Step 1: tests**
   - `BodyweightRPETable defaultOpen`: 9 righe nel `tbody` (RPE 10 → 6) × 10 celle; cella RPE 8 / 5 reps → `81%`; RPE 8.5 / 5 reps → `82%`; RPE 6.5 / 9 reps → `70.5%`; le tre note presenti
   - `BodyweightRPETable` chiusa → nessuna tabella; click sul toggle → si apre
   - `RpeTablesDrawer isOpen` → titolo `editProgram.rpeTablesPanelTitle`, entrambe le tabelle già aperte (due `table`)
   - `Escape` → `onClose` chiamato; click sul pulsante chiudi → `onClose`; click sull'overlay → `onClose`
   - `isOpen=false` → le tabelle non sono renderizzate
-- [ ] **Step 2: implementation**
+- [x] **Step 2: implementation**
   - `RPEOneRMTable`: nuove props opzionali `chart?`, `rpeLevels?`, `repRange?`,
     `formatPercentage?: (pct: number) => string`, `notes?: string[]`, e
     `i18nPrefix?` (default `'common.rpeOneRmTable'`). I default sono i valori di oggi,
@@ -521,8 +521,8 @@ corporeo + zavorra)".
     `selectedExercise?.isBodyweightLoaded ? t('personalRecords.totalLoadLabel') : 'Peso (kg)'`.
     L'esercizio selezionato si trova in `exercises` tramite `selectedExerciseId`, oppure
     è `editingRecord.exercise` in modifica.
-- [ ] **Step 3: run the test command and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit**: `feat(records): weighted pull-up/dip rpe chart`
+- [x] **Step 3: run the test command and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit**: `feat(records): weighted pull-up/dip rpe chart`
 
 ---
 

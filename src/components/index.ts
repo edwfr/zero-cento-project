@@ -46,6 +46,7 @@ export { default as ProgressBar } from './ProgressBar'
 export { default as StatCard } from './StatCard'
 export { default as NavigationCard } from './NavigationCard'
 export { default as RPEOneRMTable } from './RPEOneRMTable'
+export { default as BodyweightRPETable } from './BodyweightRPETable'
 export { default as MeasurementTrendChart } from './MeasurementTrendChart'
 export type { MeasurementTrendChartProps } from './MeasurementTrendChart'
 export { default as MeasurementFormModal } from './MeasurementFormModal'
@@ -120,3 +121,4 @@ export type {
     ProgramReportSectionWorkoutExercise,
 } from './ProgramReportSection'
 export { default as ProgramChartsDrawer } from './ProgramChartsDrawer'
+export { default as RpeTablesDrawer } from './RpeTablesDrawer'
