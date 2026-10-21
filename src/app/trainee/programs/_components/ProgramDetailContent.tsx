@@ -25,6 +25,7 @@ import {
 import type { TraineeProgramView } from '@/lib/trainee-program-data'
 import type { ExerciseType } from '@/lib/exercise-type'
 import { formatWeightRange } from '@/lib/weight-rounding'
+import { formatBallastLabel, type BallastDisplay } from '@/lib/bodyweight-load'
 
 type WeightType = 'absolute' | 'percentage_1rm' | 'percentage_previous'
 type ProgramContentMode = 'current' | 'history'
@@ -46,6 +47,7 @@ interface WorkoutExercise {
     effectiveWeight: number | null
     rpeWeightMin: number | null
     rpeWeightMax: number | null
+    ballast?: BallastDisplay | null
     restTime: RestTime
     isWarmup: boolean
     isJumpSet: boolean
@@ -231,10 +233,15 @@ const formatTargetRpe = (targetRpe: number | null): string | null => {
     return `@RPE ${formatCompactNumber(targetRpe)}`
 }
 
-const buildExerciseScheme = (exercise: WorkoutExercise): string => {
+const buildExerciseScheme = (
+    exercise: WorkoutExercise,
+    ballastLabel: (ballast: BallastDisplay) => string
+): string => {
     const segments = [`${exercise.sets} x ${exercise.reps}`]
 
-    if (exercise.weightType === 'absolute') {
+    if (exercise.ballast) {
+        segments.push(ballastLabel(exercise.ballast))
+    } else if (exercise.weightType === 'absolute') {
         const absoluteWeight = formatEffectiveWeight(exercise.effectiveWeight ?? exercise.weight)
         if (absoluteWeight) {
             segments.push(absoluteWeight)
@@ -347,7 +354,9 @@ export default function ProgramDetailContent({
     programId,
     initialData,
 }: ProgramDetailContentProps) {
-    const { t, i18n } = useTranslation('trainee')
+    const { t, i18n } = useTranslation(['trainee', 'common'])
+    const tCommon = (key: string, options?: Record<string, unknown>) =>
+        t(`common:${key}`, options) as string
     const [localWorkoutProgress, setLocalWorkoutProgress] = useState<Record<string, boolean>>({})
     const [expandedWeeks, setExpandedWeeks] = useState<Record<number, boolean>>({})
     const [expandedWorkouts, setExpandedWorkouts] = useState<Record<string, boolean>>({})
@@ -606,6 +615,9 @@ export default function ProgramDetailContent({
                         rpeWeightMin: exercise.rpeWeightMin,
                         rpeWeightMax: exercise.rpeWeightMax,
                         restTime: exercise.restTime,
+                        weightLabelOverride: exercise.ballast
+                            ? formatBallastLabel(exercise.ballast, tCommon)
+                            : null,
                     })),
                 })),
             })),
@@ -697,7 +709,7 @@ export default function ProgramDetailContent({
                 isWarmup: exercise.isWarmup,
                 isJumpSet: exercise.isJumpSet,
                 isSuperSet: exercise.isSuperSet,
-                scheme: buildExerciseScheme(exercise),
+                scheme: buildExerciseScheme(exercise, (ballast) => formatBallastLabel(ballast, tCommon)),
                 performedSets: completedSets,
                 trainerNote: exercise.notes,
                 traineeNote: performed?.traineeNote ?? null,

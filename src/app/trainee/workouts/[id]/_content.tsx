@@ -37,6 +37,7 @@ import PrevWeekPanel from '@/components/PrevWeekPanel'
 import ExerciseTypeBadge from '@/components/ExerciseTypeBadge'
 import type { ExerciseType } from '@/lib/exercise-type'
 import { formatWeightRange } from '@/lib/weight-rounding'
+import { formatBallastLabel, plannedBallastKg, type BallastDisplay } from '@/lib/bodyweight-load'
 
 interface Exercise {
     id: string
@@ -45,6 +46,7 @@ interface Exercise {
     type: ExerciseType
     youtubeUrl: string | null
     notes: string | null
+    isBodyweightLoaded?: boolean
 }
 
 interface ExerciseFeedback {
@@ -71,6 +73,7 @@ interface WorkoutExerciseWithWeight {
     effectiveWeight: number | null
     rpeWeightMin: number | null
     rpeWeightMax: number | null
+    ballast?: BallastDisplay | null
     restTime: RestTime
     isWarmup: boolean
     isJumpSet: boolean
@@ -134,6 +137,16 @@ const formatWeightValue = (value: number): string => {
     return Number.isInteger(value) ? String(value) : value.toFixed(1)
 }
 
+function plannedLoadKg(we: WorkoutExerciseWithWeight): number {
+    if (we.exercise.isBodyweightLoaded) return plannedBallastKg(we.ballast ?? null)
+    return we.effectiveWeight ?? we.weight ?? 0
+}
+
+const ballastLabel = (
+    ballast: BallastDisplay,
+    t: (key: string, vars?: Record<string, unknown>) => string
+): string => formatBallastLabel(ballast, (key, options) => t(`common:${key}`, options))
+
 const formatWeightKg = (value: number | null | undefined): string => {
     if (typeof value !== 'number' || !Number.isFinite(value)) {
         return '-'
@@ -174,7 +187,7 @@ const RPE_OPTIONS = [
 const SHOW_OVERALL_RPE_PANEL = false
 
 export default function WorkoutDetailContent() {
-    const { t } = useTranslation(['trainee', 'trainer'])
+    const { t } = useTranslation(['trainee', 'trainer', 'common'])
     const router = useRouter()
     const params = useParams()
     const searchParams = useSearchParams()
@@ -254,7 +267,7 @@ export default function WorkoutDetailContent() {
                         } else {
                             paddedSets.push({
                                 setNumber,
-                                weight: we.effectiveWeight || 0,
+                                weight: we.exercise.isBodyweightLoaded ? plannedLoadKg(we) : we.effectiveWeight || 0,
                                 reps: 0,
                                 completed: false,
                                 actualRpe: null,
@@ -267,7 +280,7 @@ export default function WorkoutDetailContent() {
                 } else {
                     initialFeedback[we.id] = Array.from({ length: we.sets }, (_, i) => ({
                         setNumber: i + 1,
-                        weight: we.effectiveWeight || 0,
+                        weight: we.exercise.isBodyweightLoaded ? plannedLoadKg(we) : we.effectiveWeight || 0,
                         reps: 0,
                         completed: false,
                         actualRpe: null,
@@ -592,7 +605,7 @@ export default function WorkoutDetailContent() {
                     : 0
             const effectiveWeight = currentSet.weight > 0
                 ? currentSet.weight
-                : (we.effectiveWeight ?? we.weight ?? 0)
+                : plannedLoadKg(we)
             newSet = {
                 ...currentSet,
                 completed: true,
@@ -1072,8 +1085,9 @@ function ExerciseFocusCard({
                 rpe: we.targetRpe,
             })
             : null
-    const compactWeightValue =
-        rpeWeightRangeValue ??
+    const compactWeightValue = we.ballast
+        ? ballastLabel(we.ballast, t)
+        : rpeWeightRangeValue ??
         (we.weightType !== 'absolute'
             ? `${calculatedWeightMissing ? t('workouts.calculatedWeightMissing') : calculatedWeightValue} (${trainerSettingValue})`
             : calculatedWeightValue)
@@ -1338,11 +1352,16 @@ function ExerciseFocusCard({
     )
 }
 
-function buildExerciseSpec(we: WorkoutExerciseWithWeight): string {
-    const weightValue = we.effectiveWeight ?? we.weight ?? 0
+function buildExerciseSpec(
+    we: WorkoutExerciseWithWeight,
+    t: (key: string, vars?: Record<string, unknown>) => string
+): string {
+    const weightValue = plannedLoadKg(we)
     const parts = [`${we.sets} x ${we.reps}`]
 
-    if (weightValue > 0) {
+    if (we.ballast) {
+        parts.push(ballastLabel(we.ballast, t))
+    } else if (weightValue > 0) {
         parts.push(`${formatWeightKg(weightValue)}kg`)
     }
 
@@ -1456,7 +1475,7 @@ function WarmupPanel({
                                                 )}
                                             </p>
                                             <p className="mt-0.5 text-xs text-gray-500">
-                                                {buildExerciseSpec(we)}
+                                                {buildExerciseSpec(we, t)}
                                             </p>
                                         </div>
                                         {isOpen
@@ -1576,7 +1595,7 @@ function SetRowsGrid({
                                 inputMode="decimal"
                                 min="0"
                                 step="0.5"
-                                placeholder={String(we.effectiveWeight ?? we.weight ?? 0)}
+                                placeholder={String(plannedLoadKg(we))}
                                 value={set.weight || ''}
                                 onChange={(e) =>
                                     onUpdateSet(we.id, setIdx, 'weight', parseFloat(e.target.value) || 0)
@@ -1680,7 +1699,7 @@ function FinalStep({
                             const idx = exercises.indexOf(we)
                             const sets = feedbackData[we.id] || []
                             const completedSets = sets.filter((s) => s.completed).length
-                            const exerciseSpec = buildExerciseSpec(we)
+                            const exerciseSpec = buildExerciseSpec(we, t)
 
                             return (
                                 <button

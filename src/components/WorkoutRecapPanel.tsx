@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { ClipboardList, ChevronDown, ChevronUp, CheckCircle2, Circle, Clock } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { ExerciseRecapItem, ExerciseStatus } from '@/lib/workout-recap'
+import { formatBallastLabel } from '@/lib/bodyweight-load'
 import { partitionWarmup } from '@/lib/workout-warmup'
 import ExerciseMetaBadges from './ExerciseMetaBadges'
 
@@ -19,10 +20,15 @@ function formatWeightValue(value: number): string {
     return Number.isInteger(value) ? String(value) : value.toFixed(1)
 }
 
-function buildExerciseSpec(exercise: ExerciseRecapItem): string {
+function buildExerciseSpec(
+    exercise: ExerciseRecapItem,
+    t: (key: string, options?: Record<string, unknown>) => string
+): string {
     const parts = [`${exercise.targetSets} x ${exercise.reps}`]
 
-    if (typeof exercise.effectiveWeight === 'number' && Number.isFinite(exercise.effectiveWeight) && exercise.effectiveWeight > 0) {
+    if (exercise.ballast) {
+        parts.push(formatBallastLabel(exercise.ballast, (key, options) => t(`common:${key}`, options)))
+    } else if (typeof exercise.effectiveWeight === 'number' && Number.isFinite(exercise.effectiveWeight) && exercise.effectiveWeight > 0) {
         parts.push(`${formatWeightValue(exercise.effectiveWeight)}kg`)
     }
 
@@ -39,7 +45,7 @@ export default function WorkoutRecapPanel({
     refreshSignal,
     onSelectExercise,
 }: WorkoutRecapPanelProps) {
-    const { t } = useTranslation('trainee')
+    const { t } = useTranslation(['trainee', 'common'])
     const recapErrorText = t('workouts.recapError')
     const [expanded, setExpanded] = useState(false)
     const [exercises, setExercises] = useState<ExerciseRecapItem[]>([])
@@ -131,7 +137,7 @@ export default function WorkoutRecapPanel({
                                                     {exercise.exerciseName}
                                                 </p>
                                                 <p className="text-xs text-gray-400">
-                                                    {buildExerciseSpec(exercise)}
+                                                    {buildExerciseSpec(exercise, t)}
                                                 </p>
                                             </div>
                                             <div className="shrink-0 flex flex-col items-end gap-1">

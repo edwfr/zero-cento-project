@@ -38,6 +38,19 @@ const makeExercise = (overrides: Partial<ProgramPdfExercise> = {}): ProgramPdfEx
 })
 
 describe('buildProgramPdfExerciseRow', () => {
+    it('uses weightLabelOverride as weight column when set', () => {
+        const row = buildProgramPdfExerciseRow(
+            makeExercise({ weightLabelOverride: 'zavorra 17.5 kg' }),
+            labels
+        )
+        expect(row[5]).toBe('zavorra 17.5 kg')
+    })
+
+    it('ignores a null or missing weightLabelOverride', () => {
+        const base = buildProgramPdfExerciseRow(makeExercise(), labels)
+        expect(buildProgramPdfExerciseRow(makeExercise({ weightLabelOverride: null }), labels)[5]).toBe(base[5])
+    })
+
     it('renders dedicated sets and reps columns', () => {
         const row = buildProgramPdfExerciseRow(makeExercise(), labels)
 

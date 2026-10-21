@@ -168,6 +168,75 @@ const renderContent = async () => {
 const nextButton = () =>
     within(screen.getByRole('navigation')).getByRole('button', { name: 'workouts.next' })
 
+describe('Trainee workout: bodyweight-loaded rows', () => {
+    const loadWith = (patch: Record<string, unknown>) => {
+        const first = fixtureWorkout.exercises[0]
+        const workout = {
+            ...fixtureWorkout,
+            exercises: [
+                {
+                    ...first,
+                    exercise: { ...first.exercise, isBodyweightLoaded: true },
+                    weightType: 'percentage_1rm' as const,
+                    weight: 75,
+                    effectiveWeight: null,
+                    ...patch,
+                },
+                fixtureWorkout.exercises[1],
+            ],
+        }
+        const original = global.fetch
+        global.fetch = vi.fn(async (url: string, init?: RequestInit) => {
+            if (typeof url === 'string' && url.includes('/api/trainee/workouts/')) {
+                return { ok: true, json: async () => ({ data: { workout } }) } as Response
+            }
+            return (original as unknown as (u: string, i?: RequestInit) => Promise<Response>)(url, init)
+        }) as unknown as typeof fetch
+    }
+
+    const weightInputs = () =>
+        screen.getAllByPlaceholderText(/^[0-9.]+$/) as HTMLInputElement[]
+
+    it('shows ballast and prefills sets with it, never the percentage', async () => {
+        loadWith({ ballast: { kind: 'ballast', kg: 17.5 } })
+        await renderContent()
+        expect(tSpy).toHaveBeenCalledWith('common:common.bodyweightLoad.ballast', { weight: '17.5' })
+        expect(weightInputs().some((i) => i.placeholder === '17.5')).toBe(true)
+        expect(weightInputs().some((i) => i.placeholder === '75')).toBe(false)
+    })
+
+    it('shows bodyweight label with 0 placeholder', async () => {
+        loadWith({ ballast: { kind: 'bodyweight' } })
+        await renderContent()
+        expect(tSpy).toHaveBeenCalledWith('common:common.bodyweightLoad.bodyweight', undefined)
+        expect(weightInputs().some((i) => i.placeholder === '0')).toBe(true)
+        expect(weightInputs().some((i) => i.placeholder === '75')).toBe(false)
+    })
+
+    it('shows ask-trainer label without numbers', async () => {
+        loadWith({ ballast: { kind: 'missingBodyweight' } })
+        await renderContent()
+        expect(tSpy).toHaveBeenCalledWith('common:common.bodyweightLoad.missingBodyweight', undefined)
+        expect(weightInputs().some((i) => i.placeholder === '75')).toBe(false)
+    })
+
+    it('shows ballast range', async () => {
+        loadWith({ ballast: { kind: 'ballastRange', minKg: 15.5, maxKg: 19 } })
+        await renderContent()
+        expect(tSpy).toHaveBeenCalledWith('common:common.bodyweightLoad.ballastRange', {
+            range: '15.5–19',
+        })
+    })
+
+    it('leaves non bodyweight-loaded rows unchanged', async () => {
+        await renderContent()
+        expect(
+            tSpy.mock.calls.some(([k]) => String(k).startsWith('common:common.bodyweightLoad'))
+        ).toBe(false)
+        expect(weightInputs().some((i) => i.placeholder === '80')).toBe(true)
+    })
+})
+
 describe('Trainee workout focus mode', () => {
     it('shows only the current exercise card', async () => {
         await renderContent()

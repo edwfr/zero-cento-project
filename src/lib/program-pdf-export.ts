@@ -21,6 +21,7 @@ export interface ProgramPdfExercise {
     rpeWeightMin: number | null
     rpeWeightMax: number | null
     restTime: RestTime
+    weightLabelOverride?: string | null
 }
 
 export interface ProgramPdfWorkout {
@@ -188,6 +189,7 @@ export function buildProgramPdfExerciseRow(
             ? `~ ${formatWeightRange(rpeWeightMin, rpeWeightMax)} kg`
             : null
     const weightLabel =
+        exercise.weightLabelOverride ??
         rpeWeightRangeLabel ??
         (exercise.weightType === 'absolute'
             ? assignedWeight

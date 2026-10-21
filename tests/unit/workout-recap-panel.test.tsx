@@ -95,6 +95,33 @@ describe('WorkoutRecapPanel', () => {
         expect(screen.queryByText('Workout note')).not.toBeInTheDocument()
     })
 
+    it('shows the ballast label instead of the kg for bodyweight-loaded rows', async () => {
+        global.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                data: {
+                    ...mockRecapResponse.data,
+                    exercises: [
+                        {
+                            ...mockRecapResponse.data.exercises[0],
+                            effectiveWeight: null,
+                            ballast: { kind: 'ballast', kg: 17.5 },
+                        },
+                    ],
+                },
+            }),
+        }) as unknown as typeof fetch
+
+        const user = userEvent.setup()
+        render(<WorkoutRecapPanel workoutId="w-ballast" />)
+        await user.click(screen.getByRole('button', { name: 'Workout Recap' }))
+        await waitFor(() => expect(screen.getByText('Back Squat')).toBeInTheDocument())
+        expect(
+            screen.getByText('3 x 5 · common:common.bodyweightLoad.ballast · @RPE 8')
+        ).toBeInTheDocument()
+        expect(screen.queryByText(/120kg/)).not.toBeInTheDocument()
+    })
+
     it('re-fetches on second expand for same workout', async () => {
         global.fetch = vi.fn().mockResolvedValue({
             ok: true,

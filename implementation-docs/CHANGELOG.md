@@ -10,6 +10,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(trainee): zavorra negli esercizi a corpo libero zavorrati (22/10/2026)
+- Workout trainee, recap, dettaglio programma e PDF mostrano `zavorra X kg`, `corpo libero` o `chiedi al trainer` al posto del carico; le serie sono precompilate con la zavorra (helper unico `plannedLoadKg`). `ProgramPdfExercise.weightLabelOverride` vince sul calcolo della colonna peso.
+- Motivo: il trainee vede solo cosa caricare, mai il carico totale ne' la percentuale applicata al corpo.
+
 ### feat(api): letture trainee con la sola zavorra (22/10/2026)
 - Workout detail, recap, `GET /api/programs/[id]` (ramo trainee) e `loadTraineeProgramView` leggono il peso corporeo solo se c'e' una riga zavorrata, passano le opzioni BW a `resolveEffectiveWeight` e restituiscono `effectiveWeight`/range a `null` piu' `ballast` gia' calcolato; nessun campo BW nelle risposte. `ExerciseRecapItem` ha `ballast`. `ballastForRow` arrotonda per eccesso a 0,5 kg anche la zavorra `absolute`.
 - Motivo: il trainee vede solo cosa caricare e BW non si ricava nemmeno per sottrazione.

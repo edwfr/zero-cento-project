@@ -88,6 +88,11 @@ zavorra sul server e **non inviano mai** BW né carico totale per le righe zavor
   `{ isBodyweightLoaded?: boolean | null } | null` dava 13 errori di type-check nelle
   pagine edit e workouts/[wId] (weak type detection). Usato
   `({ isBodyweightLoaded?: boolean | null } & object) | null`.
+- **`ballast` per riga (Task 10).** Il piano scrive `exercise.ballast`, ma `ballast` sta
+  sulla riga (`we.ballast`), non su `exercise` (`loadTraineeProgramView` toglie il flag da
+  `exercise`). La UI usa `row.ballast` ovunque. Il flag serve solo nel workout detail,
+  dove `exercise.isBodyweightLoaded` e' presente. `t` e' `common:`-prefissato tramite
+  un piccolo wrapper per `formatBallastLabel`.
 - **PUT esercizio (Task 2).** `PUT /api/exercises/[id]` valida con `exerciseSchema` (non
   `updateExerciseSchema`), quindi il default `false` azzerava il flag. La route usa
   `exerciseSchema.extend({ isBodyweightLoaded: z.boolean().optional() })`.
@@ -619,7 +624,7 @@ quattro le letture trainee restituiscono `effectiveWeight: null` e
 **Done when:** il trainee vede `zavorra 17.5 kg` e le serie partono da `17.5`.
 `corpo libero` e `chiedi al trainer` compaiono senza numeri.
 
-- [ ] **Step 1: tests**
+- [x] **Step 1: tests**
   - workout focus: riga con `exercise.isBodyweightLoaded: true`, `weightType: 'percentage_1rm'`, `weight: 75`, `effectiveWeight: null`, `ballast { kind: 'ballast', kg: 17.5 }` → testo `zavorra 17.5 kg` (via chiave i18n), input kg della serie con placeholder `17.5`, e **non** `75`
   - `ballast { kind: 'bodyweight' }` → `corpo libero`, placeholder `0`
   - `ballast { kind: 'missingBodyweight' }` → `chiedi al trainer`, nessun numero kg
@@ -627,7 +632,7 @@ quattro le letture trainee restituiscono `effectiveWeight: null` e
   - riga non zavorrata → invariata
   - recap panel: `ballast 17.5` → la spec della riga contiene l'etichetta zavorra e non `effectiveWeight`
   - PDF: `buildProgramPdfExerciseRow` con `weightLabelOverride: 'zavorra 17.5 kg'` → colonna peso (indice 5) `'zavorra 17.5 kg'`; con `null` o assente → invariato
-- [ ] **Step 2: implementation**
+- [x] **Step 2: implementation**
   - Workout `_content.tsx`: tipo (~riga 70) riceve `ballast: BallastDisplay | null`, ed
     `Exercise` riceve `isBodyweightLoaded?: boolean`. Un solo helper locale:
     ```ts
@@ -650,8 +655,8 @@ quattro le letture trainee restituiscono `effectiveWeight: null` e
   - `program-pdf-export.ts`: `ProgramPdfExercise.weightLabelOverride?: string | null`. In
     `buildProgramPdfExerciseRow`, se è valorizzato vince su ogni altro calcolo
     di `weightLabel`.
-- [ ] **Step 3: run the test command and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit**: `feat(trainee): show ballast for weighted bodyweight exercises`
+- [x] **Step 3: run the test command and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit**: `feat(trainee): show ballast for weighted bodyweight exercises`
 
 ---
 
