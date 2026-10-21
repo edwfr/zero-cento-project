@@ -98,6 +98,19 @@ export function traineeWeightFields(
     }
 }
 
+/**
+ * Base of a following percentage_previous row. Ballasted absolute rows store
+ * the ballast, so their base is ballast + bodyweight; null when that is unknown.
+ */
+export function previousLoadBase(
+    previousWeight: number | null,
+    options: { isBodyweightLoaded: boolean; previousIsAbsolute: boolean; bodyweightKg: number | null }
+): number | null {
+    if (typeof previousWeight !== 'number' || !Number.isFinite(previousWeight)) return null
+    if (!options.isBodyweightLoaded || !options.previousIsAbsolute) return previousWeight
+    return options.bodyweightKg === null ? null : previousWeight + options.bodyweightKg
+}
+
 /** kg to prefill in the trainee's sets. */
 export function plannedBallastKg(ballast: BallastDisplay | null): number {
     return ballast?.kind === 'ballast' ? ballast.kg : 0

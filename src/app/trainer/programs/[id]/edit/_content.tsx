@@ -11,7 +11,7 @@ import {
     latestPersonalRecordByExercise,
     recordNormalizedOneRM,
 } from '@/lib/calculations'
-import { formatTrainerLoadLabel } from '@/lib/bodyweight-load'
+import { formatTrainerLoadLabel, previousLoadBase } from '@/lib/bodyweight-load'
 import {
     formatWeightRange,
     percentageOfOneRmWeight,
@@ -1903,18 +1903,12 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             return { errorCode: 'missing_previous_occurrence' }
         }
 
-        let previousEffectiveWeight: number | null = effectiveWeightByRowId[previousRow.id]
-        if (
-            isBodyweightLoadedExercise(row.exerciseId) &&
-            parseWeightInputValue(previousRow.weight).mode === 'absolute'
-        ) {
-            // previous absolute row stores the ballast: the base of -x% is ballast + bodyweight
-            previousEffectiveWeight =
-                typeof previousEffectiveWeight === 'number' && bodyweightKg !== null
-                    ? previousEffectiveWeight + bodyweightKg
-                    : null
-        }
-        if (typeof previousEffectiveWeight !== 'number' || !Number.isFinite(previousEffectiveWeight)) {
+        const previousEffectiveWeight = previousLoadBase(effectiveWeightByRowId[previousRow.id], {
+            isBodyweightLoaded: isBodyweightLoadedExercise(row.exerciseId),
+            previousIsAbsolute: parseWeightInputValue(previousRow.weight).mode === 'absolute',
+            bodyweightKg,
+        })
+        if (previousEffectiveWeight === null) {
             return {
                 parsedWeight: {
                     weightType: 'percentage_previous',

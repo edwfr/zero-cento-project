@@ -10,6 +10,12 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### fix(bodyweight-loaded): correzioni dalla review finale (22/10/2026)
+- Workout trainee: il box KG della card principale mostra `zavorra X kg` / `corpo libero` / `chiedi al trainer` e nasconde la percentuale (prima la zavorra compariva solo in riscaldamento e riepilogo); rimosso `compactWeightValue` inutilizzato. Test sul testo renderizzato, non sulle chiamate a `t()`.
+- `GET /api/programs/[id]/test-results`: per le righe zavorrate `plannedWeight` e' la zavorra (null se il BW manca), per trainer e trainee. Prima era il carico totale: il trainee poteva ricavare il proprio BW e il trainer vedeva totale e zavorra mescolati.
+- Review trainer: l'etichetta zavorra usa anche l'`effectiveWeight` di fallback (righe salvate senza valore calcolato). Base del `-x%` dopo una riga zavorrata in kg estratta in `previousLoadBase()` (`src/lib/bodyweight-load.ts`), usata da editor e review e testata (zavorra 20 + BW 80, -10% → 90).
+- Ripristinate le terminazioni CRLF di 6 file convertiti a LF durante la feature (diff e `git blame` puliti).
+
 ### feat(programs): carico totale e zavorra in review e PDF trainer (22/10/2026)
 - `GET /api/programs/[id]/review`: le select dei PR e degli esercizi includono `isBodyweightLoaded` (l'1RM degli esercizi zavorrati usa la tabella trazioni/dip), la risposta aggiunge `latestBodyweightKg` (letto solo se il programma ha righe zavorrate).
 - Pagina review e PDF trainer: per le righe zavorrate `carico totale · zavorra X kg`, avviso se il peso corporeo non e' registrato; base del `-x%` successivo a una riga in kg = zavorra + BW.

@@ -21,7 +21,7 @@ import {
     roundWeightValue,
 } from '@/lib/weight-rounding'
 import ExerciseTypeBadge from '@/components/ExerciseTypeBadge'
-import { formatTrainerLoadLabel } from '@/lib/bodyweight-load'
+import { formatTrainerLoadLabel, previousLoadBase } from '@/lib/bodyweight-load'
 
 const PRIMARY_COLOR = 'rgb(var(--brand-primary))'
 type RestTimeValue = 's30' | 'm1' | 'm1s30' | 'm2' | 'm3' | 'm5'
@@ -816,7 +816,11 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                                                                     )
                                                                                     const bodyweightLoad = isBodyweightLoaded
                                                                                         ? formatTrainerLoadLabel(
-                                                                                            workoutExercise,
+                                                                                            {
+                                                                                                ...workoutExercise,
+                                                                                                effectiveWeight:
+                                                                                                    effectiveWeightValue,
+                                                                                            },
                                                                                             latestBodyweightKg,
                                                                                             (key, options) =>
                                                                                                 t(`common:${key}`, options) as string
@@ -827,19 +831,15 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                                                                         typeof effectiveWeightValue ===
                                                                                         'number'
                                                                                     ) {
-                                                                                        // Ballasted absolute rows store the ballast: the base of a
-                                                                                        // following -x% is ballast + body weight.
                                                                                         effectiveWeightByExerciseId[
                                                                                             workoutExercise.exercise.id
-                                                                                        ] =
-                                                                                            isBodyweightLoaded &&
-                                                                                            workoutExercise.weightType ===
-                                                                                                'absolute'
-                                                                                                ? latestBodyweightKg == null
-                                                                                                    ? null
-                                                                                                    : effectiveWeightValue +
-                                                                                                      latestBodyweightKg
-                                                                                                : effectiveWeightValue
+                                                                                        ] = previousLoadBase(effectiveWeightValue, {
+                                                                                            isBodyweightLoaded,
+                                                                                            previousIsAbsolute:
+                                                                                                workoutExercise.weightType ===
+                                                                                                'absolute',
+                                                                                            bodyweightKg: latestBodyweightKg,
+                                                                                        })
                                                                                     }
 
                                                                                     const effectiveWeight =

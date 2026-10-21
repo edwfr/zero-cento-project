@@ -6,8 +6,10 @@ import {
     plannedBallastKg,
     formatBallastLabel,
     formatTrainerLoadLabel,
+    previousLoadBase,
     type BodyweightLoadRow,
 } from '@/lib/bodyweight-load'
+import { percentageOfPreviousWeight } from '@/lib/weight-rounding'
 
 const t = (key: string, opts?: Record<string, unknown>) => key + JSON.stringify(opts ?? {})
 
@@ -175,5 +177,34 @@ describe('formatTrainerLoadLabel', () => {
     })
     it('returns null when nothing planned', () => {
         expect(formatTrainerLoadLabel(row(), 80, t)).toBeNull()
+    })
+})
+
+describe('previousLoadBase', () => {
+    const loadedAbsolute = { isBodyweightLoaded: true, previousIsAbsolute: true }
+
+    it('adds bodyweight to a ballasted absolute previous row', () => {
+        expect(previousLoadBase(20, { ...loadedAbsolute, bodyweightKg: 80 })).toBe(100)
+        expect(percentageOfPreviousWeight(previousLoadBase(20, { ...loadedAbsolute, bodyweightKg: 80 })!, -10)).toBe(90)
+    })
+
+    it('returns null when bodyweight is missing for a ballasted absolute previous row', () => {
+        expect(previousLoadBase(20, { ...loadedAbsolute, bodyweightKg: null })).toBeNull()
+    })
+
+    it('keeps a percentage previous row as is: it already stores the total', () => {
+        expect(
+            previousLoadBase(117, { isBodyweightLoaded: true, previousIsAbsolute: false, bodyweightKg: 80 })
+        ).toBe(117)
+    })
+
+    it('keeps non bodyweight-loaded rows as is', () => {
+        expect(
+            previousLoadBase(100, { isBodyweightLoaded: false, previousIsAbsolute: true, bodyweightKg: 80 })
+        ).toBe(100)
+    })
+
+    it('returns null for a missing previous weight', () => {
+        expect(previousLoadBase(null, { ...loadedAbsolute, bodyweightKg: 80 })).toBeNull()
     })
 })
