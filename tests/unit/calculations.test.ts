@@ -14,6 +14,10 @@ import {
     loadTraineeOneRmMap,
     latestPersonalRecordByExercise,
     latestNormalizedOneRMByExercise,
+    recordNormalizedOneRM,
+    BODYWEIGHT_LOADED_RPE_CHART,
+    BODYWEIGHT_LOADED_RPE_LEVELS,
+    BODYWEIGHT_LOADED_REP_RANGE,
 } from '@/lib/calculations'
 import { prisma } from '@/lib/prisma'
 
@@ -445,5 +449,57 @@ describe('loadTraineeOneRmMap', () => {
             where: { traineeId: 'trainee-1' },
             select: expect.objectContaining({ recordDate: true }),
         })
+    })
+})
+
+describe('bodyweight-loaded chart', () => {
+    it('exposes anchors and generated half points', () => {
+        expect(BODYWEIGHT_LOADED_RPE_CHART[1]['10']).toBe(100)
+        expect(BODYWEIGHT_LOADED_RPE_CHART[5]['8']).toBe(81)
+        expect(BODYWEIGHT_LOADED_RPE_CHART[5]['8.5']).toBe(82)
+        expect(BODYWEIGHT_LOADED_RPE_CHART[10]['6']).toBe(68)
+        expect(BODYWEIGHT_LOADED_RPE_CHART[9]['6.5']).toBe(70.5)
+    })
+
+    it('has 9 rpe keys for every row 1-10', () => {
+        for (let reps = 1; reps <= 10; reps++) {
+            expect(Object.keys(BODYWEIGHT_LOADED_RPE_CHART[reps])).toHaveLength(9)
+        }
+    })
+
+    it('exposes levels and rep range', () => {
+        expect(BODYWEIGHT_LOADED_RPE_LEVELS).toEqual([10, 9.5, 9, 8.5, 8, 7.5, 7, 6.5, 6])
+        expect(BODYWEIGHT_LOADED_REP_RANGE).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    })
+
+    it('normalizedOneRM uses the bodyweight chart only with the flag', () => {
+        expect(normalizedOneRM(110, 3, true)).toBe(121)
+        expect(normalizedOneRM(110, 3, false)).toBe(normalizedOneRM(110, 3))
+        expect(normalizedOneRM(110, 3)).not.toBe(121)
+        expect(normalizedOneRM(110, 11, true)).toBe(150.5)
+    })
+
+    it('intensityFromRpeChart with the flag', () => {
+        expect(intensityFromRpeChart(5, 8.5, true)).toBe(82)
+        expect(intensityFromRpeChart(5, 5.5, true)).toBeNull()
+        expect(intensityFromRpeChart(11, 8, true)).toBeNull()
+    })
+
+    it('rpeWeightRange with the flag', () => {
+        expect(rpeWeightRange(130, 5, 8, true)).toEqual({ min: 103.5, max: 107.5 })
+    })
+
+    it('recordNormalizedOneRM picks the chart of the exercise', () => {
+        const base = { exerciseId: 'e', weight: 110, reps: 3 }
+        expect(recordNormalizedOneRM({ ...base, exercise: { isBodyweightLoaded: true } })).toBe(121)
+        expect(recordNormalizedOneRM(base)).toBe(normalizedOneRM(110, 3))
+    })
+
+    it('latestNormalizedOneRMByExercise honours the flag', () => {
+        expect(
+            latestNormalizedOneRMByExercise([
+                { exerciseId: 'e', weight: 110, reps: 3, exercise: { isBodyweightLoaded: true } },
+            ])
+        ).toEqual({ e: 121 })
     })
 })

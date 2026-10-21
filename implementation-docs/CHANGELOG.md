@@ -10,6 +10,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(weights): tabella RPE per esercizi a corpo libero zavorrati (22/10/2026)
+- `src/lib/calculations.ts`: nuove `BODYWEIGHT_LOADED_RPE_CHART` (trazioni/dip, ancore RPE 10/9/8/7/6 con mezzi punti generati), `BODYWEIGHT_LOADED_RPE_LEVELS`, `BODYWEIGHT_LOADED_REP_RANGE`. `estimateOneRMFromRpeTable`, `intensityFromRpeChart`, `rpeWeightRange`, `normalizedOneRM` prendono `bodyweightLoaded = false` (default Tuchscherer, nessun numero esistente cambia). `PersonalRecordInput.exercise?.isBodyweightLoaded` e nuova `recordNormalizedOneRM` usata da `latestPersonalRecordByExercise` e `latestNormalizedOneRMByExercise`.
+- Test: `calculations.test.ts` (`normalizedOneRM(110, 3, true)` = 121, intensità 5 @ 8.5 = 82, range 103.5–107.5, record con flag).
+- Motivo: base di calcolo per 1RM e percentuali RPE sul carico totale (piano `2026-10-22-bodyweight-loaded-exercises`, Task 1).
+
 ### feat(programs): range di peso da RPE in review e PDF (21/10/2026)
 - `src/lib/program-pdf-export.ts`: `ProgramPdfExercise` con `rpeWeightMin`/`rpeWeightMax`; in `buildProgramPdfExerciseRow` una riga `absolute` senza peso (né `weight` né `effectiveWeight`) e con range mostra `~ 110.5–115 kg` nella colonna peso (prefisso `~`: l'Helvetica built-in di jsPDF non ha `≈` e corromperebbe la cella). Il peso esplicito vince; senza range resta `missingValue`.
 - `trainer/programs/[id]/review/_content.tsx`: tipo esteso, i due campi passano ai dati PDF; nella cella peso, se non c'è peso effettivo e il range c'è, la riga verde mostra `t('reviewProgram.tableWeightRpeRange')` al posto di `-`. Il range non entra in `effectiveWeightByExerciseId` (non è base per `-x%`).

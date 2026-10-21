@@ -15,6 +15,16 @@ export interface PersonalRecordInput {
     weight: number
     reps: number
     recordDate?: Date | string | null
+    exercise?: ({ isBodyweightLoaded?: boolean | null } & object) | null
+}
+
+/** normalizedOneRM of a PR, with the chart of its exercise. */
+export function recordNormalizedOneRM(record: PersonalRecordInput): number {
+    return normalizedOneRM(
+        record.weight,
+        record.reps,
+        record.exercise?.isBodyweightLoaded === true
+    )
 }
 
 function recordTime(recordDate: PersonalRecordInput['recordDate']): number {
@@ -42,8 +52,7 @@ export function latestPersonalRecordByExercise<T extends PersonalRecordInput>(
         if (
             candidateTime > currentTime ||
             (candidateTime === currentTime &&
-                normalizedOneRM(candidate.weight, candidate.reps) >
-                    normalizedOneRM(current.weight, current.reps))
+                recordNormalizedOneRM(candidate) > recordNormalizedOneRM(current))
         ) {
             latest[candidate.exerciseId] = candidate
         }
@@ -57,7 +66,7 @@ export function latestNormalizedOneRMByExercise(
 ): Record<string, number> {
     const result: Record<string, number> = {}
     for (const [exerciseId, record] of Object.entries(latestPersonalRecordByExercise(records))) {
-        result[exerciseId] = normalizedOneRM(record.weight, record.reps)
+        result[exerciseId] = recordNormalizedOneRM(record)
     }
     return result
 }
@@ -332,6 +341,43 @@ export const MIKE_TUCHSCHERER_RPE_CHART: Record<number, Record<string, number>> 
     },
 }
 
+export const BODYWEIGHT_LOADED_RPE_LEVELS = [10, 9.5, 9, 8.5, 8, 7.5, 7, 6.5, 6] as const
+export const BODYWEIGHT_LOADED_REP_RANGE = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const
+
+// Weighted pull-ups / dips: % of total load (bodyweight + added weight) at RPE 10, 9, 8, 7, 6.
+const BODYWEIGHT_LOADED_ANCHORS: Record<number, readonly [number, number, number, number, number]> = {
+    1: [100, 94, 91, 88, 86],
+    2: [94, 91, 88, 86, 83],
+    3: [91, 88, 86, 83, 81],
+    4: [88, 86, 83, 81, 79],
+    5: [86, 83, 81, 79, 77],
+    6: [83, 81, 79, 77, 75],
+    7: [81, 79, 77, 75, 73],
+    8: [79, 77, 75, 73, 71],
+    9: [77, 75, 73, 71, 70],
+    10: [75, 73, 71, 70, 68],
+}
+
+function buildBodyweightLoadedChart(): Record<number, Record<string, number>> {
+    const chart: Record<number, Record<string, number>> = {}
+    for (const [reps, anchors] of Object.entries(BODYWEIGHT_LOADED_ANCHORS)) {
+        const row: Record<string, number> = {}
+        anchors.forEach((pct, i) => {
+            const rpe = 10 - i
+            row[toRpeChartKey(rpe)] = pct
+            if (i < anchors.length - 1) row[toRpeChartKey(rpe - 0.5)] = (pct + anchors[i + 1]) / 2
+        })
+        chart[Number(reps)] = row
+    }
+    return chart
+}
+
+export const BODYWEIGHT_LOADED_RPE_CHART = buildBodyweightLoadedChart()
+
+function rpeChartFor(bodyweightLoaded: boolean): Record<number, Record<string, number>> {
+    return bodyweightLoaded ? BODYWEIGHT_LOADED_RPE_CHART : MIKE_TUCHSCHERER_RPE_CHART
+}
+
 function normalizeRpeToHalfStep(rpe: number): number {
     return Math.round(rpe * 2) / 2
 }
@@ -344,13 +390,18 @@ function toRpeChartKey(rpe: number): string {
  * Estimate 1RM using Mike Tuchscherer's RPE chart.
  * Falls back to Epley when reps/rpe are outside the chart.
  */
-export function estimateOneRMFromRpeTable(weight: number, reps: number, rpe = 10): number {
+export function estimateOneRMFromRpeTable(
+    weight: number,
+    reps: number,
+    rpe = 10,
+    bodyweightLoaded = false
+): number {
     if (!Number.isFinite(weight) || weight <= 0) return 0
     if (!Number.isFinite(reps)) return 0
 
     const normalizedReps = Math.max(1, Math.round(reps))
     const normalizedRpe = Math.max(5, Math.min(10, normalizeRpeToHalfStep(rpe)))
-    const byReps = MIKE_TUCHSCHERER_RPE_CHART[normalizedReps]
+    const byReps = rpeChartFor(bodyweightLoaded)[normalizedReps]
 
     if (!byReps) {
         return estimateOneRM(weight, normalizedReps)
@@ -368,13 +419,17 @@ export function estimateOneRMFromRpeTable(weight: number, reps: number, rpe = 10
  * Look up the % of 1RM from Mike Tuchscherer's RPE chart for a (reps, rpe) pair.
  * Returns null when the combination is outside the chart (reps > 12, rpe < 5).
  */
-export function intensityFromRpeChart(reps: number, rpe: number): number | null {
+export function intensityFromRpeChart(
+    reps: number,
+    rpe: number,
+    bodyweightLoaded = false
+): number | null {
     if (!Number.isFinite(reps) || !Number.isFinite(rpe)) return null
 
     const normalizedReps = Math.round(reps)
     if (normalizedReps < 1) return null
 
-    const byReps = MIKE_TUCHSCHERER_RPE_CHART[normalizedReps]
+    const byReps = rpeChartFor(bodyweightLoaded)[normalizedReps]
     if (!byReps) return null
 
     const normalizedRpe = normalizeRpeToHalfStep(rpe)
@@ -392,10 +447,15 @@ export interface RpeWeightRange {
 }
 
 /** Proposed kg range: oneRm × chart% ± 2%, each bound ceiled to 0.5 kg. Null outside the chart or without a 1RM. */
-export function rpeWeightRange(oneRm: number, reps: number, rpe: number): RpeWeightRange | null {
+export function rpeWeightRange(
+    oneRm: number,
+    reps: number,
+    rpe: number,
+    bodyweightLoaded = false
+): RpeWeightRange | null {
     if (!Number.isFinite(oneRm) || oneRm <= 0) return null
 
-    const pct = intensityFromRpeChart(reps, rpe)
+    const pct = intensityFromRpeChart(reps, rpe, bodyweightLoaded)
     if (pct === null) return null
 
     const center = (oneRm * pct) / 100
@@ -419,6 +479,6 @@ export function storedRpeWeightRange(
  * Canonical normalized 1RM used across the app.
  * Mike Tuchscherer RPE table at RPE 10, rounded to the nearest 0.5 kg.
  */
-export function normalizedOneRM(weight: number, reps: number): number {
-    return Math.round(estimateOneRMFromRpeTable(weight, reps, 10) * 2) / 2
+export function normalizedOneRM(weight: number, reps: number, bodyweightLoaded = false): number {
+    return Math.round(estimateOneRMFromRpeTable(weight, reps, 10, bodyweightLoaded) * 2) / 2
 }
