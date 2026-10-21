@@ -34,6 +34,8 @@ export interface TraineeProgram {
                 weightType: 'absolute' | 'percentage_1rm' | 'percentage_previous'
                 weight: number | null
                 effectiveWeight: number | null
+                rpeWeightMin: number | null
+                rpeWeightMax: number | null
                 restTime: 's30' | 'm1' | 'm1s30' | 'm2' | 'm3' | 'm5'
                 isWarmup: boolean
                 isJumpSet: boolean
@@ -212,6 +214,8 @@ async function loadProgramTreeForTrainee(
                         weightType: we.weightType,
                         weight: we.weight,
                         effectiveWeight: we.effectiveWeight,
+                        rpeWeightMin: we.rpeWeightMin ?? null,
+                        rpeWeightMax: we.rpeWeightMax ?? null,
                         restTime: we.restTime,
                         isWarmup: we.isWarmup,
                         isJumpSet: we.isJumpSet,

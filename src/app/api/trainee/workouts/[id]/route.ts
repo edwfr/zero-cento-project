@@ -212,6 +212,8 @@ export async function GET(
                 weightType: we.weightType,
                 weight: we.weight,
                 effectiveWeight,
+                rpeWeightMin: we.rpeWeightMin ?? null,
+                rpeWeightMax: we.rpeWeightMax ?? null,
                 restTime: we.restTime,
                 isWarmup: Boolean(we.isWarmup),
                 isJumpSet: Boolean(we.isJumpSet),

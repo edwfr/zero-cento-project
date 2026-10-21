@@ -81,6 +81,8 @@ export async function GET(
                                             weightType: true,
                                             weight: true,
                                             effectiveWeight: true,
+                                            rpeWeightMin: true,
+                                            rpeWeightMax: true,
                                             restTime: true,
                                             isWarmup: true,
                                             isJumpSet: true,

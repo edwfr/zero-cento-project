@@ -10,6 +10,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(api): range di peso da RPE nelle letture (21/10/2026)
+- `rpeWeightMin` / `rpeWeightMax` restituiti, così come salvati e senza ricalcolo, da: review route (`select`), `loadTraineeProgramView` (`src/lib/trainee-program-data.ts`, tipo e oggetto `base`), GET `api/trainee/workouts/[id]` e `transformApiExercise` della pagina edit. `api/programs/[id]` usa `include` + spread: già li restituisce, nessuna modifica.
+- Test: `trainee-workout-detail.test.ts` e `lib/trainee-program-data.test.ts` (riga senza peso con range 110.5–115 → stessi valori in risposta, `effectiveWeight` null).
+- Motivo: rendere il range disponibile alle viste trainer e trainee (piano `2026-10-21-rpe-weight-range`, Task 4).
+
 ### feat(api): salvataggio e copia del range di peso da RPE (21/10/2026)
 - `src/lib/calculations.ts`: helper `storedRpeWeightRange(weight, min, max)` — con `weight != null` restituisce `rpeWeightMin = rpeWeightMax = null`, altrimenti i valori ricevuti (o null). Usato da POST `exercises`, PUT `exercises/[exerciseId]` e PUT `exercises/bulk`, così il server azzera il range su ogni riga con peso qualunque cosa arrivi nel body.
 - PUT `[exerciseId]` (update parziale): tocca le colonne solo se il body manda `weight` o i campi range; senza `weight` nel body l'invariante usa il peso già salvato sulla riga.

@@ -101,6 +101,67 @@ describe('GET /api/trainee/workouts/[id]', () => {
         expect(body.error.key).toBe('workout.notFound')
     })
 
+    it('returns the frozen rpe weight range for an exercise without a weight', async () => {
+        vi.mocked(resolveEffectiveWeight).mockReturnValue(null)
+        prismaMock.exerciseFeedback.findMany.mockResolvedValue([] as never)
+        prismaMock.workout.findUnique.mockResolvedValue({
+            id: 'workout-1',
+            dayIndex: 1,
+            notes: null,
+            week: {
+                weekNumber: 2,
+                weekType: 'normal',
+                program: {
+                    id: 'program-1',
+                    title: 'Programma Test',
+                    traineeId: mockTraineeSession.user.id,
+                    trainerId: 'trainer-1',
+                },
+            },
+            workoutExercises: [
+                {
+                    id: 'we-1',
+                    exerciseId: 'exercise-1',
+                    variant: null,
+                    sets: 3,
+                    reps: '5',
+                    targetRpe: 8,
+                    weightType: 'absolute',
+                    weight: null,
+                    effectiveWeight: null,
+                    rpeWeightMin: 110.5,
+                    rpeWeightMax: 115,
+                    restTime: 'm2',
+                    isWarmup: false,
+                    isJumpSet: false,
+                    isSuperSet: false,
+                    notes: null,
+                    order: 1,
+                    isCompleted: false,
+                    exercise: {
+                        id: 'exercise-1',
+                        name: 'Back Squat',
+                        description: null,
+                        youtubeUrl: null,
+                        type: 'fundamental',
+                        notes: null,
+                    },
+                },
+            ],
+        } as never)
+
+        const res = await GET(makeRequest(), { params: Promise.resolve({ id: 'workout-1' }) })
+        const json = await res.json()
+
+        expect(res.status).toBe(200)
+        expect(json.data.workout.exercises[0]).toMatchObject({
+            weight: null,
+            effectiveWeight: null,
+            rpeWeightMin: 110.5,
+            rpeWeightMax: 115,
+        })
+    })
+
     it('hydrates the latest feedback for each exercise even when it was saved before today', async () => {
         prismaMock.exerciseFeedback.findMany.mockResolvedValue([
             {

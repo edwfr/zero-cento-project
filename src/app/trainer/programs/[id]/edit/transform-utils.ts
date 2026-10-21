@@ -31,6 +31,8 @@ export function transformApiExercise(we: any, trainerId: string): any {
         weightType: we.weightType,
         weight: we.weight,
         effectiveWeight: we.effectiveWeight,
+        rpeWeightMin: we.rpeWeightMin ?? null,
+        rpeWeightMax: we.rpeWeightMax ?? null,
         restTime: we.restTime,
         isWarmup: Boolean(we.isWarmup),
         isJumpSet: Boolean(we.isJumpSet),

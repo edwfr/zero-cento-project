@@ -366,6 +366,23 @@ describe('loadTraineeProgramView effective weights', () => {
         expect(result!.program.weeks[0].workouts[0].workoutExercises[0].effectiveWeight).toBe(100)
     })
 
+    it('returns the frozen rpe weight range for an exercise without a weight', async () => {
+        prismaMock.trainingProgram.findUnique.mockResolvedValue(
+            makeProgramWith([
+                makeExercise({ weight: null, targetRpe: 8, rpeWeightMin: 110.5, rpeWeightMax: 115 }),
+            ]) as never
+        )
+
+        const result = await loadTraineeProgramView({ programId: 'p1', traineeId })
+
+        expect(result!.program.weeks[0].workouts[0].workoutExercises[0]).toMatchObject({
+            weight: null,
+            effectiveWeight: null,
+            rpeWeightMin: 110.5,
+            rpeWeightMax: 115,
+        })
+    })
+
     it('reports a null weight and warns when the chain cannot be resolved', async () => {
         prismaMock.trainingProgram.findUnique.mockResolvedValue(
             makeProgramWith([makeExercise({ weightType: 'percentage_previous', weight: 10, order: 1 })]) as never

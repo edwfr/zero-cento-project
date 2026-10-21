@@ -262,17 +262,17 @@ o `tests/integration/program-detail.test.ts` (modify — scegliere quello che gi
 **Done when:** GET trainee workout e i dati del dettaglio programma trainee restituiscono
 `rpeWeightMin`/`rpeWeightMax`.
 
-- [ ] **Step 1: tests**
+- [x] **Step 1: tests**
   - trainee workout detail: workoutExercise mock con `weight: null, effectiveWeight: null, rpeWeightMin: 110.5, rpeWeightMax: 115` → risposta con gli stessi due valori ed `effectiveWeight: null`
   - dettaglio programma trainee: stesso caso sull'esercizio mappato
-- [ ] **Step 2: implementation**
+- [x] **Step 2: implementation**
   - review route: `rpeWeightMin: true, rpeWeightMax: true` nella `select` accanto a `effectiveWeight`.
   - `trainee-program-data.ts`: tipo (~riga 36) e oggetto `base` (~riga 207).
   - `api/trainee/workouts/[id]/route.ts`: oggetto restituito (~riga 205), `we.rpeWeightMin ?? null`.
   - `transform-utils.ts`: `rpeWeightMin: we.rpeWeightMin ?? null`, idem max.
   - `api/programs/[id]/route.ts` usa `include` + spread: nessuna modifica (verificare).
-- [ ] **Step 3: run the test command and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit** — `feat(api): return rpe weight range in reads`
+- [x] **Step 3: run the test command and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit** — `feat(api): return rpe weight range in reads`
 
 ---
 
