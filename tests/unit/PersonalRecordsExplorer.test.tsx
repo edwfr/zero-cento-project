@@ -40,7 +40,7 @@ const mockRecords = [
 ]
 
 describe('PersonalRecordsExplorer action buttons', () => {
-    it('renders edit action buttons and delete drop zone (no delete icon buttons)', () => {
+    it('renders inline edit and delete buttons on every row, no drag and drop', () => {
         const onEdit = vi.fn()
         const onDelete = vi.fn()
 
@@ -55,16 +55,18 @@ describe('PersonalRecordsExplorer action buttons', () => {
         fireEvent.click(screen.getByLabelText('common.personalRecordsExplorer.expand'))
 
         const editButtons = screen.getAllByTitle('common.edit')
-        const deleteButtons = screen.queryAllByTitle('common.delete')
-        const dropZoneLabel = screen.getByText('common.personalRecordsExplorer.dragToDelete')
+        const deleteButtons = screen.getAllByTitle('common.delete')
 
         expect(editButtons).toHaveLength(2)
-        expect(deleteButtons).toHaveLength(0)
-        expect(dropZoneLabel).toBeInTheDocument()
+        expect(deleteButtons).toHaveLength(2)
+        expect(screen.getAllByRole('row').some((row) => row.getAttribute('draggable') === 'true')).toBe(false)
 
         editButtons.forEach((button) => {
             expect(button).toHaveClass('bg-green-600')
             expect(button).not.toHaveClass('text-blue-600')
+        })
+        deleteButtons.forEach((button) => {
+            expect(button).toHaveClass('bg-red-600')
         })
     })
 
@@ -113,7 +115,7 @@ describe('PersonalRecordsExplorer action buttons', () => {
         expect(names).toEqual(['Squat', 'Bench', 'Addome Plank'])
     })
 
-    it('calls onDeleteRecord when dropping a dragged row on trash zone', () => {
+    it('calls onDeleteRecord with the row record when clicking its delete button', () => {
         const onEdit = vi.fn()
         const onDelete = vi.fn()
 
@@ -125,21 +127,15 @@ describe('PersonalRecordsExplorer action buttons', () => {
             />
         )
 
-        const firstRow = screen
-            .getAllByRole('row')
-            .find((row) => row.getAttribute('draggable') === 'true')
-        const dropZone = screen.getByText('common.personalRecordsExplorer.dragToDelete').closest('div')
+        fireEvent.click(screen.getByLabelText('common.personalRecordsExplorer.expand'))
 
-        expect(firstRow).toBeTruthy()
-        expect(dropZone).toBeTruthy()
+        const [latestDelete, historyDelete] = screen.getAllByTitle('common.delete')
 
-        fireEvent.dragStart(firstRow as HTMLElement)
-        fireEvent.dragOver(dropZone as HTMLElement)
-        fireEvent.drop(dropZone as HTMLElement)
+        fireEvent.click(latestDelete)
+        expect(onDelete).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'rec-1' }))
 
-        expect(onDelete).toHaveBeenCalledTimes(1)
-        expect(onDelete).toHaveBeenCalledWith(
-            expect.objectContaining({ id: 'rec-1' })
-        )
+        fireEvent.click(historyDelete)
+        expect(onDelete).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'rec-2' }))
+        expect(onDelete).toHaveBeenCalledTimes(2)
     })
 })

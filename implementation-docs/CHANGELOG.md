@@ -10,6 +10,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(records): eliminazione record con pulsante inline (21/10/2026)
+- `PersonalRecordsExplorer`: rimosso il drag and drop sulla zona cestino; ogni riga (ultimo record e storico) ha ora un `ActionIconButton variant="delete"` accanto a modifica, con la stessa conferma di prima (`ConfirmationModal`). Rimosse le chiavi i18n `dragToDelete`/`dropToDelete` (it/en).
+- Motivo: coerenza con il resto dell'app (eliminazione inline) e il drag and drop non funziona su touch.
+
 ### feat(records): assi espliciti nella tabella RPE (21/10/2026)
 - `RPEOneRMTable`: header su due righe, "RPE" nell'angolo (`rowSpan=2`) e "Ripetizioni" sopra le colonne 1–12 (`colSpan`); colonna RPE con sfondo grigio e bordo destro come intestazione. Nuova chiave i18n `common.rpeOneRmTable.repsHeader` (it/en).
 - Motivo: le colonne 1–12 non avevano etichetta e non era chiaro che fossero ripetizioni.
