@@ -102,7 +102,7 @@ export const repsSchema: z.ZodType<string>                     // z.string().ref
 **Test command:** `npx vitest run tests/unit/lib/reps.test.ts`
 **Done when:** `parseReps`/`isValidReps`/`plannedReps`/`repsSchema` esportati con le firme del Design e tutti i casi sotto verdi.
 
-- [ ] **Step 1: tests** — `tests/unit/lib/reps.test.ts`:
+- [x] **Step 1: tests** — `tests/unit/lib/reps.test.ts`:
   - `parseReps('8')` → `{kind:'reps',min:8,max:8}`
   - `parseReps('8/10')` → `{kind:'reps',min:8,max:10}`
   - `parseReps('30"')` → `{kind:'time',seconds:30}`
@@ -112,9 +112,9 @@ export const repsSchema: z.ZodType<string>                     // z.string().ref
   - `isValidReps` coerente con `parseReps !== null`
   - `plannedReps`: `'8'`→8, `'8/10'`→8, `'30"'`→0, `'max'`→0, `'8-10'`→0, `''`→0
   - `repsSchema.safeParse('8/10').success` true; `'8-10'` false con message `validation.invalidReps`
-- [ ] **Step 2: implementation** — un solo `switch` per regex, costanti `REPS_MIN=1`, `REPS_MAX=50`, `SECONDS_MAX=300`. Nessun trim: l'input va già trimmato dal chiamante (la UI fa `row.reps.trim()`).
-- [ ] **Step 3: run the test command and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit** — `feat(reps): add shared reps format module`
+- [x] **Step 2: implementation** — un solo `switch` per regex, costanti `REPS_MIN=1`, `REPS_MAX=50`, `SECONDS_MAX=300`. Nessun trim: l'input va già trimmato dal chiamante (la UI fa `row.reps.trim()`).
+- [x] **Step 3: run the test command and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit** — `feat(reps): add shared reps format module`
 
 ---
 

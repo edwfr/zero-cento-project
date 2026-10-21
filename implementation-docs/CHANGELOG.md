@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(reps): modulo condiviso per il formato delle ripetizioni (21/10/2026)
+- `src/lib/reps.ts`: unica fonte di verità per formato (`8`, `8/10`, `30"`, `max`), limiti (reps 1-50, secondi 1-300, range con `a < b`), `parseReps`, `isValidReps`, `plannedReps` (secondi/max/invalid = 0) e `repsSchema` zod con messaggio `validation.invalidReps`. Il trattino `8-10` non è più accettato. Test in `tests/unit/lib/reps.test.ts`.
+
 ### chore(mcp): aggiunto MCP Supabase in sola lettura (21/10/2026)
 - `.mcp.json`: server HTTP `supabase` (`https://mcp.supabase.com/mcp`) limitato al progetto `rqxbjybbwqitwhxqqgit` con `read_only=true`, così Claude Code può interrogare il DB di produzione senza poter scrivere dati o applicare migrazioni. Primo uso: `/mcp` → supabase → Authenticate (OAuth).
 
