@@ -58,6 +58,7 @@ import {
 } from '@/lib/program-sbd-metrics'
 import ProgramSbdSummaryTable from '@/components/ProgramSbdSummaryTable'
 import ProgramChartsDrawer from '@/components/ProgramChartsDrawer'
+import { isValidReps } from '@/lib/reps'
 import {
     DndContext,
     DragOverlay,
@@ -2040,8 +2041,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     }
 
     const getBaseValidationError = (row: EditableWorkoutExerciseRow): string | null => {
-        // Allow: number (8), range (8-10), drop-set (6/8), seconds (30"), or keyword "max"
-        const repsPattern = /^(\d+|\d+-\d+|\d+\/\d+|\d+"|max)$/
+        // Allow: number (8), range (8/10), seconds (30"), or keyword "max" (see @/lib/reps)
         const parsedSets = Number.parseInt(row.sets, 10)
         const parsedRpe = row.targetRpe.trim() === '' ? null : Number(row.targetRpe)
 
@@ -2057,7 +2057,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
             return t('editProgram.rowValidationSets')
         }
 
-        if (!repsPattern.test(row.reps.trim())) {
+        if (!isValidReps(row.reps.trim())) {
             return t('editProgram.rowValidationReps')
         }
 

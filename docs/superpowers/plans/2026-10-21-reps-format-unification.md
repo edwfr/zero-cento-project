@@ -164,10 +164,10 @@ export const repsSchema: z.ZodType<string>                     // z.string().ref
 **Test command:** `npx vitest run tests/unit/row-utils.test.ts tests/unit/WorkoutTemplateEditor.test.tsx`
 **Done when:** `repsPattern` rimosso, `grep -rnE '\\d\+-\\d\+|\\d\+\\/\\d\+' src` trova solo `src/lib/reps.ts`.
 
-- [ ] **Step 1: tests** — se esiste un test della validazione di riga in `tests/unit/row-utils.test.ts` o `edit-program-start-date.test.tsx` che usa `'8-10'`, aggiornare a `'8/10'` e aggiungere: riga con reps `'8-10'` → messaggio `editProgram.rowValidationReps`. Se la funzione di validazione non è testabile in isolamento, estrarla in un export puro e testarla.
-- [ ] **Step 2: implementation** — `_content.tsx:2044` `repsPattern.test(row.reps.trim())` → `isValidReps(row.reps.trim())`, aggiornare commento riga 2043 (niente "drop-set"). Eliminare `reps-utils.ts` dopo `grep -rn reps-utils src tests` per confermare zero import. Controllare in `WorkoutTemplateEditor.tsx` che non ci sia validazione locale delle reps.
-- [ ] **Step 3: run the test command and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit** — `refactor(reps): use shared validation in program editor`
+- [x] **Step 1: tests** — se esiste un test della validazione di riga in `tests/unit/row-utils.test.ts` o `edit-program-start-date.test.tsx` che usa `'8-10'`, aggiornare a `'8/10'` e aggiungere: riga con reps `'8-10'` → messaggio `editProgram.rowValidationReps`. Se la funzione di validazione non è testabile in isolamento, estrarla in un export puro e testarla.
+- [x] **Step 2: implementation** — `_content.tsx:2044` `repsPattern.test(row.reps.trim())` → `isValidReps(row.reps.trim())`, aggiornare commento riga 2043 (niente "drop-set"). Eliminare `reps-utils.ts` dopo `grep -rn reps-utils src tests` per confermare zero import. Controllare in `WorkoutTemplateEditor.tsx` che non ci sia validazione locale delle reps.
+- [x] **Step 3: run the test command and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit** — `refactor(reps): use shared validation in program editor`
 
 ---
 

@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### refactor(reps): validazione condivisa nell'editor programma (21/10/2026)
+- `edit/_content.tsx` valida le reps di riga con `isValidReps` (rimosso `repsPattern`, che accettava `8-10`); eliminato `edit/reps-utils.ts` (non importato). `WorkoutTemplateEditor` non ha validazione locale delle reps.
+
 ### fix(reps): secondi e max esclusi dal volume pianificato (21/10/2026)
 - `parseReps` (calculations), `parseRepsValue` (program-sbd-metrics) e la copia locale in `workouts/[wId]/_content.tsx` ora usano `plannedReps` di `@/lib/reps`: `8/10` vale 8 (minimo), `30"` e `max` valgono 0 in volume, conteggio SBD e `percentage_rm` (che ritorna `null` senza cercare il PR). Test aggiornati.
 

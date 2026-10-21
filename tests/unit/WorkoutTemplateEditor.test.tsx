@@ -53,7 +53,7 @@ function fillRow() {
     fireEvent.click(screen.getAllByText('trainer:templates.addExercise')[0])
     fireEvent.click(screen.getByText('pick'))
     fireEvent.change(screen.getByLabelText('trainer:templates.colSets'), { target: { value: '3' } })
-    fireEvent.change(screen.getByLabelText('trainer:templates.colReps'), { target: { value: '8-10' } })
+    fireEvent.change(screen.getByLabelText('trainer:templates.colReps'), { target: { value: '8/10' } })
     fireEvent.change(screen.getByLabelText('trainer:templates.colRest'), { target: { value: 'm2' } })
 }
 
@@ -159,7 +159,7 @@ describe('WorkoutTemplateEditor', () => {
             name: 'Week A',
             workoutsPerWeek: 2,
             workouts: [
-                { dayIndex: 0, exercises: [{ exerciseId: EXERCISE_ID, sets: 3, reps: '8-10', restTime: 'm2' }] },
+                { dayIndex: 0, exercises: [{ exerciseId: EXERCISE_ID, sets: 3, reps: '8/10', restTime: 'm2' }] },
                 { dayIndex: 1, exercises: [] },
             ],
         })
