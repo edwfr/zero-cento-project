@@ -1965,7 +1965,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 return { errorCode: 'invalid_format' }
             }
 
-            const targetReps = parseRepsValue(row.reps)
+            const targetReps = parseRepsValue(row.reps.trim())
             const rmRecord = (recordsByExercise[row.exerciseId] || [])
                 .filter((record) => record.reps === targetReps)
                 .sort((left, right) => {

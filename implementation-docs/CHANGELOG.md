@@ -10,6 +10,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### fix(reps): fix dalla review dell'unificazione formato reps (21/10/2026)
+- Anteprima peso `percentage_rm` nell'editor programma: `parseRepsValue(row.reps.trim())`, come validazione e payload. Prima `8 ` (spazio finale) non trovava l'8RM e l'anteprima dava errore.
+- Ripristinati i line ending CRLF su 4 file convertiti per errore a LF (`core.autocrlf=input` nel `.git/config` locale): diff e `git blame` di nuovo leggibili.
+- Commento in `trainee/workouts/[id]/_content.tsx` aggiornato al formato `6/8`.
+
 ### test(reps): usato il formato range con slash nei fixture (21/10/2026)
 - Fixture di test che usavano `8-10` come input valido passati a `8/10` (`tests/unit/schemas.test.ts`, `tests/integration/workout-templates.test.ts`, `tests/integration/programs-from-template.test.ts`). I test che verificano il rifiuto di `8-10` restano invariati.
 - `validWorkoutExercise` in `tests/unit/schemas.test.ts` usa `reps: '8'` (stringa): lo schema programma non accetta più reps numeriche.

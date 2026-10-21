@@ -567,7 +567,7 @@ export default function WorkoutDetailContent() {
 
         // "8" → can auto-fill with planned value on first tap
         // "max" → user must enter actual reps (how many they achieved)
-        // "6-8", "6/8" → can complete freely (no strict block)
+        // "6/8" → can complete freely (no strict block)
         const isPreciseReps = /^\d+$/.test(we.reps.trim())
         const isMaxReps = we.reps.trim() === 'max'
 
