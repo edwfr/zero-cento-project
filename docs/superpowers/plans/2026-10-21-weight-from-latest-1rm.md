@@ -249,19 +249,19 @@ Consumes (from `src/lib/calculations.ts`):
 Consumes (from `src/lib/calculations.ts`):
 `latestPersonalRecordByExercise<T extends { exerciseId: string; weight: number; reps: number; recordDate?: Date | string | null }>(records: readonly T[]): Record<string, T>`
 
-- [ ] **Step 1: implementation (edit)** — `edit/_content.tsx:1122-1147`:
+- [x] **Step 1: implementation (edit)** — `edit/_content.tsx:1122-1147`:
   `bestPRs` diventa `Object.values(latestPersonalRecordByExercise(personalRecords))`
   ordinato per `normalizedOneRM` desc (ordinamento di visualizzazione invariato);
   `normalizedOneRMByExercise` invariato nella forma (deriva da `bestPRs`). Rinomina
   `bestPRs` → `latestPRs` in tutto il file (incluso pannello ~:2904). Se
   `recordsByExercise` resta usato solo dal ramo `percentage_rm` (:1963), lascialo:
   sparisce in Task 4.
-- [ ] **Step 2: implementation (vista workout)** — `workouts/[wId]/_content.tsx:305-325`:
+- [x] **Step 2: implementation (vista workout)** — `workouts/[wId]/_content.tsx:305-325`:
   stessa sostituzione; `recordsByExercise` diventa inutile → eliminalo. Rinomina
   `bestPRs` → `latestPRs` (pannello ~:524).
-- [ ] **Step 3: run the test command, `npm run type-check`, `npm run lint`**; verifica
+- [x] **Step 3: run the test command, `npm run type-check`, `npm run lint`**; verifica
   manuale con `npm run dev` se disponibile un trainee con due PR in date diverse.
-- [ ] **Step 4: CHANGELOG entry and commit** — `feat(programs): show and use latest PR as 1RM base`
+- [x] **Step 4: CHANGELOG entry and commit** — `feat(programs): show and use latest PR as 1RM base`
 
 ---
 

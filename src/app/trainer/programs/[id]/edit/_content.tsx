@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { RestTime, WeightType, WeekType } from '@prisma/client'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { normalizedOneRM } from '@/lib/calculations'
+import { latestPersonalRecordByExercise, normalizedOneRM } from '@/lib/calculations'
 import { EXERCISE_TYPE_META, type ExerciseType } from '@/lib/exercise-type'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ConfirmationModal from '@/components/ConfirmationModal'
@@ -1119,31 +1119,23 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
         [personalRecords]
     )
 
-    const bestPRs = useMemo(
+    const latestPRs = useMemo(
         () =>
-            Object.values(recordsByExercise)
-                .map((records) =>
-                    records.reduce((best, current) => {
-                        const currentNormalized = normalizedOneRM(current.weight, current.reps)
-                        const bestNormalized = normalizedOneRM(best.weight, best.reps)
-                        return currentNormalized > bestNormalized ? current : best
-                    })
-                )
-                .sort((left, right) => {
-                    const leftValue = normalizedOneRM(left.weight, left.reps)
-                    const rightValue = normalizedOneRM(right.weight, right.reps)
-                    return rightValue - leftValue
-                }),
-        [recordsByExercise]
+            Object.values(latestPersonalRecordByExercise(personalRecords)).sort((left, right) => {
+                const leftValue = normalizedOneRM(left.weight, left.reps)
+                const rightValue = normalizedOneRM(right.weight, right.reps)
+                return rightValue - leftValue
+            }),
+        [personalRecords]
     )
 
     const normalizedOneRMByExercise = useMemo(
         () =>
-            bestPRs.reduce((acc, record) => {
+            latestPRs.reduce((acc, record) => {
                 acc[record.exerciseId] = normalizedOneRM(record.weight, record.reps)
                 return acc
             }, {} as Record<string, number>),
-        [bestPRs]
+        [latestPRs]
     )
 
     const shouldShowSbdReporting = program?.isSbdProgram ?? false
@@ -2901,9 +2893,9 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
                             {!isPrHelperCollapsed && (
                                 <div className="mt-4 max-h-72 overflow-y-auto">
-                                    {bestPRs.length > 0 ? (
+                                    {latestPRs.length > 0 ? (
                                         <div className="space-y-2">
-                                            {bestPRs.map((record) => {
+                                            {latestPRs.map((record) => {
                                                 const label =
                                                     record.exercise?.name ||
                                                     exerciseNameById[record.exerciseId] ||

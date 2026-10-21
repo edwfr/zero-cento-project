@@ -10,6 +10,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(programs): PR più recente come base 1RM in edit e vista workout (21/10/2026)
+- `edit/_content.tsx` e `workouts/[wId]/_content.tsx`: `bestPRs` (massimo 1RM teorico) → `latestPRs` via `latestPersonalRecordByExercise`; il pannello PR e il calcolo `%1RM` mostrano lo stesso PR usato dal server. In edit l'ordinamento di visualizzazione resta per 1RM decrescente.
+- Motivo: stessa regola ovunque (PR più recente, non il più alto).
+
 ### feat(review): 1RM stimato dal PR più recente (21/10/2026)
 - `GET /api/programs/[id]/review`: la query `$queryRaw … MAX(weight) GROUP BY reps` diventa `personalRecord.findMany` + `latestNormalizedOneRMByExercise`; la risposta non contiene più `bestWeightByExerciseAndReps`. La pagina review non legge più quel campo e perde il ramo `%RM`.
 - Ripristinati i fine riga CRLF di `calculations.ts` persi nel commit precedente.

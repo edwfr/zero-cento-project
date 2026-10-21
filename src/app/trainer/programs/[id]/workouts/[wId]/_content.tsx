@@ -10,7 +10,7 @@ import MovementPatternTag from '@/components/MovementPatternTag'
 import { WeightType, RestTime } from '@prisma/client'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { normalizedOneRM } from '@/lib/calculations'
+import { latestPersonalRecordByExercise, normalizedOneRM } from '@/lib/calculations'
 import type { ExerciseType } from '@/lib/exercise-type'
 import { plannedReps as plannedRepsOf } from '@/lib/reps'
 import ExerciseTypeBadge from '@/components/ExerciseTypeBadge'
@@ -301,25 +301,10 @@ export default function WorkoutDetailContent() {
         return opts[wt] || wt
     }
 
-    // Group personal records by exercise
-    const recordsByExercise = personalRecords.reduce((acc, record) => {
-        const key = record.exerciseId
-        if (!acc[key]) {
-            acc[key] = []
-        }
-        acc[key].push(record)
-        return acc
-    }, {} as Record<string, PersonalRecord[]>)
+    // Most recent PR per exercise: its theoretical 1RM is the base for %1RM
+    const latestPRs = Object.values(latestPersonalRecordByExercise(personalRecords))
 
-    const bestPRs = Object.values(recordsByExercise).map((records) => {
-        return records.reduce((best, current) => {
-            const currentNormalized = normalizedOneRM(current.weight, current.reps)
-            const bestNormalized = normalizedOneRM(best.weight, best.reps)
-            return currentNormalized > bestNormalized ? current : best
-        })
-    })
-
-    const normalizedOneRMByExercise = bestPRs.reduce((acc, record) => {
+    const normalizedOneRMByExercise = latestPRs.reduce((acc, record) => {
         acc[record.exerciseId] = normalizedOneRM(record.weight, record.reps)
         return acc
     }, {} as Record<string, number>)
@@ -521,9 +506,9 @@ export default function WorkoutDetailContent() {
                     </div>
                     {!isPRPanelCollapsed && (
                         <div className="p-4">
-                            {bestPRs.length > 0 ? (
+                            {latestPRs.length > 0 ? (
                                 <div className="space-y-3">
-                                    {bestPRs.map((pr) => (
+                                    {latestPRs.map((pr) => (
                                         <div key={pr.id} className="border-b border-gray-200 pb-3 last:border-b-0">
                                             <div className="flex items-start justify-between">
                                                 <div className="flex-1">
