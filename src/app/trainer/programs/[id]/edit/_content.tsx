@@ -29,6 +29,8 @@ import {
     type ParsedWeightInputValue,
 } from './weight-input'
 import { rpeWeightRangeForRow } from './rpe-weight-range'
+import WeightExplanationPopover from '@/components/WeightExplanationPopover'
+import { explainWeight, type WeightExplanationInput, type WeightValue } from '@/lib/weight-explanation'
 import { EXERCISE_TYPE_META, type ExerciseType } from '@/lib/exercise-type'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ConfirmationModal from '@/components/ConfirmationModal'
@@ -538,6 +540,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     const [isChartsDrawerOpen, setIsChartsDrawerOpen] = useState(false)
     const [isRpeTablesDrawerOpen, setIsRpeTablesDrawerOpen] = useState(false)
     const [bodyweightKg, setBodyweightKg] = useState<number | null>(null)
+    const [bodyweightMeasuredAt, setBodyweightMeasuredAt] = useState<string | null>(null)
     const [structureRowsByWorkoutIndex, setStructureRowsByWorkoutIndex] = useState<
         Record<number, WorkoutStructureTemplateRow[]>
     >({})
@@ -715,9 +718,12 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                         ? latestValue
                         : null
                 )
+                const latestMeasuredAt = bodyweightData?.data?.items?.[0]?.measuredAt
+                setBodyweightMeasuredAt(typeof latestMeasuredAt === 'string' ? latestMeasuredAt : null)
             } catch {
                 if (requestId === requestIdRef.current) {
                     setBodyweightKg(null)
+                    setBodyweightMeasuredAt(null)
                 }
             }
         } catch {
@@ -1079,6 +1085,11 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
 
     const normalizedOneRMByExercise = useMemo(
         () => latestNormalizedOneRMByExercise(personalRecords),
+        [personalRecords]
+    )
+
+    const latestRecordByExerciseId = useMemo(
+        () => latestPersonalRecordByExercise(personalRecords),
         [personalRecords]
     )
 
@@ -3555,6 +3566,77 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                 ? formatCompactLoadLabel(bodyweightLoadRow, bodyweightKg, translateCommon)
                                                                                 : null
 
+                                                                            // Step-by-step weight calculation shown behind the (i) button (trainer only).
+                                                                            let weightExplanation: ReturnType<typeof explainWeight> = null
+                                                                            if (parsedWeightInputForPreview.mode !== 'invalid') {
+                                                                                const explainRpe = row.targetRpe.trim() === '' ? null : Number(row.targetRpe.replace(',', '.'))
+                                                                                const previousRowForExplanation =
+                                                                                    parsedWeightInputForPreview.mode === 'percentage_previous'
+                                                                                        ? workoutRows
+                                                                                            .slice(0, rowIndex)
+                                                                                            .reverse()
+                                                                                            .find((candidateRow) => candidateRow.exerciseId === row.exerciseId)
+                                                                                        : undefined
+                                                                                const previousIndexForExplanation = previousRowForExplanation
+                                                                                    ? workoutRows.findIndex((candidateRow) => candidateRow.id === previousRowForExplanation.id)
+                                                                                    : -1
+                                                                                let savedForExplanation: WeightValue | null = null
+                                                                                if (readOnly) {
+                                                                                    if (
+                                                                                        typeof persistedEffectiveWeight === 'number' &&
+                                                                                        parsedWeightInputForPreview.mode !== 'absolute'
+                                                                                    ) {
+                                                                                        savedForExplanation = { kind: 'kg', kg: persistedEffectiveWeight }
+                                                                                    } else if (persistedRpeWeightRange) {
+                                                                                        savedForExplanation = {
+                                                                                            kind: 'range',
+                                                                                            minKg: persistedRpeWeightRange.min,
+                                                                                            maxKg: persistedRpeWeightRange.max,
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                                const explanationInput: WeightExplanationInput = {
+                                                                                    weightType:
+                                                                                        parsedWeightInputForPreview.mode === 'percentage_1rm' ||
+                                                                                        parsedWeightInputForPreview.mode === 'percentage_previous'
+                                                                                            ? parsedWeightInputForPreview.mode
+                                                                                            : 'absolute',
+                                                                                    weight: parsedWeightInputForPreview.mode === 'empty' ? null : parsedWeightInputForPreview.value,
+                                                                                    reps: row.reps,
+                                                                                    targetRpe: explainRpe !== null && Number.isFinite(explainRpe) ? explainRpe : null,
+                                                                                    isBodyweightLoaded: rowIsBodyweightLoaded,
+                                                                                    latestRecord: latestRecordByExerciseId[row.exerciseId] ?? null,
+                                                                                    bodyweight:
+                                                                                        bodyweightKg === null
+                                                                                            ? null
+                                                                                            : { kg: bodyweightKg, measuredAt: bodyweightMeasuredAt },
+                                                                                    previous: previousRowForExplanation
+                                                                                        ? {
+                                                                                            rowNumber: previousIndexForExplanation + 1,
+                                                                                            exerciseName:
+                                                                                                exerciseLookupById.get(previousRowForExplanation.exerciseId)?.name ?? '',
+                                                                                            baseKg: previousLoadBase(effectiveWeightPreviewByRowId[previousRowForExplanation.id], {
+                                                                                                isBodyweightLoaded: rowIsBodyweightLoaded,
+                                                                                                previousIsAbsolute:
+                                                                                                    parseWeightInputValue(previousRowForExplanation.weight).mode === 'absolute',
+                                                                                                bodyweightKg,
+                                                                                            }),
+                                                                                            ballastKg:
+                                                                                                rowIsBodyweightLoaded &&
+                                                                                                (() => {
+                                                                                                    const previousParsed = parseWeightInputValue(previousRowForExplanation.weight)
+                                                                                                    return previousParsed.mode === 'absolute' && typeof previousParsed.value === 'number'
+                                                                                                })()
+                                                                                                    ? (parseWeightInputValue(previousRowForExplanation.weight).value as number)
+                                                                                                    : null,
+                                                                                            range: weightRangePreviewByRowId[previousRowForExplanation.id] ?? null,
+                                                                                        }
+                                                                                        : null,
+                                                                                    saved: savedForExplanation,
+                                                                                }
+                                                                                weightExplanation = explainWeight(explanationInput)
+                                                                            }
+
                                                                             // Empty weight: the proposed range goes in the placeholder, typing overrides it.
                                                                             const weightInputIsEmpty = row.weight.trim() === ''
                                                                             const weightPlaceholder = !weightInputIsEmpty
@@ -3921,11 +4003,12 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                         })}
                                                                                                     </p>
                                                                                                 )}
+                                                                                                <WeightExplanationPopover explanation={weightExplanation} />
                                                                                             </div>
                                                                                         ) : (
                                                                                             <>
                                                                                             <div className="flex items-center gap-1">
-                                                                                                <div className={inlineWeightLabel ? 'w-16 shrink-0' : 'w-full'}>
+                                                                                                <div className={inlineWeightLabel ? 'w-16 shrink-0' : 'min-w-0 flex-1'}>
                                                                                                     <Input
                                                                                                         type="text"
                                                                                                         value={row.weight}
@@ -3948,6 +4031,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                                         {inlineWeightLabel}
                                                                                                     </p>
                                                                                                 )}
+                                                                                                <WeightExplanationPopover explanation={weightExplanation} />
                                                                                             </div>
                                                                                             {rowIsBodyweightLoaded && bodyweightLoadLabel?.missingBodyweight && (
                                                                                                 <p className="text-[11px] text-amber-700">

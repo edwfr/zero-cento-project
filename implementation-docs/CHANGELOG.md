@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(programs): dettaglio calcolo del peso nell'editor (22/10/2026)
+- `trainer/programs/[id]/edit/_content.tsx`: accanto al peso (editabile e sola lettura) compare la (i) con `WeightExplanationPopover` per `%1RM`, `-x%`, range RPE e righe zavorrate. Input costruito con gli stessi dati del peso mostrato (PR piu' recente, BW con data, riga precedente, valore salvato in sola lettura); aggiunto stato `bodyweightMeasuredAt`. Il wrapper dell'input a peso vuoto passa a `min-w-0 flex-1` per far entrare la (i).
+
 ### feat(programs): popover del calcolo del peso (22/10/2026)
 - Nuovo `WeightExplanationPopover`: bottone (i) che al click/tap apre un popover a portale con i passaggi di `explainWeight()` tradotti (numeri `it-IT`/`en-GB`, date GG/MM/AAAA); si chiude con Esc, clic/tap fuori o secondo clic. Non renderizza nulla senza spiegazione. Esportato da `src/components/index.ts`.
 

@@ -428,11 +428,11 @@ clic fuori, tap fuori e secondo clic, e con `explanation === null` non viene ren
 la (i) compare accanto al peso per `%1RM`, `-x%`, range RPE e righe zavorrate, non per
 un `absolute` normale, e il popover mostra gli stessi kg della cella.
 
-- [ ] **Step 1: tests** — nessun test di pagina (il file è 4188 righe e non ha test di
+- [x] **Step 1: tests** — nessun test di pagina (il file è 4188 righe e non ha test di
       render). La logica è coperta dai Task 1 e 4. Verifica manuale con `npm run dev`
       sui casi della spec (PR presente/assente, `-10%` senza riga precedente, zavorrato
       con/senza BW, sola lettura con PR arrivato dopo il salvataggio).
-- [ ] **Step 2: implementation**
+- [x] **Step 2: implementation**
   - Stato: accanto a `bodyweightKg` (riga ~540) aggiungi
     `bodyweightMeasuredAt: string | null`, valorizzato nello stesso blocco
     (`bodyweightData?.data?.items?.[0]?.measuredAt`, riga ~712) e azzerato negli stessi
@@ -466,8 +466,8 @@ un `absolute` normale, e il popover mostra gli stessi kg della cella.
       (riga ~3923). Con peso vuoto il wrapper dell'input è `w-full`: cambialo in
       `min-w-0 flex-1` così la (i) entra nella cella (colonna PESO al 14%).
   - Non cambiare `resolveWeightInputForRow`, le etichette esistenti né il payload salvato.
-- [ ] **Step 3: run the test command and `npm run type-check`; prova in `npm run dev`**
-- [ ] **Step 4: CHANGELOG entry and commit** — `feat(programs): weight explanation in editor`
+- [x] **Step 3: run the test command and `npm run type-check`; prova in `npm run dev`**
+- [x] **Step 4: CHANGELOG entry and commit** — `feat(programs): weight explanation in editor`
 
 ---
 
