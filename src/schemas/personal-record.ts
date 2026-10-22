@@ -4,6 +4,17 @@ import { z } from 'zod'
  * Personal Record Validation Schemas
  */
 
+const DAY_MS = 24 * 60 * 60 * 1000
+
+/**
+ * Latest accepted record date: tomorrow (UTC day). The client sends its local
+ * day as YYYY-MM-DD, parsed as UTC midnight; in timezones ahead of UTC (Italy)
+ * the local day is already the next UTC day for a few hours after midnight.
+ */
+function latestRecordDay(now: Date): Date {
+    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) + DAY_MS)
+}
+
 export const personalRecordSchema = z.object({
     exerciseId: z.string().uuid('validation.invalidExerciseId'),
     reps: z
@@ -28,7 +39,7 @@ export const personalRecordSchema = z.object({
             }
             return val
         })
-        .refine((date) => date <= new Date(), 'validation.dateCannotBeFuture'),
+        .refine((date) => date <= latestRecordDay(new Date()), 'validation.dateCannotBeFuture'),
     notes: z.string().max(500).optional(),
 })
 

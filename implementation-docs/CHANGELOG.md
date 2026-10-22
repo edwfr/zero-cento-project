@@ -10,6 +10,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### fix(records): massimale di oggi rifiutato dopo mezzanotte + errore nascosto dalla popup (22/10/2026)
+- `schemas/personal-record.ts`: la data massimale arriva come `YYYY-MM-DD` (mezzanotte UTC); tra le 00:00 e le 02:00 italiane il server, ancora sul giorno UTC precedente, la considerava futura. Ora il limite e' fine del giorno UTC successivo (`latestRecordDay()`), confronto per giorno e non per istante. Nuovo test `tests/unit/schemas/personal-record.test.ts`.
+- `trainer/trainees/[id]/records/_content.tsx`: gli errori di salvataggio del massimale hanno uno stato proprio (`modalError`) e compaiono dentro la popup sopra i pulsanti; prima finivano nel banner della pagina, coperto dalla popup.
+
 ### fix(programs): fix della review sul dettaglio peso (22/10/2026)
 - `trainer/programs/[id]/review/_content.tsx`: dopo una riga senza kg (es. sola RPE) la base del fallback `-x%` torna `null`. Prima restava il peso di una riga ancora prima: la review mostrava un "Effettivo" che la (i) contraddiceva. Ora la review si comporta come l'editor.
 - `trainer/programs/[id]/edit/_content.tsx`: nell'editor editabile, se l'etichetta di carico mostra il range salvato perché non si può ricalcolare (es. PR cancellato su esercizio zavorrato), la (i) riceve quel range come `saved` e dice che è il valore salvato.

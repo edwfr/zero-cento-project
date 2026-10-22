@@ -63,6 +63,7 @@ export default function TraineeRecordsContent() {
     // Add/Edit modal state
     const [showModal, setShowModal] = useState(false)
     const [modalLoading, setModalLoading] = useState(false)
+    const [modalError, setModalError] = useState<string | null>(null)
     const [editingRecord, setEditingRecord] = useState<PersonalRecord | null>(null)
     const [selectedExerciseId, setSelectedExerciseId] = useState('')
     const [weight, setWeight] = useState('')
@@ -132,7 +133,7 @@ export default function TraineeRecordsContent() {
             setSelectedExerciseId(exercises[0].id)
         }
         setShowModal(true)
-        setError(null)
+        setModalError(null)
     }
 
     const openEditModal = (record: PersonalRecord) => {
@@ -143,15 +144,15 @@ export default function TraineeRecordsContent() {
         setRecordDate(formatDateForInput(record.recordDate))
         setNotes(record.notes || '')
         setShowModal(true)
-        setError(null)
+        setModalError(null)
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        setError(null)
+        setModalError(null)
 
         if (!selectedExerciseId || !weight || !reps) {
-            setError('Compila tutti i campi obbligatori')
+            setModalError('Compila tutti i campi obbligatori')
             return
         }
 
@@ -196,7 +197,7 @@ export default function TraineeRecordsContent() {
             // Refresh data
             fetchData()
         } catch (err: any) {
-            setError(err.message)
+            setModalError(err.message)
         } finally {
             setModalLoading(false)
         }
@@ -443,6 +444,12 @@ export default function TraineeRecordsContent() {
                                     </div>
                                 )}
 
+                                {modalError && (
+                                    <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+                                        {modalError}
+                                    </div>
+                                )}
+
                                 <div className="flex space-x-4 pt-4">
                                     <Button
                                         type="submit"
@@ -460,7 +467,7 @@ export default function TraineeRecordsContent() {
                                         onClick={() => {
                                             setShowModal(false)
                                             setEditingRecord(null)
-                                            setError(null)
+                                            setModalError(null)
                                         }}
                                         variant="secondary"
                                         size="lg"
