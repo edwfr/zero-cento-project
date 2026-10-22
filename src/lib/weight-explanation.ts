@@ -4,7 +4,7 @@
  * raw numbers, never translated strings; every number comes from the same
  * functions that compute the weight the pages display. No Prisma, no React.
  */
-import { ballastFromRange, ballastFromTotal } from './bodyweight-load'
+import { ballastFromRange, ballastFromTotal, previousLoadBase } from './bodyweight-load'
 import type { BallastDisplay } from './bodyweight-load'
 import {
     RPE_WEIGHT_RANGE_TOLERANCE,
@@ -265,4 +265,22 @@ export function explainWeight(input: WeightExplanationInput): WeightExplanation 
     }
 
     return { steps, result, missingReason }
+}
+
+/**
+ * Base a following percentage_previous row takes from this row, with current data
+ * (same as previousLoadBase() on the editor's preview); null when the row has no kg.
+ */
+export function explanationLoadBase(
+    input: WeightExplanationInput,
+    explanation: WeightExplanation | null
+): number | null {
+    if (input.weightType === 'absolute' && typeof input.weight === 'number') {
+        return previousLoadBase(input.weight, {
+            isBodyweightLoaded: input.isBodyweightLoaded,
+            previousIsAbsolute: true,
+            bodyweightKg: input.bodyweight?.kg ?? null,
+        })
+    }
+    return explanation?.result?.kind === 'kg' ? explanation.result.kg : null
 }

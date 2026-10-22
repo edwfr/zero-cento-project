@@ -23,7 +23,12 @@ import {
 import ExerciseTypeBadge from '@/components/ExerciseTypeBadge'
 import { formatTrainerLoadLabel, previousLoadBase } from '@/lib/bodyweight-load'
 import WeightExplanationPopover from '@/components/WeightExplanationPopover'
-import { explainWeight, type WeightValue } from '@/lib/weight-explanation'
+import {
+    explainWeight,
+    explanationLoadBase,
+    type WeightExplanationInput,
+    type WeightValue,
+} from '@/lib/weight-explanation'
 
 const PRIMARY_COLOR = 'rgb(var(--brand-primary))'
 type RestTimeValue = 's30' | 'm1' | 'm1s30' | 'm2' | 'm3' | 'm5'
@@ -728,7 +733,7 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                             const effectiveWeightByExerciseId: Record<string, number | null> = {}
                                             const previousRowByExerciseId: Record<
                                                 string,
-                                                { rowNumber: number; ballastKg: number | null }
+                                                { rowNumber: number; baseKg: number | null; ballastKg: number | null }
                                             > = {}
 
                                             return (
@@ -866,7 +871,7 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                                                                             maxKg: workoutExercise.rpeWeightMax,
                                                                                         }
                                                                                     }
-                                                                                    const weightExplanation = explainWeight({
+                                                                                    const explanationInput: WeightExplanationInput = {
                                                                                         weightType: workoutExercise.weightType,
                                                                                         weight: workoutExercise.weight,
                                                                                         reps: workoutExercise.reps,
@@ -889,16 +894,15 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                                                                                 rowNumber: previousRow.rowNumber,
                                                                                                 exerciseName:
                                                                                                     workoutExercise.exercise.name,
-                                                                                                baseKg:
-                                                                                                    effectiveWeightByExerciseId[
-                                                                                                        workoutExercise.exercise.id
-                                                                                                    ] ?? null,
+                                                                                                baseKg: previousRow.baseKg,
                                                                                                 ballastKg: previousRow.ballastKg,
                                                                                                 range: null,
                                                                                             }
                                                                                             : null,
                                                                                         saved: savedForExplanation,
-                                                                                    })
+                                                                                    }
+                                                                                    const weightExplanation =
+                                                                                        explainWeight(explanationInput)
 
                                                                                     if (
                                                                                         typeof effectiveWeightValue ===
@@ -919,6 +923,11 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                                                                         workoutExercise.exercise.id
                                                                                     ] = {
                                                                                         rowNumber: rowIndex + 1,
+                                                                                        // Current data, as in the editor; null after an RPE-only row.
+                                                                                        baseKg: explanationLoadBase(
+                                                                                            explanationInput,
+                                                                                            weightExplanation
+                                                                                        ),
                                                                                         ballastKg:
                                                                                             isBodyweightLoaded &&
                                                                                             workoutExercise.weightType ===

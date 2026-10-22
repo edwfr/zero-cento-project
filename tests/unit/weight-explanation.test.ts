@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { explainWeight } from '@/lib/weight-explanation'
+import { explainWeight, explanationLoadBase } from '@/lib/weight-explanation'
 import type { WeightExplanationInput } from '@/lib/weight-explanation'
 import {
     normalizedOneRM,
     recordNormalizedOneRM,
     rpeWeightRange,
 } from '@/lib/calculations'
-import { ballastFromRange, ballastFromTotal } from '@/lib/bodyweight-load'
+import { ballastFromRange, ballastFromTotal, previousLoadBase } from '@/lib/bodyweight-load'
 import { percentageOfOneRmWeight, percentageOfPreviousWeight } from '@/lib/weight-rounding'
 
 const PR = { weight: 120, reps: 5, recordDate: '2026-09-30' }
@@ -436,6 +436,145 @@ describe('explainWeight', () => {
             const e = explainWeight(input({ targetRpe: rpe, reps: '5' }))!
             const expected = rpeWeightRange(normalizedOneRM(120, 5), 5, rpe)!
             expect(e.result).toEqual({ kind: 'range', minKg: expected.min, maxKg: expected.max })
+        })
+
+        const previous = (overrides: Partial<NonNullable<WeightExplanationInput['previous']>>) => ({
+            rowNumber: 1,
+            exerciseName: 'Panca',
+            baseKg: null,
+            ballastKg: null,
+            range: null,
+            ...overrides,
+        })
+
+        it.each([
+            [104.5, -10],
+            [97, -5],
+            [112.5, 2.5],
+        ])('-x%% from base %s at %s%%', (baseKg, pct) => {
+            const e = explainWeight(
+                input({ weightType: 'percentage_previous', weight: pct, previous: previous({ baseKg }) })
+            )!
+            expect(e.result).toEqual({ kind: 'kg', kg: percentageOfPreviousWeight(baseKg, pct) })
+        })
+
+        it.each([-10, -5])('range scaled from a previous row at %s%%', (pct) => {
+            const e = explainWeight(
+                input({
+                    weightType: 'percentage_previous',
+                    weight: pct,
+                    previous: previous({ range: { min: 110.5, max: 115 } }),
+                })
+            )!
+            expect(e.result).toEqual({
+                kind: 'range',
+                minKg: percentageOfPreviousWeight(110.5, pct),
+                maxKg: percentageOfPreviousWeight(115, pct),
+            })
+        })
+
+        it.each([
+            { pct: 75, bwKg: 70 },
+            { pct: 90, bwKg: 85 },
+            { pct: 60, bwKg: 120 },
+        ])('weighted %1RM $pct with BW $bwKg', ({ pct, bwKg }) => {
+            const record = { weight: 100, reps: 3 }
+            const e = explainWeight(
+                input({
+                    weightType: 'percentage_1rm',
+                    weight: pct,
+                    isBodyweightLoaded: true,
+                    latestRecord: record,
+                    bodyweight: { kg: bwKg, measuredAt: null },
+                })
+            )!
+            const totalKg = percentageOfOneRmWeight(normalizedOneRM(100, 3, true), pct)
+            expect(e.result).toEqual({ kind: 'kg', kg: totalKg })
+            expect(e.steps.at(-1)).toMatchObject({ kind: 'bodyweight', ballast: ballastFromTotal(totalKg, bwKg) })
+        })
+
+        it.each([7, 8.5])('weighted range at RPE %s', (rpe) => {
+            const e = explainWeight(
+                input({
+                    targetRpe: rpe,
+                    isBodyweightLoaded: true,
+                    latestRecord: { weight: 100, reps: 3 },
+                    bodyweight: { kg: 80, measuredAt: null },
+                })
+            )!
+            const range = rpeWeightRange(normalizedOneRM(100, 3, true), 5, rpe, true)!
+            expect(e.result).toEqual({ kind: 'range', minKg: range.min, maxKg: range.max })
+            expect(e.steps.at(-1)).toMatchObject({
+                kind: 'bodyweight',
+                ballast: ballastFromRange(range.min, range.max, 80),
+            })
+        })
+    })
+})
+
+describe('explanationLoadBase', () => {
+    const base = (overrides: Partial<WeightExplanationInput>) => {
+        const i = input(overrides)
+        return explanationLoadBase(i, explainWeight(i))
+    }
+
+    it('absolute row gives its kg', () => {
+        expect(base({ weight: 100 })).toBe(100)
+    })
+
+    it('ballasted absolute row gives ballast + bodyweight', () => {
+        expect(base({ weight: 10, isBodyweightLoaded: true, bodyweight: BW })).toBe(
+            previousLoadBase(10, { isBodyweightLoaded: true, previousIsAbsolute: true, bodyweightKg: 80 })
+        )
+    })
+
+    it('ballasted absolute row without bodyweight has no base', () => {
+        expect(base({ weight: 10, isBodyweightLoaded: true })).toBeNull()
+    })
+
+    it('%1RM row gives the value recalculated from the current PR', () => {
+        expect(base({ weightType: 'percentage_1rm', weight: 75 })).toBe(104.5)
+    })
+
+    it('RPE-only row has no kg base', () => {
+        expect(base({ targetRpe: 8 })).toBeNull()
+    })
+
+    it('nothing planned has no base', () => {
+        expect(base({})).toBeNull()
+    })
+
+    // Review: 100 kg, then RPE 8 only, then -10%: the base must not leak past row 2.
+    it('chained rows use the nearest row, not the last row with kg', () => {
+        const row1 = base({ weight: 100 })
+        const row2 = base({ targetRpe: 8 })
+        expect(row1).toBe(100)
+        const e = explainWeight(
+            input({
+                weightType: 'percentage_previous',
+                weight: -10,
+                previous: { rowNumber: 2, exerciseName: 'Panca', baseKg: row2, ballastKg: null, range: null },
+            })
+        )!
+        expect(e.missingReason).toBe('previousWithoutBase')
+    })
+
+    // Review: 75% saved at 112.5 kg, current PR gives 104.5: -10% starts from 104.5.
+    it('chained -x% uses the current value of the previous row', () => {
+        const row1 = base({ weightType: 'percentage_1rm', weight: 75, saved: { kind: 'kg', kg: 112.5 } })
+        const e = explainWeight(
+            input({
+                weightType: 'percentage_previous',
+                weight: -10,
+                previous: { rowNumber: 1, exerciseName: 'Panca', baseKg: row1, ballastKg: null, range: null },
+                saved: { kind: 'kg', kg: 101.5 },
+            })
+        )!
+        expect(e.result).toEqual({ kind: 'kg', kg: percentageOfPreviousWeight(104.5, -10) })
+        expect(e.steps.at(-1)).toEqual({
+            kind: 'savedDiffers',
+            saved: { kind: 'kg', kg: 101.5 },
+            current: { kind: 'kg', kg: percentageOfPreviousWeight(104.5, -10) },
         })
     })
 })
