@@ -66,6 +66,27 @@ describe('GET /api/programs/[id]/review', () => {
         )
     })
 
+    it('returns the most recent record of each exercise with its details', async () => {
+        prismaMock.personalRecord.findMany.mockResolvedValue([
+            { exerciseId: 'ex-1', reps: 1, weight: 150, recordDate: new Date('2026-06-01') },
+            { exerciseId: 'ex-1', reps: 5, weight: 120, recordDate: new Date('2026-09-30') },
+        ] as never)
+
+        const res = await reviewProgram(makeRequest(undefined, 'GET'), withIdParam(PROGRAM_ID))
+        const body = await res.json()
+
+        expect(body.data.latestRecordByExercise).toEqual({
+            'ex-1': { weight: 120, reps: 5, recordDate: '2026-09-30T00:00:00.000Z' },
+        })
+    })
+
+    it('returns an empty latestRecordByExercise without records', async () => {
+        const res = await reviewProgram(makeRequest(undefined, 'GET'), withIdParam(PROGRAM_ID))
+        const body = await res.json()
+
+        expect(body.data.latestRecordByExercise).toEqual({})
+    })
+
     it('uses the bodyweight table for flagged exercises and selects the flag', async () => {
         prismaMock.personalRecord.findMany.mockResolvedValue([
             {
@@ -108,12 +129,16 @@ describe('GET /api/programs/[id]/review', () => {
                 },
             ],
         } as never)
-        prismaMock.traineeMeasurement.findFirst.mockResolvedValue({ value: 80 } as never)
+        prismaMock.traineeMeasurement.findFirst.mockResolvedValue({
+            value: 80,
+            measuredAt: new Date('2026-10-15T00:00:00.000Z'),
+        } as never)
 
         const res = await reviewProgram(makeRequest(undefined, 'GET'), withIdParam(PROGRAM_ID))
         const body = await res.json()
 
         expect(body.data.latestBodyweightKg).toBe(80)
+        expect(body.data.latestBodyweightMeasuredAt).toBe('2026-10-15T00:00:00.000Z')
         expect(prismaMock.traineeMeasurement.findFirst).toHaveBeenCalledWith(
             expect.objectContaining({ where: { traineeId: TRAINEE_ID, metric: 'weight' } })
         )
@@ -124,6 +149,7 @@ describe('GET /api/programs/[id]/review', () => {
         const body = await res.json()
 
         expect(body.data.latestBodyweightKg).toBeNull()
+        expect(body.data.latestBodyweightMeasuredAt).toBeNull()
         expect(prismaMock.traineeMeasurement.findFirst).not.toHaveBeenCalled()
     })
 

@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(api): review restituisce ultimo PR e data del BW (22/10/2026)
+- `GET /api/programs/[id]/review` aggiunge `latestRecordByExercise` (peso, reps, data del PR più recente per esercizio) e `latestBodyweightMeasuredAt` (data del BW usato), necessari al dettaglio del calcolo del peso del trainer. Nuovo `loadLatestBodyweight()` in `calculations.ts`; `loadLatestBodyweightKg` ne deriva ed è invariato per i chiamanti.
+
 ### feat(weights): spiegazione del calcolo del peso (22/10/2026)
 - Nuovo `src/lib/weight-explanation.ts`: `explainWeight()` pura restituisce gli step strutturati (PR, 1RM, % o RPE, arrotondamento, zavorra, peso salvato diverso) o il motivo per cui il peso manca. Ogni numero viene dalle funzioni di calcolo esistenti, così dettaglio e peso mostrato non divergono. Esportati `RPE_WEIGHT_RANGE_TOLERANCE` (`calculations.ts`) e `ballastFromRange` (`bodyweight-load.ts`). Base della (i) trainer nei task successivi.
 

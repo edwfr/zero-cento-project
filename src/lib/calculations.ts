@@ -90,14 +90,21 @@ export async function loadTraineeOneRmMap(traineeId: string): Promise<TraineeOne
     return new Map(Object.entries(latestNormalizedOneRMByExercise(records)))
 }
 
-/** Latest bodyweight (kg) of a trainee, or null. Server only; never return it to a trainee. */
-export async function loadLatestBodyweightKg(traineeId: string): Promise<number | null> {
+/** Latest bodyweight of a trainee with its measurement date, or null. Server only; never return it to a trainee. */
+export async function loadLatestBodyweight(
+    traineeId: string
+): Promise<{ kg: number; measuredAt: Date } | null> {
     const row = await prisma.traineeMeasurement.findFirst({
         where: { traineeId, metric: 'weight' },
         orderBy: { measuredAt: 'desc' },
-        select: { value: true },
+        select: { value: true, measuredAt: true },
     })
-    return row ? row.value : null
+    return row ? { kg: row.value, measuredAt: row.measuredAt } : null
+}
+
+/** Latest bodyweight (kg) of a trainee, or null. Server only; never return it to a trainee. */
+export async function loadLatestBodyweightKg(traineeId: string): Promise<number | null> {
+    return (await loadLatestBodyweight(traineeId))?.kg ?? null
 }
 
 export interface BodyweightResolveOptions {

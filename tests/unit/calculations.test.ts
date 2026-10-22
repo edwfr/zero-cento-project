@@ -12,6 +12,7 @@ import {
     normalizedOneRM,
     resolveEffectiveWeight,
     loadTraineeOneRmMap,
+    loadLatestBodyweight,
     loadLatestBodyweightKg,
     latestPersonalRecordByExercise,
     latestNormalizedOneRMByExercise,
@@ -479,7 +480,7 @@ describe('loadLatestBodyweightKg', () => {
         expect(prisma.traineeMeasurement.findFirst).toHaveBeenCalledWith({
             where: { traineeId: 't', metric: 'weight' },
             orderBy: { measuredAt: 'desc' },
-            select: { value: true },
+            select: { value: true, measuredAt: true },
         })
     })
 
@@ -487,6 +488,24 @@ describe('loadLatestBodyweightKg', () => {
         vi.mocked(prisma.traineeMeasurement.findFirst).mockResolvedValue(null as never)
 
         expect(await loadLatestBodyweightKg('t')).toBeNull()
+    })
+})
+
+describe('loadLatestBodyweight', () => {
+    it('returns kg and measurement date', async () => {
+        const measuredAt = new Date('2026-10-15T00:00:00.000Z')
+        vi.mocked(prisma.traineeMeasurement.findFirst).mockResolvedValue({
+            value: 80.5,
+            measuredAt,
+        } as never)
+
+        expect(await loadLatestBodyweight('t')).toEqual({ kg: 80.5, measuredAt })
+    })
+
+    it('returns null without measurements', async () => {
+        vi.mocked(prisma.traineeMeasurement.findFirst).mockResolvedValue(null as never)
+
+        expect(await loadLatestBodyweight('t')).toBeNull()
     })
 })
 

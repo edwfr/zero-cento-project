@@ -2,7 +2,11 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
-import { latestNormalizedOneRMByExercise, loadLatestBodyweightKg } from '@/lib/calculations'
+import {
+    latestNormalizedOneRMByExercise,
+    latestPersonalRecordByExercise,
+    loadLatestBodyweight,
+} from '@/lib/calculations'
 import { handleApiError } from '@/lib/api-error-handler'
 
 /**
@@ -17,6 +21,9 @@ import { handleApiError } from '@/lib/api-error-handler'
  * - Program and personal records are fetched in parallel (Promise.all).
  * - Returns pre-computed `estimatedOneRMByExercise` (theoretical 1RM of the
  *   most recent PR of each exercise) ready for the client to consume directly.
+ * - Returns `latestRecordByExercise` (weight, reps, recordDate of the most recent
+ *   PR per exercise) and `latestBodyweightMeasuredAt` (date of the bodyweight used)
+ *   so the trainer UI can explain how a derived weight was computed.
  *
  * RBAC: trainer owner or admin only.
  */
@@ -148,11 +155,27 @@ export async function GET(
                 workout.workoutExercises.some((we) => we.exercise.isBodyweightLoaded)
             )
         )
-        const latestBodyweightKg = hasBodyweightLoaded
-            ? await loadLatestBodyweightKg(programMeta.traineeId)
+        const latestBodyweight = hasBodyweightLoaded
+            ? await loadLatestBodyweight(programMeta.traineeId)
             : null
+        const latestBodyweightKg = latestBodyweight?.kg ?? null
+        const latestBodyweightMeasuredAt = latestBodyweight?.measuredAt?.toISOString?.() ?? null
 
-        return apiSuccess({ program, estimatedOneRMByExercise, latestBodyweightKg })
+        // Most recent PR per exercise, without the joined exercise flag
+        const latestRecordByExercise = Object.fromEntries(
+            Object.entries(latestPersonalRecordByExercise(records)).map(([exerciseId, record]) => [
+                exerciseId,
+                { weight: record.weight, reps: record.reps, recordDate: record.recordDate },
+            ])
+        )
+
+        return apiSuccess({
+            program,
+            estimatedOneRMByExercise,
+            latestRecordByExercise,
+            latestBodyweightKg,
+            latestBodyweightMeasuredAt,
+        })
     } catch (error) {
         return handleApiError(error, {
             logMessage: 'Error fetching program for review',

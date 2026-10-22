@@ -273,7 +273,7 @@ bodyweight-load passano invariati.
 **Done when:** la risposta di `GET /api/programs/[id]/review` contiene
 `latestRecordByExercise` e `latestBodyweightMeasuredAt` e i campi esistenti sono invariati.
 
-- [ ] **Step 1: tests** — in `describe('GET /api/programs/[id]/review')`:
+- [x] **Step 1: tests** — in `describe('GET /api/programs/[id]/review')`:
   - due PR dello stesso esercizio (date diverse) → `latestRecordByExercise['ex-1']` =
     `{ weight, reps, recordDate }` del più recente
   - nessun PR → `latestRecordByExercise` `{}`
@@ -283,7 +283,7 @@ bodyweight-load passano invariati.
     (il test esistente lo verifica già: estendilo)
   - test unit in `calculations.test.ts`: `loadLatestBodyweight` → `{kg, measuredAt}` o null;
     `loadLatestBodyweightKg` invariato
-- [ ] **Step 2: implementation**
+- [x] **Step 2: implementation**
   - `calculations.ts`:
     ```ts
     export async function loadLatestBodyweight(
@@ -300,8 +300,8 @@ bodyweight-load passano invariati.
     Aggiorna il commento JSDoc di testa della route.
   - Mock esistenti di `findFirst` che restituiscono solo `{ value }`: `measuredAt`
     undefined → serializza come null (`measuredAt?.toISOString?.() ?? null` o simile).
-- [ ] **Step 3: run the test command and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit** — `feat(api): review returns latest pr and bodyweight date`
+- [x] **Step 3: run the test command and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit** — `feat(api): review returns latest pr and bodyweight date`
 
 ---
 
