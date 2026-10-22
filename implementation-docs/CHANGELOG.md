@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(programs): dettaglio calcolo del peso nella review (22/10/2026)
+- `trainer/programs/[id]/review/_content.tsx`: accanto al peso effettivo compare la (i) con `WeightExplanationPopover` per pesi derivati, range RPE e righe zavorrate; segnala quando il peso salvato differisce dal ricalcolo. Usa `latestRecordByExercise` e `latestBodyweightMeasuredAt` dell'API review e tiene la riga precedente per esercizio (range sempre null, come mostrato in review).
+
 ### feat(programs): dettaglio calcolo del peso nell'editor (22/10/2026)
 - `trainer/programs/[id]/edit/_content.tsx`: accanto al peso (editabile e sola lettura) compare la (i) con `WeightExplanationPopover` per `%1RM`, `-x%`, range RPE e righe zavorrate. Input costruito con gli stessi dati del peso mostrato (PR piu' recente, BW con data, riga precedente, valore salvato in sola lettura); aggiunto stato `bodyweightMeasuredAt`. Il wrapper dell'input a peso vuoto passa a `min-w-0 flex-1` per far entrare la (i).
 

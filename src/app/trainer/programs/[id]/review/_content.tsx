@@ -22,6 +22,8 @@ import {
 } from '@/lib/weight-rounding'
 import ExerciseTypeBadge from '@/components/ExerciseTypeBadge'
 import { formatTrainerLoadLabel, previousLoadBase } from '@/lib/bodyweight-load'
+import WeightExplanationPopover from '@/components/WeightExplanationPopover'
+import { explainWeight, type WeightValue } from '@/lib/weight-explanation'
 
 const PRIMARY_COLOR = 'rgb(var(--brand-primary))'
 type RestTimeValue = 's30' | 'm1' | 'm1s30' | 'm2' | 'm3' | 'm5'
@@ -242,6 +244,10 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
     const [program, setProgram] = useState<ProgramSummary | null>(null)
     const [estimatedOneRMByExercise, setEstimatedOneRMByExercise] = useState<Record<string, number>>({})
     const [latestBodyweightKg, setLatestBodyweightKg] = useState<number | null>(null)
+    const [latestRecordByExercise, setLatestRecordByExercise] = useState<
+        Record<string, { weight: number; reps: number; recordDate: string | null }>
+    >({})
+    const [latestBodyweightMeasuredAt, setLatestBodyweightMeasuredAt] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
     const [activeViewStep, setActiveViewStep] = useState<ViewWizardStep>('report')
 
@@ -270,6 +276,8 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                 setProgram(data.data.program)
                 setEstimatedOneRMByExercise(data.data.estimatedOneRMByExercise ?? {})
                 setLatestBodyweightKg(data.data.latestBodyweightKg ?? null)
+                setLatestRecordByExercise(data.data.latestRecordByExercise ?? {})
+                setLatestBodyweightMeasuredAt(data.data.latestBodyweightMeasuredAt ?? null)
             } catch (err: unknown) {
                 setError(err instanceof Error ? err.message : t('reviewProgram.errorLoading'))
             } finally {
@@ -718,6 +726,10 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                     <div className="space-y-4 p-4">
                                         {orderedWorkouts.map((workout, workoutIndex) => {
                                             const effectiveWeightByExerciseId: Record<string, number | null> = {}
+                                            const previousRowByExerciseId: Record<
+                                                string,
+                                                { rowNumber: number; ballastKg: number | null }
+                                            > = {}
 
                                             return (
                                                 <div
@@ -758,7 +770,7 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody className="divide-y divide-gray-100 bg-white">
-                                                                    {workout.workoutExercises.map((workoutExercise) => (
+                                                                    {workout.workoutExercises.map((workoutExercise, rowIndex) => (
                                                                         <tr key={workoutExercise.id}>
                                                                             <td className="px-3 py-3 align-top">
                                                                                 <div className="flex items-center gap-2">
@@ -827,6 +839,67 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                                                                         )
                                                                                         : null
 
+                                                                                    // Step-by-step weight calculation behind the (i) button (trainer only).
+                                                                                    const previousRow =
+                                                                                        previousRowByExerciseId[
+                                                                                            workoutExercise.exercise.id
+                                                                                        ]
+                                                                                    let savedForExplanation: WeightValue | null = null
+                                                                                    if (
+                                                                                        typeof workoutExercise.effectiveWeight ===
+                                                                                            'number' &&
+                                                                                        workoutExercise.weightType !== 'absolute'
+                                                                                    ) {
+                                                                                        savedForExplanation = {
+                                                                                            kind: 'kg',
+                                                                                            kg: workoutExercise.effectiveWeight,
+                                                                                        }
+                                                                                    } else if (
+                                                                                        typeof workoutExercise.rpeWeightMin ===
+                                                                                            'number' &&
+                                                                                        typeof workoutExercise.rpeWeightMax ===
+                                                                                            'number'
+                                                                                    ) {
+                                                                                        savedForExplanation = {
+                                                                                            kind: 'range',
+                                                                                            minKg: workoutExercise.rpeWeightMin,
+                                                                                            maxKg: workoutExercise.rpeWeightMax,
+                                                                                        }
+                                                                                    }
+                                                                                    const weightExplanation = explainWeight({
+                                                                                        weightType: workoutExercise.weightType,
+                                                                                        weight: workoutExercise.weight,
+                                                                                        reps: workoutExercise.reps,
+                                                                                        targetRpe: workoutExercise.targetRpe,
+                                                                                        isBodyweightLoaded,
+                                                                                        latestRecord:
+                                                                                            latestRecordByExercise[
+                                                                                                workoutExercise.exercise.id
+                                                                                            ] ?? null,
+                                                                                        bodyweight:
+                                                                                            latestBodyweightKg === null
+                                                                                                ? null
+                                                                                                : {
+                                                                                                    kg: latestBodyweightKg,
+                                                                                                    measuredAt:
+                                                                                                        latestBodyweightMeasuredAt,
+                                                                                                },
+                                                                                        previous: previousRow
+                                                                                            ? {
+                                                                                                rowNumber: previousRow.rowNumber,
+                                                                                                exerciseName:
+                                                                                                    workoutExercise.exercise.name,
+                                                                                                baseKg:
+                                                                                                    effectiveWeightByExerciseId[
+                                                                                                        workoutExercise.exercise.id
+                                                                                                    ] ?? null,
+                                                                                                ballastKg: previousRow.ballastKg,
+                                                                                                range: null,
+                                                                                            }
+                                                                                            : null,
+                                                                                        saved: savedForExplanation,
+                                                                                    })
+
                                                                                     if (
                                                                                         typeof effectiveWeightValue ===
                                                                                         'number'
@@ -840,6 +913,20 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                                                                                 'absolute',
                                                                                             bodyweightKg: latestBodyweightKg,
                                                                                         })
+                                                                                    }
+
+                                                                                    previousRowByExerciseId[
+                                                                                        workoutExercise.exercise.id
+                                                                                    ] = {
+                                                                                        rowNumber: rowIndex + 1,
+                                                                                        ballastKg:
+                                                                                            isBodyweightLoaded &&
+                                                                                            workoutExercise.weightType ===
+                                                                                                'absolute' &&
+                                                                                            typeof workoutExercise.weight ===
+                                                                                                'number'
+                                                                                                ? workoutExercise.weight
+                                                                                                : null,
                                                                                     }
 
                                                                                     const effectiveWeight =
@@ -872,6 +959,7 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                                                                                     }
                                                                                                 )}
                                                                                             </p>
+                                                                                            <div className="flex items-center gap-1">
                                                                                             <p className="text-xs font-semibold text-emerald-700">
                                                                                                 {bodyweightLoad !== null
                                                                                                     ? bodyweightLoad.label
@@ -889,6 +977,8 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                                                                                         }
                                                                                                     )}
                                                                                             </p>
+                                                                                            <WeightExplanationPopover explanation={weightExplanation} />
+                                                                                            </div>
                                                                                             {bodyweightLoad?.missingBodyweight && (
                                                                                                 <p className="text-xs text-state-warning">
                                                                                                     {t('common:common.bodyweightLoad.bodyweightNotRecorded')}

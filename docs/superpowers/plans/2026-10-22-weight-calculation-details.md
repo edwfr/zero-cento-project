@@ -481,9 +481,9 @@ un `absolute` normale, e il popover mostra gli stessi kg della cella.
 effettivo per pesi derivati, range RPE e righe zavorrate, e segnala quando il peso
 salvato differisce dal ricalcolo.
 
-- [ ] **Step 1: tests** — come Task 5: nessun test di pagina; verifica manuale in
+- [x] **Step 1: tests** — come Task 5: nessun test di pagina; verifica manuale in
       `npm run dev` (review di un programma con un `%1RM` salvato prima di un nuovo PR).
-- [ ] **Step 2: implementation**
+- [x] **Step 2: implementation**
   - Stato da API (riga ~271): `latestRecordByExercise: Record<string, { weight: number; reps: number; recordDate: string | null }>`
     (default `{}`) e `latestBodyweightMeasuredAt: string | null`.
   - Nel loop del workout (riga ~720), accanto a `effectiveWeightByExerciseId`, tieni
@@ -503,5 +503,5 @@ salvato differisce dal ricalcolo.
       `{kind:'kg'}`; altrimenti `rpeWeightMin/Max` numeri → `{kind:'range'}`; altrimenti null
   - Render: `<WeightExplanationPopover>` nel `<p>` verde della riga ~875 trasformato in
     `div.flex.items-center.gap-1` (testo + (i)); classi del testo invariate.
-- [ ] **Step 3: run the test command and `npm run type-check`; prova in `npm run dev`**
-- [ ] **Step 4: CHANGELOG entry and commit** — `feat(programs): weight explanation in review`
+- [x] **Step 3: run the test command and `npm run type-check`; prova in `npm run dev`**
+- [x] **Step 4: CHANGELOG entry and commit** — `feat(programs): weight explanation in review`
