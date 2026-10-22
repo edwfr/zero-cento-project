@@ -10,6 +10,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### fix(programs): fix della review sul dettaglio peso (22/10/2026)
+- `trainer/programs/[id]/review/_content.tsx`: dopo una riga senza kg (es. sola RPE) la base del fallback `-x%` torna `null`. Prima restava il peso di una riga ancora prima: la review mostrava un "Effettivo" che la (i) contraddiceva. Ora la review si comporta come l'editor.
+- `trainer/programs/[id]/edit/_content.tsx`: nell'editor editabile, se l'etichetta di carico mostra il range salvato perché non si può ricalcolare (es. PR cancellato su esercizio zavorrato), la (i) riceve quel range come `saved` e dice che è il valore salvato.
+- `WeightExplanationPopover`: area di tap della (i) portata a 24×24 px (`h-6 w-6 -m-1`, WCAG 2.5.8). L'icona e l'ingombro nel layout restano uguali.
+
 ### fix(programs): base del `-x%` nel dettaglio peso della review (22/10/2026)
 - `trainer/programs/[id]/review/_content.tsx`: la base del `-x%` nella (i) ora viene dalla riga precedente con dati attuali (nuovo `explanationLoadBase()` in `weight-explanation.ts`), non dal peso salvato dell'ultima riga con kg. Prima, dopo una riga a sola RPE, la base indicava il numero di riga sbagliato con il peso di una riga ancora prima; ora la review e l'editor in sola lettura spiegano la stessa riga allo stesso modo. Aggiunti test "stesso numero finale" per `-x%`, range scalato e zavorrato.
 

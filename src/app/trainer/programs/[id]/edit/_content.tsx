@@ -3594,6 +3594,13 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                                                                                             maxKg: persistedRpeWeightRange.max,
                                                                                         }
                                                                                     }
+                                                                                } else if (persistedRpeWeightRange && rangeForLoadLabel === persistedRpeWeightRange) {
+                                                                                    // The load label falls back to the saved range: say so in the explanation.
+                                                                                    savedForExplanation = {
+                                                                                        kind: 'range',
+                                                                                        minKg: persistedRpeWeightRange.min,
+                                                                                        maxKg: persistedRpeWeightRange.max,
+                                                                                    }
                                                                                 }
                                                                                 const explanationInput: WeightExplanationInput = {
                                                                                     weightType:

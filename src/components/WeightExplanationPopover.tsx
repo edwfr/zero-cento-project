@@ -229,7 +229,7 @@ export default function WeightExplanationPopover({ explanation, className = '' }
             <button
                 ref={buttonRef}
                 type="button"
-                className={`inline-flex h-4 w-4 items-center justify-center rounded text-gray-500 hover:text-brand-primary ${className}`.trim()}
+                className={`-m-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-gray-500 hover:text-brand-primary ${className}`.trim()}
                 aria-label={t('weightExplanation.buttonLabel')}
                 aria-expanded={open}
                 aria-haspopup="dialog"

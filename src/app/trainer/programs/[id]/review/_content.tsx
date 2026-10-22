@@ -917,6 +917,11 @@ export default function ReviewProgramContent({ viewOnly = false }: ReviewProgram
                                                                                                 'absolute',
                                                                                             bodyweightKg: latestBodyweightKg,
                                                                                         })
+                                                                                    } else {
+                                                                                        // No kg on this row: later percentage_previous rows have no base, as in the editor.
+                                                                                        effectiveWeightByExerciseId[
+                                                                                            workoutExercise.exercise.id
+                                                                                        ] = null
                                                                                     }
 
                                                                                     previousRowByExerciseId[
