@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(i18n): chiavi per la spiegazione del calcolo del peso (22/10/2026)
+- Aggiunto l'oggetto `weightExplanation` (con `reasons`) in `public/locales/{it,en}/trainer.json`: etichette del popover (i) che mostra i passaggi del calcolo del peso per il trainer. BOM UTF-8 conservato.
+
 ### feat(api): review restituisce ultimo PR e data del BW (22/10/2026)
 - `GET /api/programs/[id]/review` aggiunge `latestRecordByExercise` (peso, reps, data del PR più recente per esercizio) e `latestBodyweightMeasuredAt` (data del BW usato), necessari al dettaglio del calcolo del peso del trainer. Nuovo `loadLatestBodyweight()` in `calculations.ts`; `loadLatestBodyweightKg` ne deriva ed è invariato per i chiamanti.
 

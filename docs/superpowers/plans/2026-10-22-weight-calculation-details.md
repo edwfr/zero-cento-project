@@ -314,8 +314,8 @@ bodyweight-load passano invariati.
 **Done when:** entrambi i file sono JSON validi, iniziano ancora con `efbb bf` e hanno
 l'oggetto `weightExplanation` top-level con tutte le chiavi sotto.
 
-- [ ] **Step 1: tests** — il test command sopra (parse + BOM).
-- [ ] **Step 2: implementation** — aggiungi l'oggetto top-level `weightExplanation`
+- [x] **Step 1: tests** — il test command sopra (parse + BOM).
+- [x] **Step 2: implementation** — aggiungi l'oggetto top-level `weightExplanation`
       (accanto a `editProgram` / `reviewProgram`). Edita a mano, conserva BOM e indent.
 
   | key | it | en |
@@ -354,8 +354,8 @@ l'oggetto `weightExplanation` top-level con tutte le chiavi sotto.
   | `reasons.previousWithoutBase` | La riga precedente non ha un peso in kg | The previous row has no weight in kg |
   | `reasons.repsOutOfChart` | Reps o RPE fuori tabella: nessun range proposto | Reps or RPE outside the chart: no range proposed |
 
-- [ ] **Step 3: run the test command**
-- [ ] **Step 4: CHANGELOG entry and commit** — `feat(i18n): add weight explanation keys`
+- [x] **Step 3: run the test command**
+- [x] **Step 4: CHANGELOG entry and commit** — `feat(i18n): add weight explanation keys`
 
 ---
 

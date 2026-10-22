@@ -1144,5 +1144,42 @@
         "moveDown": "Move down",
         "editBtn": "Edit",
         "deleteBtn": "Delete"
+    },
+    "weightExplanation": {
+        "buttonLabel": "How this weight is calculated",
+        "title": "Weight calculation",
+        "latestRecord": "Latest PR: {{weight}} kg × {{reps}} ({{date}})",
+        "latestRecordTotal": "Latest PR: {{weight}} kg × {{reps}} (total load) ({{date}})",
+        "oneRmTuchscherer": "Estimated 1RM: {{weight}} ÷ {{percent}}% (Tuchscherer, {{reps}} @ RPE 10) = {{raw}} → {{oneRm}} kg",
+        "oneRmBodyweightLoaded": "Estimated 1RM: {{weight}} ÷ {{percent}}% (pull-up/dip chart, {{reps}} @ RPE 10) = {{raw}} → {{oneRm}} kg",
+        "oneRmEpley": "Estimated 1RM: {{weight}} × (1 + {{reps}}/30) (Epley, reps outside the chart) = {{raw}} → {{oneRm}} kg",
+        "percentOfOneRm": "{{percent}}% of {{oneRm}} = {{raw}} → rounded {{result}} kg",
+        "percentOfOneRmTotal": "{{percent}}% of {{oneRm}} = {{raw}} → rounded {{result}} kg total",
+        "previousBase": "Base: row {{row}} ({{exercise}}) = {{base}} kg",
+        "previousBaseBallast": "Base: row {{row}} ({{exercise}}) = {{ballast}} kg added + bodyweight = {{base}} kg",
+        "percentOfPrevious": "{{base}} × (1 − {{percent}}%) = {{raw}} → rounded {{result}} kg",
+        "previousRange": "Base: row {{row}} ({{exercise}}) = range {{min}} – {{max}} kg",
+        "percentOfPreviousRange": "{{min}} – {{max}} × (1 − {{percent}}%) → {{resultMin}} – {{resultMax}} kg",
+        "rpeIntensityTuchscherer": "{{reps}} @ RPE {{rpe}} = {{percent}}% (Tuchscherer) → {{center}} kg",
+        "rpeIntensityBodyweightLoaded": "{{reps}} @ RPE {{rpe}} = {{percent}}% (pull-up/dip chart) → {{center}} kg",
+        "rpeRange": "Range ±{{tolerance}}%: {{rawMin}} – {{rawMax}} → {{min}} – {{max}} kg",
+        "absoluteBallast": "{{ballast}} kg added + bodyweight {{bodyweight}} kg ({{date}}) = {{total}} kg total",
+        "absoluteBallastNoBodyweight": "{{ballast}} kg added. Bodyweight not recorded: total unavailable",
+        "absoluteBodyweightOnly": "Bodyweight only, no added load",
+        "bodyweightBallast": "Bodyweight: {{bodyweight}} kg ({{date}}) → {{ballast}} kg added",
+        "bodyweightBallastRange": "Bodyweight: {{bodyweight}} kg ({{date}}) → {{min}} – {{max}} kg added",
+        "bodyweightOnly": "Bodyweight: {{bodyweight}} kg ({{date}}) → bodyweight only, no added load",
+        "missingBodyweight": "Bodyweight not recorded: added load unavailable",
+        "savedDiffers": "Saved weight: {{saved}}. With current data it would be {{current}}.",
+        "savedDiffersNoCurrent": "Saved weight: {{saved}}. It cannot be calculated with current data.",
+        "valueKg": "{{weight}} kg",
+        "valueRange": "{{min}} – {{max}} kg",
+        "noDate": "date not set",
+        "reasons": {
+            "noRecord": "No PR recorded for this exercise",
+            "noPreviousRow": "No previous row of the same exercise",
+            "previousWithoutBase": "The previous row has no weight in kg",
+            "repsOutOfChart": "Reps or RPE outside the chart: no range proposed"
+        }
     }
 }

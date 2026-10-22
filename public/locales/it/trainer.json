@@ -1144,5 +1144,42 @@
         "moveDown": "Sposta giù",
         "editBtn": "Modifica",
         "deleteBtn": "Elimina"
+    },
+    "weightExplanation": {
+        "buttonLabel": "Come è calcolato il peso",
+        "title": "Calcolo del peso",
+        "latestRecord": "PR più recente: {{weight}} kg × {{reps}} ({{date}})",
+        "latestRecordTotal": "PR più recente: {{weight}} kg × {{reps}} (carico totale) ({{date}})",
+        "oneRmTuchscherer": "1RM teorico: {{weight}} ÷ {{percent}}% (Tuchscherer, {{reps}} @ RPE 10) = {{raw}} → {{oneRm}} kg",
+        "oneRmBodyweightLoaded": "1RM teorico: {{weight}} ÷ {{percent}}% (tabella trazioni/dip, {{reps}} @ RPE 10) = {{raw}} → {{oneRm}} kg",
+        "oneRmEpley": "1RM teorico: {{weight}} × (1 + {{reps}}/30) (Epley, reps fuori tabella) = {{raw}} → {{oneRm}} kg",
+        "percentOfOneRm": "{{percent}}% di {{oneRm}} = {{raw}} → arrotondato {{result}} kg",
+        "percentOfOneRmTotal": "{{percent}}% di {{oneRm}} = {{raw}} → arrotondato {{result}} kg totali",
+        "previousBase": "Base: riga {{row}} ({{exercise}}) = {{base}} kg",
+        "previousBaseBallast": "Base: riga {{row}} ({{exercise}}) = zavorra {{ballast}} kg + peso corporeo = {{base}} kg",
+        "percentOfPrevious": "{{base}} × (1 − {{percent}}%) = {{raw}} → arrotondato {{result}} kg",
+        "previousRange": "Base: riga {{row}} ({{exercise}}) = range {{min}} – {{max}} kg",
+        "percentOfPreviousRange": "{{min}} – {{max}} × (1 − {{percent}}%) → {{resultMin}} – {{resultMax}} kg",
+        "rpeIntensityTuchscherer": "{{reps}} @ RPE {{rpe}} = {{percent}}% (Tuchscherer) → {{center}} kg",
+        "rpeIntensityBodyweightLoaded": "{{reps}} @ RPE {{rpe}} = {{percent}}% (tabella trazioni/dip) → {{center}} kg",
+        "rpeRange": "Range ±{{tolerance}}%: {{rawMin}} – {{rawMax}} → {{min}} – {{max}} kg",
+        "absoluteBallast": "Zavorra {{ballast}} kg + peso corporeo {{bodyweight}} kg ({{date}}) = {{total}} kg totali",
+        "absoluteBallastNoBodyweight": "Zavorra {{ballast}} kg. Peso corporeo non registrato: totale non calcolabile",
+        "absoluteBodyweightOnly": "Corpo libero, nessuna zavorra",
+        "bodyweightBallast": "Peso corporeo: {{bodyweight}} kg ({{date}}) → zavorra {{ballast}} kg",
+        "bodyweightBallastRange": "Peso corporeo: {{bodyweight}} kg ({{date}}) → zavorra {{min}} – {{max}} kg",
+        "bodyweightOnly": "Peso corporeo: {{bodyweight}} kg ({{date}}) → corpo libero, nessuna zavorra",
+        "missingBodyweight": "Peso corporeo non registrato: zavorra non calcolabile",
+        "savedDiffers": "Peso salvato: {{saved}}. Con i dati attuali sarebbe {{current}}.",
+        "savedDiffersNoCurrent": "Peso salvato: {{saved}}. Con i dati attuali non è calcolabile.",
+        "valueKg": "{{weight}} kg",
+        "valueRange": "{{min}} – {{max}} kg",
+        "noDate": "data non indicata",
+        "reasons": {
+            "noRecord": "Nessun PR registrato per questo esercizio",
+            "noPreviousRow": "Nessuna riga precedente dello stesso esercizio",
+            "previousWithoutBase": "La riga precedente non ha un peso in kg",
+            "repsOutOfChart": "Reps o RPE fuori tabella: nessun range proposto"
+        }
     }
 }
