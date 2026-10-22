@@ -369,7 +369,7 @@ l'oggetto `weightExplanation` top-level con tutte le chiavi sotto.
 **Done when:** il bottone (i) apre un popover con una riga per step, si chiude con Esc,
 clic fuori, tap fuori e secondo clic, e con `explanation === null` non viene renderizzato nulla.
 
-- [ ] **Step 1: tests** — mock i18n come in `tests/unit/UserStatusBadge.test.tsx`.
+- [x] **Step 1: tests** — mock i18n come in `tests/unit/UserStatusBadge.test.tsx`.
   - `explanation={null}` → `container` vuoto, nessun bottone
   - explanation `%1RM` (costruita con `explainWeight` del Task 1) → bottone con
     `aria-label` = chiave `weightExplanation.buttonLabel`, `aria-expanded="false"`
@@ -384,7 +384,7 @@ clic fuori, tap fuori e secondo clic, e con `explanation === null` non viene ren
   - `recordDate` null → interpolazione `date` = chiave `weightExplanation.noDate`
   - con lingua `it` i numeri decimali hanno la virgola (`104,25`) — se il mock di
     i18n non lo consente, testa l'helper di formattazione esportato dal componente
-- [ ] **Step 2: implementation**
+- [x] **Step 2: implementation**
   ```ts
   export interface WeightExplanationPopoverProps {
       explanation: WeightExplanation | null
@@ -413,8 +413,8 @@ clic fuori, tap fuori e secondo clic, e con `explanation === null` non viene ren
     `absoluteBodyweightOnly`; `bodyweightKg` null → `absoluteBallastNoBodyweight`.
     `WeightValue` → `valueKg` / `valueRange`. `missingReason` → riga `reasons.*` in coda.
   - Export default + named in `src/components/index.ts` (CRLF) come gli altri componenti.
-- [ ] **Step 3: run the test command and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit** — `feat(programs): add weight explanation popover`
+- [x] **Step 3: run the test command and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit** — `feat(programs): add weight explanation popover`
 
 ---
 

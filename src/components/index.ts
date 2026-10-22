@@ -122,3 +122,4 @@ export type {
 } from './ProgramReportSection'
 export { default as ProgramChartsDrawer } from './ProgramChartsDrawer'
 export { default as RpeTablesDrawer } from './RpeTablesDrawer'
+export { default as WeightExplanationPopover } from './WeightExplanationPopover'

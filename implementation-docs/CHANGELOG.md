@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(programs): popover del calcolo del peso (22/10/2026)
+- Nuovo `WeightExplanationPopover`: bottone (i) che al click/tap apre un popover a portale con i passaggi di `explainWeight()` tradotti (numeri `it-IT`/`en-GB`, date GG/MM/AAAA); si chiude con Esc, clic/tap fuori o secondo clic. Non renderizza nulla senza spiegazione. Esportato da `src/components/index.ts`.
+
 ### feat(i18n): chiavi per la spiegazione del calcolo del peso (22/10/2026)
 - Aggiunto l'oggetto `weightExplanation` (con `reasons`) in `public/locales/{it,en}/trainer.json`: etichette del popover (i) che mostra i passaggi del calcolo del peso per il trainer. BOM UTF-8 conservato.
 
