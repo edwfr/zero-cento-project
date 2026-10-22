@@ -470,7 +470,7 @@ export function intensityFromRpeChart(
     return percentage
 }
 
-const RPE_WEIGHT_RANGE_TOLERANCE = 0.02
+export const RPE_WEIGHT_RANGE_TOLERANCE = 0.02
 
 export interface RpeWeightRange {
     min: number

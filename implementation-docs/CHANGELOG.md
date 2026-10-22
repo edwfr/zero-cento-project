@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(weights): spiegazione del calcolo del peso (22/10/2026)
+- Nuovo `src/lib/weight-explanation.ts`: `explainWeight()` pura restituisce gli step strutturati (PR, 1RM, % o RPE, arrotondamento, zavorra, peso salvato diverso) o il motivo per cui il peso manca. Ogni numero viene dalle funzioni di calcolo esistenti, così dettaglio e peso mostrato non divergono. Esportati `RPE_WEIGHT_RANGE_TOLERANCE` (`calculations.ts`) e `ballastFromRange` (`bodyweight-load.ts`). Base della (i) trainer nei task successivi.
+
 ### fix(trainee): range RPE compatto nel box KG (22/10/2026)
 - Workout trainee: il box KG della card principale mostra il range proposto da RPE come `x/y` (es. `104/108.5`) invece di `104–108.5 kg (RPE 9.5)`. L'RPE ha già il suo box a destra e il testo lungo andava a capo su 4 righe. Rimossa la chiave i18n `workouts.rpeWeightRange` non più usata; sotto il range compare in grigio `range` (nuova chiave `workouts.rpeWeightRangeHint`).
 - Stesso box per gli esercizi zavorrati: zavorra fissa come numero grande (`17.5`), range come `52/57.5`, con sotto la dicitura `zavorra` (nuova chiave `common.bodyweightLoad.ballastHint`) al posto di `zavorra 52–57.5 kg`, come avviene per `n% 1RM`. `corpo libero` / `chiedi al trainer` invariati.

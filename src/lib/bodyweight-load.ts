@@ -36,7 +36,7 @@ export function ballastFromTotal(totalKg: number, bodyweightKg: number | null): 
     return { kind: 'ballast', kg }
 }
 
-function ballastFromRange(
+export function ballastFromRange(
     minTotal: number,
     maxTotal: number,
     bodyweightKg: number | null
