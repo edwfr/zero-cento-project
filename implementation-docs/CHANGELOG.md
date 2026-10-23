@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### chore(skills): sentry-triage senza sezione quota (23/10/2026)
+- `.claude/skills/sentry-triage/SKILL.md`: rimossi step 5 e sezione "Quota" dell'output. Il Sentry MCP non espone le org stats (`stats_v2`), quindi la quota mensile non è leggibile e la sezione restituiva sempre "non disponibile".
+
 ### fix(records): massimale di oggi rifiutato dopo mezzanotte + errore nascosto dalla popup (22/10/2026)
 - `schemas/personal-record.ts`: la data massimale arriva come `YYYY-MM-DD` (mezzanotte UTC); tra le 00:00 e le 02:00 italiane il server, ancora sul giorno UTC precedente, la considerava futura. Ora il limite e' fine del giorno UTC successivo (`latestRecordDay()`), confronto per giorno e non per istante. Nuovo test `tests/unit/schemas/personal-record.test.ts`.
 - `trainer/trainees/[id]/records/_content.tsx`: gli errori di salvataggio del massimale hanno uno stato proprio (`modalError`) e compaiono dentro la popup sopra i pulsanti; prima finivano nel banner della pagina, coperto dalla popup.
