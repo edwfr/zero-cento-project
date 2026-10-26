@@ -106,6 +106,7 @@
             "daysLeft": "In {{count}} days",
             "daysLeft_one": "Tomorrow",
             "daysLeft_zero": "Today",
+            "finished": "Finished",
             "lastWeekProgress": "Last week"
         },
         "drafts": {

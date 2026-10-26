@@ -10,6 +10,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### fix(trainer-dashboard): programmi terminati restano in "Programmi in chiusura" (26/10/2026)
+- `lib/trainer-dashboard/program-ending.ts`: il box considerava solo programmi `active`. Quando l'atleta completa l'ultimo allenamento il programma passa in automatico a `completed` e spariva dal box proprio quando il trainer deve preparare il successivo (segnalazione di un trainer: atleta con programma chiuso il 23/10 non visibile in home). Ora include anche i programmi `completed` negli ultimi 7 giorni (`completedAt`), solo l'ultimo per atleta e solo se non c'è già un programma successivo in bozza o attivo; un programma completato non conta come successore. Nuovo campo `finished`, ordinati per primi.
+- `ProgramEndingWidget`: per i programmi terminati mostra "Terminato" invece del conto alla rovescia. Nuova chiave `trainerDashboard.programEnding.finished` in it/en.
+- Test: `tests/unit/trainer-dashboard/program-ending.test.ts`, `widgets-phase1.test.tsx`.
+
 ### chore(skills): sentry-triage senza sezione quota (23/10/2026)
 - `.claude/skills/sentry-triage/SKILL.md`: rimossi step 5 e sezione "Quota" dell'output. Il Sentry MCP non espone le org stats (`stats_v2`), quindi la quota mensile non è leggibile e la sezione restituiva sempre "non disponibile".
 

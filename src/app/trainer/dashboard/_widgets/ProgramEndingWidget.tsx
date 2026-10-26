@@ -55,9 +55,15 @@ export default async function ProgramEndingWidget({ ctx }: { ctx: WidgetContext 
                                 <div className="min-w-0 flex-1">
                                     <div className="flex items-baseline justify-between gap-2">
                                         <p className="truncate font-medium text-gray-900">{item.traineeName}</p>
-                                        <span className="shrink-0 text-xs font-medium text-blue-600">
-                                            {t('trainerDashboard.programEnding.daysLeft', { count: item.days })}
-                                        </span>
+                                        {item.finished ? (
+                                            <span className="shrink-0 text-xs font-medium text-amber-600">
+                                                {t('trainerDashboard.programEnding.finished')}
+                                            </span>
+                                        ) : (
+                                            <span className="shrink-0 text-xs font-medium text-blue-600">
+                                                {t('trainerDashboard.programEnding.daysLeft', { count: item.days })}
+                                            </span>
+                                        )}
                                     </div>
                                     <p className="truncate text-sm text-gray-600" title={item.programTitle}>
                                         {item.programTitle}

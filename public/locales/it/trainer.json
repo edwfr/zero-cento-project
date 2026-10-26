@@ -33,6 +33,7 @@
             "daysLeft": "Tra {{count}} giorni",
             "daysLeft_one": "Domani",
             "daysLeft_zero": "Oggi",
+            "finished": "Terminato",
             "lastWeekProgress": "Ultima settimana"
         },
         "drafts": {

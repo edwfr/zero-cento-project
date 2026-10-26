@@ -94,8 +94,8 @@ describe('HeaderKpis', () => {
 describe('ProgramEndingWidget', () => {
     it('lists each ending program with its countdown, last-week progress and link, and shows the count', async () => {
         vi.mocked(getEndingPrograms).mockResolvedValue([
-            { programId: 'p1', traineeId: 't1', traineeName: 'Anna Rossi', programTitle: 'Forza', days: 0, completed: 2, planned: 4 },
-            { programId: 'p2', traineeId: 't2', traineeName: 'Luca Bianchi', programTitle: 'Ipertrofia', days: 3, completed: 0, planned: 0 },
+            { programId: 'p1', traineeId: 't1', traineeName: 'Anna Rossi', programTitle: 'Forza', days: 0, finished: false, completed: 2, planned: 4 },
+            { programId: 'p2', traineeId: 't2', traineeName: 'Luca Bianchi', programTitle: 'Ipertrofia', days: 3, finished: false, completed: 0, planned: 0 },
         ])
 
         await renderAsync(ProgramEndingWidget({ ctx: makeCtx() }))
@@ -111,6 +111,19 @@ describe('ProgramEndingWidget', () => {
         expect(links[1]).toHaveTextContent('Luca BianchiTra 3 giorniIpertrofia')
         // no planned workouts in the last week: no progress bar
         expect(within(links[1]).queryByRole('progressbar')).not.toBeInTheDocument()
+    })
+
+    it('labels a program the trainee already finished as finished instead of counting down', async () => {
+        vi.mocked(getEndingPrograms).mockResolvedValue([
+            { programId: 'p1', traineeId: 't1', traineeName: 'Anna Rossi', programTitle: 'Forza', days: 0, finished: true, completed: 4, planned: 4 },
+        ])
+
+        await renderAsync(ProgramEndingWidget({ ctx: makeCtx() }))
+
+        const link = within(screen.getByRole('region', { name: 'Programmi in chiusura' })).getByRole('link')
+        expect(link).toHaveTextContent('Anna RossiTerminatoForza')
+        expect(link).not.toHaveTextContent('Oggi')
+        expect(link).toHaveTextContent('100%')
     })
 
     it('shows the empty state when no program is ending', async () => {

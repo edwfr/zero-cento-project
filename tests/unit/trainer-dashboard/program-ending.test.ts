@@ -6,16 +6,18 @@ import { NOW, TRAINEES, at, day, makeTrainee } from './fixtures'
 const program = (
     id: string,
     traineeId: string,
-    status: 'draft' | 'active',
+    status: 'draft' | 'active' | 'completed',
     startDate: Date | null,
     durationWeeks: number,
     lastWeek: boolean[][] | null = null,
+    completedAt: Date | null = null,
 ) => ({
     id,
     title: `Prog ${id}`,
     status,
     startDate,
     durationWeeks,
+    completedAt,
     traineeId,
     trainee: { firstName: traineeId.toUpperCase(), lastName: 'X' },
     weeks: lastWeek
@@ -28,19 +30,28 @@ function arrange(programs: ReturnType<typeof program>[]) {
 }
 
 describe('getEndingPrograms', () => {
-    it('queries open programs of active trainees with the workouts of their last week', async () => {
+    it('queries open programs and programs completed in the last 7 days, with the workouts of their last week', async () => {
         arrange([])
 
         await expect(getEndingPrograms('trainer-1', TRAINEES, NOW)).resolves.toEqual([])
 
         expect(prismaMock.trainingProgram.findMany).toHaveBeenCalledWith({
-            where: { trainerId: 'trainer-1', status: { in: ['draft', 'active'] }, traineeId: { in: ['t1', 't2'] } },
+            where: {
+                trainerId: 'trainer-1',
+                traineeId: { in: ['t1', 't2'] },
+                OR: [
+                    { status: { in: ['draft', 'active'] } },
+                    // NOW is 3 Oct: the window opens at midnight UTC of 26 Sep
+                    { status: 'completed', completedAt: { gte: day('2026-09-26') } },
+                ],
+            },
             select: {
                 id: true,
                 title: true,
                 status: true,
                 startDate: true,
                 durationWeeks: true,
+                completedAt: true,
                 traineeId: true,
                 trainee: { select: { firstName: true, lastName: true } },
                 weeks: {
@@ -68,8 +79,8 @@ describe('getEndingPrograms', () => {
         ])
 
         await expect(getEndingPrograms('trainer-1', TRAINEES, NOW)).resolves.toEqual([
-            { programId: 'p2', traineeId: 't2', traineeName: 'T2 X', programTitle: 'Prog p2', days: 0, completed: 0, planned: 0 },
-            { programId: 'p1', traineeId: 't1', traineeName: 'T1 X', programTitle: 'Prog p1', days: 2, completed: 0, planned: 0 },
+            { programId: 'p2', traineeId: 't2', traineeName: 'T2 X', programTitle: 'Prog p2', days: 0, finished: false, completed: 0, planned: 0 },
+            { programId: 'p1', traineeId: 't1', traineeName: 'T1 X', programTitle: 'Prog p1', days: 2, finished: false, completed: 0, planned: 0 },
         ])
     })
 
@@ -104,6 +115,60 @@ describe('getEndingPrograms', () => {
         const items = await getEndingPrograms('trainer-1', TRAINEES, NOW)
 
         expect(items.map((item) => item.traineeName)).toEqual(['BOB X', 'AMY X', 'ZED X'])
+    })
+
+    describe('programs the trainee already finished', () => {
+        // 6 weeks from 24 Aug: last training day Sun 4 Oct, but every workout was done on Thu 1 Oct
+        const finished = (id: string, traineeId: string, completedAt = at('2026-10-01T16:50:00')) =>
+            program(id, traineeId, 'completed', day('2026-08-24'), 6, [[true, true], [true]], completedAt)
+
+        it('stays listed as finished after auto-completion when no next program exists', async () => {
+            arrange([finished('p1', 't1')])
+
+            await expect(getEndingPrograms('trainer-1', TRAINEES, NOW)).resolves.toEqual([
+                { programId: 'p1', traineeId: 't1', traineeName: 'T1 X', programTitle: 'Prog p1', days: 0, finished: true, completed: 2, planned: 2 },
+            ])
+        })
+
+        it('disappears once the trainer prepares the next program, draft or active', async () => {
+            arrange([
+                finished('p1', 't1'),
+                program('p2', 't1', 'draft', null, 4),
+                finished('p3', 't2'),
+                program('p4', 't2', 'active', day('2026-10-05'), 6),
+            ])
+
+            await expect(getEndingPrograms('trainer-1', TRAINEES, NOW)).resolves.toEqual([])
+        })
+
+        it('does not count as the successor of an active program that is ending', async () => {
+            arrange([finished('p1', 't1', at('2026-09-27T10:00:00')), program('p2', 't1', 'active', day('2026-09-08'), 4)])
+
+            const items = await getEndingPrograms('trainer-1', TRAINEES, NOW)
+
+            // p2 (ends in 2 days) supersedes p1, and p1 does not hide p2
+            expect(items.map((item) => item.programId)).toEqual(['p2'])
+        })
+
+        it('lists only the latest completed program of a trainee', async () => {
+            arrange([finished('p1', 't1', at('2026-09-27T10:00:00')), finished('p2', 't1', at('2026-10-02T08:00:00'))])
+
+            const items = await getEndingPrograms('trainer-1', TRAINEES, NOW)
+
+            expect(items.map((item) => item.programId)).toEqual(['p2'])
+        })
+
+        it('comes before programs still running, then by days left', async () => {
+            arrange([
+                program('p1', 'amy', 'active', day('2026-09-06'), 4),
+                finished('p2', 'zed'),
+                program('p3', 'bob', 'active', day('2026-09-08'), 4),
+            ])
+
+            const items = await getEndingPrograms('trainer-1', TRAINEES, NOW)
+
+            expect(items.map((item) => `${item.programId}:${item.finished}:${item.days}`)).toEqual(['p2:true:0', 'p1:false:0', 'p3:false:2'])
+        })
     })
 
     it('does not query without active trainees', async () => {
