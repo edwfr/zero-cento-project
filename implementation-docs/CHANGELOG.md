@@ -10,6 +10,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### fix(trainee): errori di rete dell'autosave serie su iOS (26/10/2026)
+- `lib/sentry-filters.ts`: il filtro scartava solo `Failed to fetch` (Chrome) sulla pagina allenamento. Safari lancia lo stesso errore di rete come `Load failed` (Firefox: `NetworkError when attempting to fetch resource.`) e finiva su Sentry (JAVASCRIPT-NEXTJS-S, iPhone di un atleta). Ora il filtro copre i tre testi, sempre solo su `/trainee/workouts/:id`.
+- `trainee/workouts/[id]/_content.tsx`: se il salvataggio della serie fallisce per rete (`TypeError` senza status HTTP) il toast mostra `workouts.errorFeedbackNetwork` invece del testo grezzo del browser ("Load failed"). Nuova chiave in it/en.
+- Test: `tests/unit/lib/sentry-filters.test.ts`, `tests/unit/trainee-workout-focus.test.tsx`.
+
 ### fix(trainer-dashboard): programmi terminati restano in "Programmi in chiusura" (26/10/2026)
 - `lib/trainer-dashboard/program-ending.ts`: il box considerava solo programmi `active`. Quando l'atleta completa l'ultimo allenamento il programma passa in automatico a `completed` e spariva dal box proprio quando il trainer deve preparare il successivo (segnalazione di un trainer: atleta con programma chiuso il 23/10 non visibile in home). Ora include anche i programmi `completed` negli ultimi 7 giorni (`completedAt`), solo l'ultimo per atleta e solo se non c'è già un programma successivo in bozza o attivo; un programma completato non conta come successore. Nuovo campo `finished`, ordinati per primi.
 - `ProgramEndingWidget`: per i programmi terminati mostra "Terminato" invece del conto alla rovescia. Nuova chiave `trainerDashboard.programEnding.finished` in it/en.

@@ -79,6 +79,19 @@ describe('shouldDropClientEvent', () => {
         expect(shouldDropClientEvent(event)).toBe(true)
     })
 
+    it.each(['Load failed', 'NetworkError when attempting to fetch resource.'])(
+        'drops the WebKit/Firefox network failure "%s" on the trainee workout page',
+        (value) => {
+            const event = { ...eventWith('TypeError', value), transaction: '/trainee/workouts/:id' } as ErrorEvent
+            expect(shouldDropClientEvent(event)).toBe(true)
+        }
+    )
+
+    it('keeps "Load failed" on other pages', () => {
+        const event = { ...eventWith('TypeError', 'Load failed'), transaction: '/trainer/programs/:id/edit' } as ErrorEvent
+        expect(shouldDropClientEvent(event)).toBe(false)
+    })
+
     it('keeps "Failed to fetch" on other pages', () => {
         const event = { ...eventWith('TypeError', 'Failed to fetch'), transaction: '/trainer/programs/:id/edit' } as ErrorEvent
         expect(shouldDropClientEvent(event)).toBe(false)

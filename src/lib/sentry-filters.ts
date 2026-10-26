@@ -4,6 +4,8 @@ const NOISE_TYPES = new Set(['AbortError', 'ChunkLoadError'])
 const CHUNK_LOAD_MESSAGE = /Loading chunk [\w-]+ failed/i
 const AUTH_LOCK_STOLEN_MESSAGE = /Lock ".*" was released because another request stole it/i
 const AUTOSAVE_TRANSACTION = '/trainee/workouts/:id'
+// fetch() network failure as worded by Chromium, WebKit and Firefox
+const NETWORK_FAILURE_MESSAGE = /^(Failed to fetch|Load failed|NetworkError when attempting to fetch resource\.?)$/
 const SW_REGISTER_FRAME = /ServiceWorkerContainer\.register|@serwist\/window/
 const SW_SCRIPT_LOAD_FAILED = /^Script .*\/sw\.js load failed$/
 const EXTENSION_FRAME =/^(chrome|moz|safari(-web)?)-extension:\/\//
@@ -25,7 +27,8 @@ export function shouldDropClientEvent(event: ErrorEvent): boolean {
     // Offline/flaky mobile network on the workout page (autosave retries); scoped so other pages still report
     if (
         exception.type === 'TypeError' &&
-        exception.value === 'Failed to fetch' &&
+        exception.value &&
+        NETWORK_FAILURE_MESSAGE.test(exception.value) &&
         event.transaction === AUTOSAVE_TRANSACTION
     ) {
         return true

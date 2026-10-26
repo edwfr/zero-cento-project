@@ -251,6 +251,7 @@
         "errorNotFound": "Workout not found",
         "feedbackSuccess": "Feedback sent successfully!",
         "errorFeedback": "Error sending feedback",
+        "errorFeedbackNetwork": "No connection: set not saved. Try again.",
         "errorRepsRequired": "Enter the reps performed before marking the set as done",
         "markExerciseComplete": "Mark as done",
         "markExerciseIncomplete": "Mark as not done",

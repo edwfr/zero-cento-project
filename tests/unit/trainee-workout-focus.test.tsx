@@ -492,6 +492,25 @@ describe('Trainee workout focus mode', () => {
             expect(Sentry.captureException).not.toHaveBeenCalled()
         })
 
+        it('toasts a localized message when the network drops, not the browser wording', async () => {
+            const baseFetch = global.fetch
+            global.fetch = vi.fn(async (url: string, init?: RequestInit) => {
+                if (typeof url === 'string' && url.endsWith('/feedback') && init?.method === 'PATCH') {
+                    throw new TypeError('Load failed')
+                }
+                return baseFetch(url, init)
+            }) as unknown as typeof fetch
+            const user = userEvent.setup()
+            await renderContent()
+
+            await user.click(screen.getAllByRole('button', { name: /workouts\.markSetDone/i })[0])
+
+            await waitFor(() => {
+                expect(showToast).toHaveBeenCalledWith('workouts.errorFeedbackNetwork', 'error')
+            })
+            expect(showToast).not.toHaveBeenCalledWith('Load failed', 'error')
+        })
+
         it('reports a 500 to Sentry', async () => {
             mockAutosaveResponse(500, { error: { code: 'INTERNAL_ERROR', message: 'boom' } })
             const user = userEvent.setup()

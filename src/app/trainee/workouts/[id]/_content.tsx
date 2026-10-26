@@ -552,12 +552,17 @@ export default function WorkoutDetailContent() {
                     },
                 })
             }
+            // fetch() rejects with a TypeError and no HTTP status when the network drops:
+            // its message is browser wording ("Load failed", "Failed to fetch"), not for the user.
+            const networkFailure = err instanceof TypeError && httpStatus === undefined
             showToast(
                 aborted
                     ? t('workouts.errorFeedback')
-                    : err instanceof Error
-                        ? err.message
-                        : t('workouts.errorFeedback'),
+                    : networkFailure
+                        ? t('workouts.errorFeedbackNetwork')
+                        : err instanceof Error
+                            ? err.message
+                            : t('workouts.errorFeedback'),
                 'error'
             )
         } finally {

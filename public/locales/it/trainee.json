@@ -251,6 +251,7 @@
         "errorNotFound": "Workout non trovato",
         "feedbackSuccess": "Feedback inviato con successo!",
         "errorFeedback": "Errore invio feedback",
+        "errorFeedbackNetwork": "Connessione assente: serie non salvata. Riprova.",
         "errorRepsRequired": "Inserisci le ripetizioni eseguite prima di spuntare la serie",
         "markExerciseComplete": "Segna come completato",
         "markExerciseIncomplete": "Segna come non completato",
