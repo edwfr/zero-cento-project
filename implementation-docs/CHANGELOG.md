@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(programs): nuovo esercizio dalla modifica programma (10/11/2026)
+- Nuovo `ExerciseForm` (`src/components/ExerciseForm.tsx`): il form di `/trainer/exercises/new` (nome, varianti, YouTube, tipo, zavorrato, schema motorio, gruppi muscolari) estratto in un componente condiviso che carica i dati, valida, fa la POST a `/api/exercises` e restituisce l'esercizio creato con `onSuccess`. La pagina `/new` lo usa e si comporta come prima (crea → refresh + redirect, Annulla → elenco). Test: `tests/unit/exercise-form.test.tsx`.
+
 ### fix(onboarding): attivazione utente con token Bearer (10/11/2026)
 - `onboarding/set-password/page.tsx`: dopo `updateUser()` la chiamata a `/api/auth/activate` invia l'access token della sessione in `Authorization: Bearer`. Su Chrome iOS (WKWebView) i cookie della nuova sessione non arrivavano alla route e `getUser()` lato server rispondeva 401 anche dopo il retry (JAVASCRIPT-NEXTJS-14, 33 eventi, un atleta bloccato a fine onboarding). Senza token resta il fallback sul cookie con un retry.
 - `lib/auth.ts`: `requireAuthDuringOnboarding(request?)` valida il Bearer token con `supabase.auth.getUser(token)` se presente, altrimenti il cookie. `api/auth/activate` passa la request.
