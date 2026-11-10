@@ -68,6 +68,9 @@ export interface ProgramTraineeTableProps {
     getCloneHref: (program: ProgramTraineeTableProgram) => string
     getViewTestsHref: (program: ProgramTraineeTableProgram) => string
     getAthleteName?: (program: ProgramTraineeTableProgram) => string
+    /** Shown on active/completed rows only; omit to hide the export action. */
+    onExportPdf?: (program: ProgramTraineeTableProgram) => void
+    exportingProgramId?: string | null
 }
 
 export default function ProgramTraineeTable({
@@ -95,6 +98,8 @@ export default function ProgramTraineeTable({
     getCloneHref,
     getViewTestsHref,
     getAthleteName,
+    onExportPdf,
+    exportingProgramId = null,
 }: ProgramTraineeTableProps) {
     const { t } = useTranslation(['trainer', 'components', 'common'])
 
@@ -395,6 +400,14 @@ export default function ProgramTraineeTable({
                                                                 label={t('programs.viewTests')}
                                                                 href={getViewTestsHref(program)}
                                                             />
+                                                            {onExportPdf && (
+                                                                <ActionIconButton
+                                                                    variant="export-pdf"
+                                                                    label={t('programs.exportPdf')}
+                                                                    onClick={() => onExportPdf(program)}
+                                                                    isLoading={exportingProgramId === program.id}
+                                                                />
+                                                            )}
                                                             <ActionIconButton
                                                                 variant="delete"
                                                                 label={t('programs.delete')}

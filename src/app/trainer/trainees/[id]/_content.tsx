@@ -26,6 +26,7 @@ import SubscriptionTab from './_subscription-tab'
 import SubscriptionAlertBanner from './_subscription-alert'
 import SubscriptionStatusIcon from '@/components/SubscriptionStatusIcon'
 import { useTraineeSubscription } from './_use-trainee-subscription'
+import { useTrainerProgramPdfExport } from '@/lib/use-trainer-program-pdf-export'
 import {
     BarChart3,
     CalendarRange,
@@ -295,6 +296,7 @@ export default function TraineeDetailContent() {
     const params = useParams<{ id: string }>()
     const { t } = useTranslation(['trainer', 'components', 'common'])
     const { showToast } = useToast()
+    const { exportProgramPdf, exportingProgramId } = useTrainerProgramPdfExport()
     const traineeId = params.id
 
     const [loading, setLoading] = useState(true)
@@ -1398,6 +1400,8 @@ export default function TraineeDetailContent() {
                             getViewTestsHref={(program) =>
                                 `/trainer/programs/${program.id}/tests?backContext=trainee&traineeId=${traineeId}`
                             }
+                            onExportPdf={(program) => void exportProgramPdf(program.id)}
+                            exportingProgramId={exportingProgramId}
                         />
                     </div>
                 )}

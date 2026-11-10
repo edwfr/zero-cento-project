@@ -1,7 +1,7 @@
 import Link from 'next/link'
-import { FileEdit, Eye, FlaskConical, Trash2, Loader2, UserCheck, UserX, Copy, type LucideIcon } from 'lucide-react'
+import { FileEdit, Eye, FlaskConical, Trash2, Loader2, UserCheck, UserX, Copy, FileDown, type LucideIcon } from 'lucide-react'
 
-export type ActionVariant = 'edit' | 'view' | 'view-test' | 'delete' | 'activate' | 'deactivate' | 'clone'
+export type ActionVariant = 'edit' | 'view' | 'view-test' | 'delete' | 'activate' | 'deactivate' | 'clone' | 'export-pdf'
 
 export interface ActionIconButtonProps {
     variant: ActionVariant
@@ -22,6 +22,7 @@ const VARIANT_CONFIG: Record<ActionVariant, { Icon: LucideIcon; activeClass: str
     activate: { Icon: UserCheck, activeClass: 'bg-green-600 hover:bg-green-700' },
     deactivate: { Icon: UserX, activeClass: 'bg-red-600 hover:bg-red-700' },
     clone: { Icon: Copy, activeClass: 'bg-indigo-600 hover:bg-indigo-700' },
+    'export-pdf': { Icon: FileDown, activeClass: 'bg-brand-primary hover:bg-brand-primary-hover' },
 }
 
 const BASE =

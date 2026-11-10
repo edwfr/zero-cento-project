@@ -573,6 +573,8 @@
         "cloneSourceErrorNotFound": "The source program could not be found.",
         "cloneSourceErrorForbidden": "You do not have access to that source program.",
         "viewTests": "View feedback",
+        "exportPdf": "Export PDF",
+        "exportPdfError": "Error while generating the PDF",
         "testWeeksColumn": "Test weeks",
         "testStatusColumn": "Test status",
         "plannedCompletionDateColumn": "Expected completion date",

@@ -8,6 +8,7 @@ import ConfirmationModal from '@/components/ConfirmationModal'
 import ProgramCreditRefundModal from '@/components/ProgramCreditRefundModal'
 import { useTranslation } from 'react-i18next'
 import { getApiErrorMessage } from '@/lib/api-error'
+import { useTrainerProgramPdfExport } from '@/lib/use-trainer-program-pdf-export'
 
 interface Program {
     id: string
@@ -82,6 +83,7 @@ const INITIAL_STATUS_COUNTS: ProgramStatusCounts = {
 export default function TrainerProgramsContent() {
     const { t } = useTranslation(['trainer', 'components', 'common'])
     const { showToast } = useToast()
+    const { exportProgramPdf, exportingProgramId } = useTrainerProgramPdfExport()
     const hasLoadedOnceRef = useRef(false)
     const programsCacheRef = useRef(new Map<string, ProgramListSnapshot>())
     const activeRequestControllerRef = useRef<AbortController | null>(null)
@@ -469,6 +471,8 @@ export default function TrainerProgramsContent() {
                     getViewHref={(program) => `/trainer/programs/${program.id}`}
                     getCloneHref={(program) => `/trainer/programs/new?cloneFromProgramId=${program.id}`}
                     getViewTestsHref={(program) => `/trainer/programs/${program.id}/tests?backContext=programs`}
+                    onExportPdf={(program) => void exportProgramPdf(program.id)}
+                    exportingProgramId={exportingProgramId}
                 />
             </div>
         </>

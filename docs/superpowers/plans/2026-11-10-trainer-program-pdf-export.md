@@ -204,7 +204,7 @@ Consumes (from Tasks 1-2):
 - `apiProgramToPdfSource(apiProgram: ApiProgramForPdf): PdfSourceProgram` and `buildProgramPdfData(program, { unknownTraineeName, ballastLabel }): ProgramPdfData` from `@/lib/program-pdf-data`
 - `useTraineeProgramPdfLabels(): { labels, fileNamePrefix, locale, unknownTraineeName, ballastLabel }` from `@/lib/use-trainee-program-pdf-labels`
 
-- [ ] **Step 1: tests**
+- [x] **Step 1: tests**
   - `tests/unit/use-trainer-program-pdf-export.test.tsx` (mock `fetch`, `@/lib/program-pdf-export`'s `exportProgramToPdf`, and `useToast`; render the hook with `renderHook`):
     - `exportProgramPdf('p1')` → `fetch` called with `/api/programs/p1?resolveWeights=trainee`; `exportProgramToPdf` called once with the mapped data, the trainee labels, `{ fileNamePrefix, locale }`
     - during the export `exportingProgramId === 'p1'`; after → `null`
@@ -217,7 +217,7 @@ Consumes (from Tasks 1-2):
     - `exportingProgramId` = active id → that button is disabled/loading, others enabled
     - without `onExportPdf` → no `programs.exportPdf` buttons (table stays backward compatible)
   - Existing `trainer-programs-content.test.tsx` line ~289 counts delete buttons by label: must still pass untouched.
-- [ ] **Step 2: implementation**
+- [x] **Step 2: implementation**
   - `ActionIconButton.tsx`: add variant `'export-pdf'` to `ActionVariant` with `{ Icon: FileDown, activeClass: 'bg-brand-primary hover:bg-brand-primary-hover' }` (`FileDown` from `lucide-react`, the icon the trainee button uses).
   - `src/lib/use-trainer-program-pdf-export.ts` (`'use client'`):
     ```ts
@@ -236,5 +236,5 @@ Consumes (from Tasks 1-2):
     `{onExportPdf && <ActionIconButton variant="export-pdf" label={t('programs.exportPdf')} onClick={() => onExportPdf(program)} isLoading={exportingProgramId === program.id} />}`. Do not touch the draft branch.
   - Both pages: `const { exportProgramPdf, exportingProgramId } = useTrainerProgramPdfExport()`; pass `onExportPdf={(program) => void exportProgramPdf(program.id)}` and `exportingProgramId`.
   - Locales (BOM — use Edit): in `trainer.json` under the top-level `programs` object (the one holding `cloneProgram`, `viewTests`, ~line 569): `"exportPdf": "Esporta PDF"` (it) / `"Export PDF"` (en), `"exportPdfError": "Errore durante la generazione del PDF"` (it) / `"Error while generating the PDF"` (en). Check the key does not already exist in that object first.
-- [ ] **Step 3: run the test command, `npm run type-check` and `npm run lint`**
-- [ ] **Step 4: CHANGELOG entry and commit** — `feat(programs): export athlete PDF from trainer programs list`
+- [x] **Step 3: run the test command, `npm run type-check` and `npm run lint`**
+- [x] **Step 4: CHANGELOG entry and commit** — `feat(programs): export athlete PDF from trainer programs list`

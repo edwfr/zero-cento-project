@@ -573,6 +573,8 @@
         "cloneSourceErrorNotFound": "Programma di origine non trovato.",
         "cloneSourceErrorForbidden": "Non hai accesso a quel programma di origine.",
         "viewTests": "Visualizza feedback",
+        "exportPdf": "Esporta PDF",
+        "exportPdfError": "Errore durante la generazione del PDF",
         "testWeeksColumn": "Settimane test",
         "testStatusColumn": "Test",
         "plannedCompletionDateColumn": "Fine",
