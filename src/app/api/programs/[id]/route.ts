@@ -4,8 +4,7 @@ import { apiSuccess, apiError } from '@/lib/api-response'
 import { requireRole } from '@/lib/auth'
 import { createProgramSchema } from '@/schemas/program'
 import { logger } from '@/lib/logger'
-import { loadLatestBodyweightKg, loadTraineeOneRmMap, resolveEffectiveWeight } from '@/lib/calculations'
-import { traineeWeightFields } from '@/lib/bodyweight-load'
+import { resolveProgramWeeksForTrainee } from '@/lib/program-weight-resolution'
 import { handleApiError } from '@/lib/api-error-handler'
 import { isProgramVisibleToTrainee } from '@/lib/program-visibility'
 import { settleCreditOnProgramDelete } from '@/lib/program-credits'
@@ -112,93 +111,15 @@ export async function GET(
 
         let resolvedProgram = program
 
-        if (session.user.role === 'trainee') {
-            const needsPrMap = program.weeks.some((week) =>
-                week.workouts.some((workout) =>
-                    workout.workoutExercises.some((we) => we.weightType !== 'absolute')
-                )
-            )
-
-            const oneRmMap = needsPrMap ? await loadTraineeOneRmMap(session.user.id) : new Map<string, number>()
-
-            const loadedIds = new Set<string>()
-            for (const week of program.weeks) {
-                for (const workout of week.workouts) {
-                    for (const we of workout.workoutExercises) {
-                        if ((we.exercise as { isBodyweightLoaded?: boolean }).isBodyweightLoaded) {
-                            loadedIds.add(we.exerciseId)
-                        }
-                    }
-                }
+        const resolveForTrainee =
+            session.user.role === 'trainee' ||
+            request.nextUrl.searchParams.get('resolveWeights') === 'trainee'
+        if (resolveForTrainee) {
+            const traineeId = session.user.role === 'trainee' ? session.user.id : program.traineeId
+            resolvedProgram = {
+                ...program,
+                weeks: await resolveProgramWeeksForTrainee(program.weeks, traineeId, { programId }),
             }
-            const bodyweightKg =
-                loadedIds.size > 0 ? await loadLatestBodyweightKg(session.user.id) : null
-            const resolveOptions = {
-                bodyweightKg,
-                isBodyweightLoaded: (exerciseId: string) => loadedIds.has(exerciseId),
-            }
-
-            const resolvedWeeks = program.weeks.map((week) => ({
-                ...week,
-                workouts: week.workouts.map((workout) => {
-                    const siblings = workout.workoutExercises
-                    return {
-                        ...workout,
-                        workoutExercises: workout.workoutExercises.map((workoutExercise) => {
-                            const withBallast = (effectiveWeight: number | null) => ({
-                                ...workoutExercise,
-                                ...traineeWeightFields(
-                                    {
-                                        weightType: workoutExercise.weightType,
-                                        weight: workoutExercise.weight,
-                                        effectiveWeight,
-                                        rpeWeightMin: workoutExercise.rpeWeightMin ?? null,
-                                        rpeWeightMax: workoutExercise.rpeWeightMax ?? null,
-                                        isBodyweightLoaded: Boolean(
-                                            (workoutExercise.exercise as { isBodyweightLoaded?: boolean })
-                                                .isBodyweightLoaded
-                                        ),
-                                    },
-                                    bodyweightKg
-                                ),
-                            })
-
-                            if (typeof workoutExercise.effectiveWeight === 'number') {
-                                return withBallast(workoutExercise.effectiveWeight)
-                            }
-
-                            if (workoutExercise.weightType === 'absolute') {
-                                return withBallast(workoutExercise.weight)
-                            }
-
-                            try {
-                                const effectiveWeight = resolveEffectiveWeight(
-                                    workoutExercise,
-                                    oneRmMap,
-                                    siblings,
-                                    resolveOptions
-                                )
-                                return withBallast(effectiveWeight)
-                            } catch (calculationError: unknown) {
-                                logger.warn(
-                                    {
-                                        programId,
-                                        workoutExerciseId: workoutExercise.id,
-                                        error:
-                                            calculationError instanceof Error
-                                                ? calculationError.message
-                                                : String(calculationError),
-                                    },
-                                    'Failed to resolve effective weight while fetching program details'
-                                )
-                                return withBallast(null)
-                            }
-                        }),
-                    }
-                }),
-            }))
-
-            resolvedProgram = { ...program, weeks: resolvedWeeks }
         }
 
         // For trainer/admin viewing an active program, enrich each workout with isStarted

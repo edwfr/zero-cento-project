@@ -10,6 +10,10 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(programs): export PDF atleta dalla lista programmi del trainer (10/11/2026)
+- Nuovo `src/lib/program-weight-resolution.ts` (`resolveProgramWeeksForTrainee`): la risoluzione dei carichi effettivi e della zavorra contro 1RM e peso corporeo dell'atleta, prima inline nel ramo trainee di `GET /api/programs/[id]`, estratta senza modifiche (restano i salti di lettura PR/peso corporeo quando non servono).
+- `GET /api/programs/[id]?resolveWeights=trainee`: trainer proprietario e admin ottengono i carichi risolti sull'atleta assegnato (`program.traineeId`), uguali a quelli che vede l'atleta. Controlli 403/404 invariati e prima della risoluzione; senza flag (o con altro valore) la risposta trainer/admin non cambia. Test in `tests/integration/program-detail.test.ts`.
+
 ### feat(programs): nuovo esercizio dalla modifica programma (10/11/2026)
 - Nuovo `ExerciseForm` (`src/components/ExerciseForm.tsx`): il form di `/trainer/exercises/new` (nome, varianti, YouTube, tipo, zavorrato, schema motorio, gruppi muscolari) estratto in un componente condiviso che carica i dati, valida, fa la POST a `/api/exercises` e restituisce l'esercizio creato con `onSuccess`. La pagina `/new` lo usa e si comporta come prima (crea → refresh + redirect, Annulla → elenco). Test: `tests/unit/exercise-form.test.tsx`.
 - Nuovo `ExerciseQuickCreateModal`: popup accessibile (`role=dialog`, ESC, focus trap, ✕) che contiene `ExerciseForm`; il clic sullo sfondo non chiude per non perdere un form compilato a metà. Esportato con `ExerciseForm` da `src/components/index.ts`. Test: `tests/unit/exercise-quick-create-modal.test.tsx`.

@@ -229,6 +229,134 @@ describe('GET /api/programs/[id] - trainee bodyweight-loaded rows', () => {
     })
 })
 
+describe('GET /api/programs/[id] — trainer resolveWeights=trainee', () => {
+    const ATHLETE_ID = 'athlete-1'
+    const flagUrl = 'http://localhost:3000/api/programs/prog-1?resolveWeights=trainee'
+
+    const pctRow = { ...baseExercise, weightType: 'percentage_1rm' as const, weight: 80, effectiveWeight: null }
+    const loadedAbsRow = {
+        ...baseExercise,
+        exerciseId: 'ex-pullup',
+        weightType: 'absolute' as const,
+        weight: 10,
+        effectiveWeight: null,
+        rpeWeightMin: null,
+        rpeWeightMax: null,
+        exercise: { id: 'ex-pullup', name: 'Trazioni', type: 'fundamental' as const, isBodyweightLoaded: true },
+    }
+
+    function mockProgram(rows: unknown[], overrides: Record<string, unknown> = {}) {
+        prismaMock.trainingProgram.findUnique.mockResolvedValue({
+            id: 'prog-1',
+            trainerId: mockTrainerSession.user.id,
+            traineeId: ATHLETE_ID,
+            status: 'completed',
+            title: 'Test',
+            weeks: [
+                {
+                    weekNumber: 1,
+                    weekType: 'volume',
+                    workouts: [{ id: 'w-1', dayIndex: 1, workoutExercises: rows }],
+                },
+            ],
+            workoutSkeletons: [],
+            trainer: { id: mockTrainerSession.user.id, firstName: 'T', lastName: 'R' },
+            trainee: { id: ATHLETE_ID, firstName: 'M', lastName: 'A' },
+            ...overrides,
+        } as never)
+    }
+
+    const fetchRows = async (url = flagUrl) => {
+        const res = await GET(makeRequest(url), withProgramParam())
+        const json = await res.json()
+        return { res, json, rows: json.data?.program.weeks[0].workouts[0].workoutExercises }
+    }
+
+    beforeEach(() => {
+        vi.clearAllMocks()
+        asTrainer()
+        prismaMock.personalRecord.findMany.mockResolvedValue([
+            { exerciseId: 'ex-1', reps: 1, weight: 100, recordDate: new Date() },
+        ] as never)
+        prismaMock.traineeMeasurement.findFirst.mockResolvedValue({ value: 80 } as never)
+        prismaMock.workout.findMany.mockResolvedValue([] as never)
+    })
+
+    it('resolves percentage rows against the athlete 1RM', async () => {
+        mockProgram([pctRow])
+
+        const { res, rows } = await fetchRows()
+
+        expect(res.status).toBe(200)
+        expect(rows[0].effectiveWeight).toBe(80)
+        expect(prismaMock.personalRecord.findMany).toHaveBeenCalledTimes(1)
+        expect(callArg(prismaMock.personalRecord.findMany.mock.calls[0][0]).where).toMatchObject({ traineeId: ATHLETE_ID })
+    })
+
+    it('returns the athlete ballast for a bodyweight-loaded row', async () => {
+        mockProgram([loadedAbsRow])
+
+        const { rows } = await fetchRows()
+
+        expect(rows[0]).toMatchObject({ effectiveWeight: null, ballast: { kind: 'ballast', kg: 10 } })
+        expect(callArg(prismaMock.traineeMeasurement.findFirst.mock.calls[0][0]).where).toMatchObject({ traineeId: ATHLETE_ID })
+    })
+
+    it('returns raw rows without the flag', async () => {
+        mockProgram([pctRow])
+
+        const { res, rows } = await fetchRows('http://localhost:3000/api/programs/prog-1')
+
+        expect(res.status).toBe(200)
+        expect(rows[0].effectiveWeight).toBeNull()
+        expect(rows[0]).not.toHaveProperty('ballast')
+        expect(prismaMock.personalRecord.findMany).not.toHaveBeenCalled()
+        expect(prismaMock.traineeMeasurement.findFirst).not.toHaveBeenCalled()
+    })
+
+    it('ignores any other flag value', async () => {
+        mockProgram([pctRow])
+
+        const { rows } = await fetchRows('http://localhost:3000/api/programs/prog-1?resolveWeights=foo')
+
+        expect(rows[0].effectiveWeight).toBeNull()
+        expect(rows[0]).not.toHaveProperty('ballast')
+        expect(prismaMock.personalRecord.findMany).not.toHaveBeenCalled()
+    })
+
+    it('returns 403 for another trainer program without resolving', async () => {
+        mockProgram([pctRow], { trainerId: 'another-trainer' })
+
+        const { res, json } = await fetchRows()
+
+        expect(res.status).toBe(403)
+        expect(json.error.key).toBe('program.viewDenied')
+        expect(prismaMock.personalRecord.findMany).not.toHaveBeenCalled()
+        expect(prismaMock.traineeMeasurement.findFirst).not.toHaveBeenCalled()
+    })
+
+    it('resolves for an admin', async () => {
+        asAdmin()
+        mockProgram([pctRow], { trainerId: 'some-trainer' })
+
+        const { res, rows } = await fetchRows()
+
+        expect(res.status).toBe(200)
+        expect(rows[0].effectiveWeight).toBe(80)
+        expect(callArg(prismaMock.personalRecord.findMany.mock.calls[0][0]).where).toMatchObject({ traineeId: ATHLETE_ID })
+    })
+
+    it('keeps isStarted on an active program', async () => {
+        mockProgram([pctRow], { status: 'active' })
+        prismaMock.workout.findMany.mockResolvedValue([{ id: 'w-1' }] as never)
+
+        const { json, rows } = await fetchRows()
+
+        expect(rows[0].effectiveWeight).toBe(80)
+        expect(json.data.program.weeks[0].workouts[0].isStarted).toBe(true)
+    })
+})
+
 describe('GET /api/programs/[id] — trainee select shape', () => {
     beforeEach(() => {
         vi.clearAllMocks()
