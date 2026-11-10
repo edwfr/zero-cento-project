@@ -72,4 +72,29 @@ describe('ExerciseQuickCreateModal', () => {
         fireEvent.click(screen.getByTestId('exercise-quick-create-backdrop'))
         expect(onClose).not.toHaveBeenCalled()
     })
+
+    it('ignores Escape and disables the close icon while the POST is in flight', async () => {
+        let resolvePost: (value: ReturnType<typeof jsonResponse>) => void = () => {}
+        fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
+            if (url === '/api/muscle-groups') return jsonResponse({ data: { items: [] } })
+            if (url === '/api/movement-patterns') return jsonResponse({ data: { items: [{ id: 'mp1', name: 'Pull' }] } })
+            if (url === '/api/exercises' && init?.method === 'POST')
+                return new Promise((resolve) => { resolvePost = resolve })
+            return jsonResponse({})
+        })
+        const { onClose, onCreated } = renderModal()
+        await waitFor(() => expect(screen.getByRole('option', { name: 'Pull' })).toBeInTheDocument())
+        fireEvent.change(screen.getByPlaceholderText('exercises.exerciseNamePlaceholder'), {
+            target: { value: 'Trazioni' },
+        })
+        fireEvent.click(screen.getByRole('button', { name: 'exercises.createExercise' }))
+
+        const closeIcon = screen.getByRole('button', { name: 'common:common.close' })
+        await waitFor(() => expect(closeIcon).toBeDisabled())
+        fireEvent.keyDown(document, { key: 'Escape' })
+        expect(onClose).not.toHaveBeenCalled()
+
+        resolvePost(jsonResponse({ data: { exercise: { id: 'ex1', name: 'Trazioni' } } }, true, 201))
+        await waitFor(() => expect(onCreated).toHaveBeenCalledTimes(1))
+    })
 })

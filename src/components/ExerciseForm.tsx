@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import '@/lib/i18n/client'
 import { getApiErrorMessage } from '@/lib/api-error'
@@ -31,9 +32,15 @@ export interface CreatedExercise {
     name: string
 }
 
-export interface ExerciseFormProps {
+/** Cancel either navigates to `cancelHref` (a plain link) or calls `onCancel`. */
+type ExerciseFormCancelProps =
+    | { cancelHref: string; onCancel?: never }
+    | { onCancel: () => void; cancelHref?: never }
+
+export type ExerciseFormProps = ExerciseFormCancelProps & {
     onSuccess: (exercise: CreatedExercise) => void
-    onCancel: () => void
+    /** Called with `true` when the POST starts and `false` when it settles. */
+    onSubmittingChange?: (submitting: boolean) => void
 }
 
 /**
@@ -41,7 +48,7 @@ export interface ExerciseFormProps {
  * Loads muscle groups and movement patterns, validates, POSTs to `/api/exercises`
  * and reports the created exercise through `onSuccess`.
  */
-export default function ExerciseForm({ onSuccess, onCancel }: ExerciseFormProps) {
+export default function ExerciseForm({ onSuccess, onCancel, cancelHref, onSubmittingChange }: ExerciseFormProps) {
     const { t } = useTranslation(['trainer', 'common'])
     const [loading, setLoading] = useState(false)
     const [muscleGroups, setMuscleGroups] = useState<MuscleGroup[]>([])
@@ -56,6 +63,10 @@ export default function ExerciseForm({ onSuccess, onCancel }: ExerciseFormProps)
     const [isBodyweightLoaded, setIsBodyweightLoaded] = useState(false)
     const [movementPatternId, setMovementPatternId] = useState('')
     const [selectedMuscleGroups, setSelectedMuscleGroups] = useState<MuscleGroupInput[]>([])
+
+    useEffect(() => {
+        onSubmittingChange?.(loading)
+    }, [loading, onSubmittingChange])
 
     const fetchData = useCallback(async () => {
         try {
@@ -369,16 +380,25 @@ export default function ExerciseForm({ onSuccess, onCancel }: ExerciseFormProps)
                     >
                         {t('exercises.createExercise')}
                     </Button>
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        size="lg"
-                        className="flex-1"
-                        onClick={onCancel}
-                        disabled={loading}
-                    >
-                        {t('exercises.cancel')}
-                    </Button>
+                    {cancelHref ? (
+                        <Link
+                            href={cancelHref}
+                            className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-lg text-center transition-colors"
+                        >
+                            {t('exercises.cancel')}
+                        </Link>
+                    ) : (
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="lg"
+                            className="flex-1"
+                            onClick={onCancel}
+                            disabled={loading}
+                        >
+                            {t('exercises.cancel')}
+                        </Button>
+                    )}
                 </div>
             </form>
         </>

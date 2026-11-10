@@ -23,7 +23,7 @@ export default function NewExerciseContent() {
                     router.refresh()
                     router.push('/trainer/exercises')
                 }}
-                onCancel={() => router.push('/trainer/exercises')}
+                cancelHref="/trainer/exercises"
             />
         </div>
     )

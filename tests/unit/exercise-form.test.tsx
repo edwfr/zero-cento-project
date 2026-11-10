@@ -147,4 +147,26 @@ describe('ExerciseForm', () => {
         expect(onCancel).toHaveBeenCalledTimes(1)
         expect(postCalls()).toHaveLength(0)
     })
+
+    it('renders Cancel as a link when cancelHref is given', async () => {
+        render(<ExerciseForm onSuccess={vi.fn()} cancelHref="/trainer/exercises" />)
+        await waitForPatterns()
+        const link = screen.getByRole('link', { name: 'exercises.cancel' })
+        expect(link).toHaveAttribute('href', '/trainer/exercises')
+        expect(screen.queryByRole('button', { name: 'exercises.cancel' })).not.toBeInTheDocument()
+    })
+
+    it('reports submitting state through onSubmittingChange and clears it after a failed POST', async () => {
+        let resolvePost: (value: ReturnType<typeof jsonResponse>) => void = () => {}
+        postResponse = () => new Promise((resolve) => { resolvePost = resolve }) as never
+        const onSubmittingChange = vi.fn()
+        render(<ExerciseForm onSuccess={vi.fn()} onCancel={vi.fn()} onSubmittingChange={onSubmittingChange} />)
+        await waitForPatterns()
+        fillName()
+        submit()
+        await waitFor(() => expect(onSubmittingChange).toHaveBeenLastCalledWith(true))
+        // A failed POST re-enables the form; on success it stays submitting until unmounted
+        resolvePost(jsonResponse({ error: { code: 'VALIDATION_ERROR', message: 'Invalid' } }, false, 400))
+        await waitFor(() => expect(onSubmittingChange).toHaveBeenLastCalledWith(false))
+    })
 })

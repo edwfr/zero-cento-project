@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
 import '@/lib/i18n/client'
@@ -24,6 +24,13 @@ export default function ExerciseQuickCreateModal({ onClose, onCreated }: Exercis
     const titleId = useId()
     const dialogRef = useRef<HTMLDivElement>(null)
     const onCloseRef = useRef(onClose)
+    // While the POST is in flight, closing would hide a create that still lands
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const isSubmittingRef = useRef(false)
+
+    useEffect(() => {
+        isSubmittingRef.current = isSubmitting
+    }, [isSubmitting])
 
     useEffect(() => {
         onCloseRef.current = onClose
@@ -37,7 +44,7 @@ export default function ExerciseQuickCreateModal({ onClose, onCreated }: Exercis
 
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
-                onCloseRef.current()
+                if (!isSubmittingRef.current) onCloseRef.current()
                 return
             }
             if (e.key !== 'Tab' || !dialogRef.current) return
@@ -82,15 +89,16 @@ export default function ExerciseQuickCreateModal({ onClose, onCreated }: Exercis
                     <button
                         type="button"
                         onClick={onClose}
+                        disabled={isSubmitting}
                         aria-label={t('common:common.close')}
                         title={t('common:common.close')}
-                        className="rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700"
+                        className="rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         <X className="h-5 w-5" />
                     </button>
                 </div>
                 <div className="px-6 pb-6">
-                    <ExerciseForm onSuccess={onCreated} onCancel={onClose} />
+                    <ExerciseForm onSuccess={onCreated} onCancel={onClose} onSubmittingChange={setIsSubmitting} />
                 </div>
             </div>
         </div>
