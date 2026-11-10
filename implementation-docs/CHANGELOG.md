@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### chore(mcp): server MCP Vercel in `.mcp.json` (10/11/2026)
+- Aggiunto `vercel` (`https://mcp.vercel.com`, HTTP + OAuth) accanto a sentry e supabase, per consultare deployment e log di build/runtime da Claude Code. Primo uso: `/mcp` → vercel → Authenticate.
+
 ### feat(ui): tooltip descrittivo sulle azioni dei programmi del trainer (10/11/2026)
 - `ActionIconButton`: nuovo prop opzionale `tooltip`; al passaggio del mouse (o al focus da tastiera) compare subito un tooltip visibile (`role="tooltip"`) con il testo descrittivo, o con `label` se `tooltip` manca. Sostituisce il `title` nativo, lento e scarno. Il nome accessibile resta `label` (`aria-label`), quindi i selettori esistenti non cambiano.
 - `ProgramTraineeTable`: tooltip descrittivi su Modifica, Visualizza, Clona, Visualizza feedback, Esporta PDF ed Elimina. Il tooltip di "Visualizza" chiarisce che mostra il programma pianificato; quello di "Visualizza feedback" che mostra pesi e reps eseguiti dall'atleta. Il motivo: i trainer confondevano le due pagine. Chiavi `programs.*Tooltip` in it/en.
