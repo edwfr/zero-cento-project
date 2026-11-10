@@ -159,7 +159,34 @@ describe('useTrainerProgramPdfExport', () => {
 
     it('shows the generic error when the PDF generation fails', async () => {
         fetchMock.mockResolvedValue(okResponse({ data: { program: apiProgram } }))
-        exportProgramToPdf.mockRejectedValue('boom')
+        exportProgramToPdf.mockRejectedValue(new Error('boom'))
+        const { result } = renderHook(() => useTrainerProgramPdfExport())
+
+        await act(async () => {
+            await result.current.exportProgramPdf('p1')
+        })
+
+        expect(showToast).toHaveBeenCalledWith('programs.exportPdfError', 'error')
+        expect(result.current.exportingProgramId).toBeNull()
+    })
+
+    it('shows the generic error when the error response is not JSON', async () => {
+        fetchMock.mockResolvedValue({
+            ok: false,
+            json: async () => { throw new SyntaxError("Unexpected token '<'") },
+        } as unknown as Response)
+        const { result } = renderHook(() => useTrainerProgramPdfExport())
+
+        await act(async () => {
+            await result.current.exportProgramPdf('p1')
+        })
+
+        expect(showToast).toHaveBeenCalledWith('programs.exportPdfError', 'error')
+        expect(exportProgramToPdf).not.toHaveBeenCalled()
+    })
+
+    it('shows the generic error when the network request fails', async () => {
+        fetchMock.mockRejectedValue(new TypeError('Failed to fetch'))
         const { result } = renderHook(() => useTrainerProgramPdfExport())
 
         await act(async () => {

@@ -33,18 +33,22 @@ export function useTrainerProgramPdfExport(): {
 
             try {
                 const res = await fetch(`/api/programs/${programId}?resolveWeights=trainee`, { cache: 'no-store' })
-                const body = await res.json()
                 if (!res.ok) {
-                    throw new Error(getApiErrorMessage(body, t('programs.exportPdfError'), t))
+                    // A gateway error page is not JSON: fall back to the generic message.
+                    const errorBody = await res.json().catch(() => null)
+                    showToast(getApiErrorMessage(errorBody, t('programs.exportPdfError'), t), 'error')
+                    return
                 }
+                const body = await res.json()
 
                 const data = buildProgramPdfData(
                     apiProgramToPdfSource(body.data.program as ApiProgramForPdf),
                     { unknownTraineeName, ballastLabel }
                 )
                 await exportProgramToPdf(data, labels, { fileNamePrefix, locale })
-            } catch (err) {
-                showToast(err instanceof Error ? err.message : t('programs.exportPdfError'), 'error')
+            } catch {
+                // Network, parse and PDF-chunk failures carry technical messages: never show them.
+                showToast(t('programs.exportPdfError'), 'error')
             } finally {
                 inFlightRef.current = false
                 setExportingProgramId(null)

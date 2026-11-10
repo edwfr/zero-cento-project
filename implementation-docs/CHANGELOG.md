@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### fix(programs): toast d'errore export PDF trainer senza messaggi tecnici (10/11/2026)
+- `useTrainerProgramPdfExport`: il messaggio dell'API si mostra solo sulla risposta `!res.ok` (corpo letto con `.json().catch(() => null)`, così una pagina HTML 502 ricade sul messaggio generico). Errori di rete, di parsing e del chunk della libreria PDF mostrano sempre `programs.exportPdfError`, mai `err.message` (es. `Unexpected token '<'`, `Failed to fetch`). Test aggiornato (rejection con `Error`) + casi corpo non JSON e rete assente.
+
 ### feat(programs): export PDF atleta dalla lista programmi del trainer (10/11/2026)
 - Nuovo `src/lib/program-weight-resolution.ts` (`resolveProgramWeeksForTrainee`): la risoluzione dei carichi effettivi e della zavorra contro 1RM e peso corporeo dell'atleta, prima inline nel ramo trainee di `GET /api/programs/[id]`, estratta senza modifiche (restano i salti di lettura PR/peso corporeo quando non servono).
 - `GET /api/programs/[id]?resolveWeights=trainee`: trainer proprietario e admin ottengono i carichi risolti sull'atleta assegnato (`program.traineeId`), uguali a quelli che vede l'atleta. Controlli 403/404 invariati e prima della risoluzione; senza flag (o con altro valore) la risposta trainer/admin non cambia. Test in `tests/integration/program-detail.test.ts`.
