@@ -121,7 +121,7 @@
 **Test command:** `npx vitest run tests/unit/program-pdf-data.test.ts tests/unit/program-pdf-export.test.ts`
 **Done when:** the trainee page builds its PDF data and labels only through the new module and hook, with no change in output, and the mapper is covered by unit tests.
 
-- [ ] **Step 1: tests** — `tests/unit/program-pdf-data.test.ts` for `buildProgramPdfData` and `apiProgramToPdfSource`:
+- [x] **Step 1: tests** — `tests/unit/program-pdf-data.test.ts` for `buildProgramPdfData` and `apiProgramToPdfSource`:
   - program with trainee `{firstName:'Mario', lastName:'Rossi'}` → `traineeName` `'Mario Rossi'`; trainer name concatenated the same way
   - program without trainee (`undefined` or `null`) → `traineeName` = `options.unknownTraineeName`
   - exercise with `ballast: { kind: 'ballast', kg: 10 }` → `weightLabelOverride` = `options.ballastLabel(ballast)` result (pass a stub returning `'BW + 10 kg'`)
@@ -130,7 +130,7 @@
   - all other fields (`id`, `name` from `exercise.name`, `variant`, `type` from `exercise.type`, `isWarmup`, `sets`, `reps`, `targetRpe`, `weightType`, `weight`, `effectiveWeight`, `rpeWeightMin`, `rpeWeightMax`, `restTime`) copied as-is
   - workouts keep input order (no sorting — the trainee PDF does not sort)
   - `apiProgramToPdfSource`: API workout `{ id, dayIndex, workoutExercises: [...] }` → `{ id, dayIndex, exercises: [...] }`; weeks and top-level fields carried over
-- [ ] **Step 2: implementation**
+- [x] **Step 2: implementation**
   - `src/lib/program-pdf-data.ts` (pure, no React):
     ```ts
     import type { RestTime, WeekType } from '@prisma/client'
@@ -186,8 +186,8 @@
     ```
     Uses `useTranslation(['trainee', 'common'])` — the `trainee` namespace even when called from trainer pages, so the PDF matches the athlete's. Labels = the current `pdfLabels` useMemo in `ProgramDetailContent.tsx` (~line 544) moved verbatim; `fileNamePrefix` = `t('currentProgram.pdfFileNamePrefix')`; `unknownTraineeName` = `t('currentProgram.pdfUnknownTrainee')`; `ballastLabel` = `(b) => formatBallastLabel(b, (key, opts) => t(\`common:${key}\`, opts) as string)` (same as the page's `tCommon`). Memoize on `[t, i18n.language]`.
   - `ProgramDetailContent.tsx`: delete the local `pdfLabels` memo and the inline mapping; `pdfProgramData = useMemo(() => mergedProgram ? buildProgramPdfData({ ...mergedProgram, weeks: mergedProgram.weeks.map(w => ({ ...w, workouts: w.workouts.map(wo => ({ id: wo.id, dayIndex: wo.dayOfWeek, exercises: wo.exercises })) })) }, { unknownTraineeName, ballastLabel }) : null, [...])`. Pass `labels`, `fileNamePrefix`, `locale` from the hook to `ProgramPdfExportButton`. Keep the page's own `locale`/`tCommon` if still used elsewhere in the file (they are: `formatDate`, `buildExerciseScheme`).
-- [ ] **Step 3: run the test command and `npm run type-check`**; also run `npx vitest run tests/unit/trainee-program-data-notes.test.ts` (touches the same page data)
-- [ ] **Step 4: CHANGELOG entry and commit** — `refactor(programs): extract trainee PDF data mapper and labels`
+- [x] **Step 3: run the test command and `npm run type-check`**; also run `npx vitest run tests/unit/trainee-program-data-notes.test.ts` (touches the same page data)
+- [x] **Step 4: CHANGELOG entry and commit** — `refactor(programs): extract trainee PDF data mapper and labels`
 
 ---
 

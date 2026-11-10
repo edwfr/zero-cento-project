@@ -18,10 +18,9 @@ import WeekTypeBadge from '@/components/WeekTypeBadge'
 import WorkoutExerciseDisplayList, { type ExerciseDisplayItem } from '@/components/WorkoutExerciseDisplayList'
 import { formatDate } from '@/lib/date-format'
 import ProgramPdfExportButton from '@/components/ProgramPdfExportButton'
-import {
-    ProgramPdfData,
-    ProgramPdfLabels,
-} from '@/lib/program-pdf-export'
+import type { ProgramPdfData } from '@/lib/program-pdf-export'
+import { buildProgramPdfData } from '@/lib/program-pdf-data'
+import { useTraineeProgramPdfLabels } from '@/lib/use-trainee-program-pdf-labels'
 import type { TraineeProgramView } from '@/lib/trainee-program-data'
 import type { ExerciseType } from '@/lib/exercise-type'
 import { formatWeightRange } from '@/lib/weight-rounding'
@@ -354,7 +353,7 @@ export default function ProgramDetailContent({
     programId,
     initialData,
 }: ProgramDetailContentProps) {
-    const { t, i18n } = useTranslation(['trainee', 'common'])
+    const { t } = useTranslation(['trainee', 'common'])
     const tCommon = (key: string, options?: Record<string, unknown>) =>
         t(`common:${key}`, options) as string
     const [localWorkoutProgress, setLocalWorkoutProgress] = useState<Record<string, boolean>>({})
@@ -541,88 +540,29 @@ export default function ProgramDetailContent({
         return Array.isArray(value) ? value : []
     }, [t])
 
-    const pdfLabels = useMemo<ProgramPdfLabels>(
-        () => ({
-            trainerLabel: t('currentProgram.pdfTrainerLabel'),
-            startDateLabel: t('currentProgram.pdfStartDateLabel'),
-            generatedAtLabel: t('currentProgram.pdfGeneratedAtLabel'),
-            weekLabel: (week: number) => t('currentProgram.week', { number: week }),
-            weekTypeLabel: (weekType: WeekType) => {
-                const labels: Record<WeekType, string> = {
-                    tecnica: t('currentProgram.weekTypeTecnica'),
-                    ipertrofia: t('currentProgram.weekTypeIpertrofia'),
-                    volume: t('currentProgram.weekTypeVolume'),
-                    forza_generale: t('currentProgram.weekTypeForzaGenerale'),
-                    intensificazione: t('currentProgram.weekTypeIntensificazione'),
-                    picco: t('currentProgram.weekTypePicco'),
-                    test: t('currentProgram.weekTypeTest'),
-                    deload: t('currentProgram.weekTypeDeload'),
-                }
-                return labels[weekType]
-            },
-            workoutLabel: (dayIndex: number) =>
-                t('currentProgram.day', {
-                    number: dayIndex,
-                }),
-            tableExercise: t('currentProgram.tableExercise'),
-            tableVariant: t('currentProgram.tableVariant'),
-            tableSets: t('currentProgram.tableSets'),
-            tableReps: t('currentProgram.tableReps'),
-            tableRpe: t('currentProgram.tableRpe'),
-            tableWeight: t('currentProgram.tableWeight'),
-            tableRest: t('currentProgram.tableRest'),
-            tableNoExercises: t('currentProgram.tableNoExercises'),
-            warmupYesShort: t('currentProgram.warmupYesShort'),
-            jumpSetShort: t('currentProgram.jumpSetShort'),
-            superSetShort: t('currentProgram.superSetShort'),
-            missingValue: t('currentProgram.tableMissingValue'),
-        }),
-        [t]
+    const pdfConfig = useTraineeProgramPdfLabels()
+    const { unknownTraineeName, ballastLabel } = pdfConfig
+
+    const pdfProgramData = useMemo<ProgramPdfData | null>(
+        () =>
+            mergedProgram
+                ? buildProgramPdfData(
+                      {
+                          ...mergedProgram,
+                          weeks: mergedProgram.weeks.map((week) => ({
+                              ...week,
+                              workouts: week.workouts.map((workout) => ({
+                                  id: workout.id,
+                                  dayIndex: workout.dayOfWeek,
+                                  exercises: workout.exercises,
+                              })),
+                          })),
+                      },
+                      { unknownTraineeName, ballastLabel }
+                  )
+                : null,
+        [mergedProgram, unknownTraineeName, ballastLabel]
     )
-
-    const pdfProgramData = useMemo<ProgramPdfData | null>(() => {
-        if (!mergedProgram) {
-            return null
-        }
-
-        return {
-            title: mergedProgram.title,
-            traineeName: mergedProgram.trainee
-                ? `${mergedProgram.trainee.firstName} ${mergedProgram.trainee.lastName}`
-                : t('currentProgram.pdfUnknownTrainee'),
-            trainerName: `${mergedProgram.trainer.firstName} ${mergedProgram.trainer.lastName}`,
-            startDate: mergedProgram.startDate,
-            weeks: mergedProgram.weeks.map((week) => ({
-                weekNumber: week.weekNumber,
-                weekType: week.weekType,
-                workouts: week.workouts.map((workout) => ({
-                    id: workout.id,
-                    dayIndex: workout.dayOfWeek,
-                    exercises: workout.exercises.map((exercise) => ({
-                        id: exercise.id,
-                        name: exercise.exercise.name,
-                        variant: exercise.variant,
-                        type: exercise.exercise.type,
-                        isWarmup: exercise.isWarmup,
-                        isJumpSet: Boolean(exercise.isJumpSet),
-                        isSuperSet: Boolean(exercise.isSuperSet),
-                        sets: exercise.sets,
-                        reps: exercise.reps,
-                        targetRpe: exercise.targetRpe,
-                        weightType: exercise.weightType,
-                        weight: exercise.weight,
-                        effectiveWeight: exercise.effectiveWeight,
-                        rpeWeightMin: exercise.rpeWeightMin,
-                        rpeWeightMax: exercise.rpeWeightMax,
-                        restTime: exercise.restTime,
-                        weightLabelOverride: exercise.ballast
-                            ? formatBallastLabel(exercise.ballast, tCommon)
-                            : null,
-                    })),
-                })),
-            })),
-        }
-    }, [mergedProgram, t])
 
     const toggleWeek = (weekNumber: number) => {
         setExpandedWeeks((previous) => ({
@@ -741,8 +681,6 @@ export default function ProgramDetailContent({
         ? Math.round((completedWorkouts / totalWorkouts) * 100)
         : 0
 
-    const locale = i18n.language === 'en' ? 'en-GB' : 'it-IT'
-
     return (
         <div>
             {/* Header */}
@@ -761,12 +699,12 @@ export default function ProgramDetailContent({
 
                     <ProgramPdfExportButton
                         program={pdfProgramData}
-                        labels={pdfLabels}
+                        labels={pdfConfig.labels}
                         buttonLabel={t('currentProgram.exportPdf')}
                         loadingLabel={t('currentProgram.exportingPdf')}
                         errorLabel={t('currentProgram.exportPdfError')}
-                        fileNamePrefix={t('currentProgram.pdfFileNamePrefix')}
-                        locale={locale}
+                        fileNamePrefix={pdfConfig.fileNamePrefix}
+                        locale={pdfConfig.locale}
                         className="md:self-start"
                     />
                 </div>
