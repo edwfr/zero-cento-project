@@ -747,6 +747,8 @@
         "structureApplyAndContinue": "Avanti: dettagli esercizi",
         "editStructureStepButton": "Modifica scheletro",
         "floatingChartsButton": "Grafici",
+        "floatingNewExerciseButton": "Nuovo esercizio",
+        "exerciseCreatedToast": "Esercizio «{{name}}» aggiunto alla libreria",
         "chartsPanelTitle": "Report programma",
         "chartsPanelClose": "Chiudi pannello",
         "nextReview": "Avanti: Riepilogo",

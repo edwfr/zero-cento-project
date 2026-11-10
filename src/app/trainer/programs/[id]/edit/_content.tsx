@@ -82,6 +82,7 @@ import {
 } from '@/lib/program-sbd-metrics'
 import ProgramSbdSummaryTable from '@/components/ProgramSbdSummaryTable'
 import ProgramChartsDrawer from '@/components/ProgramChartsDrawer'
+import ExerciseQuickCreateModal from '@/components/ExerciseQuickCreateModal'
 import RpeTablesDrawer from '@/components/RpeTablesDrawer'
 import { checkReps, REPS_ERROR_KEYS } from '@/lib/reps'
 import {
@@ -539,6 +540,7 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
     )
     const [isChartsDrawerOpen, setIsChartsDrawerOpen] = useState(false)
     const [isRpeTablesDrawerOpen, setIsRpeTablesDrawerOpen] = useState(false)
+    const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false)
     const [bodyweightKg, setBodyweightKg] = useState<number | null>(null)
     const [bodyweightMeasuredAt, setBodyweightMeasuredAt] = useState<string | null>(null)
     const [structureRowsByWorkoutIndex, setStructureRowsByWorkoutIndex] = useState<
@@ -623,7 +625,6 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 const exercisesData = await exercisesRes.json()
 
                 if (!exercisesRes.ok) {
-                    setExerciseCatalog([])
                     return
                 }
 
@@ -678,9 +679,18 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                 )
             )
         } catch {
-            setExerciseCatalog([])
+            // Keep the current catalog: a failed refresh must not empty the dropdowns
         }
     }, [])
+
+    const handleExerciseCreated = useCallback(
+        (exercise: { id: string; name: string }) => {
+            setIsExerciseModalOpen(false)
+            showToast(t('editProgram.exerciseCreatedToast', { name: exercise.name }), 'success')
+            void fetchExerciseCatalog()
+        },
+        [fetchExerciseCatalog, showToast, t]
+    )
 
     const fetchPersonalRecords = useCallback(async (traineeId: string, requestId: number) => {
         try {
@@ -4183,6 +4193,23 @@ export default function EditProgramContent({ readOnly = false }: EditProgramCont
                     >
                         <Table className="h-6 w-6" />
                     </button>
+                )}
+                {!readOnly && (
+                    <button
+                        type="button"
+                        onClick={() => setIsExerciseModalOpen(true)}
+                        className="fixed top-24 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-brand-primary text-white shadow-lg transition-colors hover:bg-brand-primary-hover"
+                        aria-label={t('editProgram.floatingNewExerciseButton')}
+                        title={t('editProgram.floatingNewExerciseButton')}
+                    >
+                        <Plus className="h-6 w-6" />
+                    </button>
+                )}
+                {isExerciseModalOpen && (
+                    <ExerciseQuickCreateModal
+                        onClose={() => setIsExerciseModalOpen(false)}
+                        onCreated={handleExerciseCreated}
+                    />
                 )}
                 <RpeTablesDrawer
                     isOpen={isRpeTablesDrawerOpen}

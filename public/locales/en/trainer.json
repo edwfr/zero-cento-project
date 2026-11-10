@@ -747,6 +747,8 @@
         "structureApplyAndContinue": "Next: exercise details",
         "editStructureStepButton": "Edit structure",
         "floatingChartsButton": "Charts",
+        "floatingNewExerciseButton": "New exercise",
+        "exerciseCreatedToast": "Exercise “{{name}}” added to the library",
         "chartsPanelTitle": "Program report",
         "chartsPanelClose": "Close panel",
         "nextReview": "Next: Review",

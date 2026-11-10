@@ -211,10 +211,10 @@ Consumes from Task 2:
 No page-level unit test exists for this 4k-line component and none is added: behaviour
 is covered by Task 1-2 tests plus the manual check in Step 3.
 
-- [ ] **Step 1: i18n** — under `editProgram` in both locale files (BOM: use Edit):
+- [x] **Step 1: i18n** — under `editProgram` in both locale files (BOM: use Edit):
   - `floatingNewExerciseButton`: it `"Nuovo esercizio"`, en `"New exercise"`
   - `exerciseCreatedToast`: it `"Esercizio «{{name}}» aggiunto alla libreria"`, en `"Exercise “{{name}}” added to the library"`
-- [ ] **Step 2: implementation** in `EditProgramContent` (keep CRLF):
+- [x] **Step 2: implementation** in `EditProgramContent` (keep CRLF):
   - `const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false)`
   - in `fetchExerciseCatalog` (≈ line 605) remove the two `setExerciseCatalog([])`
     calls (the `!exercisesRes.ok` branch keeps its `return`; the `catch` becomes empty
@@ -234,4 +234,4 @@ is covered by Task 1-2 tests plus the manual check in Step 3.
       toast bottom-right, exercise found in a Skeleton row autocomplete and in an
       Exercises row autocomplete; ESC/✕/Cancel discard; open a read-only program →
       no button. Report what was checked.
-- [ ] **Step 4: CHANGELOG entry and commit** — `feat(programs): create library exercise from program editor`
+- [x] **Step 4: CHANGELOG entry and commit** — `feat(programs): create library exercise from program editor`
