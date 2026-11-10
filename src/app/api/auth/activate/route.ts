@@ -12,7 +12,7 @@ import { handleApiError } from '@/lib/api-error-handler'
  */
 export async function POST(request: NextRequest) {
     try {
-        const session = await requireAuthDuringOnboarding()
+        const session = await requireAuthDuringOnboarding(request)
 
         // Activate the user
         // Onboarding completes once: an inactive user who already activated was

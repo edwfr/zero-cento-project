@@ -317,6 +317,26 @@ describe('requireAuthDuringOnboarding', () => {
         expect(result.supabaseUser.id).toBe('supabase-uuid-1')
     })
 
+    it('validates the cookie session when no bearer token is sent', async () => {
+        prismaMock.user.findUnique.mockResolvedValue({ ...prismaUser, isActive: false } as never)
+
+        await requireAuthDuringOnboarding(new Request('http://localhost/api/auth/activate'))
+
+        expect(getUser).toHaveBeenCalledWith()
+    })
+
+    it('validates the bearer token when the client sends one', async () => {
+        prismaMock.user.findUnique.mockResolvedValue({ ...prismaUser, isActive: false } as never)
+        const request = new Request('http://localhost/api/auth/activate', {
+            headers: { Authorization: 'Bearer access-token-1' },
+        })
+
+        const result = await requireAuthDuringOnboarding(request)
+
+        expect(getUser).toHaveBeenCalledWith('access-token-1')
+        expect(result.supabaseUser.id).toBe('supabase-uuid-1')
+    })
+
     it('throws 401 when Supabase has no user', async () => {
         getUser.mockResolvedValue({ data: { user: null }, error: null })
 

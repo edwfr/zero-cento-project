@@ -170,12 +170,19 @@ export default function SetPasswordPage() {
 
             if (updateError) throw updateError
 
-            // Activate the user in the database. A 401 right after updateUser means the
-            // new session cookies have not propagated yet: retry once before giving up.
+            // Activate the user in the database. The access token goes in the Authorization
+            // header: Chrome on iOS may not send the new session cookies yet (JAVASCRIPT-NEXTJS-14).
+            // A 401 without a token falls back to the cookie: retry once before giving up.
+            const {
+                data: { session },
+            } = await supabase.auth.getSession()
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+            if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`
+
             const activate = () =>
                 fetch('/api/auth/activate', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers,
                 })
 
             let activateResponse = await activate()

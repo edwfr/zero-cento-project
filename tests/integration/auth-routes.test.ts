@@ -96,9 +96,11 @@ describe('GET /api/auth/me', () => {
 
 describe('POST /api/auth/activate', () => {
     it('activates the onboarding user and syncs metadata', async () => {
-        const response = await activate(makeRequest({}))
+        const request = makeRequest({})
+        const response = await activate(request)
 
         expect(response.status).toBe(200)
+        expect(requireAuthDuringOnboarding).toHaveBeenCalledWith(request)
         expect(prismaMock.user.update).toHaveBeenCalledWith(
             expect.objectContaining({
                 where: { id: mockTrainerSession.user.id },

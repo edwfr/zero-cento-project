@@ -6,6 +6,7 @@ const { authMock } = vi.hoisted(() => ({
     authMock: {
         verifyOtp: vi.fn(),
         setSession: vi.fn(),
+        getSession: vi.fn(),
         getUser: vi.fn(),
         updateUser: vi.fn(),
     },
@@ -113,5 +114,37 @@ describe('SetPasswordPage', () => {
         expect(
             await screen.findByRole('button', { name: 'auth:setPassword.submit' }),
         ).toBeInTheDocument()
+    })
+
+    it('sends the session access token to the activate endpoint', async () => {
+        setUrl('/onboarding/set-password')
+        authMock.getUser.mockResolvedValue({ data: { user: invitedUser }, error: null })
+        authMock.updateUser.mockResolvedValue({ data: { user: invitedUser }, error: null })
+        authMock.getSession.mockResolvedValue({
+            data: { session: { access_token: 'fresh-token' } },
+            error: null,
+        })
+        const fetchMock = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
+        vi.stubGlobal('fetch', fetchMock)
+
+        const { container } = render(<SetPasswordPage />)
+        await screen.findByRole('button', { name: 'auth:setPassword.submit' })
+        const [passwordInput, confirmInput] = Array.from(
+            container.querySelectorAll('input[type="password"]'),
+        )
+        fireEvent.change(passwordInput, { target: { value: 'new-password-1' } })
+        fireEvent.change(confirmInput, { target: { value: 'new-password-1' } })
+        fireEvent.click(screen.getByRole('button', { name: 'auth:setPassword.submit' }))
+
+        await waitFor(() =>
+            expect(fetchMock).toHaveBeenCalledWith(
+                '/api/auth/activate',
+                expect.objectContaining({
+                    method: 'POST',
+                    headers: expect.objectContaining({ Authorization: 'Bearer fresh-token' }),
+                }),
+            ),
+        )
+        vi.unstubAllGlobals()
     })
 })

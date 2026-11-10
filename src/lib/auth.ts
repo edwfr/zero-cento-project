@@ -172,16 +172,21 @@ export const getSessionIncludingInactive = cache(async (): Promise<AuthSession |
 
 /**
  * Require authentication during onboarding - returns session without checking isActive
- * Used for activate endpoint where user needs to be authenticated but not yet active
+ * Used for activate endpoint where user needs to be authenticated but not yet active.
+ * Accepts an `Authorization: Bearer` access token: right after updateUser(), Chrome on iOS
+ * (WKWebView) may not send the fresh session cookies yet (Sentry JAVASCRIPT-NEXTJS-14).
  */
-export async function requireAuthDuringOnboarding(): Promise<{ user: any; supabaseUser: SupabaseUser }> {
+export async function requireAuthDuringOnboarding(
+    request?: Request
+): Promise<{ user: any; supabaseUser: SupabaseUser }> {
     const supabase = await createClient()
+    const bearerToken = request?.headers.get('authorization')?.match(/^Bearer (.+)$/i)?.[1]
 
-    // Use getUser() to authenticate the token
+    // getUser() validates the token server-side, whether from the header or the cookie
     const {
         data: { user: supabaseUser },
         error,
-    } = await supabase.auth.getUser()
+    } = bearerToken ? await supabase.auth.getUser(bearerToken) : await supabase.auth.getUser()
 
     if (error || !supabaseUser) {
         throw apiError(
