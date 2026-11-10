@@ -54,8 +54,8 @@ describe('PersonalRecordsExplorer action buttons', () => {
 
         fireEvent.click(screen.getByLabelText('common.personalRecordsExplorer.expand'))
 
-        const editButtons = screen.getAllByTitle('common.edit')
-        const deleteButtons = screen.getAllByTitle('common.delete')
+        const editButtons = screen.getAllByRole('button', { name: 'common.edit' })
+        const deleteButtons = screen.getAllByRole('button', { name: 'common.delete' })
 
         expect(editButtons).toHaveLength(2)
         expect(deleteButtons).toHaveLength(2)
@@ -129,7 +129,7 @@ describe('PersonalRecordsExplorer action buttons', () => {
 
         fireEvent.click(screen.getByLabelText('common.personalRecordsExplorer.expand'))
 
-        const [latestDelete, historyDelete] = screen.getAllByTitle('common.delete')
+        const [latestDelete, historyDelete] = screen.getAllByRole('button', { name: 'common.delete' })
 
         fireEvent.click(latestDelete)
         expect(onDelete).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'rec-1' }))

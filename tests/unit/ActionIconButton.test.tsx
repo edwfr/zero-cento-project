@@ -40,9 +40,22 @@ describe('ActionIconButton', () => {
         expect(el).toBeDisabled()
     })
 
-    it('applies correct title attribute', () => {
+    it('shows the label as hover tooltip by default', () => {
         render(<ActionIconButton variant="edit" label="Modifica" onClick={vi.fn()} />)
-        expect(screen.getByTitle('Modifica')).toBeInTheDocument()
+        expect(screen.getByRole('tooltip', { hidden: true })).toHaveTextContent('Modifica')
+    })
+
+    it('shows the descriptive tooltip while keeping the short accessible name', () => {
+        render(
+            <ActionIconButton
+                variant="view-test"
+                label="Visualizza feedback"
+                tooltip="Risultati workout eseguiti dall'atleta"
+                href="/tests"
+            />
+        )
+        expect(screen.getByRole('link', { name: 'Visualizza feedback' })).toBeInTheDocument()
+        expect(screen.getByRole('tooltip', { hidden: true })).toHaveTextContent("Risultati workout eseguiti dall'atleta")
     })
 
     it('renders as disabled button when isLoading is true', () => {

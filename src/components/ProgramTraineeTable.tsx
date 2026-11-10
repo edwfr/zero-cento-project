@@ -358,21 +358,25 @@ export default function ProgramTraineeTable({
                                                             <ActionIconButton
                                                                 variant="edit"
                                                                 label={t('programs.editProgramAction')}
+                                                                tooltip={t('programs.editProgramTooltip')}
                                                                 href={getEditHref(program)}
                                                             />
                                                             <ActionIconButton
                                                                 variant="view"
                                                                 label={t('programs.viewProgram')}
+                                                                tooltip={t('programs.viewProgramTooltip')}
                                                                 href={getViewHref(program)}
                                                             />
                                                             <ActionIconButton
                                                                 variant="clone"
                                                                 label={t('programs.cloneProgram')}
+                                                                tooltip={t('programs.cloneProgramTooltip')}
                                                                 href={getCloneHref(program)}
                                                             />
                                                             <ActionIconButton
                                                                 variant="delete"
                                                                 label={t('programs.delete')}
+                                                                tooltip={t('programs.deleteProgramTooltip')}
                                                                 onClick={() => onDeleteProgram(program.id, program.title, program.status)}
                                                             />
                                                         </InlineActions>
@@ -382,28 +386,33 @@ export default function ProgramTraineeTable({
                                                                 <ActionIconButton
                                                                     variant="edit"
                                                                     label={t('programs.editProgramAction')}
+                                                                    tooltip={t('programs.editProgramTooltip')}
                                                                     href={getEditHref(program)}
                                                                 />
                                                             )}
                                                             <ActionIconButton
                                                                 variant="view"
                                                                 label={t('programs.viewProgram')}
+                                                                tooltip={t('programs.viewProgramTooltip')}
                                                                 href={getViewHref(program)}
                                                             />
                                                             <ActionIconButton
                                                                 variant="clone"
                                                                 label={t('programs.cloneProgram')}
+                                                                tooltip={t('programs.cloneProgramTooltip')}
                                                                 href={getCloneHref(program)}
                                                             />
                                                             <ActionIconButton
                                                                 variant="view-test"
                                                                 label={t('programs.viewTests')}
+                                                                tooltip={t('programs.viewTestsTooltip')}
                                                                 href={getViewTestsHref(program)}
                                                             />
                                                             {onExportPdf && (
                                                                 <ActionIconButton
                                                                     variant="export-pdf"
                                                                     label={t('programs.exportPdf')}
+                                                                    tooltip={t('programs.exportPdfTooltip')}
                                                                     onClick={() => onExportPdf(program)}
                                                                     isLoading={exportingProgramId === program.id}
                                                                 />
@@ -411,6 +420,7 @@ export default function ProgramTraineeTable({
                                                             <ActionIconButton
                                                                 variant="delete"
                                                                 label={t('programs.delete')}
+                                                                tooltip={t('programs.deleteProgramTooltip')}
                                                                 onClick={() => onDeleteProgram(program.id, program.title, program.status)}
                                                             />
                                                         </InlineActions>

@@ -6,6 +6,8 @@ export type ActionVariant = 'edit' | 'view' | 'view-test' | 'delete' | 'activate
 export interface ActionIconButtonProps {
     variant: ActionVariant
     label: string
+    /** Descriptive hover text; falls back to `label`. */
+    tooltip?: string
     href?: string
     onClick?: () => void
     disabled?: boolean
@@ -28,10 +30,13 @@ const VARIANT_CONFIG: Record<ActionVariant, { Icon: LucideIcon; activeClass: str
 const BASE =
     'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white transition-colors'
 const DISABLED_CLASS = 'bg-gray-200 text-gray-500 cursor-not-allowed'
+const TOOLTIP_CLASS =
+    'pointer-events-none invisible absolute bottom-full right-0 z-20 mb-2 w-max max-w-[16rem] rounded-md bg-gray-900 px-2 py-1 text-left text-xs font-medium leading-snug text-white opacity-0 shadow-lg transition-opacity delay-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100'
 
 export function ActionIconButton({
     variant,
     label,
+    tooltip,
     href,
     onClick,
     disabled = false,
@@ -47,26 +52,30 @@ export function ActionIconButton({
         ? <Loader2 className="w-4 h-4 animate-spin" />
         : <Icon className="w-4 h-4" />
 
-    if (href && !isDisabled) {
-        return (
-            <Link href={href} className={finalClassName} title={label} aria-label={label} tabIndex={tabIndex}>
-                {icon}
-            </Link>
-        )
-    }
-
-    return (
+    const control = href && !isDisabled ? (
+        <Link href={href} className={finalClassName} aria-label={label} tabIndex={tabIndex}>
+            {icon}
+        </Link>
+    ) : (
         <button
             type="button"
             onClick={onClick}
             disabled={isDisabled}
             className={finalClassName}
-            title={label}
             aria-label={label}
             tabIndex={tabIndex}
         >
             {icon}
         </button>
+    )
+
+    return (
+        <span className="group relative inline-flex shrink-0">
+            {control}
+            <span role="tooltip" className={TOOLTIP_CLASS}>
+                {tooltip ?? label}
+            </span>
+        </span>
     )
 }
 

@@ -10,6 +10,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### feat(ui): tooltip descrittivo sulle azioni dei programmi del trainer (10/11/2026)
+- `ActionIconButton`: nuovo prop opzionale `tooltip`; al passaggio del mouse (o al focus da tastiera) compare subito un tooltip visibile (`role="tooltip"`) con il testo descrittivo, o con `label` se `tooltip` manca. Sostituisce il `title` nativo, lento e scarno. Il nome accessibile resta `label` (`aria-label`), quindi i selettori esistenti non cambiano.
+- `ProgramTraineeTable`: tooltip descrittivi su Modifica, Visualizza, Clona, Visualizza feedback, Esporta PDF ed Elimina. Il tooltip di "Visualizza" chiarisce che mostra il programma pianificato; quello di "Visualizza feedback" che mostra pesi e reps eseguiti dall'atleta. Il motivo: i trainer confondevano le due pagine. Chiavi `programs.*Tooltip` in it/en.
+- Test: `ActionIconButton.test.tsx` (tooltip di default e descrittivo), `PersonalRecordsExplorer.test.tsx` (selettori per nome accessibile invece di `title`).
+
 ### fix(programs): toast d'errore export PDF trainer senza messaggi tecnici (10/11/2026)
 - `useTrainerProgramPdfExport`: il messaggio dell'API si mostra solo sulla risposta `!res.ok` (corpo letto con `.json().catch(() => null)`, così una pagina HTML 502 ricade sul messaggio generico). Errori di rete, di parsing e del chunk della libreria PDF mostrano sempre `programs.exportPdfError`, mai `err.message` (es. `Unexpected token '<'`, `Failed to fetch`). Test aggiornato (rejection con `Error`) + casi corpo non JSON e rete assente.
 
