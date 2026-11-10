@@ -166,14 +166,14 @@ program editor; auto-inserting the new exercise into a row.
 Consumes from Task 1:
 `ExerciseForm({ onSuccess: (e: { id: string; name: string }) => void, onCancel: () => void })`.
 
-- [ ] **Step 1: tests** — same fetch mock as Task 1.
+- [x] **Step 1: tests** — same fetch mock as Task 1.
   - renders `role="dialog"`, `aria-modal="true"`, labelled by the title `exercises.newExerciseTitle`
   - successful submit → `onCreated` called with `{ id: 'ex1', name: 'Trazioni' }`
   - form Cancel → `onClose` called
   - ✕ button (`aria-label` = `common:common.close`, check the key exists, otherwise reuse the one `ExerciseCreateModal` uses) → `onClose`
   - ESC keydown on document → `onClose`
   - click on backdrop → `onClose` NOT called
-- [ ] **Step 2: implementation**
+- [x] **Step 2: implementation**
 
   ```ts
   export interface ExerciseQuickCreateModalProps {
@@ -192,8 +192,8 @@ Consumes from Task 1:
   body = `<ExerciseForm onSuccess={onCreated} onCancel={onClose} />`. No backdrop
   click handler. Export it and its props type from `src/components/index.ts` next to
   `ExerciseCreateModal`.
-- [ ] **Step 3: run the test command and `npm run type-check`**
-- [ ] **Step 4: CHANGELOG entry and commit** — `feat(exercises): add ExerciseQuickCreateModal`
+- [x] **Step 3: run the test command and `npm run type-check`**
+- [x] **Step 4: CHANGELOG entry and commit** — `feat(exercises): add ExerciseQuickCreateModal`
 
 ---
 
