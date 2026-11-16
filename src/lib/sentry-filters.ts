@@ -6,7 +6,8 @@ const AUTH_LOCK_STOLEN_MESSAGE = /Lock ".*" was released because another request
 const AUTOSAVE_TRANSACTION = '/trainee/workouts/:id'
 // fetch() network failure as worded by Chromium, WebKit and Firefox
 const NETWORK_FAILURE_MESSAGE = /^(Failed to fetch|Load failed|NetworkError when attempting to fetch resource\.?)$/
-const SW_REGISTER_FRAME = /ServiceWorkerContainer\.register|@serwist\/window/
+// Native frame, crawler stubs of navigator.serviceWorker.register (Google WRS), or Serwist itself
+const SW_REGISTER_FRAME = /ServiceWorkerContainer\.register|navigator\.serviceWorker\.register|@serwist\/window/
 const SW_SCRIPT_LOAD_FAILED = /^Script .*\/sw\.js load failed$/
 const EXTENSION_FRAME =/^(chrome|moz|safari(-web)?)-extension:\/\//
 
@@ -35,6 +36,7 @@ export function shouldDropClientEvent(event: ErrorEvent): boolean {
     }
 
     // Service worker registration refused by the browser (private mode, policy, blocked storage)
+    // or by a crawler that stubs the API (JAVASCRIPT-NEXTJS-N)
     if (
         exception.value === 'Rejected' &&
         (exception.stacktrace?.frames ?? []).some((frame) =>

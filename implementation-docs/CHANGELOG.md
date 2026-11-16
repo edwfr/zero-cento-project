@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### fix(sentry): scarta "Rejected" della registrazione service worker dai crawler (16/11/2026)
+- `shouldDropClientEvent()`: il filtro "Rejected" riconosceva solo il frame nativo `ServiceWorkerContainer.register` o `@serwist/window`. Il Web Rendering Service di Google sostituisce `navigator.serviceWorker.register` con un suo stub (frame `wrsParams.serviceWorkers.navigator.serviceWorker.register`) e lato client i frame Serwist sono minificati, quindi l'evento passava (Sentry JAVASCRIPT-NEXTJS-N, 60 eventi, nessun utente reale). La regex accetta ora anche `navigator.serviceWorker.register`. Test in `sentry-filters.test.ts` con i frame dell'evento reale.
+
 ### fix(users): cambio email allineato fra Supabase Auth e Prisma + migrazioni email minuscole (16/11/2026)
 - `PUT /api/users/[id]`: un cambio d'email aggiorna prima l'account Supabase (`auth.admin.updateUserById`), poi Prisma. Prima solo Prisma: il trainee non veniva più associato alla sua riga (stessa causa di JAVASCRIPT-NEXTJS-14). 409 `user.emailExists` se l'email è già di un altro utente (controllo Prisma case-insensitive prima di toccare Supabase, o `email_exists` da Supabase); errore Supabase → 500 e Prisma intatto; errore Prisma dopo Supabase → l'email Supabase viene ripristinata. Un cambio di sole maiuscole non tocca Supabase.
 - Migrazioni, applicate dal deploy di produzione (`scripts/vercel-build.sh`): `20261116120000_normalize_user_emails` porta `users.email` in minuscolo (4 righe, nessuna collisione verificata); `20261116120100_users_email_lowercase_check` aggiunge `CHECK (email = lower(trim(email)))`. Il vincolo deve uscire insieme alla normalizzazione degli schemi Zod: con il codice precedente un'email con maiuscole fallirebbe dopo l'invio dell'invito Supabase.

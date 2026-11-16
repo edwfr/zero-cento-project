@@ -53,6 +53,25 @@ describe('shouldDropClientEvent', () => {
         expect(shouldDropClientEvent(event)).toBe(true)
     })
 
+    // Google's Web Rendering Service stubs navigator.serviceWorker.register (JAVASCRIPT-NEXTJS-N)
+    it('drops "Rejected" from a crawler stub of navigator.serviceWorker.register', () => {
+        const event = {
+            type: undefined,
+            exception: {
+                values: [{
+                    type: 'Error',
+                    value: 'Rejected',
+                    stacktrace: { frames: [
+                        { filename: 'https://www.zerocento-bodylab.it/_next/static/chunks/a.js', function: 'o.register' },
+                        { filename: 'https://www.zerocento-bodylab.it/_next/static/chunks/a.js', function: 'o._registerScript' },
+                        { filename: '<anonymous>', function: 'wrsParams.serviceWorkers.navigator.serviceWorker.register' },
+                    ] },
+                }],
+            },
+        } as ErrorEvent
+        expect(shouldDropClientEvent(event)).toBe(true)
+    })
+
     it('keeps "Rejected" errors that do not come from service worker registration', () => {
         expect(shouldDropClientEvent(eventWith('Error', 'Rejected'))).toBe(false)
     })
