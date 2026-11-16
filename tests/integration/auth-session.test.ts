@@ -75,7 +75,7 @@ describe('getSession', () => {
             },
             supabaseUser: mockSupabaseUserWithFullMeta,
         })
-        expect(prismaMock.user.findUnique).not.toHaveBeenCalled()
+        expect(prismaMock.user.findFirst).not.toHaveBeenCalled()
     })
 
     it('returns null without calling Prisma when metadata shows isActive=false', async () => {
@@ -96,7 +96,7 @@ describe('getSession', () => {
         const session = await getSession()
 
         expect(session).toBeNull()
-        expect(prismaMock.user.findUnique).not.toHaveBeenCalled()
+        expect(prismaMock.user.findFirst).not.toHaveBeenCalled()
     })
 
     it('ignores a role the user injected into user_metadata', async () => {
@@ -133,7 +133,7 @@ describe('getSession', () => {
             },
         } as never)
 
-        prismaMock.user.findUnique.mockResolvedValue({
+        prismaMock.user.findFirst.mockResolvedValue({
             id: 'user-uuid-2',
             email: 'legacy@example.com',
             firstName: 'Legacy',
@@ -144,8 +144,8 @@ describe('getSession', () => {
 
         const session = await getSession()
 
-        expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
-            where: { email: 'legacy@example.com' },
+        expect(prismaMock.user.findFirst).toHaveBeenCalledWith({
+            where: { email: { equals: 'legacy@example.com', mode: 'insensitive' } },
             select: {
                 id: true,
                 email: true,

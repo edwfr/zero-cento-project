@@ -7,9 +7,9 @@ vi.mock('react', async (importOriginal) => {
 })
 
 // vi.mock factories are hoisted: the spies must be created with vi.hoisted
-const { getUser, findUnique } = vi.hoisted(() => ({
+const { getUser, findFirst } = vi.hoisted(() => ({
     getUser: vi.fn(),
-    findUnique: vi.fn(),
+    findFirst: vi.fn(),
 }))
 
 vi.mock('@/lib/supabase-server', () => ({
@@ -17,7 +17,7 @@ vi.mock('@/lib/supabase-server', () => ({
 }))
 
 vi.mock('@/lib/prisma', () => ({
-    prisma: { user: { findUnique } },
+    prisma: { user: { findFirst } },
 }))
 
 import { getSession, getSessionIncludingInactive } from '@/lib/auth'
@@ -60,7 +60,7 @@ describe('getSession authorization source', () => {
         expect(session?.user.role).toBe('trainer')
         expect(session?.user.firstName).toBe('Marco')
         expect(session?.user.lastName).toBe('Trainer')
-        expect(findUnique).not.toHaveBeenCalled()
+        expect(findFirst).not.toHaveBeenCalled()
     })
 
     it('ignores a role injected into user_metadata', async () => {
@@ -102,12 +102,12 @@ describe('getSession authorization source', () => {
             },
             error: null,
         })
-        findUnique.mockResolvedValue(prismaUser)
+        findFirst.mockResolvedValue(prismaUser)
 
         const session = await getSession()
 
-        expect(findUnique).toHaveBeenCalledWith({
-            where: { email: 'user@zerocento.it' },
+        expect(findFirst).toHaveBeenCalledWith({
+            where: { email: { equals: 'user@zerocento.it', mode: 'insensitive' } },
             select: {
                 id: true,
                 email: true,
@@ -125,17 +125,17 @@ describe('getSession authorization source', () => {
             data: { user: supabaseUser({ app_metadata: { role: 'trainer', isActive: true } }) },
             error: null,
         })
-        findUnique.mockResolvedValue(prismaUser)
+        findFirst.mockResolvedValue(prismaUser)
 
         const session = await getSession()
 
-        expect(findUnique).toHaveBeenCalled()
+        expect(findFirst).toHaveBeenCalled()
         expect(session?.user.firstName).toBe('Mario')
     })
 
     it('returns null when Prisma says the user is inactive', async () => {
         getUser.mockResolvedValue({ data: { user: supabaseUser() }, error: null })
-        findUnique.mockResolvedValue({ ...prismaUser, isActive: false })
+        findFirst.mockResolvedValue({ ...prismaUser, isActive: false })
 
         await expect(getSession()).resolves.toBeNull()
     })
@@ -144,7 +144,7 @@ describe('getSession authorization source', () => {
         getUser.mockResolvedValue({ data: { user: null }, error: { message: 'invalid' } })
 
         await expect(getSession()).resolves.toBeNull()
-        expect(findUnique).not.toHaveBeenCalled()
+        expect(findFirst).not.toHaveBeenCalled()
     })
 })
 
@@ -168,7 +168,7 @@ describe('getSessionIncludingInactive authorization source', () => {
 
         expect(session?.user.isActive).toBe(false)
         expect(session?.user.role).toBe('trainee')
-        expect(findUnique).not.toHaveBeenCalled()
+        expect(findFirst).not.toHaveBeenCalled()
     })
 
     it('ignores a role injected into user_metadata', async () => {
@@ -189,7 +189,7 @@ describe('getSessionIncludingInactive authorization source', () => {
 
     it('falls back to Prisma and keeps inactive users', async () => {
         getUser.mockResolvedValue({ data: { user: supabaseUser() }, error: null })
-        findUnique.mockResolvedValue({ ...prismaUser, isActive: false })
+        findFirst.mockResolvedValue({ ...prismaUser, isActive: false })
 
         const session = await getSessionIncludingInactive()
 

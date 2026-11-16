@@ -29,6 +29,20 @@ function readDisplayMetadata(supabaseUser: SupabaseUser): { firstName?: string; 
     return { firstName: meta?.firstName, lastName: meta?.lastName }
 }
 
+/**
+ * Prisma user of a Supabase user. Supabase Auth stores emails lowercased, while
+ * Prisma rows may hold the email as typed: compare without case (Sentry
+ * JAVASCRIPT-NEXTJS-14). Not by id: some legacy rows have a Prisma id that
+ * differs from the Auth id.
+ */
+async function findAppUserByEmail(email: string | undefined) {
+    if (!email) return null
+    return prisma.user.findFirst({
+        where: { email: { equals: email, mode: 'insensitive' } },
+        select: { id: true, email: true, firstName: true, lastName: true, role: true, isActive: true },
+    })
+}
+
 export interface AuthSession {
     user: {
         id: string
@@ -86,17 +100,7 @@ export const getSession = cache(async (): Promise<AuthSession | null> => {
     }
 
     // Fallback: legacy users without complete metadata — hit Prisma
-    const user = await prisma.user.findUnique({
-        where: { email: supabaseUser.email },
-        select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-            role: true,
-            isActive: true,
-        },
-    })
+    const user = await findAppUserByEmail(supabaseUser.email)
 
     if (!user || !user.isActive) {
         return null
@@ -148,17 +152,7 @@ export const getSessionIncludingInactive = cache(async (): Promise<AuthSession |
     }
 
     // Fallback: legacy users without complete metadata — hit Prisma
-    const user = await prisma.user.findUnique({
-        where: { email: supabaseUser.email },
-        select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-            role: true,
-            isActive: true,
-        },
-    })
+    const user = await findAppUserByEmail(supabaseUser.email)
 
     if (!user) {
         return null
@@ -199,17 +193,7 @@ export async function requireAuthDuringOnboarding(
     }
 
     // Fetch user data from Prisma using email (without checking isActive)
-    const user = await prisma.user.findUnique({
-        where: { email: supabaseUser.email },
-        select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-            role: true,
-            isActive: true,
-        },
-    })
+    const user = await findAppUserByEmail(supabaseUser.email)
 
     if (!user) {
         throw apiError('UNAUTHORIZED', 'User not found', 401, undefined, AUTH_ERROR_KEYS.userNotFound)

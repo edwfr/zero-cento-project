@@ -59,7 +59,7 @@ describe('getSession', () => {
         getUser.mockResolvedValue({ data: { user: null }, error: { message: 'jwt expired' } })
 
         await expect(getSession()).resolves.toBeNull()
-        expect(prismaMock.user.findUnique).not.toHaveBeenCalled()
+        expect(prismaMock.user.findFirst).not.toHaveBeenCalled()
     })
 
     it('returns null when there is no user', async () => {
@@ -79,7 +79,7 @@ describe('getSession', () => {
             role: 'trainer',
             isActive: true,
         })
-        expect(prismaMock.user.findUnique).not.toHaveBeenCalled()
+        expect(prismaMock.user.findFirst).not.toHaveBeenCalled()
     })
 
     it('returns null when the metadata says the account is inactive', async () => {
@@ -95,7 +95,7 @@ describe('getSession', () => {
         })
 
         await expect(getSession()).resolves.toBeNull()
-        expect(prismaMock.user.findUnique).not.toHaveBeenCalled()
+        expect(prismaMock.user.findFirst).not.toHaveBeenCalled()
     })
 
     it('falls back to Prisma when the metadata is incomplete', async () => {
@@ -109,12 +109,12 @@ describe('getSession', () => {
             },
             error: null,
         })
-        prismaMock.user.findUnique.mockResolvedValue(prismaUser as never)
+        prismaMock.user.findFirst.mockResolvedValue(prismaUser as never)
 
         const session = await getSession()
 
-        expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
-            where: { email: 'trainer@zerocento.it' },
+        expect(prismaMock.user.findFirst).toHaveBeenCalledWith({
+            where: { email: { equals: 'trainer@zerocento.it', mode: 'insensitive' } },
             select: { id: true, email: true, firstName: true, lastName: true, role: true, isActive: true },
         })
         expect(session?.user.id).toBe('trainer-uuid-1')
@@ -125,7 +125,7 @@ describe('getSession', () => {
             data: { user: makeSupabaseUser({ email: 'ghost@zerocento.it', app_metadata: {}, user_metadata: {} }) },
             error: null,
         })
-        prismaMock.user.findUnique.mockResolvedValue(null)
+        prismaMock.user.findFirst.mockResolvedValue(null)
 
         await expect(getSession()).resolves.toBeNull()
     })
@@ -135,7 +135,7 @@ describe('getSession', () => {
             data: { user: makeSupabaseUser({ email: 'trainer@zerocento.it', app_metadata: {}, user_metadata: {} }) },
             error: null,
         })
-        prismaMock.user.findUnique.mockResolvedValue({ ...prismaUser, isActive: false } as never)
+        prismaMock.user.findFirst.mockResolvedValue({ ...prismaUser, isActive: false } as never)
 
         await expect(getSession()).resolves.toBeNull()
     })
@@ -168,12 +168,12 @@ describe('getSession', () => {
             },
             error: null,
         })
-        prismaMock.user.findUnique.mockResolvedValue({ ...prismaUser, role: 'trainee' } as never)
+        prismaMock.user.findFirst.mockResolvedValue({ ...prismaUser, role: 'trainee' } as never)
 
         const session = await getSession()
 
         // metadata is not a trustworthy source here: Prisma decides
-        expect(prismaMock.user.findUnique).toHaveBeenCalled()
+        expect(prismaMock.user.findFirst).toHaveBeenCalled()
         expect(session?.user.role).toBe('trainee')
     })
 })
@@ -194,7 +194,7 @@ describe('getSessionIncludingInactive', () => {
         const session = await getSessionIncludingInactive()
 
         expect(session?.user.isActive).toBe(false)
-        expect(prismaMock.user.findUnique).not.toHaveBeenCalled()
+        expect(prismaMock.user.findFirst).not.toHaveBeenCalled()
     })
 
     it('returns the session of an inactive user', async () => {
@@ -202,7 +202,7 @@ describe('getSessionIncludingInactive', () => {
             data: { user: makeSupabaseUser({ email: 'trainer@zerocento.it', app_metadata: {}, user_metadata: {} }) },
             error: null,
         })
-        prismaMock.user.findUnique.mockResolvedValue({ ...prismaUser, isActive: false } as never)
+        prismaMock.user.findFirst.mockResolvedValue({ ...prismaUser, isActive: false } as never)
 
         const session = await getSessionIncludingInactive()
 
@@ -214,7 +214,7 @@ describe('getSessionIncludingInactive', () => {
             data: { user: makeSupabaseUser({ email: 'ghost@zerocento.it', app_metadata: {}, user_metadata: {} }) },
             error: null,
         })
-        prismaMock.user.findUnique.mockResolvedValue(null)
+        prismaMock.user.findFirst.mockResolvedValue(null)
 
         await expect(getSessionIncludingInactive()).resolves.toBeNull()
     })
@@ -309,7 +309,7 @@ describe('requireRole', () => {
 
 describe('requireAuthDuringOnboarding', () => {
     it('returns the user even when the account is not active yet', async () => {
-        prismaMock.user.findUnique.mockResolvedValue({ ...prismaUser, isActive: false } as never)
+        prismaMock.user.findFirst.mockResolvedValue({ ...prismaUser, isActive: false } as never)
 
         const result = await requireAuthDuringOnboarding()
 
@@ -318,7 +318,7 @@ describe('requireAuthDuringOnboarding', () => {
     })
 
     it('validates the cookie session when no bearer token is sent', async () => {
-        prismaMock.user.findUnique.mockResolvedValue({ ...prismaUser, isActive: false } as never)
+        prismaMock.user.findFirst.mockResolvedValue({ ...prismaUser, isActive: false } as never)
 
         await requireAuthDuringOnboarding(new Request('http://localhost/api/auth/activate'))
 
@@ -326,7 +326,7 @@ describe('requireAuthDuringOnboarding', () => {
     })
 
     it('validates the bearer token when the client sends one', async () => {
-        prismaMock.user.findUnique.mockResolvedValue({ ...prismaUser, isActive: false } as never)
+        prismaMock.user.findFirst.mockResolvedValue({ ...prismaUser, isActive: false } as never)
         const request = new Request('http://localhost/api/auth/activate', {
             headers: { Authorization: 'Bearer access-token-1' },
         })
@@ -347,8 +347,38 @@ describe('requireAuthDuringOnboarding', () => {
         })
     })
 
+    it('matches the Prisma email without case: Supabase stores it lowercased (JAVASCRIPT-NEXTJS-14)', async () => {
+        getUser.mockResolvedValue({
+            data: { user: makeSupabaseUser({ id: 'supabase-uuid-1', email: 'mario.rossi@zerocento.it' }) },
+            error: null,
+        })
+        prismaMock.user.findFirst.mockResolvedValue({
+            ...prismaUser,
+            email: 'Mario.Rossi@zerocento.it',
+            isActive: false,
+        } as never)
+
+        const result = await requireAuthDuringOnboarding()
+
+        expect(prismaMock.user.findFirst).toHaveBeenCalledWith({
+            where: { email: { equals: 'mario.rossi@zerocento.it', mode: 'insensitive' } },
+            select: { id: true, email: true, firstName: true, lastName: true, role: true, isActive: true },
+        })
+        expect(result.user.email).toBe('Mario.Rossi@zerocento.it')
+    })
+
+    it('throws 401 without querying Prisma when the Supabase user has no email', async () => {
+        getUser.mockResolvedValue({
+            data: { user: makeSupabaseUser({ id: 'supabase-uuid-1', email: undefined }) },
+            error: null,
+        })
+
+        expect(await caught(requireAuthDuringOnboarding())).toMatchObject({ status: 401, key: 'user.notFound' })
+        expect(prismaMock.user.findFirst).not.toHaveBeenCalled()
+    })
+
     it('throws 401 with userNotFound when Prisma has no user', async () => {
-        prismaMock.user.findUnique.mockResolvedValue(null)
+        prismaMock.user.findFirst.mockResolvedValue(null)
 
         expect(await caught(requireAuthDuringOnboarding())).toEqual({
             status: 401,

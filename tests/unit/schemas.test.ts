@@ -13,6 +13,7 @@ import {
 } from '@/schemas/program'
 import {
     createUserSchema,
+    updateUserSchema,
     passwordSchema,
     changePasswordSchema,
     loginSchema,
@@ -496,6 +497,30 @@ describe('createUserSchema', () => {
         expect(createUserSchema.safeParse({ ...validUser, role: 'admin' }).success).toBe(true)
         expect(createUserSchema.safeParse({ ...validUser, role: 'trainer' }).success).toBe(true)
         expect(createUserSchema.safeParse({ ...validUser, role: 'trainee' }).success).toBe(true)
+    })
+
+    // Supabase Auth stores emails lowercased: Prisma must hold the same value (JAVASCRIPT-NEXTJS-14)
+    it('normalizes the email to trimmed lowercase', () => {
+        const result = createUserSchema.safeParse({ ...validUser, email: '  Mario.Rossi@ZeroCento.it ' })
+        expect(result.success).toBe(true)
+        expect(result.success && result.data.email).toBe('mario.rossi@zerocento.it')
+    })
+})
+
+describe('updateUserSchema', () => {
+    it('normalizes the email to trimmed lowercase', () => {
+        const result = updateUserSchema.safeParse({ email: ' Mario.Rossi@ZeroCento.it' })
+        expect(result.success).toBe(true)
+        expect(result.success && result.data.email).toBe('mario.rossi@zerocento.it')
+    })
+
+    it('leaves the email out when it is not sent', () => {
+        const result = updateUserSchema.safeParse({ firstName: 'Mario' })
+        expect(result.success && result.data).toEqual({ firstName: 'Mario' })
+    })
+
+    it('rejects an invalid email', () => {
+        expect(updateUserSchema.safeParse({ email: 'not-an-email' }).success).toBe(false)
     })
 })
 

@@ -10,6 +10,13 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### fix(auth): attivazione onboarding con email in maiuscolo e retry dopo attivazione fallita (16/11/2026)
+- Causa di Sentry JAVASCRIPT-NEXTJS-14 (401 su `/api/auth/activate`): Supabase Auth salva l'email in minuscolo, Prisma la salvava come digitata dal trainer, e `requireAuthDuringOnboarding` la cercava con match esatto → "User not found". Verificato su DB: 4 utenti su 78 con email mixed-case, nessuno attivato via API (gli ultimi due riattivati a mano dal trainer).
+- `src/lib/auth.ts`: nuovo `findAppUserByEmail()`, ricerca case-insensitive (`mode: 'insensitive'`) usata da `requireAuthDuringOnboarding` e dai fallback Prisma di `getSession` / `getSessionIncludingInactive`; email assente → `null` senza query. Non per id: un admin ha id Prisma diverso dall'id Auth.
+- `src/schemas/user.ts`: `createUserSchema` e `updateUserSchema` normalizzano l'email con `trim().toLowerCase()` (anche il messaggio di `updateUserSchema` passa alla chiave i18n `validation.invalidEmail`).
+- `onboarding/set-password`: dopo un'attivazione fallita il retry con la stessa password non richiama `updateUser` (Supabase rispondeva `same_password`, Sentry JAVASCRIPT-NEXTJS-1E, e l'utente restava bloccato); `same_password` è trattato come password già impostata. Una password diversa al retry viene comunque salvata.
+- Test: `auth.test.ts`, `auth-metadata.test.ts`, `auth-session.test.ts` (nuova forma della query + casi mixed-case e email assente), `schemas.test.ts` (normalizzazione), `onboarding-set-password.test.tsx` (retry, password cambiata, `same_password`).
+
 ### chore(mcp): server MCP Vercel in `.mcp.json` (10/11/2026)
 - Aggiunto `vercel` (`https://mcp.vercel.com`, HTTP + OAuth) accanto a sentry e supabase, per consultare deployment e log di build/runtime da Claude Code. Primo uso: `/mcp` → vercel → Authenticate.
 

@@ -11,8 +11,11 @@ export const passwordSchema = z
     .regex(/[a-z]/, 'validation.passwordLowercase')
     .regex(/[0-9]/, 'validation.passwordNumber')
 
+// Supabase Auth stores emails lowercased: the Prisma copy must match it (Sentry JAVASCRIPT-NEXTJS-14)
+const emailSchema = z.string().trim().toLowerCase().email('validation.invalidEmail')
+
 export const createUserSchema = z.object({
-    email: z.string().email('validation.invalidEmail'),
+    email: emailSchema,
     firstName: z.string().min(2, 'validation.firstNameTooShort').max(50, 'validation.firstNameTooLong'),
     lastName: z.string().min(2, 'validation.lastNameTooShort').max(50, 'validation.lastNameTooLong'),
     role: z.enum(['admin', 'trainer', 'trainee']),
@@ -20,7 +23,7 @@ export const createUserSchema = z.object({
 })
 
 export const updateUserSchema = z.object({
-    email: z.string().email('Email non valida').optional(),
+    email: emailSchema.optional(),
     firstName: z.string().min(2).max(50).optional(),
     lastName: z.string().min(2).max(50).optional(),
     isActive: z.boolean().optional(),

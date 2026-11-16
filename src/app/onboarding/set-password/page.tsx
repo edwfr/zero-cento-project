@@ -27,6 +27,9 @@ export default function SetPasswordPage() {
     const [userData, setUserData] = useState<any>(null)
     const [pendingTokenHash, setPendingTokenHash] = useState<string | null>(null)
     const [activating, setActivating] = useState(false)
+    // Password already saved by updateUser(): a retry after a failed activation must not
+    // set the same password again, Supabase rejects it (Sentry JAVASCRIPT-NEXTJS-1E)
+    const [savedPassword, setSavedPassword] = useState<string | null>(null)
 
     useEffect(() => {
         const supabase = createClient()
@@ -163,12 +166,16 @@ export default function SetPasswordPage() {
         try {
             const supabase = createClient()
 
-            // Set the password
-            const { error: updateError } = await supabase.auth.updateUser({
-                password: password,
-            })
+            // Set the password, unless a previous attempt already saved this one
+            if (savedPassword !== password) {
+                const { error: updateError } = await supabase.auth.updateUser({
+                    password: password,
+                })
 
-            if (updateError) throw updateError
+                // same_password: the password was set by an attempt whose activation failed
+                if (updateError && updateError.code !== 'same_password') throw updateError
+                setSavedPassword(password)
+            }
 
             // Activate the user in the database. The access token goes in the Authorization
             // header: Chrome on iOS may not send the new session cookies yet (JAVASCRIPT-NEXTJS-14).

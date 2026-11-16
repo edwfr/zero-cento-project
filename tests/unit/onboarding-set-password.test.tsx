@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import * as Sentry from '@sentry/nextjs'
 import SetPasswordPage from '@/app/onboarding/set-password/page'
 
 const { authMock } = vi.hoisted(() => ({
@@ -146,5 +147,78 @@ describe('SetPasswordPage', () => {
             ),
         )
         vi.unstubAllGlobals()
+    })
+
+    describe('retry after a failed activation (JAVASCRIPT-NEXTJS-1E)', () => {
+        const json = (status: number) => () => Promise.resolve(new Response('{}', { status }))
+
+        async function renderPasswordForm() {
+            setUrl('/onboarding/set-password')
+            authMock.getUser.mockResolvedValue({ data: { user: invitedUser }, error: null })
+            authMock.getSession.mockResolvedValue({ data: { session: { access_token: 't' } }, error: null })
+            const { container } = render(<SetPasswordPage />)
+            await screen.findByRole('button', { name: 'auth:setPassword.submit' })
+            const [passwordInput, confirmInput] = Array.from(
+                container.querySelectorAll('input[type="password"]'),
+            )
+            fireEvent.change(passwordInput, { target: { value: 'new-password-1' } })
+            fireEvent.change(confirmInput, { target: { value: 'new-password-1' } })
+        }
+
+        const submit = () => fireEvent.click(screen.getByRole('button', { name: 'auth:setPassword.submit' }))
+
+        afterEach(() => {
+            vi.unstubAllGlobals()
+        })
+
+        it('does not set the password again when only the activation failed', async () => {
+            authMock.updateUser.mockResolvedValue({ data: { user: invitedUser }, error: null })
+            const fetchMock = vi.fn().mockImplementationOnce(json(500)).mockImplementation(json(200))
+            vi.stubGlobal('fetch', fetchMock)
+            await renderPasswordForm()
+
+            submit()
+            await screen.findByText('auth:setPassword.errorActivateUser')
+            submit()
+
+            await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2))
+            expect(authMock.updateUser).toHaveBeenCalledTimes(1)
+            await waitFor(() =>
+                expect(screen.queryByText('auth:setPassword.errorActivateUser')).not.toBeInTheDocument(),
+            )
+        })
+
+        it('sets the password again when the retry uses a different one', async () => {
+            authMock.updateUser.mockResolvedValue({ data: { user: invitedUser }, error: null })
+            const fetchMock = vi.fn().mockImplementationOnce(json(500)).mockImplementation(json(200))
+            vi.stubGlobal('fetch', fetchMock)
+            await renderPasswordForm()
+
+            submit()
+            await screen.findByText('auth:setPassword.errorActivateUser')
+            const inputs = Array.from(document.querySelectorAll('input[type="password"]'))
+            inputs.forEach((input) => fireEvent.change(input, { target: { value: 'other-password-2' } }))
+            submit()
+
+            await waitFor(() => expect(authMock.updateUser).toHaveBeenCalledTimes(2))
+            expect(authMock.updateUser).toHaveBeenLastCalledWith({ password: 'other-password-2' })
+        })
+
+        it('treats same_password as a password already set and goes on with the activation', async () => {
+            authMock.updateUser.mockResolvedValue({
+                data: { user: null },
+                error: { name: 'AuthApiError', code: 'same_password', message: 'New password should be different' },
+            })
+            const fetchMock = vi.fn().mockImplementation(json(200))
+            vi.stubGlobal('fetch', fetchMock)
+            await renderPasswordForm()
+
+            submit()
+
+            await waitFor(() =>
+                expect(fetchMock).toHaveBeenCalledWith('/api/auth/activate', expect.objectContaining({ method: 'POST' })),
+            )
+            expect(Sentry.captureException).not.toHaveBeenCalled()
+        })
     })
 })
