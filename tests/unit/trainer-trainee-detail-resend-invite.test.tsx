@@ -20,6 +20,10 @@ vi.mock('@/components/TraineePlannedMuscleGroupReport', () => ({
     default: () => <div data-testid="planned-muscle-report" />,
 }))
 
+vi.mock('@/lib/use-trainer-program-pdf-export', () => ({
+    useTrainerProgramPdfExport: () => ({ exportProgramPdf: vi.fn(), exportingProgramId: null }),
+}))
+
 const showToast = vi.fn()
 
 vi.mock('@/components', async () => {

@@ -10,6 +10,9 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### test(trainer): mock dell'export PDF nei test della pagina dettaglio trainee (16/11/2026)
+- `trainer-trainee-detail-resend-invite.test.tsx` e `trainer-trainee-detail-sbd-report.test.tsx` fallivano (5 test) con "useToast must be used within ToastProvider": `useTrainerProgramPdfExport` (aggiunto alla pagina con l'export PDF) importa `useToast` da `@/components/ToastNotification`, fuori dal mock del barrel `@/components`. I test ora mockano l'hook, estraneo a ciò che verificano. Nessuna modifica al codice applicativo.
+
 ### fix(sentry): scarta "Rejected" della registrazione service worker dai crawler (16/11/2026)
 - `shouldDropClientEvent()`: il filtro "Rejected" riconosceva solo il frame nativo `ServiceWorkerContainer.register` o `@serwist/window`. Il Web Rendering Service di Google sostituisce `navigator.serviceWorker.register` con un suo stub (frame `wrsParams.serviceWorkers.navigator.serviceWorker.register`) e lato client i frame Serwist sono minificati, quindi l'evento passava (Sentry JAVASCRIPT-NEXTJS-N, 60 eventi, nessun utente reale). La regex accetta ora anche `navigator.serviceWorker.register`. Test in `sentry-filters.test.ts` con i frame dell'evento reale.
 
