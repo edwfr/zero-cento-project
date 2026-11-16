@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import { NextRequest } from 'next/server'
 
+const { updateUserByIdMock } = vi.hoisted(() => ({ updateUserByIdMock: vi.fn() }))
+
 vi.mock('@/lib/auth', async () => (await import('../helpers/auth-module-mock')).authModuleMock())
 
 vi.mock('@/lib/password-utils', () => ({
@@ -27,6 +29,7 @@ vi.mock('@/lib/supabase-server', () => ({
                     data: { user: null },
                     error: null,
                 }),
+                updateUserById: updateUserByIdMock,
             },
         },
     })),
@@ -734,5 +737,104 @@ describe('PUT /api/users/[id]', () => {
 
         expect(res.status).toBe(500)
         expect(body.error.key).toBe('internal.default')
+    })
+
+    it('leaves the Supabase account alone when the email is not sent', async () => {
+        await updateUser(updateRequest({ firstName: 'Marco' }), detailParams())
+
+        expect(updateUserByIdMock).not.toHaveBeenCalled()
+    })
+
+    // Supabase Auth and Prisma must hold the same email, or the user can no longer be
+    // matched to their Prisma row (Sentry JAVASCRIPT-NEXTJS-14)
+    describe('email change', () => {
+        const NEW_EMAIL = 'mario.nuovo@example.com'
+
+        beforeEach(() => {
+            prismaMock.user.findFirst.mockResolvedValue(null)
+            prismaMock.user.update.mockResolvedValue({ ...detailUser, email: NEW_EMAIL } as never)
+            updateUserByIdMock.mockResolvedValue({ data: { user: { id: DETAIL_ID } }, error: null })
+        })
+
+        it('updates the Supabase account first, then Prisma, both normalized', async () => {
+            const res = await updateUser(updateRequest({ email: ' Mario.Nuovo@Example.com ' }), detailParams())
+            const body = await res.json()
+
+            expect(res.status).toBe(200)
+            expect(body.data.user).toMatchObject({ id: DETAIL_ID, email: NEW_EMAIL })
+            expect(updateUserByIdMock).toHaveBeenCalledWith(DETAIL_ID, { email: NEW_EMAIL })
+            expect(prismaMock.user.update).toHaveBeenCalledWith(
+                expect.objectContaining({ where: { id: DETAIL_ID }, data: { email: NEW_EMAIL } })
+            )
+            expect(updateUserByIdMock.mock.invocationCallOrder[0]).toBeLessThan(
+                prismaMock.user.update.mock.invocationCallOrder[0]
+            )
+        })
+
+        it('skips Supabase when only the case of the email differs', async () => {
+            prismaMock.user.findUnique.mockResolvedValue({ ...detailUser, email: 'Mario.Rossi@example.com' } as never)
+
+            const res = await updateUser(updateRequest({ email: 'mario.rossi@example.com' }), detailParams())
+
+            expect(res.status).toBe(200)
+            expect(updateUserByIdMock).not.toHaveBeenCalled()
+            expect(prismaMock.user.update).toHaveBeenCalledWith(
+                expect.objectContaining({ data: { email: 'mario.rossi@example.com' } })
+            )
+        })
+
+        it('returns 409 when another user already has the email', async () => {
+            prismaMock.user.findFirst.mockResolvedValue({ id: 'user-2' } as never)
+
+            const res = await updateUser(updateRequest({ email: NEW_EMAIL }), detailParams())
+            const body = await res.json()
+
+            expect(res.status).toBe(409)
+            expect(body.error.key).toBe('user.emailExists')
+            expect(prismaMock.user.findFirst).toHaveBeenCalledWith({
+                where: { email: { equals: NEW_EMAIL, mode: 'insensitive' }, NOT: { id: DETAIL_ID } },
+                select: { id: true },
+            })
+            expect(updateUserByIdMock).not.toHaveBeenCalled()
+            expect(prismaMock.user.update).not.toHaveBeenCalled()
+        })
+
+        it('returns 409 when Supabase already has an account with the email', async () => {
+            updateUserByIdMock.mockResolvedValue({
+                data: { user: null },
+                error: { status: 422, code: 'email_exists', message: 'A user with this email address has already been registered' },
+            })
+
+            const res = await updateUser(updateRequest({ email: NEW_EMAIL }), detailParams())
+            const body = await res.json()
+
+            expect(res.status).toBe(409)
+            expect(body.error.key).toBe('user.emailExists')
+            expect(prismaMock.user.update).not.toHaveBeenCalled()
+        })
+
+        it('returns 500 and leaves Prisma untouched when Supabase fails', async () => {
+            updateUserByIdMock.mockResolvedValue({
+                data: { user: null },
+                error: { status: 500, code: 'unexpected_failure', message: 'boom' },
+            })
+
+            const res = await updateUser(updateRequest({ email: NEW_EMAIL }), detailParams())
+            const body = await res.json()
+
+            expect(res.status).toBe(500)
+            expect(body.error.key).toBe('internal.default')
+            expect(prismaMock.user.update).not.toHaveBeenCalled()
+        })
+
+        it('restores the Supabase email when the Prisma update fails', async () => {
+            prismaMock.user.update.mockRejectedValue(new Error('db down'))
+
+            const res = await updateUser(updateRequest({ email: NEW_EMAIL }), detailParams())
+
+            expect(res.status).toBe(500)
+            expect(updateUserByIdMock).toHaveBeenNthCalledWith(1, DETAIL_ID, { email: NEW_EMAIL })
+            expect(updateUserByIdMock).toHaveBeenNthCalledWith(2, DETAIL_ID, { email: 'mario.rossi@example.com' })
+        })
     })
 })

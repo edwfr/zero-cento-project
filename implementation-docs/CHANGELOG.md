@@ -10,6 +10,11 @@ Per stato corrente usare sempre [CHECKLIST.md](./CHECKLIST.md).
 
 ## [Unreleased]
 
+### fix(users): cambio email allineato fra Supabase Auth e Prisma + migrazioni email minuscole (16/11/2026)
+- `PUT /api/users/[id]`: un cambio d'email aggiorna prima l'account Supabase (`auth.admin.updateUserById`), poi Prisma. Prima solo Prisma: il trainee non veniva più associato alla sua riga (stessa causa di JAVASCRIPT-NEXTJS-14). 409 `user.emailExists` se l'email è già di un altro utente (controllo Prisma case-insensitive prima di toccare Supabase, o `email_exists` da Supabase); errore Supabase → 500 e Prisma intatto; errore Prisma dopo Supabase → l'email Supabase viene ripristinata. Un cambio di sole maiuscole non tocca Supabase.
+- Migrazioni, applicate dal deploy di produzione (`scripts/vercel-build.sh`): `20261116120000_normalize_user_emails` porta `users.email` in minuscolo (4 righe, nessuna collisione verificata); `20261116120100_users_email_lowercase_check` aggiunge `CHECK (email = lower(trim(email)))`. Il vincolo deve uscire insieme alla normalizzazione degli schemi Zod: con il codice precedente un'email con maiuscole fallirebbe dopo l'invio dell'invito Supabase.
+- Test: `users.test.ts` (ordine Supabase → Prisma, normalizzazione, 409 Prisma e Supabase, 500 Supabase, ripristino su errore Prisma, nessuna chiamata Supabase senza email o con sole maiuscole diverse).
+
 ### fix(auth): attivazione onboarding con email in maiuscolo e retry dopo attivazione fallita (16/11/2026)
 - Causa di Sentry JAVASCRIPT-NEXTJS-14 (401 su `/api/auth/activate`): Supabase Auth salva l'email in minuscolo, Prisma la salvava come digitata dal trainer, e `requireAuthDuringOnboarding` la cercava con match esatto → "User not found". Verificato su DB: 4 utenti su 78 con email mixed-case, nessuno attivato via API (gli ultimi due riattivati a mano dal trainer).
 - `src/lib/auth.ts`: nuovo `findAppUserByEmail()`, ricerca case-insensitive (`mode: 'insensitive'`) usata da `requireAuthDuringOnboarding` e dai fallback Prisma di `getSession` / `getSessionIncludingInactive`; email assente → `null` senza query. Non per id: un admin ha id Prisma diverso dall'id Auth.

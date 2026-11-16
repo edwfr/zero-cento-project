@@ -127,19 +127,66 @@ export async function PUT(request: NextRequest, { params }: Params) {
             }
         }
 
+        // Email change: Supabase Auth and Prisma must hold the same address, or the
+        // user can no longer be matched to their Prisma row (Sentry JAVASCRIPT-NEXTJS-14).
+        // The schema already lowercased the new email; a case-only change skips Supabase.
+        const newEmail = validation.data.email
+        const previousAuthEmail = existingUser.email.toLowerCase()
+        const authEmailChanged = newEmail !== undefined && newEmail !== previousAuthEmail
+
+        if (authEmailChanged) {
+            const emailOwner = await prisma.user.findFirst({
+                where: { email: { equals: newEmail, mode: 'insensitive' }, NOT: { id } },
+                select: { id: true },
+            })
+            if (emailOwner) {
+                return apiError('CONFLICT', 'Email already exists', 409, undefined, 'user.emailExists')
+            }
+
+            // Supabase first: on failure nothing is touched
+            const { error: authError } = await createAdminClient().auth.admin.updateUserById(id, {
+                email: newEmail,
+            })
+            if (authError?.code === 'email_exists') {
+                return apiError('CONFLICT', 'Email already exists', 409, undefined, 'user.emailExists')
+            }
+            if (authError) {
+                return handleApiError(authError, {
+                    logMessage: 'Failed to update Supabase auth email',
+                    message: 'Failed to update user',
+                    key: 'internal.default',
+                    context: { userId: id },
+                })
+            }
+        }
+
         // Update user
-        const user = await prisma.user.update({
-            where: { id },
-            data: validation.data,
-            select: {
-                id: true,
-                email: true,
-                firstName: true,
-                lastName: true,
-                role: true,
-                isActive: true,
-            },
-        })
+        let user
+        try {
+            user = await prisma.user.update({
+                where: { id },
+                data: validation.data,
+                select: {
+                    id: true,
+                    email: true,
+                    firstName: true,
+                    lastName: true,
+                    role: true,
+                    isActive: true,
+                },
+            })
+        } catch (error) {
+            // Put the Supabase email back, so the two stores stay aligned
+            if (authEmailChanged) {
+                const { error: revertError } = await createAdminClient().auth.admin.updateUserById(id, {
+                    email: previousAuthEmail,
+                })
+                if (revertError) {
+                    logger.error({ userId: id, err: revertError }, 'Failed to restore Supabase auth email')
+                }
+            }
+            throw error
+        }
 
         // Sync name changes to metadata cache
         const metaUpdates: { firstName?: string; lastName?: string } = {}
